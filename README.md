@@ -1,6 +1,8 @@
 # WallpaperTool
 动态壁纸的WPF版本，类似wallpaper engine。
-只是按我自己的想法实现了基本功能，希望有人能继续实现~
+只实现了基本功能~
+![steup](https://github.com/WallpaperTools/WallpaperTool/blob/master/example.gif)
+
 
 qq群:191034956
 
@@ -10,3 +12,5 @@ qq群:191034956
 
 代码中没有壁纸，需要自行导入，或者创建壁纸
 示例壁纸参考这个项目：https://github.com/WallpaperTools/WallpaperTool.Example.DynamicWallpaper
+
+
