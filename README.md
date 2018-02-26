@@ -23,6 +23,6 @@
 ## 运行壁纸
         * 本仓库中没有壁纸，需要自行导入或者创建壁纸
         * 下载示例壁纸参考，解压到程序目录下的Wallpapers目录下
-        * 示例壁纸：[地址](https://github.com/WallpaperTools/WallpaperTool.Example.DynamicWallpaper:target="_blank")
+        * 示例壁纸：[地址](https://github.com/WallpaperTools/WallpaperTool.Example.DynamicWallpaper")
 
 
