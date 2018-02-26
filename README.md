@@ -4,6 +4,8 @@
 ![steup](https://github.com/WallpaperTools/WallpaperTool/blob/master/example.gif)
 
 
+
+个人开发精力有限，这个项目只是提供一个思路。欢迎大家奉献代码以及壁纸~
 qq群:191034956
 
 
