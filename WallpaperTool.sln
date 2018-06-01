@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WallpaperTool", "WallpaperTool\WallpaperTool.csproj", "{388BDD62-84C4-4E24-922E-B1AC5ADADD18}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WallpaperTool", "WallpaperTool\WallpaperTool\WallpaperTool.csproj", "{388BDD62-84C4-4E24-922E-B1AC5ADADD18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Browser", "..\Browser\Browser.csproj", "{9420E4D7-9A03-4761-8010-B878EFE9FF51}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Browser", "Browser\Browser.csproj", "{9420E4D7-9A03-4761-8010-B878EFE9FF51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoPlayer", "..\VideoPlayer\VideoPlayer.csproj", "{82388B00-8146-494E-ABB7-B35ADE533636}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoPlayer", "VideoPlayer\VideoPlayer.csproj", "{82388B00-8146-494E-ABB7-B35ADE533636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
