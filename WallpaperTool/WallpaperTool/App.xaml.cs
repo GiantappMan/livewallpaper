@@ -17,6 +17,7 @@ namespace WallpaperTool
         public App()
         {
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en-US");
+            //Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("zh-chs");
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
         }
