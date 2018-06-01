@@ -467,7 +467,7 @@ namespace WallpaperTool.ViewModels
 
         #endregion
 
-        #region public methods
+        #region public methods 
 
         internal void SetPaper(Wallpaper w)
         {
