@@ -1,13 +1,13 @@
 ﻿<Application
-    x:Class="WallpaperTool.App"
+    x:Uid="Application_1" x:Class="WallpaperTool.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:WallpaperTool">
     <Application.Resources>
-        <ResourceDictionary>
+        <ResourceDictionary x:Uid="ResourceDictionary_1">
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary>
-                    <local:Bootstrapper x:Key="Bootstrapper" />
+                <ResourceDictionary x:Uid="ResourceDictionary_2">
+                    <local:Bootstrapper x:Uid="local:Bootstrapper_1" x:Key="Bootstrapper" />
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
