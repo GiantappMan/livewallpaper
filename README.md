@@ -1,6 +1,6 @@
 # WallpaperTool
-## 我准备把这个仓库作为产品来开发，暂时定位为客户端工具，无服务端内容。
-## 开发群：191034956
+ 我准备把这个仓库作为产品来开发，暂时定位为客户端工具，无服务端内容。
+ 开发群：191034956
 
 ## 效果预览
 ![steup](https://github.com/WallpaperTools/WallpaperTool/blob/master/example.gif)
