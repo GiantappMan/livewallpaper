@@ -1,4 +1,6 @@
 # WallpaperTool
+## 我准备把这个仓库作为产品来开发，暂时定位为客户端工具，无服务端内容。
+## 开发群：191034956
 
 ## 效果预览
 ![steup](https://github.com/WallpaperTools/WallpaperTool/blob/master/example.gif)
@@ -12,10 +14,6 @@
         1.Start项目
         2.Fork修改代码
         3.Issues提交问题
-
-## 技术交流群
-        qq群:191034956
-
 
 ## 编译：因为用了cefsharp，编译的时候选择 x86/x64平台 anycpu不行
         壁纸保存在应用程序目录下。
