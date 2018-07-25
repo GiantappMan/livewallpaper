@@ -1,0 +1,78 @@
+﻿<Window
+    x:Uid="Window_1" x:Class="LiveWallpaper.Views.MainView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cal="http://www.caliburnproject.org"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:LiveWallpaper"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="LiveWallpaper"
+    Width="800"
+    Height="600"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <Grid x:Uid="Grid_1">
+        <TabControl x:Uid="TabControl_1" Grid.Row="1">
+            <TabItem x:Uid="TabItem_1" Header="本地壁纸">
+                <Grid x:Uid="Grid_2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition x:Uid="RowDefinition_1" Height="*" />
+                        <RowDefinition x:Uid="RowDefinition_2" Height="auto" />
+                    </Grid.RowDefinitions>
+                    <ListView x:Uid="Wallpapers" x:Name="Wallpapers">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:Uid="DataTemplate_1">
+                                <Grid x:Uid="Grid_3">
+                                    <Grid
+                                        x:Uid="Grid_4" Width="150"
+                                        Height="150"
+                                        cal:Action.TargetWithoutContext="MainViewModel"
+                                        cal:Message.Attach="[Event PreviewMouseDown] = [Action ApplyWallpaper($datacontext)]"
+                                        Background="Gray">
+
+                                        <StackPanel x:Uid="StackPanel_1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Uid="TextBlock_1" Text="{Binding Name}" />
+                                            <TextBlock x:Uid="TextBlock_2" Text="{Binding Author}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Expander x:Uid="Expander_1" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <StackPanel x:Uid="StackPanel_2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button x:Uid="Button_1" cal:Action.TargetWithoutContext="MainViewModel" cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]">编辑</Button>
+                                            <Button x:Uid="Button_2" cal:Action.TargetWithoutContext="MainViewModel" cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]">打开文件</Button>
+                                            <Button x:Uid="Button_3" cal:Action.TargetWithoutContext="MainViewModel" cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]">删除</Button>
+                                        </StackPanel>
+                                    </Expander>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate x:Uid="ItemsPanelTemplate_1">
+                                <WrapPanel x:Uid="WrapPanel_1" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                    </ListView>
+                    <StackPanel
+                        x:Uid="StackPanel_3" Grid.Row="1"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <Button x:Uid="RefreshLocalWallpaper" x:Name="RefreshLocalWallpaper">
+                            刷新壁纸
+                        </Button>
+                        <Button x:Uid="CreateWallpaper" x:Name="CreateWallpaper" Margin="10,0,0,0">
+                            创建壁纸
+                        </Button>
+                    </StackPanel>
+
+                </Grid>
+            </TabItem>
+            <!--<TabItem Header="创意工厂">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                </Grid>
+            </TabItem>-->
+        </TabControl>
+    </Grid>
+</Window>
