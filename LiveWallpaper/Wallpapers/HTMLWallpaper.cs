@@ -22,7 +22,7 @@ namespace LiveWallpaper.Wallpapers
             return base.Show(new WallpapaerParameter()
             {
                 Dir = browserPath,
-                EnterPoint = "Browser.exe",
+                EnterPoint = "Browser\\Browser.exe",
                 Args = url
             });
         }
