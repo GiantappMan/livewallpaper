@@ -24,7 +24,7 @@ namespace LiveWallpaper.Wallpapers
             return base.Show(new WallpapaerParameter()
             {
                 Dir = browserPath,
-                EnterPoint = "VideoPlayer.exe",
+                EnterPoint = "VideoPlayer\\VideoPlayer.exe",
                 Args = path
             });
         }
