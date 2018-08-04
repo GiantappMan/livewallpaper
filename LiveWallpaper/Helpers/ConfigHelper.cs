@@ -37,10 +37,10 @@ namespace LiveWallpaper.Helpers
         private static string GetDefaultPath<T>() where T : new()
         {
             //var temp = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-            var rootDir = Environment.CurrentDirectory;
-
+            //var configDir = Environment.CurrentDirectory;
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             //return $"{typeof(T).Name}.json";
-            return $"{rootDir}\\Config\\{typeof(T).Name}.json";
+            return $"{appData}\\LiveWallpaper\\Config\\{typeof(T).Name}.json";
         }
 
     }
