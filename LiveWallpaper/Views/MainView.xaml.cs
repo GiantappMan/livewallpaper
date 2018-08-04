@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using LiveWallpaper.Wallpapers;
+using MultiLanguageManager;
 
 namespace LiveWallpaper.Views
 {
@@ -35,7 +37,6 @@ namespace LiveWallpaper.Views
         private void btn_CreateWallpaper(object sender, RoutedEventArgs e)
         {
             CreateWallpaperView createWindow = new CreateWallpaperView();
-            //createWindow.Owner = this;
             createWindow.Show();
             createWindow.Closed += CreateWindow_Closed;
         }
@@ -44,6 +45,15 @@ namespace LiveWallpaper.Views
         {
             CreateWallpaperView createWindow = sender as CreateWallpaperView;
             createWindow.Closed -= CreateWindow_Closed;
+        }
+
+        private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBoxItem item = e.AddedItems[0] as ComboBoxItem;
+            string culture = item.Tag as string;
+
+            Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(culture);
+            await LanService.UpdateLanguage();
         }
     }
 }

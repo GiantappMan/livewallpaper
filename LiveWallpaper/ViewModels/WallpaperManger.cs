@@ -33,7 +33,7 @@ namespace LiveWallpaper.ViewModels
             {
                 case WallpaperType.Exe:
                     return exeWallPaper;
-                case WallpaperType.HTML:
+                case WallpaperType.WEB:
                     return htmlWallpaper;
                 case WallpaperType.Video:
                     return videoWallpaper;

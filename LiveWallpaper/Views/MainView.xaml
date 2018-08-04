@@ -4,22 +4,24 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cal="http://www.caliburnproject.org"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="LiveWallpaper"
+    Title=" "
     Width="800"
     Height="600"
+    lan:Xaml.Key="app_title"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>
         <TabControl Grid.Row="1">
-            <TabItem x:Uid="tabItem_Header" Header="本地壁纸">
+            <TabItem lan:Xaml.Key="local_wallpaper">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <ListView x:Name="Wallpapers" x:Uid="lstView_Wallpapers">
+                    <ListView x:Name="Wallpapers">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -31,28 +33,28 @@
                                         Background="Gray">
 
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock x:Uid="txt_Name" Text="{Binding Name}" />
-                                            <TextBlock x:Uid="txt_Author" Text="{Binding Author}" />
+                                            <TextBlock Text="{Binding Name}" />
+                                            <TextBlock Text="{Binding Author}" />
                                         </StackPanel>
                                     </Grid>
                                     <Expander HorizontalAlignment="Right" VerticalAlignment="Top">
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Button
-                                                x:Uid="btn_Edit"
                                                 cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]">
+                                                cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
+                                                lan:Xaml.Key="edit">
                                                 编辑
                                             </Button>
                                             <Button
-                                                x:Uid="btn_OpenFile"
                                                 cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]">
+                                                cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
+                                                lan:Xaml.Key="open_file">
                                                 打开文件
                                             </Button>
                                             <Button
-                                                x:Uid="btn_Delete"
                                                 cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]">
+                                                cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
+                                                lan:Xaml.Key="delete">
                                                 删除
                                             </Button>
                                         </StackPanel>
@@ -66,17 +68,24 @@
                             </ItemsPanelTemplate>
                         </ListView.ItemsPanel>
                     </ListView>
+                    <ComboBox
+                        Grid.Row="1"
+                        HorizontalAlignment="Left"
+                        SelectionChanged="ComboBox_SelectionChanged">
+                        <ComboBoxItem Tag="zh">中文</ComboBoxItem>
+                        <ComboBoxItem Tag="en">English</ComboBoxItem>
+                    </ComboBox>
                     <StackPanel
                         Grid.Row="1"
                         HorizontalAlignment="Right"
                         Orientation="Horizontal">
-                        <Button x:Name="RefreshLocalWallpaper" x:Uid="btn_RefreshLocalWallpaper">
+                        <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="refresh_wallpaper">
                             刷新壁纸
                         </Button>
                         <Button
                             x:Name="CreateWallpaper"
-                            x:Uid="btn_CreateWallpaper"
-                            Margin="10,0,0,0">
+                            Margin="10,0,0,0"
+                            lan:Xaml.Key="create_wallpaper">
                             创建壁纸
                         </Button>
                     </StackPanel>

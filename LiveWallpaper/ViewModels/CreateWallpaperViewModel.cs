@@ -10,6 +10,7 @@ using LiveWallpaper.Configs;
 using LiveWallpaper.Helpers;
 using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
+using MultiLanguageManager;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -22,7 +23,6 @@ namespace LiveWallpaper.ViewModels
             _wallpaper = new Wallpaper();
             _wallpaper.ID = Guid.NewGuid().ToString();
             _wallpaper.CreatedTime = DateTime.Now;
-            DisplayName = "创建壁纸";
             Init();
             UpdateDesc();
         }
@@ -437,27 +437,27 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        private void UpdateDesc()
+        private async void UpdateDesc()
         {
             switch (SelectedType)
             {
                 //应用程序壁纸
                 case WallpaperType.Exe:
-                    DirDesc = "应用程序文件夹路径，可拖入文件夹到文本框";
-                    EndPointDesc = "应用程序名称  例如：game.exe";
-                    ArgumentsDesc = "选填";
+                    DirDesc = await LanService.Get("type_exe_desc1");
+                    EndPointDesc = await LanService.Get("type_exe_desc2");
+                    ArgumentsDesc = await LanService.Get("type_exe_desc3");
                     break;
                 //网页壁纸
-                case WallpaperType.HTML:
-                    DirDesc = "不用填";
-                    EndPointDesc = "不用填";
-                    ArgumentsDesc = "网页路径";
+                case WallpaperType.WEB:
+                    DirDesc = await LanService.Get("type_web_desc1");
+                    EndPointDesc = await LanService.Get("type_web_desc2");
+                    ArgumentsDesc = await LanService.Get("type_web_desc3");
                     break;
                 //视频壁纸
                 case WallpaperType.Video:
-                    DirDesc = "不用填";
-                    EndPointDesc = "不用填";
-                    ArgumentsDesc = "视频路径，可拖入.mp4到文本框";
+                    DirDesc = await LanService.Get("type_video_desc1");
+                    EndPointDesc = await LanService.Get("type_video_desc2");
+                    ArgumentsDesc = await LanService.Get("type_video_desc3");
                     break;
             }
             //DirDesc = EndPointDesc = ArgumentsDesc = null;
@@ -576,7 +576,7 @@ namespace LiveWallpaper.ViewModels
 
                     }
                     break;
-                case WallpaperType.HTML:
+                case WallpaperType.WEB:
                     var htmlDir = Path.GetDirectoryName(wallpaper.PackInfo.Args);
                     if (relativeDir != htmlDir)
                     {
