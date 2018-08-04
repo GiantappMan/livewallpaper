@@ -9,7 +9,6 @@
     xmlns:model="clr-namespace:LiveWallpaper.Server.Models"
     Width="525"
     Height="350"
-    lan:Xaml.Key="create"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>
