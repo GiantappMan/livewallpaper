@@ -3,3 +3,4 @@ debug
 *.suo
 .vs
 packages
+*.user

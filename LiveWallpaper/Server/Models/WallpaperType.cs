@@ -10,6 +10,6 @@ namespace LiveWallpaper.Server.Models
     {
         Exe,
         Video,
-        HTML
+        WEB
     }
 }

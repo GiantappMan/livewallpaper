@@ -56,6 +56,8 @@ namespace LiveWallpaper.Helpers
         {
             return Task.Run(() =>
             {
+                if (!File.Exists(path))
+                    return default(T);
                 string json = File.ReadAllText(path);
                 return JsonDeserialize<T>(json);
             });
