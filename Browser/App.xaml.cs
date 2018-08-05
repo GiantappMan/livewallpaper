@@ -16,7 +16,6 @@ namespace Browser
         public static string[] Args { get; set; }
         protected override void OnStartup(StartupEventArgs e)
         {
-
             Args = e.Args;
             base.OnStartup(e);
         }
