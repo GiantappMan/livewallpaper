@@ -23,6 +23,7 @@ namespace LiveWallpaper
             //自定义消息拦截
             container = new SimpleContainer();
 
+            container.Instance(container);
             container.Singleton<IWindowManager, WindowManager>();
 
             container.Singleton<MainViewModel>(nameof(MainViewModel));
