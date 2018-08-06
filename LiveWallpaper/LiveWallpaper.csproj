@@ -115,6 +115,7 @@
     <Compile Include="Helpers\ConfigHelper.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="Server\Models\WallpaperType.cs" />
+    <Compile Include="ViewModels\ContextMenuViewModel.cs" />
     <Compile Include="ViewModels\CreateWallpaperViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\WallpaperManger.cs" />

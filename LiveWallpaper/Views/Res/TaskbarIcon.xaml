@@ -1,6 +1,30 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cal="http://www.caliburnproject.org"
     xmlns:tb="http://www.hardcodet.net/taskbar">
-    <tb:TaskbarIcon x:Key="NotifyIcon" />
+
+    <ContextMenu
+        x:Key="ContextMenu"
+        cal:Action.Target="ContextMenuViewModel"
+        x:Shared="false">
+        <!--<MenuItem cal:Message.Attach="About()" Header="关于">
+            <MenuItem Header="官网" />
+            <MenuItem Header="反馈" />
+            <MenuItem Header="检查更新" />
+            <MenuItem Header="分享" />
+        </MenuItem>
+        <MenuItem cal:Message.Attach="OpenConfigFolder()" Header="配置目录" />
+        <MenuItem
+            cal:Message.Attach="StartWithOS()"
+            Header="开机启动"
+            IsCheckable="True"
+            IsChecked="{Binding IsAutoLaunch, Mode=OneWay}" />
+        <Separator />
+
+        <MenuItem cal:Message.Attach="RestImmediately()" Header="立即休息" />
+        <Separator />-->
+        <MenuItem cal:Message.Attach="ExitApp()" Header="退出" />
+    </ContextMenu>
+    <tb:TaskbarIcon x:Key="NotifyIcon" ContextMenu="{StaticResource ContextMenu}" />
 </ResourceDictionary>
