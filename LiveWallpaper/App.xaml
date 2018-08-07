@@ -19,9 +19,11 @@
                 <ResourceDictionary>
                     <tb:TaskbarIcon
                         x:Key="NotifyIcon"
+                        lan:Xaml.ApplyImmediately="True"
                         lan:Xaml.Key="app_name"
                         ContextMenu="{StaticResource ContextMenu}"
-                        TrayMouseDoubleClick="TaskbarIcon_TrayMouseDoubleClick" />
+                        TrayMouseDoubleClick="TaskbarIcon_TrayMouseDoubleClick">
+                    </tb:TaskbarIcon>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
