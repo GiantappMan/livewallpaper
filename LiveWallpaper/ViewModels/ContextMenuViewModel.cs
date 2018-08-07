@@ -12,7 +12,13 @@ namespace LiveWallpaper.ViewModels
 {
     public class ContextMenuViewModel : Screen
     {
-        private Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private IWindowManager _windowManager;
+
+        public ContextMenuViewModel(IWindowManager windowManager)
+        {
+            _windowManager = windowManager;
+        }
 
         public void About()
         {
@@ -22,8 +28,20 @@ namespace LiveWallpaper.ViewModels
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "About Ex");
+                _logger.Error(ex, "About Ex");
             }
+        }
+
+        public void Config()
+        {
+            var vm = IoC.Get<ConfigViewModel>();
+            _windowManager.ShowDialog(this, vm);
+        }
+
+        public void Main()
+        {
+            var vm = IoC.Get<MainViewModel>();
+            _windowManager.ShowWindow(vm);
         }
 
         public void ExitApp()

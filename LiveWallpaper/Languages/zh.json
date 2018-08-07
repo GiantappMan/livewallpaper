@@ -25,5 +25,17 @@
   "type_web_desc3": "网页路径",
   "type_video_desc1": "不用填",
   "type_video_desc2": "不用填",
-  "type_video_desc3": "视频路径，可拖入.mp4到文本框"
+  "type_video_desc3": "视频路径，可拖入.mp4到文本框",
+  "config": "配置",
+  "exit": "退出",
+  "about": "关于",
+  "": "",
+  "": "",
+  "": "",
+  "": "",
+  "": "",
+  "": "",
+  "": "",
+  "": "",
+  "": ""
 }
