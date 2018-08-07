@@ -20,6 +20,19 @@ namespace LiveWallpaper.ViewModels
             _windowManager = windowManager;
         }
 
+        protected override void OnViewAttached(object view, object context)
+        {
+            base.OnViewAttached(view, context);
+        }
+        protected override void OnViewReady(object view)
+        {
+            base.OnViewReady(view);
+        }
+        protected override void OnViewLoaded(object view)
+        {
+            base.OnViewLoaded(view);
+        }
+
         public void About()
         {
             try

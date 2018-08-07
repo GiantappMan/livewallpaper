@@ -10,23 +10,10 @@
         cal:Action.Target="ContextMenuViewModel"
         x:Shared="false">
         <MenuItem cal:Message.Attach="About()" lan:Xaml.Key="about" />
-        <!--<MenuItem cal:Message.Attach="OpenConfigFolder()" Header="配置目录" />
-        <MenuItem
-            cal:Message.Attach="StartWithOS()"
-            Header="开机启动"
-            IsCheckable="True"
-            IsChecked="{Binding IsAutoLaunch, Mode=OneWay}" />-->
         <Separator />
-
         <MenuItem cal:Message.Attach="Config()" lan:Xaml.Key="config" />
         <Separator />
         <MenuItem cal:Message.Attach="Main()" lan:Xaml.Key="main" />
         <MenuItem cal:Message.Attach="ExitApp()" lan:Xaml.Key="exit" />
     </ContextMenu>
-
-    <tb:TaskbarIcon
-        x:Key="NotifyIcon"
-        cal:Action.Target="ContextMenuViewModel"
-        cal:Message.Attach="[Event TrayMouseDoubleClick] = [Action Main()]"
-        ContextMenu="{StaticResource ContextMenu}" />
 </ResourceDictionary>

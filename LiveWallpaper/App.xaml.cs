@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using Hardcodet.Wpf.TaskbarNotification;
+using LiveWallpaper.ViewModels;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,8 @@ namespace LiveWallpaper
         public App()
         {
             //多语言
+            Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipProperty);
+
             string path = Path.Combine(Environment.CurrentDirectory, "Languages");
             LanService.Init(new JsonDB(path), true);
         }
@@ -64,6 +67,13 @@ namespace LiveWallpaper
             NLog.LogManager.Shutdown();
             notifyIcon.Dispose();
             base.OnExit(e);
+        }
+
+        private void TaskbarIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            var vm = IoC.Get<ContextMenuViewModel>(nameof(ContextMenuViewModel));
+            if (vm != null)
+                vm.Main();
         }
     }
 }
