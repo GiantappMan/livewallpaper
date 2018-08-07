@@ -24,6 +24,11 @@ namespace LiveWallpaper.ViewModels
             RefreshLocalWallpaper();
         }
 
+        protected override void OnViewReady(object view)
+        {
+            base.OnViewReady(view);
+        }
+
         #region  public methods
 
         public void CreateWallpaper()
@@ -40,6 +45,22 @@ namespace LiveWallpaper.ViewModels
             vm.Deactivated -= Vm_Deactivated;
 
             RefreshLocalWallpaper();
+        }
+        public override object GetView(object context = null)
+        {
+            return base.GetView(context);
+        }
+
+        internal void ActiveUI()
+        {
+            var view = GetView();
+            var window = view as Window;
+            if (window != null)
+            {
+                if (window.WindowState == WindowState.Minimized)
+                    window.WindowState = WindowState.Normal;
+                window.Activate();
+            }
         }
 
         public async void RefreshLocalWallpaper()

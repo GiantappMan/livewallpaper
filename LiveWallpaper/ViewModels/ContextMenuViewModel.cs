@@ -41,7 +41,10 @@ namespace LiveWallpaper.ViewModels
         public void Main()
         {
             var vm = IoC.Get<MainViewModel>();
-            _windowManager.ShowWindow(vm);
+            if (vm.IsActive)
+                vm.ActiveUI();
+            else
+                _windowManager.ShowWindow(vm);
         }
 
         public void ExitApp()

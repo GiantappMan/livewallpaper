@@ -20,7 +20,13 @@
 
         <MenuItem cal:Message.Attach="Config()" lan:Xaml.Key="config" />
         <Separator />
+        <MenuItem cal:Message.Attach="Main()" lan:Xaml.Key="main" />
         <MenuItem cal:Message.Attach="ExitApp()" lan:Xaml.Key="exit" />
     </ContextMenu>
-    <tb:TaskbarIcon x:Key="NotifyIcon" ContextMenu="{StaticResource ContextMenu}" />
+
+    <tb:TaskbarIcon
+        x:Key="NotifyIcon"
+        cal:Action.Target="ContextMenuViewModel"
+        cal:Message.Attach="[Event TrayMouseDoubleClick] = [Action Main()]"
+        ContextMenu="{StaticResource ContextMenu}" />
 </ResourceDictionary>

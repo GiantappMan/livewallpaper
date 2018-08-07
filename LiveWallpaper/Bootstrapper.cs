@@ -38,7 +38,7 @@ namespace LiveWallpaper
 
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-            //DisplayRootViewFor<MainViewModel>();
+            DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)
