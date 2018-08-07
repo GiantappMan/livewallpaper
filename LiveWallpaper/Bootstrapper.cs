@@ -27,7 +27,8 @@ namespace LiveWallpaper
             .Singleton<IWindowManager, WindowManager>()
             .Singleton<ContextMenuViewModel>(nameof(ContextMenuViewModel))
             .Singleton<MainViewModel>(nameof(MainViewModel))
-            .PerRequest<CreateWallpaperViewModel>();
+            .PerRequest<CreateWallpaperViewModel>()
+            .PerRequest<ConfigViewModel>();
         }
 
         private object GetCefSource(ActionExecutionContext arg)
@@ -37,7 +38,7 @@ namespace LiveWallpaper
 
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-            DisplayRootViewFor<MainViewModel>();
+            //DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)
