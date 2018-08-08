@@ -110,6 +110,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Configs\GeneralSetting.cs" />
+    <Compile Include="Configs\SettingConfig.cs" />
     <Compile Include="Configs\UserConfig.cs" />
     <Compile Include="DragManager.cs" />
     <Compile Include="Helpers\ConfigHelper.cs" />
