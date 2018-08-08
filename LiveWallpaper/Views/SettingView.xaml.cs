@@ -17,9 +17,9 @@ namespace LiveWallpaper.Views
     /// <summary>
     /// Interaction logic for ConfigView.xaml
     /// </summary>
-    public partial class ConfigView : Window
+    public partial class SettingView : Window
     {
-        public ConfigView()
+        public SettingView()
         {
             InitializeComponent();
         }

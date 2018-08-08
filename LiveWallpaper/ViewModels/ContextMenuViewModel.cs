@@ -3,6 +3,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace LiveWallpaper.ViewModels
     {
         private Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private IWindowManager _windowManager;
-        private ConfigViewModel _configVM;
+        private SettingViewModel _settingVM;
 
         public ContextMenuViewModel(IWindowManager windowManager)
         {
@@ -35,12 +36,16 @@ namespace LiveWallpaper.ViewModels
 
         public void Config()
         {
-            if (_configVM != null)
+            if (_settingVM != null)
                 return;
 
-            _configVM = IoC.Get<ConfigViewModel>();
-            _windowManager.ShowDialog(this, _configVM);
-            _configVM = null;
+            _settingVM = IoC.Get<SettingViewModel>();
+            dynamic settings = new ExpandoObject();
+            settings.Height = 500;
+            settings.Width = 400;
+            settings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            _windowManager.ShowDialog(_settingVM, null, settings);
+            _settingVM = null;
         }
 
         public void Main()
