@@ -35,16 +35,10 @@ namespace LiveWallpaper.ViewModels
         {
             var windowManager = IoC.Get<IWindowManager>();
             var vm = IoC.Get<CreateWallpaperViewModel>();
-            windowManager.ShowDialog(vm);
-            vm.Deactivated += Vm_Deactivated;
-        }
+            bool? isOk = windowManager.ShowDialog(vm);
+            if (isOk != null && isOk.Value)
+                RefreshLocalWallpaper();
 
-        private void Vm_Deactivated(object sender, DeactivationEventArgs e)
-        {
-            var vm = sender as CreateWallpaperViewModel;
-            vm.Deactivated -= Vm_Deactivated;
-
-            RefreshLocalWallpaper();
         }
         public override object GetView(object context = null)
         {
@@ -97,8 +91,7 @@ namespace LiveWallpaper.ViewModels
             var windowManager = IoC.Get<IWindowManager>();
             var vm = IoC.Get<CreateWallpaperViewModel>();
             vm.SetPaper(s);
-            windowManager.ShowWindow(vm);
-            vm.Deactivated += Vm_Deactivated;
+            windowManager.ShowDialog(vm);
         }
         public void DeleteWallpaper(Wallpaper w)
         {

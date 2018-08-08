@@ -14,23 +14,11 @@ namespace LiveWallpaper.ViewModels
     {
         private Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private IWindowManager _windowManager;
+        private ConfigViewModel _configVM;
 
         public ContextMenuViewModel(IWindowManager windowManager)
         {
             _windowManager = windowManager;
-        }
-
-        protected override void OnViewAttached(object view, object context)
-        {
-            base.OnViewAttached(view, context);
-        }
-        protected override void OnViewReady(object view)
-        {
-            base.OnViewReady(view);
-        }
-        protected override void OnViewLoaded(object view)
-        {
-            base.OnViewLoaded(view);
         }
 
         public void About()
@@ -47,8 +35,12 @@ namespace LiveWallpaper.ViewModels
 
         public void Config()
         {
-            var vm = IoC.Get<ConfigViewModel>();
-            _windowManager.ShowDialog(this, vm);
+            if (_configVM != null)
+                return;
+
+            _configVM = IoC.Get<ConfigViewModel>();
+            _windowManager.ShowDialog(this, _configVM);
+            _configVM = null;
         }
 
         public void Main()

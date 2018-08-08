@@ -9,5 +9,9 @@ namespace LiveWallpaper.ViewModels
 {
     public class ConfigViewModel : Screen
     {
+        protected override void OnDeactivate(bool close)
+        {
+            base.OnDeactivate(close);
+        }
     }
 }
