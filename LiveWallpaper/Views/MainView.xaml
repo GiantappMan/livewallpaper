@@ -10,7 +10,7 @@
     Title=" "
     Width="800"
     Height="600"
-    lan:Xaml.Key="app_title"
+    lan:Xaml.Key="app_name"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>

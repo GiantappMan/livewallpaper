@@ -35,7 +35,7 @@ namespace LiveWallpaper.ViewModels
         {
             var windowManager = IoC.Get<IWindowManager>();
             var vm = IoC.Get<CreateWallpaperViewModel>();
-            windowManager.ShowWindow(vm);
+            windowManager.ShowDialog(vm);
             vm.Deactivated += Vm_Deactivated;
         }
 
