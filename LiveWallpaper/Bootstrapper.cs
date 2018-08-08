@@ -28,7 +28,7 @@ namespace LiveWallpaper
             .Singleton<ContextMenuViewModel>(nameof(ContextMenuViewModel))
             .Singleton<MainViewModel>(nameof(MainViewModel))
             .PerRequest<CreateWallpaperViewModel>()
-            .PerRequest<ConfigViewModel>();
+            .PerRequest<SettingViewModel>();
         }
 
         private object GetCefSource(ActionExecutionContext arg)

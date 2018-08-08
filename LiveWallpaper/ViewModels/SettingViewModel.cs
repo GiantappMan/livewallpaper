@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaper.ViewModels
 {
-    public class ConfigViewModel : Screen
+    public class SettingViewModel : Screen
     {
         protected override void OnDeactivate(bool close)
         {
