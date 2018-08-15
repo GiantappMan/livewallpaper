@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LiveWallpaper.Configs;
 using LiveWallpaper.Helpers;
 using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
@@ -30,11 +29,11 @@ namespace LiveWallpaper.ViewModels
 
         private async void Init()
         {
-            var config = await ConfigHelper.LoadConfigAsync<UserConfig>();
-            if (config == null)
-                config = new UserConfig();
+            //var config = await ConfigHelper.LoadConfigAsync<UserConfig>();
+            //if (config == null)
+            //    config = new UserConfig();
 
-            Author = config.UserName;
+            //Author = config.UserName;
         }
 
         #region properties
@@ -485,11 +484,11 @@ namespace LiveWallpaper.ViewModels
         {
             CanGenerate = false;
 
-            var config = await ConfigHelper.LoadConfigAsync<UserConfig>();
-            if (config == null)
-                config = new UserConfig();
+            //var config = await ConfigHelper.LoadConfigAsync<UserConfig>();
+            //if (config == null)
+            //    config = new UserConfig();
 
-            config.UserName = Author;
+            //config.UserName = Author;
 
             //todo 从文件夹读取
             //var exist = config.Wallpapers.FirstOrDefault(m => m.ID == _wallpaper.ID);
@@ -507,7 +506,7 @@ namespace LiveWallpaper.ViewModels
             await CreateLocalPack(_wallpaper);
 
 
-            await ConfigHelper.SaveConfigAsync(config);
+            //await ConfigHelper.SaveConfigAsync(config);
 
             CanGenerate = true;
             CanPublish = true;

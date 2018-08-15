@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JsonConfiger.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,8 +17,8 @@ namespace LiveWallpaper.Helpers
                     path = GetDefaultPath<T>();
 
                 var config = await JsonHelper.JsonDeserializeFromFileAsync<T>(path);
-                if (config == null)
-                    config = new T();
+                //if (config == null)
+                //    config = new T();
                 return config;
             }
             catch (Exception ex)
