@@ -6,8 +6,8 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:wpf="clr-namespace:JsonConfiger.WPF;assembly=JsonConfiger.WPF"
+    lan:Xaml.Key="config"
     mc:Ignorable="d">
-    <TabControl TabStripPlacement="Left">
-        <TabItem lan:Xaml.Key="setting_general" />
-    </TabControl>
+    <wpf:JsonConfierControl DataContext="{Binding JsonConfierViewModel}" />
 </Window>

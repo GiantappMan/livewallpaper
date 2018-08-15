@@ -13,86 +13,85 @@
     lan:Xaml.Key="app_name"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid>
-        <TabControl Grid.Row="1">
-            <TabItem lan:Xaml.Key="local_wallpaper">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="auto" />
-                    </Grid.RowDefinitions>
-                    <ListView x:Name="Wallpapers">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid
-                                        Width="150"
-                                        Height="150"
-                                        cal:Action.TargetWithoutContext="MainViewModel"
-                                        cal:Message.Attach="[Event PreviewMouseDown] = [Action ApplyWallpaper($datacontext)]"
-                                        Background="Gray">
+    <TabControl>
+        <TabItem lan:Xaml.Key="local_wallpaper">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <ListView x:Name="Wallpapers">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid
+                                    Width="150"
+                                    Height="150"
+                                    cal:Action.TargetWithoutContext="MainViewModel"
+                                    cal:Message.Attach="[Event PreviewMouseDown] = [Action ApplyWallpaper($datacontext)]"
+                                    Background="Gray">
 
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" />
-                                            <TextBlock Text="{Binding Author}" />
-                                        </StackPanel>
-                                    </Grid>
-                                    <Expander HorizontalAlignment="Right" VerticalAlignment="Top">
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Button
-                                                cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
-                                                lan:Xaml.Key="edit">
-                                                编辑
-                                            </Button>
-                                            <Button
-                                                cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
-                                                lan:Xaml.Key="open_file">
-                                                打开文件
-                                            </Button>
-                                            <Button
-                                                cal:Action.TargetWithoutContext="MainViewModel"
-                                                cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
-                                                lan:Xaml.Key="delete">
-                                                删除
-                                            </Button>
-                                        </StackPanel>
-                                    </Expander>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" />
+                                        <TextBlock Text="{Binding Author}" />
+                                    </StackPanel>
                                 </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                        <ListView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel IsItemsHost="True" />
-                            </ItemsPanelTemplate>
-                        </ListView.ItemsPanel>
-                    </ListView>
-                    <ComboBox
-                        Grid.Row="1"
-                        HorizontalAlignment="Left"
-                        SelectionChanged="ComboBox_SelectionChanged">
-                        <ComboBoxItem Tag="zh">中文</ComboBoxItem>
-                        <ComboBoxItem Tag="en">English</ComboBoxItem>
-                    </ComboBox>
-                    <StackPanel
-                        Grid.Row="1"
-                        HorizontalAlignment="Right"
-                        Orientation="Horizontal">
-                        <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="refresh_wallpaper">
-                            刷新壁纸
-                        </Button>
-                        <Button
-                            x:Name="CreateWallpaper"
-                            Margin="10,0,0,0"
-                            lan:Xaml.Key="create_wallpaper">
-                            创建壁纸
-                        </Button>
-                    </StackPanel>
+                                <Expander HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Button
+                                            cal:Action.TargetWithoutContext="MainViewModel"
+                                            cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
+                                            lan:Xaml.Key="edit">
+                                            编辑
+                                        </Button>
+                                        <Button
+                                            cal:Action.TargetWithoutContext="MainViewModel"
+                                            cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
+                                            lan:Xaml.Key="open_file">
+                                            打开文件
+                                        </Button>
+                                        <Button
+                                            cal:Action.TargetWithoutContext="MainViewModel"
+                                            cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
+                                            lan:Xaml.Key="delete">
+                                            删除
+                                        </Button>
+                                    </StackPanel>
+                                </Expander>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                </ListView>
+                <ComboBox
+                    Grid.Row="1"
+                    HorizontalAlignment="Left"
+                    SelectionChanged="ComboBox_SelectionChanged">
+                    <ComboBoxItem Tag="zh">中文</ComboBoxItem>
+                    <ComboBoxItem Tag="en">English</ComboBoxItem>
+                </ComboBox>
+                <StackPanel
+                    Grid.Row="1"
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal">
+                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="refresh_wallpaper">
+                        刷新壁纸
+                    </Button>
+                    <Button
+                        x:Name="CreateWallpaper"
+                        Margin="10,0,0,0"
+                        lan:Xaml.Key="create_wallpaper">
+                        创建壁纸
+                    </Button>
+                </StackPanel>
 
-                </Grid>
-            </TabItem>
-            <!--<TabItem Header="创意工厂">
+            </Grid>
+        </TabItem>
+        <!--<TabItem Header="创意工厂">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto" />
@@ -100,6 +99,5 @@
                     </Grid.RowDefinitions>
                 </Grid>
             </TabItem>-->
-        </TabControl>
-    </Grid>
+    </TabControl>
 </Window>
