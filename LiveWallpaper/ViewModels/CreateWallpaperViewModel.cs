@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LiveWallpaper.Helpers;
 using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
 using MultiLanguageManager;
@@ -607,7 +606,7 @@ namespace LiveWallpaper.ViewModels
             }
 
             wallpaper.PackInfo.Dir = relativeDir;
-            await ConfigHelper.SaveConfigAsync(wallpaper, Path.Combine(target, "config.json"));
+            //await ConfigHelper.SaveConfigAsync(wallpaper, Path.Combine(target, "config.json"));
         }
 
         private void CopyFileToDir(string path, string target)

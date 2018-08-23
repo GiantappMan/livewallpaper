@@ -1,0 +1,13 @@
+﻿{
+  "General": {
+    "lan": "常规",
+    "StartWithWindows": {
+      "type": "string",
+      "lan": "开机启动"
+    },
+    "CurrentLan": {
+      "type": "string",
+      "lan": "多语言"
+    }
+  }
+}

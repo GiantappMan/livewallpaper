@@ -1,7 +1,9 @@
 ﻿using Caliburn.Micro;
+using DZY.DotNetUtil.Helpers;
 using JsonConfiger;
 using JsonConfiger.Models;
-using LiveWallpaper.Helpers;
+using LiveWallpaper.Models.Settings;
+using LiveWallpaper.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,16 +15,13 @@ namespace LiveWallpaper.ViewModels
 {
     public class SettingViewModel : Screen
     {
-        JCrService service = new JCrService();
+        JCrService _jcrService = new JCrService();
         protected override async void OnInitialize()
         {
-            var config = await ConfigHelper.LoadConfigAsync<dynamic>();
-            if (config == null)
-            {
-                string defaultConfig = Path.Combine(Environment.CurrentDirectory, "Configs\\default_config.json");
-                config = await ConfigHelper.LoadConfigAsync<dynamic>(defaultConfig);
-            }
-            JsonConfierViewModel = service.GetVM(config);
+            var config = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppService.SettingPath);
+            string descPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
+            var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(descPath);
+            JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
             base.OnInitialize();
         }
 

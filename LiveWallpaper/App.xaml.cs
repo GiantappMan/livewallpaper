@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using Hardcodet.Wpf.TaskbarNotification;
+using LiveWallpaper.Services;
 using LiveWallpaper.ViewModels;
 using MultiLanguageManager;
 using System;
@@ -26,11 +27,7 @@ namespace LiveWallpaper
 
         public App()
         {
-            //多语言
-            Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
-
-            string path = Path.Combine(Environment.CurrentDirectory, "Languages");
-            LanService.Init(new JsonDB(path), true);
+            AppService.Initlize();
         }
 
         protected override void OnStartup(StartupEventArgs e)
