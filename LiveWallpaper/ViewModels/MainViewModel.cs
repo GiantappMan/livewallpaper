@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using LiveWallpaper.Helpers;
 using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
 
@@ -68,11 +67,11 @@ namespace LiveWallpaper.ViewModels
             try
             {
                 var configs = dir.EnumerateFiles("config.json", SearchOption.AllDirectories);
-                foreach (var item in configs)
-                {
-                    var data = await ConfigHelper.LoadConfigAsync<Wallpaper>(item.FullName);
-                    Wallpapers.Add(data);
-                }
+                //foreach (var item in configs)
+                //{
+                //    var data = await ConfigHelper.LoadConfigAsync<Wallpaper>(item.FullName);
+                //    Wallpapers.Add(data);
+                //}
             }
             catch (Exception ex)
             {
