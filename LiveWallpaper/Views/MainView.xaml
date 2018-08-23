@@ -67,13 +67,14 @@
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
                 </ListView>
-                <ComboBox
+                <!--<ComboBox
                     Grid.Row="1"
                     HorizontalAlignment="Left"
                     SelectionChanged="ComboBox_SelectionChanged">
                     <ComboBoxItem Tag="zh">中文</ComboBoxItem>
                     <ComboBoxItem Tag="en">English</ComboBoxItem>
-                </ComboBox>
+                </ComboBox>-->
+                <Button Grid.Row="1" HorizontalAlignment="Left" />
                 <StackPanel
                     Grid.Row="1"
                     HorizontalAlignment="Right"
