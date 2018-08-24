@@ -60,5 +60,17 @@ namespace LiveWallpaper.ViewModels
         #endregion
 
         #endregion
+
+        public async void Save()
+        {
+            var data = _jcrService.GetData(JsonConfierViewModel.Nodes);
+            await JsonHelper.JsonSerializeAsync(data, AppService.SettingPath);
+            TryClose(true);
+        }
+
+        public void Cancel()
+        {
+            TryClose(false);
+        }
     }
 }

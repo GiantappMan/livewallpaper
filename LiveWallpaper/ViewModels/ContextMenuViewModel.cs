@@ -1,4 +1,7 @@
 ﻿using Caliburn.Micro;
+using DZY.DotNetUtil.Helpers;
+using LiveWallpaper.Models.Settings;
+using LiveWallpaper.Services;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -34,17 +37,19 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        public void Config()
+        public async void Config()
         {
             if (_settingVM != null)
                 return;
 
             _settingVM = IoC.Get<SettingViewModel>();
             dynamic settings = new ExpandoObject();
-            settings.Height = 500;
-            settings.Width = 400;
-            settings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            _windowManager.ShowDialog(_settingVM, null, settings);
+            var ok = _windowManager.ShowDialog(_settingVM, null, settings);
+            if (ok != null && ok)
+            {
+                var config = await JsonHelper.JsonDeserializeFromFileAsync<Setting>(AppService.SettingPath);
+                await AppService.ApplySetting(config);
+            }
             _settingVM = null;
         }
 

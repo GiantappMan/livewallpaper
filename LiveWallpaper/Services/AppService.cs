@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LiveWallpaper.Services
@@ -43,9 +44,12 @@ namespace LiveWallpaper.Services
             await ApplySetting(Setting);
         }
 
-        private static Task ApplySetting(Setting setting)
+        public static async Task ApplySetting(Setting setting)
         {
-            return Task.CompletedTask;
+            Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
+            await LanService.UpdateLanguage();
+
+            //todo setting.General.StartWithWindows;
         }
 
         public static string SettingPath { get; private set; }

@@ -1,13 +1,23 @@
 ﻿{
   "General": {
-    "lan": "常规",
+    "lanKey": "setting_general",
     "StartWithWindows": {
-      "type": "string",
-      "lan": "开机启动"
+      "type": "boolean",
+      "lanKey": "setting_startwithwindows"
     },
     "CurrentLan": {
-      "type": "string",
-      "lan": "多语言"
+      "type": "combobox",
+      "lanKey": "setting_lan",
+      "cbItems": [
+        {
+          "lan": "中文",
+          "value": "zh"
+        },
+        {
+          "lan": "English",
+          "value": "en"
+        }
+      ]
     }
   }
 }
