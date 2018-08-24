@@ -13,6 +13,7 @@
   "type_video": "视频壁纸",
   "author": "作者",
   "test": "测试",
+  "save": "保存",
   "cancel": "取消",
   "generate": "生成",
   "publish": "发布",
@@ -31,10 +32,9 @@
   "main": "打开主界面",
   "app_name": "巨应动态壁纸",
   "setting_general": "常规",
-  "": "",
-  "": "",
-  "": "",
-  "": "",
+  "setting_startwithwindows": "开机启动",
+  "setting_lan": "多语言",
+
   "": "",
   "": ""
 }

@@ -7,8 +7,30 @@
     xmlns:local="clr-namespace:LiveWallpaper.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:wpf="clr-namespace:JsonConfiger.WPF;assembly=JsonConfiger.WPF"
-    Width="500"
+    Width="400"
+    Height="365"
     lan:Xaml.Key="config"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <wpf:JsonConfierControl DataContext="{Binding JsonConfierViewModel}" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <wpf:JsonConfierControl DataContext="{Binding JsonConfierViewModel}" />
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,0,0,5"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+                x:Name="Save"
+                Margin="2,0"
+                lan:Xaml.Key="save" />
+            <Button
+                x:Name="Cancel"
+                Margin="2,0"
+                lan:Xaml.Key="cancel" />
+        </StackPanel>
+    </Grid>
 </Window>
