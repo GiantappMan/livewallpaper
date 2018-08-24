@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cal="http://www.caliburnproject.org"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -74,7 +75,15 @@
                     <ComboBoxItem Tag="zh">中文</ComboBoxItem>
                     <ComboBoxItem Tag="en">English</ComboBoxItem>
                 </ComboBox>-->
-                <Button Grid.Row="1" HorizontalAlignment="Left" />
+                <Button
+                    x:Name="Setting"
+                    Grid.Row="1"
+                    HorizontalAlignment="Left">
+                    <iconPacks:PackIconMaterial
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Kind="SettingsBox" />
+                </Button>
                 <StackPanel
                     Grid.Row="1"
                     HorizontalAlignment="Right"

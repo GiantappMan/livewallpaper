@@ -118,6 +118,11 @@ namespace LiveWallpaper.ViewModels
             await WallpaperManger.ApplyWallpaper(w.Type, w.PackInfo);
         }
 
+        public void Setting()
+        {
+            IoC.Get<ContextMenuViewModel>().Config();
+        }
+
         protected override void OnDeactivate(bool close)
         {
             base.OnDeactivate(close);
