@@ -82,7 +82,7 @@
                     <iconPacks:PackIconMaterial
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Kind="SettingsBox" />
+                        Kind="SettingsOutline" />
                 </Button>
                 <StackPanel
                     Grid.Row="1"
