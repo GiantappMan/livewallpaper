@@ -16,6 +16,13 @@ namespace LiveWallpaper.Services
     {
         public static async void Initlize()
         {
+            //开机启动
+#if UWP
+            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper-Free");
+#else
+            AutoStartupHelper.Initlize(AutoStartupType.Win32, "LiveWallpaper-Free");
+#endif
+
             //多语言
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
 
@@ -49,7 +56,9 @@ namespace LiveWallpaper.Services
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
 
-            //todo setting.General.StartWithWindows;
+            await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
+
+            setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
         }
 
         public static string SettingPath { get; private set; }
