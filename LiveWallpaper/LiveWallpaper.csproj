@@ -75,11 +75,17 @@
     <Reference Include="DZY.DotNetUtil, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DZY.DotNetUtil.1.0.3\lib\netstandard2.0\DZY.DotNetUtil.dll</HintPath>
     </Reference>
+    <Reference Include="DZY.DotNetUtil.WPF, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DZY.DotNetUtil.WPF.1.0.0.1\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
+    </Reference>
     <Reference Include="Hardcodet.Wpf.TaskbarNotification, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.1.0.8\lib\net451\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
     </Reference>
     <Reference Include="JsonConfiger.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\JsonConfiger.1.0.0.16\lib\net46\JsonConfiger.WPF.dll</HintPath>
+    </Reference>
+    <Reference Include="LoadingIndicators.WPF, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LoadingIndicators.WPF.0.0.1\lib\LoadingIndicators.WPF.dll</HintPath>
     </Reference>
     <Reference Include="MahApps.Metro.IconPacks, Version=2.3.0.4, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MahApps.Metro.IconPacks.2.3.0\lib\net46\MahApps.Metro.IconPacks.dll</HintPath>
@@ -136,7 +142,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
-    <Compile Include="DragManager.cs" />
     <Compile Include="Models\Settings\Setting.cs" />
     <Compile Include="Services\AppService.cs" />
     <Compile Include="Server\Models\WallpaperType.cs" />
