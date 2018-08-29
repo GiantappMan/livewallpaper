@@ -142,8 +142,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
-    <Compile Include="Models\Settings\SettingObject.cs" />
-    <Compile Include="Models\Wallpapers\WallpaperObject.cs" />
+    <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Services\AppService.cs" />
     <Compile Include="Server\Models\WallpaperType.cs" />
     <Compile Include="ViewModels\SettingViewModel.cs" />

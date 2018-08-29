@@ -1,6 +1,6 @@
 ﻿using DZY.DotNetUtil.Helpers;
 using Hardcodet.Wpf.TaskbarNotification;
-using LiveWallpaper.Models.Settings;
+using LiveWallpaper.Settings;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
