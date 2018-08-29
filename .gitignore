@@ -4,3 +4,4 @@ debug
 .vs
 packages
 *.user
+obj
