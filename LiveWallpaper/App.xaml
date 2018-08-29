@@ -20,7 +20,7 @@
                     <tb:TaskbarIcon
                         x:Key="NotifyIcon"
                         lan:Xaml.ApplyImmediately="True"
-                        lan:Xaml.Key="app_name"
+                        lan:Xaml.Key="common_appName"
                         ContextMenu="{StaticResource ContextMenu}"
                         TrayMouseDoubleClick="TaskbarIcon_TrayMouseDoubleClick">
                     </tb:TaskbarIcon>

@@ -23,13 +23,16 @@
             helper:DragHelper.CanDrag="True"
             helper:DragHelper.Data="{Binding Dir, Mode=TwoWay}"
             Background="LightGray">
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">拖入视频文件</TextBlock>
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                lan:Xaml.Key="setting_dragIntoDesc" />
         </Grid>
         <StackPanel
             Grid.Row="1"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom">
-            <CheckBox Content="启用桌面预览" />
+            <CheckBox lan:Xaml.Key="setting_desktopLivePreview" />
         </StackPanel>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
@@ -51,15 +54,13 @@
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" lan:Xaml.Key="name" />
+            <TextBlock Grid.Row="0" lan:Xaml.Key="common_title" />
             <TextBox x:Name="Name" Grid.Column="1" />
 
             <TextBlock
                 Grid.Row="2"
-                Grid.Column="2"
-                Margin="10,0,0,0"
                 HorizontalAlignment="Stretch"
-                lan:Xaml.Key="desc"
+                lan:Xaml.Key="common_desc"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="Desc"
@@ -69,7 +70,7 @@
 
             <TextBlock
                 Grid.Row="5"
-                lan:Xaml.Key="author"
+                lan:Xaml.Key="common_author"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="Author"
@@ -80,8 +81,8 @@
             Grid.Row="3"
             HorizontalAlignment="Center"
             Orientation="Horizontal">
-            <Button Margin="3,0">确定</Button>
-            <Button Margin="3,0" lan:Xaml.Key="cancel">取消</Button>
+            <Button Margin="3,0" lan:Xaml.Key="common_save" />
+            <Button Margin="3,0" lan:Xaml.Key="common_cancel" />
         </StackPanel>
         <!--<Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -103,7 +104,7 @@
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" lan:Xaml.Key="name" />
+            <TextBlock Grid.Row="0" lan:Xaml.Key="common_name" />
             <TextBox x:Name="Name" Grid.Column="1" />
             <TextBlock
                 Grid.Row="1"
@@ -156,7 +157,7 @@
                 helper:DragHelper.CanDrag="True" />
             <TextBlock
                 Grid.Row="5"
-                lan:Xaml.Key="author"
+                lan:Xaml.Key="common_author"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="Author"
@@ -172,7 +173,7 @@
                 <Button
                     x:Name="Clean"
                     Margin="10,0"
-                    lan:Xaml.Key="cancel" />
+                    lan:Xaml.Key="common_cancel" />
             </StackPanel>
             <StackPanel
                 Grid.Row="12"
