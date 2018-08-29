@@ -6,6 +6,7 @@ using LiveWallpaper.Models.Settings;
 using LiveWallpaper.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -71,6 +72,19 @@ namespace LiveWallpaper.ViewModels
         public void Cancel()
         {
             TryClose(false);
+        }
+
+        public void OpenConfigFolder()
+        {
+            try
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                appData = Path.Combine(appData, "LiveWallpaper");
+                Process.Start(appData);
+            }
+            catch (Exception ex)
+            {
+            }
         }
     }
 }
