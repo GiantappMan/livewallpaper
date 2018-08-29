@@ -51,7 +51,7 @@
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" lan:Xaml.Key="name" />
+            <TextBlock Grid.Row="0" lan:Xaml.Key="common_name" />
             <TextBox x:Name="Name" Grid.Column="1" />
 
             <TextBlock
@@ -69,7 +69,7 @@
 
             <TextBlock
                 Grid.Row="5"
-                lan:Xaml.Key="author"
+                lan:Xaml.Key="common_author"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="Author"
@@ -80,8 +80,8 @@
             Grid.Row="3"
             HorizontalAlignment="Center"
             Orientation="Horizontal">
-            <Button Margin="3,0">确定</Button>
-            <Button Margin="3,0" lan:Xaml.Key="cancel">取消</Button>
+            <Button Margin="3,0" lan:Xaml.Key="common_save">确定</Button>
+            <Button Margin="3,0" lan:Xaml.Key="common_cancel">取消</Button>
         </StackPanel>
         <!--<Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -103,7 +103,7 @@
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" lan:Xaml.Key="name" />
+            <TextBlock Grid.Row="0" lan:Xaml.Key="common_name" />
             <TextBox x:Name="Name" Grid.Column="1" />
             <TextBlock
                 Grid.Row="1"
@@ -156,7 +156,7 @@
                 helper:DragHelper.CanDrag="True" />
             <TextBlock
                 Grid.Row="5"
-                lan:Xaml.Key="author"
+                lan:Xaml.Key="common_author"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="Author"
@@ -172,7 +172,7 @@
                 <Button
                     x:Name="Clean"
                     Margin="10,0"
-                    lan:Xaml.Key="cancel" />
+                    lan:Xaml.Key="common_cancel" />
             </StackPanel>
             <StackPanel
                 Grid.Row="12"
