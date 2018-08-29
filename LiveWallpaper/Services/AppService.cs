@@ -39,13 +39,13 @@ namespace LiveWallpaper.Services
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             SettingPath = $"{appData}\\LiveWallpaper\\Config\\setting.json";
 
-            Setting = await JsonHelper.JsonDeserializeFromFileAsync<Setting>(SettingPath);
+            Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
             if (Setting == null)
             {
                 //默认值
-                Setting = new Setting()
+                Setting = new SettingObject()
                 {
-                    General = new General()
+                    General = new GeneralObject()
                     {
                         StartWithWindows = true,
                         CurrentLan = "zh"
@@ -57,7 +57,7 @@ namespace LiveWallpaper.Services
             await ApplySetting(Setting);
         }
 
-        public static async Task ApplySetting(Setting setting)
+        public static async Task ApplySetting(SettingObject setting)
         {
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
@@ -69,6 +69,6 @@ namespace LiveWallpaper.Services
 
         public static string SettingPath { get; private set; }
 
-        public static Setting Setting { get; private set; }
+        public static SettingObject Setting { get; private set; }
     }
 }

@@ -12,20 +12,78 @@
     Height="550"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid>
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="300" />
+            <RowDefinition Height="20" />
             <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <Grid
-            Margin="10"
             helper:DragHelper.CanDrag="True"
             helper:DragHelper.Data="{Binding Dir, Mode=TwoWay}"
             Background="LightGray">
             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">拖入视频文件</TextBlock>
         </Grid>
-        <Grid Grid.Row="1">
+        <StackPanel
+            Grid.Row="1"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom">
+            <CheckBox Content="启用桌面预览" />
+        </StackPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" lan:Xaml.Key="name" />
+            <TextBox x:Name="Name" Grid.Column="1" />
+
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="2"
+                Margin="10,0,0,0"
+                HorizontalAlignment="Stretch"
+                lan:Xaml.Key="desc"
+                TextWrapping="Wrap" />
+            <TextBox
+                x:Name="Desc"
+                Grid.Row="2"
+                Grid.Column="1"
+                helper:DragHelper.CanDrag="True" />
+
+            <TextBlock
+                Grid.Row="5"
+                lan:Xaml.Key="author"
+                TextWrapping="Wrap" />
+            <TextBox
+                x:Name="Author"
+                Grid.Row="5"
+                Grid.Column="1" />
+        </Grid>
+        <StackPanel
+            Grid.Row="3"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button Margin="3,0">确定</Button>
+            <Button Margin="3,0" lan:Xaml.Key="cancel">取消</Button>
+        </StackPanel>
+        <!--<Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="200" />
@@ -132,6 +190,6 @@
             </StackPanel>
 
 
-        </Grid>
+        </Grid>-->
     </Grid>
 </Window>
