@@ -22,7 +22,7 @@ namespace LiveWallpaper.ViewModels
             _wallpaper.ID = Guid.NewGuid().ToString();
             _wallpaper.CreatedTime = DateTime.Now;
             Init();
-            DisplayName = LanService.Get("create").Result;
+            DisplayName = LanService.Get("common_create").Result;
             UpdateDesc();
         }
 
@@ -470,7 +470,7 @@ namespace LiveWallpaper.ViewModels
 
         internal void SetPaper(Wallpaper w)
         {
-            DisplayName = LanService.Get("edit").Result; 
+            DisplayName = LanService.Get("common_edit").Result; 
             Name = w.Name;
             Dir = w.PackInfo.Dir;
             EndPoint = w.PackInfo.EnterPoint;

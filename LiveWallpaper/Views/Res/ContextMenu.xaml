@@ -9,11 +9,11 @@
         x:Key="ContextMenu"
         cal:Action.Target="ContextMenuViewModel"
         x:Shared="false">
-        <MenuItem cal:Message.Attach="About()" lan:Xaml.Key="about" />
+        <MenuItem cal:Message.Attach="About()" lan:Xaml.Key="common_about" />
         <Separator />
-        <MenuItem cal:Message.Attach="Config()" lan:Xaml.Key="config" />
+        <MenuItem cal:Message.Attach="Config()" lan:Xaml.Key="common_config" />
         <Separator />
-        <MenuItem cal:Message.Attach="Main()" lan:Xaml.Key="main" />
-        <MenuItem cal:Message.Attach="ExitApp()" lan:Xaml.Key="exit" />
+        <MenuItem cal:Message.Attach="Main()" lan:Xaml.Key="contextMenu_main" />
+        <MenuItem cal:Message.Attach="ExitApp()" lan:Xaml.Key="common_exit" />
     </ContextMenu>
 </ResourceDictionary>
