@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaper.Models.Settings
 {
-    public class General
+    public class GeneralObject
     {
         public bool StartWithWindows { get; set; }
 
@@ -14,8 +14,8 @@ namespace LiveWallpaper.Models.Settings
     }
 
 
-    public class Setting
+    public class SettingObject
     {
-        public General General { get; set; }
+        public GeneralObject General { get; set; }
     }
 }
