@@ -1,6 +1,6 @@
 ﻿using Caliburn.Micro;
 using DZY.DotNetUtil.Helpers;
-using LiveWallpaper.Models.Settings;
+using LiveWallpaper.Settings;
 using LiveWallpaper.Services;
 using NLog;
 using System;
