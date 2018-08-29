@@ -27,6 +27,9 @@ namespace LiveWallpaper
 
         public App()
         {
+            //异常捕获
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
             AppService.Initlize();
         }
 
@@ -34,9 +37,6 @@ namespace LiveWallpaper
         {
             base.OnStartup(e);
 
-            //异常捕获
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
 
             //托盘初始化
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
