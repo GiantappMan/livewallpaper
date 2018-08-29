@@ -11,11 +11,11 @@
     Title=" "
     Width="800"
     Height="600"
-    lan:Xaml.Key="app_name"
+    lan:Xaml.Key="common_appName"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <TabControl>
-        <TabItem lan:Xaml.Key="local_wallpaper">
+        <TabItem lan:Xaml.Key="mainUI_localWallpaper">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -42,19 +42,19 @@
                                         <Button
                                             cal:Action.TargetWithoutContext="MainViewModel"
                                             cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
-                                            lan:Xaml.Key="edit">
+                                            lan:Xaml.Key="common_edit">
                                             编辑
                                         </Button>
                                         <Button
                                             cal:Action.TargetWithoutContext="MainViewModel"
                                             cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
-                                            lan:Xaml.Key="open_file">
+                                            lan:Xaml.Key="common_openFile">
                                             打开文件
                                         </Button>
                                         <Button
                                             cal:Action.TargetWithoutContext="MainViewModel"
                                             cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
-                                            lan:Xaml.Key="delete">
+                                            lan:Xaml.Key="common_delete">
                                             删除
                                         </Button>
                                     </StackPanel>
@@ -88,13 +88,13 @@
                     Grid.Row="1"
                     HorizontalAlignment="Right"
                     Orientation="Horizontal">
-                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="refresh_wallpaper">
+                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper">
                         刷新壁纸
                     </Button>
                     <Button
                         x:Name="CreateWallpaper"
                         Margin="10,0,0,0"
-                        lan:Xaml.Key="create_wallpaper">
+                        lan:Xaml.Key="mainUI_createWallpaper">
                         创建壁纸
                     </Button>
                 </StackPanel>
