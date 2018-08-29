@@ -6,14 +6,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace LiveWallpaper.Services
 {
     public class AppService
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static async void Initlize()
         {
             //开机启动
@@ -26,7 +29,10 @@ namespace LiveWallpaper.Services
             //多语言
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
 
-            string path = Path.Combine(Environment.CurrentDirectory, "Res\\Languages");
+            //不能用Environment.CurrentDirectory，开机启动目录会出错
+            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string path = Path.Combine(appDir, "Res\\Languages");
+            logger.Info($"lanPath:{path}");
             LanService.Init(new JsonDB(path), true);
 
             //配置相关

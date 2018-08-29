@@ -37,7 +37,6 @@ namespace LiveWallpaper
         {
             base.OnStartup(e);
 
-
             //托盘初始化
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
             notifyIcon.Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
