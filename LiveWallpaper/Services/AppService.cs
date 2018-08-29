@@ -18,9 +18,9 @@ namespace LiveWallpaper.Services
         {
             //开机启动
 #if UWP
-            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper-Free");
+            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper");
 #else
-            AutoStartupHelper.Initlize(AutoStartupType.Win32, "LiveWallpaper-Free");
+            AutoStartupHelper.Initlize(AutoStartupType.Win32, "LiveWallpaper");
 #endif
 
             //多语言

@@ -7,7 +7,7 @@
     <ProjectGuid>{388BDD62-84C4-4E24-922E-B1AC5ADADD18}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>LiveWallpaper</RootNamespace>
-    <AssemblyName>LiveWallpaper-Free</AssemblyName>
+    <AssemblyName>LiveWallpaper</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
