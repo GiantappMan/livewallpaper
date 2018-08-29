@@ -14,12 +14,19 @@
     mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <wpf:JsonConfierControl DataContext="{Binding JsonConfierViewModel}" />
+        <Button
+            x:Name="OpenConfigFolder"
+            Margin="0,0,5,0"
+            HorizontalAlignment="Right">
+            存储目录
+        </Button>
+        <wpf:JsonConfierControl Grid.Row="1" DataContext="{Binding JsonConfierViewModel}" />
         <StackPanel
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="0,0,0,5"
             HorizontalAlignment="Center"
             Orientation="Horizontal">
