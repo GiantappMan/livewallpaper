@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaperEngine
 {
-    public class WallpaperObject : ObservableObject
+    /// <summary>
+    /// 壁纸工程的详细信息
+    /// </summary>
+    public class ProjectInfo : ObservableObject
     {
         #region Description
 
@@ -117,7 +120,6 @@ namespace LiveWallpaperEngine
 
         #endregion
 
-        //用字符串类型是为了兼容wallpaperEngine的json格式
         #region Type
 
         /// <summary>
@@ -125,12 +127,12 @@ namespace LiveWallpaperEngine
         /// </summary>
         public const string TypePropertyName = "Type";
 
-        private WallpaperType _Type;
+        private string _Type;
 
         /// <summary>
         /// Type
         /// </summary>
-        public WallpaperType Type
+        public string Type
         {
             get { return _Type; }
 
@@ -200,4 +202,3 @@ namespace LiveWallpaperEngine
         #endregion
     }
 }
-
