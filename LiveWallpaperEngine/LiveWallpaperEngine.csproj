@@ -67,6 +67,7 @@
     <Compile Include="Controls\WallpaperRender.xaml.cs">
       <DependentUpon>WallpaperRender.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProjectInfo.cs" />
     <Compile Include="WallpaperManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -81,7 +82,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="WallpaperObject.cs" />
+    <Compile Include="Wallpaper.cs" />
     <Compile Include="WallpaperType.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
