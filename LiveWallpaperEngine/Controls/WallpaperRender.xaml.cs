@@ -24,5 +24,15 @@ namespace LiveWallpaperEngine.Controls
         {
             InitializeComponent();
         }
+
+        public void ShowPaper(WallpaperObject Wwallpaper)
+        {
+
+        }
+
+        public void ClosePaper()
+        {
+
+        }
     }
 }

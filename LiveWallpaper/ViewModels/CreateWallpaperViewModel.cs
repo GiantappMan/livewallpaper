@@ -470,7 +470,7 @@ namespace LiveWallpaper.ViewModels
 
         internal void SetPaper(Wallpaper w)
         {
-            DisplayName = LanService.Get("common_edit").Result; 
+            DisplayName = LanService.Get("common_edit").Result;
             Name = w.Name;
             Dir = w.PackInfo.Dir;
             EndPoint = w.PackInfo.EnterPoint;
@@ -555,9 +555,9 @@ namespace LiveWallpaper.ViewModels
 
         private async Task CreateLocalPack(Wallpaper wallpaper)
         {
-            var target = Path.Combine(Directory.GetCurrentDirectory(), "Wallpapers", wallpaper.ID);
+            var target = Path.Combine(Services.AppService.AppDir, "Wallpapers", wallpaper.ID);
             var destDir = Directory.CreateDirectory(target);
-            var currentDir = Directory.GetCurrentDirectory();
+            var currentDir = Services.AppService.AppDir;
 
             var relativeDir = target.Replace(currentDir, "");
 
