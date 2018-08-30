@@ -16,6 +16,8 @@ namespace LiveWallpaper.Services
 {
     public class AppService
     {
+        public static string AppDir { get; private set; }
+
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static async void Initlize()
         {
@@ -30,8 +32,8 @@ namespace LiveWallpaper.Services
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
 
             //不能用Environment.CurrentDirectory，开机启动目录会出错
-            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            string path = Path.Combine(appDir, "Res\\Languages");
+            AppDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string path = Path.Combine(AppDir, "Res\\Languages");
             logger.Info($"lanPath:{path}");
             LanService.Init(new JsonDB(path), true);
 

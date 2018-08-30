@@ -60,7 +60,7 @@ namespace LiveWallpaper.ViewModels
         {
             Wallpapers = new ObservableCollection<Wallpaper>();
 
-            var dirPath = Path.Combine(Directory.GetCurrentDirectory(), saveDIR);
+            var dirPath = Path.Combine(Services.AppService.AppDir, saveDIR);
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
             var dir = new DirectoryInfo(dirPath);
@@ -81,7 +81,7 @@ namespace LiveWallpaper.ViewModels
 
         public void ExploreWallpaper(Wallpaper s)
         {
-            var currentDir = Directory.GetCurrentDirectory();
+            var currentDir = Services.AppService.AppDir;
             var target = currentDir + s.PackInfo.Dir;
             Process.Start("Explorer.exe", target);
         }
@@ -101,7 +101,7 @@ namespace LiveWallpaper.ViewModels
                     WallpaperManger.Clean();
                     currentShowWallpaper = null;
                 }
-                var currentDir = Directory.GetCurrentDirectory();
+                var currentDir = Services.AppService.AppDir;
                 var target = currentDir + w.PackInfo.Dir;
                 Directory.Delete(target, true);
             }

@@ -117,6 +117,7 @@ namespace LiveWallpaperEngine
 
         #endregion
 
+        //用字符串类型是为了兼容wallpaperEngine的json格式
         #region Type
 
         /// <summary>
@@ -124,12 +125,12 @@ namespace LiveWallpaperEngine
         /// </summary>
         public const string TypePropertyName = "Type";
 
-        private string _Type;
+        private WallpaperType _Type;
 
         /// <summary>
         /// Type
         /// </summary>
-        public string Type
+        public WallpaperType Type
         {
             get { return _Type; }
 
