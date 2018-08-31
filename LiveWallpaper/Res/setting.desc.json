@@ -5,6 +5,10 @@
       "type": "boolean",
       "lanKey": "setting_startwithwindows"
     },
+    "MinimizeUI": {
+      "type": "boolean",
+      "lanKey": "setting_minimizeUI"
+    },
     "CurrentLan": {
       "type": "combobox",
       "lanKey": "setting_lan",

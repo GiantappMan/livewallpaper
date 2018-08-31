@@ -33,21 +33,15 @@ namespace LiveWallpaper
             .PerRequest<SettingViewModel>();
         }
 
-        private object GetCefSource(ActionExecutionContext arg)
-        {
-            return arg.Source;
-        }
-
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-            logger.Info("OnStartup");
-            //logger.Info(Environment.CurrentDirectory);
-            //logger.Info(AppService.AppDir);
-            //logger.Info(AppService.SettingPath);
-
-            //todo 不是开机启动
-            //if (Environment.CurrentDirectory == AppService.AppDir)
-            DisplayRootViewFor<MainViewModel>();
+#if UWP
+            logger.Info("OnStartup UWP");
+#else
+            logger.Info("OnStartup WPF");
+#endif
+            if (!AppService.Setting.General.MinimizeUI)
+                DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)

@@ -10,7 +10,10 @@ namespace LiveWallpaper.Settings
     {
         public bool StartWithWindows { get; set; }
 
+        public bool MinimizeUI { get; set; }
+
         public string CurrentLan { get; set; }
+
     }
 
 
