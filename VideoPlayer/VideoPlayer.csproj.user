@@ -7,4 +7,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <StartArguments>C:/Users/SKtester/Desktop/1.mp4</StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugUWP|x86'">
+    <StartArguments>C:/Users/SKtester/Desktop/1.mp4</StartArguments>
+  </PropertyGroup>
 </Project>

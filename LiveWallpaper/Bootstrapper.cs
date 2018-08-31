@@ -13,6 +13,7 @@ namespace LiveWallpaper
     public class Bootstrapper : BootstrapperBase
     {
         private SimpleContainer container;
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public Bootstrapper()
         {
@@ -39,9 +40,14 @@ namespace LiveWallpaper
 
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-            //不是开机启动
-            if (Environment.CurrentDirectory == AppService.AppDir)
-                DisplayRootViewFor<MainViewModel>();
+            logger.Info("OnStartup");
+            //logger.Info(Environment.CurrentDirectory);
+            //logger.Info(AppService.AppDir);
+            //logger.Info(AppService.SettingPath);
+
+            //todo 不是开机启动
+            //if (Environment.CurrentDirectory == AppService.AppDir)
+            DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)
