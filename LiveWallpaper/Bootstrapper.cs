@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.ViewModels;
+using LiveWallpaper.Services;
 
 namespace LiveWallpaper
 {
@@ -38,7 +39,9 @@ namespace LiveWallpaper
 
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-            DisplayRootViewFor<MainViewModel>();
+            //不是开机启动
+            if (Environment.CurrentDirectory == AppService.AppDir)
+                DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)
