@@ -27,10 +27,15 @@ namespace LiveWallpaper
 
         public App()
         {
+            Init();
+        }
+
+        private async void Init()
+        {
             //异常捕获
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
-            AppService.Initlize();
+            await AppService.Initlize();
         }
 
         protected override void OnStartup(StartupEventArgs e)

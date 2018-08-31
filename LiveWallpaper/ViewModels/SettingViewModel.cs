@@ -19,8 +19,18 @@ namespace LiveWallpaper.ViewModels
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         JCrService _jcrService = new JCrService();
+
+        private static bool firstLaunch = true;
         protected override async void OnInitialize()
         {
+            if (firstLaunch)
+            {
+                firstLaunch = false;
+                //读取json按对象重新保存一次。防止json格式不全
+                var Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppService.SettingPath);
+                await JsonHelper.JsonSerializeAsync(Setting, AppService.SettingPath);
+            }
+
             var config = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppService.SettingPath);
             string descPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
             var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(descPath);

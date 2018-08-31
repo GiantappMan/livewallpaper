@@ -19,7 +19,7 @@ namespace LiveWallpaper.Services
         public static string AppDir { get; private set; }
 
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        public static async void Initlize()
+        public static async Task Initlize()
         {
             //开机启动
 #if UWP
@@ -34,7 +34,7 @@ namespace LiveWallpaper.Services
             //不能用Environment.CurrentDirectory，开机启动目录会出错
             AppDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string path = Path.Combine(AppDir, "Res\\Languages");
-            logger.Info($"lanPath:{path}");
+            //logger.Info($"lanPath:{path}");
             LanService.Init(new JsonDB(path), true, "zh");
 
             //配置相关
