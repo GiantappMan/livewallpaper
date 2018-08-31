@@ -11,11 +11,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace LiveWallpaper.ViewModels
 {
     public class SettingViewModel : Screen
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         JCrService _jcrService = new JCrService();
         protected override async void OnInitialize()
         {
@@ -78,12 +80,18 @@ namespace LiveWallpaper.ViewModels
         {
             try
             {
+#if UWP
+                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                var appData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
+#else
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 appData = Path.Combine(appData, "LiveWallpaper");
+#endif
                 Process.Start(appData);
             }
             catch (Exception ex)
             {
+                logger.Warn("OpenConfigFolder:" + ex);
             }
         }
     }

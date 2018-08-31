@@ -35,7 +35,7 @@ namespace LiveWallpaper.Services
             AppDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string path = Path.Combine(AppDir, "Res\\Languages");
             logger.Info($"lanPath:{path}");
-            LanService.Init(new JsonDB(path), true);
+            LanService.Init(new JsonDB(path), true, "zh");
 
             //配置相关
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
