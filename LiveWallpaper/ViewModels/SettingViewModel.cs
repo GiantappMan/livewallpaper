@@ -72,17 +72,46 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region DialogResult
+
+        /// <summary>
+        /// The <see cref="DialogResult" /> property's name.
+        /// </summary>
+        public const string DialogResultPropertyName = "DialogResult";
+
+        private bool _DialogResult;
+
+        /// <summary>
+        /// DialogResult
+        /// </summary>
+        public bool DialogResult
+        {
+            get { return _DialogResult; }
+
+            set
+            {
+                if (_DialogResult == value) return;
+
+                _DialogResult = value;
+                NotifyOfPropertyChange(DialogResultPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         public async void Save()
         {
             var data = _jcrService.GetData(JsonConfierViewModel.Nodes);
             await JsonHelper.JsonSerializeAsync(data, AppService.SettingPath);
+            DialogResult = true;
             TryClose(true);
         }
 
         public void Cancel()
         {
+            DialogResult = false;
             TryClose(false);
         }
 

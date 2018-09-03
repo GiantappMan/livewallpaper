@@ -44,5 +44,87 @@ namespace LiveWallpaperEngine
             foreach (var item in Directory.EnumerateFiles(dir, ""))
                 yield return new Wallpaper();
         }
+
+        //public static Task CreateLocalPack(Wallpaper wallpaper)
+        //{
+        //    var target = Path.Combine(Services.AppService.ApptEntryDir, "Wallpapers", wallpaper.ID);
+        //    var destDir = Directory.CreateDirectory(target);
+        //    var currentDir = Services.AppService.ApptEntryDir;
+
+        //    var relativeDir = target.Replace(currentDir, "");
+
+        //    wallpaper.Name = Name;
+
+        //    switch (wallpaper.Type)
+        //    {
+        //        //case WallpaperType.Exe:
+        //        //    if (relativeDir != wallpaper.PackInfo.Dir)
+        //        //    {
+        //        //        await Task.Run(() =>
+        //        //        {
+        //        //            CopyAll(new DirectoryInfo(wallpaper.PackInfo.Dir), destDir);
+        //        //        });
+
+        //        //    }
+        //        //    break;
+        //        //case WallpaperType.WEB:
+        //        //    var htmlDir = Path.GetDirectoryName(wallpaper.PackInfo.Args);
+        //        //    if (relativeDir != htmlDir)
+        //        //    {
+        //        //        await Task.Run(() =>
+        //        //        {
+        //        //            CopyAll(new DirectoryInfo(htmlDir), destDir);
+
+        //        //            var fileExtension = Path.GetExtension(wallpaper.PackInfo.Args);
+        //        //            string dest = Path.Combine(destDir.FullName, $"index{fileExtension}");
+        //        //            var relativePath = dest.Replace(currentDir, "");
+
+        //        //            wallpaper.PackInfo.Args = relativePath;
+        //        //        });
+        //        //    }
+        //        //    break;
+        //        case WallpaperType.Video:
+        //            await Task.Run(() =>
+        //            {
+        //                var fileExtension = Path.GetExtension(wallpaper.PackInfo.Args);
+        //                string dest = Path.Combine(destDir.FullName, $"index{fileExtension}");
+        //                CopyFileToDir(wallpaper.PackInfo.Args, dest);
+        //                var relativePath = dest.Replace(currentDir, "");
+
+        //                wallpaper.PackInfo.Args = relativePath;
+        //            });
+
+        //            break;
+        //    }
+
+        //    wallpaper.PackInfo.Dir = relativeDir;
+        //    //await ConfigHelper.SaveConfigAsync(wallpaper, Path.Combine(target, "config.json"));
+        //}
+
+        public static void CopyFileToDir(string path, string target)
+        {
+            FileInfo file = new FileInfo(path);
+            file.CopyTo(target, true);
+        }
+
+        public static void CopyAll(DirectoryInfo source, DirectoryInfo target)
+        {
+            Directory.CreateDirectory(target.FullName);
+
+            // Copy each file into the new directory.
+            foreach (FileInfo fi in source.GetFiles())
+            {
+                Console.WriteLine(@"Copying {0}\{1}", target.FullName, fi.Name);
+                fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
+            }
+
+            // Copy each subdirectory using recursion.
+            foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
+            {
+                DirectoryInfo nextTargetSubDir =
+                    target.CreateSubdirectory(diSourceSubDir.Name);
+                CopyAll(diSourceSubDir, nextTargetSubDir);
+            }
+        }
     }
 }

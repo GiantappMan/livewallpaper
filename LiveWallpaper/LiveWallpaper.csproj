@@ -184,12 +184,10 @@
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Services\AppService.cs" />
-    <Compile Include="Server\Models\WallpaperType.cs" />
     <Compile Include="ViewModels\SettingViewModel.cs" />
     <Compile Include="ViewModels\ContextMenuViewModel.cs" />
     <Compile Include="ViewModels\CreateWallpaperViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
-    <Compile Include="ViewModels\WallpaperManger.cs" />
     <Compile Include="Views\SettingView.xaml.cs">
       <DependentUpon>SettingView.xaml</DependentUpon>
     </Compile>
@@ -197,8 +195,6 @@
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
     <Compile Include="NativeWindowHandler.cs" />
-    <Compile Include="Server\IServer.cs" />
-    <Compile Include="Server\Models\Wallpaper.cs" />
     <Compile Include="W32.cs" />
     <Compile Include="Wallpapers\WallpapaerParameter.cs" />
     <Compile Include="Wallpapers\ExeWallpaper.cs" />
