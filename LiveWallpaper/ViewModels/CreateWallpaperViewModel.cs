@@ -21,55 +21,28 @@ namespace LiveWallpaper.ViewModels
 
         #region properties
 
-        #region Name
+        #region CurrentWallpaper
 
         /// <summary>
-        /// The <see cref="Name" /> property's name.
+        /// The <see cref="CurrentWallpaper" /> property's name.
         /// </summary>
-        public const string NamePropertyName = "Name";
+        public const string CurrentWallpaperPropertyName = "CurrentWallpaper";
 
-        private string _Name;
+        private Wallpaper _CurrentWallpaper;
 
         /// <summary>
-        /// Name
+        /// CurrentWallpaper
         /// </summary>
-        public string Name
+        public Wallpaper CurrentWallpaper
         {
-            get { return _Name; }
+            get { return _CurrentWallpaper; }
 
             set
             {
-                if (_Name == value) return;
+                if (_CurrentWallpaper == value) return;
 
-                _Name = value;
-                NotifyOfPropertyChange(NamePropertyName);
-            }
-        }
-
-        #endregion
-
-        #region Author
-
-        /// <summary>
-        /// The <see cref="Author" /> property's name.
-        /// </summary>
-        public const string AuthorPropertyName = "Author";
-
-        private string _Author;
-
-        /// <summary>
-        /// Author
-        /// </summary>
-        public string Author
-        {
-            get { return _Author; }
-
-            set
-            {
-                if (_Author == value) return;
-
-                _Author = value;
-                NotifyOfPropertyChange(AuthorPropertyName);
+                _CurrentWallpaper = value;
+                NotifyOfPropertyChange(CurrentWallpaperPropertyName);
             }
         }
 
