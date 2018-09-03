@@ -25,6 +25,62 @@ namespace LiveWallpaperEngine.Controls
             InitializeComponent();
         }
 
+        #region properties
+
+        #region DragTips
+
+        public object DragTips
+        {
+            get { return (object)GetValue(DragTipsProperty); }
+            set { SetValue(DragTipsProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for DragTips.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty DragTipsProperty =
+            DependencyProperty.Register("DragTips", typeof(object), typeof(WallpaperRender), new PropertyMetadata(null));
+
+        #endregion
+
+        #region Wallpaper
+
+        public Wallpaper Wallpaper
+        {
+            get { return (Wallpaper)GetValue(WallpaperProperty); }
+            set { SetValue(WallpaperProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Wallpaper.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty WallpaperProperty =
+            DependencyProperty.Register("Wallpaper", typeof(Wallpaper), typeof(WallpaperRender), new PropertyMetadata(null, new PropertyChangedCallback((sender, e) =>
+            {
+
+            })));
+
+        #endregion
+
+        #region FilePath
+
+        public string FilePath
+        {
+            get { return (string)GetValue(FilePathProperty); }
+            set { SetValue(FilePathProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FilePath.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FilePathProperty =
+            DependencyProperty.Register("FilePath", typeof(string), typeof(WallpaperRender), new PropertyMetadata(null,
+                new PropertyChangedCallback(async (sender, e) =>
+                {
+                    WallpaperRender control = sender as WallpaperRender;
+                    var temp = await WallpaperManager.ResolveFromFile(e.NewValue.ToString());
+                    control.SetValue(WallpaperProperty, temp);
+                })));
+
+
+        #endregion
+
+        #endregion
+
         public void ShowPaper(Wallpaper Wwallpaper)
         {
 
