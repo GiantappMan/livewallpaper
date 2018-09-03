@@ -110,7 +110,7 @@ namespace LiveWallpaper.Wallpapers
                 {
                     var tempDir = model.Dir;
                     if (model.Dir.StartsWith("\\Wallpapers\\"))
-                        tempDir = Services.AppService.AppDir + model.Dir;
+                        tempDir = Services.AppService.ApptEntryDir + model.Dir;
 
                     ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(tempDir, model.EnterPoint));
                     startInfo.WindowStyle = ProcessWindowStyle.Maximized;

@@ -8,8 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
+using LiveWallpaperEngine;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -60,7 +60,7 @@ namespace LiveWallpaper.ViewModels
         {
             Wallpapers = new ObservableCollection<Wallpaper>();
 
-            var dirPath = Path.Combine(Services.AppService.AppDir, saveDIR);
+            var dirPath = Path.Combine(Services.AppService.ApptEntryDir, saveDIR);
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
             var dir = new DirectoryInfo(dirPath);
@@ -81,9 +81,9 @@ namespace LiveWallpaper.ViewModels
 
         public void ExploreWallpaper(Wallpaper s)
         {
-            var currentDir = Services.AppService.AppDir;
-            var target = currentDir + s.PackInfo.Dir;
-            Process.Start("Explorer.exe", target);
+            //var currentDir = Services.AppService.ApptEntryDir;
+            //var target = currentDir + s.PackInfo.Dir;
+            //Process.Start("Explorer.exe", target);
         }
         public void EditWallpaper(Wallpaper s)
         {
@@ -94,28 +94,27 @@ namespace LiveWallpaper.ViewModels
         }
         public void DeleteWallpaper(Wallpaper w)
         {
-            try
-            {
-                if (w == currentShowWallpaper)
-                {
-                    WallpaperManger.Clean();
-                    currentShowWallpaper = null;
-                }
-                var currentDir = Services.AppService.AppDir;
-                var target = currentDir + w.PackInfo.Dir;
-                Directory.Delete(target, true);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-            RefreshLocalWallpaper();
+            //try
+            //{
+            //    if (w == currentShowWallpaper)
+            //    {
+            //        WallpaperManger.Clean();
+            //        currentShowWallpaper = null;
+            //    }
+            //    var currentDir = Services.AppService.ApptEntryDir;
+            //    WallpaperManger.Delete(w);
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show(ex.ToString());
+            //}
+            //RefreshLocalWallpaper();
         }
 
         public async void ApplyWallpaper(Wallpaper w)
         {
-            currentShowWallpaper = w;
-            await WallpaperManger.ApplyWallpaper(w.Type, w.PackInfo);
+            //currentShowWallpaper = w;
+            //await WallpaperManger.ApplyWallpaper(w);
         }
 
         public void Setting()
@@ -126,7 +125,7 @@ namespace LiveWallpaper.ViewModels
         protected override void OnDeactivate(bool close)
         {
             base.OnDeactivate(close);
-            WallpaperManger.Clean();
+            //WallpaperManger.Clean();
         }
 
         #endregion

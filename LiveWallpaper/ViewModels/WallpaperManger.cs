@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LiveWallpaper.Server.Models;
 using LiveWallpaper.Wallpapers;
+using LiveWallpaperEngine;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -17,13 +18,13 @@ namespace LiveWallpaper.ViewModels
         public static IWallpaper LastWallpaper { get; private set; }
 
 
-        public static async Task ApplyWallpaper(WallpaperType type, WallpapaerParameter info)
+        public static async Task ApplyWallpaper(Wallpaper w)
         {
             if (LastWallpaper != null)
                 LastWallpaper.Clean();
 
-            LastWallpaper = GetWallper(type);
-            await LastWallpaper.Show(info);
+            LastWallpaper = GetWallper(w.ProjectInfo.Type);
+            await LastWallpaper.Show();
         }
 
 
@@ -45,6 +46,11 @@ namespace LiveWallpaper.ViewModels
         {
             if (LastWallpaper != null)
                 LastWallpaper.Clean();
+        }
+
+        internal static void Delete(Wallpaper w)
+        {
+            throw new NotImplementedException();
         }
     }
 }

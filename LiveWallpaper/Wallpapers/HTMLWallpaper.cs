@@ -15,10 +15,10 @@ namespace LiveWallpaper.Wallpapers
         }
         public override Task Show(WallpapaerParameter para)
         {
-            var browserPath = Services.AppService.AppDir;
+            var browserPath = Services.AppService.ApptEntryDir;
             var url = para.Args;
             if (url.StartsWith("\\Wallpapers\\"))
-                url = Services.AppService.AppDir + url;
+                url = Services.AppService.ApptEntryDir + url;
             return base.Show(new WallpapaerParameter()
             {
                 Dir = browserPath,

@@ -16,7 +16,22 @@ namespace LiveWallpaper.Services
 {
     public class AppService
     {
-        public static string AppDir { get; private set; }
+        /// <summary>
+        /// 程序入口
+        /// </summary>
+        public static string ApptEntryDir { get; private set; }
+        /// <summary>
+        /// 配置文件地址
+        /// </summary>
+        public static string SettingPath { get; private set; }
+        /// <summary>
+        /// 数据保存目录
+        /// </summary>
+        public static string AppDataDir { get; private set; }
+        /// <summary>
+        /// 本地壁纸路径
+        /// </summary>
+        public static string LocalWallpaperDir { get; private set; }
 
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static async Task Initlize()
@@ -32,14 +47,16 @@ namespace LiveWallpaper.Services
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
 
             //不能用Environment.CurrentDirectory，开机启动目录会出错
-            AppDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            string path = Path.Combine(AppDir, "Res\\Languages");
+            ApptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string path = Path.Combine(ApptEntryDir, "Res\\Languages");
             //logger.Info($"lanPath:{path}");
             LanService.Init(new JsonDB(path), true, "zh");
 
             //配置相关
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            SettingPath = $"{appData}\\LiveWallpaper\\Config\\setting.json";
+            AppDataDir = $"{appData}\\LiveWallpaper";
+            SettingPath = $"{AppDataDir}\\Config\\setting.json";
+            LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
 
             Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
             if (Setting == null)
@@ -69,7 +86,6 @@ namespace LiveWallpaper.Services
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
         }
 
-        public static string SettingPath { get; private set; }
 
         public static SettingObject Setting { get; private set; }
     }

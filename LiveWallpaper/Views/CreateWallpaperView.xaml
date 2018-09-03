@@ -7,7 +7,6 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:model="clr-namespace:LiveWallpaper.Server.Models"
     Width="725"
     Height="550"
     WindowStartupLocation="CenterScreen"

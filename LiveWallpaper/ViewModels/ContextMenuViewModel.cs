@@ -37,15 +37,21 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        public async void Config()
+        public void Config()
         {
             if (_settingVM != null)
                 return;
 
             _settingVM = IoC.Get<SettingViewModel>();
-            dynamic settings = new ExpandoObject();
-            var ok = _windowManager.ShowDialog(_settingVM, null, settings);
-            if (ok != null && ok)
+            _settingVM.Deactivated += _settingVM_Deactivated;
+            _windowManager.ShowWindow(_settingVM, null);
+        }
+
+        private async void _settingVM_Deactivated(object sender, DeactivationEventArgs e)
+        {
+            _settingVM.Deactivated -= _settingVM_Deactivated;
+            bool ok = _settingVM.DialogResult;
+            if (ok)
             {
                 var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppService.SettingPath);
                 await AppService.ApplySetting(config);
