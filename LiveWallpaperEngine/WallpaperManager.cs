@@ -1,4 +1,5 @@
 ﻿using DZY.DotNetUtil.Helpers;
+using LiveWallpaperEngine.NativeWallpapers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +16,12 @@ namespace LiveWallpaperEngine
             "mp4",
             //to do exe,html,image
             };
+
+        public static async void Initlize()
+        {
+            await RestoreDefaultBG();
+        }
+
         /// <summary>
         /// 解析壁纸
         /// </summary>
@@ -45,6 +52,15 @@ namespace LiveWallpaperEngine
                 yield return new Wallpaper();
         }
 
+        public static async Task RestoreDefaultBG()
+        {
+            var _defaultBG = await ImgWallpaper.GetCurrentBG();
+            await ImgWallpaper.SetBG(_defaultBG);
+        }
+
+        public static async Task Show(Wallpaper wallpaper)
+        {
+        }
         //public static Task CreateLocalPack(Wallpaper wallpaper)
         //{
         //    var target = Path.Combine(Services.AppService.ApptEntryDir, "Wallpapers", wallpaper.ID);

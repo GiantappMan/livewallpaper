@@ -192,13 +192,6 @@
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
     <Compile Include="NativeWindowHandler.cs" />
-    <Compile Include="W32.cs" />
-    <Compile Include="Wallpapers\WallpapaerParameter.cs" />
-    <Compile Include="Wallpapers\ExeWallpaper.cs" />
-    <Compile Include="Wallpapers\HTMLWallpaper.cs" />
-    <Compile Include="Wallpapers\ImgWallpaper.cs" />
-    <Compile Include="Wallpapers\VideoWallpaper.cs" />
-    <Compile Include="Wallpapers\IWallpaper.cs" />
     <Page Include="Views\SettingView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -259,9 +252,6 @@
     <Content Include="Res\setting.desc.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="NLog.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

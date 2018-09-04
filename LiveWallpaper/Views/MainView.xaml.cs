@@ -1,19 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using LiveWallpaperEngine;
+using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using LiveWallpaper.Wallpapers;
-using MultiLanguageManager;
 
 namespace LiveWallpaper.Views
 {
@@ -25,14 +12,8 @@ namespace LiveWallpaper.Views
         public MainView()
         {
             InitializeComponent();
-            RestoreDefaultBG();
         }
 
-        private async void RestoreDefaultBG()
-        {
-            var _defaultBG = await ImgWallpaper.GetCurrentBG();
-            await ImgWallpaper.SetBG(_defaultBG);
-        }
 
         private void btn_CreateWallpaper(object sender, RoutedEventArgs e)
         {
