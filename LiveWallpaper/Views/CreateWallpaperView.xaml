@@ -13,9 +13,9 @@
     mc:Ignorable="d">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="300" />
+            <RowDefinition Height="*" MinHeight="300" />
             <RowDefinition Height="20" />
-            <RowDefinition Height="*" />
+            <RowDefinition MinHeight="100" Height="auto" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <engine:WallpaperRender Wallpaper="{Binding CurrentWallpaper, Mode=TwoWay}">
@@ -69,8 +69,14 @@
             Grid.Row="3"
             HorizontalAlignment="Center"
             Orientation="Horizontal">
-            <Button Margin="3,0" lan:Xaml.Key="common_save" />
-            <Button Margin="3,0" lan:Xaml.Key="common_cancel" />
+            <Button
+                x:Name="Save"
+                Margin="3,0"
+                lan:Xaml.Key="common_save" />
+            <Button
+                x:Name="Cancel"
+                Margin="3,0"
+                lan:Xaml.Key="common_cancel" />
         </StackPanel>
         <!--<Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

@@ -8,6 +8,7 @@ namespace LiveWallpaperEngine
 {
     public enum WallpaperType
     {
+        NotSupport,
         Video,
     }
 }
