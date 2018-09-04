@@ -11,8 +11,12 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <DataTemplate x:Key="videoTemplate">
-            <MediaElement x:Name="media">
-                <MediaElement.Triggers>
+            <MediaElement
+                x:Name="media"
+                MediaEnded="media_MediaEnded"
+                Source="{Binding AbsolutePath}"
+                UnloadedBehavior="Play">
+                <!--<MediaElement.Triggers>
                     <EventTrigger RoutedEvent="MediaElement.Loaded">
                         <EventTrigger.Actions>
                             <BeginStoryboard>
@@ -25,7 +29,7 @@
                             </BeginStoryboard>
                         </EventTrigger.Actions>
                     </EventTrigger>
-                </MediaElement.Triggers>
+                </MediaElement.Triggers>-->
             </MediaElement>
         </DataTemplate>
         <local:RenderInfoSelector x:Key="RenderInfoSelector" VideoTemplate="{StaticResource videoTemplate}" />
