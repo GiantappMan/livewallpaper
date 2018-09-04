@@ -106,13 +106,13 @@ namespace LiveWallpaper.ViewModels
             var data = _jcrService.GetData(JsonConfierViewModel.Nodes);
             await JsonHelper.JsonSerializeAsync(data, AppService.SettingPath);
             DialogResult = true;
-            TryClose(true);
+            TryClose();
         }
 
         public void Cancel()
         {
             DialogResult = false;
-            TryClose(false);
+            TryClose();
         }
 
         public void OpenConfigFolder()
