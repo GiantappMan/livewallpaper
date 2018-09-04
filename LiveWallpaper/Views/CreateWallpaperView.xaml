@@ -11,14 +11,14 @@
     Height="550"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid Margin="10">
+    <Grid x:Name="rootGrid" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="300" />
             <RowDefinition Height="20" />
-            <RowDefinition MinHeight="100" Height="auto" />
+            <RowDefinition Height="auto" MinHeight="100" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <engine:WallpaperRender Wallpaper="{Binding CurrentWallpaper, Mode=TwoWay}">
+        <engine:WallpaperRender x:Name="WallpaperRender" Wallpaper="{Binding CurrentWallpaper, Mode=TwoWay}">
             <engine:WallpaperRender.DragTips>
                 <TextBlock
                     HorizontalAlignment="Center"
@@ -31,7 +31,7 @@
             Grid.Row="1"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom">
-            <CheckBox lan:Xaml.Key="setting_desktopLivePreview" />
+            <CheckBox lan:Xaml.Key="setting_desktopLivePreview" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked" />
         </StackPanel>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>

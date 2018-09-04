@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.ViewModels;
 using LiveWallpaper.Services;
+using LiveWallpaperEngine;
 
 namespace LiveWallpaper
 {
@@ -22,6 +23,8 @@ namespace LiveWallpaper
 
         protected override void Configure()
         {
+            WallpaperManager.Initlize();
+
             //自定义消息拦截
             container = new SimpleContainer();
 

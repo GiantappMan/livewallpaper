@@ -12,7 +12,15 @@ namespace LiveWallpaperEngine
     /// </summary>
     public class Wallpaper : ObservableObject
     {
+        /// <summary>
+        /// 壁纸的绝对路径
+        /// </summary>
         public string AbsolutePath { get; set; }
+
+        public string ExeName { get; internal set; }
+        public string ExePath { get; internal set; }
+        public object ExeArgs { get; internal set; }
+
         #region ProjectInfo
 
         /// <summary>
@@ -37,7 +45,7 @@ namespace LiveWallpaperEngine
                 NotifyOfPropertyChange(ProjectInfoPropertyName);
             }
         }
-
+        
         #endregion
 
         public static WallpaperType GetType(Wallpaper w)
