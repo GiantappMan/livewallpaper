@@ -16,34 +16,24 @@ namespace LiveWallpaper.Views
             InitializeComponent();
         }
 
-        Window newWindow;
+        RenderWindow renderWindow;
         private async void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (newWindow == null)
-                newWindow = new Window();
+            if (renderWindow == null)
+                renderWindow = new RenderWindow();
 
-            var render = new WallpaperRender();
-            render.Wallpaper = WallpaperRender.Wallpaper;
-            WallpaperRender.Wallpaper = null;
-            newWindow.Content = render;
-            newWindow.Show();
+            renderWindow.Wallpaper = WallpaperRender.Wallpaper;
+            //WallpaperRender.Wallpaper = null;
+            renderWindow.Show();
 
-            var handler = new WindowInteropHelper(newWindow).Handle;
+            var handler = new WindowInteropHelper(renderWindow).Handle;
             await HandlerWallpaper.Show(handler);
-
-            double width = Screen.AllScreens[0].Bounds.Width;
-            double height = Screen.AllScreens[0].Bounds.Height;
-            newWindow.WindowStyle = WindowStyle.None;
-            newWindow.WindowState = WindowState.Maximized;
-
-            newWindow.Width = width;
-            newWindow.Height = height;
         }
 
         private async void CheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            newWindow.Close();
-            newWindow = null;
+            renderWindow.Close();
+            renderWindow = null;
             await HandlerWallpaper.Clean();
         }
     }
