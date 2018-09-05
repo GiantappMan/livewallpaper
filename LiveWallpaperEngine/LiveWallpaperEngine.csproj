@@ -90,7 +90,11 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\MediaElementEx.cs" />
     <Compile Include="Controls\RenderInfoSelector.cs" />
+    <Compile Include="Controls\RenderWindow.xaml.cs">
+      <DependentUpon>RenderWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\WallpaperRender.xaml.cs">
       <DependentUpon>WallpaperRender.xaml</DependentUpon>
     </Compile>
@@ -129,6 +133,14 @@
     <Analyzer Include="..\packages\UwpDesktop.10.0.14393.3\analyzers\dotnet\UwpDesktopAnalyzer.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Controls\RenderWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\Style.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\WallpaperRender.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
