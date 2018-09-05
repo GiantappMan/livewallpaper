@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DZY.WinAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,7 +30,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
             return Task.Run(() =>
             {
                 StringBuilder wallPaperPath = new StringBuilder(200);
-                var temp = W32.SystemParametersInfo(W32.SPI_GETDESKWALLPAPER, 200, wallPaperPath, 0);
+                var temp = USER32Wrapper.SystemParametersInfo(USER32Wrapper.SPI_GETDESKWALLPAPER, 200, wallPaperPath, 0);
                 if (temp > 0)
                 {
                     return wallPaperPath.ToString();
@@ -42,7 +43,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
         {
             return Task.Run(() =>
             {
-                var result = W32.SystemParametersInfo(W32.SPI_SETDESKWALLPAPER, 0, new StringBuilder(bg), W32.SPIF_UPDATEINIFILE);
+                var result = USER32Wrapper.SystemParametersInfo(USER32Wrapper.SPI_SETDESKWALLPAPER, 0, new StringBuilder(bg), USER32Wrapper.SPIF_UPDATEINIFILE);
             });
         }
     }

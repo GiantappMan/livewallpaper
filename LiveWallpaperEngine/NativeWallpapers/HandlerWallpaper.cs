@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DZY.WinAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,24 +47,24 @@ namespace LiveWallpaperEngine.NativeWallpapers
             }
             _defaultBG = await ImgWallpaper.GetCurrentBG();
 
-            W32.SetParent(handler, _workerw);
+            USER32Wrapper.SetParent(handler, _workerw);
         }
 
         private static bool Initlize()
         {
-            IntPtr progman = W32.FindWindow("Progman", null);
+            IntPtr progman = USER32Wrapper.FindWindow("Progman", null);
             IntPtr result = IntPtr.Zero;
-            W32.SendMessageTimeout(progman,
+            USER32Wrapper.SendMessageTimeout(progman,
                                    0x052C,
                                    new IntPtr(0),
                                    IntPtr.Zero,
-                                   W32.SendMessageTimeoutFlags.SMTO_NORMAL,
+                                   SendMessageTimeoutFlags.SMTO_NORMAL,
                                    1000,
                                    out result);
             _workerw = IntPtr.Zero;
-            var result1 = W32.EnumWindows(new W32.EnumWindowsProc((tophandle, topparamhandle) =>
+            var result1 = USER32Wrapper.EnumWindows(new EnumWindowsProc((tophandle, topparamhandle) =>
             {
-                IntPtr p = W32.FindWindowEx(tophandle,
+                IntPtr p = USER32Wrapper.FindWindowEx(tophandle,
                                             IntPtr.Zero,
                                             "SHELLDLL_DefView",
                                             IntPtr.Zero);
@@ -71,7 +72,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (p != IntPtr.Zero)
                 {
                     // Gets the WorkerW Window after the current one.
-                    _workerw = W32.FindWindowEx(IntPtr.Zero,
+                    _workerw = USER32Wrapper.FindWindowEx(IntPtr.Zero,
                                              tophandle,
                                              "WorkerW",
                                              IntPtr.Zero);
