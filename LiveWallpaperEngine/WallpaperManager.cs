@@ -30,8 +30,10 @@ namespace LiveWallpaperEngine
         /// <returns></returns>
         public static async Task<Wallpaper> ResolveFromFile(string filePath)
         {
-            Wallpaper result = new Wallpaper();
-            result.AbsolutePath = filePath;
+            Wallpaper result = new Wallpaper
+            {
+                AbsolutePath = filePath
+            };
 
             string dir = Path.GetDirectoryName(filePath);
             result.ProjectInfo = await GetProjectInfo(dir);
@@ -58,8 +60,9 @@ namespace LiveWallpaperEngine
             await ImgWallpaper.SetBG(_defaultBG);
         }
 
-        public static async Task Show(Wallpaper wallpaper)
+        public static Task Show(Wallpaper wallpaper)
         {
+            return Task.CompletedTask;
         }
         //public static Task CreateLocalPack(Wallpaper wallpaper)
         //{

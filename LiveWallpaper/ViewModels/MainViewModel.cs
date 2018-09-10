@@ -10,7 +10,6 @@ namespace LiveWallpaper.ViewModels
     public class MainViewModel : Screen
     {
         const string saveDIR = "Wallpapers";
-        Wallpaper currentShowWallpaper;
 
         public MainViewModel()
         {
@@ -41,8 +40,7 @@ namespace LiveWallpaper.ViewModels
         internal void ActiveUI()
         {
             var view = GetView();
-            var window = view as Window;
-            if (window != null)
+            if (view is Window window)
             {
                 if (window.WindowState == WindowState.Minimized)
                     window.WindowState = WindowState.Normal;
@@ -50,7 +48,7 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        public async void RefreshLocalWallpaper()
+        public void RefreshLocalWallpaper()
         {
             Wallpapers = new ObservableCollection<Wallpaper>();
 
@@ -67,7 +65,7 @@ namespace LiveWallpaper.ViewModels
                 //    Wallpapers.Add(data);
                 //}
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("failed to read wallpapers");
             }
@@ -105,7 +103,7 @@ namespace LiveWallpaper.ViewModels
             //RefreshLocalWallpaper();
         }
 
-        public async void ApplyWallpaper(Wallpaper w)
+        public void ApplyWallpaper(Wallpaper w)
         {
             //currentShowWallpaper = w;
             //await WallpaperManger.ApplyWallpaper(w);
