@@ -7,10 +7,11 @@ using LiveWallpaperEngine.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Services;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace LiveWallpaper.ViewModels
 {
-    public class CreateWallpaperViewModel : Screen
+    public class CreateWallpaperViewModel : ScreenWindow
     {
         //默认是false，修改后内存保存
         private static bool _preview;
@@ -149,8 +150,6 @@ namespace LiveWallpaper.ViewModels
         #endregion
 
         #region private methods
-
-
 
         #endregion
     }
