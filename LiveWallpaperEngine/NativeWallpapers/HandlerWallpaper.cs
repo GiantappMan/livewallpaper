@@ -1,4 +1,5 @@
-﻿using DZY.WinAPI;
+﻿//https://www.codeproject.com/Articles/856020/Draw-Behind-Desktop-Icons-in-Windows
+using DZY.WinAPI;
 using DZY.WinAPI.Desktop.API;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
     {
         static IDesktopWallpaper _desktopWallpaperAPI = DesktopWallpaperFactory.Create();
         static IntPtr _workerw;
-        //static string _defaultBG;
 
         static bool _showed;
         static bool _initlized;
@@ -28,24 +28,13 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
             if (!_initlized)
                 Initlize();
-            //if (!string.IsNullOrEmpty(_defaultBG))
-            //{
-            //    ImgWallpaper.SetBG(_defaultBG);
-            //    _defaultBG = null;
-            //}
-
+          
             if (restoreParent)
             {
                 var desktop = USER32Wrapper.GetDesktopWindow();
                 USER32Wrapper.SetParent(_handler, desktop);
             }
             _desktopWallpaperAPI.Enable(true);
-
-            //var resul = W32.RedrawWindow(workerw, IntPtr.Zero, IntPtr.Zero, RedrawWindowFlags.Invalidate);
-            //W32.SendMessage(temp, 0x000F, 0, IntPtr.Zero);
-            //W32.SendMessage(workerw, 0x000F, 0, IntPtr.Zero);
-            //W32.SendMessage(workerw, W32.WM_CHANGEUISTATE, 2, IntPtr.Zero);
-            //W32.SendMessage(workerw, W32.WM_UPDATEUISTATE, 2, IntPtr.Zero);
         }
 
         public static void Show(IntPtr handler)
@@ -61,7 +50,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (!isOk)
                     return;
             }
-            //_defaultBG = await ImgWallpaper.GetCurrentBG();
             USER32Wrapper.SetParent(_handler, _workerw);
             _desktopWallpaperAPI.Enable(false);
         }
@@ -87,7 +75,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
                 if (p != IntPtr.Zero)
                 {
-                    // Gets the WorkerW Window after the current one.
                     _workerw = USER32Wrapper.FindWindowEx(IntPtr.Zero,
                                              tophandle,
                                              "WorkerW",

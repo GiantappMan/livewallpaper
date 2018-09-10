@@ -26,6 +26,15 @@
                     VerticalAlignment="Center"
                     lan:Xaml.Key="setting_dragIntoDesc" />
             </engine:WallpaperRender.DragTips>
+            <engine:WallpaperRender.Style>
+                <Style TargetType="engine:WallpaperRender">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PreviewWallpaper}" Value="True">
+                            <Setter Property="IsEnabled" Value="False" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </engine:WallpaperRender.Style>
         </engine:WallpaperRender>
         <StackPanel
             Grid.Row="1"

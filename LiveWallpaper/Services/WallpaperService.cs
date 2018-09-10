@@ -26,8 +26,10 @@ namespace LiveWallpaper.Services
             {
                 if (RenderWindow == null)
                 {
-                    RenderWindow = new RenderWindow();
-                    RenderWindow.Wallpaper = wallpaper;
+                    RenderWindow = new RenderWindow
+                    {
+                        Wallpaper = wallpaper
+                    };
                     RenderWindow.Show();
                 }
                 else
@@ -46,11 +48,12 @@ namespace LiveWallpaper.Services
             if (RenderWindow == null)
                 return;
 
+            HandlerWallpaper.Close();
+
             Execute.OnUIThread(() =>
             {
                 RenderWindow.Wallpaper = null;
             });
-            HandlerWallpaper.Close();
         }
 
         public static void Dispose()

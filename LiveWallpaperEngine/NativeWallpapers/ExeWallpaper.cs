@@ -1,5 +1,4 @@
-﻿//https://www.codeproject.com/Articles/856020/Draw-Behind-Desktop-Icons-in-Windows
-using DZY.WinAPI;
+﻿using DZY.WinAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +29,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
             return Task.Run(() =>
             {
                 Initlize();
-                //W32.SetParent(cacheMainHandle, cacheParent);
 
                 if (process != null)
                 {
@@ -49,20 +47,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                     ImgWallpaper.SetBG(_defaultBG);
                     _defaultBG = null;
                 }
-
-
-                //var resul = W32.RedrawWindow(workerw, IntPtr.Zero, IntPtr.Zero, RedrawWindowFlags.Invalidate);
-                //var temp = W32.GetParent(workerw);
-                //W32.SendMessage(temp, 0x000F, 0, IntPtr.Zero);
-                //W32.SendMessage(workerw, 0x000F, 0, IntPtr.Zero);
-                //W32.SendMessage(workerw, W32.WM_CHANGEUISTATE, 2, IntPtr.Zero);
-                //W32.SendMessage(workerw, W32.WM_UPDATEUISTATE, 2, IntPtr.Zero);
             });
-        }
-
-        public virtual Task Dispose()
-        {
-            throw new NotImplementedException();
         }
 
         public virtual async Task Show(string appPath, string args)
@@ -105,18 +90,15 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 }
                 if (process == null)
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo(appPath);
-                    startInfo.WindowStyle = ProcessWindowStyle.Maximized;
+                    ProcessStartInfo startInfo = new ProcessStartInfo(appPath)
+                    {
+                        WindowStyle = ProcessWindowStyle.Maximized
+                    };
                     double width = Screen.AllScreens[0].Bounds.Width;
                     double height = Screen.AllScreens[0].Bounds.Height;
                     startInfo.Arguments = $"{args} -popupwindow -screen-height {height} -screen-width {width}";
                     //startInfo.Arguments = $" -popupwindow -screen-width {y1}";
                     process = Process.Start(startInfo);
-
-                    //NativeWindowHandler windowHandler = new NativeWindowHandler();
-                    //windowHandler.MaximizeWindow(process.Handle.ToInt32());
-
-                    //process = Process.Start(path);
                 }
             }
             cacheMainHandle = await TryGetMainWindowHandle(process);
@@ -144,7 +126,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (process != null)
                     process.ToList().ForEach(m => m.Kill());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -158,7 +140,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 {
                     result = process.MainWindowHandle;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     continue;
                 }
@@ -190,7 +172,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
                   if (p != IntPtr.Zero)
                   {
-                      // Gets the WorkerW Window after the current one.
                       workerw = USER32Wrapper.FindWindowEx(IntPtr.Zero,
                                                tophandle,
                                                "WorkerW",

@@ -53,7 +53,7 @@ namespace Browser
             //Test();
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private  void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             //await Task.Delay(2000);
             //browser.GetBrowser().ShowDevTools();
