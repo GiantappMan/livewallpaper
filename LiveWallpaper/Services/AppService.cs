@@ -1,6 +1,7 @@
 ﻿using DZY.DotNetUtil.Helpers;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Settings;
+using LiveWallpaperEngine.Controls;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,8 @@ namespace LiveWallpaper.Services
 {
     public class AppService
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+     
         /// <summary>
         /// 程序入口
         /// </summary>
@@ -33,7 +36,6 @@ namespace LiveWallpaper.Services
         /// </summary>
         public static string LocalWallpaperDir { get; private set; }
 
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static async Task Initlize()
         {
             //开机启动
@@ -85,7 +87,6 @@ namespace LiveWallpaper.Services
 
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
         }
-
 
         public static SettingObject Setting { get; private set; }
     }

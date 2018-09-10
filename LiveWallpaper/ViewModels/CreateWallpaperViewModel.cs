@@ -2,11 +2,17 @@
 using System.Diagnostics;
 using MultiLanguageManager;
 using LiveWallpaperEngine;
+using LiveWallpaperEngine.Controls;
+using LiveWallpaperEngine.NativeWallpapers;
+using System.Windows.Interop;
+using LiveWallpaper.Services;
 
 namespace LiveWallpaper.ViewModels
 {
     public class CreateWallpaperViewModel : Screen
     {
+        private bool _preview;
+
         public CreateWallpaperViewModel()
         {
             DisplayName = LanService.Get("common_create").Result;
@@ -35,6 +41,8 @@ namespace LiveWallpaper.ViewModels
                 if (_CurrentWallpaper == value) return;
 
                 _CurrentWallpaper = value;
+                if (_preview)
+                    Preview();
                 NotifyOfPropertyChange(CurrentWallpaperPropertyName);
             }
         }
@@ -56,46 +64,17 @@ namespace LiveWallpaper.ViewModels
 
             //_wallpaper = w;
         }
-        public async void Generate()
+
+        public async void Preview()
         {
-            //CanGenerate = false;
-
-            ////var config = await ConfigHelper.LoadConfigAsync<UserConfig>();
-            ////if (config == null)
-            ////    config = new UserConfig();
-
-            ////config.UserName = Author;
-
-            ////todo 从文件夹读取
-            ////var exist = config.Wallpapers.FirstOrDefault(m => m.ID == _wallpaper.ID);
-            ////if (exist != null)
-            ////    _wallpaper = exist;
-
-            //_wallpaper.Author = Author;
-
-            //var para = new WallpapaerParameter() { Dir = Dir, EnterPoint = EndPoint, Args = Arguments };
-            //_wallpaper.PackInfo = para;
-            //_wallpaper.Type = SelectedType;
-
-            //_wallpaper.UpdatedTime = DateTime.Now;
-
-            //await CreateLocalPack(_wallpaper);
-
-
-            ////await ConfigHelper.SaveConfigAsync(config);
-
-            //CanGenerate = true;
-            //CanPublish = true;
+            _preview = true;
+            await WallpaperService.Preivew(CurrentWallpaper);
         }
 
-        public async void Apply()
+        public async void StopPreview()
         {
-            //CanClean = true;
-            //CanGenerate = true;
-            ////await 
-            //var para = new WallpapaerParameter() { Dir = Dir, EnterPoint = EndPoint, Args = Arguments };
-
-            //await WallpaperManger.ApplyWallpaper(SelectedType, para);
+            _preview = false;
+            await WallpaperService.StopPreview();
         }
 
         public void Clean()
