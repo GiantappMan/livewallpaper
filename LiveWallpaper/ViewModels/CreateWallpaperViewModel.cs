@@ -98,7 +98,10 @@ namespace LiveWallpaper.ViewModels
         public async void Preview()
         {
             _preview = true;
-            await Task.Run(() =>
+
+            //防止显示黑屏
+            if (CurrentWallpaper != null)
+                await Task.Run(() =>
             {
                 WallpaperService.Preivew(CurrentWallpaper);
             });

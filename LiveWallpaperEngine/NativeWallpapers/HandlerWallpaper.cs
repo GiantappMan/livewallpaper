@@ -54,9 +54,9 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (!isOk)
                     return;
             }
-            _desktopWallpaperAPI.Enable(false);
             //_defaultBG = await ImgWallpaper.GetCurrentBG();
             USER32Wrapper.SetParent(handler, _workerw);
+            _desktopWallpaperAPI.Enable(false);
         }
 
         private static bool Initlize()
