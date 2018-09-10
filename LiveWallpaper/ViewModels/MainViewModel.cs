@@ -7,9 +7,10 @@ using LiveWallpaperEngine;
 
 namespace LiveWallpaper.ViewModels
 {
-    public class MainViewModel : Screen
+    public class MainViewModel : ScreenWindow
     {
         const string saveDIR = "Wallpapers";
+        private CreateWallpaperViewModel _createVM;
 
         public MainViewModel()
         {
@@ -25,27 +26,27 @@ namespace LiveWallpaper.ViewModels
 
         public void CreateWallpaper()
         {
-            var windowManager = IoC.Get<IWindowManager>();
-            var vm = IoC.Get<CreateWallpaperViewModel>();
-            bool? isOk = windowManager.ShowDialog(vm);
-            if (isOk != null && isOk.Value)
-                RefreshLocalWallpaper();
+            if (_createVM != null)
+            {
+                _createVM.ActiveUI();
+                return;
+            }
 
+            var windowManager = IoC.Get<IWindowManager>();
+            _createVM = IoC.Get<CreateWallpaperViewModel>();
+            _createVM.Deactivated += _createVM_Deactivated;
+            windowManager.ShowWindow(_createVM, null, null);
         }
+
+        private void _createVM_Deactivated(object sender, DeactivationEventArgs e)
+        {
+            _createVM.Deactivated -= _createVM_Deactivated;
+            _createVM = null;
+        }
+
         public override object GetView(object context = null)
         {
             return base.GetView(context);
-        }
-
-        internal void ActiveUI()
-        {
-            var view = GetView();
-            if (view is Window window)
-            {
-                if (window.WindowState == WindowState.Minimized)
-                    window.WindowState = WindowState.Normal;
-                window.Activate();
-            }
         }
 
         public void RefreshLocalWallpaper()
