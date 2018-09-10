@@ -1,4 +1,5 @@
-﻿using LiveWallpaperEngine;
+﻿using Caliburn.Micro;
+using LiveWallpaperEngine;
 using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
 using System;
@@ -18,21 +19,26 @@ namespace LiveWallpaper.Services
         public static RenderWindow RenderWindow { get; private set; }
         private static Wallpaper _lastwallPaper;
 
-        public static async Task Show(Wallpaper wallpaper)
+        public static void Show(Wallpaper wallpaper)
         {
-            if (RenderWindow == null)
-                RenderWindow = new RenderWindow();
-            else
+            IntPtr handler = IntPtr.Zero;
+            Execute.OnUIThread(() =>
             {
-                RenderWindow.Wallpaper = wallpaper;
-                return;
-            }
+                if (RenderWindow == null)
+                {
+                    RenderWindow = new RenderWindow();
+                    RenderWindow.Wallpaper = wallpaper;
+                    RenderWindow.Show();
+                }
+                else
+                {
+                    RenderWindow.Wallpaper = wallpaper;
+                }
 
-            RenderWindow.Wallpaper = wallpaper;
-            RenderWindow.Show();
+                handler = new WindowInteropHelper(RenderWindow).Handle;
+            });
 
-            var handler = new WindowInteropHelper(RenderWindow).Handle;
-            await HandlerWallpaper.Show(handler);
+            HandlerWallpaper.Show(handler);
         }
 
         public static void Close()
@@ -40,29 +46,37 @@ namespace LiveWallpaper.Services
             if (RenderWindow == null)
                 return;
 
-            RenderWindow.Wallpaper = null;
+            Execute.OnUIThread(() =>
+            {
+                RenderWindow.Wallpaper = null;
+            });
+            HandlerWallpaper.Close();
         }
 
-        public static async Task Dispose()
+        public static void Dispose()
         {
             if (RenderWindow == null)
                 return;
 
+            Close();
+
             RenderWindow.Close();
             RenderWindow = null;
-            await HandlerWallpaper.Clean();
         }
 
-        public static async Task Preivew(Wallpaper previewWallpaper)
+        public static void Preivew(Wallpaper previewWallpaper)
         {
-            _lastwallPaper = RenderWindow?.Wallpaper;
-            await Show(previewWallpaper);
+            Execute.OnUIThread(() =>
+            {
+                _lastwallPaper = RenderWindow?.Wallpaper;
+            });
+            Show(previewWallpaper);
         }
 
-        public static async Task StopPreview()
+        public static void StopPreview()
         {
             if (_lastwallPaper != null)
-                await Show(_lastwallPaper);
+                Show(_lastwallPaper);
             else
                 Close();
         }

@@ -6,16 +6,19 @@ using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Services;
+using System.Threading.Tasks;
 
 namespace LiveWallpaper.ViewModels
 {
     public class CreateWallpaperViewModel : Screen
     {
-        private bool _preview;
+        //默认是false，修改后内存保存
+        private static bool _preview;
 
         public CreateWallpaperViewModel()
         {
             DisplayName = LanService.Get("common_create").Result;
+            PreviewWallpaper = _preview;
         }
 
         #region properties
@@ -49,6 +52,33 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region PreviewWallpaper
+
+        /// <summary>
+        /// The <see cref="PreviewWallpaper" /> property's name.
+        /// </summary>
+        public const string PreviewWallpaperPropertyName = "PreviewWallpaper";
+
+        private bool _PreviewWallpaper;
+
+        /// <summary>
+        /// PreviewWallpaper
+        /// </summary>
+        public bool PreviewWallpaper
+        {
+            get { return _PreviewWallpaper; }
+
+            set
+            {
+                if (_PreviewWallpaper == value) return;
+
+                _PreviewWallpaper = value;
+                NotifyOfPropertyChange(PreviewWallpaperPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region public methods 
@@ -68,23 +98,31 @@ namespace LiveWallpaper.ViewModels
         public async void Preview()
         {
             _preview = true;
-            await WallpaperService.Preivew(CurrentWallpaper);
+            await Task.Run(() =>
+            {
+                WallpaperService.Preivew(CurrentWallpaper);
+            });
         }
 
         public async void StopPreview()
         {
             _preview = false;
-            await WallpaperService.StopPreview();
+            await Task.Run(new System.Action(WallpaperService.StopPreview));
         }
 
-        public void Clean()
+        public void Cancel()
         {
-            //WallpaperManger.Clean();
+            StopPreview();
+            TryClose(false);
         }
 
-        public void Publish()
+        public async void Save()
         {
-
+            await Task.Run(() =>
+            {
+                WallpaperService.Show(CurrentWallpaper);
+            });
+            TryClose(true);
         }
 
         public void RestartExploer()

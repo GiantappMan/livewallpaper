@@ -54,11 +54,5 @@ namespace LiveWallpaperEngine.Controls
             DependencyProperty.Register("Wallpaper", typeof(Wallpaper), typeof(RenderWindow), new PropertyMetadata(null));
 
         #endregion
-
-        public new void Show()
-        {
-            base.Show();
-
-        }
     }
 }
