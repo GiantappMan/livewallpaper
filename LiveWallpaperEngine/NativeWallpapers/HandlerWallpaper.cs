@@ -1,4 +1,5 @@
 ﻿using DZY.WinAPI;
+using DZY.WinAPI.Desktop.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,44 +10,52 @@ namespace LiveWallpaperEngine.NativeWallpapers
 {
     public class HandlerWallpaper
     {
+        static IDesktopWallpaper _desktopWallpaperAPI = DesktopWallpaperFactory.Create();
         static IntPtr _workerw;
-        static string _defaultBG;
+        //static string _defaultBG;
+
+        static bool _showed;
         static bool _initlized;
 
-        public static Task Clean()
+        public static void Close()
         {
-            return Task.Run(() =>
-            {
-                if (!_initlized)
-                    Initlize();
-                if (!string.IsNullOrEmpty(_defaultBG))
-                {
-                    ImgWallpaper.SetBG(_defaultBG);
-                    _defaultBG = null;
-                }
+            if (!_showed)
+                return;
 
-                //var resul = W32.RedrawWindow(workerw, IntPtr.Zero, IntPtr.Zero, RedrawWindowFlags.Invalidate);
-                //var temp = W32.GetParent(workerw);
-                //W32.SendMessage(temp, 0x000F, 0, IntPtr.Zero);
-                //W32.SendMessage(workerw, 0x000F, 0, IntPtr.Zero);
-                //W32.SendMessage(workerw, W32.WM_CHANGEUISTATE, 2, IntPtr.Zero);
-                //W32.SendMessage(workerw, W32.WM_UPDATEUISTATE, 2, IntPtr.Zero);
-            });
+            _showed = false;
+
+            if (!_initlized)
+                Initlize();
+            //if (!string.IsNullOrEmpty(_defaultBG))
+            //{
+            //    ImgWallpaper.SetBG(_defaultBG);
+            //    _defaultBG = null;
+            //}
+
+            _desktopWallpaperAPI.Enable(true);
+
+            //var resul = W32.RedrawWindow(workerw, IntPtr.Zero, IntPtr.Zero, RedrawWindowFlags.Invalidate);
+            //var temp = W32.GetParent(workerw);
+            //W32.SendMessage(temp, 0x000F, 0, IntPtr.Zero);
+            //W32.SendMessage(workerw, 0x000F, 0, IntPtr.Zero);
+            //W32.SendMessage(workerw, W32.WM_CHANGEUISTATE, 2, IntPtr.Zero);
+            //W32.SendMessage(workerw, W32.WM_UPDATEUISTATE, 2, IntPtr.Zero);
         }
 
-        public static async Task Show(IntPtr handler)
+        public static void Show(IntPtr handler)
         {
-            if (handler == IntPtr.Zero)
+            if (handler == IntPtr.Zero || _showed)
                 return;
+            _showed = true;
 
             if (!_initlized)
             {
-                bool isOk = await Task.Run(() => Initlize());
+                bool isOk = Initlize();
                 if (!isOk)
                     return;
             }
-            _defaultBG = await ImgWallpaper.GetCurrentBG();
-
+            _desktopWallpaperAPI.Enable(false);
+            //_defaultBG = await ImgWallpaper.GetCurrentBG();
             USER32Wrapper.SetParent(handler, _workerw);
         }
 

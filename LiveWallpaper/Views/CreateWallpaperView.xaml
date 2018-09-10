@@ -31,7 +31,10 @@
             Grid.Row="1"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom">
-            <CheckBox cal:Message.Attach="[Event Checked] = [Action Preview()];[Event Unchecked] = [Action StopPreview()]" lan:Xaml.Key="setting_desktopLivePreview" />
+            <CheckBox
+                x:Name="PreviewWallpaper"
+                cal:Message.Attach="[Event Checked] = [Action Preview()];[Event Unchecked] = [Action StopPreview()]"
+                lan:Xaml.Key="setting_desktopLivePreview" />
         </StackPanel>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
