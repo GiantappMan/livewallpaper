@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using LiveWallpaper.Services;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Text;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -23,6 +24,8 @@ namespace LiveWallpaper.ViewModels
         }
 
         #region properties
+
+        public bool Result { get; set; }
 
         #region CurrentWallpaper
 
@@ -80,9 +83,55 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region FilePath
+
+        /// <summary>
+        /// The <see cref="FilePath" /> property's name.
+        /// </summary>
+        public const string FilePathPropertyName = "FilePath";
+
+        private string _FilePath;
+
+        /// <summary>
+        /// FilePath
+        /// </summary>
+        public string FilePath
+        {
+            get { return _FilePath; }
+
+            set
+            {
+                if (_FilePath == value) return;
+
+                _FilePath = value;
+                NotifyOfPropertyChange(FilePathPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region public methods 
+
+        public async void SelectFile()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
+            foreach (var item in WallpaperManager.SupportedExtensions)
+            {
+                sb.Append($"*.{item};");
+            }
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog()
+            {
+                Filter = sb.ToString()
+            };
+            var result = openFileDialog.ShowDialog();
+            if (result == true)
+            {
+                FilePath = openFileDialog.FileName;
+            }
+        }
 
         internal void SetPaper(Wallpaper w)
         {
@@ -117,35 +166,44 @@ namespace LiveWallpaper.ViewModels
         public void Cancel()
         {
             StopPreview();
-            TryClose(false);
+            Result = false;
+            TryClose();
         }
 
         public async void Save()
         {
+            if (CurrentWallpaper == null ||
+                string.IsNullOrEmpty(CurrentWallpaper.ProjectInfo.Title))
+            {
+                MessageBox.Show(await LanService.Get("wallpaperEditor_invalidWallpaper"));
+                return;
+            }
+
             await Task.Run(() =>
             {
                 WallpaperService.Show(CurrentWallpaper);
             });
-            TryClose(true);
+            Result = true;
+            TryClose();
         }
 
-        public void RestartExploer()
-        {
-            foreach (Process exe in Process.GetProcesses())
-            {
-                if (exe.ProcessName.StartsWith("explorer"))
-                {
-                    exe.Kill();
-                    break;
-                }
-            }
+        //public void RestartExploer()
+        //{
+        //    foreach (Process exe in Process.GetProcesses())
+        //    {
+        //        if (exe.ProcessName.StartsWith("explorer"))
+        //        {
+        //            exe.Kill();
+        //            break;
+        //        }
+        //    }
 
-            var p = new Process();
-            string explorer = "explorer.exe";
-            p.StartInfo.FileName = explorer;
-            p.Start();
-            p.Kill();
-        }
+        //    var p = new Process();
+        //    string explorer = "explorer.exe";
+        //    p.StartInfo.FileName = explorer;
+        //    p.Start();
+        //    p.Kill();
+        //}
 
         #endregion
 

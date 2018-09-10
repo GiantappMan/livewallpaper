@@ -19,12 +19,23 @@
             <RowDefinition Height="auto" MinHeight="100" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <engine:WallpaperRender x:Name="WallpaperRender" Wallpaper="{Binding CurrentWallpaper, Mode=TwoWay}">
+        <engine:WallpaperRender
+            x:Name="WallpaperRender"
+            FilePath="{Binding FilePath}"
+            Wallpaper="{Binding CurrentWallpaper, Mode=TwoWay}">
             <engine:WallpaperRender.DragTips>
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    lan:Xaml.Key="setting_dragIntoDesc" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        lan:Xaml.Key="setting_dragIntoDesc" />
+                    <TextBlock
+                        Margin="0,10,0,0"
+                        HorizontalAlignment="Center"
+                        lan:Xaml.Key="common_or"
+                        Foreground="#6D6B6B" />
+                    <Button Margin="0,10,0,0" cal:Message.Attach="[Event Click]=[Action SelectFile]">选择文件</Button>
+                </StackPanel>
             </engine:WallpaperRender.DragTips>
             <engine:WallpaperRender.Style>
                 <Style TargetType="engine:WallpaperRender">
