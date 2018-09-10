@@ -14,6 +14,7 @@
   "common_exit": "退出",
   "common_about": "关于",
   "common_appName": "巨应动态壁纸",
+  "common_or": "或",
 
   "mainUI_localWallpaper": "本地壁纸",
   "mainUI_refreshWallpaper": "刷新壁纸",
@@ -27,6 +28,8 @@
   "setting_dragIntoDesc": "拖入视频文件",
   "setting_desktopLivePreview": "启用桌面预览",
   "setting_minimizeUI": "启动后最小化",
-  "": "",
+
+  "wallpaperEditor_invalidWallpaper": "无效壁纸",
+  "wallpaperEditor_fileDialogType": "壁纸类型 |",
   "": ""
 }
