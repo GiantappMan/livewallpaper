@@ -3,6 +3,7 @@ using DZY.WinAPI.Desktop.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,8 +17,9 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
         static bool _showed;
         static bool _initlized;
+        static IntPtr _handler;
 
-        public static void Close()
+        public static void Close(bool restoreParent = false)
         {
             if (!_showed)
                 return;
@@ -32,10 +34,14 @@ namespace LiveWallpaperEngine.NativeWallpapers
             //    _defaultBG = null;
             //}
 
+            if (restoreParent)
+            {
+                var desktop = USER32Wrapper.GetDesktopWindow();
+                USER32Wrapper.SetParent(_handler, desktop);
+            }
             _desktopWallpaperAPI.Enable(true);
 
             //var resul = W32.RedrawWindow(workerw, IntPtr.Zero, IntPtr.Zero, RedrawWindowFlags.Invalidate);
-            //var temp = W32.GetParent(workerw);
             //W32.SendMessage(temp, 0x000F, 0, IntPtr.Zero);
             //W32.SendMessage(workerw, 0x000F, 0, IntPtr.Zero);
             //W32.SendMessage(workerw, W32.WM_CHANGEUISTATE, 2, IntPtr.Zero);
@@ -44,7 +50,8 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
         public static void Show(IntPtr handler)
         {
-            if (handler == IntPtr.Zero || _showed)
+            _handler = handler;
+            if (_handler == IntPtr.Zero || _showed)
                 return;
             _showed = true;
 
@@ -55,7 +62,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                     return;
             }
             //_defaultBG = await ImgWallpaper.GetCurrentBG();
-            USER32Wrapper.SetParent(handler, _workerw);
+            USER32Wrapper.SetParent(_handler, _workerw);
             _desktopWallpaperAPI.Enable(false);
         }
 
