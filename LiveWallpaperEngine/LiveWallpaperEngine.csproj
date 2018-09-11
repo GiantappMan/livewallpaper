@@ -115,7 +115,7 @@
     </Compile>
     <Compile Include="NativeWallpapers\HandlerWallpaper.cs" />
     <Compile Include="ProjectInfo.cs" />
-    <Compile Include="WallpaperManager.cs" />
+    <Compile Include="WallpaperManager.Data.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -130,8 +130,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Wallpaper.cs" />
-    <Compile Include="NativeWallpapers\ExeWallpaper.cs" />
-    <Compile Include="NativeWallpapers\ImgWallpaper.cs" />
+    <Compile Include="WallpaperManager.UI.cs" />
     <Compile Include="WallpaperType.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

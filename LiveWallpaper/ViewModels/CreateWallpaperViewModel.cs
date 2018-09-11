@@ -9,11 +9,15 @@ using LiveWallpaper.Services;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Text;
+using System.IO;
+using System;
 
 namespace LiveWallpaper.ViewModels
 {
     public class CreateWallpaperViewModel : ScreenWindow
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         //默认是false，修改后内存保存
         private static bool _preview;
 
@@ -110,6 +114,33 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region CanSave
+
+        /// <summary>
+        /// The <see cref="CanSave" /> property's name.
+        /// </summary>
+        public const string CanSavePropertyName = "CanSave";
+
+        private bool _CanSave = true;
+
+        /// <summary>
+        /// CanSave
+        /// </summary>
+        public bool CanSave
+        {
+            get { return _CanSave; }
+
+            set
+            {
+                if (_CanSave == value) return;
+
+                _CanSave = value;
+                NotifyOfPropertyChange(CanSavePropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region public methods 
@@ -120,7 +151,7 @@ namespace LiveWallpaper.ViewModels
             sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
             foreach (var item in WallpaperManager.SupportedExtensions)
             {
-                sb.Append($"*.{item};");
+                sb.Append($"*{item};");
             }
             var openFileDialog = new Microsoft.Win32.OpenFileDialog()
             {
@@ -153,14 +184,14 @@ namespace LiveWallpaper.ViewModels
             if (CurrentWallpaper != null)
                 await Task.Run(() =>
             {
-                WallpaperService.Preivew(CurrentWallpaper);
+                WallpaperManager.Preivew(CurrentWallpaper);
             });
         }
 
         public async void StopPreview()
         {
             _preview = false;
-            await Task.Run(new System.Action(WallpaperService.StopPreview));
+            await Task.Run(new System.Action(WallpaperManager.StopPreview));
         }
 
         public void Cancel()
@@ -172,17 +203,34 @@ namespace LiveWallpaper.ViewModels
 
         public async void Save()
         {
-            if (CurrentWallpaper == null ||
-                string.IsNullOrEmpty(CurrentWallpaper.ProjectInfo.Title))
+            if (CurrentWallpaper == null)
             {
-                MessageBox.Show(await LanService.Get("wallpaperEditor_invalidWallpaper"));
+                MessageBox.Show(await LanService.Get("wallpaperEditor_warning_invalidWallpaper"));
                 return;
             }
-
-            await Task.Run(() =>
+            if (string.IsNullOrEmpty(CurrentWallpaper.ProjectInfo.Title))
             {
-                WallpaperService.Show(CurrentWallpaper);
-            });
+                MessageBox.Show(await LanService.Get("wallpaperEditor_warning_titleEmpty"));
+                return;
+            }
+            CanSave = false;
+
+            string destDir = Path.Combine(AppService.LocalWallpaperDir, Guid.NewGuid().ToString());
+            try
+            {
+                await WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
+                await Task.Run(() =>
+                {
+                    WallpaperManager.Show(CurrentWallpaper);
+                });
+            }
+            catch (Exception ex)
+            {
+                CanSave = true;
+                logger.Error(ex);
+                MessageBox.Show(ex.Message);
+                return;
+            }
             Result = true;
             TryClose();
         }

@@ -1,6 +1,7 @@
 ﻿using DZY.DotNetUtil.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,17 @@ namespace LiveWallpaperEngine
     /// </summary>
     public class ProjectInfo : ObservableObject
     {
+        public ProjectInfo()
+        {
+
+        }
+
+        public ProjectInfo(string filePath)
+        {
+            Title = File = Path.GetFileName(filePath);
+            Type = WallpaperManager.GetWallpaperType(filePath);
+        }
+
         #region Description
 
         /// <summary>
