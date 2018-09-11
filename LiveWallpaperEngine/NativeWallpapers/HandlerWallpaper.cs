@@ -12,12 +12,13 @@ namespace LiveWallpaperEngine.NativeWallpapers
 {
     public class HandlerWallpaper
     {
-        static IDesktopWallpaper _desktopWallpaperAPI = DesktopWallpaperFactory.Create();
         static IntPtr _workerw;
 
         static bool _showed;
         static bool _initlized;
         static IntPtr _handler;
+
+        public static IDesktopWallpaper DesktopWallpaperAPI { get; private set; } = DesktopWallpaperFactory.Create();
 
         public static void Close(bool restoreParent = false)
         {
@@ -28,13 +29,13 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
             if (!_initlized)
                 Initlize();
-          
+
             if (restoreParent)
             {
                 var desktop = USER32Wrapper.GetDesktopWindow();
                 USER32Wrapper.SetParent(_handler, desktop);
             }
-            _desktopWallpaperAPI.Enable(true);
+            DesktopWallpaperAPI.Enable(true);
         }
 
         public static void Show(IntPtr handler)
@@ -51,7 +52,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                     return;
             }
             USER32Wrapper.SetParent(_handler, _workerw);
-            _desktopWallpaperAPI.Enable(false);
+            DesktopWallpaperAPI.Enable(false);
         }
 
         private static bool Initlize()

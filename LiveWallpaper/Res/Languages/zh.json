@@ -29,7 +29,8 @@
   "setting_desktopLivePreview": "启用桌面预览",
   "setting_minimizeUI": "启动后最小化",
 
-  "wallpaperEditor_invalidWallpaper": "无效壁纸",
+  "wallpaperEditor_warning_invalidWallpaper": "无效壁纸",
+  "wallpaperEditor_warning_titleEmpty": "请输入壁纸标题",
   "wallpaperEditor_fileDialogType": "壁纸类型 |",
   "": ""
 }
