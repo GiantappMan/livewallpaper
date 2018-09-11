@@ -19,6 +19,7 @@
   "mainUI_localWallpaper": "本地壁纸",
   "mainUI_refreshWallpaper": "刷新壁纸",
   "mainUI_createWallpaper": "创建壁纸",
+  "mainUI_warning_loadError": "读取壁纸失败",
 
   "contextMenu_main": "打开主界面",
 

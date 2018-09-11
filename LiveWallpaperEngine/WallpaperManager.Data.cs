@@ -37,7 +37,7 @@ namespace LiveWallpaperEngine
         /// <returns></returns>
         public static async Task<Wallpaper> ResolveFromFile(string filePath)
         {
-            Wallpaper result = new Wallpaper
+            Wallpaper result = new Wallpaper()
             {
                 AbsolutePath = filePath
             };
@@ -60,8 +60,12 @@ namespace LiveWallpaperEngine
         public static IEnumerable<Wallpaper> GetWallpapers(string dir)
         {
             //test E:\SteamLibrary\steamapps\workshop\content\431960
-            foreach (var item in Directory.EnumerateFiles(dir, ""))
-                yield return new Wallpaper();
+            foreach (var item in Directory.EnumerateFiles(dir, "project.json", SearchOption.AllDirectories))
+            {
+                var info = JsonHelper.JsonDeserializeFromFileAsync<ProjectInfo>(item).Result;
+                var result = new Wallpaper(info, item);
+                yield return result;
+            }
         }
 
         public static async Task CreateLocalPack(Wallpaper wallpaper, string destDir)
