@@ -218,9 +218,9 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppService.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                await WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
                 await Task.Run(() =>
                 {
+                    WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
                     WallpaperManager.Show(CurrentWallpaper);
                 });
             }

@@ -9,7 +9,7 @@
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    Width="800"
+    Width="825"
     Height="600"
     lan:Xaml.Key="common_appName"
     WindowStartupLocation="CenterScreen"
@@ -21,7 +21,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="auto" />
                 </Grid.RowDefinitions>
-                <ListView x:Name="Wallpapers">
+                <ListView x:Name="Wallpapers" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -31,34 +31,30 @@
                                     cal:Action.TargetWithoutContext="MainViewModel"
                                     cal:Message.Attach="[Event PreviewMouseDown] = [Action ApplyWallpaper($datacontext)]"
                                     Background="Gray">
-
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" />
-                                        <TextBlock Text="{Binding Author}" />
+                                    <Image Source="{Binding AbsolutePreviewPath}" />
+                                    <StackPanel
+                                        Margin="0,0,0,10"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Bottom">
+                                        <TextBlock Foreground="White" Text="{Binding ProjectInfo.Title}" />
                                     </StackPanel>
+                                    <Grid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem
+                                                cal:Action.TargetWithoutContext="MainViewModel"
+                                                cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
+                                                lan:Xaml.Key="common_edit" />
+                                            <MenuItem
+                                                cal:Action.TargetWithoutContext="MainViewModel"
+                                                cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
+                                                lan:Xaml.Key="common_openFile" />
+                                            <MenuItem
+                                                cal:Action.TargetWithoutContext="MainViewModel"
+                                                cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
+                                                lan:Xaml.Key="common_delete" />
+                                        </ContextMenu>
+                                    </Grid.ContextMenu>
                                 </Grid>
-                                <Expander HorizontalAlignment="Right" VerticalAlignment="Top">
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Button
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_edit">
-                                            编辑
-                                        </Button>
-                                        <Button
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_openFile">
-                                            打开文件
-                                        </Button>
-                                        <Button
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_delete">
-                                            删除
-                                        </Button>
-                                    </StackPanel>
-                                </Expander>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
