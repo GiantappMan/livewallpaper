@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace LiveWallpaperEngine
 {
@@ -20,13 +21,10 @@ namespace LiveWallpaperEngine
             SupportedExtensions.AddRange(VideoExtensions);
         }
 
-        public static async void Initlize()
+        public static void Initlize()
         {
-            await Task.Run(() =>
-            {
-                //恢复桌面，以防上次崩溃x显示黑屏
-                HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
-            });
+            //恢复桌面，以防上次崩溃x显示黑屏
+            HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
         }
 
         /// <summary>
@@ -35,7 +33,7 @@ namespace LiveWallpaperEngine
         /// <param name="filePath">壁纸路径</param>
         /// <remarks>如果目录下没有project.json，则会生成默认对象</remarks>
         /// <returns></returns>
-        public static async Task<Wallpaper> ResolveFromFile(string filePath)
+        public static Wallpaper ResolveFromFile(string filePath)
         {
             Wallpaper result = new Wallpaper()
             {
@@ -43,17 +41,17 @@ namespace LiveWallpaperEngine
             };
 
             string dir = Path.GetDirectoryName(filePath);
-            result.ProjectInfo = await GetProjectInfo(dir);
+            result.ProjectInfo = GetProjectInfo(dir);
             if (result.ProjectInfo == null)
                 result.ProjectInfo = new ProjectInfo(filePath);
 
             return result;
         }
 
-        public static async Task<ProjectInfo> GetProjectInfo(string dirPath)
+        public static ProjectInfo GetProjectInfo(string dirPath)
         {
             string file = Path.Combine(dirPath, "project.json");
-            var info = await JsonHelper.JsonDeserializeFromFileAsync<ProjectInfo>(file);
+            var info = JsonHelper.JsonDeserializeFromFile<ProjectInfo>(file);
             return info;
         }
 
@@ -68,23 +66,29 @@ namespace LiveWallpaperEngine
             }
         }
 
-        public static async Task CreateLocalPack(Wallpaper wallpaper, string destDir)
+        public static void CreateLocalPack(Wallpaper wallpaper, string destDir)
         {
-            await Task.Run(() =>
+            var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
+            string projectInfoPath = Path.Combine(currentDir, "project.json");
+            if (File.Exists(projectInfoPath))
             {
-                var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
-                string projectInfoPath = Path.Combine(currentDir, "project.json");
-                if (File.Exists(projectInfoPath))
-                {
-                    //有详细信息，全拷
-                    CopyFolder(new DirectoryInfo(currentDir), new DirectoryInfo(destDir));
-                }
-                else
-                    CopyFileToDir(wallpaper.AbsolutePath, destDir);
-            });
+                //有详细信息，全拷。兼容wallpaper engine
+                CopyFolder(new DirectoryInfo(currentDir), new DirectoryInfo(destDir));
+            }
+            else
+                CopyFileToDir(wallpaper.AbsolutePath, destDir);
 
             string jsonPath = Path.Combine(destDir, "project.json");
-            await JsonHelper.JsonSerializeAsync(wallpaper.ProjectInfo, jsonPath);
+            JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
+        }
+
+        public static void Delete(Wallpaper wallpaper)
+        {
+            if (RenderWindow != null && RenderWindow.Wallpaper != null
+                && RenderWindow.Wallpaper.AbsolutePath == wallpaper.AbsolutePath)
+                Close();
+            string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
+            Directory.Delete(dir, true);
         }
 
         public static void CopyFileToDir(string path, string dir)
@@ -101,14 +105,11 @@ namespace LiveWallpaperEngine
         {
             Directory.CreateDirectory(target.FullName);
 
-            // Copy each file into the new directory.
             foreach (FileInfo fi in source.GetFiles())
             {
-                Console.WriteLine(@"Copying {0}\{1}", target.FullName, fi.Name);
                 fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
             }
 
-            // Copy each subdirectory using recursion.
             foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
             {
                 DirectoryInfo nextTargetSubDir =

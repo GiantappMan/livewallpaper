@@ -6,16 +6,24 @@ using System.Windows;
 using LiveWallpaperEngine;
 using MultiLanguageManager;
 using LiveWallpaper.Services;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace LiveWallpaper.ViewModels
 {
     public class MainViewModel : ScreenWindow
     {
+        private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private CreateWallpaperViewModel _createVM;
 
         public MainViewModel()
         {
-            RefreshLocalWallpaper();
+            Init();
+        }
+
+        private async void Init()
+        {
+            await RefreshLocalWallpaper();
         }
 
         protected override void OnViewReady(object view)
@@ -39,9 +47,13 @@ namespace LiveWallpaper.ViewModels
             windowManager.ShowWindow(_createVM, null, null);
         }
 
-        private void _createVM_Deactivated(object sender, DeactivationEventArgs e)
+        private async void _createVM_Deactivated(object sender, DeactivationEventArgs e)
         {
             _createVM.Deactivated -= _createVM_Deactivated;
+            if (_createVM.Result)
+            {
+                await RefreshLocalWallpaper();
+            }
             _createVM = null;
         }
 
@@ -50,7 +62,7 @@ namespace LiveWallpaper.ViewModels
             return base.GetView(context);
         }
 
-        public async void RefreshLocalWallpaper()
+        public async Task RefreshLocalWallpaper()
         {
             Wallpapers = new ObservableCollection<Wallpaper>();
 
@@ -73,9 +85,15 @@ namespace LiveWallpaper.ViewModels
 
         public void ExploreWallpaper(Wallpaper s)
         {
-            //var currentDir = Services.AppService.ApptEntryDir;
-            //var target = currentDir + s.PackInfo.Dir;
-            //Process.Start("Explorer.exe", target);
+            try
+            {
+                Process.Start("Explorer.exe", $" /select, {s.AbsolutePath}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+                MessageBox.Show(ex.Message);
+            }
         }
         public void EditWallpaper(Wallpaper s)
         {
@@ -84,23 +102,17 @@ namespace LiveWallpaper.ViewModels
             vm.SetPaper(s);
             windowManager.ShowDialog(vm);
         }
-        public void DeleteWallpaper(Wallpaper w)
+        public async void DeleteWallpaper(Wallpaper w)
         {
-            //try
-            //{
-            //    if (w == currentShowWallpaper)
-            //    {
-            //        WallpaperManger.Clean();
-            //        currentShowWallpaper = null;
-            //    }
-            //    var currentDir = Services.AppService.ApptEntryDir;
-            //    WallpaperManger.Delete(w);
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show(ex.ToString());
-            //}
-            //RefreshLocalWallpaper();
+            try
+            {
+                WallpaperManager.Delete(w);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            await RefreshLocalWallpaper();
         }
 
         public void ApplyWallpaper(Wallpaper w)

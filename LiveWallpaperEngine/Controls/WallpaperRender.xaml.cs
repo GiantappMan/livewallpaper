@@ -69,26 +69,15 @@ namespace LiveWallpaperEngine.Controls
         // Using a DependencyProperty as the backing store for FilePath.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty FilePathProperty =
             DependencyProperty.Register("FilePath", typeof(string), typeof(WallpaperRender), new PropertyMetadata(null,
-                new PropertyChangedCallback(async (sender, e) =>
+                new PropertyChangedCallback((sender, e) =>
                 {
                     WallpaperRender control = sender as WallpaperRender;
-                    var temp = await WallpaperManager.ResolveFromFile(e.NewValue.ToString());
+                    var temp = WallpaperManager.ResolveFromFile(e.NewValue.ToString());
                     control.SetValue(WallpaperProperty, temp);
                 })));
 
-
         #endregion
 
         #endregion
-
-        public void ShowPaper(Wallpaper Wwallpaper)
-        {
-
-        }
-
-        public void ClosePaper()
-        {
-
-        }
     }
 }
