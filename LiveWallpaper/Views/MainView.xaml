@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cal="http://www.caliburnproject.org"
+    xmlns:conveters="clr-namespace:LiveWallpaper.Views.Conveters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
@@ -14,6 +15,9 @@
     lan:Xaml.Key="common_appName"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+    <Window.Resources>
+        <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
+    </Window.Resources>
     <TabControl>
         <TabItem lan:Xaml.Key="mainUI_localWallpaper">
             <Grid>
@@ -31,7 +35,7 @@
                                     cal:Action.TargetWithoutContext="MainViewModel"
                                     cal:Message.Attach="[Event PreviewMouseDown] = [Action ApplyWallpaper($datacontext)]"
                                     Background="Gray">
-                                    <Image Source="{Binding AbsolutePreviewPath}" />
+                                    <Image Source="{Binding AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}}" />
                                     <StackPanel
                                         Margin="0,0,0,10"
                                         HorizontalAlignment="Center"
