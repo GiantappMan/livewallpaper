@@ -1,6 +1,7 @@
 ﻿using DZY.DotNetUtil.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,18 @@ namespace LiveWallpaperEngine
         public string ExeName { get; internal set; }
         public string ExePath { get; internal set; }
         public object ExeArgs { get; internal set; }
+
+        public Wallpaper()
+        {
+
+        }
+
+        public Wallpaper(ProjectInfo info, string infoPath)
+        {
+            ProjectInfo = info;
+            string dir = Path.GetDirectoryName(infoPath);
+            AbsolutePath = Path.Combine(dir, info.File);
+        }
 
         #region ProjectInfo
 
@@ -45,7 +58,7 @@ namespace LiveWallpaperEngine
                 NotifyOfPropertyChange(ProjectInfoPropertyName);
             }
         }
-        
+
         #endregion
 
         public static WallpaperType GetType(Wallpaper w)

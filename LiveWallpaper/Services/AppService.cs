@@ -17,7 +17,7 @@ namespace LiveWallpaper.Services
 {
     public class AppService
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
      
         /// <summary>
         /// 程序入口

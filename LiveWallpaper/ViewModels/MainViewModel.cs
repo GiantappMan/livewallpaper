@@ -4,12 +4,13 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using LiveWallpaperEngine;
+using MultiLanguageManager;
+using LiveWallpaper.Services;
 
 namespace LiveWallpaper.ViewModels
 {
     public class MainViewModel : ScreenWindow
     {
-        const string saveDIR = "Wallpapers";
         private CreateWallpaperViewModel _createVM;
 
         public MainViewModel()
@@ -49,26 +50,24 @@ namespace LiveWallpaper.ViewModels
             return base.GetView(context);
         }
 
-        public void RefreshLocalWallpaper()
+        public async void RefreshLocalWallpaper()
         {
             Wallpapers = new ObservableCollection<Wallpaper>();
 
-            var dirPath = Path.Combine(Services.AppService.ApptEntryDir, saveDIR);
-            if (!Directory.Exists(dirPath))
-                Directory.CreateDirectory(dirPath);
-            var dir = new DirectoryInfo(dirPath);
+            if (!Directory.Exists(AppService.LocalWallpaperDir))
+                Directory.CreateDirectory(AppService.LocalWallpaperDir);
+
             try
             {
-                var configs = dir.EnumerateFiles("config.json", SearchOption.AllDirectories);
-                //foreach (var item in configs)
-                //{
-                //    var data = await ConfigHelper.LoadConfigAsync<Wallpaper>(item.FullName);
-                //    Wallpapers.Add(data);
-                //}
+                var wallpapers = WallpaperManager.GetWallpapers(AppService.LocalWallpaperDir);
+                foreach (var item in wallpapers)
+                {
+                    Wallpapers.Add(item);
+                }
             }
             catch (Exception)
             {
-                MessageBox.Show("failed to read wallpapers");
+                MessageBox.Show(await LanService.Get("mainUI_warning_loadError"));
             }
         }
 
