@@ -12,7 +12,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="725"
     Height="550"
-    WindowStartupLocation="CenterScreen"
+    WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <Window.Resources>
         <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
