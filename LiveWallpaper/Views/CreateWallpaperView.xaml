@@ -93,7 +93,9 @@
                 x:Name="Desc"
                 Grid.Row="2"
                 Grid.Column="1"
+                MaxHeight="50"
                 Margin="2"
+                AcceptsReturn="True"
                 Text="{Binding CurrentWallpaper.ProjectInfo.Description, Mode=TwoWay}" />
             <Grid
                 Grid.RowSpan="3"
