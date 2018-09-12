@@ -1,4 +1,5 @@
-﻿using DZY.DotNetUtil.Helpers;
+﻿using Caliburn.Micro;
+using DZY.DotNetUtil.Helpers;
 using LiveWallpaperEngine.NativeWallpapers;
 using System;
 using System.Collections.Generic;
@@ -61,12 +62,13 @@ namespace LiveWallpaperEngine
             foreach (var item in Directory.EnumerateFiles(dir, "project.json", SearchOption.AllDirectories))
             {
                 var info = JsonHelper.JsonDeserializeFromFileAsync<ProjectInfo>(item).Result;
-                var result = new Wallpaper(info, item);
+                var saveDir = Path.GetDirectoryName(item);
+                var result = new Wallpaper(info, saveDir);
                 yield return result;
             }
         }
 
-        public static void CreateLocalPack(Wallpaper wallpaper, string destDir)
+        public static Wallpaper CreateLocalPack(Wallpaper wallpaper, string destDir)
         {
             var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
             string projectInfoPath = Path.Combine(currentDir, "project.json");
@@ -83,12 +85,22 @@ namespace LiveWallpaperEngine
 
             string jsonPath = Path.Combine(destDir, "project.json");
             JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
+
+            Wallpaper result = new Wallpaper(wallpaper.ProjectInfo, destDir);
+            return result;
         }
 
         public static void Delete(Wallpaper wallpaper)
         {
-            if (RenderWindow != null && RenderWindow.Wallpaper != null
-                && RenderWindow.Wallpaper.AbsolutePath == wallpaper.AbsolutePath)
+            Wallpaper renderWallpaper = null;
+            if (RenderWindow != null)
+                Execute.OnUIThread(() =>
+                {
+                    renderWallpaper = RenderWindow.Wallpaper;
+                });
+
+            if (renderWallpaper != null &&
+                renderWallpaper.AbsolutePath == wallpaper.AbsolutePath)
                 Close();
             string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
             Directory.Delete(dir, true);

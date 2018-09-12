@@ -19,6 +19,7 @@ namespace LiveWallpaper.ViewModels
     public class CreateWallpaperViewModel : ScreenWindow
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private bool _editMode;
 
         //默认是false，修改后内存保存
         private static bool _preview;
@@ -171,6 +172,7 @@ namespace LiveWallpaper.ViewModels
         {
             DisplayName = LanService.Get("common_edit").Result;
             CurrentWallpaper = w;
+            _editMode = true;
         }
 
         public async void Preview()
@@ -218,8 +220,23 @@ namespace LiveWallpaper.ViewModels
             {
                 await Task.Run(() =>
                 {
-                    WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
-                    WallpaperManager.Show(CurrentWallpaper);
+                    var result = WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
+                    if (_editMode)
+                    {
+                        //删除旧包
+                        var temp = CurrentWallpaper;
+                        CurrentWallpaper = null;
+                        try
+                        {
+                            WallpaperManager.Delete(temp);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.ToString());
+                        }
+                    }
+                    //CurrentWallpaper = result;
+                    //WallpaperManager.Show(result);
                 });
             }
             catch (Exception ex)
