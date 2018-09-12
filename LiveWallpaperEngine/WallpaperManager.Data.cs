@@ -76,7 +76,10 @@ namespace LiveWallpaperEngine
                 CopyFolder(new DirectoryInfo(currentDir), new DirectoryInfo(destDir));
             }
             else
+            {
+                CopyFileToDir(wallpaper.AbsolutePreviewPath, destDir);
                 CopyFileToDir(wallpaper.AbsolutePath, destDir);
+            }
 
             string jsonPath = Path.Combine(destDir, "project.json");
             JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
@@ -95,6 +98,9 @@ namespace LiveWallpaperEngine
         {
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
+
+            if (!File.Exists(path))
+                return;
 
             FileInfo file = new FileInfo(path);
             string target = Path.Combine(dir, file.Name);
