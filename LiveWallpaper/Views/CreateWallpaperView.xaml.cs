@@ -1,8 +1,11 @@
 ﻿using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
+using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace LiveWallpaper.Views
 {

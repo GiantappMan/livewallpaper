@@ -15,15 +15,25 @@ namespace LiveWallpaper.Views.Conveters
             if (value == null)
                 return null;
 
-            if (!string.IsNullOrEmpty(value.ToString()))
+            string path = value.ToString();
+
+            try
             {
-                BitmapImage bi = new BitmapImage();
-                bi.BeginInit();
-                bi.UriSource = new Uri(value.ToString());
-                bi.CacheOption = BitmapCacheOption.OnLoad;
-                bi.EndInit();
-                return bi;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    BitmapImage bi = new BitmapImage();
+                    bi.BeginInit();
+                    bi.UriSource = new Uri(path);
+                    bi.CacheOption = BitmapCacheOption.OnLoad;
+                    bi.EndInit();
+                    return bi;
+                }
             }
+            catch (Exception)
+            {
+                return null;
+            }
+
             return null;
         }
 

@@ -11,6 +11,8 @@ using System.Windows;
 using System.Text;
 using System.IO;
 using System;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -54,6 +56,7 @@ namespace LiveWallpaper.ViewModels
                 _CurrentWallpaper = value;
                 if (_preview)
                     Preview();
+
                 NotifyOfPropertyChange(CurrentWallpaperPropertyName);
             }
         }
@@ -167,13 +170,7 @@ namespace LiveWallpaper.ViewModels
         internal void SetPaper(Wallpaper w)
         {
             DisplayName = LanService.Get("common_edit").Result;
-            //Name = w.Name;
-            //Dir = w.PackInfo.Dir;
-            //EndPoint = w.PackInfo.EnterPoint;
-            //Arguments = w.PackInfo.Args;
-            //SelectedType = w.Type;
-
-            //_wallpaper = w;
+            CurrentWallpaper = w;
         }
 
         public async void Preview()
@@ -213,6 +210,7 @@ namespace LiveWallpaper.ViewModels
                 MessageBox.Show(await LanService.Get("wallpaperEditor_warning_titleEmpty"));
                 return;
             }
+
             CanSave = false;
 
             string destDir = Path.Combine(AppService.LocalWallpaperDir, Guid.NewGuid().ToString());
@@ -233,6 +231,44 @@ namespace LiveWallpaper.ViewModels
             }
             Result = true;
             TryClose();
+        }
+
+        public void GeneratePreview(object parameter)
+        {
+            WallpaperRender render = parameter as WallpaperRender;
+            if (render == null || CurrentWallpaper == null)
+                return;
+
+            try
+            {
+                using (FileStream stream = File.Open(CurrentWallpaper.AbsolutePreviewPath, FileMode.Create))
+                {
+                    RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
+                        (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+
+                    bmp.Render(render);
+
+                    //截图保持正方形
+                    var size = (int)(render.ActualWidth > render.ActualHeight ? render.ActualHeight : render.ActualWidth);
+                    var x = (int)(render.ActualWidth / 2 - size / 2);
+                    var y = (int)(render.ActualHeight / 2 - size / 2);
+                    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, size, size));
+
+                    PngBitmapEncoder coder = new PngBitmapEncoder
+                    {
+                        Interlace = PngInterlaceOption.Off
+                    };
+                    coder.Frames.Add(BitmapFrame.Create(crop));
+                    coder.Save(stream);
+                }
+
+                CurrentWallpaper.NotifyOfPropertyChange(Wallpaper.AbsolutePreviewPathPropertyName);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+                MessageBox.Show(ex.Message);
+            }
         }
 
         //public void RestartExploer()
