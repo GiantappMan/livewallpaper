@@ -18,7 +18,7 @@ namespace LiveWallpaper.Services
     public class AppService
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-     
+
         /// <summary>
         /// 程序入口
         /// </summary>
@@ -27,6 +27,10 @@ namespace LiveWallpaper.Services
         /// 配置文件地址
         /// </summary>
         public static string SettingPath { get; private set; }
+        /// <summary>
+        /// 应用程序数据
+        /// </summary>
+        public static string AppDataPath { get; private set; }
         /// <summary>
         /// 数据保存目录
         /// </summary>
@@ -59,6 +63,7 @@ namespace LiveWallpaper.Services
             AppDataDir = $"{appData}\\LiveWallpaper";
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
             LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
+            AppDataPath = $"{AppDataDir}\\appData.json";
 
             Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
             if (Setting == null)
@@ -76,6 +81,18 @@ namespace LiveWallpaper.Services
                 await JsonHelper.JsonSerializeAsync(Setting, SettingPath);
             }
             await ApplySetting(Setting);
+
+            AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
+            if (AppData == null)
+            {
+                AppData = new AppData();
+            }
+            await ApplyAppData(AppData);
+        }
+
+        public static Task ApplyAppData(AppData appData)
+        {
+            return Task.CompletedTask;
         }
 
         public static async Task ApplySetting(SettingObject setting)
@@ -89,5 +106,7 @@ namespace LiveWallpaper.Services
         }
 
         public static SettingObject Setting { get; private set; }
+
+        public static AppData AppData { get; private set; }
     }
 }

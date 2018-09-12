@@ -182,6 +182,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Settings\AppData.cs" />
     <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Services\AppService.cs" />
     <Compile Include="ViewModels\ScreenWindow.cs" />
