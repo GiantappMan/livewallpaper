@@ -21,6 +21,9 @@
         helper:DragHelper.Data="{Binding FilePath, RelativeSource={RelativeSource AncestorType=local:WallpaperRender}, Mode=TwoWay}"
         Background="LightGray">
         <ContentControl Content="{Binding DragTips, RelativeSource={RelativeSource AncestorType=local:WallpaperRender}}" />
-        <ContentControl Content="{Binding Wallpaper, RelativeSource={RelativeSource AncestorType=local:WallpaperRender}}" ContentTemplateSelector="{StaticResource RenderInfoSelector}" />
+        <ContentControl
+            Content="{Binding Wallpaper, RelativeSource={RelativeSource AncestorType=local:WallpaperRender}}"
+            ContentTemplateSelector="{StaticResource RenderInfoSelector}"
+            IsEnabled="{Binding WallpaperEnabled, RelativeSource={RelativeSource AncestorType=local:WallpaperRender}}" />
     </Grid>
 </UserControl>

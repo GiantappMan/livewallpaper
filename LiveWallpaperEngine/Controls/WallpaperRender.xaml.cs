@@ -78,6 +78,20 @@ namespace LiveWallpaperEngine.Controls
 
         #endregion
 
+        #region WallpaperEnabled
+
+        public bool WallpaperEnabled
+        {
+            get { return (bool)GetValue(WallpaperEnabledProperty); }
+            set { SetValue(WallpaperEnabledProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for WallpaperEnabled.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty WallpaperEnabledProperty =
+            DependencyProperty.Register("WallpaperEnabled", typeof(bool), typeof(WallpaperRender), new PropertyMetadata(true));
+
+        #endregion
+
         #endregion
     }
 }
