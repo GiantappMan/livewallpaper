@@ -20,7 +20,8 @@ namespace LiveWallpaperEngine
 
         public ProjectInfo(string filePath)
         {
-            Title = File = Path.GetFileName(filePath);
+            File = Path.GetFileName(filePath);
+            Title = Path.GetFileNameWithoutExtension(filePath);
             Type = WallpaperManager.GetWallpaperType(filePath);
         }
 
