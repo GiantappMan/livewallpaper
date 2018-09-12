@@ -56,9 +56,9 @@ namespace LiveWallpaperEngine
 
         }
 
-        public Wallpaper(ProjectInfo info, string infoPath)
+        public Wallpaper(ProjectInfo info, string dir)
         {
-            _dir = Path.GetDirectoryName(infoPath);
+            _dir = dir;
             ProjectInfo = info;
         }
 

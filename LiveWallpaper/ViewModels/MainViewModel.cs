@@ -46,7 +46,15 @@ namespace LiveWallpaper.ViewModels
             _createVM.Deactivated += _createVM_Deactivated;
             windowManager.ShowWindow(_createVM, null, null);
         }
-
+        public void EditWallpaper(Wallpaper s)
+        {
+            CreateWallpaper();
+            _createVM.SetPaper(s);
+            //var windowManager = IoC.Get<IWindowManager>();
+            //var vm = IoC.Get<CreateWallpaperViewModel>();
+            //vm.SetPaper(s);
+            //windowManager.ShowDialog(vm);
+        }
         private async void _createVM_Deactivated(object sender, DeactivationEventArgs e)
         {
             _createVM.Deactivated -= _createVM_Deactivated;
@@ -95,13 +103,7 @@ namespace LiveWallpaper.ViewModels
                 MessageBox.Show(ex.Message);
             }
         }
-        public void EditWallpaper(Wallpaper s)
-        {
-            var windowManager = IoC.Get<IWindowManager>();
-            var vm = IoC.Get<CreateWallpaperViewModel>();
-            vm.SetPaper(s);
-            windowManager.ShowDialog(vm);
-        }
+
         public async void DeleteWallpaper(Wallpaper w)
         {
             try
@@ -118,6 +120,7 @@ namespace LiveWallpaper.ViewModels
         public void ApplyWallpaper(Wallpaper w)
         {
             //currentShowWallpaper = w;
+            WallpaperManager.Show(w);
             //await WallpaperManger.ApplyWallpaper(w);
         }
 
