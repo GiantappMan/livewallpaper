@@ -86,11 +86,14 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        public void DeleteWallpaper(Wallpaper w)
+        public async void DeleteWallpaper(Wallpaper w)
         {
             try
             {
-                WallpaperManager.Delete(w);
+                await Task.Run(() =>
+                {
+                    WallpaperManager.Delete(w);
+                });
             }
             catch (Exception ex)
             {
@@ -108,7 +111,7 @@ namespace LiveWallpaper.ViewModels
 
         public void Setting()
         {
-            IoC.Get<ContextMenuViewModel>().Config();
+            IoC.Get<ContextMenuViewModel>().Config(GetView());
         }
 
         protected override void OnDeactivate(bool close)
