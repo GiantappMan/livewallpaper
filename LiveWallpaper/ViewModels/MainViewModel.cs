@@ -8,6 +8,7 @@ using MultiLanguageManager;
 using LiveWallpaper.Services;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Dynamic;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -39,7 +40,10 @@ namespace LiveWallpaper.ViewModels
             var windowManager = IoC.Get<IWindowManager>();
             _createVM = IoC.Get<CreateWallpaperViewModel>();
             _createVM.Deactivated += _createVM_Deactivated;
-            windowManager.ShowWindow(_createVM, null, null);
+            dynamic windowSettings = new ExpandoObject();
+            windowSettings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            windowSettings.Owner = GetView();
+            windowManager.ShowWindow(_createVM, null, windowSettings);
         }
 
         public void EditWallpaper(Wallpaper s)
