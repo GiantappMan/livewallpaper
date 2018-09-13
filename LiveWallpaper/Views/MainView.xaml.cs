@@ -15,7 +15,7 @@ namespace LiveWallpaper.Views
         }
 
 
-        private void btn_CreateWallpaper(object sender, RoutedEventArgs e)
+        private void Btn_CreateWallpaper(object sender, RoutedEventArgs e)
         {
             CreateWallpaperView createWindow = new CreateWallpaperView();
             createWindow.Show();
