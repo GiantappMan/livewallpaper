@@ -252,8 +252,7 @@ namespace LiveWallpaper.ViewModels
 
         public void GeneratePreview(object parameter)
         {
-            WallpaperRender render = parameter as WallpaperRender;
-            if (render == null || CurrentWallpaper == null)
+            if (!(parameter is WallpaperRender render) || CurrentWallpaper == null)
                 return;
 
             try
