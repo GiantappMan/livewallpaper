@@ -8,6 +8,7 @@
     Title="RenderWindow"
     AllowsTransparency="True"
     Background="Transparent"
+    ShowInTaskbar="False"
     WindowStyle="None"
     mc:Ignorable="d">
     <Window.Resources>

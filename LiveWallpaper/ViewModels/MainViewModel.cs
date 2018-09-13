@@ -18,12 +18,7 @@ namespace LiveWallpaper.ViewModels
 
         public MainViewModel()
         {
-            Init();
-        }
-
-        private async void Init()
-        {
-            await RefreshLocalWallpaper();
+            Wallpapers = new ObservableCollection<Wallpaper>(AppService.Wallpapers);
         }
 
         protected override void OnViewReady(object view)
@@ -46,21 +41,19 @@ namespace LiveWallpaper.ViewModels
             _createVM.Deactivated += _createVM_Deactivated;
             windowManager.ShowWindow(_createVM, null, null);
         }
+
         public void EditWallpaper(Wallpaper s)
         {
             CreateWallpaper();
             _createVM.SetPaper(s);
-            //var windowManager = IoC.Get<IWindowManager>();
-            //var vm = IoC.Get<CreateWallpaperViewModel>();
-            //vm.SetPaper(s);
-            //windowManager.ShowDialog(vm);
         }
-        private async void _createVM_Deactivated(object sender, DeactivationEventArgs e)
+
+        private void _createVM_Deactivated(object sender, DeactivationEventArgs e)
         {
             _createVM.Deactivated -= _createVM_Deactivated;
             if (_createVM.Result)
             {
-                await RefreshLocalWallpaper();
+                RefreshLocalWallpaper();
             }
             _createVM = null;
         }
@@ -70,25 +63,10 @@ namespace LiveWallpaper.ViewModels
             return base.GetView(context);
         }
 
-        public async Task RefreshLocalWallpaper()
+        public void RefreshLocalWallpaper()
         {
-            Wallpapers = new ObservableCollection<Wallpaper>();
-
-            if (!Directory.Exists(AppService.LocalWallpaperDir))
-                Directory.CreateDirectory(AppService.LocalWallpaperDir);
-
-            try
-            {
-                var wallpapers = WallpaperManager.GetWallpapers(AppService.LocalWallpaperDir);
-                foreach (var item in wallpapers)
-                {
-                    Wallpapers.Add(item);
-                }
-            }
-            catch (Exception)
-            {
-                MessageBox.Show(await LanService.Get("mainUI_warning_loadError"));
-            }
+            AppService.RefreshLocalWallpapers();
+            Wallpapers = new ObservableCollection<Wallpaper>(AppService.Wallpapers);
         }
 
         public void ExploreWallpaper(Wallpaper s)
@@ -104,7 +82,7 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
-        public async void DeleteWallpaper(Wallpaper w)
+        public void DeleteWallpaper(Wallpaper w)
         {
             try
             {
@@ -114,14 +92,14 @@ namespace LiveWallpaper.ViewModels
             {
                 MessageBox.Show(ex.ToString());
             }
-            await RefreshLocalWallpaper();
+            RefreshLocalWallpaper();
         }
 
-        public void ApplyWallpaper(Wallpaper w)
+        public async void ApplyWallpaper(Wallpaper w)
         {
-            //currentShowWallpaper = w;
             WallpaperManager.Show(w);
-            //await WallpaperManger.ApplyWallpaper(w);
+            AppService.AppData.Wallpaper = w.AbsolutePath;
+            await AppService.ApplyAppDataAsync();
         }
 
         public void Setting()
@@ -132,13 +110,11 @@ namespace LiveWallpaper.ViewModels
         protected override void OnDeactivate(bool close)
         {
             base.OnDeactivate(close);
-            //WallpaperManger.Clean();
         }
 
         #endregion
 
         #region properties
-
 
         #region Wallpapers
 
