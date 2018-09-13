@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using DZY.WinAPI;
 using LiveWallpaperEngine;
 using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
@@ -19,6 +20,8 @@ namespace LiveWallpaperEngine
         /// </summary>
         public static RenderWindow RenderWindow { get; private set; }
         private static Wallpaper _lastwallPaper;
+        private static SetWinEventHookDelegate _hookCallback;
+        private static IntPtr _hook;
 
         public static void Show(Wallpaper wallpaper)
         {
@@ -39,9 +42,34 @@ namespace LiveWallpaperEngine
                 }
 
                 handler = new WindowInteropHelper(RenderWindow).Handle;
+
+                if (_hook == IntPtr.Zero)
+                {
+                    //监控其他程序是否最大化
+                    _hookCallback = new SetWinEventHookDelegate(WinEventProc);
+                    _hook = USER32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
+                        SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
+                }
             });
 
             HandlerWallpaper.Show(handler);
+        }
+
+        private static void WinEventProc(IntPtr hook, SetWinEventHookEventType eventType, IntPtr window, int objectId, int childId, uint threadId, uint time)
+        {
+            try
+            {
+                if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
+                    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
+                {
+                    var handle = USER32Wrapper.GetForegroundWindow();
+                    string txt = USER32Wrapper.GetWindowText(handle);
+                    System.Diagnostics.Debug.WriteLine(txt);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         internal static string GetWallpaperType(string filePath)
@@ -63,6 +91,10 @@ namespace LiveWallpaperEngine
                 RenderWindow.Wallpaper = null;
             });
 
+            if (_hook != IntPtr.Zero)
+            {
+                bool ok = USER32Wrapper.UnhookWinEvent(_hook);
+            }
             HandlerWallpaper.Close();
         }
 
