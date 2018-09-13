@@ -47,8 +47,8 @@ namespace LiveWallpaperEngine
                 {
                     //监控其他程序是否最大化
                     _hookCallback = new SetWinEventHookDelegate(WinEventProc);
-                    _hook = USER32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
-                        SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
+                    _hook = USER32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE,
+                        SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
                 }
             });
 
@@ -59,16 +59,29 @@ namespace LiveWallpaperEngine
         {
             try
             {
-                if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
-                    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
+                //if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
+                //    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
+                //
+                if (eventType == SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE)
                 {
-                    var handle = USER32Wrapper.GetForegroundWindow();
-                    string txt = USER32Wrapper.GetWindowText(handle);
-                    System.Diagnostics.Debug.WriteLine(txt);
+                    WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
+                    USER32Wrapper.GetWindowPlacement(window, ref placment);
+                    if (placment.showCmd == (uint)WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
+                    {
+                        var handle = USER32Wrapper.GetForegroundWindow();
+                        string txt = USER32Wrapper.GetWindowText(handle);
+                        System.Diagnostics.Debug.WriteLine(txt);
+                    }
+
+                    if (placment.showCmd == (uint)WINDOWPLACEMENTFlags.SW_RESTORE ||
+                        placment.showCmd == (uint)WINDOWPLACEMENTFlags.SW_SHOW ||
+                        placment.showCmd == (uint)WINDOWPLACEMENTFlags.SW_SHOWMINIMIZED)
+                        System.Diagnostics.Debug.WriteLine("离开" + placment.showCmd);
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine(ex);
             }
         }
 
