@@ -70,6 +70,7 @@ namespace LiveWallpaper.ViewModels
 
         public void ExitApp()
         {
+            AppService.Dispose();
             Application.Current.Shutdown();
         }
     }

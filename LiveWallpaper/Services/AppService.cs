@@ -1,10 +1,12 @@
 ﻿using DZY.DotNetUtil.Helpers;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Settings;
+using LiveWallpaperEngine;
 using LiveWallpaperEngine.Controls;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -40,6 +42,9 @@ namespace LiveWallpaper.Services
         /// </summary>
         public static string LocalWallpaperDir { get; private set; }
 
+        public static List<Wallpaper> Wallpapers { get; private set; }
+
+
         public static async Task Initlize()
         {
             //开机启动
@@ -51,11 +56,9 @@ namespace LiveWallpaper.Services
 
             //多语言
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
-
             //不能用Environment.CurrentDirectory，开机启动目录会出错
             ApptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string path = Path.Combine(ApptEntryDir, "Res\\Languages");
-            //logger.Info($"lanPath:{path}");
             LanService.Init(new JsonDB(path), true, "zh");
 
             //配置相关
@@ -82,17 +85,58 @@ namespace LiveWallpaper.Services
             }
             await ApplySetting(Setting);
 
+            //应用程序数据
             AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
             if (AppData == null)
             {
                 AppData = new AppData();
+                await ApplyAppDataAsync();
             }
-            await ApplyAppData(AppData);
+
+            //加载壁纸
+            await Task.Run(() =>
+            {
+                RefreshLocalWallpapers();
+                if (AppData.Wallpaper != null)
+                {
+                    var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
+                    if (current != null)
+                        WallpaperManager.Show(current);
+                }
+            });
         }
 
-        public static Task ApplyAppData(AppData appData)
+        internal static void Dispose()
         {
-            return Task.CompletedTask;
+            WallpaperManager.Close();
+        }
+
+        public static List<Wallpaper> RefreshLocalWallpapers()
+        {
+            Wallpapers = new List<Wallpaper>();
+
+            if (!Directory.Exists(LocalWallpaperDir))
+                Directory.CreateDirectory(LocalWallpaperDir);
+
+            try
+            {
+                var wallpapers = WallpaperManager.GetWallpapers(AppService.LocalWallpaperDir);
+                foreach (var item in wallpapers)
+                {
+                    Wallpapers.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+
+            return Wallpapers;
+        }
+
+        public static async Task ApplyAppDataAsync()
+        {
+            await JsonHelper.JsonSerializeAsync(AppData, AppDataPath);
         }
 
         public static async Task ApplySetting(SettingObject setting)
