@@ -58,12 +58,12 @@ namespace LiveWallpaperEngine
             if (RenderWindow == null)
                 return;
 
-            HandlerWallpaper.Close();
-
             Execute.OnUIThread(() =>
             {
                 RenderWindow.Wallpaper = null;
             });
+
+            HandlerWallpaper.Close();
         }
 
         public static void Dispose()

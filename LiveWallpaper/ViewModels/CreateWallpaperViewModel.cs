@@ -235,8 +235,6 @@ namespace LiveWallpaper.ViewModels
                             MessageBox.Show(ex.ToString());
                         }
                     }
-                    //CurrentWallpaper = result;
-                    //WallpaperManager.Show(result);
                 });
             }
             catch (Exception ex)

@@ -39,12 +39,25 @@ namespace LiveWallpaper.ViewModels
 
         public void Config()
         {
+            Config(null);
+        }
+
+        public void Config(object owner)
+        {
             if (_settingVM != null)
                 return;
 
             _settingVM = IoC.Get<SettingViewModel>();
             _settingVM.Deactivated += _settingVM_Deactivated;
-            _windowManager.ShowWindow(_settingVM, null);
+            dynamic windowSettings = new ExpandoObject();
+            if (owner == null)
+                windowSettings.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            else
+            {
+                windowSettings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                windowSettings.Owner = owner;
+            }
+            _windowManager.ShowWindow(_settingVM, null, windowSettings);
         }
 
         private async void _settingVM_Deactivated(object sender, DeactivationEventArgs e)
