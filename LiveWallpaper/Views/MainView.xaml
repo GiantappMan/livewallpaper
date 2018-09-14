@@ -25,7 +25,10 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="auto" />
                 </Grid.RowDefinitions>
-                <ListView x:Name="Wallpapers" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListView
+                    x:Name="Wallpapers"
+                    Margin="5"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid
@@ -67,16 +70,10 @@
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
                 </ListView>
-                <!--<ComboBox
-                    Grid.Row="1"
-                    HorizontalAlignment="Left"
-                    SelectionChanged="ComboBox_SelectionChanged">
-                    <ComboBoxItem Tag="zh">中文</ComboBoxItem>
-                    <ComboBoxItem Tag="en">English</ComboBoxItem>
-                </ComboBox>-->
                 <Button
                     x:Name="Setting"
                     Grid.Row="1"
+                    Margin="5,2,0,5"
                     HorizontalAlignment="Left">
                     <iconPacks:PackIconMaterial
                         HorizontalAlignment="Stretch"
@@ -85,17 +82,14 @@
                 </Button>
                 <StackPanel
                     Grid.Row="1"
+                    Margin="5,2,5,5"
                     HorizontalAlignment="Right"
                     Orientation="Horizontal">
-                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper">
-                        刷新壁纸
-                    </Button>
+                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper" />
                     <Button
                         x:Name="CreateWallpaper"
                         Margin="10,0,0,0"
-                        lan:Xaml.Key="mainUI_createWallpaper">
-                        创建壁纸
-                    </Button>
+                        lan:Xaml.Key="mainUI_createWallpaper" />
                 </StackPanel>
             </Grid>
         </TabItem>
