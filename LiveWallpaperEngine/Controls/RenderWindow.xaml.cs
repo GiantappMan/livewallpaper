@@ -33,12 +33,17 @@ namespace LiveWallpaperEngine.Controls
             double width = Screen.AllScreens[0].Bounds.Width;
             double height = Screen.AllScreens[0].Bounds.Height;
 
-            Top = -4;
-            Left = 0;
+            //Top = -4;
+            //Left = 0;
+            WindowState = WindowState.Maximized;
+
             Width = width;
             Height = height;
 
-            WindowState = WindowState.Maximized;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Top = 0;
+            Left = 0;
+
         }
 
         #region Wallpaper

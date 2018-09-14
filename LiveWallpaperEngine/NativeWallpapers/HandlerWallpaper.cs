@@ -32,8 +32,8 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
             if (restoreParent)
             {
-                var desktop = USER32Wrapper.GetDesktopWindow();
-                USER32Wrapper.SetParent(_handler, desktop);
+                var desktop = User32Wrapper.GetDesktopWindow();
+                User32Wrapper.SetParent(_handler, desktop);
             }
             DesktopWallpaperAPI.Enable(true);
         }
@@ -51,15 +51,15 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (!isOk)
                     return;
             }
-            USER32Wrapper.SetParent(_handler, _workerw);
+            User32Wrapper.SetParent(_handler, _workerw);
             DesktopWallpaperAPI.Enable(false);
         }
 
         private static bool Initlize()
         {
-            IntPtr progman = USER32Wrapper.FindWindow("Progman", null);
+            IntPtr progman = User32Wrapper.FindWindow("Progman", null);
             IntPtr result = IntPtr.Zero;
-            USER32Wrapper.SendMessageTimeout(progman,
+            User32Wrapper.SendMessageTimeout(progman,
                                    0x052C,
                                    new IntPtr(0),
                                    IntPtr.Zero,
@@ -67,16 +67,16 @@ namespace LiveWallpaperEngine.NativeWallpapers
                                    1000,
                                    out result);
             _workerw = IntPtr.Zero;
-            var result1 = USER32Wrapper.EnumWindows(new EnumWindowsProc((tophandle, topparamhandle) =>
+            var result1 = User32Wrapper.EnumWindows(new EnumWindowsProc((tophandle, topparamhandle) =>
             {
-                IntPtr p = USER32Wrapper.FindWindowEx(tophandle,
+                IntPtr p = User32Wrapper.FindWindowEx(tophandle,
                                             IntPtr.Zero,
                                             "SHELLDLL_DefView",
                                             IntPtr.Zero);
 
                 if (p != IntPtr.Zero)
                 {
-                    _workerw = USER32Wrapper.FindWindowEx(IntPtr.Zero,
+                    _workerw = User32Wrapper.FindWindowEx(IntPtr.Zero,
                                              tophandle,
                                              "WorkerW",
                                              IntPtr.Zero);
