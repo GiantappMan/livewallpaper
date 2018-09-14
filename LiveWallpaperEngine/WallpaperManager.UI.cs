@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Interop;
@@ -66,14 +67,18 @@ namespace LiveWallpaperEngine
         {
             try
             {
-                //if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
-                //    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
+                if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
+                    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
+                {
+                    var m = new OtherProgramChecker().CheckMaximized();
+                    System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
+                }
                 //
                 if (eventType == SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE)
                 {
                     WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
                     User32Wrapper.GetWindowPlacement(window, ref placment);
-                    string title = User32Wrapper.GetWindowText(window);
+                    //string title = User32Wrapper.GetWindowText(window);
                     int pid = User32Wrapper.GetProcessId(window);
                     if (placment.showCmd == WINDOWPLACEMENTFlags.SW_HIDE)
                         return;
@@ -81,17 +86,14 @@ namespace LiveWallpaperEngine
                     if (pid == _currentProcess.Id)
                         return;
 
-                    //if (title == nameof(RenderWindow))
-                    //    return;
-                    //System.Diagnostics.Debug.WriteLine(title);
-
                     if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
                     {
                         if (!maximizedPid.Contains(pid))
+                        {
                             maximizedPid.Add(pid);
-                        //var handle = USER32Wrapper.GetForegroundWindow();
-                        //string txt = USER32Wrapper.GetWindowText(handle);
-                        //System.Diagnostics.Debug.WriteLine("foreground:" + txt);
+                            var m = new OtherProgramChecker().CheckMaximized();
+                            System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
+                        }
                     }
 
                     if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWNORMAL ||
@@ -99,21 +101,12 @@ namespace LiveWallpaperEngine
                         placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOW ||
                         placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMINIMIZED)
                     {
-                        //System.Diagnostics.Debug.WriteLine("离开" + placment.showCmd);
                         if (maximizedPid.Contains(pid))
-                            maximizedPid.Remove(pid);
-                    }
-                    //else
-                    System.Diagnostics.Debug.WriteLine($"Other:{title}.pid:{pid}. cmd:{placment.showCmd }. {DateTime.Now}");
-                    if (maximizedPid.Count == 0)
-                        System.Diagnostics.Debug.WriteLine("无");
-                    else
-                    {
-                        foreach (var item in maximizedPid)
                         {
-                            System.Diagnostics.Debug.Write($"{item} ");
+                            maximizedPid.Remove(pid);
+                            var m = new OtherProgramChecker().CheckMaximized();
+                            System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
                         }
-                        System.Diagnostics.Debug.WriteLine("");
                     }
                 }
             }
@@ -121,6 +114,34 @@ namespace LiveWallpaperEngine
             {
                 System.Diagnostics.Debug.WriteLine(ex);
             }
+        }
+
+        /// <summary>
+        /// 窗口是否是最大化
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        internal static bool IsMAXIMIZED(IntPtr handle)
+        {
+            //var windowText = User32Wrapper.GetWindowText(handle);
+            WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
+            User32Wrapper.GetWindowPlacement(handle, ref placment);
+            if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
+            {
+                bool visible = User32Wrapper.IsWindowVisible(handle);
+                if (visible)
+                {
+                    // Exclude suspended Windows apps
+                    // 排除隐藏的UWP窗口
+                    int ok = DwmapiWrapper.DwmGetWindowAttribute(handle, DwmapiWrapper.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, out var cloaked, Marshal.SizeOf<bool>());
+                    if (cloaked)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal static string GetWallpaperType(string filePath)
