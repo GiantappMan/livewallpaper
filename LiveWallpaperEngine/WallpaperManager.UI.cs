@@ -69,13 +69,13 @@ namespace LiveWallpaperEngine
             {
                 if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
                     eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
-                {
-                    var m = new OtherProgramChecker().CheckMaximized();
+                {//焦点变化，窗口大小变化
+                    var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
                     System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
                 }
-                //
+
                 if (eventType == SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE)
-                {
+                {//处理最大化操作
                     WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
                     User32Wrapper.GetWindowPlacement(window, ref placment);
                     //string title = User32Wrapper.GetWindowText(window);
@@ -91,7 +91,7 @@ namespace LiveWallpaperEngine
                         if (!maximizedPid.Contains(pid))
                         {
                             maximizedPid.Add(pid);
-                            var m = new OtherProgramChecker().CheckMaximized();
+                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
                             System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
                         }
                     }
@@ -104,7 +104,7 @@ namespace LiveWallpaperEngine
                         if (maximizedPid.Contains(pid))
                         {
                             maximizedPid.Remove(pid);
-                            var m = new OtherProgramChecker().CheckMaximized();
+                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
                             System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
                         }
                     }
@@ -123,22 +123,47 @@ namespace LiveWallpaperEngine
         /// <returns></returns>
         internal static bool IsMAXIMIZED(IntPtr handle)
         {
-            //var windowText = User32Wrapper.GetWindowText(handle);
             WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
             User32Wrapper.GetWindowPlacement(handle, ref placment);
-            if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
+            bool visible = User32Wrapper.IsWindowVisible(handle);
+            if (visible)
             {
-                bool visible = User32Wrapper.IsWindowVisible(handle);
-                if (visible)
-                {
+                if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
+                {//窗口最大化
                     // Exclude suspended Windows apps
-                    // 排除隐藏的UWP窗口
                     int ok = DwmapiWrapper.DwmGetWindowAttribute(handle, DwmapiWrapper.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, out var cloaked, Marshal.SizeOf<bool>());
+                    //隐藏的UWP窗口
                     if (cloaked)
                     {
                         return false;
                     }
                     return true;
+                }
+
+                ////判断一些隐藏窗口
+                ////http://forums.codeguru.com/showthread.php?445207-Getting-HWND-of-visible-windows
+                //var wl = User32Wrapper.GetWindowLong(handle, WindowLongConstants.GWL_STYLE) & WindowStyles.WS_EX_APPWINDOW;
+                //if (wl <= 0)
+                //    return false;
+
+                //判断是否是游戏全屏
+                User32Wrapper.GetWindowRect(handle, out var r);
+                if (r.Left == 0 && r.Top == 0)
+                {
+                    int with = r.Right - r.Left;
+                    int height = r.Bottom - r.Top;
+
+                    if (height == System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height
+                        && with == System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width)
+                    {
+                        //当前窗口最大化，进入了游戏
+                        var foregroundWIndow = User32Wrapper.GetForegroundWindow();
+                        if (foregroundWIndow == handle)
+                        {
+                            var windowText = User32Wrapper.GetWindowText(handle);
+                            return true;
+                        }
+                    }
                 }
             }
             return false;

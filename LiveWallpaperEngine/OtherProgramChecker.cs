@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace LiveWallpaperEngine
 {
@@ -13,9 +15,9 @@ namespace LiveWallpaperEngine
         private bool _maximized = false;
         private static Process _currentProcess;
 
-        public OtherProgramChecker()
+        public OtherProgramChecker(Process currentProcess)
         {
-            _currentProcess = Process.GetCurrentProcess();
+            _currentProcess = currentProcess;
         }
 
         public bool CheckMaximized()
