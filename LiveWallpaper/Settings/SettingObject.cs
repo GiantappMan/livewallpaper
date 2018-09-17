@@ -6,19 +6,31 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaper.Settings
 {
-    public class GeneralObject
+    public class GeneralSettting
     {
         public bool StartWithWindows { get; set; }
 
         public bool MinimizeUI { get; set; }
 
         public string CurrentLan { get; set; }
-
     }
 
+    public enum ActionWhenMaximized
+    {
+        Play,
+        Stop,
+        Pause
+    }
+
+    public class WallpaperSetting
+    {
+        public ActionWhenMaximized ActionWhenMaximized { get; set; }
+    }
 
     public class SettingObject
     {
-        public GeneralObject General { get; set; }
+        public GeneralSettting General { get; set; }
+
+        public WallpaperSetting Wallpaper { get; set; }
     }
 }
