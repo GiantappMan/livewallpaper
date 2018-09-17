@@ -20,7 +20,7 @@ namespace LiveWallpaperEngine
         /// <summary>
         /// 壁纸显示窗体
         /// </summary>
-        public static RenderWindow RenderWindow { get; private set; }
+        private static RenderWindow RenderWindow;
         private static Wallpaper _lastwallPaper;
         private static SetWinEventHookDelegate _hookCallback;
         private static IntPtr _hook;
@@ -31,6 +31,35 @@ namespace LiveWallpaperEngine
         private static List<int> maximizedPid = new List<int>();
 
         public static event EventHandler<bool> MaximizedEvent;
+
+        public static void MonitorMaxiemized(bool enable)
+        {
+            if (enable)
+            {
+                if (_hook == IntPtr.Zero)
+                {
+                    Execute.OnUIThread(() =>
+                    {
+
+                        //监控其他程序是否最大化
+                        _hookCallback = new SetWinEventHookDelegate(WinEventProc);
+                        _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
+                            SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
+                    });
+                }
+            }
+            else
+            {
+                if (_hook != IntPtr.Zero)
+                {
+                    Execute.OnUIThread(() =>
+                    {
+                        bool ok = User32Wrapper.UnhookWinEvent(_hook);
+                        _hook = IntPtr.Zero;
+                    });
+                }
+            }
+        }
 
         public static void Show(Wallpaper wallpaper)
         {
@@ -56,13 +85,6 @@ namespace LiveWallpaperEngine
 
                 handler = new WindowInteropHelper(RenderWindow).Handle;
 
-                if (_hook == IntPtr.Zero)
-                {
-                    //监控其他程序是否最大化
-                    _hookCallback = new SetWinEventHookDelegate(WinEventProc);
-                    _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
-                        SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
-                }
             });
 
             HandlerWallpaper.Show(handler);
@@ -77,6 +99,16 @@ namespace LiveWallpaperEngine
             return null;
         }
 
+        public static void Pause()
+        {
+            RenderWindow.Pause();
+        }
+
+        public static void Resume()
+        {
+            RenderWindow.Resume();
+        }
+
         public static void Close()
         {
             if (RenderWindow == null)
@@ -88,10 +120,6 @@ namespace LiveWallpaperEngine
                 RenderWindow.Wallpaper = null;
             });
 
-            if (_hook != IntPtr.Zero)
-            {
-                bool ok = User32Wrapper.UnhookWinEvent(_hook);
-            }
             HandlerWallpaper.Close();
         }
 
@@ -100,6 +128,7 @@ namespace LiveWallpaperEngine
             if (RenderWindow == null)
                 return;
 
+            MonitorMaxiemized(false);
             Close();
 
             RenderWindow.Close();

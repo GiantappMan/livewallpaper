@@ -44,6 +44,9 @@ namespace LiveWallpaper.Services
 
         public static List<Wallpaper> Wallpapers { get; private set; }
 
+        public static SettingObject Setting { get; private set; }
+
+        public static AppData AppData { get; private set; }
 
         public static async Task Initlize()
         {
@@ -68,29 +71,32 @@ namespace LiveWallpaper.Services
             LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
             AppDataPath = $"{AppDataDir}\\appData.json";
 
-            Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            if (Setting == null)
+            var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            if (tempSetting == null)
             {
                 //默认值
-                Setting = new SettingObject();
-                Setting.General = GetDefaultGeneralSettting();
-                Setting.Wallpaper = GetDefaultWallpaperSetting();
+                tempSetting = new SettingObject
+                {
+                    General = GetDefaultGeneralSettting(),
+                    Wallpaper = GetDefaultWallpaperSetting()
+                };
 
                 //生成默认配置
-                await JsonHelper.JsonSerializeAsync(Setting, SettingPath);
+                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
             }
-            else if (Setting.General == null || Setting.Wallpaper == null)
+            else if (tempSetting.General == null || tempSetting.Wallpaper == null)
             {
-                if (Setting.General == null)
+                if (tempSetting.General == null)
                     //默认值
-                    Setting.General = GetDefaultGeneralSettting();
+                    tempSetting.General = GetDefaultGeneralSettting();
 
-                if (Setting.Wallpaper == null)
-                    Setting.Wallpaper = GetDefaultWallpaperSetting();
+                if (tempSetting.Wallpaper == null)
+                    tempSetting.Wallpaper = GetDefaultWallpaperSetting();
                 //生成默认配置
-                await JsonHelper.JsonSerializeAsync(Setting, SettingPath);
+                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
             }
-            await ApplySetting(Setting);
+
+            await ApplySetting(tempSetting);
 
             //应用程序数据
             AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
@@ -106,11 +112,38 @@ namespace LiveWallpaper.Services
                 RefreshLocalWallpapers();
                 if (AppData.Wallpaper != null)
                 {
+                    WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
                     var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
                     if (current != null)
                         WallpaperManager.Show(current);
+                    WallpaperManager.MonitorMaxiemized(true);
                 }
             });
+        }
+
+        private static void WallpaperManager_MaximizedEvent(object sender, bool e)
+        {
+            switch (Setting.Wallpaper.ActionWhenMaximized)
+            {
+                case ActionWhenMaximized.Play: break;
+                case ActionWhenMaximized.Pause:
+                    if (e)
+                        WallpaperManager.Pause();
+                    else
+                        WallpaperManager.Resume();
+                    break;
+                case ActionWhenMaximized.Stop:
+                    if (e)
+                        WallpaperManager.Close();
+                    else
+                    {
+                        var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
+                        if (current != null)
+                            WallpaperManager.Show(current);
+                        WallpaperManager.Show(current);
+                    }
+                    break;
+            }
         }
 
         private static WallpaperSetting GetDefaultWallpaperSetting()
@@ -165,6 +198,8 @@ namespace LiveWallpaper.Services
 
         public static async Task ApplySetting(SettingObject setting)
         {
+            Setting = setting;
+
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
 
@@ -173,8 +208,5 @@ namespace LiveWallpaper.Services
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
         }
 
-        public static SettingObject Setting { get; private set; }
-
-        public static AppData AppData { get; private set; }
     }
 }

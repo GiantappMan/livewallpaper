@@ -26,10 +26,13 @@ namespace LiveWallpaperEngine.Controls
             Play();
         }
 
-        private void MediaElementEx_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private async void MediaElementEx_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (IsEnabled)
+            {
+                await Task.Delay(1000);
                 Play();
+            }
             else
                 Pause();
         }
