@@ -43,7 +43,6 @@ namespace LiveWallpaperEngine.Controls
             WindowStartupLocation = WindowStartupLocation.Manual;
             Top = 0;
             Left = 0;
-
         }
 
         #region Wallpaper
@@ -59,5 +58,16 @@ namespace LiveWallpaperEngine.Controls
             DependencyProperty.Register("Wallpaper", typeof(Wallpaper), typeof(RenderWindow), new PropertyMetadata(null));
 
         #endregion
+
+        internal void Pause()
+        {
+            //以后可能会用其他方案实现
+            IsEnabled = false;
+        }
+
+        internal void Resume()
+        {
+            IsEnabled = true;
+        }
     }
 }
