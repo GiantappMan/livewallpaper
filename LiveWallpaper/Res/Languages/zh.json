@@ -30,6 +30,11 @@
   "setting_dragIntoDesc": "拖入视频文件",
   "setting_desktopLivePreview": "启用桌面预览",
   "setting_minimizeUI": "启动后最小化",
+  "setting_wallpaper": "壁纸",
+  "setting_maximized": "其他程序最大化时",
+  "setting_maximizedPlay": "播放",
+  "setting_maximizedStop": "停止",
+  "setting_maximizedPause": "暂停",
 
   "wallpaperEditor_warning_invalidWallpaper": "无效壁纸",
   "wallpaperEditor_warning_titleEmpty": "请输入壁纸标题",

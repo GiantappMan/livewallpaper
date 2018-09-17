@@ -72,14 +72,21 @@ namespace LiveWallpaper.Services
             if (Setting == null)
             {
                 //默认值
-                Setting = new SettingObject()
-                {
-                    General = new GeneralObject()
-                    {
-                        StartWithWindows = true,
-                        CurrentLan = "zh"
-                    }
-                };
+                Setting = new SettingObject();
+                Setting.General = GetDefaultGeneralSettting();
+                Setting.Wallpaper = GetDefaultWallpaperSetting();
+
+                //生成默认配置
+                await JsonHelper.JsonSerializeAsync(Setting, SettingPath);
+            }
+            else if (Setting.General == null || Setting.Wallpaper == null)
+            {
+                if (Setting.General == null)
+                    //默认值
+                    Setting.General = GetDefaultGeneralSettting();
+
+                if (Setting.Wallpaper == null)
+                    Setting.Wallpaper = GetDefaultWallpaperSetting();
                 //生成默认配置
                 await JsonHelper.JsonSerializeAsync(Setting, SettingPath);
             }
@@ -104,6 +111,23 @@ namespace LiveWallpaper.Services
                         WallpaperManager.Show(current);
                 }
             });
+        }
+
+        private static WallpaperSetting GetDefaultWallpaperSetting()
+        {
+            return new WallpaperSetting()
+            {
+                ActionWhenMaximized = ActionWhenMaximized.Pause
+            };
+        }
+
+        private static GeneralSettting GetDefaultGeneralSettting()
+        {
+            return new GeneralSettting()
+            {
+                StartWithWindows = true,
+                CurrentLan = "zh"
+            };
         }
 
         internal static void Dispose()

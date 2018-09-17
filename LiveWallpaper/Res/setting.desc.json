@@ -23,5 +23,26 @@
         }
       ]
     }
+  },
+  "Wallpaper": {
+    "lanKey": "setting_wallpaper",
+    "ActionWhenMaximized": {
+      "type": "combobox",
+      "lanKey": "setting_maximized",
+      "cbItems": [
+        {
+          "lanKey": "setting_maximizedPlay",
+          "value": 0
+        },
+        {
+          "lanKey": "setting_maximizedStop",
+          "value": 1
+        },
+        {
+          "lanKey": "setting_maximizedPause",
+          "value": 2
+        }
+      ]
+    }
   }
 }
