@@ -9,6 +9,7 @@ using LiveWallpaper.Services;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
+using Windows.Storage;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -77,7 +78,16 @@ namespace LiveWallpaper.ViewModels
         {
             try
             {
-                Process.Start("Explorer.exe", $" /select, {s.AbsolutePath}");
+                string path = s.AbsolutePath;
+#if UWP
+                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                var uwpAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
+
+                var wpfAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                wpfAppData = Path.Combine(wpfAppData, "LiveWallpaper");
+                path = path.Replace(wpfAppData, uwpAppData);
+#endif
+                Process.Start("Explorer.exe", $" /select, {path}");
             }
             catch (Exception ex)
             {
