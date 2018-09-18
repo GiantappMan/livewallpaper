@@ -61,13 +61,19 @@ namespace LiveWallpaperEngine.Controls
 
         internal void Pause()
         {
+            Dispatcher.Invoke(() =>
+            {
+                IsEnabled = false;
+            });
             //以后可能会用其他方案实现
-            IsEnabled = false;
         }
 
         internal void Resume()
         {
-            IsEnabled = true;
+            Dispatcher.Invoke(() =>
+            {
+                IsEnabled = true;
+            });
         }
     }
 }

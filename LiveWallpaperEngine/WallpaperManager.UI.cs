@@ -11,6 +11,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Interop;
 
 namespace LiveWallpaperEngine
@@ -22,8 +23,9 @@ namespace LiveWallpaperEngine
         /// </summary>
         private static RenderWindow RenderWindow;
         private static Wallpaper _lastwallPaper;
-        private static SetWinEventHookDelegate _hookCallback;
-        private static IntPtr _hook;
+        //private static SetWinEventHookDelegate _hookCallback;
+        //private static IntPtr _hook;
+        private static Timer _timer;
         private static Process _currentProcess;
 
         // 监控窗口最大化
@@ -36,28 +38,42 @@ namespace LiveWallpaperEngine
         {
             if (enable)
             {
-                if (_hook == IntPtr.Zero)
+                if (_timer == null)
                 {
-                    Execute.OnUIThread(() =>
-                    {
-
-                        //监控其他程序是否最大化
-                        _hookCallback = new SetWinEventHookDelegate(WinEventProc);
-                        _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
-                            SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
-                    });
+                    _timer = new Timer(2000);
                 }
+
+                _timer.Elapsed -= _timer_Elapsed;
+                _timer.Elapsed += _timer_Elapsed;
+                _timer.Start();
+
+                //用此种方案感觉不稳定
+                //if (_hook == IntPtr.Zero)
+                //{
+                //    Execute.OnUIThread(() =>
+                //    {
+
+                //        //监控其他程序是否最大化
+                //        _hookCallback = new SetWinEventHookDelegate(WinEventProc);
+                //        _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
+                //            SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
+                //    });
+                //}
             }
             else
             {
-                if (_hook != IntPtr.Zero)
-                {
-                    Execute.OnUIThread(() =>
-                    {
-                        bool ok = User32Wrapper.UnhookWinEvent(_hook);
-                        _hook = IntPtr.Zero;
-                    });
-                }
+                _timer.Elapsed -= _timer_Elapsed;
+                _timer.Stop();
+
+                //用此种方案感觉不稳定
+                //if (_hook != IntPtr.Zero)
+                //{
+                //    Execute.OnUIThread(() =>
+                //    {
+                //        bool ok = User32Wrapper.UnhookWinEvent(_hook);
+                //        _hook = IntPtr.Zero;
+                //    });
+                //}
             }
         }
 
@@ -162,6 +178,16 @@ namespace LiveWallpaperEngine
             _maximized = m;
             MaximizedEvent?.Invoke(null, m);
             System.Diagnostics.Debug.WriteLine($"最大化 {m} {DateTime.Now}");
+        }
+
+        private static void _timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            _timer.Stop();
+
+            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
+            RaiseMaximizedEvent(m);
+
+            _timer.Start();
         }
 
         private static void WinEventProc(IntPtr hook, SetWinEventHookEventType eventType, IntPtr window, int objectId, int childId, uint threadId, uint time)

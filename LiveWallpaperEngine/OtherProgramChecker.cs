@@ -51,6 +51,8 @@ namespace LiveWallpaperEngine
         {
             WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
             User32Wrapper.GetWindowPlacement(handle, ref placment);
+            var pid = User32Wrapper.GetProcessId(handle);
+
             bool visible = User32Wrapper.IsWindowVisible(handle);
             if (visible)
             {
@@ -63,6 +65,7 @@ namespace LiveWallpaperEngine
                     {
                         return false;
                     }
+                    //System.Diagnostics.Debug.WriteLine($"pid:{pid} maximized");
                     return true;
                 }
 
@@ -74,6 +77,8 @@ namespace LiveWallpaperEngine
 
                 //判断是否是游戏全屏
                 User32Wrapper.GetWindowRect(handle, out var r);
+
+                //System.Diagnostics.Debug.WriteLine($"pid:{pid} r:{r.Left} {r.Top} {r.Right} {r.Bottom} {DateTime.Now}");
                 if (r.Left == 0 && r.Top == 0)
                 {
                     int with = r.Right - r.Left;
@@ -87,6 +92,10 @@ namespace LiveWallpaperEngine
                         if (foregroundWIndow == handle)
                         {
                             var windowText = User32Wrapper.GetWindowText(handle);
+                            //var desktop = User32Wrapper.GetDesktopWindow();
+                            var className = User32Wrapper.GetClassName(handle);
+                            if (className == "WorkerW")
+                                return false;
                             return true;
                         }
                     }
@@ -94,6 +103,5 @@ namespace LiveWallpaperEngine
             }
             return false;
         }
-
     }
 }
