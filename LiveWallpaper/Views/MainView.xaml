@@ -93,13 +93,13 @@
                 </StackPanel>
             </Grid>
         </TabItem>
-        <!--<TabItem Header="创意工厂">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                </Grid>
-            </TabItem>-->
+        <TabItem lan:Xaml.Key="mainUI_thirdParty">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+            </Grid>
+        </TabItem>
     </TabControl>
 </Window>
