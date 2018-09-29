@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiveWallpaper.Server.Models
+namespace LiveWallpaper.Server
 {
-    public enum WallpaperType
+    class WallpaperServerObj
     {
-        Exe,
-        Video,
-        WEB
     }
 }
