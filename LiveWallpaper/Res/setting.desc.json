@@ -44,5 +44,12 @@
         }
       ]
     }
+  },
+  "Server": {
+    "lanKey": "setting_server",
+    "ServerUrl": {
+      "type": "text",
+      "lanKey": "setting_serverURL"
+    }
   }
 }

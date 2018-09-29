@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.ViewModels;
-using LiveWallpaper.Services;
+using LiveWallpaper.Managers;
 using LiveWallpaperEngine;
 
 namespace LiveWallpaper

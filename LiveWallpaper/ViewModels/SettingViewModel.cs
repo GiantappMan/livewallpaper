@@ -3,7 +3,7 @@ using DZY.DotNetUtil.Helpers;
 using JsonConfiger;
 using JsonConfiger.Models;
 using LiveWallpaper.Settings;
-using LiveWallpaper.Services;
+using LiveWallpaper.Managers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

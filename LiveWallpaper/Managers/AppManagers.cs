@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace LiveWallpaper.Services
+namespace LiveWallpaper.Managers
 {
     public class AppService
     {
@@ -71,32 +71,7 @@ namespace LiveWallpaper.Services
             LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
             AppDataPath = $"{AppDataDir}\\appData.json";
 
-            var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            if (tempSetting == null)
-            {
-                //默认值
-                tempSetting = new SettingObject
-                {
-                    General = GetDefaultGeneralSettting(),
-                    Wallpaper = GetDefaultWallpaperSetting()
-                };
-
-                //生成默认配置
-                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
-            }
-            else if (tempSetting.General == null || tempSetting.Wallpaper == null)
-            {
-                if (tempSetting.General == null)
-                    //默认值
-                    tempSetting.General = GetDefaultGeneralSettting();
-
-                if (tempSetting.Wallpaper == null)
-                    tempSetting.Wallpaper = GetDefaultWallpaperSetting();
-                //生成默认配置
-                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
-            }
-
-            await ApplySetting(tempSetting);
+            await CheckDefaultSetting();
 
             //应用程序数据
             AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
@@ -119,6 +94,47 @@ namespace LiveWallpaper.Services
                     WallpaperManager.MonitorMaxiemized(true);
                 }
             });
+        }
+
+        //检查是否有配置需要重新生成
+        private static async Task CheckDefaultSetting()
+        {
+            var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            bool writeDefault = false;
+            if (tempSetting == null)
+            {
+                //默认值
+                tempSetting = new SettingObject
+                {
+                    General = GetDefaultGeneralSettting(),
+                    Wallpaper = GetDefaultWallpaperSetting(),
+                    Server = GetDefaultServerSetting()
+                };
+                writeDefault = true;
+            }
+
+            //默认值
+            if (tempSetting.General == null)
+            {
+                writeDefault = true;
+                tempSetting.General = GetDefaultGeneralSettting();
+            }
+            if (tempSetting.Wallpaper == null)
+            {
+                writeDefault = true;
+                tempSetting.Wallpaper = GetDefaultWallpaperSetting();
+            }
+            if (tempSetting.Server == null)
+            {
+                writeDefault = true;
+                tempSetting.Server = GetDefaultServerSetting();
+            }
+
+            if (writeDefault)
+                //生成默认配置
+                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
+
+            await ApplySetting(tempSetting);
         }
 
         private static void WallpaperManager_MaximizedEvent(object sender, bool e)
@@ -151,6 +167,14 @@ namespace LiveWallpaper.Services
             return new WallpaperSetting()
             {
                 ActionWhenMaximized = ActionWhenMaximized.Pause
+            };
+        }
+
+        private static ServerSetting GetDefaultServerSetting()
+        {
+            return new ServerSetting()
+            {
+                ServerUrl = "http://localhost:8080"
             };
         }
 

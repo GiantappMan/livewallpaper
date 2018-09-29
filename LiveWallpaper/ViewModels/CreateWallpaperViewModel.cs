@@ -5,7 +5,7 @@ using LiveWallpaperEngine;
 using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
 using System.Windows.Interop;
-using LiveWallpaper.Services;
+using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Text;

@@ -13,7 +13,7 @@
   "common_config": "配置",
   "common_exit": "退出",
   "common_about": "关于",
-  "common_appName": "动态壁纸工具 - 巨应出品",
+  "common_appName": "动态壁纸工具 - 巨应工作室出品 QQ群641405255",
   "common_or": "或",
   "common_selectFile": "选择文件",
 
@@ -36,6 +36,8 @@
   "setting_maximizedPlay": "播放",
   "setting_maximizedStop": "停止",
   "setting_maximizedPause": "暂停",
+  "setting_server": "服务器",
+  "setting_serverURL": "服务器地址",
 
   "wallpaperEditor_warning_invalidWallpaper": "无效壁纸",
   "wallpaperEditor_warning_titleEmpty": "请输入壁纸标题",

@@ -1,6 +1,6 @@
 ﻿using Caliburn.Micro;
 using Hardcodet.Wpf.TaskbarNotification;
-using LiveWallpaper.Services;
+using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
 using MultiLanguageManager;
 using System;

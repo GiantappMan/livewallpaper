@@ -5,7 +5,7 @@ using System.IO;
 using System.Windows;
 using LiveWallpaperEngine;
 using MultiLanguageManager;
-using LiveWallpaper.Services;
+using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;

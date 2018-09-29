@@ -27,10 +27,17 @@ namespace LiveWallpaper.Settings
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
     }
 
+    public class ServerSetting
+    {
+        public string ServerUrl { get; set; }
+    }
+
     public class SettingObject
     {
         public GeneralSettting General { get; set; }
 
         public WallpaperSetting Wallpaper { get; set; }
+
+        public ServerSetting Server { get; set; }
     }
 }
