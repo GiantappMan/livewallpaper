@@ -27,11 +27,11 @@ namespace LiveWallpaper.ViewModels
             {
                 firstLaunch = false;
                 //读取json按对象重新保存一次。防止json格式不全
-                var Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppService.SettingPath);
-                await JsonHelper.JsonSerializeAsync(Setting, AppService.SettingPath);
+                var Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppManager.SettingPath);
+                await JsonHelper.JsonSerializeAsync(Setting, AppManager.SettingPath);
             }
 
-            var config = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppService.SettingPath);
+            var config = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppManager.SettingPath);
             string descPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
             var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(descPath);
             JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
@@ -104,7 +104,7 @@ namespace LiveWallpaper.ViewModels
         public async void Save()
         {
             var data = _jcrService.GetData(JsonConfierViewModel.Nodes);
-            await JsonHelper.JsonSerializeAsync(data, AppService.SettingPath);
+            await JsonHelper.JsonSerializeAsync(data, AppManager.SettingPath);
             DialogResult = true;
             TryClose();
         }

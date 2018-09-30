@@ -10,17 +10,22 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
 using Windows.Storage;
+using LiveWallpaper.Server;
 
 namespace LiveWallpaper.ViewModels
 {
     public class MainViewModel : ScreenWindow
     {
         private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private LocalServer _localServer;
         private CreateWallpaperViewModel _createVM;
 
         public MainViewModel()
         {
-            Wallpapers = new ObservableCollection<Wallpaper>(AppService.Wallpapers);
+            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+            _localServer = new LocalServer();
+            _localServer.InitlizeServer(AppManager.Setting.Server.ServerUrl);
+            _localServer.GetTags();
         }
 
         protected override void OnViewReady(object view)
@@ -70,8 +75,8 @@ namespace LiveWallpaper.ViewModels
 
         public void RefreshLocalWallpaper()
         {
-            AppService.RefreshLocalWallpapers();
-            Wallpapers = new ObservableCollection<Wallpaper>(AppService.Wallpapers);
+            AppManager.RefreshLocalWallpapers();
+            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
         }
 
         public void ExploreWallpaper(Wallpaper s)
@@ -115,8 +120,8 @@ namespace LiveWallpaper.ViewModels
         public async void ApplyWallpaper(Wallpaper w)
         {
             WallpaperManager.Show(w);
-            AppService.AppData.Wallpaper = w.AbsolutePath;
-            await AppService.ApplyAppDataAsync();
+            AppManager.AppData.Wallpaper = w.AbsolutePath;
+            await AppManager.ApplyAppDataAsync();
         }
 
         public void Setting()

@@ -43,7 +43,7 @@ namespace LiveWallpaper
 #else
             logger.Info("OnStartup WPF");
 #endif
-            if (!AppService.Setting.General.MinimizeUI)
+            if (!AppManager.Setting.General.MinimizeUI)
                 DisplayRootViewFor<MainViewModel>();
         }
 
