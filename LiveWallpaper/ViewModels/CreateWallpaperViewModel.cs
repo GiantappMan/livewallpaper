@@ -215,7 +215,7 @@ namespace LiveWallpaper.ViewModels
 
             CanSave = false;
 
-            string destDir = Path.Combine(AppService.LocalWallpaperDir, Guid.NewGuid().ToString());
+            string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
                 await Task.Run(() =>

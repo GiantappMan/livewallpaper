@@ -66,8 +66,8 @@ namespace LiveWallpaper.ViewModels
             bool ok = _settingVM.DialogResult;
             if (ok)
             {
-                var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppService.SettingPath);
-                await AppService.ApplySetting(config);
+                var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppManager.SettingPath);
+                await AppManager.ApplySetting(config);
             }
             _settingVM = null;
         }
@@ -83,7 +83,7 @@ namespace LiveWallpaper.ViewModels
 
         public void ExitApp()
         {
-            AppService.Dispose();
+            AppManager.Dispose();
             Application.Current.Shutdown();
         }
     }

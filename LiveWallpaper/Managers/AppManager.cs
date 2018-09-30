@@ -17,7 +17,7 @@ using System.Windows;
 
 namespace LiveWallpaper.Managers
 {
-    public class AppService
+    public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -201,7 +201,7 @@ namespace LiveWallpaper.Managers
 
             try
             {
-                var wallpapers = WallpaperManager.GetWallpapers(AppService.LocalWallpaperDir);
+                var wallpapers = WallpaperManager.GetWallpapers(AppManager.LocalWallpaperDir);
                 foreach (var item in wallpapers)
                 {
                     Wallpapers.Add(item);
