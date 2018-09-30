@@ -66,6 +66,5 @@ namespace LiveWallpaper.Server
                 return default(T);
             }
         }
-
     }
 }

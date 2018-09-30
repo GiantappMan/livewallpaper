@@ -193,6 +193,7 @@
     <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Managers\AppManager.cs" />
     <Compile Include="ViewModels\ScreenWindow.cs" />
+    <Compile Include="ViewModels\ServerViewModel.cs" />
     <Compile Include="ViewModels\SettingViewModel.cs" />
     <Compile Include="ViewModels\ContextMenuViewModel.cs" />
     <Compile Include="ViewModels\CreateWallpaperViewModel.cs" />
