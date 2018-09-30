@@ -17,15 +17,11 @@ namespace LiveWallpaper.ViewModels
     public class MainViewModel : ScreenWindow
     {
         private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-        private LocalServer _localServer;
         private CreateWallpaperViewModel _createVM;
 
         public MainViewModel()
         {
             Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
-            _localServer = new LocalServer();
-            _localServer.InitlizeServer(AppManager.Setting.Server.ServerUrl);
-            _localServer.GetTags();
         }
 
         protected override void OnViewReady(object view)
@@ -160,6 +156,33 @@ namespace LiveWallpaper.ViewModels
 
                 _Wallpapers = value;
                 NotifyOfPropertyChange(WallpapersPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region Server
+
+        /// <summary>
+        /// The <see cref="Server" /> property's name.
+        /// </summary>
+        public const string ServerPropertyName = "Server";
+
+        private ServerViewModel _Server;
+
+        /// <summary>
+        /// Server
+        /// </summary>
+        public ServerViewModel Server
+        {
+            get { return _Server; }
+
+            set
+            {
+                if (_Server == value) return;
+
+                _Server = value;
+                NotifyOfPropertyChange(ServerPropertyName);
             }
         }
 
