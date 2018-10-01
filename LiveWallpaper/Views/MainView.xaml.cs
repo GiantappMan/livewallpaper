@@ -1,6 +1,8 @@
-﻿using LiveWallpaperEngine;
+﻿using LiveWallpaper.ViewModels;
+using LiveWallpaperEngine;
 using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace LiveWallpaper.Views
 {
@@ -26,6 +28,16 @@ namespace LiveWallpaper.Views
         {
             CreateWallpaperView createWindow = sender as CreateWallpaperView;
             createWindow.Closed -= CreateWindow_Closed;
+        }
+
+        private void TabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            TabControl control = sender as TabControl;
+            if (control.SelectedIndex == 1)
+            {
+                var vm = DataContext as MainViewModel;
+                vm.InitServer();
+            }
         }
     }
 }

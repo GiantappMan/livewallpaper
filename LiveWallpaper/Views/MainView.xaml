@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
+    xmlns:loadin="clr-namespace:LoadingIndicators.WPF;assembly=LoadingIndicators.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
@@ -18,7 +19,7 @@
     <Window.Resources>
         <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
     </Window.Resources>
-    <TabControl>
+    <TabControl SelectionChanged="TabControl_SelectionChanged">
         <TabItem lan:Xaml.Key="mainUI_localWallpaper">
             <Grid>
                 <Grid.RowDefinitions>
@@ -94,9 +95,9 @@
             </Grid>
         </TabItem>
         <TabItem lan:Xaml.Key="mainUI_thirdParty">
-            <Grid>
+            <Grid DataContext="{Binding Server}">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
+                    <RowDefinition Height="auto" MinHeight="30" />
                     <RowDefinition Height="auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
@@ -105,6 +106,28 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">标签：</TextBlock>
+                <ListBox
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    BorderThickness="0"
+                    DisplayMemberPath="Name"
+                    ItemsSource="{Binding Tags}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    SelectedItem="{Binding SelectedTag}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <!--<ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton
+                                Margin="6,1"
+                                Content="{Binding Name}"
+                                GroupName="Tags" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>-->
+                </ListBox>
                 <TextBlock
                     Grid.Row="1"
                     HorizontalAlignment="Center"
@@ -157,6 +180,17 @@
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
                 </ListView>
+                <Viewbox
+                    Grid.RowSpan="3"
+                    Grid.ColumnSpan="2"
+                    Width="35"
+                    Height="35"
+                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <loadin:LoadingIndicator
+                        IsActive="True"
+                        SpeedRatio="0.45"
+                        Style="{StaticResource LoadingIndicatorRingStyle}" />
+                </Viewbox>
             </Grid>
         </TabItem>
     </TabControl>
