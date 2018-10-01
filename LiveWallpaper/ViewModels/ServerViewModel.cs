@@ -3,6 +3,7 @@ using LiveWallpaper.Managers;
 using LiveWallpaper.Server;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -75,12 +76,12 @@ namespace LiveWallpaper.ViewModels
         /// </summary>
         public const string TagsPropertyName = "Tags";
 
-        private IObservableCollection<TagServerObj> _Tags;
+        private ObservableCollection<TagServerObj> _Tags;
 
         /// <summary>
         /// Tags
         /// </summary>
-        public IObservableCollection<TagServerObj> Tags
+        public ObservableCollection<TagServerObj> Tags
         {
             get { return _Tags; }
 
@@ -95,6 +96,33 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region SelectedTag
+
+        /// <summary>
+        /// The <see cref="SelectedTag" /> property's name.
+        /// </summary>
+        public const string SelectedTagPropertyName = "SelectedTag";
+
+        private TagServerObj _SelectedTag;
+
+        /// <summary>
+        /// SelectedTag
+        /// </summary>
+        public TagServerObj SelectedTag
+        {
+            get { return _SelectedTag; }
+
+            set
+            {
+                if (_SelectedTag == value) return;
+
+                _SelectedTag = value;
+                NotifyOfPropertyChange(SelectedTagPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region methods
@@ -104,12 +132,15 @@ namespace LiveWallpaper.ViewModels
             _localServer = new LocalServer();
             _localServer.InitlizeServer(AppManager.Setting.Server.ServerUrl);
             ServerInitialized = true;
+            LoadTags();
             IsBusy = false;
         }
 
-        public void LoadTags()
+        public async void LoadTags()
         {
-            _localServer.GetTags();
+            Tags = await _localServer.GetTags();
+            if (Tags != null && Tags.Count > 0)
+                SelectedTag = Tags[0];
         }
 
         #endregion

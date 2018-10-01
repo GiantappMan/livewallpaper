@@ -130,6 +130,15 @@ namespace LiveWallpaper.ViewModels
             base.OnDeactivate(close);
         }
 
+        public void InitServer()
+        {
+            if (Server != null)
+                return;
+
+            Server = new ServerViewModel();
+            Server.InitServer();
+        }
+
         #endregion
 
         #region properties
