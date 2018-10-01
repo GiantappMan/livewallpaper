@@ -20,6 +20,12 @@ namespace LiveWallpaper.Server
             return result;
         }
 
+        public async Task<ObservableCollection<SortServerObj>> GetSorts()
+        {
+            var result = await HttpGet<ObservableCollection<SortServerObj>>($"{_host}/sorts");
+            return result;
+        }
+
         public Task InitlizeServer(string url)
         {
             _host = url;

@@ -119,14 +119,6 @@
                             <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
-                    <!--<ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <RadioButton
-                                Margin="6,1"
-                                Content="{Binding Name}"
-                                GroupName="Tags" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>-->
                 </ListBox>
                 <TextBlock
                     Grid.Row="1"
@@ -134,6 +126,21 @@
                     VerticalAlignment="Center">
                     排序：
                 </TextBlock>
+                <ListBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    BorderThickness="0"
+                    DisplayMemberPath="Name"
+                    ItemsSource="{Binding Sorts}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    SelectedItem="{Binding SelectedSort}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
                 <ListView
                     Grid.Row="2"
                     Grid.ColumnSpan="2"

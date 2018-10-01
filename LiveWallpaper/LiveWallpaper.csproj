@@ -187,6 +187,7 @@
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Server\IServer.cs" />
     <Compile Include="Server\LocalServer.cs" />
+    <Compile Include="Server\SortServerObj.cs" />
     <Compile Include="Server\TagServerObj.cs" />
     <Compile Include="Server\WallpaperServerObj.cs" />
     <Compile Include="Settings\AppData.cs" />

@@ -123,6 +123,60 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region Sorts
+
+        /// <summary>
+        /// The <see cref="Sorts" /> property's name.
+        /// </summary>
+        public const string SortsPropertyName = "Sorts";
+
+        private ObservableCollection<SortServerObj> _Sorts;
+
+        /// <summary>
+        /// Sorts
+        /// </summary>
+        public ObservableCollection<SortServerObj> Sorts
+        {
+            get { return _Sorts; }
+
+            set
+            {
+                if (_Sorts == value) return;
+
+                _Sorts = value;
+                NotifyOfPropertyChange(SortsPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region SelectedSort
+
+        /// <summary>
+        /// The <see cref="SelectedSort" /> property's name.
+        /// </summary>
+        public const string SelectedSortPropertyName = "SelectedSort";
+
+        private SortServerObj _SelectedSort;
+
+        /// <summary>
+        /// SelectedSort
+        /// </summary>
+        public SortServerObj SelectedSort
+        {
+            get { return _SelectedSort; }
+
+            set
+            {
+                if (_SelectedSort == value) return;
+
+                _SelectedSort = value;
+                NotifyOfPropertyChange(SelectedSortPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region methods
@@ -141,6 +195,10 @@ namespace LiveWallpaper.ViewModels
             Tags = await _localServer.GetTags();
             if (Tags != null && Tags.Count > 0)
                 SelectedTag = Tags[0];
+
+            Sorts = await _localServer.GetSorts();
+            if (Sorts != null && Sorts.Count > 0)
+                SelectedSort = Sorts[0];
         }
 
         #endregion
