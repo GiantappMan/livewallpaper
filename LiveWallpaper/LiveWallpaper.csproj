@@ -199,6 +199,7 @@
     <Compile Include="ViewModels\ContextMenuViewModel.cs" />
     <Compile Include="ViewModels\CreateWallpaperViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="Views\Conveters\MultiBoolToVisibilityConveter.cs" />
     <Compile Include="Views\Conveters\NullToBooleanConveter.cs" />
     <Compile Include="Views\Conveters\UriToCachedImageConverter.cs" />
     <Compile Include="Views\SettingView.xaml.cs">

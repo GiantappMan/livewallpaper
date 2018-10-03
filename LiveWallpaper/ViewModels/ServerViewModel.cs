@@ -145,6 +145,7 @@ namespace LiveWallpaper.ViewModels
                 if (_SelectedTag == value) return;
 
                 _SelectedTag = value;
+                _pageIndex = 1;
                 NotifyOfPropertyChange(SelectedTagPropertyName);
             }
         }
@@ -199,6 +200,7 @@ namespace LiveWallpaper.ViewModels
                 if (_SelectedSort == value) return;
 
                 _SelectedSort = value;
+                _pageIndex = 1;
                 NotifyOfPropertyChange(SelectedSortPropertyName);
             }
         }
@@ -267,10 +269,16 @@ namespace LiveWallpaper.ViewModels
 
         public async Task LoadWallpapers()
         {
+            if (IsLoadingWallpaper || SelectedTag == null || SelectedSort == null)
+                return;
+
             IsLoadingWallpaper = true;
 
             if (Wallpapers == null)
                 Wallpapers = new ObservableCollection<WallpaperServerObj>();
+            else if (_pageIndex == 1)
+                Wallpapers.Clear();
+
             var tempList = await _localServer.GetWallpapers(SelectedTag.ID, SelectedSort.ID, _pageIndex++);
             if (tempList == null)
                 return;
