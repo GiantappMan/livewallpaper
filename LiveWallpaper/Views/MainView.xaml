@@ -109,6 +109,7 @@
                 <ListBox
                     Grid.Column="1"
                     VerticalAlignment="Center"
+                    cal:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
                     BorderThickness="0"
                     DisplayMemberPath="Name"
                     ItemsSource="{Binding Tags}"
@@ -130,6 +131,7 @@
                     Grid.Row="1"
                     Grid.Column="1"
                     VerticalAlignment="Center"
+                    cal:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
                     BorderThickness="0"
                     DisplayMemberPath="Name"
                     ItemsSource="{Binding Sorts}"
@@ -146,18 +148,28 @@
                     Grid.ColumnSpan="2"
                     Margin="5"
                     ItemsSource="{Binding Wallpapers}"
+                    ScrollBar.Scroll="ListView_Scroll"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid
-                                Width="150"
-                                Height="150"
+                                Width="144"
+                                Height="110"
                                 cal:Action.TargetWithoutContext="MainViewModel"
                                 cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
-                                Background="Gray">
-                                <Image Stretch="Uniform" Source="{Binding Img, Converter={StaticResource UriToCachedImageConverter}}" />
+                                Background="Gray"
+                                ToolTip="{Binding Name}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="90" />
+                                    <RowDefinition Height="18" />
+                                </Grid.RowDefinitions>
+                                <Image
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Source="{Binding Img, Converter={StaticResource UriToCachedImageConverter}}"
+                                    Stretch="Uniform" />
                                 <StackPanel
-                                    Margin="0,0,0,10"
+                                    Grid.Row="1"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Bottom">
                                     <TextBlock Foreground="White" Text="{Binding Name}" />
@@ -191,8 +203,13 @@
                     Grid.RowSpan="3"
                     Grid.ColumnSpan="2"
                     Width="35"
-                    Height="35"
-                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    Height="35">
+                    <Viewbox.Visibility>
+                        <MultiBinding Converter="{StaticResource MultiBoolToVisibilityConveter}">
+                            <Binding Path="IsBusy" />
+                            <Binding Path="IsLoadingWallpaper" />
+                        </MultiBinding>
+                    </Viewbox.Visibility>
                     <loadin:LoadingIndicator
                         IsActive="True"
                         SpeedRatio="0.45"

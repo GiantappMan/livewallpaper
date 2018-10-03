@@ -3,6 +3,7 @@ using LiveWallpaperEngine;
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace LiveWallpaper.Views
 {
@@ -37,6 +38,19 @@ namespace LiveWallpaper.Views
             {
                 var vm = DataContext as MainViewModel;
                 vm.InitServer();
+            }
+        }
+
+        private void ListView_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+        {
+            ScrollBar sb = e.OriginalSource as ScrollBar;
+
+            if (sb.Orientation == Orientation.Horizontal)
+                return;
+
+            if (sb.Value >= sb.Maximum - 20)
+            {
+
             }
         }
     }
