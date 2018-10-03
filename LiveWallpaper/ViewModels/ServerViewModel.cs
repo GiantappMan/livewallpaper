@@ -13,6 +13,7 @@ namespace LiveWallpaper.ViewModels
     public class ServerViewModel : Screen
     {
         private LocalServer _localServer;
+        private int _pageIndex = 1;
 
         #region properties
 
@@ -67,6 +68,33 @@ namespace LiveWallpaper.ViewModels
                 NotifyOfPropertyChange(IsBusyPropertyName);
             }
         }
+        #endregion
+
+        #region IsLoadingWallpaper
+
+        /// <summary>
+        /// The <see cref="IsLoadingWallpaper" /> property's name.
+        /// </summary>
+        public const string IsLoadingWallpaperPropertyName = "IsLoadingWallpaper";
+
+        private bool _IsLoadingWallpaper;
+
+        /// <summary>
+        /// IsLoadingWallpaper
+        /// </summary>
+        public bool IsLoadingWallpaper
+        {
+            get { return _IsLoadingWallpaper; }
+
+            set
+            {
+                if (_IsLoadingWallpaper == value) return;
+
+                _IsLoadingWallpaper = value;
+                NotifyOfPropertyChange(IsLoadingWallpaperPropertyName);
+            }
+        }
+
         #endregion
 
         #region Tags
@@ -177,28 +205,79 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region Wallpapers
+
+        /// <summary>
+        /// The <see cref="Wallpapers" /> property's name.
+        /// </summary>
+        public const string WallpapersPropertyName = "Wallpapers";
+
+        private ObservableCollection<WallpaperServerObj> _Wallpapers;
+
+        /// <summary>
+        /// Wallpapers
+        /// </summary>
+        public ObservableCollection<WallpaperServerObj> Wallpapers
+        {
+            get { return _Wallpapers; }
+
+            set
+            {
+                if (_Wallpapers == value) return;
+
+                _Wallpapers = value;
+                NotifyOfPropertyChange(WallpapersPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region methods
-        public void InitServer()
+        public async void InitServer()
         {
             IsBusy = true;
             _localServer = new LocalServer();
-            _localServer.InitlizeServer(AppManager.Setting.Server.ServerUrl);
+            await _localServer.InitlizeServer(AppManager.Setting.Server.ServerUrl);
             ServerInitialized = true;
-            LoadTags();
+            await LoadTagsAndSorts();
+            await LoadWallpapers();
             IsBusy = false;
         }
 
-        public async void LoadTags()
+        public async Task LoadTagsAndSorts()
         {
-            Tags = await _localServer.GetTags();
+            var tempTag = await _localServer.GetTags();
+            if (tempTag == null)
+                return;
+            Tags = new ObservableCollection<TagServerObj>(tempTag);
+
             if (Tags != null && Tags.Count > 0)
                 SelectedTag = Tags[0];
 
-            Sorts = await _localServer.GetSorts();
+            var tempSort = await _localServer.GetSorts();
+            if (tempSort == null)
+                return;
+
+            Sorts = new ObservableCollection<SortServerObj>(tempSort);
             if (Sorts != null && Sorts.Count > 0)
                 SelectedSort = Sorts[0];
+        }
+
+        public async Task LoadWallpapers()
+        {
+            IsLoadingWallpaper = true;
+
+            if (Wallpapers == null)
+                Wallpapers = new ObservableCollection<WallpaperServerObj>();
+            var tempList = await _localServer.GetWallpapers(SelectedTag.ID, SelectedSort.ID, _pageIndex++);
+            if (tempList == null)
+                return;
+
+            tempList.ForEach(m => Wallpapers.Add(m));
+
+            IsLoadingWallpaper = false;
         }
 
         #endregion

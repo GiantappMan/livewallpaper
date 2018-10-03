@@ -11,7 +11,8 @@ namespace LiveWallpaper.Server
     {
         Task InitlizeServer(string url);
 
-        Task<ObservableCollection<TagServerObj>> GetTags();
-        Task<ObservableCollection<SortServerObj>> GetSorts();
+        Task<List<TagServerObj>> GetTags();
+        Task<List<SortServerObj>> GetSorts();
+        Task<List<WallpaperServerObj>> GetWallpapers(int tag, int sort, int page);
     }
 }

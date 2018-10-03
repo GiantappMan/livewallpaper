@@ -14,15 +14,21 @@ namespace LiveWallpaper.Server
     {
         string _host;
 
-        public async Task<ObservableCollection<TagServerObj>> GetTags()
+        public async Task<List<TagServerObj>> GetTags()
         {
-            var result = await HttpGet<ObservableCollection<TagServerObj>>($"{_host}/tags");
+            var result = await HttpGet<List<TagServerObj>>($"{_host}/tags");
             return result;
         }
 
-        public async Task<ObservableCollection<SortServerObj>> GetSorts()
+        public async Task<List<SortServerObj>> GetSorts()
         {
-            var result = await HttpGet<ObservableCollection<SortServerObj>>($"{_host}/sorts");
+            var result = await HttpGet<List<SortServerObj>>($"{_host}/sorts");
+            return result;
+        }
+
+        public async Task<List<WallpaperServerObj>> GetWallpapers(int tag, int sort, int page)
+        {
+            var result = await HttpGet<List<WallpaperServerObj>>($"{_host}/wallpapers?tag={tag}&sort={sort}&page={page}");
             return result;
         }
 
@@ -32,7 +38,7 @@ namespace LiveWallpaper.Server
             return Task.CompletedTask;
         }
 
-        private JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore, NullValueHandling = NullValueHandling.Ignore };
+        private readonly JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore, NullValueHandling = NullValueHandling.Ignore };
         private async Task<T> HttpGet<T>(string url)
         {
             try
@@ -72,5 +78,6 @@ namespace LiveWallpaper.Server
                 return default(T);
             }
         }
+
     }
 }
