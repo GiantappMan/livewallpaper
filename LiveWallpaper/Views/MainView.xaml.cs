@@ -41,16 +41,15 @@ namespace LiveWallpaper.Views
             }
         }
 
-        private void ListView_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+        private async void ListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            ScrollBar sb = e.OriginalSource as ScrollBar;
-
-            if (sb.Orientation == Orientation.Horizontal)
-                return;
-
-            if (sb.Value >= sb.Maximum - 20)
+            if (e.VerticalChange > 0)
             {
-
+                if (e.VerticalOffset + e.ViewportHeight == e.ExtentHeight)
+                {
+                    var vm = DataContext as MainViewModel;
+                    await vm.Server.LoadWallpapers();
+                }
             }
         }
     }
