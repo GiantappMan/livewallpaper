@@ -147,33 +147,45 @@
                     Grid.Row="2"
                     Grid.ColumnSpan="2"
                     Margin="5"
+                    Background="Transparent"
                     ItemsSource="{Binding Wallpapers}"
-                    ScrollBar.Scroll="ListView_Scroll"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.ScrollChanged="ListView_ScrollChanged">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid
                                 Width="144"
-                                Height="110"
+                                Height="128"
                                 cal:Action.TargetWithoutContext="MainViewModel"
                                 cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
                                 Background="Gray"
                                 ToolTip="{Binding Name}">
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="18" />
                                     <RowDefinition Height="90" />
                                     <RowDefinition Height="18" />
                                 </Grid.RowDefinitions>
+                                <TextBlock
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Foreground="White"
+                                    Text="{Binding DownStr}" />
                                 <Image
+                                    Grid.Row="1"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Source="{Binding Img, Converter={StaticResource UriToCachedImageConverter}}"
                                     Stretch="Uniform" />
-                                <StackPanel
-                                    Grid.Row="1"
+                                <Grid
+                                    Grid.Row="2"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Bottom">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
                                     <TextBlock Foreground="White" Text="{Binding Name}" />
-                                </StackPanel>
+                                </Grid>
                                 <Grid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem
