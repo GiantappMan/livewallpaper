@@ -145,6 +145,7 @@
                     Grid.Row="2"
                     Grid.ColumnSpan="2"
                     Margin="5"
+                    ItemsSource="{Binding Wallpapers}"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -153,14 +154,13 @@
                                 Height="150"
                                 cal:Action.TargetWithoutContext="MainViewModel"
                                 cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
-                                Background="Gray"
-                                ToolTip="{Binding ProjectInfo.Description}">
-                                <Image Source="{Binding AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}}" />
+                                Background="Gray">
+                                <Image Stretch="Uniform" Source="{Binding Img, Converter={StaticResource UriToCachedImageConverter}}" />
                                 <StackPanel
                                     Margin="0,0,0,10"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Bottom">
-                                    <TextBlock Foreground="White" Text="{Binding ProjectInfo.Title}" />
+                                    <TextBlock Foreground="White" Text="{Binding Name}" />
                                 </StackPanel>
                                 <Grid.ContextMenu>
                                     <ContextMenu>
