@@ -31,13 +31,18 @@ namespace LiveWallpaper.Views
             createWindow.Closed -= CreateWindow_Closed;
         }
 
-        private void TabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private async void TabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             TabControl control = sender as TabControl;
             if (control.SelectedIndex == 1)
             {
-                var vm = DataContext as MainViewModel;
-                vm.InitServer();
+                //var vm = DataContext as MainViewModel;
+                //vm.InitServer();
+                Uri uri = new Uri("live.wallpaper.store://");
+
+#pragma warning disable UWP003 // UWP-only
+                bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+#pragma warning restore UWP003 // UWP-only
             }
         }
 

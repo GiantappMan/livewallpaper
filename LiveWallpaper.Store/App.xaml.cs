@@ -39,9 +39,20 @@ namespace LiveWallpaper.Store
             }
         }
 
-        protected override async void OnActivated(IActivatedEventArgs args)
+        protected override async void OnActivated(IActivatedEventArgs e)
         {
-            await ActivationService.ActivateAsync(args);
+            await ActivationService.ActivateAsync(e);
+            if (e.Kind == ActivationKind.Protocol)
+            {
+                ProtocolActivatedEventArgs protocolArgs = (ProtocolActivatedEventArgs)e;
+                Uri uri = protocolArgs.Uri;
+                if (uri.Scheme == "live.wallpaper.store")
+                {
+                    //Windows.UI.Popups.MessageDialog s = new Windows.UI.Popups.MessageDialog("test");
+                    //await s.ShowAsync();
+                    DisplayRootViewFor<MainViewModel>();
+                }
+            }
         }
 
         private WinRTContainer _container;
