@@ -1,6 +1,9 @@
-﻿using LiveWallpaper.ViewModels;
+﻿using LiveWallpaper.Managers;
+using LiveWallpaper.ViewModels;
 using LiveWallpaperEngine;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -31,13 +34,14 @@ namespace LiveWallpaper.Views
             createWindow.Closed -= CreateWindow_Closed;
         }
 
-        private async void TabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             TabControl control = sender as TabControl;
             if (control.SelectedIndex == 1)
             {
-                //var vm = DataContext as MainViewModel;
-                //vm.InitServer();
+                string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
+                Process.Start(serverFile);
+
                 Uri uri = new Uri("live.wallpaper.store://");
 
 #pragma warning disable UWP003 // UWP-only

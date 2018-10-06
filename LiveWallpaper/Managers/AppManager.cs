@@ -22,7 +22,7 @@ namespace LiveWallpaper.Managers
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>
-        /// 程序入口
+        /// 程序入口目录
         /// </summary>
         public static string ApptEntryDir { get; private set; }
         /// <summary>

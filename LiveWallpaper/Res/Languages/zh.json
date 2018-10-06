@@ -13,7 +13,7 @@
   "common_config": "配置",
   "common_exit": "退出",
   "common_about": "关于",
-  "common_appName": "动态壁纸工具 - 巨应出品 QQ群641405255",
+  "common_appName": "巨应动态壁纸",
   "common_or": "或",
   "common_selectFile": "选择文件",
 
@@ -22,6 +22,7 @@
   "mainUI_refreshWallpaper": "刷新壁纸",
   "mainUI_createWallpaper": "创建壁纸",
   "mainUI_warning_loadError": "读取壁纸失败",
+  "mainUI_thirdParty_desc": "本项目完全开源，技术交流，不承担任何风险。\r目前没有官方壁纸服务，只有第三方服务解析器。介意者慎用",
 
   "contextMenu_main": "打开主界面",
 

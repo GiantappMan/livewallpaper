@@ -95,7 +95,14 @@
             </Grid>
         </TabItem>
         <TabItem lan:Xaml.Key="mainUI_thirdParty">
-            <Grid DataContext="{Binding Server}">
+            <Grid>
+                <TextBlock
+                    TextAlignment="Center"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    lan:Xaml.Key="mainUI_thirdParty_desc" />
+            </Grid>
+            <!--<Grid DataContext="{Binding Server}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto" MinHeight="30" />
                     <RowDefinition Height="auto" />
@@ -227,7 +234,7 @@
                         SpeedRatio="0.45"
                         Style="{StaticResource LoadingIndicatorRingStyle}" />
                 </Viewbox>
-            </Grid>
+            </Grid>-->
         </TabItem>
     </TabControl>
 </Window>
