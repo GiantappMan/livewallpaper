@@ -127,7 +127,9 @@ namespace LiveWallpaper.Store.Services
 
         private void OnFrameNavigated(object sender, NavigationEventArgs e)
         {
+#pragma warning disable UWP003 // UWP-only
             SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility = NavigationService.CanGoBack ?
+#pragma warning restore UWP003 // UWP-only
                 AppViewBackButtonVisibility.Visible : AppViewBackButtonVisibility.Collapsed;
         }
 

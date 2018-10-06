@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
 using Windows.Storage;
-using LiveWallpaper.Server;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -130,15 +129,6 @@ namespace LiveWallpaper.ViewModels
             base.OnDeactivate(close);
         }
 
-        public void InitServer()
-        {
-            if (Server != null)
-                return;
-
-            Server = new ServerViewModel();
-            Server.InitServer();
-        }
-
         #endregion
 
         #region properties
@@ -165,33 +155,6 @@ namespace LiveWallpaper.ViewModels
 
                 _Wallpapers = value;
                 NotifyOfPropertyChange(WallpapersPropertyName);
-            }
-        }
-
-        #endregion
-
-        #region Server
-
-        /// <summary>
-        /// The <see cref="Server" /> property's name.
-        /// </summary>
-        public const string ServerPropertyName = "Server";
-
-        private ServerViewModel _Server;
-
-        /// <summary>
-        /// Server
-        /// </summary>
-        public ServerViewModel Server
-        {
-            get { return _Server; }
-
-            set
-            {
-                if (_Server == value) return;
-
-                _Server = value;
-                NotifyOfPropertyChange(ServerPropertyName);
             }
         }
 

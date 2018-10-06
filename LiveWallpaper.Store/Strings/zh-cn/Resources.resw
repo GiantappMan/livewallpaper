@@ -118,19 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>LiveWallpaper.Store</value>
+    <value>巨应壁纸商店</value>
     <comment>Application display name</comment>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>LiveWallpaper.Store</value>
+    <value>巨应壁纸商店</value>
     <comment>Application description</comment>
   </data>
-  <data name="Main_Title.Text" xml:space="preserve">
-    <value>Main</value>
-    <comment>Page title for MainPage</comment>
+  <data name="txt_tags.Text" xml:space="preserve">
+    <value>标签：</value>
   </data>
   <data name="Main_NoSelection.Text" xml:space="preserve">
-    <value>Select an item from the list.</value>
+    <value>选择一个壁纸</value>
     <comment>No selection text for Main</comment>
+  </data>
+  <data name="txt_sorts.Text" xml:space="preserve">
+    <value>排序：</value>
   </data>
 </root>

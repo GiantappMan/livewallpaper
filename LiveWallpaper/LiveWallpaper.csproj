@@ -185,16 +185,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
-    <Compile Include="Server\IServer.cs" />
-    <Compile Include="Server\LocalServer.cs" />
-    <Compile Include="Server\SortServerObj.cs" />
-    <Compile Include="Server\TagServerObj.cs" />
-    <Compile Include="Server\WallpaperServerObj.cs" />
     <Compile Include="Settings\AppData.cs" />
     <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Managers\AppManager.cs" />
     <Compile Include="ViewModels\ScreenWindow.cs" />
-    <Compile Include="ViewModels\ServerViewModel.cs" />
     <Compile Include="ViewModels\SettingViewModel.cs" />
     <Compile Include="ViewModels\ContextMenuViewModel.cs" />
     <Compile Include="ViewModels\CreateWallpaperViewModel.cs" />
