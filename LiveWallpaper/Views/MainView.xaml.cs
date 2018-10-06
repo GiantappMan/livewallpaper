@@ -20,7 +20,6 @@ namespace LiveWallpaper.Views
             InitializeComponent();
         }
 
-
         private void Btn_CreateWallpaper(object sender, RoutedEventArgs e)
         {
             CreateWallpaperView createWindow = new CreateWallpaperView();
@@ -50,16 +49,16 @@ namespace LiveWallpaper.Views
             }
         }
 
-        private async void ListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            if (e.VerticalChange > 0)
-            {
-                if (e.VerticalOffset + e.ViewportHeight == e.ExtentHeight)
-                {
-                    var vm = DataContext as MainViewModel;
-                    await vm.Server.LoadWallpapers();
-                }
-            }
-        }
+        //private async void ListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        //{
+        //    if (e.VerticalChange > 0)
+        //    {
+        //        if (e.VerticalOffset + e.ViewportHeight == e.ExtentHeight)
+        //        {
+        //            var vm = DataContext as MainViewModel;
+        //            await vm.Server.LoadWallpapers();
+        //        }
+        //    }
+        //}
     }
 }

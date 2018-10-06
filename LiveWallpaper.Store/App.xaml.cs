@@ -72,7 +72,11 @@ namespace LiveWallpaper.Store
             _container = new WinRTContainer();
             _container.RegisterWinRTServices();
 
-            _container.PerRequest<MainViewModel>();
+            _container.PerRequest<MainViewModel>()
+                .PerRequest<ServerViewModel>();
+            _container.Singleton<AppService>();
+
+            var appService = _container.GetInstance<AppService>();
         }
 
         protected override object GetInstance(Type service, string key)

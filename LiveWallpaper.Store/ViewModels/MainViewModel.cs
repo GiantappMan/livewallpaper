@@ -15,8 +15,50 @@ namespace LiveWallpaper.Store.ViewModels
         {
             base.OnInitialize();
 
+            InitServer();
             await LoadDataAsync();
         }
+
+        #region properites
+
+        #region Server
+
+        /// <summary>
+        /// The <see cref="Server" /> property's name.
+        /// </summary>
+        public const string ServerPropertyName = "Server";
+
+        private ServerViewModel _Server;
+
+        /// <summary>
+        /// Server
+        /// </summary>
+        public ServerViewModel Server
+        {
+            get { return _Server; }
+
+            set
+            {
+                if (_Server == value) return;
+
+                _Server = value;
+                NotifyOfPropertyChange(ServerPropertyName);
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        public void InitServer()
+        {
+            if (Server != null)
+                return;
+
+            Server = IoC.Get<ServerViewModel>();
+            Server.InitServer();
+        }
+
 
         public async Task LoadDataAsync()
         {
