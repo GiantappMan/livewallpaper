@@ -73,7 +73,6 @@ namespace LiveWallpaper.Store
             _container.RegisterWinRTServices();
 
             _container.PerRequest<MainViewModel>();
-            _container.PerRequest<DetailViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)

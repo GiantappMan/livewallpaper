@@ -129,4 +129,8 @@
     <value>Main</value>
     <comment>Page title for MainPage</comment>
   </data>
+  <data name="Main_NoSelection.Text" xml:space="preserve">
+    <value>Select an item from the list.</value>
+    <comment>No selection text for Main</comment>
+  </data>
 </root>

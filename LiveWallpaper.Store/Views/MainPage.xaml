@@ -5,10 +5,29 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Style="{StaticResource PageStyle}"
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:cm="using:Caliburn.Micro"
     mc:Ignorable="d">
-    <Grid
-        x:Name="ContentArea"
-        Margin="{StaticResource MediumLeftRightMargin}">
+    <Page.Transitions>
+        <TransitionCollection>
+            <NavigationThemeTransition />
+        </TransitionCollection>
+    </Page.Transitions>
+    <Page.Resources>
+        <DataTemplate x:Key="ItemTemplate">
+            <ContentControl cm:View.Model="{Binding}" cm:View.Context="MasterView" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="DetailsTemplate">
+            <ContentControl cm:View.Model="{Binding}" cm:View.Context="DetailsView" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="NoSelectionContentTemplate">
+            <TextBlock x:Uid="Main_NoSelection" Style="{StaticResource ListNoSelectionTextStyle}" />
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid x:Name="ContentArea">
         <Grid.RowDefinitions>
             <RowDefinition Height="48"/>
             <RowDefinition Height="*"/>
@@ -17,12 +36,18 @@
         <TextBlock
             Grid.Row="0"
             x:Uid="Main_Title"
+            Margin="{StaticResource MediumLeftRightMargin}"
             Style="{StaticResource PageTitleStyle}" />
-        <Grid
-            Grid.Row="1" 
-            Background="{ThemeResource SystemControlPageBackgroundChromeLowBrush}">
-            <!--The SystemControlPageBackgroundChromeLowBrush background represents where you should place your content. 
-                Place your content here.-->
-        </Grid>
+
+        <controls:MasterDetailsView
+            Grid.Row="1"
+            x:Name="MasterDetailsViewControl"
+            ItemsSource="{x:Bind ViewModel.Items}"
+            SelectedItem="{x:Bind ViewModel.ActiveItem, Mode=OneWay}"
+            ItemTemplate="{StaticResource ItemTemplate}"
+            DetailsTemplate="{StaticResource DetailsTemplate}"
+            NoSelectionContentTemplate="{StaticResource NoSelectionContentTemplate}"
+            Loaded="MasterDetailsViewControl_Loaded"
+            BorderBrush="Transparent" />
     </Grid>
 </Page>
