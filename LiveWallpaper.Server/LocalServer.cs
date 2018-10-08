@@ -49,7 +49,6 @@ namespace LiveWallpaper.Server
                 };
                 using (var httpClient = new HttpClient(handle))
                 {
-
                     HttpResponseMessage response = await httpClient.GetAsync(url);
                     if (!response.IsSuccessStatusCode)
                         return default(T);

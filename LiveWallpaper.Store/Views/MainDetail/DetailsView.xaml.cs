@@ -1,5 +1,5 @@
 ﻿using System;
-
+using LiveWallpaper.Server;
 using LiveWallpaper.Store.ViewModels;
 
 namespace LiveWallpaper.Store.Views.MainDetail
@@ -11,6 +11,6 @@ namespace LiveWallpaper.Store.Views.MainDetail
             InitializeComponent();
         }
 
-        public MainDetailViewModel ViewModel => DataContext as MainDetailViewModel;
+        public WallpaperServerObj ViewModel => DataContext as WallpaperServerObj;
     }
 }

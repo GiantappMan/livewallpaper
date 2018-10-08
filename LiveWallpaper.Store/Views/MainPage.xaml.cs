@@ -22,12 +22,12 @@ namespace LiveWallpaper.Store.Views
             get { return DataContext as MainViewModel; }
         }
 
-        private void MasterDetailsViewControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (MasterDetailsViewControl.ViewState == MasterDetailsViewState.Both)
-            {
-                ViewModel.ActiveItem = ViewModel.Items.First();
-            }
-        }
+        //private void MasterDetailsViewControl_Loaded(object sender, RoutedEventArgs e)
+        //{
+        //    if (MasterDetailsViewControl.ViewState == MasterDetailsViewState.Both)
+        //    {
+        //        ViewModel.ActiveItem = ViewModel.Items.First();
+        //    }
+        //}
     }
 }
