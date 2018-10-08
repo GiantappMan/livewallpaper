@@ -44,25 +44,41 @@
 
         <DataTemplate x:Key="DetailsTemplate">
             <Grid>
-                <MediaElement
-                    Grid.Row="1"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Source="{Binding URL}"
-                    Stretch="Uniform" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
                 <TextBlock
-                    Margin="0,5,0,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    FontSize="11"
-                    Text="{Binding DownStr}" />
-                <TextBlock
-                    Grid.Row="2"
-                    Margin="0,0,0,5"
+                    Grid.Row="0"
+                    Margin="2"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
+                    VerticalAlignment="Center"
                     FontSize="11"
                     Text="{Binding Name}" />
+                <TextBlock
+                    Grid.Row="1"
+                    Margin="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Text="下载量：">
+                    <Run Text="{Binding DownStr}" />
+                </TextBlock>
+                <MediaElement
+                    Grid.Row="2"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"                    
+                    AreTransportControlsEnabled="True"
+                    Source="{Binding URL}"
+                    Stretch="Uniform">
+                    <MediaElement.TransportControls>
+                        <MediaTransportControls
+                            IsCompact="True"                            
+                            IsFullWindowButtonVisible="True"
+                            ShowAndHideAutomatically="True" />
+                    </MediaElement.TransportControls>
+                </MediaElement>
             </Grid>
         </DataTemplate>
 
