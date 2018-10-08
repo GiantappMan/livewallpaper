@@ -57,5 +57,15 @@ namespace LiveWallpaper.Store.ViewModels
             Server = IoC.Get<ServerViewModel>();
             Server.InitServer();
         }
+
+        public void Install()
+        {
+
+        }
+
+        public void Setting()
+        {
+
+        }
     }
 }

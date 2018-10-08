@@ -68,13 +68,13 @@
                 <MediaElement
                     Grid.Row="2"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"                    
+                    VerticalAlignment="Stretch"
                     AreTransportControlsEnabled="True"
                     Source="{Binding URL}"
                     Stretch="Uniform">
                     <MediaElement.TransportControls>
                         <MediaTransportControls
-                            IsCompact="True"                            
+                            IsCompact="True"
                             IsFullWindowButtonVisible="True"
                             ShowAndHideAutomatically="True" />
                     </MediaElement.TransportControls>
@@ -277,7 +277,18 @@
             </Setter>
         </Style>
     </Page.Resources>
-
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton
+                x:Name="Setting"
+                x:Uid="appBarBtn_setting"
+                Icon="Setting" />
+            <AppBarButton
+                x:Name="Install"
+                x:Uid="appBarBtn_install"
+                Icon="Download" />
+        </CommandBar>
+    </Page.BottomAppBar>
     <Grid x:Name="ContentArea">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />

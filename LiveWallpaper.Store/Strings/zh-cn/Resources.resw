@@ -135,4 +135,10 @@
   <data name="txt_sorts.Text" xml:space="preserve">
     <value>排序：</value>
   </data>
+  <data name="appBarBtn_install.Label" xml:space="preserve">
+    <value>安装当前壁纸</value>
+  </data>
+  <data name="appBarBtn_setting.Label" xml:space="preserve">
+    <value>设置</value>
+  </data>
 </root>
