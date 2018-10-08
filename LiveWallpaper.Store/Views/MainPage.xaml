@@ -43,11 +43,27 @@
         </DataTemplate>
 
         <DataTemplate x:Key="DetailsTemplate">
-            <ContentControl
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                cm:View.Context="DetailsView"
-                cm:View.Model="{Binding}" />
+            <Grid>
+                <MediaElement
+                    Grid.Row="1"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Source="{Binding URL}"
+                    Stretch="Uniform" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    FontSize="11"
+                    Text="{Binding DownStr}" />
+                <TextBlock
+                    Grid.Row="2"
+                    Margin="0,0,0,5"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    FontSize="11"
+                    Text="{Binding Name}" />
+            </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="NoSelectionContentTemplate">
@@ -304,9 +320,9 @@
             Grid.ColumnSpan="2"
             BorderBrush="Transparent"
             DetailsTemplate="{StaticResource DetailsTemplate}"
-            MasterPaneWidth="410"
             ItemTemplate="{StaticResource ItemTemplate}"
             ItemsSource="{x:Bind ViewModel.Server.Wallpapers, Mode=OneWay}"
+            MasterPaneWidth="410"
             NoSelectionContentTemplate="{StaticResource NoSelectionContentTemplate}"
             SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedWallpaper, Mode=OneWay}">
             <controls:MasterDetailsView.ItemsPanel>

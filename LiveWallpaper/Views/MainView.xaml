@@ -94,7 +94,7 @@
                 </StackPanel>
             </Grid>
         </TabItem>
-        <TabItem lan:Xaml.Key="mainUI_thirdParty">
+        <TabItem lan:Xaml.Key="mainUI_wallpaperStore">
             <Grid>
                 <TextBlock
                     TextAlignment="Center"
