@@ -119,6 +119,11 @@ namespace LiveWallpaper.Store.ViewModels
             IsBusy = false;
         }
 
+        public void RefreshWallpapers()
+        {
+            if (Wallpapers != null)
+                Wallpapers.Clear();
+        }
 
         #endregion
     }
