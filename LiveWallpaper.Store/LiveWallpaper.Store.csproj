@@ -120,8 +120,7 @@
     <Compile Include="Services\ActivationService.cs" />
     <Compile Include="Activation\DefaultLaunchActivationHandler.cs" />
     <Compile Include="Services\AppService.cs" />
-    <Compile Include="Services\SampleDataService.cs" />
-    <Compile Include="ViewModels\MainDetailViewModel.cs" />
+    <Compile Include="Services\WallpaperSorce.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ServerViewModel.cs" />
     <Compile Include="Views\MainDetail\DetailsView.xaml.cs">
