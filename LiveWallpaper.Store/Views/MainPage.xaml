@@ -5,6 +5,7 @@
     xmlns:cm="using:Caliburn.Micro"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:maindetail="using:LiveWallpaper.Store.Views.MainDetail"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:util="using:DZY.DotNetUtil.UWP.Controls"
     Style="{StaticResource PageStyle}"
@@ -16,7 +17,28 @@
     </Page.Transitions>
     <Page.Resources>
         <DataTemplate x:Key="ItemTemplate">
-            <ContentControl cm:View.Context="MasterView" cm:View.Model="{Binding}" />
+            <Grid
+                Width="50"
+                Height="50"
+                Padding="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Image
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Source="{Binding Img}" />
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center">
+                    <TextBlock Style="{ThemeResource ListTitleStyle}" Text="{Binding Name}" />
+                    <TextBlock Style="{StaticResource ListSubTitleStyle}" Text="{Binding URL}" />
+                    <TextBlock Style="{StaticResource ListSubTitleStyle}" Text="{Binding}" />
+                    <TextBlock Text="wer" />
+                </StackPanel>
+            </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="DetailsTemplate">
@@ -49,13 +71,13 @@
         <ListBox
             Grid.Column="1"
             VerticalAlignment="Center"
-            cm:Action.Target="{x:Bind ViewModel.Server.WallpaperSorce, Mode=OneWay}"
-            cm:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
+            cm:Action.TargetWithoutContext="{x:Bind ViewModel.Server, Mode=OneWay}"
+            cm:Message.Attach="[Event SelectionChanged]=[Action RefreshWallpapers()]"
             BorderThickness="0"
             DisplayMemberPath="Name"
-            ItemsSource="{Binding Tags, Mode=OneWay}"
+            ItemsSource="{x:Bind ViewModel.Server.WallpaperSorce.Tags, Mode=OneWay}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-            SelectedItem="{Binding SelectedTag, Mode=TwoWay}">
+            SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedTag, Mode=TwoWay}">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <controls:WrapPanel Orientation="Horizontal" />
@@ -71,8 +93,8 @@
             Grid.Row="1"
             Grid.Column="1"
             VerticalAlignment="Center"
-            cm:Action.TargetWithoutContext="{x:Bind ViewModel.Server.WallpaperSorce, Mode=OneWay}"
-            cm:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
+            cm:Action.TargetWithoutContext="{x:Bind ViewModel.Server, Mode=OneWay}"
+            cm:Message.Attach="[Event SelectionChanged]=[Action RefreshWallpapers()]"
             BorderThickness="0"
             DisplayMemberPath="Name"
             ItemsSource="{x:Bind ViewModel.Server.WallpaperSorce.Sorts, Mode=OneWay}"
@@ -84,7 +106,6 @@
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
         </ListBox>
-        <!--  ItemsSource="{x:Bind ViewModel.Server.Wallpapers, Mode=OneWay}"  -->
         <controls:MasterDetailsView
             x:Name="MasterDetailsViewControl"
             Grid.Row="2"
@@ -92,8 +113,15 @@
             BorderBrush="Transparent"
             DetailsTemplate="{StaticResource DetailsTemplate}"
             ItemTemplate="{StaticResource ItemTemplate}"
+            ItemsSource="{x:Bind ViewModel.Server.Wallpapers, Mode=OneWay}"
             NoSelectionContentTemplate="{StaticResource NoSelectionContentTemplate}"
-            SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedWallpaper, Mode=OneWay}" />
+            SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedWallpaper, Mode=OneWay}">
+            <controls:MasterDetailsView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <controls:UniformGrid Columns="2" />
+                </ItemsPanelTemplate>
+            </controls:MasterDetailsView.ItemsPanel>
+        </controls:MasterDetailsView>
         <util:BusyIndicator
             Grid.RowSpan="3"
             Grid.ColumnSpan="2"
