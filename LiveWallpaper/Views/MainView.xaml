@@ -11,8 +11,8 @@
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    Width="825"
-    Height="600"
+    Width="358"
+    Height="422"
     lan:Xaml.Key="common_appName"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -97,7 +97,11 @@
         <TabItem lan:Xaml.Key="mainUI_wallpaperStore">
             <Grid>
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock lan:Xaml.Key="mainUI_thirdParty_desc" TextAlignment="Center" />
+                    <TextBlock
+                        HorizontalAlignment="Stretch"
+                        lan:Xaml.Key="mainUI_thirdParty_desc"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
                     <Button
                         x:Name="OpenLocalServer"
                         Margin="5"
