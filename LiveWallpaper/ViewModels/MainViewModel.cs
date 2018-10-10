@@ -124,9 +124,16 @@ namespace LiveWallpaper.ViewModels
             IoC.Get<ContextMenuViewModel>().Config(GetView());
         }
 
-        protected override void OnDeactivate(bool close)
+        public async void OpenLocalServer()
         {
-            base.OnDeactivate(close);
+            string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
+            Process.Start(serverFile);
+
+            Uri uri = new Uri("live.wallpaper.store://");
+
+#pragma warning disable UWP003 // UWP-only
+            bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+#pragma warning restore UWP003 // UWP-only
         }
 
         #endregion
