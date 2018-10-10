@@ -108,6 +108,7 @@ namespace LiveWallpaper.Managers
                 {
                     General = GetDefaultGeneralSettting(),
                     Wallpaper = GetDefaultWallpaperSetting(),
+                    Server = GetDefaultServerSetting()
                 };
                 writeDefault = true;
             }
@@ -122,6 +123,11 @@ namespace LiveWallpaper.Managers
             {
                 writeDefault = true;
                 tempSetting.Wallpaper = GetDefaultWallpaperSetting();
+            }
+            if (tempSetting.Server == null)
+            {
+                writeDefault = true;
+                tempSetting.Server = GetDefaultServerSetting();
             }
 
             if (writeDefault)
@@ -154,6 +160,14 @@ namespace LiveWallpaper.Managers
                     }
                     break;
             }
+        }
+
+        private static ServerSetting GetDefaultServerSetting()
+        {
+            return new ServerSetting()
+            {
+                ServerUrl = "http://localhost:8080"
+            };
         }
 
         private static WallpaperSetting GetDefaultWallpaperSetting()
