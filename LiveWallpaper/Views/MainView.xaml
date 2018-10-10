@@ -19,7 +19,7 @@
     <Window.Resources>
         <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
     </Window.Resources>
-    <TabControl SelectionChanged="TabControl_SelectionChanged">
+    <TabControl>
         <TabItem lan:Xaml.Key="mainUI_localWallpaper">
             <Grid>
                 <Grid.RowDefinitions>
@@ -96,11 +96,14 @@
         </TabItem>
         <TabItem lan:Xaml.Key="mainUI_wallpaperStore">
             <Grid>
-                <TextBlock
-                    TextAlignment="Center"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    lan:Xaml.Key="mainUI_thirdParty_desc" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock lan:Xaml.Key="mainUI_thirdParty_desc" TextAlignment="Center" />
+                    <Button
+                        x:Name="OpenLocalServer"
+                        Margin="5"
+                        HorizontalAlignment="Center"
+                        lan:Xaml.Key="mainUI_openLocalServer" />
+                </StackPanel>
             </Grid>
             <!--<Grid DataContext="{Binding Server}">
                 <Grid.RowDefinitions>

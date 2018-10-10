@@ -231,6 +231,5 @@ namespace LiveWallpaper.Managers
 
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
         }
-
     }
 }
