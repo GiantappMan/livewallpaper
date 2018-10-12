@@ -141,4 +141,10 @@
   <data name="appBarBtn_setting.Label" xml:space="preserve">
     <value>设置</value>
   </data>
+  <data name="setting_server" xml:space="preserve">
+    <value>服务</value>
+  </data>
+  <data name="setting_serverURL" xml:space="preserve">
+    <value>服务器地址</value>
+  </data>
 </root>

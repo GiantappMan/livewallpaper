@@ -1,0 +1,9 @@
+﻿{
+  "Server": {
+    "uid": "setting_server",
+    "ServerUrl": {
+      "type": "text",
+      "uid": "setting_serverURL"
+    }
+  }
+}

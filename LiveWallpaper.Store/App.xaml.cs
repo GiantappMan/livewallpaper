@@ -73,8 +73,9 @@ namespace LiveWallpaper.Store
             _container.RegisterWinRTServices();
 
             _container.PerRequest<MainViewModel>()
-                .PerRequest<ServerViewModel>();
-            _container.Singleton<AppService>();
+                .PerRequest<ServerViewModel>()
+                .PerRequest<SettingViewModel>()
+                .Singleton<AppService>();
 
             var appService = _container.GetInstance<AppService>();
         }
