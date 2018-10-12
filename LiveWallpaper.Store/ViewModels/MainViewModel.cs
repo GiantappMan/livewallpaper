@@ -65,7 +65,8 @@ namespace LiveWallpaper.Store.ViewModels
 
         public void Setting()
         {
-
+            INavigationService service = IoC.Get<INavigationService>();
+            service.NavigateToViewModel<SettingViewModel>();
         }
     }
 }

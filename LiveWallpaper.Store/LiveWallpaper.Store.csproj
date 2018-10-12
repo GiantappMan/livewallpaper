@@ -96,7 +96,7 @@
       <Version>1.0.0.33</Version>
     </PackageReference>
     <PackageReference Include="JsonConfiger">
-      <Version>1.0.0.20</Version>
+      <Version>1.0.0.24</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
@@ -117,17 +117,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Activation\ActivationHandler.cs" />
+    <Compile Include="Activation\DefaultLaunchActivationHandler.cs" />
+    <Compile Include="Helpers\Json.cs" />
     <Compile Include="Helpers\PropertyChangedBaseExtensions.cs" />
+    <Compile Include="Helpers\SettingsStorageExtensions.cs" />
     <Compile Include="Models\SampleOrder.cs" />
     <Compile Include="Models\Settngs\ServerSetting.cs" />
+    <Compile Include="Models\Settngs\SettingObject.cs" />
     <Compile Include="Services\ActivationService.cs" />
-    <Compile Include="Activation\DefaultLaunchActivationHandler.cs" />
     <Compile Include="Services\AppService.cs" />
     <Compile Include="Services\WallpaperSorce.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ServerViewModel.cs" />
+    <Compile Include="ViewModels\SettingViewModel.cs" />
     <Compile Include="Views\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SettingPage.xaml.cs">
+      <DependentUpon>SettingPage.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +167,10 @@
     <Page Include="Views\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SettingPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -232,6 +243,9 @@
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include="LiveWallpaper.Store_TemporaryKey.pfx" />
+    <Content Include="Res\setting.desc.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">

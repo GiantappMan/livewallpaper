@@ -106,9 +106,9 @@ namespace LiveWallpaper.Managers
                 //默认值
                 tempSetting = new SettingObject
                 {
-                    General = GetDefaultGeneralSettting(),
-                    Wallpaper = GetDefaultWallpaperSetting(),
-                    Server = GetDefaultServerSetting()
+                    General = GeneralSettting.GetDefaultGeneralSettting(),
+                    Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting(),
+                    Server = ServerSetting.GetDefaultServerSetting()
                 };
                 writeDefault = true;
             }
@@ -117,17 +117,17 @@ namespace LiveWallpaper.Managers
             if (tempSetting.General == null)
             {
                 writeDefault = true;
-                tempSetting.General = GetDefaultGeneralSettting();
+                tempSetting.General = GeneralSettting.GetDefaultGeneralSettting();
             }
             if (tempSetting.Wallpaper == null)
             {
                 writeDefault = true;
-                tempSetting.Wallpaper = GetDefaultWallpaperSetting();
+                tempSetting.Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting();
             }
             if (tempSetting.Server == null)
             {
                 writeDefault = true;
-                tempSetting.Server = GetDefaultServerSetting();
+                tempSetting.Server = ServerSetting.GetDefaultServerSetting();
             }
 
             if (writeDefault)
@@ -160,31 +160,6 @@ namespace LiveWallpaper.Managers
                     }
                     break;
             }
-        }
-
-        private static ServerSetting GetDefaultServerSetting()
-        {
-            return new ServerSetting()
-            {
-                ServerUrl = "http://localhost:8080"
-            };
-        }
-
-        private static WallpaperSetting GetDefaultWallpaperSetting()
-        {
-            return new WallpaperSetting()
-            {
-                ActionWhenMaximized = ActionWhenMaximized.Pause
-            };
-        }
-
-        private static GeneralSettting GetDefaultGeneralSettting()
-        {
-            return new GeneralSettting()
-            {
-                StartWithWindows = true,
-                CurrentLan = "zh"
-            };
         }
 
         internal static void Dispose()

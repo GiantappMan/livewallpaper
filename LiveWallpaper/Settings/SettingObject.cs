@@ -13,6 +13,15 @@ namespace LiveWallpaper.Settings
         public bool MinimizeUI { get; set; }
 
         public string CurrentLan { get; set; }
+
+        public static GeneralSettting GetDefaultGeneralSettting()
+        {
+            return new GeneralSettting()
+            {
+                StartWithWindows = true,
+                CurrentLan = "zh"
+            };
+        }
     }
 
     public enum ActionWhenMaximized
@@ -25,11 +34,28 @@ namespace LiveWallpaper.Settings
     public class WallpaperSetting
     {
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
+
+        public static WallpaperSetting GetDefaultWallpaperSetting()
+        {
+            return new WallpaperSetting()
+            {
+                ActionWhenMaximized = ActionWhenMaximized.Pause
+            };
+        }
+
     }
 
     public class ServerSetting
     {
         public string ServerUrl { get; set; }
+
+        public static ServerSetting GetDefaultServerSetting()
+        {
+            return new ServerSetting()
+            {
+                ServerUrl = "http://localhost:8080"
+            };
+        }
     }
 
     public class SettingObject
