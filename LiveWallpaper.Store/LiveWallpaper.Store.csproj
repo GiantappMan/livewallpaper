@@ -95,6 +95,9 @@
     <PackageReference Include="DZY.DotNetUtil.UI">
       <Version>1.0.0.33</Version>
     </PackageReference>
+    <PackageReference Include="JsonConfiger">
+      <Version>1.0.0.20</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
     </PackageReference>
