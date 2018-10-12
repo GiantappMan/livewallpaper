@@ -10,6 +10,5 @@
     mc:Ignorable="d">
     <Grid>
         <jsonConfiger:JsonConfierControl DataContext="{Binding JsonConfierViewModel,Mode=OneWay}" />
-        <TextBlock Text="{Binding JsonConfierViewModel}"></TextBlock>
     </Grid>
 </Page>

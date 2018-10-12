@@ -96,7 +96,7 @@
       <Version>1.0.0.33</Version>
     </PackageReference>
     <PackageReference Include="JsonConfiger">
-      <Version>1.0.0.24</Version>
+      <Version>1.0.0.36</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
