@@ -93,7 +93,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DZY.DotNetUtil.UI">
-      <Version>1.0.0.29</Version>
+      <Version>1.0.0.33</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
