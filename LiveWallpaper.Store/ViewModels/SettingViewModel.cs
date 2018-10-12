@@ -21,11 +21,25 @@ namespace LiveWallpaper.Store.ViewModels
 
         public SettingViewModel()
         {
-            LoadConfig();
+        }
+
+        #region override
+
+        protected override async void OnInitialize()
+        {
+            await LoadConfig();
+            base.OnInitialize();
+        }
+
+        #endregion
+
+        protected override void OnDeactivate(bool close)
+        {
+            SaveConfig();
+            base.OnDeactivate(close);
         }
 
         #region properties
-
 
         #region JsonConfierViewModel
 
@@ -56,9 +70,14 @@ namespace LiveWallpaper.Store.ViewModels
 
         #endregion
 
-        private async void LoadConfig()
+        private async Task LoadConfig()
         {
-            var json = await ApplicationData.Current.LocalSettings.ReadAsync<string>("config");
+            string json = null;
+            object temp = null;
+            bool ok = ApplicationData.Current.LocalSettings.Values.TryGetValue("config", out temp);
+            if (ok)
+                json = temp.ToString();
+
             if (string.IsNullOrEmpty(json))
             {
                 SettingObject setting = SettingObject.GetDefaultSetting();
@@ -71,9 +90,10 @@ namespace LiveWallpaper.Store.ViewModels
             JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
         }
 
-        public void Save()
+        public async void SaveConfig()
         {
             var data = _jcrService.GetData(JsonConfierViewModel.Nodes);
+            await ApplicationData.Current.LocalSettings.SaveAsync("config", data);
         }
     }
 }

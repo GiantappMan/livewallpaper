@@ -51,14 +51,22 @@ namespace LiveWallpaper.Store.Helpers
 
         public static async Task<T> ReadAsync<T>(this ApplicationDataContainer settings, string key)
         {
-            object obj = null;
-
-            if (settings.Values.TryGetValue(key, out obj))
+            try
             {
-                return await Json.ToObjectAsync<T>((string)obj);
-            }
+                object obj = null;
 
-            return default(T);
+                if (settings.Values.TryGetValue(key, out obj))
+                {
+                    return await Json.ToObjectAsync<T>((string)obj);
+                }
+
+                return default(T);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                return default(T);
+            }
         }
 
         public static async Task<StorageFile> SaveFileAsync(this StorageFolder folder, byte[] content, string fileName, CreationCollisionOption options = CreationCollisionOption.ReplaceExisting)

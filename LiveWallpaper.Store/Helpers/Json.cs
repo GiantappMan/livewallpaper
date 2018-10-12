@@ -17,10 +17,11 @@ namespace LiveWallpaper.Store.Helpers
 
         public static async Task<string> StringifyAsync(object value)
         {
-            return await Task.Run(() =>
-            {
-                return JsonConvert.SerializeObject(value);
-            });
+            var result = await Task.Run(() =>
+             {
+                 return JsonConvert.SerializeObject(value);
+             });
+            return result;
         }
     }
 }
