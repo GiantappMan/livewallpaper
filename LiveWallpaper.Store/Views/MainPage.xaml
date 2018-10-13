@@ -72,6 +72,7 @@
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
                     AreTransportControlsEnabled="True"
+                    Loaded="MediaElement_Loaded"
                     Source="{Binding URL}"
                     Stretch="Uniform">
                     <MediaElement.TransportControls>
@@ -350,6 +351,7 @@
         </ListBox>
         <controls:MasterDetailsView
             x:Name="MasterDetailsViewControl"
+            SelectionChanged="MasterDetailsViewControl_SelectionChanged"
             Grid.Row="2"
             Grid.ColumnSpan="2"
             BorderBrush="Transparent"

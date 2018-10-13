@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 
 using Caliburn.Micro;
-
+using LiveWallpaper.Store.Helpers;
+using LiveWallpaper.Store.Models.Settngs;
 using LiveWallpaper.Store.Services;
 using LiveWallpaper.Store.ViewModels;
 
 using Windows.ApplicationModel.Activation;
+using Windows.Foundation;
+using Windows.Storage;
 using Windows.UI.Xaml;
 
 namespace LiveWallpaper.Store
@@ -48,8 +51,18 @@ namespace LiveWallpaper.Store
                 Uri uri = protocolArgs.Uri;
                 if (uri.Scheme == "live.wallpaper.store")
                 {
-                    //Windows.UI.Popups.MessageDialog s = new Windows.UI.Popups.MessageDialog("test");
-                    //await s.ShowAsync();
+                    if (!string.IsNullOrEmpty(uri.Query))
+                    {
+                        WwwFormUrlDecoder decoder = new WwwFormUrlDecoder(uri.Query);
+                        if (decoder.Count > 0)
+                        {
+                            var host = decoder[0].Value;
+                            var setting = new SettingObject();
+                            setting.Server = new ServerSetting();
+                            setting.Server.ServerUrl = host;
+                            await ApplicationData.Current.LocalSettings.SaveAsync("config", setting);
+                        }
+                    }
                     DisplayRootViewFor<MainViewModel>();
                 }
             }
