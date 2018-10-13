@@ -129,7 +129,7 @@ namespace LiveWallpaper.ViewModels
             string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
             Process.Start(serverFile);
 
-            Uri uri = new Uri("live.wallpaper.store://");
+            Uri uri = new Uri($"live.wallpaper.store://location?host={AppManager.Setting.Server.ServerUrl}");
 
 #pragma warning disable UWP003 // UWP-only
             bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
