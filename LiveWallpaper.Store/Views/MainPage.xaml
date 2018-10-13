@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cm="using:Caliburn.Micro"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:converters="using:LiveWallpaper.Store.Views.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:maindetail="using:LiveWallpaper.Store.Views.MainDetail"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -16,6 +17,7 @@
         </TransitionCollection>
     </Page.Transitions>
     <Page.Resources>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         <DataTemplate x:Key="ItemTemplate">
             <Grid Background="LightGray" ToolTipService.ToolTip="{Binding Name}">
                 <Image
@@ -83,7 +85,10 @@
         </DataTemplate>
 
         <DataTemplate x:Key="NoSelectionContentTemplate">
-            <TextBlock x:Uid="Main_NoSelection" Style="{StaticResource ListNoSelectionTextStyle}" />
+            <TextBlock
+                x:Uid="Main_NoSelection"
+                Style="{StaticResource ListNoSelectionTextStyle}"
+                Visibility="{Binding Server.WallpaperSorce.Tags.Count, FallbackValue=Collapsed, Converter={StaticResource CountToVisibilityConverter}}" />
         </DataTemplate>
 
         <Style TargetType="controls:MasterDetailsView">
@@ -302,7 +307,8 @@
         <TextBlock
             x:Uid="txt_tags"
             HorizontalAlignment="Center"
-            VerticalAlignment="Center" />
+            VerticalAlignment="Center"
+            Visibility="{Binding Server.WallpaperSorce.Tags.Count, FallbackValue=Collapsed, Converter={StaticResource CountToVisibilityConverter}}" />
         <ListBox
             Grid.Column="1"
             VerticalAlignment="Center"
@@ -323,7 +329,8 @@
             x:Uid="txt_sorts"
             Grid.Row="1"
             HorizontalAlignment="Center"
-            VerticalAlignment="Center" />
+            VerticalAlignment="Center"
+            Visibility="{Binding Server.WallpaperSorce.Tags.Count, FallbackValue=Collapsed, Converter={StaticResource CountToVisibilityConverter}}" />
         <ListBox
             Grid.Row="1"
             Grid.Column="1"
