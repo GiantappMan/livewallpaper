@@ -10,6 +10,7 @@ using LiveWallpaper.Store.ViewModels;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Storage;
+using Windows.UI.Popups;
 using Windows.UI.Xaml;
 
 namespace LiveWallpaper.Store
@@ -44,7 +45,6 @@ namespace LiveWallpaper.Store
 
         protected override async void OnActivated(IActivatedEventArgs e)
         {
-            await ActivationService.ActivateAsync(e);
             if (e.Kind == ActivationKind.Protocol)
             {
                 ProtocolActivatedEventArgs protocolArgs = (ProtocolActivatedEventArgs)e;
@@ -63,7 +63,8 @@ namespace LiveWallpaper.Store
                             await ApplicationData.Current.LocalSettings.SaveAsync("config", setting);
                         }
                     }
-                    DisplayRootViewFor<MainViewModel>();
+
+                    await ActivationService.ActivateAsync(e);
                 }
             }
         }
