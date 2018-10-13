@@ -94,6 +94,11 @@ namespace LiveWallpaper.Store.Services
                 {
                     await defaultHandler.HandleAsync(activationArgs);
                 }
+                var protocolHandler = new ProtocolLaunchActivationHandler(_defaultNavItem, NavigationService);
+                if (protocolHandler.CanHandle(activationArgs))
+                {
+                    await protocolHandler.HandleAsync(activationArgs);
+                }
 
                 // Ensure the current window is active
                 Window.Current.Activate();
