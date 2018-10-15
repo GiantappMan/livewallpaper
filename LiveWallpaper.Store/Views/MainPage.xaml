@@ -351,7 +351,6 @@
         </ListBox>
         <controls:MasterDetailsView
             x:Name="MasterDetailsViewControl"
-            SelectionChanged="MasterDetailsViewControl_SelectionChanged"
             Grid.Row="2"
             Grid.ColumnSpan="2"
             BorderBrush="Transparent"
@@ -360,7 +359,8 @@
             ItemsSource="{x:Bind ViewModel.Server.Wallpapers, Mode=OneWay}"
             MasterPaneWidth="410"
             NoSelectionContentTemplate="{StaticResource NoSelectionContentTemplate}"
-            SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedWallpaper, Mode=OneWay}">
+            SelectedItem="{x:Bind ViewModel.Server.WallpaperSorce.SelectedWallpaper, Mode=TwoWay}"
+            SelectionChanged="MasterDetailsViewControl_SelectionChanged">
             <controls:MasterDetailsView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <controls:UniformGrid Columns="2" />

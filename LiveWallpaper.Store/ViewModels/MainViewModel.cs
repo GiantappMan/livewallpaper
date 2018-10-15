@@ -13,6 +13,13 @@ namespace LiveWallpaper.Store.ViewModels
 {
     public class MainViewModel : Conductor<WallpaperServerObj>.Collection.OneActive
     {
+        AppService _appService;
+
+        public MainViewModel(AppService appService)
+        {
+            _appService = appService;
+        }
+
         protected override void OnInitialize()
         {
             base.OnInitialize();
@@ -60,38 +67,46 @@ namespace LiveWallpaper.Store.ViewModels
             Server.InitServer();
         }
 
+        //public async void Install()
+        //{
+        //    try
+        //    {
+        //        //写入文件
+        //        string dir = "d:\\";
+        //        string fileName = "sample.txt";
+        //        string fullPath = Path.Combine(dir, fileName);
+        //        StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(dir);
+        //        StorageFile writeFile = await storageFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+        //        await FileIO.WriteTextAsync(writeFile, DateTime.Now.ToString());
+
+        //        //读取文件
+        //        StorageFile readFile = await storageFolder.GetFileAsync(fileName);
+
+        //        //全路径读取
+        //        //StorageFile readFile = await StorageFile.GetFileFromPathAsync(fullPath);
+        //        var stream = await readFile.OpenAsync(FileAccessMode.Read);
+        //        ulong size = stream.Size;
+        //        using (var inputStream = stream.GetInputStreamAt(0))
+        //        {
+        //            using (var dataReader = new Windows.Storage.Streams.DataReader(inputStream))
+        //            {
+        //                uint numBytesLoaded = await dataReader.LoadAsync((uint)size);
+        //                string text = dataReader.ReadString(numBytesLoaded);
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw;
+        //    }
+        //}
         public async void Install()
         {
-            try
-            {
-                //写入文件
-                string dir = "d:\\";
-                string fileName = "sample.txt";
-                string fullPath = Path.Combine(dir, fileName);
-                StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(dir);
-                StorageFile writeFile = await storageFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-                await FileIO.WriteTextAsync(writeFile, DateTime.Now.ToString());
+            if (Server.WallpaperSorce.SelectedWallpaper == null)
+                return;
 
-                //读取文件
-                StorageFile readFile = await storageFolder.GetFileAsync(fileName);
-
-                //全路径读取
-                //StorageFile readFile = await StorageFile.GetFileFromPathAsync(fullPath);
-                var stream = await readFile.OpenAsync(FileAccessMode.Read);
-                ulong size = stream.Size;
-                using (var inputStream = stream.GetInputStreamAt(0))
-                {
-                    using (var dataReader = new Windows.Storage.Streams.DataReader(inputStream))
-                    {
-                        uint numBytesLoaded = await dataReader.LoadAsync((uint)size);
-                        string text = dataReader.ReadString(numBytesLoaded);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(_appService.Setting.General.WallpaperSaveDir);
+            var dir = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
         }
 
         public void Setting()

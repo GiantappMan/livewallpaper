@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace LiveWallpaper.Store.Models.Settngs
 {
@@ -11,13 +12,22 @@ namespace LiveWallpaper.Store.Models.Settngs
         {
             var result = new SettingObject
             {
-                Server = new ServerSetting
-                {
-                    ServerUrl = "http://localhost:8080:"
-                },
-                General = new GeneralSetting()
+                Server = ServerSetting.GetDefault(),
+                General = GeneralSetting.GetDefault()
             };
             return result;
+        }
+
+        //检查是否有配置需要重新生成
+        public void CheckDefaultSetting()
+        {
+            if (Server == null)
+            {
+                //默认值
+                Server = ServerSetting.GetDefault();
+            }
+            if (General == null)
+                General = GeneralSetting.GetDefault();
         }
     }
 }
