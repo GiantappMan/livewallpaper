@@ -73,8 +73,7 @@ namespace LiveWallpaper.Store.ViewModels
         private async Task LoadConfig()
         {
             string json = null;
-            object temp = null;
-            bool ok = ApplicationData.Current.LocalSettings.Values.TryGetValue("config", out temp);
+            bool ok = ApplicationData.Current.LocalSettings.Values.TryGetValue("config", out object temp);
             if (ok)
                 json = temp.ToString();
 
@@ -83,11 +82,14 @@ namespace LiveWallpaper.Store.ViewModels
                 SettingObject setting = SettingObject.GetDefaultSetting();
                 json = await JsonHelper.JsonSerializeAsync(setting);
             }
-            var config = await JsonHelper.JsonDeserializeAsync<dynamic>(json);
+
+            var config = await JsonHelper.JsonDeserializeAsync<SettingObject>(json);
+            if (config.General == null)
+                config.General = new GeneralSetting();
             //UWP
             string descPath = Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Res\\setting.desc.json");
             var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(descPath);
-            JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
+            JsonConfierViewModel = _jcrService.GetVM(JObject.FromObject(config), descConfig);
         }
 
         public async void SaveConfig()

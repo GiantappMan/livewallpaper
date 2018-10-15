@@ -56,10 +56,27 @@ namespace LiveWallpaper.Store
                         WwwFormUrlDecoder decoder = new WwwFormUrlDecoder(uri.Query);
                         if (decoder.Count > 0)
                         {
-                            var host = decoder[0].Value;
-                            var setting = new SettingObject();
-                            setting.Server = new ServerSetting();
-                            setting.Server.ServerUrl = host;
+                            string host = null, wallpaperDir = null;
+                            try
+                            {
+                                host = decoder.GetFirstValueByName("host");
+                                wallpaperDir = decoder.GetFirstValueByName("wallpaper");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine(ex);
+                            }
+                            var setting = new SettingObject
+                            {
+                                Server = new ServerSetting
+                                {
+                                    ServerUrl = host
+                                },
+                                General = new GeneralSetting()
+                                {
+                                    WallpaperSaveDir = wallpaperDir
+                                }
+                            };
                             await ApplicationData.Current.LocalSettings.SaveAsync("config", setting);
                         }
                     }
