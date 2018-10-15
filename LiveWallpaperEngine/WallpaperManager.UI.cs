@@ -28,6 +28,11 @@ namespace LiveWallpaperEngine
         private static Timer _timer;
         private static Process _currentProcess;
 
+        private static void InitUI()
+        {
+            _currentProcess = Process.GetCurrentProcess();
+        }
+
         // 监控窗口最大化
         private static bool _maximized;
         private static List<int> maximizedPid = new List<int>();
@@ -79,9 +84,6 @@ namespace LiveWallpaperEngine
 
         public static void Show(Wallpaper wallpaper)
         {
-            if (_currentProcess == null)
-                _currentProcess = Process.GetCurrentProcess();
-
             IntPtr handler = IntPtr.Zero;
             Execute.OnUIThread(() =>
             {
@@ -117,11 +119,15 @@ namespace LiveWallpaperEngine
 
         public static void Pause()
         {
+            if (RenderWindow == null)
+                return;
             RenderWindow.Pause();
         }
 
         public static void Resume()
         {
+            if (RenderWindow == null)
+                return;
             RenderWindow.Resume();
         }
 
