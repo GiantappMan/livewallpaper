@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Caliburn.Micro;
@@ -8,6 +10,9 @@ using LiveWallpaper.Server;
 using LiveWallpaper.Store.Helpers;
 using LiveWallpaper.Store.Services;
 using Windows.Storage;
+using Windows.Storage.Streams;
+using Windows.Web.Http;
+using Windows.Web.Http.Filters;
 
 namespace LiveWallpaper.Store.ViewModels
 {
@@ -102,11 +107,35 @@ namespace LiveWallpaper.Store.ViewModels
         //}
         public async void Install()
         {
-            if (Server.WallpaperSorce.SelectedWallpaper == null)
+            var selected = Server.WallpaperSorce.SelectedWallpaper;
+            if (selected == null)
                 return;
 
             StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(_appService.Setting.General.WallpaperSaveDir);
-            var dir = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
+            var folder = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
+
+            Uri uri = new Uri(selected.URL);
+            Debug.WriteLine(selected.URL);
+            var client = new HttpClient();
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+            // Hook up progress handler.
+            Progress<HttpProgress> progressCallback = new Progress<HttpProgress>(OnSendRequestProgress);
+            var tokenSource = new CancellationTokenSource();
+            HttpResponseMessage response = await client.SendRequestAsync(request).AsTask(tokenSource.Token, progressCallback);
+
+            IInputStream inputStream = await response.Content.ReadAsInputStreamAsync();
+            StorageFile file = await folder.CreateFileAsync("1.mp4", CreationCollisionOption.GenerateUniqueName);
+
+            // Copy from stream to stream.
+            IOutputStream outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
+            await RandomAccessStream.CopyAndCloseAsync(inputStream, outputStream);
+        }
+
+        private void OnSendRequestProgress(HttpProgress obj)
+        {
+            Debug.WriteLine(obj.Stage + " " + obj.BytesReceived + " /" + obj.TotalBytesToReceive);
         }
 
         public void Setting()
