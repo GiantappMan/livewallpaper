@@ -96,7 +96,7 @@
       <Version>1.0.0.33</Version>
     </PackageReference>
     <PackageReference Include="JsonConfiger">
-      <Version>1.0.0.36</Version>
+      <Version>1.0.0.39</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
@@ -122,7 +122,7 @@
     <Compile Include="Helpers\Json.cs" />
     <Compile Include="Helpers\PropertyChangedBaseExtensions.cs" />
     <Compile Include="Helpers\SettingsStorageExtensions.cs" />
-    <Compile Include="Models\SampleOrder.cs" />
+    <Compile Include="Models\Settngs\GeneralSetting.cs" />
     <Compile Include="Models\Settngs\ServerSetting.cs" />
     <Compile Include="Models\Settngs\SettingObject.cs" />
     <Compile Include="Services\ActivationService.cs" />

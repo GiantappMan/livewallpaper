@@ -147,4 +147,10 @@
   <data name="setting_serverURL" xml:space="preserve">
     <value>API地址：</value>
   </data>
+  <data name="setting_general" xml:space="preserve">
+    <value>常规设置</value>
+  </data>
+  <data name="setting_wallpaperDir" xml:space="preserve">
+    <value>壁纸目录：</value>
+  </data>
 </root>

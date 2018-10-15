@@ -53,9 +53,7 @@ namespace LiveWallpaper.Store.Helpers
         {
             try
             {
-                object obj = null;
-
-                if (settings.Values.TryGetValue(key, out obj))
+                if (settings.Values.TryGetValue(key, out object obj))
                 {
                     return await Json.ToObjectAsync<T>((string)obj);
                 }

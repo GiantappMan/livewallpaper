@@ -4,7 +4,8 @@ namespace LiveWallpaper.Store.Models.Settngs
 {
     public class SettingObject
     {
-        public ServerSetting Server { get; set; }
+        public GeneralSetting General { get; set; } = new GeneralSetting();
+        public ServerSetting Server { get; set; } = new ServerSetting();
 
         internal static SettingObject GetDefaultSetting()
         {
@@ -13,7 +14,8 @@ namespace LiveWallpaper.Store.Models.Settngs
                 Server = new ServerSetting
                 {
                     ServerUrl = "http://localhost:8080:"
-                }
+                },
+                General = new GeneralSetting()
             };
             return result;
         }
