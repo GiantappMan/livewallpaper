@@ -20,6 +20,7 @@ namespace LiveWallpaperEngine
         static WallpaperManager()
         {
             SupportedExtensions.AddRange(VideoExtensions);
+            InitUI();
         }
 
         public static void Initlize()
