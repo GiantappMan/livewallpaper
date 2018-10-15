@@ -111,8 +111,8 @@ namespace LiveWallpaper.Store.ViewModels
         {
             IsBusy = true;
             _localServer = new LocalServer();
-            await _appService.CheckDefaultSetting();
-            await _localServer.InitlizeServer(_appService.Setting.ServerUrl);
+            await _appService.LoadConfig();
+            await _localServer.InitlizeServer(_appService.Setting.Server.ServerUrl);
             WallpaperSorce = new WallpaperSorce(_localServer);
             await WallpaperSorce.LoadTagsAndSorts();
             Wallpapers = new IncrementalLoadingCollection<WallpaperSorce, WallpaperServerObj>(WallpaperSorce);

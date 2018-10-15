@@ -8,6 +8,13 @@ namespace LiveWallpaper.Store.Models.Settngs
 {
     public class ServerSetting
     {
-        public string ServerUrl { get; set; }
+        public string ServerUrl { get; set; }        
+        public static ServerSetting GetDefault()
+        {
+            return new ServerSetting()
+            {
+                ServerUrl = "http://localhost:8080"
+            };
+        }
     }
 }

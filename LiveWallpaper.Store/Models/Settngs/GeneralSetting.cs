@@ -9,5 +9,10 @@ namespace LiveWallpaper.Store.Models.Settngs
     public class GeneralSetting
     {
         public string WallpaperSaveDir { get; set; }
+
+        internal static GeneralSetting GetDefault()
+        {
+            return new GeneralSetting();
+        }
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace LiveWallpaper.Store.Services
 {
@@ -12,40 +13,34 @@ namespace LiveWallpaper.Store.Services
     {
         public AppService()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            appData = $"{appData}\\LiveWallpaperStore";
-            SettingPath = $"{appData}\\Config\\setting.json";
-        }
-        /// <summary>
-        /// 配置文件地址
-        /// </summary>
-        public string SettingPath { get; private set; }
-        public ServerSetting Setting { get; private set; }
-
-        private ServerSetting GetDefaultServerSetting()
-        {
-            return new ServerSetting()
-            {
-                ServerUrl = "http://localhost:8080"
-            };
+            //var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            //appData = $"{appData}\\LiveWallpaperStore";
+            //SettingPath = $"{appData}\\Config\\setting.json";
         }
 
-        //检查是否有配置需要重新生成
-        public async Task CheckDefaultSetting()
+        ///// <summary>
+        ///// 配置文件地址
+        ///// </summary>
+        //public string SettingPath { get; private set; }
+        public SettingObject Setting { get; private set; }
+
+        public async Task LoadConfig()
         {
-            var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<ServerSetting>(SettingPath);
-            bool writeDefault = false;
-            if (tempSetting == null)
+            string json = null;
+            bool ok = ApplicationData.Current.LocalSettings.Values.TryGetValue("config", out object temp);
+            if (ok)
+                json = temp.ToString();
+
+            if (string.IsNullOrEmpty(json))
             {
-                //默认值
-                tempSetting = GetDefaultServerSetting();
-                writeDefault = true;
+                SettingObject setting = SettingObject.GetDefaultSetting();
+                json = await JsonHelper.JsonSerializeAsync(setting);
             }
 
-            if (writeDefault)
-                //生成默认配置
-                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
-            Setting = tempSetting;
+
+            var config = await JsonHelper.JsonDeserializeAsync<SettingObject>(json);
+            config.CheckDefaultSetting();
+            Setting = config;
         }
     }
 }
