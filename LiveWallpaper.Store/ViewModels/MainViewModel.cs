@@ -9,8 +9,11 @@ using Caliburn.Micro;
 using LiveWallpaper.Server;
 using LiveWallpaper.Store.Helpers;
 using LiveWallpaper.Store.Services;
+using LiveWallpaperEngine;
+using Newtonsoft.Json;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.UI.Popups;
 using Windows.Web.Http;
 using Windows.Web.Http.Filters;
 
@@ -56,6 +59,33 @@ namespace LiveWallpaper.Store.ViewModels
 
                 _Server = value;
                 NotifyOfPropertyChange(ServerPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region IsInstalling
+
+        /// <summary>
+        /// The <see cref="IsInstalling" /> property's name.
+        /// </summary>
+        public const string IsInstallingPropertyName = "IsInstalling";
+
+        private bool _IsInstalling;
+
+        /// <summary>
+        /// IsInstalling
+        /// </summary>
+        public bool IsInstalling
+        {
+            get { return _IsInstalling; }
+
+            set
+            {
+                if (_IsInstalling == value) return;
+
+                _IsInstalling = value;
+                NotifyOfPropertyChange(IsInstallingPropertyName);
             }
         }
 
@@ -107,30 +137,65 @@ namespace LiveWallpaper.Store.ViewModels
         //}
         public async void Install()
         {
-            var selected = Server.WallpaperSorce.SelectedWallpaper;
-            if (selected == null)
+            if (IsInstalling)
                 return;
+            try
+            {
+                var selected = Server.WallpaperSorce.SelectedWallpaper;
+                if (selected == null)
+                    return;
 
-            StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(_appService.Setting.General.WallpaperSaveDir);
-            var folder = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
+                IsInstalling = true;
 
-            Uri uri = new Uri(selected.URL);
-            Debug.WriteLine(selected.URL);
-            var client = new HttpClient();
+                StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(_appService.Setting.General.WallpaperSaveDir);
+                var folder = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
 
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+                string previewName = $"preview{ Path.GetExtension(selected.Img)}";
+                string videowName = $"index{ Path.GetExtension(selected.URL)}";
+                await Download(folder, selected.Img, previewName);
+                await Download(folder, selected.URL, videowName);
 
-            // Hook up progress handler.
-            Progress<HttpProgress> progressCallback = new Progress<HttpProgress>(OnSendRequestProgress);
-            var tokenSource = new CancellationTokenSource();
-            HttpResponseMessage response = await client.SendRequestAsync(request).AsTask(tokenSource.Token, progressCallback);
+                ProjectInfo info = new ProjectInfo();
+                info.Title = selected.Name;
+                info.Type = WallpaperType.Video.ToString();
+                info.Preview = previewName;
+                info.File = videowName;
+                var json = JsonConvert.SerializeObject(info);
+                var projectFile = await folder.CreateFileAsync("project.json");
+                await FileIO.WriteTextAsync(projectFile, json);
+            }
+            catch (Exception ex)
+            {
+#pragma warning disable UWP003 // UWP-only
+                MessageDialog dialog = new MessageDialog($"安装出现异常，请联系开发者.{ex.Message}");
+#pragma warning restore UWP003 // UWP-only
+                await dialog.ShowAsync();
+            }
+            finally
+            {
+                IsInstalling = false;
+            }
+        }
 
-            IInputStream inputStream = await response.Content.ReadAsInputStreamAsync();
-            StorageFile file = await folder.CreateFileAsync("1.mp4", CreationCollisionOption.GenerateUniqueName);
+        private async Task Download(StorageFolder folder, string url, string targetName)
+        {
+            Uri uri = new Uri(url);
+            Debug.WriteLine(url);
+            using (var client = new HttpClient())
+            {
 
-            // Copy from stream to stream.
-            IOutputStream outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
-            await RandomAccessStream.CopyAndCloseAsync(inputStream, outputStream);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+                Progress<HttpProgress> progressCallback = new Progress<HttpProgress>(OnSendRequestProgress);
+                var tokenSource = new CancellationTokenSource();
+                HttpResponseMessage response = await client.SendRequestAsync(request).AsTask(tokenSource.Token, progressCallback);
+
+                IInputStream inputStream = await response.Content.ReadAsInputStreamAsync();
+                StorageFile file = await folder.CreateFileAsync(targetName, CreationCollisionOption.GenerateUniqueName);
+
+                IOutputStream outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
+                await RandomAccessStream.CopyAndCloseAsync(inputStream, outputStream);
+            }
         }
 
         private void OnSendRequestProgress(HttpProgress obj)

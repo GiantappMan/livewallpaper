@@ -108,15 +108,6 @@ namespace LiveWallpaperEngine
             HandlerWallpaper.Show(handler);
         }
 
-        public static string GetWallpaperType(string filePath)
-        {
-            var extenson = Path.GetExtension(filePath);
-            bool isVideo = VideoExtensions.FirstOrDefault(m => m.ToLower() == extenson.ToLower()) != null;
-            if (isVideo)
-                return WallpaperType.Video.ToString().ToLower();
-            return null;
-        }
-
         public static void Pause()
         {
             if (RenderWindow == null)

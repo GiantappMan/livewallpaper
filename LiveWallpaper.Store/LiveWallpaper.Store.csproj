@@ -116,6 +116,15 @@
     <PRIResource Include="Strings\zh-cn\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\LiveWallpaperEngine\ProjectInfo.cs">
+      <Link>LiveWallpaperEngine\ProjectInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\LiveWallpaperEngine\WallpaperManager.Define.cs">
+      <Link>LiveWallpaperEngine\WallpaperManager.Define.cs</Link>
+    </Compile>
+    <Compile Include="..\LiveWallpaperEngine\WallpaperType.cs">
+      <Link>LiveWallpaperEngine\WallpaperType.cs</Link>
+    </Compile>
     <Compile Include="Activation\ActivationHandler.cs" />
     <Compile Include="Activation\ProtocolLaunchActivationHandler.cs" />
     <Compile Include="Activation\DefaultLaunchActivationHandler.cs" />
