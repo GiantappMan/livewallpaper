@@ -185,6 +185,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Events\SettingSaved.cs" />
     <Compile Include="Settings\AppData.cs" />
     <Compile Include="Settings\SettingObject.cs" />
     <Compile Include="Managers\AppManager.cs" />

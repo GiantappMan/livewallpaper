@@ -43,6 +43,15 @@ namespace LiveWallpaper.Views
             createWindow.Closed -= CreateWindow_Closed;
         }
 
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
+
+            vm.SaveSizeData();
+        }
+
         //private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         //{
         //    TabControl control = sender as TabControl;

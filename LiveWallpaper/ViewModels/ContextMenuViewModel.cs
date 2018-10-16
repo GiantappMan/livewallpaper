@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using LiveWallpaper.Events;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -19,10 +20,12 @@ namespace LiveWallpaper.ViewModels
         private Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private IWindowManager _windowManager;
         private SettingViewModel _settingVM;
+        IEventAggregator _eventAggregator;
 
-        public ContextMenuViewModel(IWindowManager windowManager)
+        public ContextMenuViewModel(IWindowManager windowManager, IEventAggregator eventAggregator)
         {
             _windowManager = windowManager;
+            _eventAggregator = eventAggregator;
         }
 
         public void About()
@@ -68,6 +71,7 @@ namespace LiveWallpaper.ViewModels
             {
                 var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppManager.SettingPath);
                 await AppManager.ApplySetting(config);
+                await _eventAggregator.PublishOnUIThreadAsync(new SettingSaved());
             }
             _settingVM = null;
         }

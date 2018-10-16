@@ -10,17 +10,29 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
 using Windows.Storage;
+using LiveWallpaper.Events;
+using DZY.DotNetUtil.Helpers;
 
 namespace LiveWallpaper.ViewModels
 {
-    public class MainViewModel : ScreenWindow
+    public class MainViewModel : ScreenWindow, IHandle<SettingSaved>
     {
         private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private CreateWallpaperViewModel _createVM;
+        IEventAggregator _eventAggregator;
+        const float sourceWidth = 416;
+        const float sourceHeight = 337;
 
-        public MainViewModel()
+        public MainViewModel(IEventAggregator eventAggregator)
         {
+            _eventAggregator = eventAggregator;
+            _eventAggregator.Subscribe(this);
             Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+            if (AppManager.Setting.General.RecordWindowSize)
+            {
+                Width = AppManager.Setting.General.Width;
+                Height = AppManager.Setting.General.Height;
+            }
         }
 
         protected override void OnViewReady(object view)
@@ -45,6 +57,16 @@ namespace LiveWallpaper.ViewModels
             windowSettings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             windowSettings.Owner = GetView();
             windowManager.ShowWindow(_createVM, null, windowSettings);
+        }
+
+        public async void SaveSizeData()
+        {
+            if (AppManager.Setting.General.RecordWindowSize)
+            {
+                AppManager.Setting.General.Width = Width;
+                AppManager.Setting.General.Height = Height;
+                await JsonHelper.JsonSerializeAsync(AppManager.Setting, AppManager.SettingPath);
+            }
         }
 
         public void EditWallpaper(Wallpaper s)
@@ -146,6 +168,20 @@ namespace LiveWallpaper.ViewModels
 #pragma warning restore UWP003 // UWP-only
         }
 
+        public void Handle(SettingSaved message)
+        {
+            if (AppManager.Setting.General.RecordWindowSize)
+            {
+                Width = AppManager.Setting.General.Width;
+                Height = AppManager.Setting.General.Height;
+            }
+            else
+            {
+                Width = sourceWidth;
+                Height = sourceHeight;
+            }
+        }
+
         #endregion
 
         #region properties
@@ -172,6 +208,60 @@ namespace LiveWallpaper.ViewModels
 
                 _Wallpapers = value;
                 NotifyOfPropertyChange(WallpapersPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region Width
+
+        /// <summary>
+        /// The <see cref="Width" /> property's name.
+        /// </summary>
+        public const string WidthPropertyName = "Width";
+
+        private float _Width = sourceWidth;
+
+        /// <summary>
+        /// Width
+        /// </summary>
+        public float Width
+        {
+            get { return _Width; }
+
+            set
+            {
+                if (_Width == value) return;
+
+                _Width = value;
+                NotifyOfPropertyChange(WidthPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region Height
+
+        /// <summary>
+        /// The <see cref="Height" /> property's name.
+        /// </summary>
+        public const string HeightPropertyName = "Height";
+
+        private float _Height = sourceHeight;
+
+        /// <summary>
+        /// Height
+        /// </summary>
+        public float Height
+        {
+            get { return _Height; }
+
+            set
+            {
+                if (_Height == value) return;
+
+                _Height = value;
+                NotifyOfPropertyChange(HeightPropertyName);
             }
         }
 
