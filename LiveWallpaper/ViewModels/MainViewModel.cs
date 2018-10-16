@@ -24,6 +24,7 @@ namespace LiveWallpaper.ViewModels
         const float sourceWidth = 416;
         const float sourceHeight = 337;
         bool _checked;
+        bool _first = true;
 
         public MainViewModel(IEventAggregator eventAggregator)
         {
@@ -53,8 +54,17 @@ namespace LiveWallpaper.ViewModels
             var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
             Task.Run(() =>
             {
+                AppManager.MainHandle = handle;
                 AppManager.CheckUpates(handle);
             });
+
+            if (_first)
+            {
+                //隐藏界面也需要先初始化，因为需要用窗口handle处理一些逻辑
+                if (AppManager.Setting.General.MinimizeUI)
+                    TryClose();
+                _first = false;
+            }
         }
 
         public void CreateWallpaper()
