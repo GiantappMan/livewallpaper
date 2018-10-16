@@ -22,6 +22,18 @@
           "value": "en"
         }
       ]
+    },
+    "RecordWindowSize": {
+      "type": "boolean",
+      "lanKey": "setting_recordWindowSize"
+    },
+    "Width": {
+      "type": "float",
+      "lanKey": "setting_windowWidth"
+    },
+    "Height": {
+      "type": "float",
+      "lanKey": "setting_windowHeight"
     }
   },
   "Wallpaper": {
