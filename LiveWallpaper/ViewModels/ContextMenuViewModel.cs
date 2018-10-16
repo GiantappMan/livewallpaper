@@ -85,6 +85,11 @@ namespace LiveWallpaper.ViewModels
                 _windowManager.ShowWindow(vm);
         }
 
+        public void VIP()
+        {
+
+        }
+
         public void ExitApp()
         {
             AppManager.Dispose();
