@@ -47,10 +47,14 @@ namespace LiveWallpaper.ViewModels
         {
             if (_checked)
                 return;
-            
+
             _checked = true;
+
             var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
-            AppManager.CheckUpates(handle);
+            Task.Run(() =>
+            {
+                AppManager.CheckUpates(handle);
+            });
         }
 
         public void CreateWallpaper()
