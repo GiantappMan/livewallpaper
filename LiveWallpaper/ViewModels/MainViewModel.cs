@@ -68,10 +68,20 @@ namespace LiveWallpaper.ViewModels
             return base.GetView(context);
         }
 
-        public void RefreshLocalWallpaper()
+        private bool _refreshing = false;
+
+        public async void RefreshLocalWallpaper()
         {
-            AppManager.RefreshLocalWallpapers();
-            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+            if (_refreshing)
+                return;
+
+            await Task.Run(() =>
+            {
+                _refreshing = true;
+                AppManager.RefreshLocalWallpapers();
+                Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+                _refreshing = false;
+            });
         }
 
         public void ExploreWallpaper(Wallpaper s)
