@@ -91,6 +91,33 @@ namespace LiveWallpaper.Store.ViewModels
 
         #endregion
 
+        #region InstallProgress
+
+        /// <summary>
+        /// The <see cref="InstallProgress" /> property's name.
+        /// </summary>
+        public const string InstallProgressPropertyName = "InstallProgress";
+
+        private float _InstallProgress;
+
+        /// <summary>
+        /// InstallProgress
+        /// </summary>
+        public float InstallProgress
+        {
+            get { return _InstallProgress; }
+
+            set
+            {
+                if (_InstallProgress == value) return;
+
+                _InstallProgress = value;
+                NotifyOfPropertyChange(InstallProgressPropertyName);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         public void InitServer()
@@ -135,6 +162,7 @@ namespace LiveWallpaper.Store.ViewModels
         //        throw;
         //    }
         //}
+        ulong _totalSize;
         public async void Install()
         {
             if (IsInstalling)
@@ -152,8 +180,8 @@ namespace LiveWallpaper.Store.ViewModels
 
                 string previewName = $"preview{ Path.GetExtension(selected.Img)}";
                 string videowName = $"index{ Path.GetExtension(selected.URL)}";
-                await Download(folder, selected.Img, previewName);
-                await Download(folder, selected.URL, videowName);
+                await Download(folder, selected.Img, previewName, null);
+                await Download(folder, selected.URL, videowName, OnSendRequestProgress);
 
                 ProjectInfo info = new ProjectInfo();
                 info.Title = selected.Name;
@@ -177,30 +205,46 @@ namespace LiveWallpaper.Store.ViewModels
             }
         }
 
-        private async Task Download(StorageFolder folder, string url, string targetName)
+        private async Task<ulong> Download(StorageFolder folder, string url, string targetName, Action<HttpProgress> progressChanged)
         {
             Uri uri = new Uri(url);
             Debug.WriteLine(url);
             using (var client = new HttpClient())
             {
-
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
 
-                Progress<HttpProgress> progressCallback = new Progress<HttpProgress>(OnSendRequestProgress);
-                var tokenSource = new CancellationTokenSource();
-                HttpResponseMessage response = await client.SendRequestAsync(request).AsTask(tokenSource.Token, progressCallback);
+                HttpResponseMessage response = null;
+                if (progressChanged != null)
+                {
+                    Progress<HttpProgress> progressCallback = new Progress<HttpProgress>(progressChanged);
+                    var tokenSource = new CancellationTokenSource();
+                    response = await client.SendRequestAsync(request).AsTask(tokenSource.Token, progressCallback);
+                }
+                else
+                {
+                    response = await client.SendRequestAsync(request);
+                }
 
                 IInputStream inputStream = await response.Content.ReadAsInputStreamAsync();
+                bool ok = response.Content.TryComputeLength(out ulong length);
                 StorageFile file = await folder.CreateFileAsync(targetName, CreationCollisionOption.GenerateUniqueName);
 
                 IOutputStream outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
                 await RandomAccessStream.CopyAndCloseAsync(inputStream, outputStream);
+                return length;
             }
         }
 
         private void OnSendRequestProgress(HttpProgress obj)
         {
-            Debug.WriteLine(obj.Stage + " " + obj.BytesReceived + " /" + obj.TotalBytesToReceive);
+            if (_totalSize == 0 && obj.TotalBytesToReceive == null)
+                return;
+
+            if (obj.TotalBytesToReceive != null)
+                _totalSize = obj.TotalBytesToReceive.Value;
+
+            InstallProgress = (float)obj.BytesReceived / _totalSize * 100;
+            Debug.WriteLine(obj.Stage + " " + obj.BytesReceived + " /" + obj.TotalBytesToReceive + " /" + InstallProgress);
         }
 
         public void Setting()
