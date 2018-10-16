@@ -19,6 +19,14 @@ namespace LiveWallpaper.Views
         {
             InitializeComponent();
             Activated += MainView_Activated;
+            Closed += MainView_Closed;
+        }
+
+        private void MainView_Closed(object sender, EventArgs e)
+        {
+            Closed -= MainView_Closed;
+            Activated -= MainView_Activated;
+            DataContext = null;
         }
 
         private void MainView_Activated(object sender, EventArgs e)
