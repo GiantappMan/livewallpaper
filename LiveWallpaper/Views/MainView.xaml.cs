@@ -31,8 +31,7 @@ namespace LiveWallpaper.Views
 
         private void MainView_Activated(object sender, EventArgs e)
         {
-            var vm = DataContext as MainViewModel;
-            if (vm == null)
+            if (!(DataContext is MainViewModel vm))
                 return;
 
             vm.RefreshLocalWallpaper();
@@ -53,8 +52,7 @@ namespace LiveWallpaper.Views
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            var vm = DataContext as MainViewModel;
-            if (vm == null)
+            if (!(DataContext is MainViewModel vm))
                 return;
 
             vm.SaveSizeData();

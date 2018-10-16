@@ -9,6 +9,7 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
+    cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
     Width="{Binding Width, Mode=TwoWay}"
     Height="{Binding Height, Mode=TwoWay}"
     lan:Xaml.Key="common_appName"
