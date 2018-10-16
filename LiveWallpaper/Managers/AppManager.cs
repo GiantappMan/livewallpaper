@@ -1,4 +1,5 @@
-﻿using DZY.DotNetUtil.Helpers;
+﻿using Caliburn.Micro;
+using DZY.DotNetUtil.Helpers;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Settings;
 using LiveWallpaperEngine;
@@ -95,6 +96,23 @@ namespace LiveWallpaper.Managers
                 }
             });
         }
+
+        public static async void CheckUpates(IntPtr mainHandler)
+        {
+            StoreHelper store = new StoreHelper(mainHandler);
+            var icon = IoC.Get<TaskbarIcon>();
+
+            await store.DownloadAndInstallAllUpdatesAsync(() =>
+            {
+                var result = MessageBox.Show("是否更新。", "检测到新版本", MessageBoxButton.OKCancel);
+                return result == MessageBoxResult.OK;
+            }, (progress) =>
+            {
+                if ((int)progress.PackageUpdateState >= 3)
+                    icon.ShowBalloonTip("温馨提示", $"如果更新失败，请关闭软件打开应用商店手动更新。", BalloonIcon.Info);
+            });
+        }
+
 
         //检查是否有配置需要重新生成
         private static async Task CheckDefaultSetting()

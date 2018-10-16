@@ -12,6 +12,7 @@ using System.Dynamic;
 using Windows.Storage;
 using LiveWallpaper.Events;
 using DZY.DotNetUtil.Helpers;
+using System.Windows.Interop;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -22,6 +23,7 @@ namespace LiveWallpaper.ViewModels
         IEventAggregator _eventAggregator;
         const float sourceWidth = 416;
         const float sourceHeight = 337;
+        bool _checked;
 
         public MainViewModel(IEventAggregator eventAggregator)
         {
@@ -41,6 +43,15 @@ namespace LiveWallpaper.ViewModels
         }
 
         #region  public methods
+        public void SourceInitialized()
+        {
+            if (_checked)
+                return;
+            
+            _checked = true;
+            var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
+            AppManager.CheckUpates(handle);
+        }
 
         public void CreateWallpaper()
         {
