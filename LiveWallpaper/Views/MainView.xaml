@@ -10,13 +10,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
     Width="{Binding Width, Mode=TwoWay}"
-    SizeChanged="Window_SizeChanged"
     Height="{Binding Height, Mode=TwoWay}"
     lan:Xaml.Key="common_appName"
+    SizeChanged="Window_SizeChanged"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Window.Resources>
-        <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
+        <conveters:UriToCachedImageConverter
+            x:Key="UriToCachedImageConverter"
+            DecodePixelHeight="110"
+            DecodePixelWidth="180" />
     </Window.Resources>
     <TabControl>
         <TabItem lan:Xaml.Key="mainUI_localWallpaper">
