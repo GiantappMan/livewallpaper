@@ -18,6 +18,16 @@ namespace LiveWallpaper.Views
         public MainView()
         {
             InitializeComponent();
+            Activated += MainView_Activated;
+        }
+
+        private void MainView_Activated(object sender, EventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
+
+            vm.RefreshLocalWallpaper();
         }
 
         private void Btn_CreateWallpaper(object sender, RoutedEventArgs e)
@@ -38,7 +48,7 @@ namespace LiveWallpaper.Views
         //    TabControl control = sender as TabControl;
         //    if (control.SelectedIndex == 1)
         //    {
-              
+
         //    }
         //}
 
