@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
+using LiveWallpaper.Events;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -19,7 +20,7 @@ namespace LiveWallpaper.ViewModels
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         JCrService _jcrService = new JCrService();
-
+ 
         private static bool firstLaunch = true;
         protected override async void OnInitialize()
         {

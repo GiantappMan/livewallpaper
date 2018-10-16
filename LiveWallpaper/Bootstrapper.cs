@@ -29,6 +29,7 @@ namespace LiveWallpaper
             container = new SimpleContainer();
 
             container.Instance(container)
+            .Singleton<IEventAggregator, EventAggregator>()
             .Singleton<IWindowManager, WindowManager>()
             .Singleton<ContextMenuViewModel>(nameof(ContextMenuViewModel))
             .Singleton<MainViewModel>(nameof(MainViewModel))
