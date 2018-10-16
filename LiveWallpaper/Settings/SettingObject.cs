@@ -14,6 +14,12 @@ namespace LiveWallpaper.Settings
 
         public string CurrentLan { get; set; }
 
+        public bool RecordWindowSize { get; set; }
+
+        public float Width { get; set; }
+
+        public float Height { get; set; }
+
         public static GeneralSettting GetDefaultGeneralSettting()
         {
             return new GeneralSettting()

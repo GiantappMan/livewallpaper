@@ -11,8 +11,8 @@
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    Width="358"
-    Height="422"
+    Width="416"
+    Height="337"
     lan:Xaml.Key="common_appName"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
