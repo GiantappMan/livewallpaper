@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.Events;
+using DZY.DotNetUtil.WPF.Views;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -85,9 +86,15 @@ namespace LiveWallpaper.ViewModels
                 _windowManager.ShowWindow(vm);
         }
 
-        public void VIP()
+        public async void VIP()
         {
-
+            var vm = AppManager.GetPurchaseViewModel();
+            var view = new PurchaseView
+            {
+                DataContext = vm
+            };
+            view.Show();
+            await vm.LoadProducts();
         }
 
         public void ExitApp()

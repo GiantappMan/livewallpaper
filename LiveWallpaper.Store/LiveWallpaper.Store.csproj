@@ -93,7 +93,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DZY.DotNetUtil.UI">
-      <Version>1.0.0.33</Version>
+      <Version>1.0.0.35</Version>
     </PackageReference>
     <PackageReference Include="JsonConfiger">
       <Version>1.0.0.39</Version>

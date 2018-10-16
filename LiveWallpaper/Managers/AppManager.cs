@@ -1,5 +1,7 @@
 ﻿using Caliburn.Micro;
 using DZY.DotNetUtil.Helpers;
+using DZY.DotNetUtil.WPF.ViewModels;
+using DZY.DotNetUtil.WPF.Views;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Settings;
 using LiveWallpaperEngine;
@@ -48,6 +50,20 @@ namespace LiveWallpaper.Managers
         public static SettingObject Setting { get; private set; }
 
         public static AppData AppData { get; private set; }
+        public static IntPtr MainHandle { get; internal set; }
+
+        public static PurchaseViewModel GetPurchaseViewModel()
+        {
+            StoreHelper store = new StoreHelper(MainHandle);
+            var vm = new PurchaseViewModel
+            {
+                DisplayName = "感谢您的支持~~"
+            };
+            vm.Initlize(store, new string[] { "Durable" }, new string[] { "9N5XR16ZVS8M", "9NMV8XM83L0W", "9NWRT6CM2ZK4" });
+            string VIPGroup = "864039359";
+            vm.VIPContent = new VIPContent($"巨应工作室VIP QQ群：{VIPGroup}", VIPGroup, "https://shang.qq.com/wpa/qunwpa?idkey=24010e6212fe3c7ba6f79f5f91e6b216c6708d7a47abceb6f7e26890c3b15944");
+            return vm;
+        }
 
         public static async Task Initlize()
         {
