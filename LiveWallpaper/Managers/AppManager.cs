@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Windows.Storage;
 
 namespace LiveWallpaper.Managers
 {
@@ -40,6 +41,10 @@ namespace LiveWallpaper.Managers
         /// 数据保存目录
         /// </summary>
         public static string AppDataDir { get; private set; }
+        /// <summary>
+        /// UWP真实AppDatam目录
+        /// </summary>
+        public static string UWPRealAppDataDir { get; private set; }
         /// <summary>
         /// 本地壁纸路径
         /// </summary>
@@ -84,6 +89,7 @@ namespace LiveWallpaper.Managers
             //配置相关
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             AppDataDir = $"{appData}\\LiveWallpaper";
+            UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
             LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
             AppDataPath = $"{AppDataDir}\\appData.json";
