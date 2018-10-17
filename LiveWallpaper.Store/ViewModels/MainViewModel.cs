@@ -183,11 +183,13 @@ namespace LiveWallpaper.Store.ViewModels
                 await Download(folder, selected.Img, previewName, null);
                 await Download(folder, selected.URL, videowName, OnSendRequestProgress);
 
-                ProjectInfo info = new ProjectInfo();
-                info.Title = selected.Name;
-                info.Type = WallpaperType.Video.ToString();
-                info.Preview = previewName;
-                info.File = videowName;
+                ProjectInfo info = new ProjectInfo
+                {
+                    Title = selected.Name,
+                    Type = WallpaperType.Video.ToString(),
+                    Preview = previewName,
+                    File = videowName
+                };
                 var json = JsonConvert.SerializeObject(info);
                 var projectFile = await folder.CreateFileAsync("project.json");
                 await FileIO.WriteTextAsync(projectFile, json);

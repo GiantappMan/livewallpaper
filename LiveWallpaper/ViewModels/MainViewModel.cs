@@ -23,8 +23,7 @@ namespace LiveWallpaper.ViewModels
         IEventAggregator _eventAggregator;
         const float sourceWidth = 436;
         const float sourceHeight = 337;
-        bool _checked;
-        bool _first = true;
+        bool _firstLaunch = true;
 
         public MainViewModel(IEventAggregator eventAggregator)
         {
@@ -46,24 +45,17 @@ namespace LiveWallpaper.ViewModels
         #region  public methods
         public void SourceInitialized()
         {
-            if (_checked)
-                return;
-
-            _checked = true;
-
-            var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
-            Task.Run(() =>
+            if (_firstLaunch)
             {
-                AppManager.MainHandle = handle;
-                AppManager.CheckUpates(handle);
-            });
+                //第一次时打开检查更新
+                var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
+                Task.Run(() =>
+                {
+                    AppManager.MainHandle = handle;
+                    AppManager.CheckUpates(handle);
+                });
 
-            if (_first)
-            {
-                //隐藏界面也需要先初始化，因为需要用窗口handle处理一些逻辑
-                if (AppManager.Setting.General.MinimizeUI)
-                    TryClose();
-                _first = false;
+                _firstLaunch = false;
             }
         }
 
@@ -185,6 +177,10 @@ namespace LiveWallpaper.ViewModels
         {
             string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
             Process.Start(serverFile);
+
+            if (!Directory.Exists(AppManager.LocalWallpaperDir))
+                //没有文件夹UWP会报错
+                Directory.CreateDirectory(AppManager.LocalWallpaperDir);
 
             Uri uri = new Uri($"live.wallpaper.store://?host={AppManager.Setting.Server.ServerUrl}&wallpaper={AppManager.LocalWallpaperDir}");
 
