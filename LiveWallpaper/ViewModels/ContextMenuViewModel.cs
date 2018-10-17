@@ -94,7 +94,6 @@ namespace LiveWallpaper.ViewModels
                 DataContext = vm
             };
             view.Show();
-            vm.LoadProducts();
         }
 
         public void ExitApp()

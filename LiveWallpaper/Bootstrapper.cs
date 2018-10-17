@@ -44,7 +44,9 @@ namespace LiveWallpaper
 #else
             logger.Info("OnStartup WPF");
 #endif
-            DisplayRootViewFor<MainViewModel>();
+
+            if (!AppManager.Setting.General.MinimizeUI)
+                DisplayRootViewFor<MainViewModel>();
         }
 
         protected override object GetInstance(Type service, string key)
