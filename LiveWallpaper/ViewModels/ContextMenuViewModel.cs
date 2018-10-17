@@ -86,7 +86,7 @@ namespace LiveWallpaper.ViewModels
                 _windowManager.ShowWindow(vm);
         }
 
-        public async void VIP()
+        public void VIP()
         {
             var vm = AppManager.GetPurchaseViewModel();
             var view = new PurchaseView
@@ -94,7 +94,7 @@ namespace LiveWallpaper.ViewModels
                 DataContext = vm
             };
             view.Show();
-            await vm.LoadProducts();
+            vm.LoadProducts();
         }
 
         public void ExitApp()

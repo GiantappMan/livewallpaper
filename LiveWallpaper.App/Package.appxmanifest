@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap mp rescap">
-  <Identity Name="014c6fc0-b57a-44aa-94fd-289caf493846" Publisher="CN=zy" Version="1.0.0.0" />
+  <Identity Name="24765mscoder.47921C962EDAD" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="1.1.0.0" />
   <Properties>
-    <DisplayName>LiveWallpaper.App</DisplayName>
-    <PublisherDisplayName>zy</PublisherDisplayName>
+    <DisplayName>巨应动态壁纸</DisplayName>
+    <PublisherDisplayName>巨应工作室  MscoderStudio</PublisherDisplayName>
     <Logo>images\Store\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -15,8 +15,9 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
-      <uap:VisualElements DisplayName="LiveWallpaper.App" Description="LiveWallpaper.App" BackgroundColor="transparent" Square150x150Logo="images\Medium\Medium150x150Logo.png" Square44x44Logo="images\AppList\AppList.png">
-        <uap:DefaultTile Wide310x150Logo="images\Wide\Wide310x150Logo.png" Square71x71Logo="images\Small\Small71x71Logo.png" Square310x310Logo="images\Large\Large310x310Logo.png" />
+      <uap:VisualElements DisplayName="巨应动态壁纸" Description="LiveWallpaper.App" BackgroundColor="transparent" Square150x150Logo="images\Medium\Medium150x150Logo.png" Square44x44Logo="images\AppList\AppList.png">
+        <uap:DefaultTile Wide310x150Logo="images\Wide\Wide310x150Logo.png" Square71x71Logo="images\Small\Small71x71Logo.png" Square310x310Logo="images\Large\Large310x310Logo.png">
+        </uap:DefaultTile>
       </uap:VisualElements>
       <Extensions>
         <uap5:Extension Category="windows.startupTask" Executable="LiveWallpaper\LiveWallpaper.exe" EntryPoint="Windows.FullTrustApplication">

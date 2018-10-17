@@ -21,7 +21,7 @@ namespace LiveWallpaper.ViewModels
         private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private CreateWallpaperViewModel _createVM;
         IEventAggregator _eventAggregator;
-        const float sourceWidth = 416;
+        const float sourceWidth = 436;
         const float sourceHeight = 337;
         bool _checked;
         bool _first = true;
