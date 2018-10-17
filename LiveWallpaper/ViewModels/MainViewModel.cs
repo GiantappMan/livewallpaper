@@ -130,11 +130,11 @@ namespace LiveWallpaper.ViewModels
                 string path = s.AbsolutePath;
 #if UWP
                 //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
-                var uwpAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
+                //var UWPAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
 
-                var wpfAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                wpfAppData = Path.Combine(wpfAppData, "LiveWallpaper");
-                path = path.Replace(wpfAppData, uwpAppData);
+                //var wpfAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                //wpfAppData = Path.Combine(wpfAppData, "LiveWallpaper");
+                path = path.Replace(AppManager.AppDataDir, AppManager.UWPRealAppDataDir);
 #endif
                 Process.Start("Explorer.exe", $" /select, {path}");
             }
@@ -178,11 +178,14 @@ namespace LiveWallpaper.ViewModels
             string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
             Process.Start(serverFile);
 
-            if (!Directory.Exists(AppManager.LocalWallpaperDir))
-                //没有文件夹UWP会报错
-                Directory.CreateDirectory(AppManager.LocalWallpaperDir);
+            var wallpaperDir = AppManager.LocalWallpaperDir;
+            wallpaperDir = wallpaperDir.Replace(AppManager.AppDataDir, AppManager.UWPRealAppDataDir);
 
-            Uri uri = new Uri($"live.wallpaper.store://?host={AppManager.Setting.Server.ServerUrl}&wallpaper={AppManager.LocalWallpaperDir}");
+            if (!Directory.Exists(wallpaperDir))
+                //没有文件夹UWP会报错
+                Directory.CreateDirectory(wallpaperDir);
+
+            Uri uri = new Uri($"live.wallpaper.store://?host={AppManager.Setting.Server.ServerUrl}&wallpaper={wallpaperDir}");
 
 #pragma warning disable UWP003 // UWP-only
             bool success = await Windows.System.Launcher.LaunchUriAsync(uri);

@@ -83,7 +83,11 @@ namespace LiveWallpaper.ViewModels
             if (vm.IsActive)
                 vm.ActiveUI();
             else
-                _windowManager.ShowWindow(vm);
+            {
+                dynamic windowSettings = new ExpandoObject();
+                windowSettings.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                _windowManager.ShowWindow(vm, null, windowSettings);
+            }
         }
 
         public void VIP()
