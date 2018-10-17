@@ -5,3 +5,4 @@ debug
 packages
 *.user
 obj
+*.pfx
