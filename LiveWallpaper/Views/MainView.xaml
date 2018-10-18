@@ -9,9 +9,10 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
+    MinWidth="450"
     Width="{Binding Width, Mode=TwoWay}"
     Height="{Binding Height, Mode=TwoWay}"
+    cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
     lan:Xaml.Key="common_appName"
     SizeChanged="Window_SizeChanged"
     WindowStartupLocation="CenterScreen"
@@ -74,27 +75,34 @@
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
                 </ListView>
-                <Button
-                    x:Name="Setting"
-                    Grid.Row="1"
-                    Margin="5,2,0,5"
-                    HorizontalAlignment="Left">
-                    <iconPacks:PackIconMaterial
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch"
-                        Kind="SettingsOutline" />
-                </Button>
-                <StackPanel
-                    Grid.Row="1"
-                    Margin="5,2,5,5"
-                    HorizontalAlignment="Right"
-                    Orientation="Horizontal">
-                    <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper" />
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
                     <Button
-                        x:Name="CreateWallpaper"
-                        Margin="10,0,0,0"
-                        lan:Xaml.Key="mainUI_createWallpaper" />
-                </StackPanel>
+                        x:Name="Setting"
+                        Margin="5,2,0,5"
+                        HorizontalAlignment="Left">
+                        <iconPacks:PackIconMaterial
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Kind="SettingsOutline" />
+                    </Button>
+                    <ComboBox Grid.Column="1" />
+                    <StackPanel
+                        Grid.Column="2"
+                        Margin="5,2,5,5"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper" />
+                        <Button
+                            x:Name="CreateWallpaper"
+                            Margin="10,0,0,0"
+                            lan:Xaml.Key="mainUI_createWallpaper" />
+                    </StackPanel>
+                </Grid>
             </Grid>
         </TabItem>
         <TabItem lan:Xaml.Key="mainUI_wallpaperStore">
@@ -112,139 +120,6 @@
                         lan:Xaml.Key="mainUI_openLocalServer" />
                 </StackPanel>
             </Grid>
-            <!--<Grid DataContext="{Binding Server}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto" MinHeight="30" />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">标签：</TextBlock>
-                <ListBox
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    cal:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
-                    BorderThickness="0"
-                    DisplayMemberPath="Name"
-                    ItemsSource="{Binding Tags}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    SelectedItem="{Binding SelectedTag}">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
-                <TextBlock
-                    Grid.Row="1"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                    排序：
-                </TextBlock>
-                <ListBox
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    cal:Message.Attach="[Event SelectionChanged]=[Action LoadWallpapers()]"
-                    BorderThickness="0"
-                    DisplayMemberPath="Name"
-                    ItemsSource="{Binding Sorts}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    SelectedItem="{Binding SelectedSort}">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
-                <ListView
-                    Grid.Row="2"
-                    Grid.ColumnSpan="2"
-                    Margin="5"
-                    Background="Transparent"
-                    ItemsSource="{Binding Wallpapers}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    ScrollViewer.ScrollChanged="ListView_ScrollChanged">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid
-                                Width="144"
-                                Height="128"
-                                cal:Action.TargetWithoutContext="MainViewModel"
-                                cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
-                                Background="Gray"
-                                ToolTip="{Binding Name}">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="18" />
-                                    <RowDefinition Height="90" />
-                                    <RowDefinition Height="18" />
-                                </Grid.RowDefinitions>
-                                <TextBlock
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Foreground="White"
-                                    Text="{Binding DownStr}" />
-                                <Image
-                                    Grid.Row="1"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Source="{Binding Img, Converter={StaticResource UriToCachedImageConverter}}"
-                                    Stretch="Uniform" />
-                                <Grid
-                                    Grid.Row="2"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Bottom">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Foreground="White" Text="{Binding Name}" />
-                                </Grid>
-                                <Grid.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_edit" />
-                                        <MenuItem
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action ExploreWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_openFile" />
-                                        <MenuItem
-                                            cal:Action.TargetWithoutContext="MainViewModel"
-                                            cal:Message.Attach="[Event Click] = [Action DeleteWallpaper($datacontext)]"
-                                            lan:Xaml.Key="common_delete" />
-                                    </ContextMenu>
-                                </Grid.ContextMenu>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                </ListView>
-                <Viewbox
-                    Grid.RowSpan="3"
-                    Grid.ColumnSpan="2"
-                    Width="35"
-                    Height="35">
-                    <Viewbox.Visibility>
-                        <MultiBinding Converter="{StaticResource MultiBoolToVisibilityConveter}">
-                            <Binding Path="IsBusy" />
-                            <Binding Path="IsLoadingWallpaper" />
-                        </MultiBinding>
-                    </Viewbox.Visibility>
-                    <loadin:LoadingIndicator
-                        IsActive="True"
-                        SpeedRatio="0.45"
-                        Style="{StaticResource LoadingIndicatorRingStyle}" />
-                </Viewbox>
-            </Grid>-->
         </TabItem>
     </TabControl>
 </Window>

@@ -61,13 +61,16 @@ namespace LiveWallpaper.ViewModels
 
                 AppHelper AppHelper = new AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
-                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 0.0069444444444444, 0.0138888888888889);
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath));
                 if (canPrpmpt)
                 {
                     var windowManager = IoC.Get<IWindowManager>();
 
                     var view = new PurchaseTipsView();
-                    var vm = new PurchaseTipsViewModel();
+                    var vm = new PurchaseTipsViewModel()
+                    {
+                        BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
+                    };
                     vm.Initlize(AppManager.GetPurchaseViewModel(), windowManager);
                     view.DataContext = vm;
                     view.Show();
