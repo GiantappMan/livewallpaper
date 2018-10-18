@@ -11,7 +11,7 @@ Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "LiveWallpaper.App", "LiveWa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaper.Store", "LiveWallpaper.Store\LiveWallpaper.Store.csproj", "{41204506-0D80-40A7-A163-1DD9AC818D07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaper.Server", "LiveWallpaper.Server\LiveWallpaper.Server.csproj", "{A02BFFFD-8611-4192-92D1-D5D43344CBC9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper.Server", "LiveWallpaper.Server\LiveWallpaper.Server.csproj", "{A02BFFFD-8611-4192-92D1-D5D43344CBC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
