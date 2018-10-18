@@ -13,6 +13,10 @@ using Windows.Storage;
 using LiveWallpaper.Events;
 using DZY.DotNetUtil.Helpers;
 using System.Windows.Interop;
+using DZY.DotNetUtil.UI.Helpers;
+using DZY.DotNetUtil.WPF;
+using DZY.DotNetUtil.WPF.Views;
+using DZY.DotNetUtil.WPF.ViewModels;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -54,6 +58,25 @@ namespace LiveWallpaper.ViewModels
                     AppManager.MainHandle = handle;
                     AppManager.CheckUpates(handle);
                 });
+
+                AppHelper AppHelper = new AppHelper();
+                //0.0069444444444444, 0.0138888888888889 10/20分钟
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 0.0069444444444444, 0.0138888888888889);
+                if (canPrpmpt)
+                {
+                    var windowManager = IoC.Get<IWindowManager>();
+
+                    var view = new PurchaseTipsView();
+                    var vm = new PurchaseTipsViewModel();
+                    vm.Initlize(AppManager.GetPurchaseViewModel(), windowManager);
+                    view.DataContext = vm;
+                    view.Show();
+                }
+
+                if (AppManager.Setting.General.MinimizeUI)
+                {
+                    TryClose();
+                }
 
                 _firstLaunch = false;
             }

@@ -38,6 +38,10 @@ namespace LiveWallpaper.Managers
         /// </summary>
         public static string AppDataPath { get; private set; }
         /// <summary>
+        /// 注册数据
+        /// </summary>
+        public static string PurchaseDataPath { get; private set; }
+        /// <summary>
         /// 数据保存目录
         /// </summary>
         public static string AppDataDir { get; private set; }
@@ -93,6 +97,7 @@ namespace LiveWallpaper.Managers
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
             LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
             AppDataPath = $"{AppDataDir}\\appData.json";
+            PurchaseDataPath = $"{AppDataDir}\\purchaseData.json";
 
             await CheckDefaultSetting();
 
