@@ -45,7 +45,7 @@ namespace LiveWallpaperEngine
             {
                 if (_timer == null)
                 {
-                    _timer = new Timer(2000);
+                    _timer = new Timer(1000);
                 }
 
                 _timer.Elapsed -= _timer_Elapsed;
