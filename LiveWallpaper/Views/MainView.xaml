@@ -90,7 +90,7 @@
                             VerticalAlignment="Stretch"
                             Kind="SettingsOutline" />
                     </Button>
-                    <ComboBox Grid.Column="1" />
+                    <!--<ComboBox Grid.Column="1" />-->
                     <StackPanel
                         Grid.Column="2"
                         Margin="5,2,5,5"
