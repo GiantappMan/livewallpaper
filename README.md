@@ -18,7 +18,7 @@
   （漂亮的UI是系统或框架应该做的事，不要逆系统而为。
   例如UWP天生比WPF美省内存。用Winform制作UWP的感觉,浪费一些无益的开销，这是我的最新感受）
   * 有Win10内购只是一种捐赠形式，没有功能限制。但是目前商店不知道能否通过，无法使用。
-  *  语言其实是支持的，鉴于我的英语水平没有翻译。有好心人可以pull这里  [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/zh.json)
+  * 多语言其实是支持的，鉴于我的英语水平没有翻译。有好心人可以pull这里  [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/zh.json)
   * c#交流群：191034956
    
        
