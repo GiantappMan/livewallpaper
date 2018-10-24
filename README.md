@@ -1,23 +1,30 @@
-# 定位  免费的动态壁纸工具。无广告无流氓，只有核心功能
+# 免费开源的动态壁纸工具。无流氓，极简UI，省内存只有核心功能。
+# 你需要的只是动态壁纸，不是漂亮的软件~
  
 
+## 客户端
+![client](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/client.png)
+## 商场
+![store](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/store.png)
+## 早期demo
+![早期demo](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/example.gif)
 
-## 效果预览
-![steup](https://github.com/WallpaperTools/WallpaperTool/blob/master/example.gif)
 ## 关于本项目
         * 动态壁纸的WPF实现版本，类似wallpaper engine
-        * 我准备把这个仓库作为产品来开发，暂时定位为客户端工具，无服务端内容。
-        * 开发群：191034956
+        * 只支持Win10比较新的版本，因为用了Win10特性
+        * Golang制作的一个小型解析器，有兴趣的可以按源码api，开发自己的壁纸源。
+        * UI能省既省，我的目的是动态壁纸，不希望在UI花太多精力。也不想为了实现一点UI，搞太多黑科技。（漂亮的UI是系统或框架应该做的事，不要逆系统而为。例如UWP天生比WPF美省内存。用Winform制作UWP的感觉,浪费一些无益的开销，这是我的最新感受）
+        * 有Win10内购只是一种捐赠形式，没有功能限制。但是目前商店不知道能否通过，无法使用。
+        * c#交流群：191034956
        
-
+## 目前的不足:
+        * 只支持视频壁纸，exe和web其实demo是支持的，实现也很容易。后面看需求在做
+        * 声音无法关闭，可以通过系统音量混合器，禁音Livewallpaper。后面看需求在做
+        * 不支持自定义分组 （可以做，看用户情况吧，有需要再开发）
+        * WPF性能低，UI难看,内存高。内存无法释放完毕（打算用Go制作一个纯净版，可以用web控制。或者用进程通信，每次UI可以完全释放，只保留壁纸核心进程省内存，都只是初步想法，是否实现还是看用户量吧）
+        
 ## 三步参与代码
         1.Start项目
         2.Fork修改代码
         3.Issues提交问题
-
-
-## 运行壁纸
-        * 本仓库中没有壁纸，需要自行导入或者创建壁纸
-        * 目前只支持视频壁纸，基本功能已经完成。正在开发第三方资源访问
-
 
