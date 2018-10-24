@@ -66,8 +66,8 @@
     <Reference Include="DZY.DotNetUtil.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DZY.DotNetUtil.UI.1.0.0.49\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
     </Reference>
-    <Reference Include="DZY.WinAPI, Version=1.0.17.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DZY.WinAPI.1.0.17\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
+    <Reference Include="DZY.WinAPI, Version=1.0.25.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DZY.WinAPI.1.0.25\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
     </Reference>
     <Reference Include="LoadingIndicators.WPF, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LoadingIndicators.WPF.0.0.1\lib\LoadingIndicators.WPF.dll</HintPath>
