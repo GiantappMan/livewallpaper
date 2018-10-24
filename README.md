@@ -33,4 +33,11 @@
   * Fork修改代码
   * Issues提交问题
 
+## 编译源码：
+  * Clone 代码
+  * 打开VS2017
+  * 设置LiveWallpaper.App为启动项
+  * 修改解决方案配置为 ReleaseUWP/DebugUWP
+  * 运行吧
+  
 c#交流群：191034956
