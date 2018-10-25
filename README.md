@@ -40,7 +40,8 @@
   * 修改解决方案配置为 ReleaseUWP/DebugUWP
   * 运行吧
 
-## 如果你觉得本项目对你有帮助，请star支持一下~
+## 感谢：
+  * 如果你觉得本项目对你有帮助，请star支持一下~
 
 ## 项目官网
 https://mscoder.cn/products/LiveWallpaper.html  
