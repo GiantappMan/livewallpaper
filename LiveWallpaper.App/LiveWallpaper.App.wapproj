@@ -114,7 +114,6 @@
     <None Include="LiveWallpaper.App_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaper.Store\LiveWallpaper.Store.csproj" />
     <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj" />
   </ItemGroup>
   <ItemGroup>
