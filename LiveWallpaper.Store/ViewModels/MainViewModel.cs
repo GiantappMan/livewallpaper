@@ -122,10 +122,9 @@ namespace LiveWallpaper.Store.ViewModels
 
         public void InitServer()
         {
-            if (Server != null)
-                return;
+            if (Server == null)
+                Server = IoC.Get<ServerViewModel>();
 
-            Server = IoC.Get<ServerViewModel>();
             Server.InitServer();
         }
 
@@ -175,7 +174,7 @@ namespace LiveWallpaper.Store.ViewModels
 
                 IsInstalling = true;
 
-                if(string.IsNullOrEmpty(_appService.Setting.General.WallpaperSaveDir))
+                if (string.IsNullOrEmpty(_appService.Setting.General.WallpaperSaveDir))
                 {
 #pragma warning disable UWP003 // UWP-only
                     MessageDialog dialog = new MessageDialog($"未设置壁纸目录，请下载《巨应动态壁纸》使用本应用");

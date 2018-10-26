@@ -596,6 +596,10 @@
     <Page.BottomAppBar>
         <CommandBar>
             <AppBarButton
+                x:Name="InitServer"
+                x:Uid="appBarBtn_refresh"
+                Icon="Refresh" />
+            <AppBarButton
                 x:Name="Setting"
                 x:Uid="appBarBtn_setting"
                 Icon="Setting" />
