@@ -201,8 +201,8 @@ namespace LiveWallpaper.ViewModels
 
         public async void OpenLocalServer()
         {
-            string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
-            Process.Start(serverFile);
+            //string serverFile = Path.Combine(AppManager.ApptEntryDir, "Res\\LiveWallpaperServer\\LiveWallpaperServer.exe");
+            //Process.Start(serverFile);
 
             var wallpaperDir = AppManager.LocalWallpaperDir;
             wallpaperDir = wallpaperDir.Replace(AppManager.AppDataDir, AppManager.UWPRealAppDataDir);
