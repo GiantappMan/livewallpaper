@@ -175,6 +175,15 @@ namespace LiveWallpaper.Store.ViewModels
 
                 IsInstalling = true;
 
+                if(string.IsNullOrEmpty(_appService.Setting.General.WallpaperSaveDir))
+                {
+#pragma warning disable UWP003 // UWP-only
+                    MessageDialog dialog = new MessageDialog($"未设置壁纸目录，请下载《巨应动态壁纸》使用本应用");
+#pragma warning restore UWP003 // UWP-only
+                    await dialog.ShowAsync();
+                    return;
+                }
+
                 StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(_appService.Setting.General.WallpaperSaveDir);
                 var folder = await storageFolder.CreateFolderAsync(Guid.NewGuid().ToString());
 

@@ -221,7 +221,7 @@ namespace LiveWallpaper.Store.Services
         public async Task<ReadOnlyCollection<WallpaperServerObj>> LoadWallpapers()
         {
             if (SelectedTag == null || SelectedSort == null)
-                return new ReadOnlyCollection<WallpaperServerObj>(Wallpapers);
+                return null;
 
             if (Wallpapers == null)
                 Wallpapers = new List<WallpaperServerObj>();
