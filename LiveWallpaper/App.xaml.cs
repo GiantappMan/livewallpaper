@@ -24,6 +24,7 @@ namespace LiveWallpaper
     {
         private TaskbarIcon notifyIcon;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        Mutex mutex;
 
         public App()
         {
@@ -40,6 +41,14 @@ namespace LiveWallpaper
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            bool ret;
+            mutex = new Mutex(true, "Livewallpaper", out ret);
+
+            if (!ret)
+            {
+                Environment.Exit(0);
+                return;
+            }
             base.OnStartup(e);
 
             //托盘初始化
