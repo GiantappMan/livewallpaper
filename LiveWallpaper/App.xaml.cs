@@ -33,29 +33,43 @@ namespace LiveWallpaper
 
         private async void Init()
         {
-            //异常捕获
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
-            await AppManager.Initlize();
+            try
+            {
+                //异常捕获
+                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+                Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
+                await AppManager.Initlize();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            bool ret;
-            mutex = new Mutex(true, "Livewallpaper", out ret);
-
-            if (!ret)
+            try
             {
-                Environment.Exit(0);
-                return;
-            }
-            base.OnStartup(e);
+                bool ret;
+                mutex = new Mutex(true, "Livewallpaper", out ret);
 
-            //托盘初始化
-            notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
-            notifyIcon.Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
-            var container = IoC.Get<SimpleContainer>();
-            container.Instance(notifyIcon);
+                if (!ret)
+                {
+                    Environment.Exit(0);
+                    return;
+                }
+                base.OnStartup(e);
+
+                //托盘初始化
+                notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
+                notifyIcon.Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+                var container = IoC.Get<SimpleContainer>();
+                container.Instance(notifyIcon);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
