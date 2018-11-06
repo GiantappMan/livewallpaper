@@ -45,4 +45,5 @@
 
 ## 项目官网
 https://mscoder.cn/products/LiveWallpaper.html  
+[Win10商店下载](https://www.microsoft.com/store/apps/9MV8GK87MZ05)  
 c#交流群：191034956
