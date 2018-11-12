@@ -11,6 +11,7 @@
         x:Shared="false">
         <MenuItem cal:Message.Attach="About()" lan:Xaml.Key="common_about" />
         <MenuItem cal:Message.Attach="VIP()" lan:Xaml.Key="common_vip" />
+        <MenuItem cal:Message.Attach="QQ()" lan:Xaml.Key="common_qq" />
         <Separator />
         <MenuItem cal:Message.Attach="Config()" lan:Xaml.Key="common_config" />
         <Separator />

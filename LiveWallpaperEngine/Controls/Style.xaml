@@ -5,6 +5,7 @@
     <DataTemplate x:Key="videoTemplate">
         <local:MediaElementEx
             x:Name="media"
+            IsMuted="{Binding Muted}"
             Source="{Binding AbsolutePath}"
             Stretch="Fill" />
     </DataTemplate>
