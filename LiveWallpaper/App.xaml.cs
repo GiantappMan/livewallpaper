@@ -2,6 +2,7 @@
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
+using LiveWallpaperEngine.NativeWallpapers;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
@@ -98,6 +99,12 @@ namespace LiveWallpaper
             var vm = IoC.Get<ContextMenuViewModel>(nameof(ContextMenuViewModel));
             if (vm != null)
                 vm.Main();
+        }
+
+        private void Application_SessionEnding(object sender, SessionEndingCancelEventArgs e)
+        {
+            //关机时恢复系统壁纸，防止开机黑屏
+            HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
         }
     }
 }

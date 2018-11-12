@@ -6,8 +6,8 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:tb="http://www.hardcodet.net/taskbar"
+    SessionEnding="Application_SessionEnding"
     ShutdownMode="OnExplicitShutdown">
-
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

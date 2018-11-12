@@ -92,7 +92,10 @@ namespace LiveWallpaper.Managers
             AppDataDir = $"{appData}\\LiveWallpaper";
             UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
-            LocalWallpaperDir = $"{AppDataDir}\\Wallpapers";
+            //LocalWallpaperDir = $"{AppDataDir}\\Wallpapers"; 
+            //因为uwp store权限问题所以改为 %userprofile%\videos\LivewallpaperCache
+            string videoDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            LocalWallpaperDir = $"{videoDir}\\LivewallpaperCache";
             AppDataPath = $"{AppDataDir}\\appData.json";
             PurchaseDataPath = $"{AppDataDir}\\purchaseData.json";
 
