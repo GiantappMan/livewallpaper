@@ -108,6 +108,11 @@ namespace LiveWallpaperEngine
             HandlerWallpaper.Show(handler);
         }
 
+        public static void Mute(bool mute)
+        {
+            RenderWindow.Mute(mute);
+        }
+
         public static void Pause()
         {
             if (RenderWindow == null)

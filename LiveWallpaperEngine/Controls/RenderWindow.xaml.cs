@@ -28,6 +28,12 @@ namespace LiveWallpaperEngine.Controls
             Loaded += RenderWindow_Loaded;
         }
 
+        internal void Mute(bool mute)
+        {
+            if (Wallpaper != null)
+                Wallpaper.Muted = mute;
+        }
+
         private void RenderWindow_Loaded(object sender, RoutedEventArgs e)
         {
             //处理alt+tab可以看见本程序

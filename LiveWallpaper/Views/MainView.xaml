@@ -9,9 +9,9 @@
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    MinWidth="450"
     Width="{Binding Width, Mode=TwoWay}"
     Height="{Binding Height, Mode=TwoWay}"
+    MinWidth="450"
     cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
     lan:Xaml.Key="common_appName"
     SizeChanged="Window_SizeChanged"
@@ -90,7 +90,18 @@
                             VerticalAlignment="Stretch"
                             Kind="SettingsOutline" />
                     </Button>
-                    <!--<ComboBox Grid.Column="1" />-->
+                    <!--<ComboBox />-->
+                    <CheckBox
+                        x:Name="Mute"
+                        Grid.Column="1"
+                        Margin="20,0"
+                        VerticalAlignment="Center"
+                        IsChecked="True">
+                        <iconPacks:PackIconMaterial
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Kind="VolumeMute" />
+                    </CheckBox>
                     <StackPanel
                         Grid.Column="2"
                         Margin="5,2,5,5"

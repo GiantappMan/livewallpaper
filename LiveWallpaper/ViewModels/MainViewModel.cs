@@ -198,6 +198,10 @@ namespace LiveWallpaper.ViewModels
         {
             IoC.Get<ContextMenuViewModel>().Config(GetView());
         }
+        public void Mute(bool mute)
+        {
+            WallpaperManager.Mute(mute);
+        }
 
         public async void OpenLocalServer()
         {

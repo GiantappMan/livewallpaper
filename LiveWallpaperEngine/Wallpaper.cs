@@ -18,6 +18,33 @@ namespace LiveWallpaperEngine
         /// </summary>
         public string AbsolutePath { get; set; }
 
+        #region Muted
+
+        /// <summary>
+        /// The <see cref="Muted" /> property's name.
+        /// </summary>
+        public const string MutedPropertyName = "Muted";
+
+        private bool _Muted = true;
+
+        /// <summary>
+        /// Muted
+        /// </summary>
+        public bool Muted
+        {
+            get { return _Muted; }
+
+            set
+            {
+                if (_Muted == value) return;
+
+                _Muted = value;
+                NotifyOfPropertyChange(MutedPropertyName);
+            }
+        }
+
+        #endregion
+
         #region AbsolutePreviewPath
 
         /// <summary>

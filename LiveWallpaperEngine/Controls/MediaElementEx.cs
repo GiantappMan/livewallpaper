@@ -39,7 +39,7 @@ namespace LiveWallpaperEngine.Controls
 
         private void MediaElementEx_MediaEnded(object sender, System.Windows.RoutedEventArgs e)
         {
-            var mediaElement = sender as MediaElement;
+            var mediaElement = sender as MediaElement;            
             mediaElement.Position = new TimeSpan(0, 0, 0);
         }
     }
