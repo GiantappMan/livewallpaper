@@ -236,6 +236,17 @@ namespace LiveWallpaper.ViewModels
             }
         }
 
+        public void DownloadStore()
+        {
+            try
+            {
+                Process.Start("ms-windows-store://pdp/?productid=9PNN27P9SS38");
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         #endregion
 
         #region properties

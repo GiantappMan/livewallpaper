@@ -125,6 +125,17 @@
                         TextAlignment="Center"
                         TextWrapping="Wrap" />
                     <Button
+                        x:Name="DownloadStore"
+                        Margin="5"
+                        HorizontalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0">
+                        <TextBlock
+                            lan:Xaml.Key="mainUI_downloadStore"
+                            Foreground="Blue"
+                            TextDecorations="Underline" />
+                    </Button>
+                    <Button
                         x:Name="OpenLocalServer"
                         Margin="5"
                         HorizontalAlignment="Center"

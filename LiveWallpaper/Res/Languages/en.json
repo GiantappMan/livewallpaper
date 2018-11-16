@@ -25,6 +25,7 @@
   "mainUI_warning_loadError": "Failed to read wallpaper",
   "mainUI_thirdParty_desc": "The project is completely open source and technical communication without any risk.\r Wallpaper Store is another app that needs to be downloaded separately.Separate stores are designed to keep the tools simple and reduce memory",
   "mainUI_openLocalServer": "Open local service",
+  "mainUI_downloadStore": "Download store",
 
   "contextMenu_main": "Open the main interface",
 
