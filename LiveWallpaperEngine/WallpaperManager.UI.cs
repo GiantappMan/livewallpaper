@@ -84,6 +84,9 @@ namespace LiveWallpaperEngine
 
         public static void Show(Wallpaper wallpaper)
         {
+            //每次都调用禁用背景。有时候背景会被其他程序启动起来
+            HandlerWallpaper.DesktopWallpaperAPI.Enable(false);
+
             IntPtr handler = IntPtr.Zero;
             Execute.OnUIThread(() =>
             {
