@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using DZY.WinAPI;
+using DZY.WinAPI.Desktop.API;
 using LiveWallpaperEngine;
 using LiveWallpaperEngine.Controls;
 using LiveWallpaperEngine.NativeWallpapers;
@@ -84,6 +85,8 @@ namespace LiveWallpaperEngine
 
         public static void Show(Wallpaper wallpaper)
         {
+            //每次都重置，否则explorer死后会卡很久
+            HandlerWallpaper.ResetDesktopWallpaperAPI();
             //每次都调用禁用背景。有时候背景会被其他程序启动起来
             HandlerWallpaper.DesktopWallpaperAPI.Enable(false);
 
@@ -100,8 +103,23 @@ namespace LiveWallpaperEngine
                 }
                 else
                 {
-                    RenderWindow.Wallpaper = wallpaper;
-                    RenderWindow.Visibility = System.Windows.Visibility.Visible;
+                    try
+                    {
+                        RenderWindow.Wallpaper = wallpaper;
+                        RenderWindow.Visibility = System.Windows.Visibility.Visible;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        RenderWindow?.Close();                        
+                        RenderWindow = null;
+                        //explorer 崩溃后会触发这个问题
+                        HandlerWallpaper.ReInitlize();
+                        RenderWindow = new RenderWindow
+                        {
+                            Wallpaper = wallpaper
+                        };
+                        RenderWindow.Show();
+                    }
                 }
 
                 handler = new WindowInteropHelper(RenderWindow).Handle;

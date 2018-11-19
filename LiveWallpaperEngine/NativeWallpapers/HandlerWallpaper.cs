@@ -20,6 +20,11 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
         public static IDesktopWallpaper DesktopWallpaperAPI { get; private set; } = DesktopWallpaperFactory.Create();
 
+        public static void ResetDesktopWallpaperAPI()
+        {
+            DesktopWallpaperAPI = DesktopWallpaperFactory.Create();
+        }
+
         public static void Close(bool restoreParent = false)
         {
             if (!_showed)
@@ -57,6 +62,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
 
         private static bool Initlize()
         {
+            _showed = false;
             IntPtr progman = User32Wrapper.FindWindow("Progman", null);
             IntPtr result = IntPtr.Zero;
             User32Wrapper.SendMessageTimeout(progman,
@@ -86,6 +92,12 @@ namespace LiveWallpaperEngine.NativeWallpapers
             }), IntPtr.Zero);
             _initlized = result1;
             return result1;
+        }
+
+        //explorer崩溃后需要重新调用
+        internal static void ReInitlize()
+        {
+            Initlize();
         }
     }
 
