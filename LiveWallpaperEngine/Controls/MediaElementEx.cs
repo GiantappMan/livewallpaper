@@ -17,8 +17,14 @@ namespace LiveWallpaperEngine.Controls
             LoadedBehavior = MediaState.Manual;
             //UnloadedBehavior = MediaState.Manual;
             MediaEnded += MediaElementEx_MediaEnded;
+            MediaFailed += MediaElementEx_MediaFailed;
             IsEnabledChanged += MediaElementEx_IsEnabledChanged;
             Play();
+        }
+
+        private void MediaElementEx_MediaFailed(object sender, ExceptionRoutedEventArgs e)
+        {
+            MessageBox.Show(e.ErrorException.Message);
         }
 
         private void MediaElementEx_SourceUpdated(object sender, System.Windows.Data.DataTransferEventArgs e)
