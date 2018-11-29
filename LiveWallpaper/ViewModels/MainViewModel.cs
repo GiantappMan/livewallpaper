@@ -61,7 +61,7 @@ namespace LiveWallpaper.ViewModels
 
                 AppHelper AppHelper = new AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
-                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath));
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 15, 30);
                 if (canPrpmpt)
                 {
                     var windowManager = IoC.Get<IWindowManager>();
