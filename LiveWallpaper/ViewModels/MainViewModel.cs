@@ -240,7 +240,7 @@ namespace LiveWallpaper.ViewModels
         {
             try
             {
-                Process.Start("ms-windows-store://pdp/?productid=9PNN27P9SS38");
+                Process.Start("https://www.mscoder.cn/product/livewallpaperstore/");
             }
             catch (Exception)
             {
