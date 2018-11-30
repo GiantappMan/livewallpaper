@@ -48,7 +48,6 @@ namespace LiveWallpaperEngine.NativeWallpapers
             _handler = handler;
             if (_handler == IntPtr.Zero || _showed)
                 return;
-            _showed = true;
 
             if (!_initlized)
             {
@@ -56,6 +55,7 @@ namespace LiveWallpaperEngine.NativeWallpapers
                 if (!isOk)
                     return;
             }
+            _showed = true;
             User32Wrapper.SetParent(_handler, _workerw);
             DesktopWallpaperAPI.Enable(false);
         }
