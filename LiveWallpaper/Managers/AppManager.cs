@@ -113,14 +113,14 @@ namespace LiveWallpaper.Managers
             await Task.Run(() =>
             {
                 RefreshLocalWallpapers();
-                if (AppData.Wallpaper != null)
-                {
-                    WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
-                    var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
-                    if (current != null)
-                        WallpaperManager.Show(current);
-                    WallpaperManager.MonitorMaxiemized(true);
-                }
+                //if (AppData.Wallpaper != null)
+                //{
+                WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
+                var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
+                if (current != null)
+                    WallpaperManager.Show(current);
+                WallpaperManager.MonitorMaxiemized(true);
+                //}
             });
         }
 
