@@ -15,8 +15,6 @@
   * 只支持Win10比较新的版本，因为用了Win10特性
   * Golang制作的一个小型解析器，有兴趣的可以按源码api，开发自己的壁纸源。
   * UI能省既省，我的目的是动态壁纸，不希望在UI花太多精力。也不想为了实现一点UI，搞太多黑科技。
-  （漂亮的UI是系统或框架应该做的事，不要逆系统而为。
-  例如UWP天生比WPF美省内存。用Winform制作UWP的感觉,浪费一些无益的开销，这是我的最新感受）
   * 有Win10内购只是一种捐赠形式，没有功能限制。但是目前商店不知道能否通过，无法使用。
   * 多语言其实是支持的，鉴于我的英语水平没有翻译。有好心人可以pull这里  [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/zh.json)
   * c#交流群：191034956
