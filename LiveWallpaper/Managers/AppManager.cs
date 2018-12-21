@@ -129,6 +129,10 @@ namespace LiveWallpaper.Managers
             StoreHelper store = new StoreHelper(mainHandler);
             var icon = IoC.Get<TaskbarIcon>();
 
+#if DEBUG
+            return;
+#endif
+
             await store.DownloadAndInstallAllUpdatesAsync(() =>
             {
                 var result = MessageBox.Show("是否更新。", "检测到新版本", MessageBoxButton.OKCancel);
