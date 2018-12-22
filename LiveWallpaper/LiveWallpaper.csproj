@@ -57,9 +57,11 @@
       <HintPath>..\packages\DZY.DotNetUtil.1.0.30\lib\netstandard2.0\DZY.DotNetUtil.dll</HintPath>
     </Reference>
     <Reference Include="DZY.DotNetUtil.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DZY.DotNetUtil.UI.1.0.0.51\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
+      <HintPath>..\packages\DZY.DotNetUtil.UI.1.0.0.53\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
     </Reference>
-    <Reference Include="DZY.WinAPI, Version=1.0.25.0, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="DZY.WinAPI, Version=1.0.44.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DZY.WinAPI.1.0.44\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
+    </Reference>
     <Reference Include="Hardcodet.Wpf.TaskbarNotification, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.1.0.8\lib\net451\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
     </Reference>
@@ -81,11 +83,11 @@
     <Reference Include="MultiLanguageManager.WPF, Version=1.0.0.8, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MultiLanguageForXAML.1.0.0.18\lib\net46\MultiLanguageManager.WPF.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.5.10\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.5.11\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -208,6 +210,9 @@
     <Content Include="Res\setting.desc.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -222,9 +227,9 @@
     <Analyzer Include="..\packages\UwpDesktop.10.0.14393.3\analyzers\dotnet\UwpDesktopAnalyzer.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaperEngine\LiveWallpaperEngine.csproj">
+    <ProjectReference Include="..\LiveWallpaperEngineLib\LiveWallpaperEngineLib.csproj">
       <Project>{8f67bf70-2ca4-42c0-8cc5-7a37c186bb2b}</Project>
-      <Name>LiveWallpaperEngine</Name>
+      <Name>LiveWallpaperEngineLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

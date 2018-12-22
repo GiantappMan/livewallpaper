@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperEngine
+namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {

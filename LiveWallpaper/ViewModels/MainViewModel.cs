@@ -3,7 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using LiveWallpaperEngine;
+using LiveWallpaperEngineLib;
 using MultiLanguageManager;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;

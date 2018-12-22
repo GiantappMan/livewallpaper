@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperEngine
+namespace LiveWallpaperEngineLib
 {
     /// <summary>
     /// 壁纸工程的详细信息

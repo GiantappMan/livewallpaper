@@ -1,9 +1,11 @@
 ﻿using Caliburn.Micro;
 using DZY.WinAPI;
 using DZY.WinAPI.Desktop.API;
+using DZY.WinAPI.Helpers;
 using LiveWallpaperEngine;
-using LiveWallpaperEngine.Controls;
-using LiveWallpaperEngine.NativeWallpapers;
+using LiveWallpaperEngineLib;
+using LiveWallpaperEngineLib.Controls;
+//using LiveWallpaperEngineLib.NativeWallpapers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,7 +17,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Interop;
 
-namespace LiveWallpaperEngine
+namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
@@ -28,6 +30,7 @@ namespace LiveWallpaperEngine
         //private static IntPtr _hook;
         private static Timer _timer;
         private static Process _currentProcess;
+        private static LWECore _LWECore;
 
         private static void InitUI()
         {
@@ -85,11 +88,6 @@ namespace LiveWallpaperEngine
 
         public static void Show(Wallpaper wallpaper)
         {
-            //每次都重置，否则explorer死后会卡很久
-            HandlerWallpaper.ResetDesktopWallpaperAPI();
-            //每次都调用禁用背景。有时候背景会被其他程序启动起来
-            HandlerWallpaper.DesktopWallpaperAPI.Enable(false);
-
             IntPtr handler = IntPtr.Zero;
             Execute.OnUIThread(() =>
             {
@@ -110,10 +108,10 @@ namespace LiveWallpaperEngine
                     }
                     catch (InvalidOperationException)
                     {
-                        RenderWindow?.Close();                        
+                        RenderWindow?.Close();
                         RenderWindow = null;
                         //explorer 崩溃后会触发这个问题
-                        HandlerWallpaper.ReInitlize();
+
                         RenderWindow = new RenderWindow
                         {
                             Wallpaper = wallpaper
@@ -126,7 +124,8 @@ namespace LiveWallpaperEngine
 
             });
 
-            HandlerWallpaper.Show(handler);
+            //HandlerWallpaper.Show(handler);
+            _LWECore.SendToBackground(handler);
         }
 
         public static void Mute(bool mute)
@@ -159,7 +158,8 @@ namespace LiveWallpaperEngine
                 RenderWindow.Wallpaper = null;
             });
 
-            HandlerWallpaper.Close();
+            //HandlerWallpaper.Close();
+            //_LWECore.RestoreParent();
         }
 
         public static void Dispose()
@@ -169,6 +169,7 @@ namespace LiveWallpaperEngine
 
             MonitorMaxiemized(false);
             Close();
+            _LWECore.Dispose();
 
             RenderWindow.Close();
             RenderWindow = null;
