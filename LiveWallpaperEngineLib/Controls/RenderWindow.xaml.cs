@@ -15,7 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace LiveWallpaperEngine.Controls
+namespace LiveWallpaperEngineLib.Controls
 {
     /// <summary>
     /// Interaction logic for RenderWindow.xaml
@@ -47,19 +47,19 @@ namespace LiveWallpaperEngine.Controls
 
             Loaded -= RenderWindow_Loaded;
 
-            double width = Screen.AllScreens[0].Bounds.Width;
-            double height = Screen.AllScreens[0].Bounds.Height;
+            //double width = Screen.AllScreens[0].Bounds.Width;
+            //double height = Screen.AllScreens[0].Bounds.Height;
 
-            //Top = -4;
+            ////Top = -4;
+            ////Left = 0;
+            //WindowState = WindowState.Maximized;
+
+            //Width = width;
+            //Height = height;
+
+            //WindowStartupLocation = WindowStartupLocation.Manual;
+            //Top = 0;
             //Left = 0;
-            WindowState = WindowState.Maximized;
-
-            Width = width;
-            Height = height;
-
-            WindowStartupLocation = WindowStartupLocation.Manual;
-            Top = 0;
-            Left = 0;
         }
 
         #region Wallpaper

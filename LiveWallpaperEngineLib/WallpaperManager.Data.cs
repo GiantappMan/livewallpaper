@@ -1,6 +1,7 @@
 ﻿using Caliburn.Micro;
 using DZY.DotNetUtil.Helpers;
-using LiveWallpaperEngine.NativeWallpapers;
+using LiveWallpaperEngine;
+//using LiveWallpaperEngineLib.NativeWallpapers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace LiveWallpaperEngine
+namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
@@ -22,8 +23,9 @@ namespace LiveWallpaperEngine
 
         public static void Initlize()
         {
-            //恢复桌面，以防上次崩溃x显示黑屏
-            HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
+            _LWECore = new LWECore();
+            ////恢复桌面，以防上次崩溃x显示黑屏
+            //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
         }
 
         /// <summary>

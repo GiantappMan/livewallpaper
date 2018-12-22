@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace LiveWallpaperEngine.Controls
+namespace LiveWallpaperEngineLib.Controls
 {
     public class RenderInfoSelector : DataTemplateSelector
     {

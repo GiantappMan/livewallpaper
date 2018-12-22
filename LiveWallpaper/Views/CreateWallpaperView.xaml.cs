@@ -1,5 +1,5 @@
-﻿using LiveWallpaperEngine.Controls;
-using LiveWallpaperEngine.NativeWallpapers;
+﻿using LiveWallpaperEngineLib.Controls;
+//using LiveWallpaperEngineLib.NativeWallpapers;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;

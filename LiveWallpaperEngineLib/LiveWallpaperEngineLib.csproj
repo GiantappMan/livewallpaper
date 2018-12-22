@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{8F67BF70-2CA4-42C0-8CC5-7A37C186BB2B}</ProjectGuid>
     <OutputType>library</OutputType>
-    <RootNamespace>LiveWallpaperEngine</RootNamespace>
-    <AssemblyName>LiveWallpaperEngine</AssemblyName>
+    <RootNamespace>LiveWallpaperEngineLib</RootNamespace>
+    <AssemblyName>LiveWallpaperEngineLib</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -47,10 +47,13 @@
       <HintPath>..\packages\DZY.DotNetUtil.1.0.30\lib\netstandard2.0\DZY.DotNetUtil.dll</HintPath>
     </Reference>
     <Reference Include="DZY.DotNetUtil.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DZY.DotNetUtil.UI.1.0.0.51\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
+      <HintPath>..\packages\DZY.DotNetUtil.UI.1.0.0.53\lib\net46\DZY.DotNetUtil.WPF.dll</HintPath>
     </Reference>
-    <Reference Include="DZY.WinAPI, Version=1.0.25.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DZY.WinAPI.1.0.25\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
+    <Reference Include="DZY.WinAPI, Version=1.0.44.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DZY.WinAPI.1.0.44\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="LiveWallpaperEngine, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveWallpaperEngine.1.0.0\lib\netstandard2.0\LiveWallpaperEngine.dll</HintPath>
     </Reference>
     <Reference Include="LoadingIndicators.WPF, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LoadingIndicators.WPF.0.0.1\lib\LoadingIndicators.WPF.dll</HintPath>
@@ -58,8 +61,8 @@
     <Reference Include="Microsoft.Win32.Registry, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Registry.4.5.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -96,8 +99,6 @@
     <Compile Include="Controls\WallpaperRender.xaml.cs">
       <DependentUpon>WallpaperRender.xaml</DependentUpon>
     </Compile>
-    <Compile Include="NativeWallpapers\HandlerWallpaper.cs" />
-    <Compile Include="OtherProgramChecker.cs" />
     <Compile Include="ProjectInfo.cs" />
     <Compile Include="WallpaperManager.Data.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -120,6 +121,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

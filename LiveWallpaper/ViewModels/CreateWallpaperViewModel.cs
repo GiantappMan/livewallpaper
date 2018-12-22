@@ -1,9 +1,9 @@
 ﻿using Caliburn.Micro;
 using System.Diagnostics;
 using MultiLanguageManager;
-using LiveWallpaperEngine;
-using LiveWallpaperEngine.Controls;
-using LiveWallpaperEngine.NativeWallpapers;
+using LiveWallpaperEngineLib;
+using LiveWallpaperEngineLib.Controls;
+//using LiveWallpaperEngineLib.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;

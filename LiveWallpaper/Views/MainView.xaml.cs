@@ -1,6 +1,6 @@
 ﻿using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
-using LiveWallpaperEngine;
+using LiveWallpaperEngineLib;
 using System;
 using System.Diagnostics;
 using System.IO;

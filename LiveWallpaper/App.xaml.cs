@@ -2,7 +2,7 @@
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
-using LiveWallpaperEngine.NativeWallpapers;
+//using LiveWallpaperEngineLib.NativeWallpapers;
 using MultiLanguageManager;
 using System;
 using System.Collections.Generic;
@@ -51,8 +51,7 @@ namespace LiveWallpaper
         {
             try
             {
-                bool ret;
-                mutex = new Mutex(true, "Livewallpaper", out ret);
+                mutex = new Mutex(true, "Livewallpaper", out bool ret);
 
                 if (!ret)
                 {
@@ -104,7 +103,7 @@ namespace LiveWallpaper
         private void Application_SessionEnding(object sender, SessionEndingCancelEventArgs e)
         {
             //关机时恢复系统壁纸，防止开机黑屏
-            HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
+            //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
         }
     }
 }
