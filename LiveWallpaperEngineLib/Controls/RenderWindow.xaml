@@ -12,13 +12,13 @@
     ShowInTaskbar="False"
     WindowStyle="None"
     mc:Ignorable="d">
-    <Window.Resources>
+    <!--<Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Style.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
+    </Window.Resources>-->
     <WindowsFormsHost>
         <windowsForms:Panel x:Name="PlayerHost" />
     </WindowsFormsHost>

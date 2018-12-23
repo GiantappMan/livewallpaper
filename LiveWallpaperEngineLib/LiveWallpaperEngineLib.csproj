@@ -97,6 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controls\MediaElementEx.cs" />
+    <Compile Include="Controls\RenderForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\RenderForm.Designer.cs">
+      <DependentUpon>RenderForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\RenderInfoSelector.cs" />
     <Compile Include="Controls\RenderWindow.xaml.cs">
       <DependentUpon>RenderWindow.xaml</DependentUpon>
