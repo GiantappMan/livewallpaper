@@ -108,7 +108,7 @@ namespace LiveWallpaperEngineLib
                         //RenderWindow .Visibility = System.Windows.Visibility.Visible;
                         RenderWindow.Visible = true;
                     }
-                    catch (InvalidOperationException)
+                    catch (Exception)
                     {
                         RenderWindow?.Close();
                         RenderWindow = null;
