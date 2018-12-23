@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Mpv.NET.Player;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,16 +24,27 @@ namespace LiveWallpaperEngineLib.Controls
     /// </summary>
     public partial class RenderWindow : Window
     {
+        private MpvPlayer player;
+
         public RenderWindow()
         {
             InitializeComponent();
             Loaded += RenderWindow_Loaded;
+            Closing += RenderWindow_Closing;
+        }
+
+        private void RenderWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Closing -= RenderWindow_Closing;
+            player?.Dispose();
         }
 
         internal void Mute(bool mute)
         {
             if (Wallpaper != null)
                 Wallpaper.Muted = mute;
+            if (player != null)
+                player.Volume = mute ? 0 : 100;
         }
 
         private void RenderWindow_Loaded(object sender, RoutedEventArgs e)
@@ -47,19 +60,28 @@ namespace LiveWallpaperEngineLib.Controls
 
             Loaded -= RenderWindow_Loaded;
 
-            //double width = Screen.AllScreens[0].Bounds.Width;
-            //double height = Screen.AllScreens[0].Bounds.Height;
+            double width = Screen.AllScreens[0].Bounds.Width;
+            double height = Screen.AllScreens[0].Bounds.Height;
+
+            Width = width;
+            Height = height;
 
             ////Top = -4;
             ////Left = 0;
             //WindowState = WindowState.Maximized;
 
-            //Width = width;
-            //Height = height;
-
             //WindowStartupLocation = WindowStartupLocation.Manual;
             //Top = 0;
             //Left = 0;
+
+            string appDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            player = new MpvPlayer(PlayerHost.Handle, $@"{appDir}\lib\mpv-1.dll")
+            {
+                Loop = true,
+                Volume = 0
+            };
+
+            ReloadWallpaper();
         }
 
         #region Wallpaper
@@ -72,7 +94,20 @@ namespace LiveWallpaperEngineLib.Controls
 
         // Using a DependencyProperty as the backing store for Wallpaper.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty WallpaperProperty =
-            DependencyProperty.Register("Wallpaper", typeof(Wallpaper), typeof(RenderWindow), new PropertyMetadata(null));
+            DependencyProperty.Register("Wallpaper", typeof(Wallpaper), typeof(RenderWindow), new PropertyMetadata(null, new PropertyChangedCallback((sender, e) =>
+            {
+                RenderWindow window = sender as RenderWindow;
+                window.ReloadWallpaper();
+            })));
+
+        private void ReloadWallpaper()
+        {
+            if (Wallpaper != null && player != null)
+            {
+                player.Load(Wallpaper.AbsolutePath);
+                player.Resume();
+            }
+        }
 
         #endregion
 
@@ -80,16 +115,17 @@ namespace LiveWallpaperEngineLib.Controls
         {
             Dispatcher.Invoke(() =>
             {
-                IsEnabled = false;
+                player.Pause();
+                //IsEnabled = false;
             });
-            //以后可能会用其他方案实现
         }
 
         internal void Resume()
         {
             Dispatcher.Invoke(() =>
             {
-                IsEnabled = true;
+                player.Resume();
+                //IsEnabled = true;
             });
         }
 
