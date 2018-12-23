@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:LiveWallpaperEngineLib.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:windowsForms="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
     Title="RenderWindow"
     AllowsTransparency="True"
     Background="Transparent"
@@ -18,5 +19,8 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <ContentControl Content="{Binding Wallpaper, RelativeSource={RelativeSource AncestorType=local:RenderWindow}}" ContentTemplateSelector="{StaticResource RenderInfoSelector}" />
+    <WindowsFormsHost>
+        <windowsForms:Panel x:Name="PlayerHost" />
+    </WindowsFormsHost>
+    <!--<ContentControl Content="{Binding Wallpaper, RelativeSource={RelativeSource AncestorType=local:RenderWindow}}" ContentTemplateSelector="{StaticResource RenderInfoSelector}" />-->
 </Window>
