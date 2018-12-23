@@ -24,7 +24,8 @@ namespace LiveWallpaperEngineLib
         /// <summary>
         /// 壁纸显示窗体
         /// </summary>
-        private static RenderWindow RenderWindow;
+        //private static RenderWindow RenderWindow;
+        private static RenderForm RenderWindow;
         private static Wallpaper _lastwallPaper;
         //private static SetWinEventHookDelegate _hookCallback;
         //private static IntPtr _hook;
@@ -93,7 +94,7 @@ namespace LiveWallpaperEngineLib
             {
                 if (RenderWindow == null)
                 {
-                    RenderWindow = new RenderWindow
+                    RenderWindow = new RenderForm
                     {
                         Wallpaper = wallpaper
                     };
@@ -104,7 +105,8 @@ namespace LiveWallpaperEngineLib
                     try
                     {
                         RenderWindow.Wallpaper = wallpaper;
-                        RenderWindow.Visibility = System.Windows.Visibility.Visible;
+                        //RenderWindow .Visibility = System.Windows.Visibility.Visible;
+                        RenderWindow.Visible = true;
                     }
                     catch (InvalidOperationException)
                     {
@@ -112,7 +114,7 @@ namespace LiveWallpaperEngineLib
                         RenderWindow = null;
                         //explorer 崩溃后会触发这个问题
 
-                        RenderWindow = new RenderWindow
+                        RenderWindow = new RenderForm
                         {
                             Wallpaper = wallpaper
                         };
@@ -120,7 +122,8 @@ namespace LiveWallpaperEngineLib
                     }
                 }
 
-                handler = new WindowInteropHelper(RenderWindow).Handle;
+                //handler = new WindowInteropHelper(RenderWindow).Handle;
+                handler = RenderWindow.Handle;
 
             });
 
@@ -154,7 +157,8 @@ namespace LiveWallpaperEngineLib
 
             Execute.OnUIThread(() =>
             {
-                RenderWindow.Visibility = System.Windows.Visibility.Collapsed;
+                //RenderWindow.Visibility = System.Windows.Visibility.Collapsed;
+                RenderWindow.Visible = false;
                 RenderWindow.Wallpaper = null;
             });
 
@@ -169,6 +173,7 @@ namespace LiveWallpaperEngineLib
 
             MonitorMaxiemized(false);
             Close();
+            _LWECore.RestoreParent();
             _LWECore.Dispose();
 
             RenderWindow.Close();
