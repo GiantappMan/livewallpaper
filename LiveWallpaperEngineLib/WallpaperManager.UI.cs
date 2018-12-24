@@ -168,16 +168,23 @@ namespace LiveWallpaperEngineLib
 
         public static void Dispose()
         {
-            if (RenderWindow == null)
-                return;
+            try
+            {
+                if (RenderWindow == null)
+                    return;
 
-            MonitorMaxiemized(false);
-            Close();
-            _LWECore.RestoreParent();
-            _LWECore.Dispose();
+                MonitorMaxiemized(false);
+                Close();
+                _LWECore.RestoreParent();
+                _LWECore.Dispose();
 
-            RenderWindow.Close();
-            RenderWindow = null;
+                RenderWindow.Close();
+                RenderWindow = null;
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         public static void Preivew(Wallpaper previewWallpaper)
