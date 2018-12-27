@@ -61,6 +61,10 @@ namespace LiveWallpaperEngineLib.Controls
                     player.Load(value.AbsolutePath);
                     player.Resume();
                 }
+                else
+                {
+                    player.Stop();
+                }
             }
         }
 

@@ -218,24 +218,21 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                await Task.Run(() =>
+                //await Task.Run(() =>
+                //{
+                var result = await Task.Run(() => { return WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
+                if (_editMode)
                 {
-                    var result = WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir);
-                    if (_editMode)
+                    //删除旧包
+                    var temp = CurrentWallpaper;
+                    CurrentWallpaper = null;
+                    bool ok = await WallpaperManager.Delete(temp);
+                    if (!ok)
                     {
-                        //删除旧包
-                        var temp = CurrentWallpaper;
-                        CurrentWallpaper = null;
-                        try
-                        {
-                            WallpaperManager.Delete(temp);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(ex.ToString());
-                        }
+                        MessageBox.Show("删除失败请手动删除");
                     }
-                });
+                }
+                //});
             }
             catch (Exception ex)
             {
