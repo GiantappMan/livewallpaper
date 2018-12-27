@@ -173,17 +173,19 @@ namespace LiveWallpaper.ViewModels
 
         public async void DeleteWallpaper(Wallpaper w)
         {
+            bool ok = false;
             try
             {
-                await Task.Run(() =>
-                {
-                    WallpaperManager.Delete(w);
-                });
+                ok = await WallpaperManager.Delete(w);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show(ex.Message);
             }
+
+            if (!ok)
+                MessageBox.Show("删除失败请手动删除");
+
             RefreshLocalWallpaper();
         }
 

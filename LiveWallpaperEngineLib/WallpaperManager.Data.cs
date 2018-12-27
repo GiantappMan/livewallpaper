@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -93,7 +94,7 @@ namespace LiveWallpaperEngineLib
             return result;
         }
 
-        public static void Delete(Wallpaper wallpaper)
+        public static async Task<bool> Delete(Wallpaper wallpaper)
         {
             Wallpaper renderWallpaper = null;
             if (RenderWindow != null)
@@ -106,7 +107,20 @@ namespace LiveWallpaperEngineLib
                 renderWallpaper.AbsolutePath == wallpaper.AbsolutePath)
                 Close();
             string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
-            Directory.Delete(dir, true);
+            for (int i = 0; i < 3; i++)
+            {
+                await Task.Delay(1000);
+                try
+                {
+                    //尝试删除3次 
+                    Directory.Delete(dir, true);
+                    return true;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            return false;
         }
 
         public static void CopyFileToDir(string path, string dir)
