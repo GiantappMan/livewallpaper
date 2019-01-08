@@ -29,6 +29,8 @@ namespace LiveWallpaperEngineLib.Controls
                 Loop = true,
                 Volume = 0
             };
+            //var test = player.API.GetPropertyString("video-aspect");
+            //player.API.SetPropertyString("video-aspect", "1:1");
 
             FormClosing += RenderForm_FormClosing;
 
@@ -44,7 +46,8 @@ namespace LiveWallpaperEngineLib.Controls
         private void RenderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             FormClosing -= RenderForm_FormClosing;
-            player.Dispose();
+            if (player != null)
+                player.Dispose();
         }
 
         private Wallpaper _wallpaper;
@@ -57,30 +60,37 @@ namespace LiveWallpaperEngineLib.Controls
                 _wallpaper = value;
                 if (value != null)
                 {
-                    player.Pause();
-                    player.Load(value.AbsolutePath);
-                    player.Resume();
+                    if (player != null)
+                    {
+                        player.Pause();
+                        player.Load(value.AbsolutePath);
+                        player.Resume();
+                    }
                 }
                 else
                 {
-                    player.Stop();
+                    if (player != null)
+                        player.Stop();
                 }
             }
         }
 
         internal void Mute(bool mute)
         {
-            player.Volume = mute ? 0 : 100;
+            if (player != null)
+                player.Volume = mute ? 0 : 100;
         }
 
         internal void Pause()
         {
-            player.Pause();
+            if (player != null)
+                player.Pause();
         }
 
         internal void Resume()
         {
-            player.Resume();
+            if (player != null)
+                player.Resume();
         }
 
 
