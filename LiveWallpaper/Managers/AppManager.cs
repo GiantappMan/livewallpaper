@@ -118,7 +118,10 @@ namespace LiveWallpaper.Managers
                 WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
                 var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
                 if (current != null)
+                {
+                    WallpaperManager.VideoAspect = Setting.Wallpaper.VideoAspect;
                     WallpaperManager.Show(current);
+                }
                 WallpaperManager.MonitorMaxiemized(true);
                 //}
             });

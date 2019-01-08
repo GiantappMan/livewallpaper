@@ -75,6 +75,18 @@ namespace LiveWallpaperEngineLib.Controls
             }
         }
 
+        internal void SetAspect(string aspect)
+        {
+            if (player != null)
+            {
+                //var test = player.API.GetPropertyString("video-aspect");
+                if (string.IsNullOrEmpty(aspect))
+                    player.API.SetPropertyString("video-aspect", "-1.000000");
+                else
+                    player.API.SetPropertyString("video-aspect", aspect);
+            }
+        }
+
         internal void Mute(bool mute)
         {
             if (player != null)
