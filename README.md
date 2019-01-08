@@ -17,7 +17,7 @@
   * 只支持Win10比较新的版本，因为用了Win10特性
   * UI能省既省，我的目的是动态壁纸，不希望在UI花太多精力。也不想为了实现一点UI，搞太多黑科技。
   * 有Win10内购只是一种捐赠形式，没有功能限制。
-  * 多语言其实是支持的，谷歌翻译的。有好心人可以pull这里  [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/zh.json)
+  * 多语言其实是支持的，谷歌翻译的。有好心人可以pull这里  [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/en.json)
   * c#交流群：191034956
         
 ## 三步参与代码：
