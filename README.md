@@ -6,7 +6,7 @@
 ![client](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/client.png)
 ## 商店
 ![store](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/store.png)
-## 早期Demo
+## 早期Demo （gif文件略大，请耐心等候）
 ![早期Demo](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/example.gif)
 
 ## 关于本项目：
