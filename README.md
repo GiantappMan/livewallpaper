@@ -1,10 +1,8 @@
-# 免费开源的动态壁纸工具
-## 本仓库是完整的项目，代码比较多而且冗余。
-## 核心代码请看我新开的仓库 https://github.com/MscoderStudio/LiveWallpaperEngine
+# Github第一款开源的完整动态壁纸软件，免费版wallpaper engine
 
-#### 无流氓、极简UI、单进程、省资源、无弹窗无骚扰、纯净，只有核心功能，毕竟我自己也是要用的...
-#### Github第一款开源的类似wallpaper engine的软件...
- 
+## 本仓库是完整项目。核心代码请看仓库 https://github.com/MscoderStudio/LiveWallpaperEngine
+
+*  **无流氓、极简UI、单进程、省资源、无弹窗无骚扰、纯净，只有核心功能，毕竟我自己也是要用的...**  
 
 ## 客户端
 ![client](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/client.png)
