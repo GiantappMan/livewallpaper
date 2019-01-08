@@ -38,6 +38,8 @@ namespace LiveWallpaperEngineLib
             _currentProcess = Process.GetCurrentProcess();
         }
 
+        public static string VideoAspect { get; set; }
+
         // 监控窗口最大化
         private static bool _maximized;
         private static List<int> maximizedPid = new List<int>();
@@ -98,6 +100,7 @@ namespace LiveWallpaperEngineLib
                     {
                         Wallpaper = wallpaper
                     };
+                    RenderWindow.SetAspect(VideoAspect);
                     RenderWindow.Show();
                 }
                 else
@@ -105,6 +108,8 @@ namespace LiveWallpaperEngineLib
                     try
                     {
                         RenderWindow.Wallpaper = wallpaper;
+                        RenderWindow.SetAspect(VideoAspect);
+
                         //RenderWindow .Visibility = System.Windows.Visibility.Visible;
                         RenderWindow.Visible = true;
                     }

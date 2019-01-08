@@ -41,6 +41,7 @@
   "setting_maximizedPlay": "Play",
   "setting_maximizedStop": "Pause",
   "setting_maximizedPause": "Stop",
+  "setting_videoAspect": "VideoAspect",
   "setting_server": "Server",
   "setting_serverURL": "server url",
   "setting_recordWindowSize": "Save the main window size",

@@ -44,6 +44,7 @@ namespace LiveWallpaper.Settings
     public class WallpaperSetting
     {
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
+        public string VideoAspect { get; set; }
 
         public static WallpaperSetting GetDefaultWallpaperSetting()
         {

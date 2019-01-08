@@ -191,6 +191,7 @@ namespace LiveWallpaper.ViewModels
 
         public async void ApplyWallpaper(Wallpaper w)
         {
+            WallpaperManager.VideoAspect = AppManager.Setting.Wallpaper.VideoAspect;
             WallpaperManager.Show(w);
             AppManager.AppData.Wallpaper = w.AbsolutePath;
             await AppManager.ApplyAppDataAsync();
