@@ -160,7 +160,7 @@ namespace LiveWallpaper.Managers
                 {
                     General = GeneralSettting.GetDefaultGeneralSettting(),
                     Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting(),
-                    Server = ServerSetting.GetDefaultServerSetting()
+                    //Server = ServerSetting.GetDefaultServerSetting()
                 };
                 writeDefault = true;
             }
@@ -176,11 +176,11 @@ namespace LiveWallpaper.Managers
                 writeDefault = true;
                 tempSetting.Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting();
             }
-            if (tempSetting.Server == null)
-            {
-                writeDefault = true;
-                tempSetting.Server = ServerSetting.GetDefaultServerSetting();
-            }
+            //if (tempSetting.Server == null)
+            //{
+            //    writeDefault = true;
+            //    tempSetting.Server = ServerSetting.GetDefaultServerSetting();
+            //}
 
             if (writeDefault)
                 //生成默认配置
@@ -257,6 +257,8 @@ namespace LiveWallpaper.Managers
             await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
 
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
+            WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
+            WallpaperManager.ApplyVideoAspect();
         }
     }
 }

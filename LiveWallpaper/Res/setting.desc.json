@@ -58,14 +58,16 @@
     },
     "VideoAspect": {
       "type": "text",
-      "lanKey": "setting_videoAspect"
-    }
-  },
-  "Server": {
-    "lanKey": "setting_server",
-    "ServerUrl": {
-      "type": "text",
-      "lanKey": "setting_serverURL"
+      "lanKey": "setting_videoAspect",
+      "descLanKey": "setting_videoAspect_desc"
     }
   }
+  //,
+  //"Server": {
+  //  "lanKey": "setting_server",
+  //  "ServerUrl": {
+  //    "type": "text",
+  //    "lanKey": "setting_serverURL"
+  //  }
+  //}
 }

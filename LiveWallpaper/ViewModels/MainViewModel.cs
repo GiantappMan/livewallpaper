@@ -218,7 +218,8 @@ namespace LiveWallpaper.ViewModels
                 //没有文件夹UWP会报错
                 Directory.CreateDirectory(wallpaperDir);
 
-            Uri uri = new Uri($"live.wallpaper.store://?host={AppManager.Setting.Server.ServerUrl}&wallpaper={wallpaperDir}");
+            //host={AppManager.Setting.Server.ServerUrl}&
+            Uri uri = new Uri($"live.wallpaper.store://?wallpaper={wallpaperDir}");
 
 #pragma warning disable UWP003 // UWP-only
             bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
