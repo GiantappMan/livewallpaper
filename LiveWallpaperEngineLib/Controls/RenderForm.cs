@@ -77,13 +77,24 @@ namespace LiveWallpaperEngineLib.Controls
 
         internal void SetAspect(string aspect)
         {
-            if (player != null)
+            try
             {
-                //var test = player.API.GetPropertyString("video-aspect");
-                if (string.IsNullOrEmpty(aspect))
-                    player.API.SetPropertyString("video-aspect", "-1.000000");
-                else
-                    player.API.SetPropertyString("video-aspect", aspect);
+                if (player != null)
+                {
+                    //var test = player.API.GetPropertyString("video-aspect");
+                    if (string.IsNullOrEmpty(aspect))
+                        player.API.SetPropertyString("video-aspect", "-1.000000");
+                    else
+                    {
+                        //兼容中文分号
+                        aspect = aspect.Replace("：", ":");
+                        player.API.SetPropertyString("video-aspect", aspect);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
             }
         }
 
