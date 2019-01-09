@@ -75,6 +75,6 @@ namespace LiveWallpaper.Settings
 
         public WallpaperSetting Wallpaper { get; set; }
 
-        public ServerSetting Server { get; set; }
+        //public ServerSetting Server { get; set; }
     }
 }

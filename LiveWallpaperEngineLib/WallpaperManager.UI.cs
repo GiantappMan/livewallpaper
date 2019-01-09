@@ -89,6 +89,13 @@ namespace LiveWallpaperEngineLib
             }
         }
 
+        public static void ApplyVideoAspect()
+        {
+            if (RenderWindow != null)
+            {
+                RenderWindow.SetAspect(VideoAspect);
+            }
+        }
         public static void Show(Wallpaper wallpaper)
         {
             IntPtr handler = IntPtr.Zero;
