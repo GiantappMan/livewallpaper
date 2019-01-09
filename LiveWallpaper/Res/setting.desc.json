@@ -58,7 +58,7 @@
     },
     "VideoAspect": {
       "type": "text",
-      "lankey": "setting_videoAspect"
+      "lanKey": "setting_videoAspect"
     }
   },
   "Server": {
