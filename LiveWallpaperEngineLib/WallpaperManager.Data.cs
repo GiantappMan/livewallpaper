@@ -76,6 +76,7 @@ namespace LiveWallpaperEngineLib
         {
             var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
             string projectInfoPath = Path.Combine(currentDir, "project.json");
+
             if (File.Exists(projectInfoPath))
             {
                 //有详细信息，全拷。兼容wallpaper engine
@@ -83,9 +84,13 @@ namespace LiveWallpaperEngineLib
             }
             else
             {
-                CopyFileToDir(wallpaper.AbsolutePreviewPath, destDir);
                 CopyFileToDir(wallpaper.AbsolutePath, destDir);
             }
+
+            string preview = "preview.jpg";
+            wallpaper.ProjectInfo.Preview = preview;
+            CopyFileToDir(wallpaper.AbsolutePreviewPath, destDir, preview);
+
 
             string jsonPath = Path.Combine(destDir, "project.json");
             JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
@@ -123,7 +128,7 @@ namespace LiveWallpaperEngineLib
             return false;
         }
 
-        public static void CopyFileToDir(string path, string dir)
+        public static void CopyFileToDir(string path, string dir, string targetFileName = null)
         {
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
@@ -132,7 +137,15 @@ namespace LiveWallpaperEngineLib
                 return;
 
             FileInfo file = new FileInfo(path);
-            string target = Path.Combine(dir, file.Name);
+            if (string.IsNullOrEmpty(targetFileName))
+            {
+                targetFileName = file.Name;
+            }
+
+            string target = Path.Combine(dir, targetFileName);
+            if (path == target)
+                return;
+
             file.CopyTo(target, true);
         }
 
