@@ -10,8 +10,8 @@ namespace LiveWallpaper.Views.Conveters
 {
     public class UriToCachedImageConverter : IValueConverter
     {
-        public int DecodePixelWidth { get; set; }
-        public int DecodePixelHeight { get; set; }
+        public int DecodePixelWidth { get; set; } = 100;
+        public int DecodePixelHeight { get; set; } = 100;
 
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {

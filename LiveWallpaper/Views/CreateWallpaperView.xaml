@@ -15,7 +15,10 @@
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <Window.Resources>
-        <conveters:UriToCachedImageConverter x:Key="UriToCachedImageConverter" />
+        <conveters:UriToCachedImageConverter
+            x:Key="UriToCachedImageConverter"
+            DecodePixelHeight="50"
+            DecodePixelWidth="50" />
         <conveters:NullToBooleanConveter x:Key="NullToBooleanConveter" />
     </Window.Resources>
     <Grid x:Name="rootGrid" Margin="10">
@@ -121,7 +124,10 @@
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
                 <Button lan:Xaml.Key="wallpaperEditor_screenshot" />
-                <Image Source="{Binding CurrentWallpaper.AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}}" Stretch="Fill" />
+                <Image
+                    Source="{Binding CurrentWallpaper.AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}, Mode=OneWay}"
+                    Stretch="Fill"
+                    ToolTip="{Binding CurrentWallpaper.AbsolutePreviewPath}" />
             </Grid>
         </Grid>
         <StackPanel

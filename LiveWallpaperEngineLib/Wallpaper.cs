@@ -119,7 +119,9 @@ namespace LiveWallpaperEngineLib
                     if (_dir != null)
                     {
                         AbsolutePath = Path.Combine(_dir, value.File);
-                        AbsolutePreviewPath = Path.Combine(_dir, value.Preview ?? "preview.jpg");
+                        //AbsolutePreviewPath = Path.Combine(_dir, value.Preview ?? "preview.jpg");
+                        if (!string.IsNullOrEmpty(value.Preview))
+                            AbsolutePreviewPath = Path.Combine(_dir, value.Preview);
                     }
                 }
                 else

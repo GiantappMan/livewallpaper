@@ -252,7 +252,8 @@ namespace LiveWallpaper.ViewModels
 
             try
             {
-                using (FileStream stream = File.Open(CurrentWallpaper.AbsolutePreviewPath, FileMode.Create))
+                var tmpImg = Path.GetTempFileName();
+                using (FileStream stream = File.Open(tmpImg, FileMode.Create))
                 {
                     RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
                         (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
@@ -273,7 +274,9 @@ namespace LiveWallpaper.ViewModels
                     coder.Save(stream);
                 }
 
-                CurrentWallpaper.NotifyOfPropertyChange(Wallpaper.AbsolutePreviewPathPropertyName);
+                CurrentWallpaper.AbsolutePreviewPath = tmpImg;
+
+                //CurrentWallpaper.NotifyOfPropertyChange(Wallpaper.AbsolutePreviewPathPropertyName);
             }
             catch (Exception ex)
             {
