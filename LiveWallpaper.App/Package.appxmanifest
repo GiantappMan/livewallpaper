@@ -28,6 +28,7 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <uap:Capability Name="videosLibrary" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>
