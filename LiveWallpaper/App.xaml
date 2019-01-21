@@ -2,7 +2,7 @@
     x:Class="LiveWallpaper.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:cal="http://www.caliburnproject.org"
+    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:tb="http://www.hardcodet.net/taskbar"
@@ -26,7 +26,51 @@
                         ContextMenu="{StaticResource ContextMenu}"
                         TrayMouseDoubleClick="TaskbarIcon_TrayMouseDoubleClick" />
                 </ResourceDictionary>
+
+                <!--  MahApps  -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/BaseLight.xaml" />
+
+                <!--  Material Design  -->
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
+
+                <!--  Material Design: MahApps Compatibility  -->
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.MahApps;component/Themes/MaterialDesignTheme.MahApps.Defaults.xaml " />
+
+                <!--  Dragablz Material Design  -->
+                <ResourceDictionary Source="pack://application:,,,/Dragablz;component/Themes/materialdesign.xaml" />
+
+
             </ResourceDictionary.MergedDictionaries>
+
+            <!--  MahApps Brushes  覆盖窗口样式  -->
+            <SolidColorBrush x:Key="HighlightBrush" Color="{DynamicResource Primary700}" />
+            <SolidColorBrush x:Key="AccentColorBrush" Color="{DynamicResource Primary500}" />
+            <SolidColorBrush x:Key="AccentColorBrush2" Color="{DynamicResource Primary400}" />
+            <SolidColorBrush x:Key="AccentColorBrush3" Color="{DynamicResource Primary300}" />
+            <SolidColorBrush x:Key="AccentColorBrush4" Color="{DynamicResource Primary200}" />
+            <SolidColorBrush x:Key="WindowTitleColorBrush" Color="{DynamicResource Primary700}" />
+            <SolidColorBrush x:Key="AccentSelectedColorBrush" Color="{DynamicResource Primary500Foreground}" />
+            <LinearGradientBrush x:Key="ProgressBrush" StartPoint="1.002,0.5" EndPoint="0.001,0.5">
+                <GradientStop Offset="0" Color="{DynamicResource Primary700}" />
+                <GradientStop Offset="1" Color="{DynamicResource Primary300}" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="CheckmarkFill" Color="{DynamicResource Primary500}" />
+            <SolidColorBrush x:Key="RightArrowFill" Color="{DynamicResource Primary500}" />
+            <SolidColorBrush x:Key="IdealForegroundColorBrush" Color="{DynamicResource Primary500Foreground}" />
+            <SolidColorBrush
+                x:Key="IdealForegroundDisabledBrush"
+                Opacity="0.4"
+                Color="{DynamicResource Primary500}" />
+
+            <!--  Dragablz Material Design  -->
+            <Style BasedOn="{StaticResource MaterialDesignTabablzControlStyle}" TargetType="{x:Type dragablz:TabablzControl}" />
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

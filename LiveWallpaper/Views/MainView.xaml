@@ -1,12 +1,15 @@
-﻿<Window
+﻿<controls:MetroWindow
     x:Class="LiveWallpaper.Views.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cal="http://www.caliburnproject.org"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:conveters="clr-namespace:LiveWallpaper.Views.Conveters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
     Width="{Binding Width, Mode=TwoWay}"
@@ -23,7 +26,10 @@
             DecodePixelHeight="110"
             DecodePixelWidth="180" />
     </Window.Resources>
-    <TabControl>
+    <dragablz:TabablzControl Style="{StaticResource MaterialDesignAlternateTabablzControlStyle}">
+        <!--<dragablz:TabablzControl.InterTabController>
+            <dragablz:InterTabController />
+        </dragablz:TabablzControl.InterTabController>-->
         <TabItem lan:Xaml.Key="mainUI_localWallpaper">
             <Grid>
                 <Grid.RowDefinitions>
@@ -84,11 +90,12 @@
                     <Button
                         x:Name="Setting"
                         Margin="5,2,0,5"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
                         <iconPacks:PackIconMaterial
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            Kind="SettingsOutline" />
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Kind="SettingsOutline" />
                     </Button>
                     <!--<ComboBox />-->
                     <CheckBox
@@ -107,11 +114,29 @@
                         Margin="5,2,5,5"
                         HorizontalAlignment="Right"
                         Orientation="Horizontal">
-                        <Button x:Name="RefreshLocalWallpaper" lan:Xaml.Key="mainUI_refreshWallpaper" />
+                        <Button x:Name="RefreshLocalWallpaper" Style="{StaticResource MaterialDesignFloatingActionMiniButton}">
+                            <Button.ToolTip>
+                                <Run lan:Xaml.Key="mainUI_refreshWallpaper" />
+                            </Button.ToolTip>
+                            <iconPacks:PackIconMaterial
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Kind="Refresh" />
+                        </Button>
                         <Button
                             x:Name="CreateWallpaper"
                             Margin="10,0,0,0"
-                            lan:Xaml.Key="mainUI_createWallpaper" />
+                            Style="{StaticResource MaterialDesignFloatingActionMiniButton}">
+                            <Button.ToolTip>
+                                <Run lan:Xaml.Key="mainUI_createWallpaper" />
+                            </Button.ToolTip>
+                            <materialDesign:PackIcon
+                                Height="26"
+                                Width="26"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Kind="Add" />
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -143,5 +168,5 @@
                 </StackPanel>
             </Grid>
         </TabItem>
-    </TabControl>
-</Window>
+    </dragablz:TabablzControl>
+</controls:MetroWindow>
