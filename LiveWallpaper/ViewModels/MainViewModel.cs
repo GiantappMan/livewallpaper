@@ -71,7 +71,7 @@ namespace LiveWallpaper.ViewModels
                     {
                         BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
                     };
-                    vm.Initlize(AppManager.GetPurchaseViewModel(), windowManager);
+                    vm.Initlize(AppManager.GetPurchaseViewModel());
                     view.DataContext = vm;
                     view.Show();
                 }
