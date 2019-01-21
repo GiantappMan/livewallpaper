@@ -94,8 +94,9 @@ namespace LiveWallpaper.Managers
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
             //LocalWallpaperDir = $"{AppDataDir}\\Wallpapers"; 
             //因为uwp store权限问题所以改为 %userprofile%\videos\LivewallpaperCache
-            string videoDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-            LocalWallpaperDir = $"{videoDir}\\LivewallpaperCache";
+            //string videoDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            //LocalWallpaperDir = $"{videoDir}\\LivewallpaperCache";
+
             AppDataPath = $"{AppDataDir}\\appData.json";
             PurchaseDataPath = $"{AppDataDir}\\purchaseData.json";
 
@@ -170,6 +171,11 @@ namespace LiveWallpaper.Managers
             {
                 writeDefault = true;
                 tempSetting.General = GeneralSettting.GetDefaultGeneralSettting();
+            }
+            if (string.IsNullOrEmpty(tempSetting.General.WallpaperSaveDir))
+            {
+                writeDefault = true;
+                tempSetting.General.WallpaperSaveDir = GeneralSettting.GetDefaultSaveDir();
             }
             if (tempSetting.Wallpaper == null)
             {
@@ -259,6 +265,7 @@ namespace LiveWallpaper.Managers
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
             WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect();
+            LocalWallpaperDir = setting.General.WallpaperSaveDir;
         }
     }
 }

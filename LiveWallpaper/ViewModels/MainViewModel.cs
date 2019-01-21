@@ -238,6 +238,8 @@ namespace LiveWallpaper.ViewModels
                 Width = sourceWidth;
                 Height = sourceHeight;
             }
+
+            RefreshLocalWallpaper();
         }
 
         public void DownloadStore()

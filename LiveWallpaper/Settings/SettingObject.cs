@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,10 +21,21 @@ namespace LiveWallpaper.Settings
 
         public float Height { get; set; }
 
+        public string WallpaperSaveDir { get; set; }
+
+        public static string GetDefaultSaveDir()
+        {
+            string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            saveDir = Path.Combine(saveDir, "LivewallpaperCache");
+            return saveDir;
+        }
+
         public static GeneralSettting GetDefaultGeneralSettting()
         {
+            string saveDir = GetDefaultSaveDir();
             return new GeneralSettting()
             {
+                WallpaperSaveDir = saveDir,
                 StartWithWindows = true,
                 MinimizeUI = true,
                 RecordWindowSize = true,
