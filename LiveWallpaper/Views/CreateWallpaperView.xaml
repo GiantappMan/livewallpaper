@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:engine="clr-namespace:LiveWallpaperEngineLib.Controls;assembly=LiveWallpaperEngineLib"
     xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -18,7 +19,7 @@
         <conveters:UriToCachedImageConverter
             x:Key="UriToCachedImageConverter"
             DecodePixelHeight="50"
-            DecodePixelWidth="50" />
+            DecodePixelWidth="75" />
         <conveters:NullToBooleanConveter x:Key="NullToBooleanConveter" />
     </Window.Resources>
     <Grid x:Name="rootGrid" Margin="10">
@@ -81,7 +82,10 @@
             <TextBlock
                 Grid.Row="0"
                 Margin="4"
-                lan:Xaml.Key="common_title" />
+                VerticalAlignment="Center">
+                <Run lan:Xaml.Key="common_title" />
+                <Run Text=": " />
+            </TextBlock>
             <TextBox
                 Grid.Column="1"
                 Margin="2"
@@ -90,8 +94,11 @@
                 Grid.Row="2"
                 Margin="4"
                 HorizontalAlignment="Stretch"
-                lan:Xaml.Key="common_desc"
-                TextWrapping="Wrap" />
+                VerticalAlignment="Center"
+                TextWrapping="Wrap">
+                <Run lan:Xaml.Key="common_desc" />
+                <Run Text=": " />
+            </TextBlock>
             <TextBox
                 x:Name="Desc"
                 Grid.Row="2"
@@ -103,9 +110,12 @@
             <Grid
                 Grid.RowSpan="3"
                 Grid.Column="2"
-                Width="50"
+                Width="75"
                 Height="50"
                 Background="Transparent">
+                <Grid.ToolTip>
+                    <Run lan:Xaml.Key="wallpaperEditor_screenshot" />
+                </Grid.ToolTip>
                 <Grid.Style>
                     <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -123,11 +133,18 @@
                         </cal:ActionMessage>
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
-                <Button lan:Xaml.Key="wallpaperEditor_screenshot" />
+                <Button>
+                    <iconPacks:PackIconMaterial
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Kind="Image" />
+                </Button>
                 <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
                     Source="{Binding CurrentWallpaper.AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}, Mode=OneWay}"
-                    Stretch="Fill"
-                    ToolTip="{Binding CurrentWallpaper.AbsolutePreviewPath}" />
+                    Stretch="Uniform" />
+                <!--  ToolTip="{Binding CurrentWallpaper.AbsolutePreviewPath}"  -->
             </Grid>
         </Grid>
         <StackPanel

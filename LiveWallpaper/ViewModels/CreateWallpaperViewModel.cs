@@ -260,11 +260,16 @@ namespace LiveWallpaper.ViewModels
 
                     bmp.Render(render);
 
-                    //截图保持正方形
-                    var size = (int)(render.ActualWidth > render.ActualHeight ? render.ActualHeight : render.ActualWidth);
-                    var x = (int)(render.ActualWidth / 2 - size / 2);
-                    var y = (int)(render.ActualHeight / 2 - size / 2);
-                    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, size, size));
+                    //用16：9
+                    //var width = (int)(render.ActualWidth > render.ActualHeight ? render.ActualHeight : render.ActualWidth);
+                    //var height = (int)(9 / 16.0 * width);
+                    //var x = (int)(render.ActualWidth / 2 - width / 2);
+                    //var y = (int)(render.ActualHeight / 2 - height / 2);
+                    int width = (int)render.ActualWidth;
+                    int height = (int)render.ActualHeight;
+                    int x = 0;
+                    int y = 0;
+                    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, width, height));
 
                     PngBitmapEncoder coder = new PngBitmapEncoder
                     {
