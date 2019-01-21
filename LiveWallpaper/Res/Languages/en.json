@@ -48,6 +48,7 @@
   "setting_recordWindowSize": "Save the main window size",
   "setting_windowWidth": "Width",
   "setting_windowHeight": "Height",
+  "setting_wallpaperDir": "Wallpaper Directory",
 
   "wallpaperEditor_warning_invalidWallpaper": "Invalid wallpaper",
   "wallpaperEditor_warning_titleEmpty": "Please enter wallpaper title",

@@ -34,6 +34,10 @@
     "Height": {
       "type": "float",
       "lanKey": "setting_windowHeight"
+    },
+    "WallpaperSaveDir": {
+      "type": "string",
+      "lanKey": "setting_wallpaperDir"
     }
   },
   "Wallpaper": {

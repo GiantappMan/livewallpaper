@@ -49,6 +49,7 @@
   "setting_recordWindowSize": "保存主窗口大小",
   "setting_windowWidth": "主窗口宽度",
   "setting_windowHeight": "主窗口高度",
+  "setting_wallpaperDir": "壁纸目录",
 
   "wallpaperEditor_warning_invalidWallpaper": "无效壁纸",
   "wallpaperEditor_warning_titleEmpty": "请输入壁纸标题",
