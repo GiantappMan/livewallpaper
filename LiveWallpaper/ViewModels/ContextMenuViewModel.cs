@@ -103,7 +103,7 @@ namespace LiveWallpaper.ViewModels
         {
             try
             {
-                Process.Start("https://shang.qq.com/wpa/qunwpa?idkey=e8d8e46fa4067c16110376db53d51065bdce6abb943e08f09736317527bfbf45");
+                Process.Start("https://www.mscoder.cn/contact/");
             }
             catch (Exception)
             {
