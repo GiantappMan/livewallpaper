@@ -32,6 +32,7 @@ namespace LiveWallpaperEngineLib
         private static Timer _timer;
         private static Process _currentProcess;
         private static LWECore _LWECore;
+        private static bool _isPreviewing;
 
         private static void InitUI()
         {
@@ -201,6 +202,7 @@ namespace LiveWallpaperEngineLib
 
         public static void Preivew(Wallpaper previewWallpaper)
         {
+            _isPreviewing = true;
             Execute.OnUIThread(() =>
             {
                 _lastwallPaper = RenderWindow?.Wallpaper;
@@ -210,6 +212,10 @@ namespace LiveWallpaperEngineLib
 
         public static void StopPreview()
         {
+            if (!_isPreviewing)
+                return;
+
+            _isPreviewing = false;
             if (_lastwallPaper != null)
                 Show(_lastwallPaper);
             else
