@@ -146,7 +146,7 @@ namespace LiveWallpaperEngineLib
 
         public static void Mute(bool mute)
         {
-            RenderWindow.Mute(mute);
+            RenderWindow?.Mute(mute);
         }
 
         public static void Pause()
