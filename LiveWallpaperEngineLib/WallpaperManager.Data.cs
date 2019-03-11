@@ -24,7 +24,6 @@ namespace LiveWallpaperEngineLib
 
         public static void Initlize()
         {
-            _LWECore = new LWECore();
             ////恢复桌面，以防上次崩溃x显示黑屏
             //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
         }
@@ -101,15 +100,15 @@ namespace LiveWallpaperEngineLib
 
         public static async Task<bool> Delete(Wallpaper wallpaper)
         {
-            Wallpaper renderWallpaper = null;
-            if (RenderWindow != null)
+            string renderWallpaper = null;
+            if (_videoRender != null)
                 Execute.OnUIThread(() =>
                 {
-                    renderWallpaper = RenderWindow.Wallpaper;
+                    renderWallpaper = _videoRender.CurrentPath;
                 });
 
             if (renderWallpaper != null &&
-                renderWallpaper.AbsolutePath == wallpaper.AbsolutePath)
+                renderWallpaper == wallpaper.AbsolutePath)
                 Close();
             string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
             for (int i = 0; i < 3; i++)
