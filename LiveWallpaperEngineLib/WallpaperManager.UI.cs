@@ -1,21 +1,12 @@
 ﻿using Caliburn.Micro;
 using DZY.WinAPI;
-using DZY.WinAPI.Desktop.API;
 using DZY.WinAPI.Helpers;
 using LiveWallpaperEngine;
-using LiveWallpaperEngineLib;
-using LiveWallpaperEngineLib.Controls;
-//using LiveWallpaperEngineLib.NativeWallpapers;
+using LiveWallpaperEngineRender.Renders;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
-using System.Windows.Interop;
 
 namespace LiveWallpaperEngineLib
 {
@@ -24,15 +15,11 @@ namespace LiveWallpaperEngineLib
         /// <summary>
         /// 壁纸显示窗体
         /// </summary>
-        //private static RenderWindow RenderWindow;
-        private static RenderForm RenderWindow;
-        private static Wallpaper _lastwallPaper;
-        //private static SetWinEventHookDelegate _hookCallback;
-        //private static IntPtr _hook;
+        private static string _lastwallPaper;
         private static Timer _timer;
         private static Process _currentProcess;
-        private static LWECore _LWECore;
         private static bool _isPreviewing;
+        private static VideoRender _videoRender = new VideoRender();
 
         private static void InitUI()
         {
@@ -92,112 +79,60 @@ namespace LiveWallpaperEngineLib
 
         public static void ApplyVideoAspect()
         {
-            if (RenderWindow != null)
+            if (_videoRender != null)
             {
-                RenderWindow.SetAspect(VideoAspect);
+                _videoRender.SetAspect(VideoAspect);
             }
         }
         public static void Show(Wallpaper wallpaper)
         {
-            IntPtr handler = IntPtr.Zero;
-            Execute.OnUIThread(() =>
+            InnerShow(wallpaper.AbsolutePath);
+        }
+
+        private static void InnerShow(string absolutePath)
+        {
+            if (_videoRender != null)
             {
-                if (RenderWindow == null)
+                Execute.OnUIThread(() =>
                 {
-                    RenderWindow = new RenderForm
+                    if (_videoRender.RenderDisposed)
                     {
-                        Wallpaper = wallpaper
-                    };
-                    RenderWindow.SetAspect(VideoAspect);
-                    RenderWindow.Show();
-                }
-                else
-                {
-                    try
-                    {
-                        RenderWindow.Wallpaper = wallpaper;
-                        RenderWindow.SetAspect(VideoAspect);
-
-                        //RenderWindow .Visibility = System.Windows.Visibility.Visible;
-                        RenderWindow.Visible = true;
+                        _videoRender = new VideoRender();
+                        _videoRender.SetAspect(VideoAspect);
                     }
-                    catch (Exception)
-                    {
-                        RenderWindow?.Close();
-                        RenderWindow = null;
-                        //explorer 崩溃后会触发这个问题
+                    _videoRender.Play(absolutePath);
 
-                        RenderWindow = new RenderForm
-                        {
-                            Wallpaper = wallpaper
-                        };
-                        RenderWindow.Show();
-                    }
-                }
-
-                //handler = new WindowInteropHelper(RenderWindow).Handle;
-                handler = RenderWindow.Handle;
-
-            });
-
-            //HandlerWallpaper.Show(handler);
-            _LWECore.SendToBackground(handler);
+                    LiveWallpaperEngineManager.Show(_videoRender);
+                });
+            }
         }
 
         public static void Mute(bool mute)
         {
-            RenderWindow?.Mute(mute);
+            _videoRender?.Mute(mute);
         }
 
         public static void Pause()
         {
-            if (RenderWindow == null)
-                return;
-            RenderWindow.Pause();
+            _videoRender?.Pause();
         }
 
         public static void Resume()
         {
-            if (RenderWindow == null)
-                return;
-            RenderWindow.Resume();
+            _videoRender?.Resume();
         }
 
         public static void Close()
         {
-            if (RenderWindow == null)
-                return;
-
-            Execute.OnUIThread(() =>
+            Execute.BeginOnUIThread(() =>
             {
-                //RenderWindow.Visibility = System.Windows.Visibility.Collapsed;
-                RenderWindow.Visible = false;
-                RenderWindow.Wallpaper = null;
+                _videoRender?.CloseRender();
             });
-
-            //HandlerWallpaper.Close();
-            //_LWECore.RestoreParent();
         }
 
         public static void Dispose()
         {
-            try
-            {
-                if (RenderWindow == null)
-                    return;
-
-                MonitorMaxiemized(false);
-                Close();
-                _LWECore.RestoreParent();
-                _LWECore.Dispose();
-
-                RenderWindow.Close();
-                RenderWindow = null;
-            }
-            catch (Exception)
-            {
-
-            }
+            Close();
         }
 
         public static void Preivew(Wallpaper previewWallpaper)
@@ -205,7 +140,7 @@ namespace LiveWallpaperEngineLib
             _isPreviewing = true;
             Execute.OnUIThread(() =>
             {
-                _lastwallPaper = RenderWindow?.Wallpaper;
+                _lastwallPaper = _videoRender?.CurrentPath;
             });
             Show(previewWallpaper);
         }
@@ -217,7 +152,7 @@ namespace LiveWallpaperEngineLib
 
             _isPreviewing = false;
             if (_lastwallPaper != null)
-                Show(_lastwallPaper);
+                InnerShow(_lastwallPaper);
             else
                 Close();
         }
