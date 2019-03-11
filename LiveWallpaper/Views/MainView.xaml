@@ -15,6 +15,7 @@
     Width="{Binding Width, Mode=TwoWay}"
     Height="{Binding Height, Mode=TwoWay}"
     MinWidth="450"
+    MinHeight="200"
     cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
     lan:Xaml.Key="common_appName"
     SizeChanged="Window_SizeChanged"
@@ -93,9 +94,9 @@
                         HorizontalAlignment="Left"
                         Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
                         <iconPacks:PackIconMaterial
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Kind="SettingsOutline" />
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Kind="SettingsOutline" />
                     </Button>
                     <!--<ComboBox />-->
                     <CheckBox
@@ -131,8 +132,8 @@
                                 <Run lan:Xaml.Key="mainUI_createWallpaper" />
                             </Button.ToolTip>
                             <materialDesign:PackIcon
-                                Height="26"
                                 Width="26"
+                                Height="26"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Kind="Add" />
