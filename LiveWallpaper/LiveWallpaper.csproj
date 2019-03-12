@@ -71,11 +71,11 @@
     <Reference Include="JsonConfiger.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\JsonConfiger.1.0.0.52\lib\net46\JsonConfiger.WPF.dll</HintPath>
     </Reference>
-    <Reference Include="LiveWallpaperEngine, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngine.1.0.1\lib\netstandard2.0\LiveWallpaperEngine.dll</HintPath>
+    <Reference Include="LiveWallpaperEngine, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveWallpaperEngine.1.0.2\lib\netstandard2.0\LiveWallpaperEngine.dll</HintPath>
     </Reference>
     <Reference Include="LiveWallpaperEngineRender, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.2\lib\net46\LiveWallpaperEngineRender.dll</HintPath>
+      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.6\lib\net46\LiveWallpaperEngineRender.dll</HintPath>
     </Reference>
     <Reference Include="LoadingIndicators.WPF, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LoadingIndicators.WPF.0.0.1\lib\LoadingIndicators.WPF.dll</HintPath>
