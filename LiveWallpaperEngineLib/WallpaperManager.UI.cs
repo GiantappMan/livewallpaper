@@ -19,7 +19,7 @@ namespace LiveWallpaperEngineLib
         private static Timer _timer;
         private static Process _currentProcess;
         private static bool _isPreviewing;
-        private static VideoRender _videoRender = new VideoRender();
+        private static VideoRender _videoRender;
 
         private static void InitUI()
         {
@@ -91,20 +91,19 @@ namespace LiveWallpaperEngineLib
 
         private static void InnerShow(string absolutePath)
         {
-            if (_videoRender != null)
+            Execute.OnUIThread(() =>
             {
-                Execute.OnUIThread(() =>
+                var screen = LiveWallpaperEngineManager.AllScreens[0];
+                if (_videoRender == null || _videoRender.RenderDisposed)
                 {
-                    if (_videoRender.RenderDisposed)
-                    {
-                        _videoRender = new VideoRender();
-                        _videoRender.SetAspect(VideoAspect);
-                    }
-                    _videoRender.Play(absolutePath);
+                    _videoRender = new VideoRender();
+                    _videoRender.InitRender(screen);
+                    _videoRender.SetAspect(VideoAspect);
+                }
+                _videoRender.Play(absolutePath);
 
-                    LiveWallpaperEngineManager.Show(_videoRender);
-                });
-            }
+                LiveWallpaperEngineManager.Show(_videoRender, screen);
+            });
         }
 
         public static void Mute(bool mute)
