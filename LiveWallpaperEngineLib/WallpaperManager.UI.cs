@@ -21,9 +21,16 @@ namespace LiveWallpaperEngineLib
         private static bool _isPreviewing;
         private static List<VideoRender> _videoRenders = new List<VideoRender>();
 
+        public static void Initlize()
+        {
+            InitUI();
+        }
+
         private static void InitUI()
         {
             _currentProcess = Process.GetCurrentProcess();
+            //Execute.OnUIThread(() =>
+            //{
             LiveWallpaperEngineManager.AllScreens.ForEach(m =>
             {
                 var render = new VideoRender();
@@ -33,6 +40,7 @@ namespace LiveWallpaperEngineLib
 
                 _videoRenders.Add(render);
             });
+            //});
         }
 
         public static string VideoAspect { get; set; }
@@ -55,34 +63,11 @@ namespace LiveWallpaperEngineLib
                 _timer.Elapsed -= _timer_Elapsed;
                 _timer.Elapsed += _timer_Elapsed;
                 _timer.Start();
-
-                //用此种方案感觉不稳定
-                //if (_hook == IntPtr.Zero)
-                //{
-                //    Execute.OnUIThread(() =>
-                //    {
-
-                //        //监控其他程序是否最大化
-                //        _hookCallback = new SetWinEventHookDelegate(WinEventProc);
-                //        _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
-                //            SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
-                //    });
-                //}
             }
             else
             {
                 _timer.Elapsed -= _timer_Elapsed;
                 _timer.Stop();
-
-                //用此种方案感觉不稳定
-                //if (_hook != IntPtr.Zero)
-                //{
-                //    Execute.OnUIThread(() =>
-                //    {
-                //        bool ok = User32Wrapper.UnhookWinEvent(_hook);
-                //        _hook = IntPtr.Zero;
-                //    });
-                //}
             }
         }
 
@@ -135,7 +120,7 @@ namespace LiveWallpaperEngineLib
                         if (!ok)
                         {
                             _videoRender.CloseRender();
-                            System.Windows.MessageBox.Show(ok.ToString());
+                            System.Windows.MessageBox.Show("巨应壁纸貌似不能正常工作，请关闭杀软重试");
                         }
                     }
                     _videoRender.Play(absolutePath);
@@ -234,59 +219,6 @@ namespace LiveWallpaperEngineLib
             RaiseMaximizedEvent(m);
 
             _timer.Start();
-        }
-
-        private static void WinEventProc(IntPtr hook, SetWinEventHookEventType eventType, IntPtr window, int objectId, int childId, uint threadId, uint time)
-        {
-            try
-            {
-                if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
-                    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
-                {//焦点变化，窗口大小变化
-                    var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                    RaiseMaximizedEvent(m);
-                }
-
-                if (eventType == SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE)
-                {//处理最大化操作
-                    WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
-                    User32Wrapper.GetWindowPlacement(window, ref placment);
-                    //string title = User32Wrapper.GetWindowText(window);
-                    int pid = User32WrapperEx.GetProcessId(window);
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_HIDE)
-                        return;
-
-                    if (pid == _currentProcess.Id)
-                        return;
-
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
-                    {
-                        if (!maximizedPid.Contains(pid))
-                        {
-                            maximizedPid.Add(pid);
-                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                            RaiseMaximizedEvent(m);
-                        }
-                    }
-
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWNORMAL ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_RESTORE ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOW ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMINIMIZED)
-                    {
-                        if (maximizedPid.Contains(pid))
-                        {
-                            maximizedPid.Remove(pid);
-                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                            RaiseMaximizedEvent(m);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex);
-            }
         }
 
         #endregion
