@@ -15,19 +15,23 @@ namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
+        public static string[] VideoExtensions { get; } = new string[] { ".mp4" };
         public static List<string> SupportedExtensions { get; } = new List<string>();
+
         static WallpaperManager()
         {
             SupportedExtensions.AddRange(VideoExtensions);
-            InitUI();
+            //InitUI();
         }
 
-        public static void Initlize()
+        public static string GetWallpaperType(string filePath)
         {
-            ////恢复桌面，以防上次崩溃x显示黑屏
-            //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
+            var extenson = Path.GetExtension(filePath);
+            bool isVideo = VideoExtensions.FirstOrDefault(m => m.ToLower() == extenson.ToLower()) != null;
+            if (isVideo)
+                return WallpaperType.Video.ToString().ToLower();
+            return null;
         }
-
         /// <summary>
         /// 解析壁纸
         /// </summary>
