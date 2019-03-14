@@ -101,10 +101,10 @@ namespace LiveWallpaperEngineLib
         public static async Task<bool> Delete(Wallpaper wallpaper)
         {
             string renderWallpaper = null;
-            if (_videoRender != null)
+            if (_videoRenders != null)
                 Execute.OnUIThread(() =>
                 {
-                    renderWallpaper = _videoRender.CurrentPath;
+                    renderWallpaper = _videoRenders[0].CurrentPath;
                 });
 
             if (renderWallpaper != null &&
