@@ -19,11 +19,20 @@ namespace LiveWallpaperEngineLib
         private static Timer _timer;
         private static Process _currentProcess;
         private static bool _isPreviewing;
-        private static VideoRender _videoRender;
+        private static List<VideoRender> _videoRenders = new List<VideoRender>();
 
         private static void InitUI()
         {
             _currentProcess = Process.GetCurrentProcess();
+            LiveWallpaperEngineManager.AllScreens.ForEach(m =>
+            {
+                var render = new VideoRender();
+                var screen = m;
+                render.Init(screen);
+                bool ok = LiveWallpaperEngineManager.Show(render, screen);
+
+                _videoRenders.Add(render);
+            });
         }
 
         public static string VideoAspect { get; set; }
@@ -79,53 +88,102 @@ namespace LiveWallpaperEngineLib
 
         public static void ApplyVideoAspect()
         {
-            if (_videoRender != null)
+            ForeachVideoRenders((_videoRender, screen) =>
             {
                 _videoRender.SetAspect(VideoAspect);
-            }
+                return null;
+            });
         }
+
         public static void Show(Wallpaper wallpaper)
         {
             InnerShow(wallpaper.AbsolutePath);
+        }
+
+        private static void ForeachVideoRenders(Func<VideoRender, System.Windows.Forms.Screen, VideoRender> func)
+        {
+            var tmpRenders = new List<VideoRender>(_videoRenders);
+            for (int i = 0; i < tmpRenders.Count; i++)
+            {
+                var renderItem = _videoRenders[i];
+                //if (monitors.Items[i] is CheckBox chk)
+                //{
+                //    if (chk.IsChecked != true)
+                //        continue;
+                //}
+
+                var newRender = func(renderItem, LiveWallpaperEngineManager.AllScreens[i]);
+                if (newRender != null)
+                    _videoRenders[i] = newRender;
+            }
         }
 
         private static void InnerShow(string absolutePath)
         {
             Execute.OnUIThread(() =>
             {
-                var screen = LiveWallpaperEngineManager.AllScreens[0];
-                if (_videoRender == null || _videoRender.RenderDisposed)
+                ForeachVideoRenders((_videoRender, screen) =>
                 {
-                    _videoRender = new VideoRender();
-                    _videoRender.InitRender(screen);
-                    _videoRender.SetAspect(VideoAspect);
-                }
-                _videoRender.Play(absolutePath);
+                    bool returnNew = false;
+                    if (_videoRender == null || _videoRender.RenderDisposed)
+                    {
+                        returnNew = true;
+                        _videoRender = new VideoRender();
+                        _videoRender.Init(screen);
+                        _videoRender.SetAspect(VideoAspect);
+                        bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
+                        if (!ok)
+                        {
+                            _videoRender.CloseRender();
+                            System.Windows.MessageBox.Show(ok.ToString());
+                        }
+                    }
+                    _videoRender.Play(absolutePath);
 
-                LiveWallpaperEngineManager.Show(_videoRender, screen);
+                    if (returnNew)
+                        return _videoRender;
+                    return null;
+                });
             });
+
         }
 
         public static void Mute(bool mute)
         {
-            _videoRender?.Mute(mute);
+            ForeachVideoRenders((_videoRender, screen) =>
+            {
+                _videoRender?.Mute(mute);
+                return null;
+            });
         }
 
         public static void Pause()
         {
-            _videoRender?.Pause();
+            ForeachVideoRenders((_videoRender, screen) =>
+            {
+                _videoRender?.Pause();
+                return null;
+            });
         }
 
         public static void Resume()
         {
-            _videoRender?.Resume();
+            ForeachVideoRenders((_videoRender, screen) =>
+            {
+                _videoRender?.Resume();
+                return null;
+            });
         }
 
         public static void Close()
         {
             Execute.BeginOnUIThread(() =>
             {
-                _videoRender?.CloseRender();
+                ForeachVideoRenders((_videoRender, screen) =>
+                {
+                    _videoRender?.CloseRender();
+                    return null;
+                });
             });
         }
 
@@ -139,7 +197,7 @@ namespace LiveWallpaperEngineLib
             _isPreviewing = true;
             Execute.OnUIThread(() =>
             {
-                _lastwallPaper = _videoRender?.CurrentPath;
+                _lastwallPaper = _videoRenders[0]?.CurrentPath;
             });
             Show(previewWallpaper);
         }
@@ -194,7 +252,7 @@ namespace LiveWallpaperEngineLib
                     WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
                     User32Wrapper.GetWindowPlacement(window, ref placment);
                     //string title = User32Wrapper.GetWindowText(window);
-                    int pid = User32Wrapper.GetProcessId(window);
+                    int pid = User32WrapperEx.GetProcessId(window);
                     if (placment.showCmd == WINDOWPLACEMENTFlags.SW_HIDE)
                         return;
 
