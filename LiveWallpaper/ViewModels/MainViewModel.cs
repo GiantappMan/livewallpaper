@@ -17,6 +17,7 @@ using DZY.DotNetUtil.UI.Helpers;
 using DZY.DotNetUtil.WPF;
 using DZY.DotNetUtil.WPF.Views;
 using DZY.DotNetUtil.WPF.ViewModels;
+using LiveWallpaper.Views;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -46,7 +47,8 @@ namespace LiveWallpaper.ViewModels
             base.OnViewReady(view);
         }
 
-        #region  public methods
+        #region public methods
+
         public void SourceInitialized()
         {
             if (_firstLaunch)
@@ -70,6 +72,9 @@ namespace LiveWallpaper.ViewModels
                     var vm = new PurchaseTipsViewModel()
                     {
                         BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
+                        Content = new DefaultPurchaseTipsContent(),
+                        PurchaseContent = "真可怜，给他买个包子吧",
+                        RatingContent = "造孽啊，给个精神抚慰吧",
                     };
                     vm.Initlize(AppManager.GetPurchaseViewModel());
                     view.DataContext = vm;
@@ -201,6 +206,7 @@ namespace LiveWallpaper.ViewModels
         {
             IoC.Get<ContextMenuViewModel>().Config(GetView());
         }
+
         public void Mute(bool mute)
         {
             WallpaperManager.Mute(mute);
