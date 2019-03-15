@@ -1,7 +1,5 @@
 ﻿using Caliburn.Micro;
 using DZY.DotNetUtil.Helpers;
-using LiveWallpaperEngine;
-//using LiveWallpaperEngineLib.NativeWallpapers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +19,6 @@ namespace LiveWallpaperEngineLib
         static WallpaperManager()
         {
             SupportedExtensions.AddRange(VideoExtensions);
-            //InitUI();
         }
 
         public static string GetWallpaperType(string filePath)

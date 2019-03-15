@@ -12,6 +12,7 @@ namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
+        #region fields
         /// <summary>
         /// 壁纸显示窗体
         /// </summary>
@@ -21,16 +22,26 @@ namespace LiveWallpaperEngineLib
         private static bool _isPreviewing;
         private static List<VideoRender> _videoRenders = new List<VideoRender>();
 
+        // 监控窗口最大化
+        private static bool _maximized;
+        private static List<int> maximizedPid = new List<int>();
+        #endregion
+
+        #region properties
+
+        public static string VideoAspect { get; set; }
+
+        #endregion
+
+        #region events
+
+        public static event EventHandler<bool> MaximizedEvent;
+
+        #endregion
+
         public static void Initlize()
         {
-            InitUI();
-        }
-
-        private static void InitUI()
-        {
             _currentProcess = Process.GetCurrentProcess();
-            //Execute.OnUIThread(() =>
-            //{
             LiveWallpaperEngineManager.AllScreens.ForEach(m =>
             {
                 var render = new VideoRender();
@@ -40,16 +51,9 @@ namespace LiveWallpaperEngineLib
 
                 _videoRenders.Add(render);
             });
-            //});
         }
 
-        public static string VideoAspect { get; set; }
-
-        // 监控窗口最大化
-        private static bool _maximized;
-        private static List<int> maximizedPid = new List<int>();
-
-        public static event EventHandler<bool> MaximizedEvent;
+        #region public methods
 
         public static void MonitorMaxiemized(bool enable)
         {
@@ -198,6 +202,8 @@ namespace LiveWallpaperEngineLib
             else
                 Close();
         }
+
+        #endregion
 
         #region private
 
