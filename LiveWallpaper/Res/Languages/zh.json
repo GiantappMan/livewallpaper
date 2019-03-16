@@ -50,6 +50,13 @@
   "setting_windowWidth": "主窗口宽度",
   "setting_windowHeight": "主窗口高度",
   "setting_wallpaperDir": "壁纸目录",
+  "setting_audioSource": "音频",
+  "setting_audioSource_desc": "播放的音源",
+  "setting_audioSource_mute": "静音",
+  "setting_displayMonitor": "多屏",
+  "setting_displayMonitor_desc": "动态壁纸显示的屏幕",
+  "setting_displayMonitor_default": "默认（多屏）",
+  "setting_screen": "屏幕",
 
   "wallpaperEditor_warning_invalidWallpaper": "无效壁纸",
   "wallpaperEditor_warning_titleEmpty": "请输入壁纸标题",

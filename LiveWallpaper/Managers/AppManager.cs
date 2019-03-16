@@ -3,10 +3,13 @@ using DZY.DotNetUtil.Helpers;
 using DZY.DotNetUtil.WPF.ViewModels;
 using DZY.DotNetUtil.WPF.Views;
 using Hardcodet.Wpf.TaskbarNotification;
+using JsonConfiger;
 using LiveWallpaper.Settings;
 using LiveWallpaperEngineLib;
 using LiveWallpaperEngineLib.Controls;
 using MultiLanguageManager;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -24,6 +27,16 @@ namespace LiveWallpaper.Managers
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// 默认配置
+        /// </summary>
+        public static string SettingDefaultFile { get; private set; }
+
+        /// <summary>
+        /// 配置描述文件
+        /// </summary>
+        public static string SettingDescFile { get; private set; }
 
         /// <summary>
         /// 程序入口目录
@@ -88,6 +101,9 @@ namespace LiveWallpaper.Managers
             LanService.Init(new JsonDB(path), true, "zh");
 
             //配置相关
+            SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
+            SettingDescFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
+
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             AppDataDir = $"{appData}\\LiveWallpaper";
             UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
@@ -152,47 +168,54 @@ namespace LiveWallpaper.Managers
         //检查是否有配置需要重新生成
         private static async Task CheckDefaultSetting()
         {
-            var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            bool writeDefault = false;
-            if (tempSetting == null)
-            {
-                //默认值
-                tempSetting = new SettingObject
-                {
-                    General = GeneralSettting.GetDefaultGeneralSettting(),
-                    Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting(),
-                    //Server = ServerSetting.GetDefaultServerSetting()
-                };
-                writeDefault = true;
-            }
-
-            //默认值
-            if (tempSetting.General == null)
-            {
-                writeDefault = true;
-                tempSetting.General = GeneralSettting.GetDefaultGeneralSettting();
-            }
-            if (string.IsNullOrEmpty(tempSetting.General.WallpaperSaveDir))
-            {
-                writeDefault = true;
-                tempSetting.General.WallpaperSaveDir = GeneralSettting.GetDefaultSaveDir();
-            }
-            if (tempSetting.Wallpaper == null)
-            {
-                writeDefault = true;
-                tempSetting.Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting();
-            }
-            //if (tempSetting.Server == null)
+            //var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            //bool writeDefault = false;
+            //if (tempSetting == null)
             //{
+            //    //默认值
+            //    tempSetting = new SettingObject
+            //    {
+            //        General = GeneralSettting.GetDefaultGeneralSettting(),
+            //        Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting(),
+            //        //Server = ServerSetting.GetDefaultServerSetting()
+            //    };
             //    writeDefault = true;
-            //    tempSetting.Server = ServerSetting.GetDefaultServerSetting();
             //}
 
-            if (writeDefault)
-                //生成默认配置
-                await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
+            ////默认值
+            //if (tempSetting.General == null)
+            //{
+            //    writeDefault = true;
+            //    tempSetting.General = GeneralSettting.GetDefaultGeneralSettting();
+            //}
+            //if (string.IsNullOrEmpty(tempSetting.General.WallpaperSaveDir))
+            //{
+            //    writeDefault = true;
+            //    tempSetting.General.WallpaperSaveDir = GeneralSettting.GetDefaultSaveDir();
+            //}
+            //if (tempSetting.Wallpaper == null)
+            //{
+            //    writeDefault = true;
+            //    tempSetting.Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting();
+            //}
+            ////if (tempSetting.Server == null)
+            ////{
+            ////    writeDefault = true;
+            ////    tempSetting.Server = ServerSetting.GetDefaultServerSetting();
+            ////}
 
-            await ApplySetting(tempSetting);
+            //if (writeDefault)
+            //    //生成默认配置
+            //    await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
+
+            var tmpSetting = await JsonHelper.JsonDeserializeFromFileAsync<object>(SettingPath);
+            var defaultData = await JsonHelper.JsonDeserializeFromFileAsync<object>(SettingDefaultFile);
+            tmpSetting = JCrService.CheckDefault(tmpSetting as JObject, defaultData as JObject);
+            //生成覆盖默认配置
+            await JsonHelper.JsonSerializeAsync(tmpSetting, SettingPath);
+            //再次读取配置
+            var data = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            await ApplySetting(data);
         }
 
         private static void WallpaperManager_MaximizedEvent(object sender, bool e)

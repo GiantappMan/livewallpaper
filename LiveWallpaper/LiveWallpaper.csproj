@@ -69,7 +69,7 @@
       <HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.1.0.8\lib\net451\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
     </Reference>
     <Reference Include="JsonConfiger.WPF, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\JsonConfiger.1.0.0.52\lib\net46\JsonConfiger.WPF.dll</HintPath>
+      <HintPath>..\packages\JsonConfiger.1.0.0.54\lib\net46\JsonConfiger.WPF.dll</HintPath>
     </Reference>
     <Reference Include="LiveWallpaperEngine, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.7\lib\net46\LiveWallpaperEngine.dll</HintPath>
@@ -224,6 +224,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Content Include="Res\setting.default.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="Res\Imgs\donate.jpg" />
     <Content Include="Res\Sounds\PurchaseTipsBg.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
