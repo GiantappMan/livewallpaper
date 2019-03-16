@@ -34,12 +34,6 @@ namespace LiveWallpaper.ViewModels
         {
             _eventAggregator = eventAggregator;
             _eventAggregator.Subscribe(this);
-            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
-            if (AppManager.Setting.General.RecordWindowSize)
-            {
-                Width = AppManager.Setting.General.Width;
-                Height = AppManager.Setting.General.Height;
-            }
         }
 
         protected override void OnViewReady(object view)
@@ -49,17 +43,18 @@ namespace LiveWallpaper.ViewModels
 
         #region public methods
 
-        public void SourceInitialized()
+        public async Task OnLoaded()
         {
             if (_firstLaunch)
             {
+                AppManager.Run();
                 //第一次时打开检查更新
                 var handle = (new WindowInteropHelper(Application.Current.MainWindow)).Handle;
-                Task.Run(() =>
-                {
-                    AppManager.MainHandle = handle;
-                    AppManager.CheckUpates(handle);
-                });
+                await Task.Run(() =>
+                 {
+                     AppManager.MainHandle = handle;
+                     AppManager.CheckUpates(handle);
+                 });
 
                 AppHelper AppHelper = new AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
@@ -81,12 +76,18 @@ namespace LiveWallpaper.ViewModels
                     view.Show();
                 }
 
-                if (AppManager.Setting.General.MinimizeUI)
-                {
-                    TryClose();
-                }
-
                 _firstLaunch = false;
+
+                if (AppManager.Setting.General.MinimizeUI)
+                    TryClose();
+            }
+
+            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+
+            if (AppManager.Setting.General.RecordWindowSize)
+            {
+                Width = AppManager.Setting.General.Width;
+                Height = AppManager.Setting.General.Height;
             }
         }
 
@@ -107,10 +108,12 @@ namespace LiveWallpaper.ViewModels
             windowManager.ShowWindow(_createVM, null, windowSettings);
         }
 
-        public async void SaveSizeData()
+        public async void SaveSizeData(double width, double height)
         {
-            if (AppManager.Setting.General.RecordWindowSize)
+            if (AppManager.SettingInitialized && AppManager.Setting.General.RecordWindowSize)
             {
+                Width = width;
+                Height = height;
                 AppManager.Setting.General.Width = Width;
                 AppManager.Setting.General.Height = Height;
                 await JsonHelper.JsonSerializeAsync(AppManager.Setting, AppManager.SettingPath);
@@ -292,12 +295,12 @@ namespace LiveWallpaper.ViewModels
         /// </summary>
         public const string WidthPropertyName = "Width";
 
-        private float _Width = sourceWidth;
+        private double _Width = sourceWidth;
 
         /// <summary>
         /// Width
         /// </summary>
-        public float Width
+        public double Width
         {
             get { return _Width; }
 
@@ -319,12 +322,12 @@ namespace LiveWallpaper.ViewModels
         /// </summary>
         public const string HeightPropertyName = "Height";
 
-        private float _Height = sourceHeight;
+        private double _Height = sourceHeight;
 
         /// <summary>
         /// Height
         /// </summary>
-        public float Height
+        public double Height
         {
             get { return _Height; }
 

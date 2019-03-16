@@ -70,8 +70,7 @@ namespace LiveWallpaper.ViewModels
             bool ok = _settingVM.DialogResult;
             if (ok)
             {
-                var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(AppManager.SettingPath);
-                await AppManager.ApplySetting(config);
+                await AppManager.ReApplySetting();
                 await _eventAggregator.PublishOnUIThreadAsync(new SettingSaved());
             }
             _settingVM = null;
