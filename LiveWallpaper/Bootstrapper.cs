@@ -23,6 +23,7 @@ namespace LiveWallpaper
 
         protected override void Configure()
         {
+            //需要在UI线程初始化
             WallpaperManager.Initlize();
 
             //自定义消息拦截

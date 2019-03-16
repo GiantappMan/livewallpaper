@@ -77,7 +77,7 @@ namespace LiveWallpaperEngineLib
 
         public static void ApplyVideoAspect()
         {
-            ForeachVideoRenders((_videoRender, screen) =>
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 _videoRender.SetAspect(VideoAspect);
                 return null;
@@ -89,19 +89,14 @@ namespace LiveWallpaperEngineLib
             InnerShow(wallpaper.AbsolutePath);
         }
 
-        private static void ForeachVideoRenders(Func<VideoRender, System.Windows.Forms.Screen, VideoRender> func)
+        private static void ForeachVideoRenders(Func<VideoRender, System.Windows.Forms.Screen, int, VideoRender> func)
         {
             var tmpRenders = new List<VideoRender>(_videoRenders);
             for (int i = 0; i < tmpRenders.Count; i++)
             {
                 var renderItem = _videoRenders[i];
-                //if (monitors.Items[i] is CheckBox chk)
-                //{
-                //    if (chk.IsChecked != true)
-                //        continue;
-                //}
 
-                var newRender = func(renderItem, LiveWallpaperEngineManager.AllScreens[i]);
+                var newRender = func(renderItem, LiveWallpaperEngineManager.AllScreens[i], i);
                 if (newRender != null)
                     _videoRenders[i] = newRender;
             }
@@ -111,7 +106,7 @@ namespace LiveWallpaperEngineLib
         {
             Execute.OnUIThread(() =>
             {
-                ForeachVideoRenders((_videoRender, screen) =>
+                ForeachVideoRenders((_videoRender, screen, index) =>
                 {
                     bool returnNew = false;
                     if (_videoRender == null || _videoRender.RenderDisposed)
@@ -137,18 +132,25 @@ namespace LiveWallpaperEngineLib
 
         }
 
-        public static void Mute(bool mute)
+        /// <summary>
+        /// 播放指定屏幕的音频
+        /// </summary>
+        /// <param name="displayIndex"></param>
+        public static void PlayAudio(int displayIndex)
         {
-            ForeachVideoRenders((_videoRender, screen) =>
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
-                _videoRender?.Mute(mute);
+                if (index == displayIndex)
+                    _videoRender?.Mute(false);
+                else
+                    _videoRender.Mute(true);
                 return null;
             });
         }
 
         public static void Pause()
         {
-            ForeachVideoRenders((_videoRender, screen) =>
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 _videoRender?.Pause();
                 return null;
@@ -157,7 +159,7 @@ namespace LiveWallpaperEngineLib
 
         public static void Resume()
         {
-            ForeachVideoRenders((_videoRender, screen) =>
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 _videoRender?.Resume();
                 return null;
@@ -168,7 +170,7 @@ namespace LiveWallpaperEngineLib
         {
             Execute.BeginOnUIThread(() =>
             {
-                ForeachVideoRenders((_videoRender, screen) =>
+                ForeachVideoRenders((_videoRender, screen, index) =>
                 {
                     _videoRender?.CloseRender();
                     return null;
