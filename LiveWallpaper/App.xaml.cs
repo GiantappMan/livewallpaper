@@ -33,14 +33,16 @@ namespace LiveWallpaper
             Init();
         }
 
-        private async void Init()
+        private void Init()
         {
             try
             {
                 //异常捕获
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
                 Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
-                await AppManager.Initlize();
+                //程序启动必要初始化
+                AppManager.InitMuliLanguage();
+                AppManager.InitlizeSetting();
             }
             catch (Exception ex)
             {

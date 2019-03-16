@@ -61,7 +61,19 @@ namespace LiveWallpaper.Managers
         /// <summary>
         /// UWP真实AppDatam目录
         /// </summary>
-        public static string UWPRealAppDataDir { get; private set; }
+        private static string _UWPRealAppDataDir;
+        public static string UWPRealAppDataDir
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_UWPRealAppDataDir))
+                {
+                    //使用时再读取，防止初始化等待太久
+                    _UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
+                }
+                return _UWPRealAppDataDir;
+            }
+        }
         /// <summary>
         /// 本地壁纸路径
         /// </summary>
@@ -73,6 +85,7 @@ namespace LiveWallpaper.Managers
 
         public static AppData AppData { get; private set; }
         public static IntPtr MainHandle { get; internal set; }
+        public static bool SettingInitialized { get; private set; }
 
         public static PurchaseViewModel GetPurchaseViewModel()
         {
@@ -84,21 +97,23 @@ namespace LiveWallpaper.Managers
             return vm;
         }
 
-        public static async Task Initlize()
+        public static void InitMuliLanguage()
         {
-            //开机启动
-#if UWP
-            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper");
-#else
-            AutoStartupHelper.Initlize(AutoStartupType.Win32, "LiveWallpaper");
-#endif
-
             //多语言
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
             //不能用Environment.CurrentDirectory，开机启动目录会出错
             ApptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string path = Path.Combine(ApptEntryDir, "Res\\Languages");
             LanService.Init(new JsonDB(path), true, "zh");
+        }
+
+        public static async void InitlizeSetting()
+        {
+            if (SettingInitialized)
+                return;
+
+            //开机启动
+            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper");
 
             //配置相关
             SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
@@ -106,7 +121,6 @@ namespace LiveWallpaper.Managers
 
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             AppDataDir = $"{appData}\\LiveWallpaper";
-            UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
             AppDataPath = $"{AppDataDir}\\appData.json";
             PurchaseDataPath = $"{AppDataDir}\\purchaseData.json";
@@ -121,19 +135,25 @@ namespace LiveWallpaper.Managers
                 await ApplyAppDataAsync();
             }
 
+            Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+            SettingInitialized = true;
+        }
+
+        public static async void Run()
+        {
             //加载壁纸
-            await Task.Run(() =>
+            RefreshLocalWallpapers();
+            WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
+            var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
+            if (current != null)
             {
-                RefreshLocalWallpapers();
-                WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
-                var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
-                if (current != null)
-                {
-                    WallpaperManager.VideoAspect = Setting.Wallpaper.VideoAspect;
-                    WallpaperManager.Show(current);
-                }
-                WallpaperManager.MonitorMaxiemized(true);
-            });
+                WallpaperManager.VideoAspect = Setting.Wallpaper.VideoAspect;
+                WallpaperManager.Show(current);
+            }
+            WallpaperManager.MonitorMaxiemized(true);
+            //再次读取配置
+            await ApplySetting(Setting);
         }
 
         public static async void CheckUpates(IntPtr mainHandler)
@@ -165,9 +185,6 @@ namespace LiveWallpaper.Managers
             tmpSetting = JCrService.CheckDefault(tmpSetting as JObject, defaultData as JObject);
             //生成覆盖默认配置
             await JsonHelper.JsonSerializeAsync(tmpSetting, SettingPath);
-            //再次读取配置
-            var data = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            await ApplySetting(data);
         }
 
         private static void WallpaperManager_MaximizedEvent(object sender, bool e)
@@ -200,16 +217,19 @@ namespace LiveWallpaper.Managers
             WallpaperManager.Close();
         }
 
-        public static List<Wallpaper> RefreshLocalWallpapers()
+        public static void RefreshLocalWallpapers()
         {
             Wallpapers = new List<Wallpaper>();
+
+            if (!SettingInitialized)
+                return;
 
             if (!Directory.Exists(LocalWallpaperDir))
                 Directory.CreateDirectory(LocalWallpaperDir);
 
             try
             {
-                var wallpapers = WallpaperManager.GetWallpapers(AppManager.LocalWallpaperDir);
+                var wallpapers = WallpaperManager.GetWallpapers(LocalWallpaperDir);
                 foreach (var item in wallpapers)
                 {
                     Wallpapers.Add(item);
@@ -219,8 +239,6 @@ namespace LiveWallpaper.Managers
             {
                 logger.Error(ex);
             }
-
-            return Wallpapers;
         }
 
         public static async Task ApplyAppDataAsync()
@@ -228,10 +246,14 @@ namespace LiveWallpaper.Managers
             await JsonHelper.JsonSerializeAsync(AppData, AppDataPath);
         }
 
+        public static async Task ReApplySetting()
+        {
+            var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            await ApplySetting(config);
+        }
+
         public static async Task ApplySetting(SettingObject setting)
         {
-            Setting = setting;
-
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
 
@@ -240,7 +262,6 @@ namespace LiveWallpaper.Managers
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
             WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect();
-            LocalWallpaperDir = setting.General.WallpaperSaveDir;
             WallpaperManager.PlayAudio(setting.Wallpaper.AudioSource);
         }
     }

@@ -17,9 +17,9 @@ namespace LiveWallpaper.Settings
 
         public bool RecordWindowSize { get; set; }
 
-        public float Width { get; set; }
+        public double Width { get; set; }
 
-        public float Height { get; set; }
+        public double Height { get; set; }
 
         public string WallpaperSaveDir { get; set; }
 
