@@ -108,11 +108,6 @@ namespace LiveWallpaper.Managers
             AppDataDir = $"{appData}\\LiveWallpaper";
             UWPRealAppDataDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
             SettingPath = $"{AppDataDir}\\Config\\setting.json";
-            //LocalWallpaperDir = $"{AppDataDir}\\Wallpapers"; 
-            //因为uwp store权限问题所以改为 %userprofile%\videos\LivewallpaperCache
-            //string videoDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-            //LocalWallpaperDir = $"{videoDir}\\LivewallpaperCache";
-
             AppDataPath = $"{AppDataDir}\\appData.json";
             PurchaseDataPath = $"{AppDataDir}\\purchaseData.json";
 
@@ -130,8 +125,6 @@ namespace LiveWallpaper.Managers
             await Task.Run(() =>
             {
                 RefreshLocalWallpapers();
-                //if (AppData.Wallpaper != null)
-                //{
                 WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
                 var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
                 if (current != null)
@@ -140,7 +133,6 @@ namespace LiveWallpaper.Managers
                     WallpaperManager.Show(current);
                 }
                 WallpaperManager.MonitorMaxiemized(true);
-                //}
             });
         }
 
@@ -168,46 +160,6 @@ namespace LiveWallpaper.Managers
         //检查是否有配置需要重新生成
         private static async Task CheckDefaultSetting()
         {
-            //var tempSetting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            //bool writeDefault = false;
-            //if (tempSetting == null)
-            //{
-            //    //默认值
-            //    tempSetting = new SettingObject
-            //    {
-            //        General = GeneralSettting.GetDefaultGeneralSettting(),
-            //        Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting(),
-            //        //Server = ServerSetting.GetDefaultServerSetting()
-            //    };
-            //    writeDefault = true;
-            //}
-
-            ////默认值
-            //if (tempSetting.General == null)
-            //{
-            //    writeDefault = true;
-            //    tempSetting.General = GeneralSettting.GetDefaultGeneralSettting();
-            //}
-            //if (string.IsNullOrEmpty(tempSetting.General.WallpaperSaveDir))
-            //{
-            //    writeDefault = true;
-            //    tempSetting.General.WallpaperSaveDir = GeneralSettting.GetDefaultSaveDir();
-            //}
-            //if (tempSetting.Wallpaper == null)
-            //{
-            //    writeDefault = true;
-            //    tempSetting.Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting();
-            //}
-            ////if (tempSetting.Server == null)
-            ////{
-            ////    writeDefault = true;
-            ////    tempSetting.Server = ServerSetting.GetDefaultServerSetting();
-            ////}
-
-            //if (writeDefault)
-            //    //生成默认配置
-            //    await JsonHelper.JsonSerializeAsync(tempSetting, SettingPath);
-
             var tmpSetting = await JsonHelper.JsonDeserializeFromFileAsync<object>(SettingPath);
             var defaultData = await JsonHelper.JsonDeserializeFromFileAsync<object>(SettingDefaultFile);
             tmpSetting = JCrService.CheckDefault(tmpSetting as JObject, defaultData as JObject);
@@ -289,6 +241,7 @@ namespace LiveWallpaper.Managers
             WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect();
             LocalWallpaperDir = setting.General.WallpaperSaveDir;
+            WallpaperManager.PlayAudio(setting.Wallpaper.AudioSource);
         }
     }
 }

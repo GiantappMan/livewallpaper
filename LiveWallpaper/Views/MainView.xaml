@@ -99,17 +99,6 @@
                             Kind="SettingsOutline" />
                     </Button>
                     <!--<ComboBox />-->
-                    <CheckBox
-                        x:Name="Mute"
-                        Grid.Column="1"
-                        Margin="20,0"
-                        VerticalAlignment="Center"
-                        IsChecked="True">
-                        <iconPacks:PackIconMaterial
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            Kind="VolumeMute" />
-                    </CheckBox>
                     <StackPanel
                         Grid.Column="2"
                         Margin="5,2,5,5"
