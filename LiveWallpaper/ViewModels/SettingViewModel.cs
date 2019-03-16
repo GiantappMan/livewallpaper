@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 using LiveWallpaper.Events;
+using MultiLanguageManager;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -20,7 +21,7 @@ namespace LiveWallpaper.ViewModels
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         JCrService _jcrService = new JCrService();
- 
+
         private static bool firstLaunch = true;
         protected override async void OnInitialize()
         {
@@ -33,8 +34,40 @@ namespace LiveWallpaper.ViewModels
             }
 
             var config = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppManager.SettingPath);
-            string descPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
-            var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(descPath);
+            //string descPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.desc.json");
+            var descConfig = await JsonHelper.JsonDeserializeFromFileAsync<dynamic>(AppManager.SettingDescFile);
+
+            List<dynamic> audioSource = new List<dynamic>();
+            List<dynamic> displayMonitor = new List<dynamic>();
+            displayMonitor.Add(new
+            {
+                lanKey = "setting_displayMonitor_default",
+                value = -1
+            });
+            audioSource.Add(new
+            {
+                lanKey = "setting_audioSource_mute",
+                value = -1
+            });
+
+            string screenStr = await LanService.Get("setting_screen");
+            for (int i = 0; i < System.Windows.Forms.Screen.AllScreens.Length; i++)
+            {
+                displayMonitor.Add(new
+                {
+                    lan = string.Format($"{screenStr} {i + 1}"),
+                    value = i
+                });
+                audioSource.Add(new
+                {
+                    lan = string.Format($"{screenStr} {i + 1}"),
+                    value = i
+                });
+            }
+
+            _jcrService.InjectDescObjs("$AudioSource", audioSource);
+            _jcrService.InjectDescObjs("$DisplayMonitor", displayMonitor);
+
             JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
             base.OnInitialize();
         }
