@@ -254,6 +254,7 @@ namespace LiveWallpaper.Managers
 
         public static async Task ApplySetting(SettingObject setting)
         {
+            Setting = setting;
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
 
@@ -262,6 +263,7 @@ namespace LiveWallpaper.Managers
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
             WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect();
+            WallpaperManager.InitMonitor(setting.Wallpaper.DisplayMonitor);
             WallpaperManager.PlayAudio(setting.Wallpaper.AudioSource);
         }
     }
