@@ -21,6 +21,7 @@ namespace LiveWallpaperEngineLib
         private static Process _currentProcess;
         private static bool _isPreviewing;
         private static List<VideoRender> _videoRenders = new List<VideoRender>();
+        private static int _displayMonitor;
 
         // 监控窗口最大化
         private static bool _maximized;
@@ -41,15 +42,15 @@ namespace LiveWallpaperEngineLib
 
         public static void Initlize()
         {
-            _currentProcess = Process.GetCurrentProcess();
             LiveWallpaperEngineManager.AllScreens.ForEach(m =>
             {
-                var render = new VideoRender();
-                var screen = m;
-                render.Init(screen);
-                bool ok = LiveWallpaperEngineManager.Show(render, screen);
+                //var render = new VideoRender();
+                //var screen = m;
+                //render.Init(screen);
+                //bool ok = LiveWallpaperEngineManager.Show(render, screen);
 
-                _videoRenders.Add(render);
+                //按屏幕索引，预先生成位置
+                _videoRenders.Add(null);
             });
         }
 
@@ -79,8 +80,7 @@ namespace LiveWallpaperEngineLib
         {
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
-                _videoRender.SetAspect(VideoAspect);
-                return null;
+                _videoRender?.SetAspect(VideoAspect);
             });
         }
 
@@ -89,47 +89,42 @@ namespace LiveWallpaperEngineLib
             InnerShow(wallpaper.AbsolutePath);
         }
 
-        private static void ForeachVideoRenders(Func<VideoRender, System.Windows.Forms.Screen, int, VideoRender> func)
+        private static void ForeachVideoRenders(Action<VideoRender, System.Windows.Forms.Screen, int> action)
         {
             var tmpRenders = new List<VideoRender>(_videoRenders);
             for (int i = 0; i < tmpRenders.Count; i++)
             {
                 var renderItem = _videoRenders[i];
 
-                var newRender = func(renderItem, LiveWallpaperEngineManager.AllScreens[i], i);
-                if (newRender != null)
-                    _videoRenders[i] = newRender;
+                action(renderItem, LiveWallpaperEngineManager.AllScreens[i], i);
             }
         }
 
         private static void InnerShow(string absolutePath)
         {
-            Execute.OnUIThread(() =>
+
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
-                ForeachVideoRenders((_videoRender, screen, index) =>
-                {
-                    bool returnNew = false;
+                if (_displayMonitor == index || _displayMonitor < 0)
                     if (_videoRender == null || _videoRender.RenderDisposed)
                     {
-                        returnNew = true;
-                        _videoRender = new VideoRender();
+                        Execute.OnUIThread(() =>
+                        {
+                            _videoRender = new VideoRender();
+                        });
                         _videoRender.Init(screen);
-                        _videoRender.SetAspect(VideoAspect);
+                        _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
                         bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
                         if (!ok)
                         {
-                            _videoRender.CloseRender();
+                            LiveWallpaperEngineManager.Close(_videoRender);
                             System.Windows.MessageBox.Show("巨应壁纸貌似不能正常工作，请关闭杀软重试");
                         }
+                        else
+                            _videoRenders[index] = _videoRender;
                     }
-                    _videoRender.Play(absolutePath);
-
-                    if (returnNew)
-                        return _videoRender;
-                    return null;
-                });
+                _videoRender?.Play(absolutePath);
             });
-
         }
 
         /// <summary>
@@ -138,13 +133,12 @@ namespace LiveWallpaperEngineLib
         /// <param name="displayIndex"></param>
         public static void PlayAudio(int displayIndex)
         {
-            ForeachVideoRenders((_videoRender, screen, index) =>
+            ForeachVideoRenders((videoRender, screen, index) =>
             {
-                if (index == displayIndex)
-                    _videoRender?.Mute(false);
+                if (index != displayIndex)
+                    videoRender?.Mute(false);
                 else
-                    _videoRender.Mute(true);
-                return null;
+                    videoRender?.Mute(true);
             });
         }
 
@@ -153,7 +147,6 @@ namespace LiveWallpaperEngineLib
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 _videoRender?.Pause();
-                return null;
             });
         }
 
@@ -162,7 +155,6 @@ namespace LiveWallpaperEngineLib
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 _videoRender?.Resume();
-                return null;
             });
         }
 
@@ -170,10 +162,13 @@ namespace LiveWallpaperEngineLib
         {
             Execute.BeginOnUIThread(() =>
             {
-                ForeachVideoRenders((_videoRender, screen, index) =>
+                ForeachVideoRenders((render, screen, i) =>
                 {
-                    _videoRender?.CloseRender();
-                    return null;
+                    //LiveWallpaperEngineManager.Close(_videoRender);
+                    //_videoRender?.CloseRender();
+                    //_videoRender?.Stop();
+                    LiveWallpaperEngineManager.Close(render);
+                    _videoRenders[i] = null;
                 });
             });
         }
@@ -205,6 +200,17 @@ namespace LiveWallpaperEngineLib
                 Close();
         }
 
+        public static void InitMonitor(int displayMonitor)
+        {
+            _displayMonitor = displayMonitor;
+            ForeachVideoRenders((render, screen, i) =>
+            {
+                if (displayMonitor > -1 && i != displayMonitor)
+                    LiveWallpaperEngineManager.Close(render);
+                _videoRenders[i] = null;
+            });
+        }
+
         #endregion
 
         #region private
@@ -222,6 +228,9 @@ namespace LiveWallpaperEngineLib
         private static void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             _timer.Stop();
+
+            if (_currentProcess == null)
+                _currentProcess = Process.GetCurrentProcess();
 
             var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
             RaiseMaximizedEvent(m);
