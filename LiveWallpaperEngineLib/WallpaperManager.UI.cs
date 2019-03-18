@@ -109,8 +109,8 @@ namespace LiveWallpaperEngineLib
                         Execute.OnUIThread(() =>
                         {
                             _videoRender = new VideoRender();
+                            _videoRender.Init(screen);
                         });
-                        _videoRender.Init(screen);
                         _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
                         bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
                         if (!ok)
