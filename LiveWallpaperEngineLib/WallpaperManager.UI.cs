@@ -102,7 +102,6 @@ namespace LiveWallpaperEngineLib
 
         private static void InnerShow(string absolutePath)
         {
-
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
                 if (_displayMonitor == index || _displayMonitor < 0)
@@ -135,7 +134,7 @@ namespace LiveWallpaperEngineLib
         {
             ForeachVideoRenders((videoRender, screen, index) =>
             {
-                if (index != displayIndex)
+                if (index == displayIndex)
                     videoRender?.Mute(false);
                 else
                     videoRender?.Mute(true);
@@ -166,9 +165,9 @@ namespace LiveWallpaperEngineLib
                 {
                     //LiveWallpaperEngineManager.Close(_videoRender);
                     //_videoRender?.CloseRender();
-                    //_videoRender?.Stop();
-                    LiveWallpaperEngineManager.Close(render);
-                    _videoRenders[i] = null;
+                    render?.Stop();
+                    //LiveWallpaperEngineManager.Close(render);
+                    //_videoRenders[i] = null;
                 });
             });
         }
@@ -206,8 +205,10 @@ namespace LiveWallpaperEngineLib
             ForeachVideoRenders((render, screen, i) =>
             {
                 if (displayMonitor > -1 && i != displayMonitor)
+                {
                     LiveWallpaperEngineManager.Close(render);
-                _videoRenders[i] = null;
+                    _videoRenders[i] = null;
+                }
             });
         }
 

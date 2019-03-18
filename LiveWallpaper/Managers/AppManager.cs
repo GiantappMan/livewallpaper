@@ -142,6 +142,9 @@ namespace LiveWallpaper.Managers
 
         public static async void Run()
         {
+            //再次读取配置
+            await ApplySetting(Setting);
+
             //加载壁纸
             RefreshLocalWallpapers();
             WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
@@ -152,8 +155,7 @@ namespace LiveWallpaper.Managers
                 WallpaperManager.Show(current);
             }
             WallpaperManager.MonitorMaxiemized(true);
-            //再次读取配置
-            await ApplySetting(Setting);
+            ApplyWallpaper(Setting);
         }
 
         public static async void CheckUpates(IntPtr mainHandler)
@@ -248,19 +250,22 @@ namespace LiveWallpaper.Managers
 
         public static async Task ReApplySetting()
         {
-            var config = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-            await ApplySetting(config);
+            var setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            Setting = setting;
+            await ApplySetting(setting);
+            ApplyWallpaper(setting);
         }
 
         public static async Task ApplySetting(SettingObject setting)
         {
-            Setting = setting;
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
             await LanService.UpdateLanguage();
-
             await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
-
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
+        }
+
+        public static void ApplyWallpaper(SettingObject setting)
+        {
             WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect();
             WallpaperManager.InitMonitor(setting.Wallpaper.DisplayMonitor);
