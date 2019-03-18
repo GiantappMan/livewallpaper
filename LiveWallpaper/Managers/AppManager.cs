@@ -148,14 +148,15 @@ namespace LiveWallpaper.Managers
             //加载壁纸
             RefreshLocalWallpapers();
             WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
+          
+            WallpaperManager.MonitorMaxiemized(true);
+            ApplyWallpaper(Setting);
+
             var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
             if (current != null)
             {
-                WallpaperManager.VideoAspect = Setting.Wallpaper.VideoAspect;
                 WallpaperManager.Show(current);
             }
-            WallpaperManager.MonitorMaxiemized(true);
-            ApplyWallpaper(Setting);
         }
 
         public static async void CheckUpates(IntPtr mainHandler)
@@ -266,8 +267,6 @@ namespace LiveWallpaper.Managers
 
         public static void ApplyWallpaper(SettingObject setting)
         {
-            WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
-            WallpaperManager.ApplyVideoAspect();
             WallpaperManager.InitMonitor(setting.Wallpaper.DisplayMonitor);
             WallpaperManager.PlayAudio(setting.Wallpaper.AudioSource);
         }
