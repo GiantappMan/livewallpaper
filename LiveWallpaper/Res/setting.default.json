@@ -10,8 +10,7 @@
   },
   "Wallpaper": {
     "ActionWhenMaximized": 2,
-    "VideoAspect": null,
-    "AudioSource": "-1",
-    "DisplayMonitor": "-1"
+    "AudioSource": -1,
+    "DisplayMonitor": -1
   }
 }
