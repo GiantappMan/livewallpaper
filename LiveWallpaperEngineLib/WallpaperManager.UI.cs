@@ -22,6 +22,7 @@ namespace LiveWallpaperEngineLib
         private static bool _isPreviewing;
         private static List<VideoRender> _videoRenders = new List<VideoRender>();
         private static int _displayMonitor;
+        private static int _audioSourceMonitor;
 
         // 监控窗口最大化
         private static bool _maximized;
@@ -29,8 +30,6 @@ namespace LiveWallpaperEngineLib
         #endregion
 
         #region properties
-
-        public static string VideoAspect { get; set; }
 
         #endregion
 
@@ -76,13 +75,13 @@ namespace LiveWallpaperEngineLib
             }
         }
 
-        public static void ApplyVideoAspect()
-        {
-            ForeachVideoRenders((_videoRender, screen, index) =>
-            {
-                _videoRender?.SetAspect(VideoAspect);
-            });
-        }
+        //public static void ApplyVideoAspect()
+        //{
+        //    ForeachVideoRenders((_videoRender, screen, index) =>
+        //    {
+        //        _videoRender?.SetAspect(VideoAspect);
+        //    });
+        //}
 
         public static void Show(Wallpaper wallpaper)
         {
@@ -123,6 +122,8 @@ namespace LiveWallpaperEngineLib
                             _videoRenders[index] = _videoRender;
                     }
                 _videoRender?.Play(absolutePath);
+                if (index == _audioSourceMonitor)
+                    _videoRender?.Mute(false);
             });
         }
 
@@ -132,6 +133,7 @@ namespace LiveWallpaperEngineLib
         /// <param name="displayIndex"></param>
         public static void PlayAudio(int displayIndex)
         {
+            _audioSourceMonitor = displayIndex;
             ForeachVideoRenders((videoRender, screen, index) =>
             {
                 if (index == displayIndex)
