@@ -127,6 +127,11 @@ namespace LiveWallpaperEngineLib
             });
         }
 
+        public static void ShowTargetDisplay(Wallpaper lastOverWallpaper, int display)
+        {
+            _videoRenders[display]?.Play(lastOverWallpaper.AbsolutePath);
+        }
+
         /// <summary>
         /// 播放指定屏幕的音频
         /// </summary>
