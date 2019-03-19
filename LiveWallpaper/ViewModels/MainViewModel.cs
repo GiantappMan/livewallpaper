@@ -18,6 +18,9 @@ using DZY.DotNetUtil.WPF;
 using DZY.DotNetUtil.WPF.Views;
 using DZY.DotNetUtil.WPF.ViewModels;
 using LiveWallpaper.Views;
+using LiveWallpaperEngine;
+using System.Collections.Generic;
+using Mvvm.Base;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -34,6 +37,11 @@ namespace LiveWallpaper.ViewModels
         {
             _eventAggregator = eventAggregator;
             _eventAggregator.Subscribe(this);
+            for (int i = 0; i < LiveWallpaperEngineManager.AllScreens.Count; i++)
+            {
+                Displays.Add(i + 1);
+            }
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
         }
 
         protected override void OnViewReady(object view)
@@ -204,6 +212,21 @@ namespace LiveWallpaper.ViewModels
             await AppManager.ApplyAppDataAsync();
         }
 
+        Wallpaper _lastOverWallpaper;
+        public void ApplyLastWallpaper(Wallpaper w)
+        {
+            _lastOverWallpaper = w;
+        }
+
+        public async void ApplyWallpaperToDisplay(int display)
+        {
+            if (_lastOverWallpaper == null)
+                return;
+            WallpaperManager.ShowTargetDisplay(_lastOverWallpaper, display - 1);
+            AppManager.AppData.Wallpaper = _lastOverWallpaper.AbsolutePath;
+            await AppManager.ApplyAppDataAsync();
+        }
+
         public void Setting()
         {
             IoC.Get<ContextMenuViewModel>().Config(GetView());
@@ -231,6 +254,8 @@ namespace LiveWallpaper.ViewModels
 
         public void Handle(SettingSaved message)
         {
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
+
             if (AppManager.Setting.General.RecordWindowSize)
             {
                 Width = AppManager.Setting.General.Width;
@@ -258,7 +283,88 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
+        #region PlayTargetWallpaperCommand
+
+        private DelegateCommand<Wallpaper> _PlayTargetWallpaperCommand;
+
+        /// <summary>
+        /// Gets the PlayTargetWallpaperCommand.
+        /// </summary>
+        public DelegateCommand<Wallpaper> PlayTargetWallpaperCommand
+        {
+            get
+            {
+                return _PlayTargetWallpaperCommand ?? (_PlayTargetWallpaperCommand = new DelegateCommand<Wallpaper>(ExecutePlayTargetWallpaperCommand, CanExecutePlayTargetWallpaperCommand));
+            }
+        }
+
+        private void ExecutePlayTargetWallpaperCommand(Wallpaper parameter)
+        {
+
+        }
+
+        private bool CanExecutePlayTargetWallpaperCommand(Wallpaper parameter)
+        {
+            return true;
+        }
+
+        #endregion
+
         #region properties
+
+        #region Displays
+
+        /// <summary>
+        /// The <see cref="Displays" /> property's name.
+        /// </summary>
+        public const string DisplaysPropertyName = "Displays";
+
+        private List<int> _Displays = new List<int>();
+
+        /// <summary>
+        /// Displays
+        /// </summary>
+        public List<int> Displays
+        {
+            get { return _Displays; }
+
+            set
+            {
+                if (_Displays == value) return;
+
+                _Displays = value;
+                NotifyOfPropertyChange(DisplaysPropertyName);
+            }
+        }
+
+        #endregion
+
+        #region MultiDiplay
+
+        /// <summary>
+        /// The <see cref="MultiDiplay" /> property's name.
+        /// </summary>
+        public const string MultiDiplayPropertyName = "MultiDiplay";
+
+        private bool _MultiDiplay;
+
+        /// <summary>
+        /// MultiDiplay
+        /// </summary>
+        public bool MultiDiplay
+        {
+            get { return _MultiDiplay; }
+
+            set
+            {
+                if (_MultiDiplay == value) return;
+
+                _MultiDiplay = value;
+                NotifyOfPropertyChange(MultiDiplayPropertyName);
+            }
+        }
+
+        #endregion
 
         #region Wallpapers
 

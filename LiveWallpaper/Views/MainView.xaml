@@ -44,7 +44,7 @@
                                 Width="180"
                                 Height="110"
                                 cal:Action.TargetWithoutContext="MainViewModel"
-                                cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
+                                cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)];                                 [Event PreviewMouseRightButtonDown] = [Action ApplyLastWallpaper($datacontext)]"
                                 Background="Gray"
                                 ToolTip="{Binding ProjectInfo.Description}">
                                 <Image Source="{Binding AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}}" />
@@ -56,6 +56,27 @@
                                     Text="{Binding ProjectInfo.Title}" />
                                 <Grid.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            cal:Action.Target="MainViewModel"
+                                            lan:Xaml.Key="setting_screen"
+                                            ItemsSource="{Binding Displays}"
+                                            Visibility="{Binding MultiDiplay, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <MenuItem.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Label
+                                                        MinWidth="60"
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Center"
+                                                        cal:Action.TargetWithoutContext="MainViewModel"
+                                                        cal:Message.Attach="[Event MouseDown] = [Action ApplyWallpaperToDisplay($datacontext)]"
+                                                        Background="Transparent"
+                                                        Content="{Binding}" />
+                                                </DataTemplate>
+                                            </MenuItem.ItemTemplate>
+                                        </MenuItem>
                                         <MenuItem
                                             cal:Action.TargetWithoutContext="MainViewModel"
                                             cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
