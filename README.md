@@ -1,4 +1,4 @@
-# GitHub第一款PC动态壁纸软件，免费版wallpaper engine
+# GitHub第一款完整的PC动态壁纸软件，免费版wallpaper engine
 
 *  **无流氓、极简UI、单进程、省资源、无恶意弹窗无骚扰、纯净，只有核心功能，毕竟我自己也是要用的...**  
 
