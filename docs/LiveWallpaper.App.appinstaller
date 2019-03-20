@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller Uri="https://github.com/MscoderStudio/LiveWallpaper/releases/LiveWallpaper.App.appinstaller" Version="1.1.26.0" xmlns="http://schemas.microsoft.com/appx/appinstaller/2017/2">
+  <MainBundle Name="24765mscoder.47921C962EDAD" Version="1.1.26.0" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Uri="https://github.com/MscoderStudio/LiveWallpaper/releases/LiveWallpaper.App_1.1.26.0_Debug_Test/LiveWallpaper.App_1.1.26.0_AnyCPU_Debug.appxbundle" />
+  <UpdateSettings>
+    <OnLaunch HoursBetweenUpdateChecks="24" />
+  </UpdateSettings>
+</AppInstaller>
