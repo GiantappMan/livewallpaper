@@ -38,9 +38,9 @@
     <TargetPlatformVersion>10.0.17134.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17134.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <PackageCertificateKeyFile>LiveWallpaper.App_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>LiveWallpaper.App_StoreKey.pfx</PackageCertificateKeyFile>
     <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>2AF017D2BEC6837517E45ABEE78BB23174C00E43</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>40582D832D24113EB9DCEFD56C82363F24C6B603</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
@@ -70,7 +70,6 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="LiveWallpaper.App_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj" />
@@ -126,6 +125,7 @@
     <Content Include="Images\Wide\Wide310x150Logo.scale-200.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-400.png" />
     <None Include="LiveWallpaper.App_StoreKey.pfx" />
+    <None Include="Package.StoreAssociation.xml" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
