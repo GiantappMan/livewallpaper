@@ -1,51 +1,64 @@
 ﻿using Caliburn.Micro;
 using DZY.WinAPI;
-using DZY.WinAPI.Desktop.API;
 using DZY.WinAPI.Helpers;
 using LiveWallpaperEngine;
-using LiveWallpaperEngineLib;
-using LiveWallpaperEngineLib.Controls;
-//using LiveWallpaperEngineLib.NativeWallpapers;
+using LiveWallpaperEngineRender.Renders;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
-using System.Windows.Interop;
+using System.Windows.Threading;
 
 namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
+        #region fields
         /// <summary>
         /// 壁纸显示窗体
         /// </summary>
-        //private static RenderWindow RenderWindow;
-        private static RenderForm RenderWindow;
-        private static Wallpaper _lastwallPaper;
-        //private static SetWinEventHookDelegate _hookCallback;
-        //private static IntPtr _hook;
+        private static string _lastwallPaper;
         private static Timer _timer;
         private static Process _currentProcess;
-        private static LWECore _LWECore;
         private static bool _isPreviewing;
-
-        private static void InitUI()
-        {
-            _currentProcess = Process.GetCurrentProcess();
-        }
-
-        public static string VideoAspect { get; set; }
+        private static List<VideoRender> _videoRenders = new List<VideoRender>();
+        private static int _displayMonitor;
+        private static int _audioSourceMonitor;
 
         // 监控窗口最大化
         private static bool _maximized;
         private static List<int> maximizedPid = new List<int>();
+        #endregion
+
+        #region properties
+
+        #endregion
+
+        #region events
 
         public static event EventHandler<bool> MaximizedEvent;
+
+        #endregion
+
+        public static void Initlize()
+        {
+            Execute.OnUIThread(() =>
+            {
+                LiveWallpaperEngineManager.UIDispatcher = Dispatcher.CurrentDispatcher;
+            });
+            LiveWallpaperEngineManager.AllScreens.ForEach(m =>
+            {
+                //var render = new VideoRender();
+                //var screen = m;
+                //render.Init(screen);
+                //bool ok = LiveWallpaperEngineManager.Show(render, screen);
+
+                //按屏幕索引，预先生成位置
+                _videoRenders.Add(null);
+            });
+        }
+
+        #region public methods
 
         public static void MonitorMaxiemized(bool enable)
         {
@@ -59,145 +72,116 @@ namespace LiveWallpaperEngineLib
                 _timer.Elapsed -= _timer_Elapsed;
                 _timer.Elapsed += _timer_Elapsed;
                 _timer.Start();
-
-                //用此种方案感觉不稳定
-                //if (_hook == IntPtr.Zero)
-                //{
-                //    Execute.OnUIThread(() =>
-                //    {
-
-                //        //监控其他程序是否最大化
-                //        _hookCallback = new SetWinEventHookDelegate(WinEventProc);
-                //        _hook = User32Wrapper.SetWinEventHook(SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND,
-                //            SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _hookCallback, 0, 0, SetWinEventHookFlag.WINEVENT_OUTOFCONTEXT);
-                //    });
-                //}
             }
             else
             {
                 _timer.Elapsed -= _timer_Elapsed;
                 _timer.Stop();
-
-                //用此种方案感觉不稳定
-                //if (_hook != IntPtr.Zero)
-                //{
-                //    Execute.OnUIThread(() =>
-                //    {
-                //        bool ok = User32Wrapper.UnhookWinEvent(_hook);
-                //        _hook = IntPtr.Zero;
-                //    });
-                //}
             }
         }
 
-        public static void ApplyVideoAspect()
+        //public static void ApplyVideoAspect()
+        //{
+        //    ForeachVideoRenders((_videoRender, screen, index) =>
+        //    {
+        //        _videoRender?.SetAspect(VideoAspect);
+        //    });
+        //}
+
+        public static void Show(Wallpaper w, int displayMonitor)
         {
-            if (RenderWindow != null)
+            InnerShow(w.AbsolutePath, displayMonitor);
+        }
+
+        private static void ForeachVideoRenders(Action<VideoRender, System.Windows.Forms.Screen, int> action)
+        {
+            var tmpRenders = new List<VideoRender>(_videoRenders);
+            for (int i = 0; i < tmpRenders.Count; i++)
             {
-                RenderWindow.SetAspect(VideoAspect);
+                var renderItem = _videoRenders[i];
+
+                action(renderItem, LiveWallpaperEngineManager.AllScreens[i], i);
             }
         }
-        public static void Show(Wallpaper wallpaper)
+
+        private static void InnerShow(string absolutePath, int _displayMonitor)
         {
-            IntPtr handler = IntPtr.Zero;
-            Execute.OnUIThread(() =>
+            ForeachVideoRenders((_videoRender, screen, index) =>
             {
-                if (RenderWindow == null)
-                {
-                    RenderWindow = new RenderForm
+                if (_displayMonitor == index || _displayMonitor < 0)
+                    if (_videoRender == null || _videoRender.RenderDisposed)
                     {
-                        Wallpaper = wallpaper
-                    };
-                    RenderWindow.SetAspect(VideoAspect);
-                    RenderWindow.Show();
-                }
-                else
-                {
-                    try
-                    {
-                        RenderWindow.Wallpaper = wallpaper;
-                        RenderWindow.SetAspect(VideoAspect);
-
-                        //RenderWindow .Visibility = System.Windows.Visibility.Visible;
-                        RenderWindow.Visible = true;
-                    }
-                    catch (Exception)
-                    {
-                        RenderWindow?.Close();
-                        RenderWindow = null;
-                        //explorer 崩溃后会触发这个问题
-
-                        RenderWindow = new RenderForm
+                        Execute.OnUIThread(() =>
                         {
-                            Wallpaper = wallpaper
-                        };
-                        RenderWindow.Show();
+                            _videoRender = new VideoRender();
+                            _videoRender.Init(screen);
+                            _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
+                            bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
+                            if (!ok)
+                            {
+                                LiveWallpaperEngineManager.Close(_videoRender);
+                                System.Windows.MessageBox.Show("巨应壁纸貌似不能正常工作，请关闭杀软重试");
+                            }
+                            else
+                                _videoRenders[index] = _videoRender;
+                        });
                     }
-                }
-
-                //handler = new WindowInteropHelper(RenderWindow).Handle;
-                handler = RenderWindow.Handle;
-
+                _videoRender?.Play(absolutePath);
+                if (index == _audioSourceMonitor)
+                    _videoRender?.Mute(false);
             });
-
-            //HandlerWallpaper.Show(handler);
-            _LWECore.SendToBackground(handler);
         }
 
-        public static void Mute(bool mute)
+        /// <summary>
+        /// 播放指定屏幕的音频
+        /// </summary>
+        /// <param name="displayIndex"></param>
+        public static void PlayAudio(int displayIndex)
         {
-            RenderWindow?.Mute(mute);
+            _audioSourceMonitor = displayIndex;
+            ForeachVideoRenders((videoRender, screen, index) =>
+            {
+                if (index == displayIndex)
+                    videoRender?.Mute(false);
+                else
+                    videoRender?.Mute(true);
+            });
         }
 
         public static void Pause()
         {
-            if (RenderWindow == null)
-                return;
-            RenderWindow.Pause();
+            ForeachVideoRenders((_videoRender, screen, index) =>
+            {
+                _videoRender?.Pause();
+            });
         }
 
         public static void Resume()
         {
-            if (RenderWindow == null)
-                return;
-            RenderWindow.Resume();
+            ForeachVideoRenders((_videoRender, screen, index) =>
+            {
+                _videoRender?.Resume();
+            });
         }
 
         public static void Close()
         {
-            if (RenderWindow == null)
-                return;
-
-            Execute.OnUIThread(() =>
+            Execute.BeginOnUIThread(() =>
             {
-                //RenderWindow.Visibility = System.Windows.Visibility.Collapsed;
-                RenderWindow.Visible = false;
-                RenderWindow.Wallpaper = null;
+                ForeachVideoRenders((render, screen, i) =>
+                {
+                    //LiveWallpaperEngineManager.Close(_videoRender);
+                    //_videoRender?.CloseRender();
+                    render?.Stop();
+                    //LiveWallpaperEngineManager.Close(render);
+                    //_videoRenders[i] = null;
+                });
             });
-
-            //HandlerWallpaper.Close();
-            //_LWECore.RestoreParent();
         }
 
         public static void Dispose()
         {
-            try
-            {
-                if (RenderWindow == null)
-                    return;
-
-                MonitorMaxiemized(false);
-                Close();
-                _LWECore.RestoreParent();
-                _LWECore.Dispose();
-
-                RenderWindow.Close();
-                RenderWindow = null;
-            }
-            catch (Exception)
-            {
-
-            }
+            Close();
         }
 
         public static void Preivew(Wallpaper previewWallpaper)
@@ -205,9 +189,9 @@ namespace LiveWallpaperEngineLib
             _isPreviewing = true;
             Execute.OnUIThread(() =>
             {
-                _lastwallPaper = RenderWindow?.Wallpaper;
+                _lastwallPaper = _videoRenders[0]?.CurrentPath;
             });
-            Show(previewWallpaper);
+            Show(previewWallpaper, -1);
         }
 
         public static void StopPreview()
@@ -217,10 +201,25 @@ namespace LiveWallpaperEngineLib
 
             _isPreviewing = false;
             if (_lastwallPaper != null)
-                Show(_lastwallPaper);
+                InnerShow(_lastwallPaper, -1);
             else
                 Close();
         }
+
+        public static void InitMonitor(int displayMonitor)
+        {
+            _displayMonitor = displayMonitor;
+            ForeachVideoRenders((render, screen, i) =>
+            {
+                if (displayMonitor > -1 && i != displayMonitor)
+                {
+                    LiveWallpaperEngineManager.Close(render);
+                    _videoRenders[i] = null;
+                }
+            });
+        }
+
+        #endregion
 
         #region private
 
@@ -238,63 +237,13 @@ namespace LiveWallpaperEngineLib
         {
             _timer.Stop();
 
+            if (_currentProcess == null)
+                _currentProcess = Process.GetCurrentProcess();
+
             var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
             RaiseMaximizedEvent(m);
 
             _timer.Start();
-        }
-
-        private static void WinEventProc(IntPtr hook, SetWinEventHookEventType eventType, IntPtr window, int objectId, int childId, uint threadId, uint time)
-        {
-            try
-            {
-                if (eventType == SetWinEventHookEventType.EVENT_SYSTEM_FOREGROUND ||
-                    eventType == SetWinEventHookEventType.EVENT_SYSTEM_MOVESIZEEND)
-                {//焦点变化，窗口大小变化
-                    var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                    RaiseMaximizedEvent(m);
-                }
-
-                if (eventType == SetWinEventHookEventType.EVENT_OBJECT_LOCATIONCHANGE)
-                {//处理最大化操作
-                    WINDOWPLACEMENT placment = new WINDOWPLACEMENT();
-                    User32Wrapper.GetWindowPlacement(window, ref placment);
-                    //string title = User32Wrapper.GetWindowText(window);
-                    int pid = User32Wrapper.GetProcessId(window);
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_HIDE)
-                        return;
-
-                    if (pid == _currentProcess.Id)
-                        return;
-
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMAXIMIZED)
-                    {
-                        if (!maximizedPid.Contains(pid))
-                        {
-                            maximizedPid.Add(pid);
-                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                            RaiseMaximizedEvent(m);
-                        }
-                    }
-
-                    if (placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWNORMAL ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_RESTORE ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOW ||
-                        placment.showCmd == WINDOWPLACEMENTFlags.SW_SHOWMINIMIZED)
-                    {
-                        if (maximizedPid.Contains(pid))
-                        {
-                            maximizedPid.Remove(pid);
-                            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-                            RaiseMaximizedEvent(m);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex);
-            }
         }
 
         #endregion

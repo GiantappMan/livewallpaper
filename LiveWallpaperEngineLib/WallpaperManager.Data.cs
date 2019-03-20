@@ -1,7 +1,5 @@
 ﻿using Caliburn.Micro;
 using DZY.DotNetUtil.Helpers;
-using LiveWallpaperEngine;
-//using LiveWallpaperEngineLib.NativeWallpapers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,20 +13,22 @@ namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
+        public static string[] VideoExtensions { get; } = new string[] { ".mp4" };
         public static List<string> SupportedExtensions { get; } = new List<string>();
+
         static WallpaperManager()
         {
             SupportedExtensions.AddRange(VideoExtensions);
-            InitUI();
         }
 
-        public static void Initlize()
+        public static string GetWallpaperType(string filePath)
         {
-            _LWECore = new LWECore();
-            ////恢复桌面，以防上次崩溃x显示黑屏
-            //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
+            var extenson = Path.GetExtension(filePath);
+            bool isVideo = VideoExtensions.FirstOrDefault(m => m.ToLower() == extenson.ToLower()) != null;
+            if (isVideo)
+                return WallpaperType.Video.ToString().ToLower();
+            return null;
         }
-
         /// <summary>
         /// 解析壁纸
         /// </summary>
@@ -101,15 +101,15 @@ namespace LiveWallpaperEngineLib
 
         public static async Task<bool> Delete(Wallpaper wallpaper)
         {
-            Wallpaper renderWallpaper = null;
-            if (RenderWindow != null)
+            string renderWallpaper = null;
+            if (_videoRenders != null)
                 Execute.OnUIThread(() =>
                 {
-                    renderWallpaper = RenderWindow.Wallpaper;
+                    renderWallpaper = _videoRenders[0].CurrentPath;
                 });
 
             if (renderWallpaper != null &&
-                renderWallpaper.AbsolutePath == wallpaper.AbsolutePath)
+                renderWallpaper == wallpaper.AbsolutePath)
                 Close();
             string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
             for (int i = 0; i < 3; i++)

@@ -38,14 +38,15 @@
     <TargetPlatformVersion>10.0.17134.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17134.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <PackageCertificateKeyFile>LiveWallpaper.App_StoreKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>LiveWallpaper.App_TemporaryKey.pfx</PackageCertificateKeyFile>
     <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>B0BD4AC1DAB1DBAC53360BA66FA3AD857E87A812</PackageCertificateThumbprint>
-    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <PackageCertificateThumbprint>2AF017D2BEC6837517E45ABEE78BB23174C00E43</PackageCertificateThumbprint>
+    <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
-    <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
+    <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
     <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
-    <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
+    <AppInstallerCheckForUpdateFrequency>Daily</AppInstallerCheckForUpdateFrequency>
+    <AppInstallerUri>https://github.com/MscoderStudio/LiveWallpaper/releases</AppInstallerUri>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AppxBundle>Always</AppxBundle>
@@ -124,7 +125,6 @@
     <Content Include="Images\Wide\Wide310x150Logo.scale-150.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-200.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-400.png" />
-    <None Include="Package.StoreAssociation.xml" />
     <None Include="LiveWallpaper.App_StoreKey.pfx" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />

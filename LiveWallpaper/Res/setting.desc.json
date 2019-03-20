@@ -60,10 +60,22 @@
         }
       ]
     },
-    "VideoAspect": {
-      "type": "string",
-      "lanKey": "setting_videoAspect",
-      "descLanKey": "setting_videoAspect_desc"
+    //"VideoAspect": {
+    //  "type": "string",
+    //  "lanKey": "setting_videoAspect",
+    //  "descLanKey": "setting_videoAspect_desc"
+    //},
+    "AudioSource": {
+      "type": "combobox",
+      "lanKey": "setting_audioSource",
+      "descLanKey": "setting_audioSource_desc",
+      "cbItems": "$AudioSource"
+    },
+    "DisplayMonitor": {
+      "type": "combobox",
+      "lanKey": "setting_displayMonitor",
+      "descLanKey": "setting_displayMonitor_desc",
+      "cbItems": "$DisplayMonitor"
     }
   }
   //,
