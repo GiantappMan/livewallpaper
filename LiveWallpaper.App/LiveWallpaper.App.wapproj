@@ -45,8 +45,8 @@
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
     <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
-    <AppInstallerCheckForUpdateFrequency>Daily</AppInstallerCheckForUpdateFrequency>
-    <AppInstallerUri>https://github.com/MscoderStudio/LiveWallpaper/releases</AppInstallerUri>
+    <AppInstallerCheckForUpdateFrequency>Hourly</AppInstallerCheckForUpdateFrequency>
+    <AppInstallerUri>https://mscoderstudio.github.io/LiveWallpaper/</AppInstallerUri>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AppxBundle>Always</AppxBundle>
