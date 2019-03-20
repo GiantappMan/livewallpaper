@@ -53,11 +53,11 @@
     <Reference Include="DZY.WinAPI, Version=1.0.48.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DZY.WinAPI.1.0.48\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
     </Reference>
-    <Reference Include="LiveWallpaperEngine, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.14\lib\net46\LiveWallpaperEngine.dll</HintPath>
+    <Reference Include="LiveWallpaperEngine, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveWallpaperEngine.1.0.3\lib\netstandard2.0\LiveWallpaperEngine.dll</HintPath>
     </Reference>
     <Reference Include="LiveWallpaperEngineRender, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.14\lib\net46\LiveWallpaperEngineRender.dll</HintPath>
+      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.18\lib\net46\LiveWallpaperEngineRender.dll</HintPath>
     </Reference>
     <Reference Include="LoadingIndicators.WPF, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LoadingIndicators.WPF.0.0.1\lib\LoadingIndicators.WPF.dll</HintPath>

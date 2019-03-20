@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Timers;
+using System.Windows.Threading;
 
 namespace LiveWallpaperEngineLib
 {
@@ -41,6 +42,10 @@ namespace LiveWallpaperEngineLib
 
         public static void Initlize()
         {
+            Execute.OnUIThread(() =>
+            {
+                LiveWallpaperEngineManager.UIDispatcher = Dispatcher.CurrentDispatcher;
+            });
             LiveWallpaperEngineManager.AllScreens.ForEach(m =>
             {
                 //var render = new VideoRender();
@@ -83,9 +88,9 @@ namespace LiveWallpaperEngineLib
         //    });
         //}
 
-        public static void Show(Wallpaper wallpaper)
+        public static void Show(Wallpaper w, int displayMonitor)
         {
-            InnerShow(wallpaper.AbsolutePath);
+            InnerShow(w.AbsolutePath, displayMonitor);
         }
 
         private static void ForeachVideoRenders(Action<VideoRender, System.Windows.Forms.Screen, int> action)
@@ -99,7 +104,7 @@ namespace LiveWallpaperEngineLib
             }
         }
 
-        private static void InnerShow(string absolutePath)
+        private static void InnerShow(string absolutePath, int _displayMonitor)
         {
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
@@ -110,26 +115,21 @@ namespace LiveWallpaperEngineLib
                         {
                             _videoRender = new VideoRender();
                             _videoRender.Init(screen);
+                            _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
+                            bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
+                            if (!ok)
+                            {
+                                LiveWallpaperEngineManager.Close(_videoRender);
+                                System.Windows.MessageBox.Show("巨应壁纸貌似不能正常工作，请关闭杀软重试");
+                            }
+                            else
+                                _videoRenders[index] = _videoRender;
                         });
-                        _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
-                        bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
-                        if (!ok)
-                        {
-                            LiveWallpaperEngineManager.Close(_videoRender);
-                            System.Windows.MessageBox.Show("巨应壁纸貌似不能正常工作，请关闭杀软重试");
-                        }
-                        else
-                            _videoRenders[index] = _videoRender;
                     }
                 _videoRender?.Play(absolutePath);
                 if (index == _audioSourceMonitor)
                     _videoRender?.Mute(false);
             });
-        }
-
-        public static void ShowTargetDisplay(Wallpaper lastOverWallpaper, int display)
-        {
-            _videoRenders[display]?.Play(lastOverWallpaper.AbsolutePath);
         }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace LiveWallpaperEngineLib
             {
                 _lastwallPaper = _videoRenders[0]?.CurrentPath;
             });
-            Show(previewWallpaper);
+            Show(previewWallpaper, -1);
         }
 
         public static void StopPreview()
@@ -201,7 +201,7 @@ namespace LiveWallpaperEngineLib
 
             _isPreviewing = false;
             if (_lastwallPaper != null)
-                InnerShow(_lastwallPaper);
+                InnerShow(_lastwallPaper, -1);
             else
                 Close();
         }
