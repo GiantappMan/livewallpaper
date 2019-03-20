@@ -12,12 +12,10 @@
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=" "
-    Width="{Binding Width, Mode=TwoWay}"
-    Height="{Binding Height, Mode=TwoWay}"
     MinWidth="450"
+    MinHeight="200"
     cal:Message.Attach="[Event SourceInitialized]=[Action SourceInitialized()]"
     lan:Xaml.Key="common_appName"
-    SizeChanged="Window_SizeChanged"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Window.Resources>
@@ -46,7 +44,7 @@
                                 Width="180"
                                 Height="110"
                                 cal:Action.TargetWithoutContext="MainViewModel"
-                                cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)]"
+                                cal:Message.Attach="[Event PreviewMouseLeftButtonDown] = [Action ApplyWallpaper($datacontext)];                                 [Event PreviewMouseRightButtonDown] = [Action ApplyLastWallpaper($datacontext)]"
                                 Background="Gray"
                                 ToolTip="{Binding ProjectInfo.Description}">
                                 <Image Source="{Binding AbsolutePreviewPath, Converter={StaticResource UriToCachedImageConverter}}" />
@@ -58,6 +56,27 @@
                                     Text="{Binding ProjectInfo.Title}" />
                                 <Grid.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            cal:Action.Target="MainViewModel"
+                                            lan:Xaml.Key="setting_screen"
+                                            ItemsSource="{Binding Displays}"
+                                            Visibility="{Binding MultiDiplay, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <MenuItem.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Label
+                                                        MinWidth="60"
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Center"
+                                                        cal:Action.TargetWithoutContext="MainViewModel"
+                                                        cal:Message.Attach="[Event MouseDown] = [Action ApplyWallpaperToDisplay($datacontext)]"
+                                                        Background="Transparent"
+                                                        Content="{Binding}" />
+                                                </DataTemplate>
+                                            </MenuItem.ItemTemplate>
+                                        </MenuItem>
                                         <MenuItem
                                             cal:Action.TargetWithoutContext="MainViewModel"
                                             cal:Message.Attach="[Event Click] = [Action EditWallpaper($datacontext)]"
@@ -93,22 +112,11 @@
                         HorizontalAlignment="Left"
                         Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
                         <iconPacks:PackIconMaterial
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Kind="SettingsOutline" />
-                    </Button>
-                    <!--<ComboBox />-->
-                    <CheckBox
-                        x:Name="Mute"
-                        Grid.Column="1"
-                        Margin="20,0"
-                        VerticalAlignment="Center"
-                        IsChecked="True">
-                        <iconPacks:PackIconMaterial
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Kind="VolumeMute" />
-                    </CheckBox>
+                            Kind="SettingsOutline" />
+                    </Button>
+                    <!--<ComboBox />-->
                     <StackPanel
                         Grid.Column="2"
                         Margin="5,2,5,5"
@@ -131,8 +139,8 @@
                                 <Run lan:Xaml.Key="mainUI_createWallpaper" />
                             </Button.ToolTip>
                             <materialDesign:PackIcon
-                                Height="26"
                                 Width="26"
+                                Height="26"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Kind="Add" />

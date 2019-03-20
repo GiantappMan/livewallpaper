@@ -49,6 +49,13 @@
   "setting_windowWidth": "Width",
   "setting_windowHeight": "Height",
   "setting_wallpaperDir": "Wallpaper Directory",
+  "setting_audioSource": "Audio Source",
+  "setting_audioSource_desc": "Which audio to play",
+  "setting_audioSource_mute": "Mute",
+  "setting_displayMonitor": "Multi-screen",
+  "setting_displayMonitor_desc": "Which screen to display wallpaper",
+  "setting_displayMonitor_default": "Default",
+  "setting_screen": "Screen",
 
   "wallpaperEditor_warning_invalidWallpaper": "Invalid wallpaper",
   "wallpaperEditor_warning_titleEmpty": "Please enter wallpaper title",
