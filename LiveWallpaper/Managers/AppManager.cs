@@ -148,15 +148,11 @@ namespace LiveWallpaper.Managers
             //加载壁纸
             RefreshLocalWallpapers();
             WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
-          
+
             WallpaperManager.MonitorMaxiemized(true);
             ApplyWallpaper(Setting);
 
-            var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
-            if (current != null)
-            {
-                WallpaperManager.Show(current);
-            }
+            ShowCurrentWallpapers();
         }
 
         public static async void CheckUpates(IntPtr mainHandler)
@@ -206,13 +202,43 @@ namespace LiveWallpaper.Managers
                         WallpaperManager.Close();
                     else
                     {
-                        var current = Wallpapers.FirstOrDefault(m => m.AbsolutePath == AppData.Wallpaper);
-                        if (current != null)
-                            WallpaperManager.Show(current);
-                        WallpaperManager.Show(current);
+                        ShowCurrentWallpapers();
                     }
                     break;
             }
+        }
+
+        private static void ShowCurrentWallpapers()
+        {
+            if (AppData.Wallpapers == null)
+                return;
+
+            foreach (var item in AppData.Wallpapers)
+            {
+                var w = Wallpapers.FirstOrDefault(m => m.AbsolutePath == item.Path);
+                if (w == null)
+                    continue;
+
+                WallpaperManager.Show(w, item.DisplayIndex);
+            }
+        }
+
+        internal static async Task ShowWallpaper(Wallpaper w, int index)
+        {
+            WallpaperManager.Show(w, index);
+            if (AppData.Wallpapers == null)
+                AppData.Wallpapers = new List<DisplayWallpaper>();
+
+            var exist = AppData.Wallpapers.FirstOrDefault(m => m.DisplayIndex == index);
+            if (exist == null)
+            {
+                exist = new DisplayWallpaper() { DisplayIndex = index, Path = w.AbsolutePath };
+                AppData.Wallpapers.Add(exist);
+            }
+
+            exist.Path = w.AbsolutePath;
+
+            await ApplyAppDataAsync();
         }
 
         internal static void Dispose()

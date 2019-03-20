@@ -4,12 +4,10 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using LiveWallpaperEngineLib;
-using MultiLanguageManager;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
-using Windows.Storage;
 using LiveWallpaper.Events;
 using DZY.DotNetUtil.Helpers;
 using System.Windows.Interop;
@@ -20,7 +18,6 @@ using DZY.DotNetUtil.WPF.ViewModels;
 using LiveWallpaper.Views;
 using LiveWallpaperEngine;
 using System.Collections.Generic;
-using Mvvm.Base;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -207,9 +204,7 @@ namespace LiveWallpaper.ViewModels
 
         public async void ApplyWallpaper(Wallpaper w)
         {
-            WallpaperManager.Show(w);
-            AppManager.AppData.Wallpaper = w.AbsolutePath;
-            await AppManager.ApplyAppDataAsync();
+            await AppManager.ShowWallpaper(w, -1);
         }
 
         Wallpaper _lastOverWallpaper;
@@ -222,9 +217,8 @@ namespace LiveWallpaper.ViewModels
         {
             if (_lastOverWallpaper == null)
                 return;
-            WallpaperManager.ShowTargetDisplay(_lastOverWallpaper, display - 1);
-            AppManager.AppData.Wallpaper = _lastOverWallpaper.AbsolutePath;
-            await AppManager.ApplyAppDataAsync();
+
+            await AppManager.ShowWallpaper(_lastOverWallpaper, display - 1);
         }
 
         public void Setting()
@@ -279,33 +273,6 @@ namespace LiveWallpaper.ViewModels
             catch (Exception)
             {
             }
-        }
-
-        #endregion
-
-        #region PlayTargetWallpaperCommand
-
-        private DelegateCommand<Wallpaper> _PlayTargetWallpaperCommand;
-
-        /// <summary>
-        /// Gets the PlayTargetWallpaperCommand.
-        /// </summary>
-        public DelegateCommand<Wallpaper> PlayTargetWallpaperCommand
-        {
-            get
-            {
-                return _PlayTargetWallpaperCommand ?? (_PlayTargetWallpaperCommand = new DelegateCommand<Wallpaper>(ExecutePlayTargetWallpaperCommand, CanExecutePlayTargetWallpaperCommand));
-            }
-        }
-
-        private void ExecutePlayTargetWallpaperCommand(Wallpaper parameter)
-        {
-
-        }
-
-        private bool CanExecutePlayTargetWallpaperCommand(Wallpaper parameter)
-        {
-            return true;
         }
 
         #endregion
