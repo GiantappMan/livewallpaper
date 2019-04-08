@@ -47,6 +47,13 @@
 
 c#交流群：191034956
 
+# 视频教程：
+
+## [使用教程](https://www.bilibili.com/video/av48407705/)
+
+## [安装壁纸教程](https://www.bilibili.com/video/av48408360/)
+
+
 # 软件截图
 
 ## 客户端
