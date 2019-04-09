@@ -252,12 +252,12 @@ namespace LiveWallpaper.Managers
 
             if (!SettingInitialized)
                 return;
-
-            if (!Directory.Exists(LocalWallpaperDir))
-                Directory.CreateDirectory(LocalWallpaperDir);
-
+         
             try
             {
+                if (!Directory.Exists(LocalWallpaperDir))
+                    Directory.CreateDirectory(LocalWallpaperDir);
+                
                 var wallpapers = WallpaperManager.GetWallpapers(LocalWallpaperDir);
                 foreach (var item in wallpapers)
                 {
