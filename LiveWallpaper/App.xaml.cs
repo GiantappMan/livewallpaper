@@ -50,7 +50,7 @@ namespace LiveWallpaper
             }
         }
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             try
             {
@@ -58,6 +58,8 @@ namespace LiveWallpaper
 
                 if (!ret)
                 {
+                    string msg = await LanService.Get("mainUI_programRunning");
+                    MessageBox.Show(msg);
                     Environment.Exit(0);
                     return;
                 }
