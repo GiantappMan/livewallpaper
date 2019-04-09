@@ -18,6 +18,7 @@
   "common_selectFile": "Select the file",
   "common_vip": "VIP",
 
+  "mainUI_programRunning": "Livewallpaper is already running",
   "mainUI_localWallpaper": "Local wallpaper",
   "mainUI_wallpaperStore": "Wallpaper store",
   "mainUI_refreshWallpaper": "Refresh wallpaper",
