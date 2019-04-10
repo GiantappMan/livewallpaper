@@ -219,6 +219,7 @@ namespace LiveWallpaper.Managers
                 if (w == null)
                     continue;
 
+                logger.Info($"ShowCurrentWallpapers {w.AbsolutePath} , {item.DisplayIndex}");
                 WallpaperManager.Show(w, item.DisplayIndex);
             }
         }
@@ -252,12 +253,12 @@ namespace LiveWallpaper.Managers
 
             if (!SettingInitialized)
                 return;
-         
+
             try
             {
                 if (!Directory.Exists(LocalWallpaperDir))
                     Directory.CreateDirectory(LocalWallpaperDir);
-                
+
                 var wallpapers = WallpaperManager.GetWallpapers(LocalWallpaperDir);
                 foreach (var item in wallpapers)
                 {
