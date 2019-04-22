@@ -13,7 +13,7 @@ namespace LiveWallpaperEngineLib
 {
     public static partial class WallpaperManager
     {
-        public static string[] VideoExtensions { get; } = new string[] { ".mp4" };
+        public static string[] VideoExtensions { get; } = new string[] { "*.mp4;*.flv;*.blv;*.avi", "|All Files|*.*" };
         public static List<string> SupportedExtensions { get; } = new List<string>();
 
         static WallpaperManager()

@@ -155,7 +155,7 @@ namespace LiveWallpaper.ViewModels
             sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
             foreach (var item in WallpaperManager.SupportedExtensions)
             {
-                sb.Append($"*{item};");
+                sb.Append($"{item};");
             }
             var openFileDialog = new Microsoft.Win32.OpenFileDialog()
             {
