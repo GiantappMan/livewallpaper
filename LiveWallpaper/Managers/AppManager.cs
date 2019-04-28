@@ -295,6 +295,8 @@ namespace LiveWallpaper.Managers
             await LanService.UpdateLanguage();
             await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
+            //WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
+            WallpaperManager.ApplyVideoAspect(setting.Wallpaper.VideoAspect);
         }
 
         public static void ApplyWallpaper(SettingObject setting)

@@ -43,7 +43,7 @@
   "setting_maximizedPlay": "Воспроизвести",
   "setting_maximizedStop": "Приостановить",
   "setting_maximizedPause": "Остановить",
-  "setting_videoAspect": "VideoAspect",
+  "setting_videoAspect": "Video aspect",
   "setting_videoAspect_desc": "Формат 16: 9 4: 3 1: 1, по умолчанию ничего",
   "setting_server": "Сервер",
   "setting_serverURL": "адресс сервера",

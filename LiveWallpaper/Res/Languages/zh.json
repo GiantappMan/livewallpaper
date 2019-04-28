@@ -44,7 +44,7 @@
   "setting_maximizedStop": "停止",
   "setting_maximizedPause": "暂停",
   "setting_videoAspect": "视频播放比例",
-  "setting_videoAspect_desc": "格式 16:9 4:3 1:1,默认不填",
+  "setting_videoAspect_desc": "格式 16:9 1920:1080 1:1等,默认不填",
   "setting_server": "服务器",
   "setting_serverURL": "服务器地址",
   "setting_recordWindowSize": "保存主窗口大小",

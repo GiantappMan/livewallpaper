@@ -32,6 +32,8 @@ namespace LiveWallpaperEngineLib
 
         #region properties
 
+        public static string VideoAspect { get; private set; }
+
         #endregion
 
         #region events
@@ -80,13 +82,14 @@ namespace LiveWallpaperEngineLib
             }
         }
 
-        //public static void ApplyVideoAspect()
-        //{
-        //    ForeachVideoRenders((_videoRender, screen, index) =>
-        //    {
-        //        _videoRender?.SetAspect(VideoAspect);
-        //    });
-        //}
+        public static void ApplyVideoAspect(string videoAspect)
+        {
+            VideoAspect = videoAspect;
+            ForeachVideoRenders((_videoRender, screen, index) =>
+            {
+                _videoRender?.SetAspect(videoAspect);
+            });
+        }
 
         public static void Show(Wallpaper w, int displayMonitor)
         {
@@ -115,7 +118,11 @@ namespace LiveWallpaperEngineLib
                         {
                             _videoRender = new VideoRender();
                             _videoRender.Init(screen);
-                            _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
+                            if (string.IsNullOrEmpty(VideoAspect))
+                                _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
+                            else
+                                _videoRender.SetAspect(VideoAspect);
+
                             bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
                             if (!ok)
                             {

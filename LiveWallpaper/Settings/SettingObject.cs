@@ -58,7 +58,7 @@ namespace LiveWallpaper.Settings
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
         public int AudioSource { get; set; }
         public int DisplayMonitor { get; set; }
-        //public string VideoAspect { get; set; }
+        public string VideoAspect { get; set; }
 
         public static WallpaperSetting GetDefaultWallpaperSetting()
         {

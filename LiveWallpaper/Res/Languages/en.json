@@ -43,7 +43,7 @@
   "setting_maximizedPlay": "Play",
   "setting_maximizedStop": "Pause",
   "setting_maximizedPause": "Stop",
-  "setting_videoAspect": "VideoAspect",
+  "setting_videoAspect": "Video-aspect",
   "setting_videoAspect_desc": "Format 16:9 4:3 1:1, default is none",
   "setting_server": "Server",
   "setting_serverURL": "server url",
