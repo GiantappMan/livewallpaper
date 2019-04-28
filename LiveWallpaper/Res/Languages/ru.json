@@ -13,10 +13,11 @@
   "common_config": "Конфиг",
   "common_exit": "Выход",
   "common_about": "О...",
-  "common_appName": "LiveWallpaper-MscoderStudio",
+  "common_appName": "LiveWallpaper",
   "common_or": "или",
   "common_selectFile": "Выберите файл",
   "common_vip": "VIP",
+  "common_contact": "Feedback",
 
   "mainUI_programRunning": "Livewallpaper запущен",
   "mainUI_localWallpaper": "Локальные обои",

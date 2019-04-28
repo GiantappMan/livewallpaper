@@ -2,7 +2,6 @@
   "General": {
     "StartWithWindows": true,
     "MinimizeUI": false,
-    "CurrentLan": "zh",
     "RecordWindowSize": true,
     "Width": 528.0,
     "Height": 432.0,

@@ -13,10 +13,11 @@
   "common_config": "Config",
   "common_exit": "Exit",
   "common_about": "About",
-  "common_appName": "LiveWallpaper-MscoderStudio",
+  "common_appName": "LiveWallpaper",
   "common_or": "Or",
   "common_selectFile": "Select the file",
   "common_vip": "VIP",
+  "common_contact": "Feedback",
 
   "mainUI_programRunning": "Livewallpaper is already running",
   "mainUI_localWallpaper": "Local wallpaper",
@@ -28,7 +29,7 @@
   "mainUI_openLocalServer": "Open local service",
   "mainUI_downloadStore": "Download store",
 
-  "contextMenu_main": "Open the main interface",
+  "contextMenu_main": "Open main UI",
 
   "setting_saveDir": "Storage directory",
   "setting_general": "General",

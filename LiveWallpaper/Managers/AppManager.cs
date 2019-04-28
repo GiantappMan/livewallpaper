@@ -287,7 +287,11 @@ namespace LiveWallpaper.Managers
         public static async Task ApplySetting(SettingObject setting)
         {
             LocalWallpaperDir = Setting.General.WallpaperSaveDir;
-            Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(setting.General.CurrentLan);
+            string cultureName = setting.General.CurrentLan;
+            if (cultureName == null)
+                cultureName = Thread.CurrentThread.CurrentUICulture.Name;
+
+            Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(cultureName);
             await LanService.UpdateLanguage();
             await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
             setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();

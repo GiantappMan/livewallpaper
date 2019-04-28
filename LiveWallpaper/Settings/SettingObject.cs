@@ -36,12 +36,12 @@ namespace LiveWallpaper.Settings
             return new GeneralSettting()
             {
                 WallpaperSaveDir = saveDir,
-                StartWithWindows = true,
-                MinimizeUI = true,
-                RecordWindowSize = true,
-                Width = 436,
-                Height = 337,
-                CurrentLan = "zh"
+                //StartWithWindows = true,
+                //MinimizeUI = true,
+                //RecordWindowSize = true,
+                //Width = 436,
+                //Height = 337,
+                //CurrentLan = "zh"
             };
         }
     }

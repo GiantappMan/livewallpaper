@@ -20,6 +20,10 @@
         {
           "lan": "English",
           "value": "en"
+        },
+        {
+          "lan": "Русский",
+          "value": "ru"
         }
       ]
     },
