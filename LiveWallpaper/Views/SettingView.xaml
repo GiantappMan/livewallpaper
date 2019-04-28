@@ -26,6 +26,8 @@
         <wpf:JsonConfierControl
             Grid.Row="1"
             BorderBrush="#FF673AB7"
+            Column0Width="1.5*"
+            Column1Width="4*"
             DataContext="{Binding JsonConfierViewModel}" />
         <StackPanel
             Grid.Row="2"
