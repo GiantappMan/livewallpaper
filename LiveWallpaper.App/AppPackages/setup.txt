@@ -1,0 +1,4 @@
+run Add-AppDevPackage.ps1
+
+video tutorial:
+https://www.bilibili.com/video/av40786974

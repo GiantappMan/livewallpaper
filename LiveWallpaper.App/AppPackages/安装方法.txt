@@ -1,4 +1,0 @@
-运行Add-AppDevPackage.ps1
-
-不会的看视频教程:
-https://www.bilibili.com/video/av40786974
