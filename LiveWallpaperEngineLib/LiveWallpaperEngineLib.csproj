@@ -111,7 +111,7 @@
       <Version>1.0.30</Version>
     </PackageReference>
     <PackageReference Include="DZY.DotNetUtil.UI">
-      <Version>1.0.0.59</Version>
+      <Version>1.0.0.60</Version>
     </PackageReference>
     <PackageReference Include="LiveWallpaperEngine">
       <Version>1.0.3</Version>

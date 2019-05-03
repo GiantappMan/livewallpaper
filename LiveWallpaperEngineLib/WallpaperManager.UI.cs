@@ -87,8 +87,16 @@ namespace LiveWallpaperEngineLib
             VideoAspect = videoAspect;
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
-                _videoRender?.SetAspect(videoAspect);
+                InnerApplyVideoAspect(_videoRender, VideoAspect, screen);
             });
+        }
+
+        private static void InnerApplyVideoAspect(VideoRender videoRender, string videoAspect, System.Windows.Forms.Screen screen)
+        {
+            if (string.IsNullOrEmpty(videoAspect))
+                videoRender?.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
+            else
+                videoRender?.SetAspect(videoAspect);
         }
 
         public static void Show(Wallpaper w, int displayMonitor)
@@ -118,10 +126,8 @@ namespace LiveWallpaperEngineLib
                         {
                             _videoRender = new VideoRender();
                             _videoRender.Init(screen);
-                            if (string.IsNullOrEmpty(VideoAspect))
-                                _videoRender.SetAspect($"{screen.Bounds.Width}:{screen.Bounds.Height}");
-                            else
-                                _videoRender.SetAspect(VideoAspect);
+
+                            InnerApplyVideoAspect(_videoRender, VideoAspect, screen);
 
                             bool ok = LiveWallpaperEngineManager.Show(_videoRender, screen);
                             if (!ok)
