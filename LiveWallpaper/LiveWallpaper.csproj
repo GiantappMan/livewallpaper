@@ -41,36 +41,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dragablz, Version=0.0.3.203, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dragablz.0.0.3.203\lib\net45\Dragablz.dll</HintPath>
-    </Reference>
-    <Reference Include="DZY.WinAPI, Version=1.0.48.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DZY.WinAPI.1.0.48\lib\netstandard2.0\DZY.WinAPI.dll</HintPath>
-    </Reference>
-    <Reference Include="LiveWallpaperEngine, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngine.1.0.3\lib\netstandard2.0\LiveWallpaperEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="LiveWallpaperEngineRender, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveWallpaperEngineRender.1.0.0.18\lib\net46\LiveWallpaperEngineRender.dll</HintPath>
-    </Reference>
-    <Reference Include="MahApps.Metro, Version=1.6.5.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MahApps.Metro.1.6.5\lib\net47\MahApps.Metro.dll</HintPath>
-    </Reference>
-    <Reference Include="MaterialDesignColors, Version=1.1.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MaterialDesignColors.1.1.3\lib\net45\MaterialDesignColors.dll</HintPath>
-    </Reference>
-    <Reference Include="MaterialDesignThemes.MahApps, Version=0.0.10.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MaterialDesignThemes.MahApps.0.0.12\lib\net45\MaterialDesignThemes.MahApps.dll</HintPath>
-    </Reference>
-    <Reference Include="MaterialDesignThemes.Wpf, Version=2.5.1.1345, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MaterialDesignThemes.2.5.1\lib\net45\MaterialDesignThemes.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="Mvvm.Base, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mvvm.Base.1.0.0\lib\netstandard2.0\Mvvm.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
@@ -220,7 +190,10 @@
       <Version>1.0.30</Version>
     </PackageReference>
     <PackageReference Include="DZY.DotNetUtil.UI">
-      <Version>1.0.0.60</Version>
+      <Version>1.0.0.61</Version>
+    </PackageReference>
+    <PackageReference Include="DZY.WinAPI">
+      <Version>1.0.48</Version>
     </PackageReference>
     <PackageReference Include="Expression.Interaction">
       <Version>3.0.40218</Version>
@@ -258,14 +231,17 @@
     <PackageReference Include="MultiLanguageForXAML">
       <Version>1.0.0.21</Version>
     </PackageReference>
+    <PackageReference Include="Mvvm.Base">
+      <Version>1.0.0</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.2</Version>
     </PackageReference>
     <PackageReference Include="NLog.Config">
-      <Version>4.6.3</Version>
+      <Version>4.6.4</Version>
     </PackageReference>
     <PackageReference Include="NLog.Schema">
-      <Version>4.6.3</Version>
+      <Version>4.6.4</Version>
     </PackageReference>
     <PackageReference Include="System.Security.Principal.Windows">
       <Version>4.5.1</Version>
