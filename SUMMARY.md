@@ -1,4 +1,4 @@
 # Table of contents
 
-* [Initial page](README.md)
+* [巨应动态壁纸](README.md)
 
