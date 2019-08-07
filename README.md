@@ -46,7 +46,10 @@
 
 * 本仓库是完整项目，代码较多而且复杂。如果你只是想了解一下动态壁纸原理，核心代码请看我新开的仓库，非常简单请放心食用 [https://github.com/MscoderStudio/LiveWallpaperEngine](https://github.com/MscoderStudio/LiveWallpaperEngine)
 
-c\#交流群：191034956
+### QQ群交流:
+**C#全栈开发**：191034956  
+**全球it互联交友**: 665127101
+（只允许单身码农和各行业的妹子加入，初衷是给程序员多一种认识异性的渠道）
 
 ## 视频教程：
 
