@@ -3,18 +3,11 @@ using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
 using LiveWallpaperEngineLib;
-//using LiveWallpaperEngineLib.NativeWallpapers;
-using MultiLanguageManager;
+using MultiLanguageForXAML;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace LiveWallpaper

@@ -1,13 +1,13 @@
 ﻿using Caliburn.Micro;
-using DZY.DotNetUtil.Helpers;
-using DZY.DotNetUtil.WPF.ViewModels;
-using DZY.DotNetUtil.WPF.Views;
+using DZY.Util.Common.Helpers;
+using DZY.Util.WPF.ViewModels;
+using DZY.Util.WPF.Views;
 using Hardcodet.Wpf.TaskbarNotification;
 using JsonConfiger;
 using LiveWallpaper.Settings;
 using LiveWallpaperEngineLib;
 using LiveWallpaperEngineLib.Controls;
-using MultiLanguageManager;
+using MultiLanguageForXAML;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -27,6 +27,7 @@ namespace LiveWallpaper.Managers
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static DesktopBridgeStartupManager _desktopBridgeStartupManager =null;
 
         /// <summary>
         /// 默认配置
@@ -113,7 +114,7 @@ namespace LiveWallpaper.Managers
                 return;
 
             //开机启动
-            AutoStartupHelper.Initlize(AutoStartupType.Store, "LiveWallpaper");
+            _desktopBridgeStartupManager = new DesktopBridgeStartupManager("LiveWallpaper");
 
             //配置相关
             SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
@@ -293,8 +294,8 @@ namespace LiveWallpaper.Managers
 
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(cultureName);
             await LanService.UpdateLanguage();
-            await AutoStartupHelper.Instance.Set(setting.General.StartWithWindows);
-            setting.General.StartWithWindows = await AutoStartupHelper.Instance.Check();
+            await _desktopBridgeStartupManager.Set(setting.General.StartWithWindows);
+            setting.General.StartWithWindows = await _desktopBridgeStartupManager.Check();
             //WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect(setting.Wallpaper.VideoAspect);
         }
