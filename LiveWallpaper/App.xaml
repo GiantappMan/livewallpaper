@@ -16,8 +16,6 @@
                 </ResourceDictionary>
                 <ResourceDictionary Source="Views/Res/Common.xaml" />
                 <ResourceDictionary Source="Views/Res/ContextMenu.xaml" />
-                <!--<ResourceDictionary Source="pack://application:,,,/LoadingIndicators.WPF;component/Colors.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/LoadingIndicators.WPF;component/Styles.xaml" />-->
                 <ResourceDictionary>
                     <tb:TaskbarIcon
                         x:Key="NotifyIcon"
