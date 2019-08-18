@@ -128,9 +128,6 @@
     <PackageReference Include="System.Security.Principal.Windows">
       <Version>4.5.1</Version>
     </PackageReference>
-    <PackageReference Include="UwpDesktop">
-      <Version>10.0.14393.3</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
