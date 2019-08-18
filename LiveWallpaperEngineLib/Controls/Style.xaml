@@ -1,13 +1,18 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:MpvPlayer="clr-namespace:MpvPlayer;assembly=MpvPlayer"
     xmlns:local="clr-namespace:LiveWallpaperEngineLib.Controls">
     <DataTemplate x:Key="videoTemplate">
-        <local:MediaElementEx
+        <!--<local:MediaElementEx
             x:Name="media"
             IsMuted="{Binding Muted}"
             Source="{Binding AbsolutePath}"
-            Stretch="Fill" />
+            Stretch="Fill" />-->
+        <MpvPlayer:MpvPlayerControl
+            x:Name="player"
+            IsLoop="True"
+            Source="{Binding AbsolutePath}" />
     </DataTemplate>
     <local:RenderInfoSelector x:Key="RenderInfoSelector" VideoTemplate="{StaticResource videoTemplate}" />
 </ResourceDictionary>
