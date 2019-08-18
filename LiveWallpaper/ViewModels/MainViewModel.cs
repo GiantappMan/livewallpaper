@@ -9,15 +9,14 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Dynamic;
 using LiveWallpaper.Events;
-using DZY.DotNetUtil.Helpers;
 using System.Windows.Interop;
-using DZY.DotNetUtil.UI.Helpers;
-using DZY.DotNetUtil.WPF;
-using DZY.DotNetUtil.WPF.Views;
-using DZY.DotNetUtil.WPF.ViewModels;
 using LiveWallpaper.Views;
 using LiveWallpaperEngine;
 using System.Collections.Generic;
+using DZY.Util.WPF;
+using DZY.Util.WPF.Views;
+using DZY.Util.Common.Helpers;
+using DZY.Util.WPF.ViewModels;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -61,7 +60,7 @@ namespace LiveWallpaper.ViewModels
                      AppManager.CheckUpates(handle);
                  });
 
-                AppHelper AppHelper = new AppHelper();
+                DZY.Util.Common.Helpers.AppHelper AppHelper = new DZY.Util.Common.Helpers.AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
                 bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 15, 30);
                 if (canPrpmpt)

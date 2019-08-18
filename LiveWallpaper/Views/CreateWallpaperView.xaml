@@ -8,7 +8,7 @@
     xmlns:engine="clr-namespace:LiveWallpaperEngineLib.Controls;assembly=LiveWallpaperEngineLib"
     xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-    xmlns:lan="clr-namespace:MultiLanguageManager;assembly=MultiLanguageManager.WPF"
+    xmlns:lan="clr-namespace:MultiLanguageForXAML;assembly=MultiLanguageForXAML"
     xmlns:local="clr-namespace:LiveWallpaper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="725"

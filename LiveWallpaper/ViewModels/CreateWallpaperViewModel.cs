@@ -1,6 +1,6 @@
 ﻿using Caliburn.Micro;
 using System.Diagnostics;
-using MultiLanguageManager;
+using MultiLanguageForXAML;
 using LiveWallpaperEngineLib;
 using LiveWallpaperEngineLib.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
