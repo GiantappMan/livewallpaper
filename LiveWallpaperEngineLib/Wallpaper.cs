@@ -1,4 +1,4 @@
-﻿using DZY.DotNetUtil.ViewModels;
+﻿using GiantappMvvm.Base;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +11,7 @@ namespace LiveWallpaperEngineLib
     /// <summary>
     /// 表示一个壁纸
     /// </summary>
-    public class Wallpaper : ObservableObject
+    public class Wallpaper : ObservableObj
     {
         /// <summary>
         /// 壁纸的绝对路径

@@ -1,18 +1,12 @@
 ﻿using Caliburn.Micro;
-using DZY.DotNetUtil.Helpers;
-using LiveWallpaper.Settings;
 using LiveWallpaper.Managers;
 using NLog;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.Events;
-using DZY.DotNetUtil.WPF.Views;
+using DZY.Util.WPF.Views;
 
 namespace LiveWallpaper.ViewModels
 {

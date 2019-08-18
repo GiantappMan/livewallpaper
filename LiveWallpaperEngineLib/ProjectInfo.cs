@@ -1,4 +1,4 @@
-﻿using DZY.DotNetUtil.ViewModels;
+﻿using GiantappMvvm.Base;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +11,7 @@ namespace LiveWallpaperEngineLib
     /// <summary>
     /// 壁纸工程的详细信息
     /// </summary>
-    public class ProjectInfo : ObservableObject
+    public class ProjectInfo : ObservableObj
     {
         public ProjectInfo()
         {

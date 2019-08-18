@@ -1,5 +1,4 @@
 ﻿using Caliburn.Micro;
-using DZY.DotNetUtil.Helpers;
 using JsonConfiger;
 using JsonConfiger.Models;
 using LiveWallpaper.Settings;
@@ -8,12 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Storage;
-using LiveWallpaper.Events;
-using MultiLanguageManager;
+using DZY.Util.Common.Helpers;
+using MultiLanguageForXAML;
 
 namespace LiveWallpaper.ViewModels
 {
