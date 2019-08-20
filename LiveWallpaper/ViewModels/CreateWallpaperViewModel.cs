@@ -253,35 +253,30 @@ namespace LiveWallpaper.ViewModels
             try
             {
                 var tmpImg = Path.GetTempFileName();
-                using (FileStream stream = File.Open(tmpImg, FileMode.Create))
-                {
-                    RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
-                        (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-
-                    bmp.Render(render);
-
-                    //用16：9
-                    //var width = (int)(render.ActualWidth > render.ActualHeight ? render.ActualHeight : render.ActualWidth);
-                    //var height = (int)(9 / 16.0 * width);
-                    //var x = (int)(render.ActualWidth / 2 - width / 2);
-                    //var y = (int)(render.ActualHeight / 2 - height / 2);
-                    int width = (int)render.ActualWidth;
-                    int height = (int)render.ActualHeight;
-                    int x = 0;
-                    int y = 0;
-                    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, width, height));
-
-                    PngBitmapEncoder coder = new PngBitmapEncoder
-                    {
-                        Interlace = PngInterlaceOption.Off
-                    };
-                    coder.Frames.Add(BitmapFrame.Create(crop));
-                    coder.Save(stream);
-                }
-
+                render.Capture(tmpImg);
                 CurrentWallpaper.AbsolutePreviewPath = tmpImg;
+                //using (FileStream stream = File.Open(tmpImg, FileMode.Create))
+                //{
+                //    RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
+                //        (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
 
-                //CurrentWallpaper.NotifyOfPropertyChange(Wallpaper.AbsolutePreviewPathPropertyName);
+                //    bmp.Render(render);
+
+                //    int width = (int)render.ActualWidth;
+                //    int height = (int)render.ActualHeight;
+                //    int x = 0;
+                //    int y = 0;
+                //    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, width, height));
+
+                //    PngBitmapEncoder coder = new PngBitmapEncoder
+                //    {
+                //        Interlace = PngInterlaceOption.Off
+                //    };
+                //    coder.Frames.Add(BitmapFrame.Create(crop));
+                //    coder.Save(stream);
+                //}
+
+                //CurrentWallpaper.AbsolutePreviewPath = tmpImg;
             }
             catch (Exception ex)
             {

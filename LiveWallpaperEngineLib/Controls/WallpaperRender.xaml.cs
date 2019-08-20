@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using MpvPlayer;
+using System;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace LiveWallpaperEngineLib.Controls
 {
@@ -79,6 +82,28 @@ namespace LiveWallpaperEngineLib.Controls
             DependencyProperty.Register("WallpaperEnabled", typeof(bool), typeof(WallpaperRender), new PropertyMetadata(true));
 
         #endregion
+
+
+        public void Capture(string tmpImg)
+        {
+            var player = GetChildOfType<MpvPlayerControl>(this as DependencyObject);
+            player.ScreenshotToFile(tmpImg);
+        }
+
+        public static T GetChildOfType<T>(DependencyObject depObj)
+    where T : DependencyObject
+        {
+            if (depObj == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(depObj, i);
+
+                var result = (child as T) ?? GetChildOfType<T>(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
 
         #endregion
     }
