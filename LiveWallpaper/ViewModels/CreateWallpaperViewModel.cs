@@ -1,8 +1,8 @@
 ﻿using Caliburn.Micro;
 using System.Diagnostics;
 using MultiLanguageForXAML;
-using LiveWallpaperEngineLib;
-using LiveWallpaperEngineLib.Controls;
+using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManager.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Managers;
@@ -153,7 +153,7 @@ namespace LiveWallpaper.ViewModels
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
-            foreach (var item in WallpaperManager.SupportedExtensions)
+            foreach (var item in LiveWallpaper.WallpaperManager.WallpaperManager.SupportedExtensions)
             {
                 sb.Append($"{item};");
             }
@@ -183,20 +183,20 @@ namespace LiveWallpaper.ViewModels
             if (CurrentWallpaper != null)
                 await Task.Run(() =>
             {
-                WallpaperManager.Preivew(CurrentWallpaper);
+                LiveWallpaper.WallpaperManager.WallpaperManager.Preivew(CurrentWallpaper);
             });
         }
 
         public async void StopPreview()
         {
             _preview = false;
-            await Task.Run(new System.Action(WallpaperManager.StopPreview));
+            await Task.Run(new System.Action(LiveWallpaper.WallpaperManager.WallpaperManager.StopPreview));
         }
 
-        public async void Cancel()
+        public void Cancel()
         {
             CurrentWallpaper = null;
-            await Task.Delay(1000);
+            //await Task.Delay(1000);
             StopPreview();
             Result = false;
             TryClose();
@@ -220,13 +220,13 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                var result = await Task.Run(() => { return WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
+                var result = await Task.Run(() => { return LiveWallpaper.WallpaperManager.WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
                 if (_editMode)
                 {
                     //删除旧包
                     var temp = CurrentWallpaper;
                     CurrentWallpaper = null;
-                    bool ok = await WallpaperManager.Delete(temp);
+                    bool ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(temp);
                     if (!ok)
                     {
                         MessageBox.Show("删除失败请手动删除");
