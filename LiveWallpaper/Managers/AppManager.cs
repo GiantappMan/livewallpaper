@@ -27,7 +27,7 @@ namespace LiveWallpaper.Managers
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static DesktopBridgeStartupManager _desktopBridgeStartupManager =null;
+        private static DesktopBridgeStartupManager _desktopBridgeStartupManager = null;
 
         /// <summary>
         /// 默认配置
@@ -294,7 +294,14 @@ namespace LiveWallpaper.Managers
 
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(cultureName);
             await LanService.UpdateLanguage();
-            await _desktopBridgeStartupManager.Set(setting.General.StartWithWindows);
+            try
+            {
+                await _desktopBridgeStartupManager.Set(setting.General.StartWithWindows);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
             setting.General.StartWithWindows = await _desktopBridgeStartupManager.Check();
             //WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
             WallpaperManager.ApplyVideoAspect(setting.Wallpaper.VideoAspect);

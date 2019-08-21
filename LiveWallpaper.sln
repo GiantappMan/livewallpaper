@@ -1,13 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29209.152
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaper", "LiveWallpaper\LiveWallpaper.csproj", "{388BDD62-84C4-4E24-922E-B1AC5ADADD18}"
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "LiveWallpaper.App", "LiveWallpaper.App\LiveWallpaper.App.wapproj", "{BB366D2A-B0D9-4D29-BBF1-A2A8859B7C2E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaperEngineLib", "LiveWallpaperEngineLib\LiveWallpaperEngineLib.csproj", "{8F67BF70-2CA4-42C0-8CC5-7A37C186BB2B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{CCE01828-8EF4-4AA4-A7BC-5DE76B679545}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
