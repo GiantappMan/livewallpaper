@@ -64,6 +64,25 @@ namespace LiveWallpaper.ViewModels
             _jcrService.InjectDescObjs("$AudioSource", audioSource);
             _jcrService.InjectDescObjs("$DisplayMonitor", displayMonitor);
 
+            //多语言
+            DirectoryInfo languageFilesDir = new DirectoryInfo(AppManager.GetLangaugesFilePath());
+            var files = languageFilesDir.GetFiles("*.json");
+            if (files != null)
+            {
+                List<dynamic> languages = new List<dynamic>();
+                foreach (var file in files)
+                {
+                    string cultureName = file.Name.Replace(file.Extension, "");
+                    string text = await LanService.Get("language", cultureName);
+                    languages.Add(new
+                    {
+                        lan = text,
+                        value = cultureName
+                    });
+                }
+                _jcrService.InjectDescObjs("$languages", languages);
+            }
+
             JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
             base.OnInitialize();
         }

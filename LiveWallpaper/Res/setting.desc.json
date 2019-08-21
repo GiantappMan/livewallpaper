@@ -12,20 +12,7 @@
     "CurrentLan": {
       "type": "combobox",
       "lanKey": "setting_lan",
-      "cbItems": [
-        {
-          "lan": "中文",
-          "value": "zh"
-        },
-        {
-          "lan": "English",
-          "value": "en"
-        },
-        {
-          "lan": "Русский",
-          "value": "ru"
-        }
-      ]
+      "cbItems": "$languages"
     },
     "RecordWindowSize": {
       "type": "boolean",
