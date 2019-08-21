@@ -193,10 +193,11 @@ namespace LiveWallpaper.ViewModels
             await Task.Run(new System.Action(LiveWallpaper.WallpaperManager.WallpaperManager.StopPreview));
         }
 
-        public void Cancel()
+        public async void Cancel()
         {
             CurrentWallpaper = null;
-            //await Task.Delay(1000);
+            //mpv player有时候导致卡死不明原因，曲线救国
+            await Task.Delay(1000);
             StopPreview();
             Result = false;
             TryClose();

@@ -63,6 +63,10 @@ namespace LiveWallpaper.Managers
         {
             get
             {
+                DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+                if (!helpers.IsRunningAsUwp())
+                    return null;
+
                 if (string.IsNullOrEmpty(_UWPRealAppDataDir))
                 {
                     //使用时再读取，防止初始化等待太久
@@ -98,10 +102,16 @@ namespace LiveWallpaper.Managers
         {
             //多语言
             Xaml.CustomMaps.Add(typeof(TaskbarIcon), TaskbarIcon.ToolTipTextProperty);
+            //中国人大多都会英语，老大大多不会中文。对国际友人好一点，默认显示英语 -。-##
+            LanService.Init(new JsonDB(GetLangaugesFilePath()), true, "en");
+        }
+
+        public static string GetLangaugesFilePath()
+        {
             //不能用Environment.CurrentDirectory，开机启动目录会出错
             ApptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string path = Path.Combine(ApptEntryDir, "Res\\Languages");
-            LanService.Init(new JsonDB(path), true, "zh");
+            return path;
         }
 
         public static async void InitlizeSetting()

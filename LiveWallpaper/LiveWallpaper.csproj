@@ -168,7 +168,9 @@
     <Content Include="Res\Languages\ru.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Res\Languages\gr.json" />
+    <Content Include="Res\Languages\gr.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="Res\Imgs\donate.jpg" />
     <Content Include="Res\Sounds\PurchaseTipsBg.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -224,8 +226,8 @@
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf">
       <Version>1.0.8</Version>
     </PackageReference>
-    <PackageReference Include="JsonConfiger">
-      <Version>2.0.3</Version>
+    <PackageReference Include="JsonConfiger.WPF">
+      <Version>1.0.1</Version>
     </PackageReference>
     <PackageReference Include="LiveWallpaperEngine">
       <Version>2.0.2</Version>
