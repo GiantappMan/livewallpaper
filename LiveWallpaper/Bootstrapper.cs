@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using LiveWallpaper.ViewModels;
 using LiveWallpaper.Managers;
-using LiveWallpaperEngineLib;
+using LiveWallpaper.WallpaperManager;
 
 namespace LiveWallpaper
 {
@@ -24,7 +24,7 @@ namespace LiveWallpaper
         protected override void Configure()
         {
             //需要在UI线程初始化
-            WallpaperManager.Initlize();
+            LiveWallpaper.WallpaperManager.WallpaperManager.Initlize();
 
             //自定义消息拦截
             container = new SimpleContainer();
@@ -40,13 +40,7 @@ namespace LiveWallpaper
 
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-#if UWP
-            logger.Info("OnStartup UWP");
-#else
-            logger.Info("OnStartup WPF");
-#endif
-
-            //if (!AppManager.Setting.General.MinimizeUI)
+            logger.Info("OnStartup");
             DisplayRootViewFor<MainViewModel>();
         }
 
