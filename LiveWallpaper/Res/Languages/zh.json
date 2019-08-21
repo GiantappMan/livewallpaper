@@ -20,6 +20,10 @@
   "common_vip": "巨应大会员",
   "common_contact": "反馈",
 
+  "donate_title": "本软件完全开源，开发者卖艺求生，期待有缘人捐赠~ ",
+  "donate_text": "给作者买个包子",
+  "rating_text": "好评鼓励一下~",
+
   "mainUI_programRunning": "巨应壁纸已启动，请注意右下角托盘",
   "mainUI_localWallpaper": "本地壁纸",
   "mainUI_wallpaperStore": "壁纸中心",

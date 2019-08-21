@@ -20,6 +20,10 @@
   "common_vip": "VIP",
   "common_contact": "Feedback",
 
+  "donate_title": "This software completely open source, the developers expect good people to donate ~ ",
+  "donate_text": "Buy a bun for developer",
+  "rating_text": "Give a positive evaluation",
+
   "mainUI_programRunning": "Livewallpaper is already running",
   "mainUI_localWallpaper": "Local wallpaper",
   "mainUI_wallpaperStore": "Wallpaper store",
