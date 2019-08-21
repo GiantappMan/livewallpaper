@@ -26,7 +26,7 @@
 * 只支持Win10比较新的版本
 * UI能省既省，我的目的是动态壁纸，前期不会在UI花太多精力。
 * 有Win10内购只是一种捐赠形式，没有功能限制。
-* 多语言是谷歌翻译的。有好心人可以pull这里 [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/en.json)
+* 多语言是谷歌翻译的。有好心人可以pr这里 [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/en.json)
 
 ### 关于开源：
 
@@ -35,8 +35,9 @@
 
 ### 编译环境：
 
-* VS2017
+* VS2019
 * Win10 如果某些依赖库找不到，可能是因为最新版本没有来得及上传到nuget，需要手动编译或者提交issue告知我
+* 需要安装Windows10 Software Development Kit SDK，如果你的系统盘不是C盘还需要手动修改路径，参考 https://www.mscoder.cn/program/wpf-reference-uwp/
 
 ### 感谢：
 
