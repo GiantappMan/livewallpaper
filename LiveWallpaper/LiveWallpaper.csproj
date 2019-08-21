@@ -212,10 +212,10 @@
       <Version>2.0.3</Version>
     </PackageReference>
     <PackageReference Include="LiveWallpaperEngine">
-      <Version>2.0.1</Version>
+      <Version>2.0.2</Version>
     </PackageReference>
     <PackageReference Include="LiveWallpaperEngineRender">
-      <Version>2.0.3</Version>
+      <Version>2.0.5</Version>
     </PackageReference>
     <PackageReference Include="MahApps.Metro">
       <Version>1.6.5</Version>
