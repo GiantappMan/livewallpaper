@@ -1,5 +1,6 @@
 ﻿//命名规则，模块_语言Key
 {
+  "language": "中文",
   "common_create": "创建",
   "common_edit": "编辑",
   "common_openFile": "打开文件",

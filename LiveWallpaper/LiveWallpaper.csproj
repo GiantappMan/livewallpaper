@@ -150,6 +150,7 @@
     <Content Include="Res\Languages\ru.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Res\Languages\gr.json" />
     <Resource Include="Res\Imgs\donate.jpg" />
     <Content Include="Res\Sounds\PurchaseTipsBg.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -210,12 +211,6 @@
     </PackageReference>
     <PackageReference Include="JsonConfiger">
       <Version>2.0.3</Version>
-    </PackageReference>
-    <PackageReference Include="LiveWallpaperEngine">
-      <Version>2.0.2</Version>
-    </PackageReference>
-    <PackageReference Include="LiveWallpaperEngineRender">
-      <Version>2.0.5</Version>
     </PackageReference>
     <PackageReference Include="MahApps.Metro">
       <Version>1.6.5</Version>

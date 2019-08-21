@@ -4,11 +4,6 @@
     xmlns:MpvPlayer="clr-namespace:MpvPlayer;assembly=MpvPlayer"
     xmlns:local="clr-namespace:LiveWallpaperEngineLib.Controls">
     <DataTemplate x:Key="videoTemplate">
-        <!--<local:MediaElementEx
-            x:Name="media"
-            IsMuted="{Binding Muted}"
-            Source="{Binding AbsolutePath}"
-            Stretch="Fill" />-->
         <MpvPlayer:MpvPlayerControl
             x:Name="player"
             IsLoop="True"

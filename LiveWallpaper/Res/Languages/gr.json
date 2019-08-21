@@ -1,5 +1,6 @@
 //命名规则，模块_语言Key
 {
+  "language": "Ελληνικά",
   "common_create": "Δημιουργία",
   "common_edit": "επεξεργασία",
   "common_openFile": "Εξερευνήστε το",

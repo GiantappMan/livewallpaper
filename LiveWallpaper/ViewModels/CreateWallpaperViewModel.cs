@@ -193,8 +193,10 @@ namespace LiveWallpaper.ViewModels
             await Task.Run(new System.Action(WallpaperManager.StopPreview));
         }
 
-        public void Cancel()
+        public async void Cancel()
         {
+            CurrentWallpaper = null;
+            await Task.Delay(1000);
             StopPreview();
             Result = false;
             TryClose();
@@ -218,8 +220,6 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                //await Task.Run(() =>
-                //{
                 var result = await Task.Run(() => { return WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
                 if (_editMode)
                 {
@@ -232,7 +232,6 @@ namespace LiveWallpaper.ViewModels
                         MessageBox.Show("删除失败请手动删除");
                     }
                 }
-                //});
             }
             catch (Exception ex)
             {
