@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaper", "LiveWallpa
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "LiveWallpaper.App", "LiveWallpaper.App\LiveWallpaper.App.wapproj", "{BB366D2A-B0D9-4D29-BBF1-A2A8859B7C2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaperEngineLib", "LiveWallpaperEngineLib\LiveWallpaperEngineLib.csproj", "{8F67BF70-2CA4-42C0-8CC5-7A37C186BB2B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaperEngineLib", "LiveWallpaperEngineLib\LiveWallpaperEngineLib.csproj", "{8F67BF70-2CA4-42C0-8CC5-7A37C186BB2B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{CCE01828-8EF4-4AA4-A7BC-5DE76B679545}"
 	ProjectSection(SolutionItems) = preProject

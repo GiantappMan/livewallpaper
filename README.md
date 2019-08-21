@@ -37,7 +37,8 @@
 
 * VS2019
 * Win10 如果某些依赖库找不到，可能是因为最新版本没有来得及上传到nuget，需要手动编译或者提交issue告知我
-* 需要安装Windows10 Software Development Kit SDK，如果你的系统盘不是C盘还需要手动修改路径，参考 https://www.mscoder.cn/program/wpf-reference-uwp/
+* 需要安装Windows10 Software Development Kit SDK。
+* 如果你的系统盘不是C盘还需要手动修改路径。右键LiveWallpaper->编辑项目文件。dll位置参考 https://www.mscoder.cn/program/wpf-reference-uwp/
 
 ### 感谢：
 
