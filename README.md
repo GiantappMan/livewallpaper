@@ -1,18 +1,18 @@
 # 巨应动态壁纸
 
-## 第一款完整的开源PC动态壁纸软件，免费版wallpaper engine
+## 第一款完整的开源 PC 动态壁纸软件，免费版 wallpaper engine
 
-* **无流氓、极简UI、单进程、省资源、无恶意弹窗无骚扰、纯净，只有核心功能，毕竟我自己也是要用的...**
+- **无流氓、极简 UI、单进程、省资源、无恶意弹窗无骚扰、纯净，只有核心功能，毕竟我自己也是要用的...**
 
 ### 功能
 
-* [x]  视频动态壁纸 （已发布）
-* [x]  创建/编辑壁纸 （已发布）
-* [x]  其他程序全屏时暂停 （已发布）
-* [x]  多屏支持 （已发布）
-* [x]  音源设置 （已发布）
-* [ ]  网页动态壁纸 （计划中）
-* [ ]  应用程序动态壁纸 （计划中）
+- [x] 视频动态壁纸 （已发布）
+- [x] 创建/编辑壁纸 （已发布）
+- [x] 其他程序全屏时暂停 （已发布）
+- [x] 多屏支持 （已发布）
+- [x] 音源设置 （已发布）
+- [ ] 网页动态壁纸 （计划中）
+- [ ] 应用程序动态壁纸 （计划中）
 
 ### 下载地址
 
@@ -22,36 +22,39 @@
 
 ### 关于本项目：
 
-* DotNet\(c\#\)技术栈实现，动态壁纸的WPF/UWP实现版本，类似wallpaper engine
-* 只支持Win10比较新的版本
-* UI能省既省，我的目的是动态壁纸，前期不会在UI花太多精力。
-* 有Win10内购只是一种捐赠形式，没有功能限制。
-* 多语言是谷歌翻译的。有好心人可以pr这里 [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/en.json)
+- 动态壁纸WPF实现版本，类似 wallpaper engine。
+- 只支持 Win10。
+- 目的是动态壁纸,所以UI能省既省。
+- 有 Win10 内购只是一种捐赠形式。
+- 多语言是谷歌翻译的。有好心人可以 pr 这里 [链接](https://github.com/MscoderStudio/LiveWallpaper/blob/master/LiveWallpaper/Res/Languages/en.json)。
+- 本仓库是完整项目。如果只是想了解动态壁纸原理，请看[这里](https://github.com/MscoderStudio/LiveWallpaperEngine)。
+- 如果你觉得本项目对你有帮助，请 star 支持一下~
+
 
 ### 关于开源：
 
-* 完全开源毫无保留，开源的初衷是希望大家一起完善开源项目，不一定要提交代码，提交Issue也是一种支持。
-* 另外那些抄着开源代码，自己另起炉灶并且闭源核心代码的蛀虫开发者，麻烦你不要抄了。
+- 完全开源毫无保留，开源的初衷是希望大家一起完善开源项目，不一定要提交代码，提交 Issue 也是一种支持。
 
 ### 编译环境：
 
-* VS2019
-* Win10 如果某些依赖库找不到，可能是因为最新版本没有来得及上传到nuget，需要手动编译或者提交issue告知我
-* 需要安装Windows10 Software Development Kit SDK。
-* 如果你的系统盘不是C盘还需要手动修改路径。右键LiveWallpaper->编辑项目文件。dll位置参考 https://www.mscoder.cn/program/wpf-reference-uwp/
+- VS2019
+- Win10 如果某些依赖库找不到，可能是因为最新版本没有来得及上传到 nuget，需要手动编译或者提交 issue 告知我
+- 需要安装 Windows10 Software Development Kit SDK。
+- 如果你的系统盘不是 C 盘还需要手动修改路径。右键 LiveWallpaper->编辑项目文件。dll 位置参考 https://www.mscoder.cn/program/wpf-reference-uwp/
 
 ### 感谢：
+* 感谢所有的issue提交者
+* 感谢所有的源码[贡献者](/Docs/Contribution.md)
 
-* 如果你觉得本项目对你有帮助，请star支持一下~
+---
 
-### 另外：
+### 广告区域:
 
-* 本仓库是完整项目，代码较多而且复杂。如果你只是想了解一下动态壁纸原理，核心代码请看我新开的仓库，非常简单请放心食用 [https://github.com/MscoderStudio/LiveWallpaperEngine](https://github.com/MscoderStudio/LiveWallpaperEngine)
-
-### QQ群交流:
 **C#全栈开发**：191034956  
-**全球it互联交友**: 665127101
-（只允许单身码农和各行业的妹子加入，初衷是给程序员多一种认识异性的渠道）
+**全球 it 互联交友**: 665127101
+（只允许单身码农和妹子加入，初衷是给程序员多一种认识异性的渠道）
+
+---
 
 ## 视频教程：
 
@@ -67,7 +70,6 @@
 
 [![store](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/store.png)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/store.png)
 
-### 早期Demo （gif文件略大，请耐心等候）
+### 早期 Demo （gif 文件略大，请耐心等候）
 
-[![&#x65E9;&#x671F;Demo](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/example.gif)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/example.gif)
-
+[![早期Demo](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/example.gif)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/example.gif)
