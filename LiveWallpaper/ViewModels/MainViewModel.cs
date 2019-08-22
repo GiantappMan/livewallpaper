@@ -3,7 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using LiveWallpaperEngineLib;
+using LiveWallpaper.WallpaperManager;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -17,6 +17,7 @@ using DZY.Util.WPF;
 using DZY.Util.WPF.Views;
 using DZY.Util.Common.Helpers;
 using DZY.Util.WPF.ViewModels;
+using MultiLanguageForXAML;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -62,7 +63,7 @@ namespace LiveWallpaper.ViewModels
 
                 DZY.Util.Common.Helpers.AppHelper AppHelper = new DZY.Util.Common.Helpers.AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
-                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 15, 30);
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 30, 60);
                 if (canPrpmpt)
                 {
                     var windowManager = IoC.Get<IWindowManager>();
@@ -72,8 +73,8 @@ namespace LiveWallpaper.ViewModels
                     {
                         BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
                         Content = new DefaultPurchaseTipsContent(),
-                        PurchaseContent = "真可怜，给他买个包子吧",
-                        RatingContent = "造孽啊，给个精神抚慰吧",
+                        PurchaseContent = await LanService.Get("donate_text"),
+                        RatingContent = await LanService.Get("rating_text"),
                     };
                     vm.Initlize(AppManager.GetPurchaseViewModel());
                     view.DataContext = vm;
@@ -166,14 +167,10 @@ namespace LiveWallpaper.ViewModels
             try
             {
                 string path = s.AbsolutePath;
-#if UWP
-                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
-                //var UWPAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
-
-                //var wpfAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                //wpfAppData = Path.Combine(wpfAppData, "LiveWallpaper");
-                path = path.Replace(AppManager.AppDataDir, AppManager.UWPRealAppDataDir);
-#endif
+                DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+                if (helpers.IsRunningAsUwp())
+                    //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                    path = path.Replace(AppManager.AppDataDir, AppManager.UWPRealAppDataDir);
                 Process.Start("Explorer.exe", $" /select, {path}");
             }
             catch (Exception ex)
@@ -188,7 +185,7 @@ namespace LiveWallpaper.ViewModels
             bool ok = false;
             try
             {
-                ok = await WallpaperManager.Delete(w);
+                ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(w);
             }
             catch (Exception ex)
             {

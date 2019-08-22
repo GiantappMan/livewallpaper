@@ -64,6 +64,25 @@ namespace LiveWallpaper.ViewModels
             _jcrService.InjectDescObjs("$AudioSource", audioSource);
             _jcrService.InjectDescObjs("$DisplayMonitor", displayMonitor);
 
+            //多语言
+            DirectoryInfo languageFilesDir = new DirectoryInfo(AppManager.GetLangaugesFilePath());
+            var files = languageFilesDir.GetFiles("*.json");
+            if (files != null)
+            {
+                List<dynamic> languages = new List<dynamic>();
+                foreach (var file in files)
+                {
+                    string cultureName = file.Name.Replace(file.Extension, "");
+                    string text = await LanService.Get("language", cultureName);
+                    languages.Add(new
+                    {
+                        lan = text,
+                        value = cultureName
+                    });
+                }
+                _jcrService.InjectDescObjs("$languages", languages);
+            }
+
             JsonConfierViewModel = _jcrService.GetVM(config, descConfig);
             base.OnInitialize();
         }
@@ -149,14 +168,19 @@ namespace LiveWallpaper.ViewModels
         {
             try
             {
-#if UWP
-                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
-                var appData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
-#else
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                appData = Path.Combine(appData, "LiveWallpaper");
-#endif
-                Process.Start(appData);
+                string path = null;
+                DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+                if (helpers.IsRunningAsUwp())
+                {
+                    //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                    path = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Roaming\\LiveWallpaper");
+                }
+                else
+                {
+                    path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    path = Path.Combine(path, "LiveWallpaper");
+                }
+                Process.Start(path);
             }
             catch (Exception ex)
             {
