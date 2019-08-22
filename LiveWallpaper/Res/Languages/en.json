@@ -1,5 +1,6 @@
 ﻿//命名规则，模块_语言Key
 {
+  "language": "English",
   "common_create": "Create",
   "common_edit": "Edit",
   "common_openFile": "Explore to",
@@ -18,6 +19,10 @@
   "common_selectFile": "Select the file",
   "common_vip": "VIP",
   "common_contact": "Feedback",
+
+  "donate_title": "This software completely open source, the developers expect good people to donate ~ ",
+  "donate_text": "Buy a bun for developer",
+  "rating_text": "Give a positive evaluation",
 
   "mainUI_programRunning": "Livewallpaper is already running",
   "mainUI_localWallpaper": "Local wallpaper",

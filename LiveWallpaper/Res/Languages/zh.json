@@ -1,5 +1,6 @@
 ﻿//命名规则，模块_语言Key
 {
+  "language": "中文",
   "common_create": "创建",
   "common_edit": "编辑",
   "common_openFile": "打开文件",
@@ -18,6 +19,10 @@
   "common_selectFile": "选择文件",
   "common_vip": "巨应大会员",
   "common_contact": "反馈",
+
+  "donate_title": "本软件完全开源，开发者卖艺求生，期待有缘人捐赠~ ",
+  "donate_text": "给作者买个包子",
+  "rating_text": "好评鼓励一下~",
 
   "mainUI_programRunning": "巨应壁纸已启动，请注意右下角托盘",
   "mainUI_localWallpaper": "本地壁纸",

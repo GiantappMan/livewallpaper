@@ -1,8 +1,8 @@
 ﻿using Caliburn.Micro;
 using System.Diagnostics;
 using MultiLanguageForXAML;
-using LiveWallpaperEngineLib;
-using LiveWallpaperEngineLib.Controls;
+using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManager.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Managers;
@@ -153,7 +153,7 @@ namespace LiveWallpaper.ViewModels
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
-            foreach (var item in WallpaperManager.SupportedExtensions)
+            foreach (var item in LiveWallpaper.WallpaperManager.WallpaperManager.SupportedExtensions)
             {
                 sb.Append($"{item};");
             }
@@ -183,18 +183,21 @@ namespace LiveWallpaper.ViewModels
             if (CurrentWallpaper != null)
                 await Task.Run(() =>
             {
-                WallpaperManager.Preivew(CurrentWallpaper);
+                LiveWallpaper.WallpaperManager.WallpaperManager.Preivew(CurrentWallpaper);
             });
         }
 
         public async void StopPreview()
         {
             _preview = false;
-            await Task.Run(new System.Action(WallpaperManager.StopPreview));
+            await Task.Run(new System.Action(LiveWallpaper.WallpaperManager.WallpaperManager.StopPreview));
         }
 
-        public void Cancel()
+        public async void Cancel()
         {
+            CurrentWallpaper = null;
+            //mpv player有时候导致卡死不明原因，曲线救国
+            await Task.Delay(1000);
             StopPreview();
             Result = false;
             TryClose();
@@ -218,21 +221,18 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                //await Task.Run(() =>
-                //{
-                var result = await Task.Run(() => { return WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
+                var result = await Task.Run(() => { return LiveWallpaper.WallpaperManager.WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
                 if (_editMode)
                 {
                     //删除旧包
                     var temp = CurrentWallpaper;
                     CurrentWallpaper = null;
-                    bool ok = await WallpaperManager.Delete(temp);
+                    bool ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(temp);
                     if (!ok)
                     {
                         MessageBox.Show("删除失败请手动删除");
                     }
                 }
-                //});
             }
             catch (Exception ex)
             {
@@ -253,35 +253,30 @@ namespace LiveWallpaper.ViewModels
             try
             {
                 var tmpImg = Path.GetTempFileName();
-                using (FileStream stream = File.Open(tmpImg, FileMode.Create))
-                {
-                    RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
-                        (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-
-                    bmp.Render(render);
-
-                    //用16：9
-                    //var width = (int)(render.ActualWidth > render.ActualHeight ? render.ActualHeight : render.ActualWidth);
-                    //var height = (int)(9 / 16.0 * width);
-                    //var x = (int)(render.ActualWidth / 2 - width / 2);
-                    //var y = (int)(render.ActualHeight / 2 - height / 2);
-                    int width = (int)render.ActualWidth;
-                    int height = (int)render.ActualHeight;
-                    int x = 0;
-                    int y = 0;
-                    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, width, height));
-
-                    PngBitmapEncoder coder = new PngBitmapEncoder
-                    {
-                        Interlace = PngInterlaceOption.Off
-                    };
-                    coder.Frames.Add(BitmapFrame.Create(crop));
-                    coder.Save(stream);
-                }
-
+                render.Capture(tmpImg);
                 CurrentWallpaper.AbsolutePreviewPath = tmpImg;
+                //using (FileStream stream = File.Open(tmpImg, FileMode.Create))
+                //{
+                //    RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,
+                //        (int)render.ActualHeight, 96, 96, PixelFormats.Pbgra32);
 
-                //CurrentWallpaper.NotifyOfPropertyChange(Wallpaper.AbsolutePreviewPathPropertyName);
+                //    bmp.Render(render);
+
+                //    int width = (int)render.ActualWidth;
+                //    int height = (int)render.ActualHeight;
+                //    int x = 0;
+                //    int y = 0;
+                //    CroppedBitmap crop = new CroppedBitmap(bmp, new Int32Rect(x, y, width, height));
+
+                //    PngBitmapEncoder coder = new PngBitmapEncoder
+                //    {
+                //        Interlace = PngInterlaceOption.Off
+                //    };
+                //    coder.Frames.Add(BitmapFrame.Create(crop));
+                //    coder.Save(stream);
+                //}
+
+                //CurrentWallpaper.AbsolutePreviewPath = tmpImg;
             }
             catch (Exception ex)
             {
