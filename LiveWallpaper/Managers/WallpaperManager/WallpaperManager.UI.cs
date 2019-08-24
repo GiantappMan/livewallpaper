@@ -119,7 +119,10 @@ namespace LiveWallpaper.WallpaperManager
         {
             ForeachVideoRenders((_videoRender, screen, index) =>
             {
+                //指定屏幕，或者设置为所有屏幕
                 if (_displayMonitor == index || _displayMonitor < 0)
+                {
+                    //初始化
                     if (_videoRender == null || _videoRender.RenderDisposed)
                     {
                         Execute.OnUIThread(() =>
@@ -139,9 +142,10 @@ namespace LiveWallpaper.WallpaperManager
                                 _videoRenders[index] = _videoRender;
                         });
                     }
-                _videoRender?.Play(absolutePath);
-                if (index == _audioSourceMonitor)
-                    _videoRender?.Mute(false);
+                    _videoRender?.Play(absolutePath);
+                    if (index == _audioSourceMonitor)
+                        _videoRender?.Mute(false);
+                }
             });
         }
 

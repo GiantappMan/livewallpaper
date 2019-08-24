@@ -200,7 +200,7 @@ namespace LiveWallpaper.ViewModels
 
         public async void ApplyWallpaper(Wallpaper w)
         {
-            await AppManager.ShowWallpaper(w, -1);
+            await AppManager.ShowWallpaper(w, AppManager.Setting.Wallpaper.DisplayMonitor);
         }
 
         Wallpaper _lastOverWallpaper;
