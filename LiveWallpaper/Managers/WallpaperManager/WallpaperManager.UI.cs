@@ -257,8 +257,8 @@ namespace LiveWallpaper.WallpaperManager
             if (_currentProcess == null)
                 _currentProcess = Process.GetCurrentProcess();
 
-            var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
-            RaiseMaximizedEvent(m);
+            //var m = new OtherProgramChecker(_currentProcess).CheckMaximized();
+            //RaiseMaximizedEvent(m);
 
             _timer.Start();
         }
