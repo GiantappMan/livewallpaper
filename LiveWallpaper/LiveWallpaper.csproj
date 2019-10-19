@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Managers\WallpaperManager\WallpaperManager.Data.cs" />
+    <Compile Remove="Managers\WallpaperManager\WallpaperManager.UI.cs" />
+  </ItemGroup>
+  <ItemGroup>
 
     <Content Include="Res\setting.default.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -71,10 +75,6 @@
     <PackageReference Include="JsonConfiger.WPF">
       <Version>1.0.1</Version>
     </PackageReference>
-    <PackageReference Include="LiveWallpaperEngineAPI" Version="1.0.0" />
-    <PackageReference Include="LiveWallpaperEngineRender">
-      <Version>2.0.7</Version>
-    </PackageReference>
     <PackageReference Include="MahApps.Metro">
       <Version>1.6.5</Version>
     </PackageReference>
@@ -112,6 +112,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngine.Common\LiveWallpaperEngine.Common.csproj" />
+    <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="System.Runtime.WindowsRuntime">
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
     </Reference>
@@ -119,14 +124,5 @@
       <HintPath>C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.17763.0\Windows.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="lib\mpv-1-x64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\mpv-1.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

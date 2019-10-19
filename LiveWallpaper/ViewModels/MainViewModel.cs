@@ -3,7 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManagers;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -34,11 +34,11 @@ namespace LiveWallpaper.ViewModels
         {
             _eventAggregator = eventAggregator;
             _eventAggregator.Subscribe(this);
-            for (int i = 0; i < LiveWallpaperEngineManager.AllScreens.Count; i++)
+            for (int i = 0; i < System.Windows.Forms.Screen.AllScreens.Length; i++)
             {
                 Displays.Add(i + 1);
             }
-            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && System.Windows.Forms.Screen.AllScreens.Length > 1;
         }
 
         protected override void OnViewReady(object view)
@@ -185,7 +185,7 @@ namespace LiveWallpaper.ViewModels
             bool ok = false;
             try
             {
-                ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(w);
+                ok = await Wallpaper.Delete(w);
             }
             catch (Exception ex)
             {
@@ -244,7 +244,7 @@ namespace LiveWallpaper.ViewModels
 
         public void Handle(SettingSaved message)
         {
-            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && System.Windows.Forms.Screen.AllScreens.Length > 1;
 
             if (AppManager.Setting.General.RecordWindowSize)
             {
