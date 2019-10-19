@@ -1,4 +1,4 @@
-﻿using LiveWallpaper.WallpaperManager.Controls;
+﻿using LiveWallpaper.WallpaperManagers.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
 using System.IO;
 using System.Windows;

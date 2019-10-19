@@ -1,8 +1,8 @@
 ﻿using Caliburn.Micro;
 using System.Diagnostics;
 using MultiLanguageForXAML;
-using LiveWallpaper.WallpaperManager;
-using LiveWallpaper.WallpaperManager.Controls;
+using LiveWallpaper.WallpaperManagers;
+using LiveWallpaper.WallpaperManagers.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
 using System.Windows.Interop;
 using LiveWallpaper.Managers;
@@ -13,6 +13,7 @@ using System.IO;
 using System;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using LiveWallpaperEngineAPI;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -147,13 +148,13 @@ namespace LiveWallpaper.ViewModels
 
         #endregion
 
-        #region public methods 
+        #region public methods
 
         public async void SelectFile()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(await LanService.Get("wallpaperEditor_fileDialogType"));
-            foreach (var item in LiveWallpaper.WallpaperManager.WallpaperManager.SupportedExtensions)
+            foreach (var item in Wallpaper.VideoExtensions)
             {
                 sb.Append($"{item};");
             }
@@ -178,19 +179,17 @@ namespace LiveWallpaper.ViewModels
         public async void Preview()
         {
             _preview = true;
-
-            //防止显示黑屏
             if (CurrentWallpaper != null)
-                await Task.Run(() =>
-            {
-                LiveWallpaper.WallpaperManager.WallpaperManager.Preivew(CurrentWallpaper);
-            });
+                await WallpaperManager.Instance.ShowWallpaper(new LiveWallpaperEngine.WallpaperModel()
+                {
+                    Path = CurrentWallpaper.AbsolutePath
+                }, 0);
         }
 
-        public async void StopPreview()
+        public void StopPreview()
         {
             _preview = false;
-            await Task.Run(new System.Action(LiveWallpaper.WallpaperManager.WallpaperManager.StopPreview));
+            WallpaperManager.Instance.CloseWallpaper(0);
         }
 
         public async void Cancel()
@@ -221,13 +220,13 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                var result = await Task.Run(() => { return LiveWallpaper.WallpaperManager.WallpaperManager.CreateLocalPack(CurrentWallpaper, destDir); });
+                var result = await Task.Run(() => { return Wallpaper.CreateLocalPack(CurrentWallpaper, destDir); });
                 if (_editMode)
                 {
                     //删除旧包
                     var temp = CurrentWallpaper;
                     CurrentWallpaper = null;
-                    bool ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(temp);
+                    bool ok = await Wallpaper.Delete(temp);
                     if (!ok)
                     {
                         MessageBox.Show("删除失败请手动删除");

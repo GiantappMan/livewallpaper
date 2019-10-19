@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiveWallpaper.WallpaperManager
+namespace LiveWallpaper.WallpaperManagers
 {
     /// <summary>
     /// 壁纸工程的详细信息
@@ -22,7 +22,7 @@ namespace LiveWallpaper.WallpaperManager
         {
             File = Path.GetFileName(filePath);
             Title = Path.GetFileNameWithoutExtension(filePath);
-            Type = WallpaperManager.GetWallpaperType(filePath);
+            Type = Wallpaper.GetWallpaperType(filePath);
         }
 
         #region Description

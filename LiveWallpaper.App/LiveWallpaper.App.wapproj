@@ -34,12 +34,12 @@
   </PropertyGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
-    <ProjectGuid>bb366d2a-b0d9-4d29-bbf1-a2a8859b7c2e</ProjectGuid>
-    <TargetPlatformVersion>10.0.17134.0</TargetPlatformVersion>
+    <ProjectGuid>94a78a17-1788-470b-8b52-573bb613318f</ProjectGuid>
+    <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>4F79007FB2C1659E3672D1D2249890D2DC771FB7</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>2E15F1FB741200F912A5C0CE51741242C32C2C1E</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
@@ -75,7 +75,9 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj" />
+    <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj">
+      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\AppList\AppList.scale-100.png" />
@@ -127,7 +129,6 @@
     <Content Include="Images\Wide\Wide310x150Logo.scale-150.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-200.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-400.png" />
-    <None Include="LiveWallpaper.App_StoreKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
