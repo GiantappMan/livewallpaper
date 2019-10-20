@@ -28,7 +28,6 @@ namespace LiveWallpaper.ViewModels
         IEventAggregator _eventAggregator;
         const float sourceWidth = 436;
         const float sourceHeight = 337;
-        bool _firstLaunch = true;
 
         public MainViewModel(IEventAggregator eventAggregator)
         {
@@ -50,7 +49,7 @@ namespace LiveWallpaper.ViewModels
 
         public async Task OnLoaded()
         {
-            if (_firstLaunch)
+            if (FirstLaunch)
             {
                 AppManager.Run();
                 //第一次时打开检查更新
@@ -61,31 +60,19 @@ namespace LiveWallpaper.ViewModels
                      AppManager.CheckUpates(handle);
                  });
 
-                DZY.Util.Common.Helpers.AppHelper AppHelper = new DZY.Util.Common.Helpers.AppHelper();
-                //0.0069444444444444, 0.0138888888888889 10/20分钟
-                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 30, 60);
-                if (canPrpmpt)
-                {
-                    var windowManager = IoC.Get<IWindowManager>();
-
-                    var view = new PurchaseTipsView();
-                    var vm = new PurchaseTipsViewModel()
-                    {
-                        BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
-                        Content = new DefaultPurchaseTipsContent(),
-                        PurchaseContent = await LanService.Get("donate_text"),
-                        RatingContent = await LanService.Get("rating_text"),
-                    };
-                    vm.Initlize(AppManager.GetPurchaseViewModel());
-                    view.DataContext = vm;
-                    view.Show();
-                }
-
-                _firstLaunch = false;
+                CheckVIP();
 
                 if (AppManager.Setting.General.MinimizeUI)
-                    TryClose();
+                {
+                    Shown = false;
+                }
+                else
+                    Shown = true;
+
+                FirstLaunch = false;
             }
+            else
+                Shown = true;
 
             Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
 
@@ -94,6 +81,35 @@ namespace LiveWallpaper.ViewModels
                 Width = AppManager.Setting.General.Width;
                 Height = AppManager.Setting.General.Height;
             }
+        }
+
+        private async void CheckVIP()
+        {
+            var purchaseVM = AppManager.GetPurchaseViewModel();
+            await purchaseVM.CheckVIP();
+            if (!purchaseVM.IsVIP)
+            {
+                AppHelper AppHelper = new AppHelper();
+                //0.0069444444444444, 0.0138888888888889 10/20分钟
+                //bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 0.0069444444444444, 0.0138888888888889);
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 15, 30);
+                if (canPrpmpt)
+                {
+                    //var windowManager = IoC.Get<IWindowManager>();
+                    var view = new PurchaseTipsView();
+                    var vm = new PurchaseTipsViewModel()
+                    {
+                        BGM = new Uri("Res//Sounds//PurchaseTipsBg.mp3", UriKind.RelativeOrAbsolute),
+                        Content = new DefaultPurchaseTipsContent(),
+                        PurchaseContent = await LanService.Get("donate_text"),
+                        RatingContent = await LanService.Get("rating_text"),
+                    };
+                    vm.Initlize(purchaseVM);
+                    view.DataContext = vm;
+                    view.Show();
+                }   
+            }
+
         }
 
         public void CreateWallpaper()
@@ -409,6 +425,8 @@ namespace LiveWallpaper.ViewModels
         }
 
         #endregion
+        public bool FirstLaunch { get; private set; } = true;
+        public bool Shown { get; private set; }
 
         #endregion
     }

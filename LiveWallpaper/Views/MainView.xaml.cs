@@ -23,6 +23,8 @@ namespace LiveWallpaper.Views
             Activated += MainView_Activated;
             Closed += MainView_Closed;
             Loaded += OnLoaded;
+            AllowsTransparency = true;
+            Opacity = 0;
         }
 
         private void MainView_Closed(object sender, EventArgs e)
@@ -72,7 +74,12 @@ namespace LiveWallpaper.Views
 
                 Width = vm.Width;
                 Height = vm.Height;
-            }
+
+                if (!vm.Shown)
+                    Close();
+                else
+                    Opacity = 1;
+            }            
         }
 
         private IntPtr HwndMessageHook(IntPtr wnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

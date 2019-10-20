@@ -19,7 +19,7 @@ namespace LiveWallpaper
     {
         private TaskbarIcon notifyIcon;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        Mutex mutex;
+        private Mutex mutex;
 
         public App()
         {

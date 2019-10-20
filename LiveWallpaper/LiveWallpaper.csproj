@@ -58,7 +58,7 @@
       <Version>0.0.3.203</Version>
     </PackageReference>
     <PackageReference Include="DZY.Util.WPF">
-      <Version>2.0.5.1</Version>
+      <Version>2.0.5.2</Version>
     </PackageReference>
     <PackageReference Include="DZY.WinAPI">
       <Version>2.0.9</Version>
