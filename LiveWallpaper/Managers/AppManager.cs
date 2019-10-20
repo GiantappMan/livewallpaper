@@ -19,13 +19,14 @@ using System.Windows;
 using Windows.Storage;
 using LiveWallpaperEngineAPI;
 using LiveWallpaperEngine;
+using System.Windows.Interop;
 
 namespace LiveWallpaper.Managers
 {
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static DesktopBridgeStartupManager _desktopBridgeStartupManager = null;
+        private static IStartupManager _startupManager = null;
 
         /// <summary>
         /// 默认配置
@@ -92,9 +93,15 @@ namespace LiveWallpaper.Managers
 
         public static PurchaseViewModel GetPurchaseViewModel()
         {
-            //StoreHelper store = new StoreHelper(MainHandle);
             var vm = new PurchaseViewModel();
             vm.Initlize(new string[] { "Durable" }, new string[] { "9N5XR16ZVS8M", "9NMV8XM83L0W", "9NWRT6CM2ZK4" });
+            var mainWindow = Application.Current.MainWindow;
+            if (mainWindow != null)
+            {
+                IntPtr windowHandle = new WindowInteropHelper(mainWindow).Handle;
+                //不初始化的情况下，内部注册窗口会自己调
+                vm.InitHandle(windowHandle, mainWindow.Dispatcher);
+            }
             string VIPGroup = "864039359";
             vm.VIPContent = new VIPContent($"巨应工作室VIP QQ群：{VIPGroup}", VIPGroup, "https://shang.qq.com/wpa/qunwpa?idkey=24010e6212fe3c7ba6f79f5f91e6b216c6708d7a47abceb6f7e26890c3b15944");
             return vm;
@@ -122,7 +129,11 @@ namespace LiveWallpaper.Managers
                 return;
 
             //开机启动
-            _desktopBridgeStartupManager = new DesktopBridgeStartupManager("LiveWallpaper");
+            DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+            if (helpers.IsRunningAsUwp())
+                _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
+            else
+                _startupManager = new DesktopStartupHelper("LiveWallpaper");
 
             //配置相关
             SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
@@ -203,7 +214,7 @@ namespace LiveWallpaper.Managers
                     continue;
 
                 logger.Info($"ShowCurrentWallpapers {w.AbsolutePath} , {item.DisplayIndex}");
-                _ = LiveWallpaperEngineAPI.WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+                _ = WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
                 {
                     Path = w.AbsolutePath
                 }, ConveterToScrennIndexs(item.DisplayIndex));
@@ -293,13 +304,13 @@ namespace LiveWallpaper.Managers
             await LanService.UpdateLanguage();
             try
             {
-                await _desktopBridgeStartupManager.Set(setting.General.StartWithWindows);
+                await _startupManager.Set(setting.General.StartWithWindows);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
             }
-            setting.General.StartWithWindows = await _desktopBridgeStartupManager.Check();
+            setting.General.StartWithWindows = await _startupManager.Check();
 
             var screenSetting = System.Windows.Forms.Screen.AllScreens.Select(m => new ScreenOption()
             {
