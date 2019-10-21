@@ -2,8 +2,6 @@
     x:Class="LiveWallpaper.Views.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:XamlHost="clr-namespace:Microsoft.Toolkit.Wpf.UI.XamlHost;assembly=LiveWallpaper"
-    xmlns:XamlHost1="clr-namespace:Microsoft.Toolkit.Wpf.UI.XamlHost;assembly=Microsoft.Toolkit.Wpf.UI.XamlHost"
     xmlns:cal="http://www.caliburnproject.org"
     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:conveters="clr-namespace:LiveWallpaper.Views.Conveters"
@@ -149,7 +147,6 @@
                         </Button>
                     </StackPanel>
                 </Grid>
-                <XamlHost1:WindowsXamlHost HorizontalAlignment="Center" VerticalAlignment="Bottom" />
             </Grid>
         </TabItem>
         <TabItem lan:Xaml.Key="mainUI_wallpaperStore">
