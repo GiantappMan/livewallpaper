@@ -227,12 +227,16 @@ namespace LiveWallpaper.ViewModels
             _lastOverWallpaper = w;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="display">从1开始</param>
         public async void ApplyWallpaperToDisplay(uint display)
         {
             if (_lastOverWallpaper == null)
                 return;
 
-            await AppManager.ShowWallpaper(_lastOverWallpaper, display);
+            await AppManager.ShowWallpaper(_lastOverWallpaper, display - 1);
         }
 
         public void Setting()
