@@ -36,7 +36,7 @@
   <PropertyGroup>
     <ProjectGuid>94a78a17-1788-470b-8b52-573bb613318f</ProjectGuid>
     <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
     <PackageCertificateThumbprint>3B1414AE39EC7D6ADEB1F3B915373E17A0B673BC</PackageCertificateThumbprint>
