@@ -217,37 +217,31 @@ namespace LiveWallpaper.Managers
                 _ = WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
                 {
                     Path = w.AbsolutePath
-                }, ConveterToScrennIndexs(item.DisplayIndex));
+                }, item.DisplayIndex);
             }
         }
 
-        private static uint[] ConveterToScrennIndexs(int displayIndex)
-        {
-            uint[] screenIndexs;
-            if (displayIndex < 0)
-                screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
-            else
-                screenIndexs = new uint[] { (uint)displayIndex };
-            return screenIndexs;
-        }
-
-        internal static async Task ShowWallpaper(Wallpaper w, int index)
+        internal static async Task ShowWallpaper(Wallpaper w, params uint[] screenIndexs)
         {
             await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
             {
                 Path = w.AbsolutePath
-            }, ConveterToScrennIndexs(index));
+            }, screenIndexs);
+
             if (AppData.Wallpapers == null)
                 AppData.Wallpapers = new List<DisplayWallpaper>();
 
-            var exist = AppData.Wallpapers.FirstOrDefault(m => m.DisplayIndex == index);
-            if (exist == null)
+            foreach (var index in screenIndexs)
             {
-                exist = new DisplayWallpaper() { DisplayIndex = index, Path = w.AbsolutePath };
-                AppData.Wallpapers.Add(exist);
+                var exist = AppData.Wallpapers.FirstOrDefault(m => m.DisplayIndex == index);
+                if (exist == null)
+                {
+                    exist = new DisplayWallpaper() { DisplayIndex = index, Path = w.AbsolutePath };
+                    AppData.Wallpapers.Add(exist);
+                }
+                exist.Path = w.AbsolutePath;
             }
 
-            exist.Path = w.AbsolutePath;
 
             await ApplyAppDataAsync();
         }

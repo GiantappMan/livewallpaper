@@ -9,7 +9,7 @@ namespace LiveWallpaper.Settings
     public class DisplayWallpaper
     {
         public string Path { get; set; }
-        public int DisplayIndex { get; set; }
+        public uint DisplayIndex { get; set; }
     }
 
     public class AppData

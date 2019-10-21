@@ -18,6 +18,7 @@ using DZY.Util.WPF.Views;
 using DZY.Util.Common.Helpers;
 using DZY.Util.WPF.ViewModels;
 using MultiLanguageForXAML;
+using LiveWallpaper.Settings;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -107,7 +108,7 @@ namespace LiveWallpaper.ViewModels
                     vm.Initlize(purchaseVM);
                     view.DataContext = vm;
                     view.Show();
-                }   
+                }
             }
 
         }
@@ -216,7 +217,8 @@ namespace LiveWallpaper.ViewModels
 
         public async void ApplyWallpaper(Wallpaper w)
         {
-            await AppManager.ShowWallpaper(w, AppManager.Setting.Wallpaper.DisplayMonitor);
+            var indexs = WallpaperSetting.ConveterToScreenIndexs(AppManager.Setting.Wallpaper.DisplayMonitor);
+            await AppManager.ShowWallpaper(w, indexs);
         }
 
         Wallpaper _lastOverWallpaper;
@@ -225,12 +227,12 @@ namespace LiveWallpaper.ViewModels
             _lastOverWallpaper = w;
         }
 
-        public async void ApplyWallpaperToDisplay(int display)
+        public async void ApplyWallpaperToDisplay(uint display)
         {
             if (_lastOverWallpaper == null)
                 return;
 
-            await AppManager.ShowWallpaper(_lastOverWallpaper, display - 1);
+            await AppManager.ShowWallpaper(_lastOverWallpaper, display);
         }
 
         public void Setting()

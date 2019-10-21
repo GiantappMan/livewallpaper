@@ -67,6 +67,16 @@ namespace LiveWallpaper.Settings
                 ActionWhenMaximized = ActionWhenMaximized.Pause
             };
         }
+
+        public static uint[] ConveterToScreenIndexs(int displayIndex)
+        {
+            uint[] screenIndexs;
+            if (displayIndex < 0)
+                screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
+            else
+                screenIndexs = new uint[] { (uint)displayIndex };
+            return screenIndexs;
+        }
     }
 
     public class ServerSetting
