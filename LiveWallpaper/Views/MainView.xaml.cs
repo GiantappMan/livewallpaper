@@ -79,7 +79,7 @@ namespace LiveWallpaper.Views
                     Close();
                 else
                     Opacity = 1;
-            }            
+            }
         }
 
         private IntPtr HwndMessageHook(IntPtr wnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -93,6 +93,16 @@ namespace LiveWallpaper.Views
                     break;
             }
             return IntPtr.Zero;
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(DataContext is MainViewModel vm))
+                return;
+            MenuItem menuItem = e.OriginalSource as MenuItem;
+            bool ok = uint.TryParse(menuItem.Header + "", out uint screenIndex);
+            if (ok)
+                vm.ApplyWallpaperToDisplay(screenIndex);
         }
     }
 }
