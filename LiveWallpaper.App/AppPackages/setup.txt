@@ -2,3 +2,6 @@ run Add-AppDevPackage.ps1
 
 video tutorial:
 https://www.bilibili.com/video/av40786974
+
+微软教程:
+https://docs.microsoft.com/zh-cn/windows/application-management/sideload-apps-in-windows-10#%E5%A6%82%E4%BD%95%E5%9C%A8%E6%A1%8C%E9%9D%A2%E4%B8%8A%E6%97%81%E5%8A%A0%E8%BD%BD%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F
