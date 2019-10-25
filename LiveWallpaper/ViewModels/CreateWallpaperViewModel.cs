@@ -192,11 +192,11 @@ namespace LiveWallpaper.ViewModels
             WallpaperManager.Instance.CloseWallpaper(0);
         }
 
-        public async void Cancel()
+        public void Cancel()
         {
             CurrentWallpaper = null;
             //mpv player有时候导致卡死不明原因，曲线救国
-            await Task.Delay(1000);
+            //await Task.Delay(1000);
             StopPreview();
             Result = false;
             TryClose();
