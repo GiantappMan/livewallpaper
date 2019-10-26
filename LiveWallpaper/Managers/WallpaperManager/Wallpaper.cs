@@ -1,5 +1,7 @@
 ﻿using DZY.Util.Common.Helpers;
 using GiantappMvvm.Base;
+using LiveWallpaperEngine;
+using LiveWallpaperEngineAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -219,33 +221,77 @@ namespace LiveWallpaper.WallpaperManagers
             }
             return false;
         }
-
-        public static Wallpaper CreateLocalPack(Wallpaper wallpaper, string destDir)
+        public static async Task<Wallpaper> CreateLocalPack(Wallpaper wallpaper, string destDir)
         {
-            var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
-            string projectInfoPath = Path.Combine(currentDir, "project.json");
+            string sourceDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
+            var tmpResult = await WallpaperManager.CreateLocalPack(sourceDir, Convert(wallpaper.ProjectInfo), destDir);
 
-            if (File.Exists(projectInfoPath))
+            return new Wallpaper(Convert(tmpResult.Info), destDir);
+        }
+
+        private static ProjectInfo Convert(WallpaperInfo info)
+        {
+            if (info == null)
+                return null;
+            var result = new ProjectInfo()
             {
-                //有详细信息，全拷。兼容wallpaper engine
-                CopyFolder(new DirectoryInfo(currentDir), new DirectoryInfo(destDir));
-            }
-            else
-            {
-                CopyFileToDir(wallpaper.AbsolutePath, destDir);
-            }
+                Description = info.Description,
+                File = info.File,
+                Preview = info.Preview,
+                Title = info.Title,
+                Type = info.Type,
+                Visibility = info.Visibility
+            };
+            if (info.Tags != null)
+                result.Tags = info.Tags.Split(",").ToList();
 
-            string preview = "preview.jpg";
-            wallpaper.ProjectInfo.Preview = preview;
-            CopyFileToDir(wallpaper.AbsolutePreviewPath, destDir, preview);
-
-
-            string jsonPath = Path.Combine(destDir, "project.json");
-            JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
-
-            Wallpaper result = new Wallpaper(wallpaper.ProjectInfo, destDir);
             return result;
         }
+        private static WallpaperInfo Convert(ProjectInfo info)
+        {
+            if (info == null)
+                return null;
+            var result = new WallpaperInfo()
+            {
+                Description = info.Description,
+                File = info.File,
+                Preview = info.Preview,
+                Title = info.Title,
+                Type = info.Type,
+                Visibility = info.Visibility
+            };
+            if (info.Tags != null)
+                info.Tags.ForEach(m => result.Tags += $"{m},");
+
+            return result;
+        }
+
+        //public static Wallpaper CreateLocalPack(Wallpaper wallpaper, string destDir)
+        //{
+        //    var currentDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
+        //    string projectInfoPath = Path.Combine(currentDir, "project.json");
+
+        //    if (File.Exists(projectInfoPath))
+        //    {
+        //        //有详细信息，全拷。兼容wallpaper engine
+        //        CopyFolder(new DirectoryInfo(currentDir), new DirectoryInfo(destDir));
+        //    }
+        //    else
+        //    {
+        //        CopyFileToDir(wallpaper.AbsolutePath, destDir);
+        //    }
+
+        //    string preview = "preview.jpg";
+        //    wallpaper.ProjectInfo.Preview = preview;
+        //    CopyFileToDir(wallpaper.AbsolutePreviewPath, destDir, preview);
+
+
+        //    string jsonPath = Path.Combine(destDir, "project.json");
+        //    JsonHelper.JsonSerialize(wallpaper.ProjectInfo, jsonPath);
+
+        //    Wallpaper result = new Wallpaper(wallpaper.ProjectInfo, destDir);
+        //    return result;
+        //}
         public static void CopyFileToDir(string path, string dir, string targetFileName = null)
         {
             if (!Directory.Exists(dir))
