@@ -1,5 +1,4 @@
-﻿using MpvPlayer;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -86,8 +85,8 @@ namespace LiveWallpaper.WallpaperManagers.Controls
 
         public void Capture(string tmpImg)
         {
-            var player = GetChildOfType<MpvPlayerControl>(this as DependencyObject);
-            player.ScreenshotToFile(tmpImg);
+            //var player = GetChildOfType<MpvPlayerControl>(this as DependencyObject);
+            //player.ScreenshotToFile(tmpImg);
         }
 
         public static T GetChildOfType<T>(DependencyObject depObj)
