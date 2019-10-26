@@ -220,7 +220,7 @@ namespace LiveWallpaper.ViewModels
             string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                var result = await Task.Run(() => { return Wallpaper.CreateLocalPack(CurrentWallpaper, destDir); });
+                await Wallpaper.CreateLocalPack(CurrentWallpaper, destDir);
                 if (_editMode)
                 {
                     //删除旧包
