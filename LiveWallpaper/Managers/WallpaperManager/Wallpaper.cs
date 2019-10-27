@@ -1,7 +1,7 @@
 ﻿using DZY.Util.Common.Helpers;
 using GiantappMvvm.Base;
-using LiveWallpaperEngine;
 using LiveWallpaperEngineAPI;
+using LiveWallpaperEngineAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -76,11 +76,11 @@ namespace LiveWallpaper.WallpaperManagers
 
         #endregion
 
-        public string ExeName { get; internal set; }
-        public string ExePath { get; internal set; }
-        public object ExeArgs { get; internal set; }
+        //public string ExeName { get; internal set; }
+        //public string ExePath { get; internal set; }
+        //public object ExeArgs { get; internal set; }
 
-        private string _dir;
+        public string Dir { get; private set; }
 
         public Wallpaper()
         {
@@ -89,7 +89,7 @@ namespace LiveWallpaper.WallpaperManagers
 
         public Wallpaper(ProjectInfo info, string dir)
         {
-            _dir = dir;
+            Dir = dir;
             ProjectInfo = info;
         }
 
@@ -117,15 +117,15 @@ namespace LiveWallpaper.WallpaperManagers
 
                 if (value != null)
                 {
-                    if (_dir == null)
-                        _dir = Path.GetDirectoryName(AbsolutePath);
+                    if (Dir == null)
+                        Dir = Path.GetDirectoryName(AbsolutePath);
 
-                    if (_dir != null)
+                    if (Dir != null)
                     {
-                        AbsolutePath = Path.Combine(_dir, value.File);
+                        AbsolutePath = Path.Combine(Dir, value.File);
                         //AbsolutePreviewPath = Path.Combine(_dir, value.Preview ?? "preview.jpg");
                         if (!string.IsNullOrEmpty(value.Preview))
-                            AbsolutePreviewPath = Path.Combine(_dir, value.Preview);
+                            AbsolutePreviewPath = Path.Combine(Dir, value.Preview);
                     }
                 }
                 else
@@ -203,6 +203,7 @@ namespace LiveWallpaper.WallpaperManagers
                 yield return result;
             }
         }
+
         public static async Task<bool> Delete(Wallpaper wallpaper)
         {
             string dir = Path.GetDirectoryName(wallpaper.AbsolutePath);
@@ -221,11 +222,15 @@ namespace LiveWallpaper.WallpaperManagers
             }
             return false;
         }
+
+        public static async Task EditLocakPack(Wallpaper oldWallpaper, Wallpaper wallpaper, string destDir)
+        {
+            await WallpaperManager.EditLocalPack(wallpaper.AbsolutePath, wallpaper.AbsolutePreviewPath, Convert(oldWallpaper.ProjectInfo), destDir);
+        }
+
         public static async Task<Wallpaper> CreateLocalPack(Wallpaper wallpaper, string destDir)
         {
-            string sourceDir = Path.GetDirectoryName(wallpaper.AbsolutePath);
-            var tmpResult = await WallpaperManager.CreateLocalPack(sourceDir, Convert(wallpaper.ProjectInfo), destDir);
-
+            var tmpResult = await WallpaperManager.CreateLocalPack(wallpaper.AbsolutePath, wallpaper.AbsolutePreviewPath, Convert(wallpaper.ProjectInfo), destDir);
             return new Wallpaper(Convert(tmpResult.Info), destDir);
         }
 

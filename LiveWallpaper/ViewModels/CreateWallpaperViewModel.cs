@@ -14,16 +14,17 @@ using System;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LiveWallpaperEngineAPI;
+using LiveWallpaperEngineAPI.Models;
 
 namespace LiveWallpaper.ViewModels
 {
     public class CreateWallpaperViewModel : ScreenWindow
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private bool _editMode;
 
         //默认是false，修改后内存保存
-        private static bool _preview;
+        private bool _preview;
 
         public CreateWallpaperViewModel()
         {
@@ -43,6 +44,7 @@ namespace LiveWallpaper.ViewModels
         public const string CurrentWallpaperPropertyName = "CurrentWallpaper";
 
         private Wallpaper _CurrentWallpaper;
+        private Wallpaper _OldWallpaper;
 
         /// <summary>
         /// CurrentWallpaper
@@ -55,6 +57,7 @@ namespace LiveWallpaper.ViewModels
             {
                 if (_CurrentWallpaper == value) return;
 
+                _OldWallpaper = _CurrentWallpaper;
                 _CurrentWallpaper = value;
                 if (_preview)
                     Preview();
@@ -180,7 +183,7 @@ namespace LiveWallpaper.ViewModels
         {
             _preview = true;
             if (CurrentWallpaper != null)
-                await WallpaperManager.Instance.ShowWallpaper(new LiveWallpaperEngine.WallpaperModel()
+                await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
                 {
                     Path = CurrentWallpaper.AbsolutePath
                 }, 0);
@@ -217,21 +220,28 @@ namespace LiveWallpaper.ViewModels
 
             CanSave = false;
 
-            string destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
             try
             {
-                await Wallpaper.CreateLocalPack(CurrentWallpaper, destDir);
                 if (_editMode)
                 {
-                    //删除旧包
-                    var temp = CurrentWallpaper;
-                    CurrentWallpaper = null;
-                    bool ok = await Wallpaper.Delete(temp);
-                    if (!ok)
-                    {
-                        MessageBox.Show("删除失败请手动删除");
-                    }
+                    await Wallpaper.EditLocakPack(_OldWallpaper, CurrentWallpaper, CurrentWallpaper.Dir);
                 }
+                else
+                {
+                    string destDir; destDir = Path.Combine(AppManager.LocalWallpaperDir, Guid.NewGuid().ToString());
+                    await Wallpaper.CreateLocalPack(CurrentWallpaper, destDir);
+                }
+                //if (_editMode)
+                //{
+                //    //删除旧包
+                //    var temp = CurrentWallpaper;
+                //    CurrentWallpaper = null;
+                //    bool ok = await Wallpaper.Delete(temp);
+                //    if (!ok)
+                //    {
+                //        MessageBox.Show("删除失败请手动删除");
+                //    }
+                //}
             }
             catch (Exception ex)
             {
@@ -251,7 +261,7 @@ namespace LiveWallpaper.ViewModels
 
             try
             {
-                var tmpImg = Path.GetTempFileName();
+                var tmpImg = Path.GetTempFileName().Replace(".tmp", ".png");
                 using (FileStream stream = File.Open(tmpImg, FileMode.Create))
                 {
                     RenderTargetBitmap bmp = new RenderTargetBitmap((int)render.ActualWidth,

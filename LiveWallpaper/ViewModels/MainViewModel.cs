@@ -11,7 +11,7 @@ using System.Dynamic;
 using LiveWallpaper.Events;
 using System.Windows.Interop;
 using LiveWallpaper.Views;
-using LiveWallpaperEngine;
+using LiveWallpaperEngineAPI;
 using System.Collections.Generic;
 using DZY.Util.WPF;
 using DZY.Util.WPF.Views;
@@ -87,7 +87,9 @@ namespace LiveWallpaper.ViewModels
         private async void CheckVIP()
         {
             var purchaseVM = AppManager.GetPurchaseViewModel();
-            await purchaseVM.CheckVIP();
+            var ok = await purchaseVM.CheckVIP();
+            if (!ok)
+                return;
             if (!purchaseVM.IsVIP)
             {
                 AppHelper AppHelper = new AppHelper();
@@ -110,7 +112,6 @@ namespace LiveWallpaper.ViewModels
                     view.Show();
                 }
             }
-
         }
 
         public void CreateWallpaper()
@@ -123,7 +124,7 @@ namespace LiveWallpaper.ViewModels
 
             var windowManager = IoC.Get<IWindowManager>();
             _createVM = IoC.Get<CreateWallpaperViewModel>();
-            _createVM.Deactivated += _createVM_Deactivated;
+            _createVM.Deactivated += CreateVM_Deactivated;
             dynamic windowSettings = new ExpandoObject();
             windowSettings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             windowSettings.Owner = GetView();
@@ -148,9 +149,9 @@ namespace LiveWallpaper.ViewModels
             _createVM.SetPaper(s);
         }
 
-        private void _createVM_Deactivated(object sender, DeactivationEventArgs e)
+        private void CreateVM_Deactivated(object sender, DeactivationEventArgs e)
         {
-            _createVM.Deactivated -= _createVM_Deactivated;
+            _createVM.Deactivated -= CreateVM_Deactivated;
             if (_createVM.Result)
             {
                 RefreshLocalWallpaper();

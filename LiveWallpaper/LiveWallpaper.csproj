@@ -107,7 +107,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngine.Common\LiveWallpaperEngine.Common.csproj" />
     <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
   </ItemGroup>
 

@@ -18,8 +18,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using Windows.Storage;
 using LiveWallpaperEngineAPI;
-using LiveWallpaperEngine;
 using System.Windows.Interop;
+using LiveWallpaperEngineAPI.Models;
 
 namespace LiveWallpaper.Managers
 {
@@ -309,13 +309,15 @@ namespace LiveWallpaper.Managers
             var screenSetting = System.Windows.Forms.Screen.AllScreens.Select(m => new ScreenOption()
             {
                 ScreenIndex = (uint)System.Windows.Forms.Screen.AllScreens.ToList().IndexOf(m),
-                WhenAppMaximized = LiveWallpaperEngine.ActionWhenMaximized.Pause,
+                WhenAppMaximized = ActionWhenMaximized.Pause,
             }).ToList();
 
-            var liveWallpaperOptions = new LiveWallpaperOptions();
-            liveWallpaperOptions.AppMaximizedEffectAllScreen = true;
-            liveWallpaperOptions.AudioScreenIndex = setting.Wallpaper.AudioSource;
-            liveWallpaperOptions.ScreenOptions.AddRange(screenSetting);
+            var liveWallpaperOptions = new LiveWallpaperOptions
+            {
+                AppMaximizedEffectAllScreen = true,
+                AudioScreenIndex = setting.Wallpaper.AudioSource,
+                ScreenOptions = screenSetting
+            };
 
             await WallpaperManager.Instance.SetOptions(liveWallpaperOptions);
         }
