@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiveWallpaperEngineAPI.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -46,12 +47,12 @@ namespace LiveWallpaper.Settings
         }
     }
 
-    public enum ActionWhenMaximized
-    {
-        Play,
-        Stop,
-        Pause
-    }
+    //public enum ActionWhenMaximized
+    //{
+    //    Play,
+    //    Stop,
+    //    Pause
+    //}
 
     public class WallpaperSetting
     {
