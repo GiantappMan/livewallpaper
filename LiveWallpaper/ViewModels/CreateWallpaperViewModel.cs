@@ -15,6 +15,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LiveWallpaperEngineAPI;
 using LiveWallpaperEngineAPI.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -25,6 +27,7 @@ namespace LiveWallpaper.ViewModels
 
         //默认是false，修改后内存保存
         private bool _preview;
+        private Dictionary<uint, WallpaperModel> _beforePreviewModel;
 
         public CreateWallpaperViewModel()
         {
@@ -57,7 +60,8 @@ namespace LiveWallpaper.ViewModels
             {
                 if (_CurrentWallpaper == value) return;
 
-                _OldWallpaper = _CurrentWallpaper;
+                if (_OldWallpaper == null)
+                    _OldWallpaper = _CurrentWallpaper;
                 _CurrentWallpaper = value;
                 if (_preview)
                     Preview();
@@ -183,16 +187,29 @@ namespace LiveWallpaper.ViewModels
         {
             _preview = true;
             if (CurrentWallpaper != null)
+            {
+                //所有屏幕一起预览
+                _beforePreviewModel = new Dictionary<uint, WallpaperModel>(WallpaperManager.Instance.CurrentWalpapers);
                 await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
                 {
                     Path = CurrentWallpaper.AbsolutePath
-                }, 0);
+                }, WallpaperManager.Instance.ScreenIndexs);
+            }
         }
 
-        public void StopPreview()
+        public async void StopPreview()
         {
+            if (_preview)
+            {
+                uint[] unuseScreen = WallpaperManager.Instance.ScreenIndexs.ToList().Except(_beforePreviewModel.Keys.ToList()).ToArray();
+                WallpaperManager.Instance.CloseWallpaper(unuseScreen);
+                foreach (var (screenIndex, wallpaper) in _beforePreviewModel)
+                {
+                    //恢复
+                    await WallpaperManager.Instance.ShowWallpaper(wallpaper, screenIndex);
+                }
+            }
             _preview = false;
-            WallpaperManager.Instance.CloseWallpaper(0);
         }
 
         public void Cancel()
@@ -224,7 +241,10 @@ namespace LiveWallpaper.ViewModels
             {
                 if (_editMode)
                 {
-                    await Wallpaper.EditLocakPack(_OldWallpaper, CurrentWallpaper, CurrentWallpaper.Dir);
+                    if (_OldWallpaper == null)
+                        //只修改了title，desc等信息
+                        _OldWallpaper = CurrentWallpaper;
+                    await Wallpaper.EditLocakPack(CurrentWallpaper, _OldWallpaper.Dir);
                 }
                 else
                 {

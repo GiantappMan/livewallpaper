@@ -223,9 +223,9 @@ namespace LiveWallpaper.WallpaperManagers
             return false;
         }
 
-        public static async Task EditLocakPack(Wallpaper oldWallpaper, Wallpaper wallpaper, string destDir)
+        public static async Task EditLocakPack(Wallpaper wallpaper, string destDir)
         {
-            await WallpaperManager.EditLocalPack(wallpaper.AbsolutePath, wallpaper.AbsolutePreviewPath, Convert(oldWallpaper.ProjectInfo), destDir);
+            await WallpaperManager.EditLocalPack(wallpaper.AbsolutePath, wallpaper.AbsolutePreviewPath, Convert(wallpaper.ProjectInfo), destDir);
         }
 
         public static async Task<Wallpaper> CreateLocalPack(Wallpaper wallpaper, string destDir)
