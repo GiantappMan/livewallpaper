@@ -1,6 +1,6 @@
 ﻿using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
-using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManagers;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -23,6 +23,8 @@ namespace LiveWallpaper.Views
             Activated += MainView_Activated;
             Closed += MainView_Closed;
             Loaded += OnLoaded;
+            AllowsTransparency = true;
+            Opacity = 0;
         }
 
         private void MainView_Closed(object sender, EventArgs e)
@@ -72,6 +74,11 @@ namespace LiveWallpaper.Views
 
                 Width = vm.Width;
                 Height = vm.Height;
+
+                if (!vm.Shown)
+                    Close();
+                else
+                    Opacity = 1;
             }
         }
 
@@ -86,6 +93,16 @@ namespace LiveWallpaper.Views
                     break;
             }
             return IntPtr.Zero;
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(DataContext is MainViewModel vm))
+                return;
+            MenuItem menuItem = e.OriginalSource as MenuItem;
+            bool ok = uint.TryParse(menuItem.Header + "", out uint screenIndex);
+            if (ok)
+                vm.ApplyWallpaperToDisplay(screenIndex);
         }
     }
 }

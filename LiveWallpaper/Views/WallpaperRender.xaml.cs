@@ -1,10 +1,9 @@
-﻿using MpvPlayer;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace LiveWallpaper.WallpaperManager.Controls
+namespace LiveWallpaper.WallpaperManagers.Controls
 {
     /// <summary>
     /// Interaction logic for WallpaperRender.xaml
@@ -63,7 +62,7 @@ namespace LiveWallpaper.WallpaperManager.Controls
                 new PropertyChangedCallback((sender, e) =>
                 {
                     WallpaperRender control = sender as WallpaperRender;
-                    var temp = WallpaperManager.ResolveFromFile(e.NewValue.ToString());
+                    var temp = Wallpaper.ResolveFromFile(e.NewValue.ToString());
                     control.SetValue(WallpaperProperty, temp);
                 })));
 
@@ -86,8 +85,8 @@ namespace LiveWallpaper.WallpaperManager.Controls
 
         public void Capture(string tmpImg)
         {
-            var player = GetChildOfType<MpvPlayerControl>(this as DependencyObject);
-            player.ScreenshotToFile(tmpImg);
+            //var player = GetChildOfType<MpvPlayerControl>(this as DependencyObject);
+            //player.ScreenshotToFile(tmpImg);
         }
 
         public static T GetChildOfType<T>(DependencyObject depObj)

@@ -61,21 +61,22 @@
                                             VerticalContentAlignment="Stretch"
                                             cal:Action.Target="MainViewModel"
                                             lan:Xaml.Key="setting_screen"
+                                            Click="MenuItem_Click"
                                             ItemsSource="{Binding Displays}"
                                             Visibility="{Binding MultiDiplay, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <MenuItem.ItemTemplate>
+                                            <!--<MenuItem.ItemTemplate>
                                                 <DataTemplate>
                                                     <Label
-                                                        MinWidth="60"
+                                                        MinWidth="120"
                                                         HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Stretch"
                                                         HorizontalContentAlignment="Center"
                                                         cal:Action.TargetWithoutContext="MainViewModel"
                                                         cal:Message.Attach="[Event MouseDown] = [Action ApplyWallpaperToDisplay($datacontext)]"
-                                                        Background="Transparent"
+                                                        Background="#5B800080"
                                                         Content="{Binding}" />
                                                 </DataTemplate>
-                                            </MenuItem.ItemTemplate>
+                                            </MenuItem.ItemTemplate>-->
                                         </MenuItem>
                                         <MenuItem
                                             cal:Action.TargetWithoutContext="MainViewModel"

@@ -42,18 +42,10 @@
 - 需要安装 Windows10 Software Development Kit SDK。
 - 如果你的系统盘不是 C 盘还需要手动修改路径。右键 LiveWallpaper->编辑项目文件。dll 位置参考 https://www.mscoder.cn/program/wpf-reference-uwp/
 
-### 感谢：
-* 感谢所有的issue提交者
-* 感谢所有的源码[贡献者](/Docs/Contribution.md)
-
----
-
-### 广告区域:
-
-**C#全栈开发**：191034956  
-**全球 it 互联交友**: 665127101
-（只允许单身码农和妹子加入，初衷是给程序员多一种认识异性的渠道）
-
+### 鸣谢：
+* 源码贡献者[贡献者](/Docs/Contribution.md)
+* Issue提交者
+* 所有引用的开源库
 ---
 
 ## 视频教程：

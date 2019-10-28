@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiveWallpaperEngineAPI.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -46,19 +47,19 @@ namespace LiveWallpaper.Settings
         }
     }
 
-    public enum ActionWhenMaximized
-    {
-        Play,
-        Stop,
-        Pause
-    }
+    //public enum ActionWhenMaximized
+    //{
+    //    Play,
+    //    Stop,
+    //    Pause
+    //}
 
     public class WallpaperSetting
     {
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
         public int AudioSource { get; set; }
         public int DisplayMonitor { get; set; }
-        public string VideoAspect { get; set; }
+        //public string VideoAspect { get; set; }
 
         public static WallpaperSetting GetDefaultWallpaperSetting()
         {
@@ -66,6 +67,16 @@ namespace LiveWallpaper.Settings
             {
                 ActionWhenMaximized = ActionWhenMaximized.Pause
             };
+        }
+
+        public static uint[] ConveterToScreenIndexs(int displayIndex)
+        {
+            uint[] screenIndexs;
+            if (displayIndex < 0)
+                screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
+            else
+                screenIndexs = new uint[] { (uint)displayIndex };
+            return screenIndexs;
         }
     }
 
