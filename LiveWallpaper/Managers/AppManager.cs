@@ -306,10 +306,10 @@ namespace LiveWallpaper.Managers
             }
             setting.General.StartWithWindows = await _startupManager.Check();
 
-            var screenSetting = System.Windows.Forms.Screen.AllScreens.Select(m => new ScreenOption()
+            var screenSetting = WallpaperManager.Instance.ScreenIndexs.Select((m) => new ScreenOption()
             {
-                ScreenIndex = (uint)System.Windows.Forms.Screen.AllScreens.ToList().IndexOf(m),
-                WhenAppMaximized = ActionWhenMaximized.Pause,
+                ScreenIndex = m,
+                WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
             }).ToList();
 
             var liveWallpaperOptions = new LiveWallpaperOptions
