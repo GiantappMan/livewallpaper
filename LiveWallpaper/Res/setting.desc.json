@@ -39,7 +39,7 @@
       "cbItems": [
         {
           "lanKey": "setting_maximizedPlay",
-          "value": 0
+          "value": 2
         },
         {
           "lanKey": "setting_maximizedStop",
@@ -47,7 +47,7 @@
         },
         {
           "lanKey": "setting_maximizedPause",
-          "value": 2
+          "value": 0
         }
       ]
     },

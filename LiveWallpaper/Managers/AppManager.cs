@@ -5,7 +5,7 @@ using DZY.Util.WPF.Views;
 using Hardcodet.Wpf.TaskbarNotification;
 using JsonConfiger;
 using LiveWallpaper.Settings;
-using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManagers;
 using MultiLanguageForXAML;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,13 +17,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Windows.Storage;
+using LiveWallpaperEngineAPI;
+using System.Windows.Interop;
+using LiveWallpaperEngineAPI.Models;
 
 namespace LiveWallpaper.Managers
 {
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static DesktopBridgeStartupManager _desktopBridgeStartupManager = null;
+        private static IStartupManager _startupManager = null;
 
         /// <summary>
         /// 默认配置
@@ -90,9 +93,15 @@ namespace LiveWallpaper.Managers
 
         public static PurchaseViewModel GetPurchaseViewModel()
         {
-            //StoreHelper store = new StoreHelper(MainHandle);
             var vm = new PurchaseViewModel();
             vm.Initlize(new string[] { "Durable" }, new string[] { "9N5XR16ZVS8M", "9NMV8XM83L0W", "9NWRT6CM2ZK4" });
+            var mainWindow = Application.Current.MainWindow;
+            if (mainWindow != null)
+            {
+                IntPtr windowHandle = new WindowInteropHelper(mainWindow).Handle;
+                //不初始化的情况下，内部注册窗口会自己调
+                vm.InitHandle(windowHandle, mainWindow.Dispatcher);
+            }
             string VIPGroup = "864039359";
             vm.VIPContent = new VIPContent($"巨应工作室VIP QQ群：{VIPGroup}", VIPGroup, "https://shang.qq.com/wpa/qunwpa?idkey=24010e6212fe3c7ba6f79f5f91e6b216c6708d7a47abceb6f7e26890c3b15944");
             return vm;
@@ -120,7 +129,11 @@ namespace LiveWallpaper.Managers
                 return;
 
             //开机启动
-            _desktopBridgeStartupManager = new DesktopBridgeStartupManager("LiveWallpaper");
+            DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+            if (helpers.IsRunningAsUwp())
+                _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
+            else
+                _startupManager = new DesktopStartupHelper("LiveWallpaper");
 
             //配置相关
             SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
@@ -154,10 +167,6 @@ namespace LiveWallpaper.Managers
 
             //加载壁纸
             RefreshLocalWallpapers();
-            LiveWallpaper.WallpaperManager.WallpaperManager.MaximizedEvent += WallpaperManager_MaximizedEvent;
-
-            LiveWallpaper.WallpaperManager.WallpaperManager.MonitorMaxiemized(true);
-            ApplyWallpaper(Setting);
 
             ShowCurrentWallpapers();
         }
@@ -193,28 +202,6 @@ namespace LiveWallpaper.Managers
             await JsonHelper.JsonSerializeAsync(tmpSetting, SettingPath);
         }
 
-        private static void WallpaperManager_MaximizedEvent(object sender, bool e)
-        {
-            switch (Setting.Wallpaper.ActionWhenMaximized)
-            {
-                case ActionWhenMaximized.Play: break;
-                case ActionWhenMaximized.Pause:
-                    if (e)
-                        LiveWallpaper.WallpaperManager.WallpaperManager.Pause();
-                    else
-                        LiveWallpaper.WallpaperManager.WallpaperManager.Resume();
-                    break;
-                case ActionWhenMaximized.Stop:
-                    if (e)
-                        LiveWallpaper.WallpaperManager.WallpaperManager.Close();
-                    else
-                    {
-                        ShowCurrentWallpapers();
-                    }
-                    break;
-            }
-        }
-
         private static void ShowCurrentWallpapers()
         {
             if (AppData.Wallpapers == null)
@@ -227,31 +214,41 @@ namespace LiveWallpaper.Managers
                     continue;
 
                 logger.Info($"ShowCurrentWallpapers {w.AbsolutePath} , {item.DisplayIndex}");
-                LiveWallpaper.WallpaperManager.WallpaperManager.Show(w, item.DisplayIndex);
+                _ = WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+                {
+                    Path = w.AbsolutePath
+                }, item.DisplayIndex);
             }
         }
 
-        internal static async Task ShowWallpaper(Wallpaper w, int index)
+        internal static async Task ShowWallpaper(Wallpaper w, params uint[] screenIndexs)
         {
-            LiveWallpaper.WallpaperManager.WallpaperManager.Show(w, index);
+            await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+            {
+                Path = w.AbsolutePath
+            }, screenIndexs);
+
             if (AppData.Wallpapers == null)
                 AppData.Wallpapers = new List<DisplayWallpaper>();
 
-            var exist = AppData.Wallpapers.FirstOrDefault(m => m.DisplayIndex == index);
-            if (exist == null)
+            foreach (var index in screenIndexs)
             {
-                exist = new DisplayWallpaper() { DisplayIndex = index, Path = w.AbsolutePath };
-                AppData.Wallpapers.Add(exist);
+                var exist = AppData.Wallpapers.FirstOrDefault(m => m.DisplayIndex == index);
+                if (exist == null)
+                {
+                    exist = new DisplayWallpaper() { DisplayIndex = index, Path = w.AbsolutePath };
+                    AppData.Wallpapers.Add(exist);
+                }
+                exist.Path = w.AbsolutePath;
             }
 
-            exist.Path = w.AbsolutePath;
 
             await ApplyAppDataAsync();
         }
 
         internal static void Dispose()
         {
-            LiveWallpaper.WallpaperManager.WallpaperManager.Close();
+            WallpaperManager.Instance.Dispose();
         }
 
         public static void RefreshLocalWallpapers()
@@ -266,7 +263,7 @@ namespace LiveWallpaper.Managers
                 if (!Directory.Exists(LocalWallpaperDir))
                     Directory.CreateDirectory(LocalWallpaperDir);
 
-                var wallpapers = LiveWallpaper.WallpaperManager.WallpaperManager.GetWallpapers(LocalWallpaperDir);
+                var wallpapers = Wallpaper.GetWallpapers(LocalWallpaperDir);
                 foreach (var item in wallpapers)
                 {
                     Wallpapers.Add(item);
@@ -288,7 +285,6 @@ namespace LiveWallpaper.Managers
             var setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
             Setting = setting;
             await ApplySetting(setting);
-            ApplyWallpaper(setting);
         }
 
         public static async Task ApplySetting(SettingObject setting)
@@ -302,21 +298,28 @@ namespace LiveWallpaper.Managers
             await LanService.UpdateLanguage();
             try
             {
-                await _desktopBridgeStartupManager.Set(setting.General.StartWithWindows);
+                await _startupManager.Set(setting.General.StartWithWindows);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
             }
-            setting.General.StartWithWindows = await _desktopBridgeStartupManager.Check();
-            //WallpaperManager.VideoAspect = setting.Wallpaper.VideoAspect;
-            LiveWallpaper.WallpaperManager.WallpaperManager.ApplyVideoAspect(setting.Wallpaper.VideoAspect);
-        }
+            setting.General.StartWithWindows = await _startupManager.Check();
 
-        public static void ApplyWallpaper(SettingObject setting)
-        {
-            LiveWallpaper.WallpaperManager.WallpaperManager.InitMonitor(setting.Wallpaper.DisplayMonitor);
-            LiveWallpaper.WallpaperManager.WallpaperManager.PlayAudio(setting.Wallpaper.AudioSource);
+            var screenSetting = WallpaperManager.Instance.ScreenIndexs.Select((m) => new ScreenOption()
+            {
+                ScreenIndex = m,
+                WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
+            }).ToList();
+
+            var liveWallpaperOptions = new LiveWallpaperOptions
+            {
+                AppMaximizedEffectAllScreen = true,
+                AudioScreenIndex = setting.Wallpaper.AudioSource,
+                ScreenOptions = screenSetting
+            };
+
+            await WallpaperManager.Instance.SetOptions(liveWallpaperOptions);
         }
     }
 }

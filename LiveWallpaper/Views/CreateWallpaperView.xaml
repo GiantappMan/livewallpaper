@@ -5,7 +5,7 @@
     xmlns:cal="http://www.caliburnproject.org"
     xmlns:conveters="clr-namespace:LiveWallpaper.Views.Conveters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:engine="clr-namespace:LiveWallpaper.WallpaperManager.Controls"
+    xmlns:engine="clr-namespace:LiveWallpaper.WallpaperManagers.Controls"
     xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:lan="clr-namespace:MultiLanguageForXAML;assembly=MultiLanguageForXAML"

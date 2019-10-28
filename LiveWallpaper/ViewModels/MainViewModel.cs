@@ -3,7 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using LiveWallpaper.WallpaperManager;
+using LiveWallpaper.WallpaperManagers;
 using LiveWallpaper.Managers;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -11,13 +11,14 @@ using System.Dynamic;
 using LiveWallpaper.Events;
 using System.Windows.Interop;
 using LiveWallpaper.Views;
-using LiveWallpaperEngine;
+using LiveWallpaperEngineAPI;
 using System.Collections.Generic;
 using DZY.Util.WPF;
 using DZY.Util.WPF.Views;
 using DZY.Util.Common.Helpers;
 using DZY.Util.WPF.ViewModels;
 using MultiLanguageForXAML;
+using LiveWallpaper.Settings;
 
 namespace LiveWallpaper.ViewModels
 {
@@ -28,17 +29,16 @@ namespace LiveWallpaper.ViewModels
         IEventAggregator _eventAggregator;
         const float sourceWidth = 436;
         const float sourceHeight = 337;
-        bool _firstLaunch = true;
 
         public MainViewModel(IEventAggregator eventAggregator)
         {
             _eventAggregator = eventAggregator;
             _eventAggregator.Subscribe(this);
-            for (int i = 0; i < LiveWallpaperEngineManager.AllScreens.Count; i++)
+            for (int i = 0; i < System.Windows.Forms.Screen.AllScreens.Length; i++)
             {
                 Displays.Add(i + 1);
             }
-            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && System.Windows.Forms.Screen.AllScreens.Length > 1;
         }
 
         protected override void OnViewReady(object view)
@@ -50,7 +50,7 @@ namespace LiveWallpaper.ViewModels
 
         public async Task OnLoaded()
         {
-            if (_firstLaunch)
+            if (FirstLaunch)
             {
                 AppManager.Run();
                 //第一次时打开检查更新
@@ -61,13 +61,44 @@ namespace LiveWallpaper.ViewModels
                      AppManager.CheckUpates(handle);
                  });
 
-                DZY.Util.Common.Helpers.AppHelper AppHelper = new DZY.Util.Common.Helpers.AppHelper();
+                CheckVIP();
+
+                if (AppManager.Setting.General.MinimizeUI)
+                {
+                    Shown = false;
+                }
+                else
+                    Shown = true;
+
+                FirstLaunch = false;
+            }
+            else
+                Shown = true;
+
+            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
+
+            if (AppManager.Setting.General.RecordWindowSize)
+            {
+                Width = AppManager.Setting.General.Width;
+                Height = AppManager.Setting.General.Height;
+            }
+        }
+
+        private async void CheckVIP()
+        {
+            var purchaseVM = AppManager.GetPurchaseViewModel();
+            var ok = await purchaseVM.CheckVIP();
+            if (!ok)
+                return;
+            if (!purchaseVM.IsVIP)
+            {
+                AppHelper AppHelper = new AppHelper();
                 //0.0069444444444444, 0.0138888888888889 10/20分钟
-                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 30, 60);
+                //bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 0.0069444444444444, 0.0138888888888889);
+                bool canPrpmpt = AppHelper.ShouldPrompt(new WPFPurchasedDataManager(AppManager.PurchaseDataPath), 15, 30);
                 if (canPrpmpt)
                 {
-                    var windowManager = IoC.Get<IWindowManager>();
-
+                    //var windowManager = IoC.Get<IWindowManager>();
                     var view = new PurchaseTipsView();
                     var vm = new PurchaseTipsViewModel()
                     {
@@ -76,23 +107,10 @@ namespace LiveWallpaper.ViewModels
                         PurchaseContent = await LanService.Get("donate_text"),
                         RatingContent = await LanService.Get("rating_text"),
                     };
-                    vm.Initlize(AppManager.GetPurchaseViewModel());
+                    vm.Initlize(purchaseVM);
                     view.DataContext = vm;
                     view.Show();
                 }
-
-                _firstLaunch = false;
-
-                if (AppManager.Setting.General.MinimizeUI)
-                    TryClose();
-            }
-
-            Wallpapers = new ObservableCollection<Wallpaper>(AppManager.Wallpapers);
-
-            if (AppManager.Setting.General.RecordWindowSize)
-            {
-                Width = AppManager.Setting.General.Width;
-                Height = AppManager.Setting.General.Height;
             }
         }
 
@@ -106,7 +124,7 @@ namespace LiveWallpaper.ViewModels
 
             var windowManager = IoC.Get<IWindowManager>();
             _createVM = IoC.Get<CreateWallpaperViewModel>();
-            _createVM.Deactivated += _createVM_Deactivated;
+            _createVM.Deactivated += CreateVM_Deactivated;
             dynamic windowSettings = new ExpandoObject();
             windowSettings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             windowSettings.Owner = GetView();
@@ -131,9 +149,9 @@ namespace LiveWallpaper.ViewModels
             _createVM.SetPaper(s);
         }
 
-        private void _createVM_Deactivated(object sender, DeactivationEventArgs e)
+        private void CreateVM_Deactivated(object sender, DeactivationEventArgs e)
         {
-            _createVM.Deactivated -= _createVM_Deactivated;
+            _createVM.Deactivated -= CreateVM_Deactivated;
             if (_createVM.Result)
             {
                 RefreshLocalWallpaper();
@@ -185,7 +203,7 @@ namespace LiveWallpaper.ViewModels
             bool ok = false;
             try
             {
-                ok = await LiveWallpaper.WallpaperManager.WallpaperManager.Delete(w);
+                ok = await Wallpaper.Delete(w);
             }
             catch (Exception ex)
             {
@@ -200,7 +218,8 @@ namespace LiveWallpaper.ViewModels
 
         public async void ApplyWallpaper(Wallpaper w)
         {
-            await AppManager.ShowWallpaper(w, -1);
+            var indexs = WallpaperSetting.ConveterToScreenIndexs(AppManager.Setting.Wallpaper.DisplayMonitor);
+            await AppManager.ShowWallpaper(w, indexs);
         }
 
         Wallpaper _lastOverWallpaper;
@@ -209,7 +228,11 @@ namespace LiveWallpaper.ViewModels
             _lastOverWallpaper = w;
         }
 
-        public async void ApplyWallpaperToDisplay(int display)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="display">从1开始</param>
+        public async void ApplyWallpaperToDisplay(uint display)
         {
             if (_lastOverWallpaper == null)
                 return;
@@ -244,7 +267,7 @@ namespace LiveWallpaper.ViewModels
 
         public void Handle(SettingSaved message)
         {
-            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && LiveWallpaperEngineManager.AllScreens.Count > 1;
+            MultiDiplay = AppManager.Setting.Wallpaper.DisplayMonitor < 0 && System.Windows.Forms.Screen.AllScreens.Length > 1;
 
             if (AppManager.Setting.General.RecordWindowSize)
             {
@@ -409,6 +432,8 @@ namespace LiveWallpaper.ViewModels
         }
 
         #endregion
+        public bool FirstLaunch { get; private set; } = true;
+        public bool Shown { get; private set; }
 
         #endregion
     }
