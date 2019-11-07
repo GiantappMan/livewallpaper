@@ -1,6 +1,6 @@
-# 巨应动态壁纸
+# 巨应动态壁纸 
 
-## 开源动态壁纸软件Windows10 Only，免费版 wallpaper engine
+## 开源动态壁纸软件，免费版 wallpaper engine，Windows10 Only
 
 ### 下载地址
 
