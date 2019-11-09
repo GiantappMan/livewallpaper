@@ -36,7 +36,10 @@
 
 如果你觉得还不错，可以通过以下途径捐赠与我，谢谢~
 
-![支付宝捐赠](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/donate-alipay.png)
+<img width="130px" alt="支付宝捐赠" src="https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/donate-alipay.png"/>
+
+<br />
+<br />
 
 [![star](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/star.png)](https://github.com/DaZiYuan/LiveWallpaper)
 
