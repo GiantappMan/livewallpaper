@@ -1,12 +1,11 @@
 # 巨应动态壁纸 
 
-## 开源动态壁纸软件，免费版 wallpaper engine
+开源动态壁纸软件，免费版 wallpaper engine
+---
+##下载地址
 
-### 下载地址
-
-[官网](https://mscoder.cn/products/LiveWallpaper.html)  
-[动态壁纸下载](https://www.microsoft.com/store/apps/9MV8GK87MZ05)  
-[壁纸商店下载](https://www.microsoft.com/store/apps/9PNN27P9SS38)
+[动态壁纸](https://www.microsoft.com/store/apps/9MV8GK87MZ05)  
+[壁纸商店](https://www.microsoft.com/store/apps/9PNN27P9SS38)
 
 ### 关于本项目：
 - WPF Core 版动态壁纸，类似 wallpaper engine。
@@ -25,16 +24,19 @@
 * 所有引用的开源库
 ---
 
-## 视频教程：
+### [视频教程教程](https://www.bilibili.com/video/av48408360)
 
-### [软件使用教程](https://www.bilibili.com/video/av48407705/)
-
-### 客户端软件截图
+### UI截图
 
 [![client](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/client.png)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/client.png)
 
-### 商店软件截图
+---
+### 捐赠
+如果你绝对还不错，可以通过以下途径捐赠与我。
+[![star](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/star.png)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/star.png)
 
-[![store](https://github.com/WallpaperTools/WallpaperTool/raw/master/screenshots/store.png)](https://github.com/WallpaperTools/WallpaperTool/blob/master/screenshots/store.png)
 
-**如果你觉得本项目对你有帮助，请 star 支持一下~**
+
+### 其他链接
+
+[巨应博客](https://mscoder.cn/products/LiveWallpaper.html)  
