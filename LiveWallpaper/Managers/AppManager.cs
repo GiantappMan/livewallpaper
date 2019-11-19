@@ -133,7 +133,10 @@ namespace LiveWallpaper.Managers
             if (helpers.IsRunningAsUwp())
                 _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
             else
-                _startupManager = new DesktopStartupHelper("LiveWallpaper");
+            {
+                string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
+                _startupManager = new DesktopStartupHelper("LiveWallpaper", path);
+            }
 
             //配置相关
             SettingDefaultFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "Res\\setting.default.json");
