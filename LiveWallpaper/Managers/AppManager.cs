@@ -134,8 +134,8 @@ namespace LiveWallpaper.Managers
                 _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
             else
             {
-                string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
-                _startupManager = new DesktopStartupHelper("LiveWallpaper", path);
+                //string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
+                _startupManager = new DesktopStartupHelper("LiveWallpaper");
             }
 
             //配置相关
