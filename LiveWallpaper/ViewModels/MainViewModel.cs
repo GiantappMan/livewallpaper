@@ -11,7 +11,6 @@ using System.Dynamic;
 using LiveWallpaper.Events;
 using System.Windows.Interop;
 using LiveWallpaper.Views;
-using LiveWallpaperEngineAPI;
 using System.Collections.Generic;
 using DZY.Util.WPF;
 using DZY.Util.WPF.Views;

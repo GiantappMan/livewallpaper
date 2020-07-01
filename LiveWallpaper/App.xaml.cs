@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using Giantapp.LiveWallpaper.Engine;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
@@ -86,7 +87,7 @@ namespace LiveWallpaper
 
         protected override void OnExit(ExitEventArgs e)
         {
-            LiveWallpaperEngineAPI.WallpaperManager.Instance.Dispose();
+            WallpaperManager.Instance.Dispose();
             NLog.LogManager.Shutdown();
             notifyIcon.Dispose();
             base.OnExit(e);
@@ -103,7 +104,7 @@ namespace LiveWallpaper
         {
             //关机时恢复系统壁纸，防止开机黑屏
             //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
-            LiveWallpaperEngineAPI.WallpaperManager.Instance.Dispose();
+            WallpaperManager.Instance.Dispose();
         }
     }
 }

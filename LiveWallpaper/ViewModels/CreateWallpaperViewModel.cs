@@ -1,22 +1,19 @@
 ﻿using Caliburn.Micro;
-using System.Diagnostics;
 using MultiLanguageForXAML;
 using LiveWallpaper.WallpaperManagers;
 using LiveWallpaper.WallpaperManagers.Controls;
 //using LiveWallpaperEngineLib.NativeWallpapers;
-using System.Windows.Interop;
 using LiveWallpaper.Managers;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Text;
 using System.IO;
 using System;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using LiveWallpaperEngineAPI;
-using LiveWallpaperEngineAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
+using Giantapp.LiveWallpaper.Engine.Models;
+using Giantapp.LiveWallpaper.Engine;
 
 namespace LiveWallpaper.ViewModels
 {

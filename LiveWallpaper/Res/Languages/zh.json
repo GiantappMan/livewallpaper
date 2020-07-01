@@ -30,7 +30,7 @@
   "mainUI_refreshWallpaper": "刷新壁纸",
   "mainUI_createWallpaper": "创建壁纸",
   "mainUI_warning_loadError": "读取壁纸失败",
-  "mainUI_thirdParty_desc": "本项目完全开源，技术交流，不承担任何风险。\r 商店是另一个app需要单独下载。分离商店是为了保持工具的单一性，以及减少内存",
+  "mainUI_thirdParty_desc": "本项目完全开源，技术交流，不承担任何风险。\r 目前没有壁纸商店可用，请自行下载视频导入即可。",
   "mainUI_openLocalServer": "打开壁纸商城应用",
   "mainUI_downloadStore": "下载壁纸商店",
 

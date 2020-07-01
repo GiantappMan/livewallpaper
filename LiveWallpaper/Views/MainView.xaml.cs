@@ -7,6 +7,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
@@ -103,6 +104,23 @@ namespace LiveWallpaper.Views
             bool ok = uint.TryParse(menuItem.Header + "", out uint screenIndex);
             if (ok)
                 vm.ApplyWallpaperToDisplay(screenIndex);
+        }
+
+        private void Hyperlink_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Hyperlink link = sender as Hyperlink;
+                // 激活的是当前默认的浏览器
+                Process.Start(new ProcessStartInfo(link.NavigateUri.AbsoluteUri)
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception)
+            {
+
+            }
         }
     }
 }

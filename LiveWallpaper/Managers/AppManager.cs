@@ -17,9 +17,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Windows.Storage;
-using LiveWallpaperEngineAPI;
 using System.Windows.Interop;
-using LiveWallpaperEngineAPI.Models;
+using Giantapp.LiveWallpaper.Engine.Models;
+using Giantapp.LiveWallpaper.Engine;
 
 namespace LiveWallpaper.Managers
 {
@@ -134,8 +134,8 @@ namespace LiveWallpaper.Managers
                 _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
             else
             {
-                //string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
-                _startupManager = new DesktopStartupHelper("LiveWallpaper");
+                string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
+                _startupManager = new DesktopStartupHelper("LiveWallpaper", path);
             }
 
             //配置相关
