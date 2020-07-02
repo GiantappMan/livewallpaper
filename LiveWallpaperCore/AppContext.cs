@@ -1,8 +1,12 @@
-﻿using System;
+﻿using LiveWallpaperCore.LocalServer;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace LiveWallpaperCore
@@ -25,7 +29,6 @@ namespace LiveWallpaperCore
         {
             components = new System.ComponentModel.Container();
             contextMenu = new ContextMenuStrip();
-
 
             btnMainUI = new ToolStripMenuItem()
             {
@@ -50,11 +53,27 @@ namespace LiveWallpaperCore
             };
 
             notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
+
+            Task.Run(() =>
+              {
+                  int port = FreeTcpPort();
+                  string url = $"http://localhost:{port}/";
+                  ServerWrapper.Start($"--urls={url}");
+              });
+        }
+
+        static int FreeTcpPort()
+        {
+            TcpListener l = new TcpListener(IPAddress.Loopback, 0);
+            l.Start();
+            int port = ((IPEndPoint)l.LocalEndpoint).Port;
+            l.Stop();
+            return port;
         }
 
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
-            
+
         }
 
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)

@@ -2,13 +2,17 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\logo128.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="logo128.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LiveWallpaperCore.LocalServer\LiveWallpaperCore.LocalServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
