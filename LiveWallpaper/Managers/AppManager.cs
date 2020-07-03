@@ -217,7 +217,7 @@ namespace LiveWallpaper.Managers
                     continue;
 
                 logger.Info($"ShowCurrentWallpapers {w.AbsolutePath} , {item.DisplayIndex}");
-                _ = WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+                _ = WallpaperManager.ShowWallpaper(new WallpaperModel()
                 {
                     Path = w.AbsolutePath
                 }, item.DisplayIndex);
@@ -226,7 +226,7 @@ namespace LiveWallpaper.Managers
 
         internal static async Task ShowWallpaper(Wallpaper w, params uint[] screenIndexs)
         {
-            await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+            await WallpaperManager.ShowWallpaper(new WallpaperModel()
             {
                 Path = w.AbsolutePath
             }, screenIndexs);
@@ -251,7 +251,7 @@ namespace LiveWallpaper.Managers
 
         internal static void Dispose()
         {
-            WallpaperManager.Instance.Dispose();
+            WallpaperManager.Dispose();
         }
 
         public static void RefreshLocalWallpapers()
@@ -309,7 +309,7 @@ namespace LiveWallpaper.Managers
             }
             setting.General.StartWithWindows = await _startupManager.Check();
 
-            var screenSetting = WallpaperManager.Instance.ScreenIndexs.Select((m) => new ScreenOption()
+            var screenSetting = WallpaperManager.ScreenIndexs.Select((m) => new ScreenOption()
             {
                 ScreenIndex = m,
                 WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
@@ -322,7 +322,7 @@ namespace LiveWallpaper.Managers
                 ScreenOptions = screenSetting
             };
 
-            await WallpaperManager.Instance.SetOptions(liveWallpaperOptions);
+            await WallpaperManager.SetOptions(liveWallpaperOptions);
         }
     }
 }

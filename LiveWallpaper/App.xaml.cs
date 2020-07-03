@@ -87,7 +87,7 @@ namespace LiveWallpaper
 
         protected override void OnExit(ExitEventArgs e)
         {
-            WallpaperManager.Instance.Dispose();
+            WallpaperManager.Dispose();
             NLog.LogManager.Shutdown();
             notifyIcon.Dispose();
             base.OnExit(e);
@@ -104,7 +104,7 @@ namespace LiveWallpaper
         {
             //关机时恢复系统壁纸，防止开机黑屏
             //HandlerWallpaper.DesktopWallpaperAPI.Enable(true);
-            WallpaperManager.Instance.Dispose();
+            WallpaperManager.Dispose();
         }
     }
 }
