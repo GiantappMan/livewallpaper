@@ -186,11 +186,11 @@ namespace LiveWallpaper.ViewModels
             if (CurrentWallpaper != null)
             {
                 //所有屏幕一起预览
-                _beforePreviewModel = new Dictionary<uint, WallpaperModel>(WallpaperManager.Instance.CurrentWalpapers);
-                await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
+                _beforePreviewModel = new Dictionary<uint, WallpaperModel>(WallpaperManager.CurrentWalpapers);
+                await WallpaperManager.ShowWallpaper(new WallpaperModel()
                 {
                     Path = CurrentWallpaper.AbsolutePath
-                }, WallpaperManager.Instance.ScreenIndexs);
+                }, WallpaperManager.ScreenIndexs);
             }
         }
 
@@ -198,12 +198,12 @@ namespace LiveWallpaper.ViewModels
         {
             if (_preview)
             {
-                uint[] unuseScreen = WallpaperManager.Instance.ScreenIndexs.ToList().Except(_beforePreviewModel.Keys.ToList()).ToArray();
-                WallpaperManager.Instance.CloseWallpaper(unuseScreen);
+                uint[] unuseScreen = WallpaperManager.ScreenIndexs.ToList().Except(_beforePreviewModel.Keys.ToList()).ToArray();
+                WallpaperManager.CloseWallpaper(unuseScreen);
                 foreach (var (screenIndex, wallpaper) in _beforePreviewModel)
                 {
                     //恢复
-                    await WallpaperManager.Instance.ShowWallpaper(wallpaper, screenIndex);
+                    await WallpaperManager.ShowWallpaper(wallpaper, screenIndex);
                 }
             }
             _preview = false;
