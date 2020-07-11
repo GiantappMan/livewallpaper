@@ -18,8 +18,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using Windows.Storage;
 using System.Windows.Interop;
-using Giantapp.LiveWallpaper.Engine.Models;
-using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaperEngineAPI;
+using LiveWallpaperEngineAPI.Models;
 
 namespace LiveWallpaper.Managers
 {
@@ -321,7 +321,6 @@ namespace LiveWallpaper.Managers
                 AudioScreenIndex = setting.Wallpaper.AudioSource,
                 ScreenOptions = screenSetting
             };
-
             await WallpaperManager.Instance.SetOptions(liveWallpaperOptions);
         }
     }

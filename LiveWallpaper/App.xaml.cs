@@ -1,9 +1,8 @@
 ﻿using Caliburn.Micro;
-using Giantapp.LiveWallpaper.Engine;
 using Hardcodet.Wpf.TaskbarNotification;
 using LiveWallpaper.Managers;
 using LiveWallpaper.ViewModels;
-using LiveWallpaper.WallpaperManagers;
+using LiveWallpaperEngineAPI;
 using MultiLanguageForXAML;
 using System;
 using System.Drawing;

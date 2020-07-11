@@ -12,8 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Collections.Generic;
 using System.Linq;
-using Giantapp.LiveWallpaper.Engine.Models;
-using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaperEngineAPI.Models;
+using LiveWallpaperEngineAPI;
 
 namespace LiveWallpaper.ViewModels
 {
