@@ -115,7 +115,7 @@
                         <iconPacks:PackIconMaterial
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Kind="AccountSettingsOutline" />
+                            Kind="AccountSettingsOutline" />                      
                     </Button>
                     <!--<ComboBox />-->
                     <StackPanel

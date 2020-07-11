@@ -1,7 +1,7 @@
 ﻿using DZY.Util.Common.Helpers;
-using Giantapp.LiveWallpaper.Engine;
-using Giantapp.LiveWallpaper.Engine.Models;
 using GiantappMvvm.Base;
+using LiveWallpaperEngineAPI;
+using LiveWallpaperEngineAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;

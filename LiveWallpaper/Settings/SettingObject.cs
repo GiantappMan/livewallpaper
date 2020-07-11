@@ -1,4 +1,4 @@
-﻿using Giantapp.LiveWallpaper.Engine.Models;
+﻿using LiveWallpaperEngineAPI.Models;
 using System;
 using System.IO;
 using System.Linq;

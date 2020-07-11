@@ -18,8 +18,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using Windows.Storage;
 using System.Windows.Interop;
-using Giantapp.LiveWallpaper.Engine.Models;
-using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaperEngineAPI;
+using LiveWallpaperEngineAPI.Models;
 
 namespace LiveWallpaper.Managers
 {
@@ -217,7 +217,7 @@ namespace LiveWallpaper.Managers
                     continue;
 
                 logger.Info($"ShowCurrentWallpapers {w.AbsolutePath} , {item.DisplayIndex}");
-                _ = WallpaperManager.ShowWallpaper(new WallpaperModel()
+                _ = WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
                 {
                     Path = w.AbsolutePath
                 }, item.DisplayIndex);
@@ -226,7 +226,7 @@ namespace LiveWallpaper.Managers
 
         internal static async Task ShowWallpaper(Wallpaper w, params uint[] screenIndexs)
         {
-            await WallpaperManager.ShowWallpaper(new WallpaperModel()
+            await WallpaperManager.Instance.ShowWallpaper(new WallpaperModel()
             {
                 Path = w.AbsolutePath
             }, screenIndexs);
@@ -251,7 +251,7 @@ namespace LiveWallpaper.Managers
 
         internal static void Dispose()
         {
-            WallpaperManager.Dispose();
+            WallpaperManager.Instance.Dispose();
         }
 
         public static void RefreshLocalWallpapers()
@@ -309,7 +309,7 @@ namespace LiveWallpaper.Managers
             }
             setting.General.StartWithWindows = await _startupManager.Check();
 
-            var screenSetting = WallpaperManager.ScreenIndexs.Select((m) => new ScreenOption()
+            var screenSetting = WallpaperManager.Instance.ScreenIndexs.Select((m) => new ScreenOption()
             {
                 ScreenIndex = m,
                 WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
@@ -321,8 +321,7 @@ namespace LiveWallpaper.Managers
                 AudioScreenIndex = setting.Wallpaper.AudioSource,
                 ScreenOptions = screenSetting
             };
-
-            await WallpaperManager.SetOptions(liveWallpaperOptions);
+            await WallpaperManager.Instance.SetOptions(liveWallpaperOptions);
         }
     }
 }
