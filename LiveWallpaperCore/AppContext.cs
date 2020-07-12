@@ -1,11 +1,11 @@
 ﻿using LiveWallpaperCore.LocalServer;
+using NLog;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,56 +13,87 @@ namespace LiveWallpaperCore
 {
     public class AppContext : ApplicationContext
     {
-        private NotifyIcon notifyIcon;
-        private ContextMenuStrip contextMenu;
-        //private ToolStripLabel programText;
-        private ToolStripMenuItem btnMainUI;
-        private ToolStripMenuItem btnExit;
-        private System.ComponentModel.IContainer components;
+        #region ui
+        private NotifyIcon _notifyIcon;
+        private ContextMenuStrip _contextMenu;
+        private ToolStripMenuItem _btnMainUI;
+        private ToolStripMenuItem _btnExit;
+        private System.ComponentModel.IContainer _components;
+        #endregion
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static Mutex _mutex;
 
         public AppContext()
         {
             InitializeAppContextComponent();
+            CheckMutex();
+        }
+
+        private void CheckMutex()
+        {
+            try
+            {
+                _mutex = new Mutex(true, "Livewallpaper", out bool ret);
+
+                if (!ret)
+                {
+                    _notifyIcon.ShowBalloonTip(5, "提示", "已有一个实例启动，请查看右下角托盘", ToolTipIcon.Warning);
+                    Environment.Exit(0);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+            finally
+            {
+                _mutex.ReleaseMutex();
+            }
         }
 
         private void InitializeAppContextComponent()
         {
-            components = new System.ComponentModel.Container();
-            contextMenu = new ContextMenuStrip();
+            _components = new System.ComponentModel.Container();
+            _contextMenu = new ContextMenuStrip();
 
-            btnMainUI = new ToolStripMenuItem()
+            _btnMainUI = new ToolStripMenuItem()
             {
                 Text = "主界面"
             };
-            btnMainUI.Click += BtnMainUI_Click;
-            contextMenu.Items.Add(btnMainUI);
+            _btnMainUI.Click += BtnMainUI_Click;
+            _contextMenu.Items.Add(_btnMainUI);
 
-            btnExit = new ToolStripMenuItem
+            _btnExit = new ToolStripMenuItem
             {
                 Text = "退出",
             };
-            btnExit.Click += BtnExit_Click;
-            contextMenu.Items.Add(btnExit);
+            _btnExit.Click += BtnExit_Click;
+            _contextMenu.Items.Add(_btnExit);
 
-            notifyIcon = new NotifyIcon(components)
+            _notifyIcon = new NotifyIcon(_components)
             {
                 Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
-                ContextMenuStrip = contextMenu,
+                ContextMenuStrip = _contextMenu,
                 Text = "巨应壁纸",
                 Visible = true
             };
 
-            notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
+            _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
 
             Task.Run(() =>
               {
-                  int port = FreeTcpPort();
+                  int port = GetPort();
                   string url = $"http://localhost:{port}/";
                   ServerWrapper.Start($"--urls={url}");
               });
         }
 
-        static int FreeTcpPort()
+        /// <summary>
+        /// 获取可用端口
+        /// </summary>
+        /// <returns></returns>
+        static int GetPort()
         {
             TcpListener l = new TcpListener(IPAddress.Loopback, 0);
             l.Start();
@@ -82,14 +113,14 @@ namespace LiveWallpaperCore
             {
                 MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
                  BindingFlags.Instance | BindingFlags.NonPublic);
-                mi.Invoke(notifyIcon, null);
+                mi.Invoke(_notifyIcon, null);
             }
         }
 
         private void BtnExit_Click(object Sender, EventArgs e)
         {
-            notifyIcon.Icon.Dispose();
-            notifyIcon.Dispose();
+            _notifyIcon.Icon.Dispose();
+            _notifyIcon.Dispose();
             Application.Exit();
         }
     }
