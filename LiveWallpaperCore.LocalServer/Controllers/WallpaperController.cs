@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -12,35 +10,48 @@ namespace LiveWallpaperCore.LocalServer.Controllers
     [ApiController]
     public class WallpaperController : ControllerBase
     {
-        // GET: api/<WallpaperController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        [Route(nameof(GetWallpapers))]
+        public IEnumerable<string> GetWallpapers()
         {
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/<WallpaperController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet]
+        [Route(nameof(GetState))]
+        public object GetState()
+        {
+            return null;
+        }
+
+        [HttpGet]
+        [Route(nameof(GetOptions))]
+        public string GetOptions(int id)
         {
             return "value";
         }
 
-        // POST api/<WallpaperController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route(nameof(SetOptions))]
+        public void SetOptions([FromBody] string value)
         {
         }
 
-        // PUT api/<WallpaperController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [Route(nameof(ShowWallpaper))]
+        public void ShowWallpaper(int id, [FromBody] string value)
         {
         }
 
-        // DELETE api/<WallpaperController>/5
+        [HttpPut("{id}")]
+        [Route(nameof(CloseWallpaper))]
+        public void CloseWallpaper(int id, [FromBody] string value)
+        {
+        }
+
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        [Route(nameof(DeleteWallpaper))]
+        public void DeleteWallpaper(int id)
         {
         }
     }

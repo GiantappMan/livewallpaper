@@ -5,5 +5,13 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
+  </ItemGroup>
+
 
 </Project>
