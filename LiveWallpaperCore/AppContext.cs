@@ -27,6 +27,9 @@ namespace LiveWallpaperCore
         {
             InitializeAppContextComponent();
             CheckMutex();
+
+            var mainHandler = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+            AppManager.CheckUpates(mainHandler);
         }
 
         private void CheckMutex()
@@ -80,7 +83,6 @@ namespace LiveWallpaperCore
             };
 
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
-
             Task.Run(() =>
               {
                   int port = GetPort();
