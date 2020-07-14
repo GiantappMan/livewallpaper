@@ -143,62 +143,63 @@ namespace LiveWallpaperCore.LocalServer
             ShowCurrentWallpapers();
         }
 
-        public static async void CheckUpates(IntPtr mainHandler)
-        {
-            StoreHelper store = new StoreHelper(mainHandler);
+        // 废弃因为控制台获取不了handle        
+        //        public static async void CheckUpates(IntPtr mainHandler)
+        //        {
+        //            StoreHelper store = new StoreHelper(mainHandler);
 
-#if DEBUG
-            return;
-#endif
+        //#if DEBUG
+        //            return;
+        //#endif
 
-            await store.DownloadAndInstallAllUpdatesAsync(() =>
-            {
-                string xml = $@"
-            <toast>
-                <visual>
-                    <binding template='ToastGeneric'>
-                        <text>检测到新版本</text>
-                        <text>是否更新</text>
-                    </binding>
-                </visual>
-                <actions>
-                        <action
-                            content='ok'
-                            activationType='foreground'
-                            arguments='check'/>
+        //            await store.DownloadAndInstallAllUpdatesAsync(() =>
+        //            {
+        //                string xml = $@"
+        //            <toast>
+        //                <visual>
+        //                    <binding template='ToastGeneric'>
+        //                        <text>检测到新版本</text>
+        //                        <text>是否更新</text>
+        //                    </binding>
+        //                </visual>
+        //                <actions>
+        //                        <action
+        //                            content='ok'
+        //                            activationType='foreground'
+        //                            arguments='check'/>
 
-                        <action
-                            content='cancel'
-                            activationType='foreground'
-                            arguments='cancel'/>
-                    </actions>
-            </toast>";
+        //                        <action
+        //                            content='cancel'
+        //                            activationType='foreground'
+        //                            arguments='cancel'/>
+        //                    </actions>
+        //            </toast>";
 
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml(xml);
-                var toast = new ToastNotification(doc);
+        //                XmlDocument doc = new XmlDocument();
+        //                doc.LoadXml(xml);
+        //                var toast = new ToastNotification(doc);
 
-                bool result = false;
-                TypedEventHandler<ToastNotification, object> callback = (ToastNotification sender, object args) =>
-                {
-                    if (args.ToString() == "check")
-                    {
-                        result = true;
-                    }
-                };
-                toast.Activated += callback;
-                var tn = ToastNotificationManager.CreateToastNotifier();
-                tn.Show(toast);
-                toast.Activated -= callback;
+        //                bool result = false;
+        //                TypedEventHandler<ToastNotification, object> callback = (ToastNotification sender, object args) =>
+        //                {
+        //                    if (args.ToString() == "check")
+        //                    {
+        //                        result = true;
+        //                    }
+        //                };
+        //                toast.Activated += callback;
+        //                var tn = ToastNotificationManager.CreateToastNotifier();
+        //                tn.Show(toast);
+        //                toast.Activated -= callback;
 
-                return result;
-            }, (progress) =>
-            {
-                if ((int)progress.PackageUpdateState >= 3)
-                    ShowBalloonTip("温馨提示", "如果更新失败，请关闭软件打开应用商店手动更新。");
-                //icon.ShowBalloonTip("温馨提示", $"如果更新失败，请关闭软件打开应用商店手动更新。", BalloonIcon.Info);
-            });
-        }
+        //                return result;
+        //            }, (progress) =>
+        //            {
+        //                if ((int)progress.PackageUpdateState >= 3)
+        //                    ShowBalloonTip("温馨提示", "如果更新失败，请关闭软件打开应用商店手动更新。");
+        //                //icon.ShowBalloonTip("温馨提示", $"如果更新失败，请关闭软件打开应用商店手动更新。", BalloonIcon.Info);
+        //            });
+        //        }
 
         private static void ShowBalloonTip(string title, string content, bool confirm = false)
         {

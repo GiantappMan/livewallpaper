@@ -10,7 +10,7 @@ namespace LiveWallpaperCore.LocalServer.Models
 {
     public class Wallpaper : WallpaperModel
     {
-        public ProjectInfo Info { get; private set; }
+        public ProjectInfo Info { get; set; }
 
         internal static IEnumerable<Wallpaper> GetWallpapers(string dir)
         {

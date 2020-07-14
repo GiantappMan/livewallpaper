@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
+using LiveWallpaperCore.LocalServer.Models;
+using LiveWallpaperCore.LocalServer.Store;
 using Microsoft.AspNetCore.Mvc;
 using Windows.Data.Xml.Dom;
 using Windows.Foundation;
@@ -13,13 +16,13 @@ namespace LiveWallpaperCore.LocalServer.Controllers
     [ApiController]
     public class WallpaperController : ControllerBase
     {
+        //http://localhost:5001/api/wallpaper/getwallpapers
         [HttpGet]
         [Route(nameof(GetWallpapers))]
-        public IEnumerable<string> GetWallpapers()
+        public Task<List<Wallpaper>> GetWallpapers()
         {
-            return new string[] { "value1", "value2" };
+            return WallpaperStore.GetWallpapers();
         }
-
 
         [HttpGet]
         [Route(nameof(GetState))]

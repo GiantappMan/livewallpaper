@@ -1,6 +1,7 @@
 ﻿using LiveWallpaperCore.LocalServer;
 using NLog;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
@@ -27,9 +28,6 @@ namespace LiveWallpaperCore
         {
             InitializeAppContextComponent();
             CheckMutex();
-
-            var mainHandler = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-            AppManager.CheckUpates(mainHandler);
         }
 
         private void CheckMutex()
@@ -109,7 +107,6 @@ namespace LiveWallpaperCore
 
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
-
         }
 
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)

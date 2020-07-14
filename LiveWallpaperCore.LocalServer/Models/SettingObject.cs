@@ -72,6 +72,9 @@ namespace LiveWallpaperCore.LocalServer.Models
         }
     }
 
+    /// <summary>
+    /// 用户设置
+    /// </summary>
     public class SettingObject
     {
         public GeneralSettting General { get; set; }
