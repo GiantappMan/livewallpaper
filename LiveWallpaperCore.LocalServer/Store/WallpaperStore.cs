@@ -10,6 +10,7 @@ namespace LiveWallpaperCore.LocalServer.Store
 {
     public class WallpaperStore
     {
+        static bool _initialized = false;
         static WallpaperStore()
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -19,17 +20,28 @@ namespace LiveWallpaperCore.LocalServer.Store
 
             Task.Run(async () =>
             {
-                //应用程序数据
-                AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
-                if (AppData == null)
+                try
                 {
-                    //生成默认运行数据
-                    AppData = new AppData();
-                    await JsonHelper.JsonSerializeAsync(AppData, AppDataPath);
-                }
+                    //应用程序数据
+                    AppData = await JsonHelper.JsonDeserializeFromFileAsync<AppData>(AppDataPath);
+                    if (AppData == null)
+                    {
+                        //生成默认运行数据
+                        AppData = new AppData();
+                        await JsonHelper.JsonSerializeAsync(AppData, AppDataPath);
+                    }
 
-                Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-                LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+                    Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+                    LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+                }
+                catch (Exception ex)
+                {
+
+                }
+                finally
+                {
+                    _initialized = true;
+                }
             });
         }
 
@@ -44,6 +56,10 @@ namespace LiveWallpaperCore.LocalServer.Store
 
         internal static async Task<List<Wallpaper>> GetWallpapers()
         {
+            while (!_initialized)
+            {
+                await Task.Delay(1000);
+            }
             DirectoryInfo dirInfo = new DirectoryInfo(LocalWallpaperDir);
 
             List<Wallpaper> result = new List<Wallpaper>();
