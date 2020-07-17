@@ -73,7 +73,7 @@ namespace LiveWallpaperCore.LocalServer.Store
 
                 result.Add(new Wallpaper()
                 {
-                    Path = Path.Combine(saveDir, info.File),
+                    Dir = saveDir,
                     Info = info,
                 });
             }

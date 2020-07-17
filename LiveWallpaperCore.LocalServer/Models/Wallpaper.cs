@@ -8,10 +8,14 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaperCore.LocalServer.Models
 {
-    public class Wallpaper : WallpaperModel
+    public class Wallpaper
     {
+        [Obsolete]
+        public string Path { get; set; }
         public ProjectInfo Info { get; set; }
+        public string Dir { get; set; }
 
+        [Obsolete]
         internal static IEnumerable<Wallpaper> GetWallpapers(string dir)
         {
             DirectoryInfo dirInfo = new DirectoryInfo(dir);
