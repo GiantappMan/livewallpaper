@@ -44,10 +44,10 @@ namespace LiveWallpaperCore.LocalServer.Controllers
         {
         }
 
-        [HttpPut("{id}")]
-        [Route(nameof(ShowWallpaper))]
-        public void ShowWallpaper(int id, [FromBody] string value)
+        [HttpPut("ShowWallpaper/{path}")]
+        public void ShowWallpaper(string path)
         {
+            WallpaperStore.ShowWallpaper(path);
         }
 
         [HttpPut("{id}")]

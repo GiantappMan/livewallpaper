@@ -1,10 +1,12 @@
 ﻿using DZY.Util.Common.Helpers;
+using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaperCore.LocalServer.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace LiveWallpaperCore.LocalServer.Store
 {
@@ -32,7 +34,8 @@ namespace LiveWallpaperCore.LocalServer.Store
                     }
 
                     Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-                    LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+                    if (Setting != null)
+                        LocalWallpaperDir = Setting.General.WallpaperSaveDir;
                 }
                 catch (Exception ex)
                 {
@@ -53,6 +56,11 @@ namespace LiveWallpaperCore.LocalServer.Store
         public static SettingObject Setting { get; private set; }
         public static string LocalWallpaperDir { get; private set; }
         #endregion
+
+        internal static void ShowWallpaper(string path)
+        {
+            _ = WallpaperManager.ShowWallpaper(new WallpaperModel() { Path = path });
+        }
 
         internal static async Task<List<Wallpaper>> GetWallpapers()
         {

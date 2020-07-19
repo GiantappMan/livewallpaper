@@ -1,4 +1,5 @@
-﻿using LiveWallpaperCore.LocalServer;
+﻿using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaperCore.LocalServer;
 using NLog;
 using System;
 using System.Diagnostics;
@@ -9,6 +10,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Threading;
 
 namespace LiveWallpaperCore
 {
@@ -81,12 +83,13 @@ namespace LiveWallpaperCore
             };
 
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
+            WallpaperManager.Initlize(Dispatcher.CurrentDispatcher);
             Task.Run(() =>
-              {
-                  int port = GetPort();
-                  string url = $"http://localhost:{port}/";
-                  ServerWrapper.Start($"--urls={url}");
-              });
+            {
+                int port = GetPort();
+                string url = $"http://localhost:{port}/";
+                ServerWrapper.Start($"--urls={url}");
+            });
         }
 
         /// <summary>
