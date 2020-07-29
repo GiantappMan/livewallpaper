@@ -34,8 +34,10 @@ namespace LiveWallpaperCore.LocalServer.Store
                     }
 
                     Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
-                    if (Setting != null)
-                        LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+                    if (Setting == null)
+                        Setting = SettingObject.GetDefaultSettting();
+
+                    LocalWallpaperDir = Setting.General.WallpaperSaveDir;
                 }
                 catch (Exception ex)
                 {
