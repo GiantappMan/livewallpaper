@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveWallpaperCore.LocalServer.Models;
+using LiveWallpaperCore.LocalServer.Models.AppStates;
 using LiveWallpaperCore.LocalServer.Store;
 using Microsoft.AspNetCore.Mvc;
 using Windows.Data.Xml.Dom;
@@ -45,19 +47,27 @@ namespace LiveWallpaperCore.LocalServer.Controllers
         }
 
         [HttpPut("ShowWallpaper/{path}")]
-        public void ShowWallpaper(string path)
+        public async Task<ResponseResult> ShowWallpaper(string path)
         {
-            WallpaperStore.ShowWallpaper(path);
+            ResponseResult r;
+            try
+            {
+                var result = await WallpaperStore.ShowWallpaper(path);
+                r = new ResponseResult(result, null);
+            }
+            catch (System.Exception ex)
+            {
+                r = new ResponseResult(false, ex.ToString());
+            }
+            return r;
         }
 
-        [HttpPut("{id}")]
-        [Route(nameof(CloseWallpaper))]
+        [HttpPut("CloseWallpaper/{id}")]
         public void CloseWallpaper(int id, [FromBody] string value)
         {
         }
 
-        [HttpDelete("{id}")]
-        [Route(nameof(DeleteWallpaper))]
+        [HttpDelete("DeleteWallpaper/{id}")]
         public void DeleteWallpaper(int id)
         {
         }
