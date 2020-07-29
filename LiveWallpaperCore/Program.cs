@@ -10,6 +10,7 @@ namespace LiveWallpaperCore
         [STAThread]
         static void Main(string[] args)
         {
+            Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.Run(new AppContext());
         }
     }
