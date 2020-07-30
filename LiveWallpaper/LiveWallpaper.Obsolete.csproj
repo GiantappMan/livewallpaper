@@ -121,6 +121,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="C:\Users\dhswg\.nuget\packages\livewallpaperengineapi\1.4.0\contentFiles\any\netcoreapp3.0\lib\mpv-1-x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="C:\Users\dhswg\.nuget\packages\livewallpaperengineapi\1.4.0\contentFiles\any\netcoreapp3.0\lib\mpv-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="D:\.nuget\packages\livewallpaperengineapi\1.4.0\contentFiles\any\netcoreapp3.0\lib\mpv-1-x64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
