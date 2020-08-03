@@ -21,7 +21,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             try
             {
                 var result = await WallpaperStore.ShowWallpaper(path);
-                r = new ResponseResult(result, null);
+                r = new ResponseResult(result.Ok, result.Message);
             }
             catch (Exception ex)
             {

@@ -59,7 +59,7 @@ namespace LiveWallpaperCore.LocalServer.Store
         public static string LocalWallpaperDir { get; private set; }
         #endregion
 
-        internal static Task<bool> ShowWallpaper(string path)
+        internal static Task<ShowWallpaperResult> ShowWallpaper(string path)
         {
             return WallpaperManager.ShowWallpaper(new WallpaperModel() { Path = path });
         }

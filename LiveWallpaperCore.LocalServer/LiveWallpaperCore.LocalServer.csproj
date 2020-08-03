@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\WallpaperController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="AppManager.cs1" />
   </ItemGroup>
 
@@ -17,6 +21,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 
