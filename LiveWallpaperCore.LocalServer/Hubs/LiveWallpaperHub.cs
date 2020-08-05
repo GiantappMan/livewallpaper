@@ -1,4 +1,5 @@
-﻿using LiveWallpaperCore.LocalServer.Models;
+﻿using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaperCore.LocalServer.Models;
 using LiveWallpaperCore.LocalServer.Models.AppStates;
 using LiveWallpaperCore.LocalServer.Store;
 using Microsoft.AspNetCore.SignalR;
@@ -15,19 +16,22 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         {
             return WallpaperStore.GetWallpapers();
         }
-        public async Task<ResponseResult> ShowWallpaper(string path)
+        public async Task<ShowWallpaperResult> ShowWallpaper(string path)
         {
-            ResponseResult r;
             try
             {
                 var result = await WallpaperStore.ShowWallpaper(path);
-                r = new ResponseResult(result.Ok, result.Message);
+                return result;
             }
             catch (Exception ex)
             {
-                r = new ResponseResult(false, ex.ToString());
+                return new ShowWallpaperResult()
+                {
+                    Ok = false,
+                    Error = ShowWallpaperResult.ErrorType.Exception,
+                    Message = ex?.Message
+                };
             }
-            return r;
         }
 
         public async Task SendMessage(string user, string message)
