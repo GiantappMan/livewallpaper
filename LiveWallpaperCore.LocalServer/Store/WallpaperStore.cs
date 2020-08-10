@@ -50,6 +50,27 @@ namespace LiveWallpaperCore.LocalServer.Store
             });
         }
 
+        internal static async Task<SetupPlayerResult> SetupPlayer(string path, string url = null, Action<ProgressChangedArgs> callback = null)
+        {
+            var wpType = WallpaperManager.GetWallpaperType(path);
+            if (string.IsNullOrEmpty(url))
+                url = WallpaperManager.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
+
+            void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, ProgressChangedArgs e)
+            {
+                callback?.Invoke(e);
+            }
+
+            if (callback != null)
+                WallpaperManager.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+
+            var setupResult = await WallpaperManager.SetupPlayer(wpType.Value, url);
+
+            if (callback != null)
+                WallpaperManager.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
+            return setupResult;
+        }
+
         #region properties
         public static string AppDataDir { get; }
         public static string SettingPath { get; }

@@ -2,6 +2,7 @@
 using LiveWallpaperCore.LocalServer.Models;
 using LiveWallpaperCore.LocalServer.Models.AppStates;
 using LiveWallpaperCore.LocalServer.Store;
+using LiveWallpaperCore.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,18 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                     Message = ex?.Message
                 };
             }
+        }
+
+        public async Task<SetupPlayerResult> SetupPlayer(string path)
+        {
+            SetupPlayerResult result = await WallpaperStore.SetupPlayer(path, null, async (p) =>
+             {
+                 new RaiseLimiter().Execute(async () =>
+                  {
+                      await Clients.All.SendAsync("SetupPlayerProgressChanged", p);
+                  }, 1000);
+             });
+            return result;
         }
 
         public async Task SendMessage(string user, string message)
