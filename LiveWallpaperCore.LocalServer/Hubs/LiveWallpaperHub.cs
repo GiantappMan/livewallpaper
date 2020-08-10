@@ -37,13 +37,17 @@ namespace LiveWallpaperCore.LocalServer.Hubs
 
         public async Task<SetupPlayerResult> SetupPlayer(string path)
         {
-            SetupPlayerResult result = await WallpaperStore.SetupPlayer(path, null, async (p) =>
-             {
-                 new RaiseLimiter().Execute(async () =>
-                  {
-                      await Clients.All.SendAsync("SetupPlayerProgressChanged", p);
-                  }, 1000);
-             });
+            var raiseLimiter = new RaiseLimiter();
+            SetupPlayerResult result = await WallpaperStore.SetupPlayer(path, null, (p) =>
+            {
+                raiseLimiter.Execute(async () =>
+                 {
+                     System.Diagnostics.Debug.WriteLine($"{p.ProgressPercentage} {p.ActionType}");
+                     await Clients.All.SendAsync("SetupPlayerProgressChanged", p);
+                 }, 1000);
+            });
+
+            await raiseLimiter.WaitExit();
             return result;
         }
 
