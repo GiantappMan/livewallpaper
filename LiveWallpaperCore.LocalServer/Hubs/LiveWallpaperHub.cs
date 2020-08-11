@@ -17,28 +17,16 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         {
             return WallpaperStore.GetWallpapers();
         }
-        public async Task<ShowWallpaperResult> ShowWallpaper(string path)
+
+        public Task<BaseApiResult> ShowWallpaper(string path)
         {
-            try
-            {
-                var result = await WallpaperStore.ShowWallpaper(path);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                return new ShowWallpaperResult()
-                {
-                    Ok = false,
-                    Error = ShowWallpaperResult.ErrorType.Exception,
-                    Message = ex?.Message
-                };
-            }
+            return WallpaperStore.ShowWallpaper(path);
         }
 
-        public async Task<SetupPlayerResult> SetupPlayer(string path)
+        public async Task<BaseApiResult> SetupPlayer(string path)
         {
             var raiseLimiter = new RaiseLimiter();
-            SetupPlayerResult result = await WallpaperStore.SetupPlayer(path, null, (p) =>
+            var result = await WallpaperStore.SetupPlayer(path, null, (p) =>
             {
                 raiseLimiter.Execute(async () =>
                  {
@@ -51,20 +39,27 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             return result;
         }
 
-        public async Task SendMessage(string user, string message)
+        public async Task<BaseApiResult> StopSetupPlayer()
         {
-            await Clients.All.SendAsync("ReceiveMessage", user, message);
+            WallpaperStore.StopSetupPlayer();
+            throw new NotImplementedException();
         }
 
-        public async Task Test()
+        public async Task<BaseApiResult> GetOptions()
         {
-            await Clients.All.SendAsync("ReceiveMessage", "tTest", "test2");
+            throw new NotImplementedException();
         }
 
-        public string MethodOneSimpleParameterSimpleReturnValue(string p1)
+        public async Task<BaseApiResult> SetOptions()
         {
-            Console.WriteLine($"'MethodOneSimpleParameterSimpleReturnValue' invoked. Parameter value: '{p1}");
-            return p1;
+            throw new NotImplementedException();
+
+        }
+
+        public async Task<BaseApiResult> GetAppStatus()
+        {
+            throw new NotImplementedException();
+
         }
     }
 }

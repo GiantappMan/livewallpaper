@@ -12,6 +12,7 @@ namespace LiveWallpaperCore.LocalServer.Store
 {
     public class WallpaperStore
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         static bool _initialized = false;
         static WallpaperStore()
         {
@@ -41,7 +42,7 @@ namespace LiveWallpaperCore.LocalServer.Store
                 }
                 catch (Exception ex)
                 {
-
+                    logger.Error($"WallpaperStore constructor Ex:{ex}");
                 }
                 finally
                 {
@@ -50,7 +51,16 @@ namespace LiveWallpaperCore.LocalServer.Store
             });
         }
 
-        internal static async Task<SetupPlayerResult> SetupPlayer(string path, string url = null, Action<ProgressChangedArgs> callback = null)
+        #region properties
+        public static string AppDataDir { get; }
+        public static string SettingPath { get; }
+        public static string AppDataPath { get; }
+        public static AppData AppData { get; private set; }
+        public static SettingObject Setting { get; private set; }
+        public static string LocalWallpaperDir { get; private set; }
+        #endregion
+
+        internal static async Task<BaseApiResult> SetupPlayer(string path, string url = null, Action<ProgressChangedArgs> callback = null)
         {
             var wpType = WallpaperManager.GetWallpaperType(path);
             if (string.IsNullOrEmpty(url))
@@ -71,18 +81,15 @@ namespace LiveWallpaperCore.LocalServer.Store
             return setupResult;
         }
 
-        #region properties
-        public static string AppDataDir { get; }
-        public static string SettingPath { get; }
-        public static string AppDataPath { get; }
-        public static AppData AppData { get; private set; }
-        public static SettingObject Setting { get; private set; }
-        public static string LocalWallpaperDir { get; private set; }
-        #endregion
-
-        internal static Task<ShowWallpaperResult> ShowWallpaper(string path)
+        internal static void StopSetupPlayer()
         {
-            return WallpaperManager.ShowWallpaper(new WallpaperModel() { Path = path });
+            WallpaperManager.StopSetupPlayer();
+        }
+
+        internal static async Task<BaseApiResult> ShowWallpaper(string path)
+        {
+            var result = await WallpaperManager.ShowWallpaper(new WallpaperModel() { Path = path });
+            return result;
         }
 
         internal static async Task<List<Wallpaper>> GetWallpapers()
