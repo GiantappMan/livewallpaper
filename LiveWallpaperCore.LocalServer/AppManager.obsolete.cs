@@ -16,7 +16,55 @@ using Windows.UI.Notifications;
 
 namespace LiveWallpaperCore.LocalServer
 {
-    public class AppManager
+    /// <summary>
+    /// 运行数据
+    /// </summary>
+    public class AppData
+    {
+        public List<DisplayWallpaper> Wallpapers { get; set; }
+    }
+    public class DisplayWallpaper
+    {
+        public string Path { get; set; }
+        public string Screen { get; set; }
+    }
+    public class ProjectInfo
+    {
+        public string Description { get; set; }
+        public string Title { get; set; }
+        public string File { get; set; }
+        public string Preview { get; set; }
+        public string Type { get; set; }
+        public string Visibility { get; set; }
+        public List<string> Tags { get; set; }
+    }
+    public class Wallpaper
+    {
+        [Obsolete]
+        public string Path { get; set; }
+        public ProjectInfo Info { get; set; }
+        public string Dir { get; set; }
+
+        [Obsolete]
+        internal static IEnumerable<Wallpaper> GetWallpapers(string dir)
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
+
+            //test E:\SteamLibrary\steamapps\workshop\content\431960
+            //foreach (var item in Directory.EnumerateFiles(dir, "project.json", SearchOption.AllDirectories))
+            foreach (var item in dirInfo.EnumerateFiles("project.json", SearchOption.AllDirectories).OrderByDescending(m => m.CreationTime))
+            {
+                var info = JsonHelper.JsonDeserializeFromFileAsync<ProjectInfo>(item.FullName).Result;
+                //var saveDir = Path.GetDirectoryName(item.FullName);
+                var result = new Wallpaper()
+                {
+                    Info = info,
+                };
+                yield return result;
+            }
+        }
+    }
+    public class AppManagerobsolete
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static IStartupManager _startupManager = null;
@@ -78,7 +126,7 @@ namespace LiveWallpaperCore.LocalServer
 
         public static List<Wallpaper> Wallpapers { get; private set; }
 
-        public static SettingObject Setting { get; private set; }
+        public static UserSetting Setting { get; private set; }
 
         public static AppData AppData { get; private set; }
         public static IntPtr MainHandle { get; internal set; }
@@ -127,7 +175,7 @@ namespace LiveWallpaperCore.LocalServer
                 await ApplyAppDataAsync();
             }
 
-            Setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            Setting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(SettingPath);
             LocalWallpaperDir = Setting.General.WallpaperSaveDir;
             SettingInitialized = true;
         }
@@ -267,7 +315,7 @@ namespace LiveWallpaperCore.LocalServer
                     continue;
 
                 logger.Info($"ShowCurrentWallpapers {w.Path} , {item.Screen}");
-                _ = WallpaperManager.ShowWallpaper(new WallpaperModel()
+                _ = WallpaperApi.ShowWallpaper(new WallpaperModel()
                 {
                     Path = w.Path
                 }, item.Screen);
@@ -276,7 +324,7 @@ namespace LiveWallpaperCore.LocalServer
 
         internal static async Task ShowWallpaper(Wallpaper w, params string[] screens)
         {
-            await WallpaperManager.ShowWallpaper(new WallpaperModel()
+            await WallpaperApi.ShowWallpaper(new WallpaperModel()
             {
                 Path = w.Path
             }, screens);
@@ -335,12 +383,12 @@ namespace LiveWallpaperCore.LocalServer
 
         public static async Task ReApplySetting()
         {
-            var setting = await JsonHelper.JsonDeserializeFromFileAsync<SettingObject>(SettingPath);
+            var setting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(SettingPath);
             Setting = setting;
             await ApplySetting(setting);
         }
 
-        public static async Task ApplySetting(SettingObject setting)
+        public static async Task ApplySetting(UserSetting setting)
         {
             LocalWallpaperDir = Setting.General.WallpaperSaveDir;
             string cultureName = setting.General.CurrentLan;
@@ -358,7 +406,7 @@ namespace LiveWallpaperCore.LocalServer
             }
             setting.General.StartWithWindows = await _startupManager.Check();
 
-            var screenSetting = WallpaperManager.Screens.Select((m) => new ScreenOption()
+            var screenSetting = WallpaperApi.Screens.Select((m) => new ScreenOption()
             {
                 Screen = m,
                 WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
@@ -367,10 +415,10 @@ namespace LiveWallpaperCore.LocalServer
             var liveWallpaperOptions = new LiveWallpaperOptions
             {
                 AppMaximizedEffectAllScreen = true,
-                AudioScreen = setting.Wallpaper.AudioSource,
+                AudioScreen = setting.Wallpaper.AudioScreen,
                 ScreenOptions = screenSetting
             };
-            await WallpaperManager.SetOptions(liveWallpaperOptions);
+            await WallpaperApi.SetOptions(setting.Wallpaper);
         }
     }
 }

@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 
 namespace LiveWallpaperCore.LocalServer.Models
 {
-    public class DisplayWallpaper
+    public class RunningData
     {
-        public string Path { get; set; }
-        public string Screen { get; set; }
     }
 }

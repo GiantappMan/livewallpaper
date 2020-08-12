@@ -1,11 +1,11 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaperCore.LocalServer.Models;
-using LiveWallpaperCore.LocalServer.Models.AppStates;
-using LiveWallpaperCore.LocalServer.Store;
 using LiveWallpaperCore.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Localization.Internal;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,53 +13,85 @@ namespace LiveWallpaperCore.LocalServer.Hubs
 {
     public class LiveWallpaperHub : Hub
     {
-        public Task<List<Wallpaper>> GetWallpapers()
+        public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
-            return WallpaperStore.GetWallpapers();
+            await AppManager.WaitInitialized();
+            var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.General.WallpaperSaveDir);
+            return result;
         }
 
         public Task<BaseApiResult> ShowWallpaper(string path)
         {
-            return WallpaperStore.ShowWallpaper(path);
+            return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
         }
 
         public async Task<BaseApiResult> SetupPlayer(string path)
         {
             var raiseLimiter = new RaiseLimiter();
-            var result = await WallpaperStore.SetupPlayer(path, null, (p) =>
+
+            string url = null;
+            var wpType = WallpaperApi.GetWallpaperType(path);
+            if (string.IsNullOrEmpty(url))
+                url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
+
+            void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, ProgressChangedArgs e)
             {
                 raiseLimiter.Execute(async () =>
-                 {
-                     System.Diagnostics.Debug.WriteLine($"{p.ProgressPercentage} {p.ActionType}");
-                     await Clients.All.SendAsync("SetupPlayerProgressChanged", p);
-                 }, 1000);
-            });
+                {
+                    System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
+                    await Clients.All.SendAsync("SetupPlayerProgressChanged", e);
+                }, 1000);
+            }
 
+            WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+
+            var setupResult = await WallpaperApi.SetupPlayer(wpType.Value, url);
+
+            WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
             await raiseLimiter.WaitExit();
-            return result;
+            return setupResult;
         }
 
-        public async Task<BaseApiResult> StopSetupPlayer()
+        public Task<BaseApiResult> StopSetupPlayer()
         {
-            WallpaperStore.StopSetupPlayer();
-            throw new NotImplementedException();
+            return WallpaperApi.StopSetupPlayer();
         }
 
-        public async Task<BaseApiResult> GetOptions()
+        public async Task<BaseApiResult<UserSetting>> GetUserSetting()
         {
-            throw new NotImplementedException();
+            await AppManager.WaitInitialized();
+            return new BaseApiResult<UserSetting>()
+            {
+                Ok = true,
+                Data = AppManager.UserSetting
+            };
         }
 
-        public async Task<BaseApiResult> SetOptions()
+        public async Task<BaseApiResult> SetUserSetting(UserSetting setting)
         {
-            throw new NotImplementedException();
-
+            await AppManager.WaitInitialized();
+            try
+            {
+                await AppManager.ApplyUserSetting(setting);
+                var result = await WallpaperApi.SetOptions(setting.Wallpaper);
+                //成功后才保存，防止有异常导致启动崩溃
+                await AppManager.SaveUserSetting(setting);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
         }
 
-        public async Task<BaseApiResult> GetAppStatus()
+        public async Task<BaseApiResult<RunningData>> GetRunningData()
         {
-            throw new NotImplementedException();
-
+            await AppManager.WaitInitialized();
+            return new BaseApiResult<RunningData>()
+            {
+                Ok = true,
+                Data = AppManager.RunningData
+            };
         }
     }
 }

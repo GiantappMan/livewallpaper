@@ -83,7 +83,7 @@ namespace LiveWallpaperCore
             };
 
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
-            WallpaperManager.Initlize(Dispatcher.CurrentDispatcher);
+            WallpaperApi.Initlize(Dispatcher.CurrentDispatcher);
             Task.Run(() =>
             {
                 int port = GetPort();

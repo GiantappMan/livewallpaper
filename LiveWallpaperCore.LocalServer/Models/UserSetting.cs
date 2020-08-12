@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Giantapp.LiveWallpaper.Engine;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using static Giantapp.LiveWallpaper.Engine.ScreenOption;
 
 namespace LiveWallpaperCore.LocalServer.Models
@@ -11,15 +11,7 @@ namespace LiveWallpaperCore.LocalServer.Models
     {
         public bool StartWithWindows { get; set; }
 
-        public bool MinimizeUI { get; set; }
-
         public string CurrentLan { get; set; }
-
-        public bool RecordWindowSize { get; set; }
-
-        public double Width { get; set; }
-
-        public double Height { get; set; }
 
         public string WallpaperSaveDir { get; set; }
 
@@ -36,22 +28,13 @@ namespace LiveWallpaperCore.LocalServer.Models
             return new GeneralSettting()
             {
                 WallpaperSaveDir = saveDir,
-                //StartWithWindows = true,
-                //MinimizeUI = true,
-                //RecordWindowSize = true,
-                //Width = 436,
-                //Height = 337,
-                //CurrentLan = "zh"
             };
         }
     }
 
-    public class WallpaperSetting
+    public class WallpaperSetting : LiveWallpaperOptions
     {
         public ActionWhenMaximized ActionWhenMaximized { get; set; }
-        public string AudioSource { get; set; }
-        public string DisplayMonitor { get; set; }
-        //public string VideoAspect { get; set; }
 
         public static WallpaperSetting GetDefaultWallpaperSetting()
         {
@@ -75,15 +58,15 @@ namespace LiveWallpaperCore.LocalServer.Models
     /// <summary>
     /// 用户设置
     /// </summary>
-    public class SettingObject
+    public class UserSetting
     {
         public GeneralSettting General { get; set; }
 
         public WallpaperSetting Wallpaper { get; set; }
 
-        public static SettingObject GetDefaultSettting()
+        public static UserSetting GetDefaultSettting()
         {
-            return new SettingObject()
+            return new UserSetting()
             {
                 General = GeneralSettting.GetDefaultGeneralSettting(),
                 Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting()
