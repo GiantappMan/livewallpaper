@@ -17,9 +17,7 @@ namespace LiveWallpaperCore.LocalServer
 
 
         static AppManager()
-        {
-            _runningDataFilePath = $"{AppDataDir}\\runningData.json";
-            _userSettingFilePath = $"{AppDataDir}\\Config\\userSetting.json";
+        {       
             _ = Initialize();
         }
 
@@ -34,6 +32,8 @@ namespace LiveWallpaperCore.LocalServer
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             AppDataDir = $"{appData}\\LiveWallpaper";
+            _runningDataFilePath = $"{AppDataDir}\\runningData.json";
+            _userSettingFilePath = $"{AppDataDir}\\Config\\userSetting.json";
 
             try
             {
