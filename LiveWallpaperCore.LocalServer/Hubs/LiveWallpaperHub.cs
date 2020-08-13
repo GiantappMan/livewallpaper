@@ -40,7 +40,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                 {
                     System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
                     await Clients.All.SendAsync("SetupPlayerProgressChanged", e);
-                }, 1000);
+                }, 5000);
             }
 
             WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;

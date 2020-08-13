@@ -18,7 +18,7 @@ namespace LiveWallpaperCore.LocalServer.Models
         public static string GetDefaultSaveDir()
         {
             string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-            saveDir = Path.Combine(saveDir, "LiveWallpapers");
+            saveDir = Path.Combine(saveDir, "LiveWallpaper");
             return saveDir;
         }
 
