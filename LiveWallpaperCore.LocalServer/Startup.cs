@@ -29,6 +29,10 @@ namespace LiveWallpaperCore.LocalServer
         {
             services.AddControllers();
             services.AddSignalR();
+            services.AddSingleton<HubEventEmitter>();
+            //services.AddSingleton<IHostedService, HubEventEmitter>(serviceProvider => serviceProvider.GetService<HubEventEmitter>());
+
+            services.AddHostedService(serviceProvider => serviceProvider.GetService<HubEventEmitter>());
             //.AddJsonOptions(options =>
             //{
             //    // Use the default property (Pascal) casing.

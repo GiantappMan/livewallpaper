@@ -13,6 +13,15 @@ namespace LiveWallpaperCore.LocalServer.Hubs
 {
     public class LiveWallpaperHub : Hub
     {
+        HubEventEmitter _hubEventEmitter;
+        string _lastConnectionId;
+        RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+
+        public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
+        {
+            _hubEventEmitter = hubEventEmitter;
+        }
+
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
             await AppManager.WaitInitialized();
@@ -25,31 +34,46 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
         }
 
-        public async Task<BaseApiResult> SetupPlayer(string path)
+        public BaseApiResult SetupPlayer(string path)
         {
-            var raiseLimiter = new RaiseLimiter();
-
             string url = null;
             var wpType = WallpaperApi.GetWallpaperType(path);
             if (string.IsNullOrEmpty(url))
                 url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
 
-            void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, ProgressChangedArgs e)
+            void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, SetupPlayerProgressChangedArgs e)
             {
-                raiseLimiter.Execute(async () =>
+                _lastSetupPlayerRaiseLimiter.Execute(async () =>
                 {
-                    System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
-                    await Clients.All.SendAsync("SetupPlayerProgressChanged", e);
-                }, 5000);
+                    try
+                    {
+                        System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
+                        var client = _hubEventEmitter.GetClient(_lastConnectionId);
+                        await client.SendAsync("SetupPlayerProgressChanged", e);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }, 1000);
             }
 
-            WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+            var result = WallpaperApi.SetupPlayer(wpType.Value, url, (async _ =>
+            {
+                //设置完成
+                await _lastSetupPlayerRaiseLimiter.WaitExit();
+                WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
+            }));
 
-            var setupResult = await WallpaperApi.SetupPlayer(wpType.Value, url);
+            if (result.Ok)
+            {
+                //开始成功
+                _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+                WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+                _lastConnectionId = Context.ConnectionId;
+            }
 
-            WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
-            await raiseLimiter.WaitExit();
-            return setupResult;
+            return result;
         }
 
         public Task<BaseApiResult> StopSetupPlayer()
