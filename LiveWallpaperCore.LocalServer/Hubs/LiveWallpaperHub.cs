@@ -25,7 +25,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
             await AppManager.WaitInitialized();
-            var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.General.WallpaperSaveDir);
+            var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
             return result;
         }
 

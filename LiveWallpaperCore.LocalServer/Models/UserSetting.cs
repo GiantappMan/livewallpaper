@@ -13,7 +13,26 @@ namespace LiveWallpaperCore.LocalServer.Models
 
         public string CurrentLan { get; set; }
 
+        public static GeneralSettting GetDefaultGeneralSettting()
+        {
+            return new GeneralSettting();
+        }
+    }
+
+    public class WallpaperSetting : LiveWallpaperOptions
+    {
         public string WallpaperSaveDir { get; set; }
+        public ActionWhenMaximized ActionWhenMaximized { get; set; }
+
+        public static WallpaperSetting GetDefaultWallpaperSetting()
+        {
+            string saveDir = GetDefaultSaveDir();
+            return new WallpaperSetting()
+            {
+                ActionWhenMaximized = ActionWhenMaximized.Pause,
+                WallpaperSaveDir = saveDir,
+            };
+        }
 
         public static string GetDefaultSaveDir()
         {
@@ -21,29 +40,6 @@ namespace LiveWallpaperCore.LocalServer.Models
             saveDir = Path.Combine(saveDir, "LiveWallpaper");
             return saveDir;
         }
-
-        public static GeneralSettting GetDefaultGeneralSettting()
-        {
-            string saveDir = GetDefaultSaveDir();
-            return new GeneralSettting()
-            {
-                WallpaperSaveDir = saveDir,
-            };
-        }
-    }
-
-    public class WallpaperSetting : LiveWallpaperOptions
-    {
-        public ActionWhenMaximized ActionWhenMaximized { get; set; }
-
-        public static WallpaperSetting GetDefaultWallpaperSetting()
-        {
-            return new WallpaperSetting()
-            {
-                ActionWhenMaximized = ActionWhenMaximized.Pause
-            };
-        }
-
         public static uint[] ConveterToScreenIndexs(int displayIndex)
         {
             uint[] screenIndexs;

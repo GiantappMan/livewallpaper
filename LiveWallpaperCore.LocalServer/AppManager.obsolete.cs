@@ -176,7 +176,7 @@ namespace LiveWallpaperCore.LocalServer
             }
 
             Setting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(SettingPath);
-            LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+            LocalWallpaperDir = Setting.Wallpaper.WallpaperSaveDir;
             SettingInitialized = true;
         }
 
@@ -390,7 +390,7 @@ namespace LiveWallpaperCore.LocalServer
 
         public static async Task ApplySetting(UserSetting setting)
         {
-            LocalWallpaperDir = Setting.General.WallpaperSaveDir;
+            LocalWallpaperDir = Setting.Wallpaper.WallpaperSaveDir;
             string cultureName = setting.General.CurrentLan;
             if (cultureName == null)
                 cultureName = Thread.CurrentThread.CurrentUICulture.Name;
