@@ -409,7 +409,7 @@ namespace LiveWallpaperCore.LocalServer
             var screenSetting = WallpaperApi.Screens.Select((m) => new ScreenOption()
             {
                 Screen = m,
-                WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
+                //WhenAppMaximized = setting.Wallpaper.ActionWhenMaximized,
             }).ToList();
 
             var liveWallpaperOptions = new LiveWallpaperOptions

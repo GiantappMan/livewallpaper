@@ -1,6 +1,7 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using static Giantapp.LiveWallpaper.Engine.ScreenOption;
@@ -22,16 +23,33 @@ namespace LiveWallpaperCore.LocalServer.Models
     public class WallpaperSetting : LiveWallpaperOptions
     {
         public string WallpaperSaveDir { get; set; }
-        public ActionWhenMaximized ActionWhenMaximized { get; set; }
 
         public static WallpaperSetting GetDefaultWallpaperSetting()
         {
             string saveDir = GetDefaultSaveDir();
-            return new WallpaperSetting()
+            var r = new WallpaperSetting()
             {
-                ActionWhenMaximized = ActionWhenMaximized.Pause,
                 WallpaperSaveDir = saveDir,
             };
+            r.FixScreenOptions();
+            return r;
+        }
+        public void FixScreenOptions()
+        {
+            if (ScreenOptions == null)
+                ScreenOptions = new List<ScreenOption>();
+
+            foreach (var screenItem in WallpaperApi.Screens)
+            {
+                var exist = ScreenOptions.FirstOrDefault(m => m.Screen == screenItem);
+                if (exist == null)
+                {
+                    //新增了屏幕
+                    ScreenOptions.Add(new ScreenOption() { Screen = screenItem });
+                }
+            }
+            // 过滤移除的屏幕
+            ScreenOptions = ScreenOptions.Where(m => WallpaperApi.Screens.Contains(m.Screen)).ToList();
         }
 
         public static string GetDefaultSaveDir()
@@ -40,15 +58,15 @@ namespace LiveWallpaperCore.LocalServer.Models
             saveDir = Path.Combine(saveDir, "LiveWallpaper");
             return saveDir;
         }
-        public static uint[] ConveterToScreenIndexs(int displayIndex)
-        {
-            uint[] screenIndexs;
-            if (displayIndex < 0)
-                screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
-            else
-                screenIndexs = new uint[] { (uint)displayIndex };
-            return screenIndexs;
-        }
+        //public static uint[] ConveterToScreenIndexs(int displayIndex)
+        //{
+        //    uint[] screenIndexs;
+        //    if (displayIndex < 0)
+        //        screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
+        //    else
+        //        screenIndexs = new uint[] { (uint)displayIndex };
+        //    return screenIndexs;
+        //}
     }
 
     /// <summary>

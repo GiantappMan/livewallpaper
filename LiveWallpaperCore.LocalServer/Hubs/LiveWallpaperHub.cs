@@ -84,6 +84,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         public async Task<BaseApiResult<UserSetting>> GetUserSetting()
         {
             await AppManager.WaitInitialized();
+            AppManager.UserSetting.Wallpaper.FixScreenOptions();
             return new BaseApiResult<UserSetting>()
             {
                 Ok = true,
