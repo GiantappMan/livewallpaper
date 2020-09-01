@@ -11,8 +11,8 @@ namespace LiveWallpaperCore.LocalServer.Models
     public class GeneralSettting
     {
         public bool StartWithWindows { get; set; }
-
         public string CurrentLan { get; set; }
+        public List<string> LanOptions { get; } = new List<string>() { "English", "Ελληνικά", "Русский", "中文" };
 
         public static GeneralSettting GetDefaultGeneralSettting()
         {

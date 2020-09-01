@@ -34,12 +34,16 @@ namespace LiveWallpaperCore.LocalServer.Utils
             {
                 if (DateTime.Now > _timeoutTime)
                 {
-                    await _nextTask();
+                    if (_nextTask != null)
+                        await _nextTask();
+                    _nextTask = null;
                     _running = false;
                     break;
                 }
 
-                await _nextTask();
+                if (_nextTask != null)
+                    await _nextTask();
+                _nextTask = null;
                 await Task.Delay(interval);
             };
         }
