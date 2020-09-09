@@ -84,7 +84,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         public async Task<BaseApiResult<UserSetting>> GetUserSetting()
         {
             await AppManager.WaitInitialized();
-            AppManager.UserSetting.Wallpaper.FixScreenOptions();
+            await AppManager.LoadUserSetting();
             return new BaseApiResult<UserSetting>()
             {
                 Ok = true,
@@ -97,9 +97,8 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             await AppManager.WaitInitialized();
             try
             {
-                await AppManager.ApplyUserSetting(setting);
                 var result = await WallpaperApi.SetOptions(setting.Wallpaper);
-                //成功后才保存，防止有异常导致启动崩溃
+                //成功设置后保存，防止有异常导致启动崩溃
                 await AppManager.SaveUserSetting(setting);
                 return result;
             }

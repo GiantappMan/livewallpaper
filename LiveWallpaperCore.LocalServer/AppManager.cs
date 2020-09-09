@@ -17,7 +17,7 @@ namespace LiveWallpaperCore.LocalServer
 
 
         static AppManager()
-        {       
+        {
             _ = Initialize();
         }
 
@@ -46,10 +46,7 @@ namespace LiveWallpaperCore.LocalServer
                     await JsonHelper.JsonSerializeAsync(RunningData, _runningDataFilePath);
                 }
 
-                UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(_userSettingFilePath);
-                if (UserSetting == null)
-                    UserSetting = UserSetting.GetDefaultSettting();
-
+                await LoadUserSetting();
                 //开机启动
                 DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
                 if (helpers.IsRunningAsUwp())
@@ -76,27 +73,29 @@ namespace LiveWallpaperCore.LocalServer
                 await Task.Delay(1000);
         }
 
-        internal static Task SaveUserSetting(UserSetting setting)
+        internal static async Task LoadUserSetting()
         {
-            return JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
+            UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(_userSettingFilePath);
+            if (UserSetting == null)
+                UserSetting = UserSetting.GetDefaultSettting();
+            UserSetting.Wallpaper.FixScreenOptions();
         }
-
-        internal static async Task ApplyUserSetting(UserSetting setting)
+        internal static async Task SaveUserSetting(UserSetting setting)
         {
-            string cultureName = setting.General.CurrentLan;
-            if (cultureName == null)
-                cultureName = Thread.CurrentThread.CurrentUICulture.Name;
-
-            Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(cultureName);
             try
             {
                 await _startupManager.Set(setting.General.StartWithWindows);
+                await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
+                //更细内存对象
+                UserSetting = setting;
+                //检查开机启动
+                if (setting?.General?.StartWithWindows != null)
+                    setting.General.StartWithWindows = await _startupManager.Check();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
             }
-            setting.General.StartWithWindows = await _startupManager.Check();
         }
     }
 }
