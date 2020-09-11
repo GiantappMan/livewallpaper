@@ -14,7 +14,7 @@
 - UI 端
   - [ ] 社区分享，此功能 UI 端提供
     - [ ] 壁纸投稿
-  - [ ] UI 技术目前待定，flutter/winui/electron 都有可能。
+  - [ ] UI Flutter实现 暂未开源。
 
 ### 编译环境：
 
