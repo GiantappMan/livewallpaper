@@ -87,8 +87,7 @@ namespace LiveWallpaperCore
             Task.Run(() =>
             {
                 int port = GetPort();
-                string url = $"http://*:{port}/";
-                ServerWrapper.Start($"--urls={url}");
+                ServerWrapper.Start(port);
             });
         }
 

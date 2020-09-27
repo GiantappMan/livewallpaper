@@ -7,5 +7,6 @@ namespace LiveWallpaperCore.LocalServer.Models
 {
     public class RunningData
     {
+        public int HostPort { get; set; }
     }
 }

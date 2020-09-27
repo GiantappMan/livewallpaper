@@ -1,9 +1,7 @@
 ﻿using DZY.Util.Common.Helpers;
-using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaperCore.LocalServer.Models;
 using System;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LiveWallpaperCore.LocalServer
@@ -15,25 +13,19 @@ namespace LiveWallpaperCore.LocalServer
         private static string _userSettingFilePath;
         private static IStartupManager _startupManager = null;
 
-
-        static AppManager()
-        {
-            _ = Initialize();
-        }
-
         #region properties
+        public const string AppName = "LiveWallpaper";
         public static string AppDataDir { get; private set; }
         public static RunningData RunningData { get; private set; }
         public static UserSetting UserSetting { get; private set; }
         public static bool Initialized { get; private set; }
         #endregion
 
-        public static async Task Initialize()
+        public static async Task Initialize(int hostPort)
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            AppDataDir = $"{appData}\\LiveWallpaper";
-            _runningDataFilePath = $"{AppDataDir}\\runningData.json";
-            _userSettingFilePath = $"{AppDataDir}\\Config\\userSetting.json";
+            //MyDocuments这个路径不会虚拟化，方便从Dart端读取
+            _runningDataFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\{AppName}\\runningData.json";
+            _userSettingFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\{AppName}\\Config\\userSetting.json";
 
             try
             {
@@ -43,18 +35,20 @@ namespace LiveWallpaperCore.LocalServer
                 {
                     //生成默认运行数据
                     RunningData = new RunningData();
-                    await JsonHelper.JsonSerializeAsync(RunningData, _runningDataFilePath);
                 }
+                //更新端口号
+                RunningData.HostPort = hostPort;
+                await JsonHelper.JsonSerializeAsync(RunningData, _runningDataFilePath);
 
                 await LoadUserSetting();
                 //开机启动
                 DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
                 if (helpers.IsRunningAsUwp())
-                    _startupManager = new DesktopBridgeStartupManager("LiveWallpaper");
+                    _startupManager = new DesktopBridgeStartupManager(AppName);
                 else
                 {
                     string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
-                    _startupManager = new DesktopStartupHelper("LiveWallpaper", path);
+                    _startupManager = new DesktopStartupHelper(AppName, path);
                 }
             }
             catch (Exception ex)
