@@ -4,6 +4,7 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -97,9 +98,9 @@ namespace LiveWallpaperCore
         /// <returns></returns>
         static int GetPort()
         {
-#if DEBUG
-            return 5001;
-#endif
+            //#if DEBUG
+            //            return 5001;
+            //#endif
             TcpListener l = new TcpListener(IPAddress.Loopback, 0);
             l.Start();
             int port = ((IPEndPoint)l.LocalEndpoint).Port;
@@ -109,6 +110,16 @@ namespace LiveWallpaperCore
 
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
+            try
+            {
+                string apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string uiExe = Path.Combine(apptEntryDir, "UI", "livewallpaper_dart.exe");
+                Process.Start(uiExe);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)
