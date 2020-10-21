@@ -2,5 +2,5 @@
 https://github.com/dotnet/runtime/issues/36590
 
 ```
-dotnet publish -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesInSingleFile=true
+dotnet publish -r /p:PublishSingleFile=true /p:IncludeNativeLibrariesInSingleFile=true
 ```
