@@ -1,4 +1,5 @@
-﻿using Giantapp.LiveWallpaper.Engine;
+﻿using DZY.WinAPI;
+using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaperCore.LocalServer;
 using NLog;
 using System;
@@ -24,6 +25,9 @@ namespace LiveWallpaperCore
         private ToolStripMenuItem _btnExit;
         private System.ComponentModel.IContainer _components;
         #endregion
+
+        private static Process _uiProcess;
+
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static Mutex _mutex;
 
@@ -112,9 +116,19 @@ namespace LiveWallpaperCore
         {
             try
             {
+                if (_uiProcess != null)
+                {
+                    //todo use32.setactive
+                    return;
+                }
                 string apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
                 string uiExe = Path.Combine(apptEntryDir, "UI", "livewallpaper_dart.exe");
-                Process.Start(uiExe);
+                _uiProcess = Process.Start(uiExe);
+                _ = Task.Run(() =>
+                {
+                    _uiProcess.WaitForExit();
+                    _uiProcess = null;
+                });
             }
             catch (Exception ex)
             {
