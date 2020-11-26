@@ -17,6 +17,7 @@ namespace LiveWallpaperCore.LocalServer
 {
     public class Startup
     {
+        readonly string AllowSpecificOrigins = "AllowSpecificOrigins";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -27,6 +28,22 @@ namespace LiveWallpaperCore.LocalServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn" };
+#if DEBUG
+                urls.Add("http://localhost:3000");
+#endif
+                options.AddPolicy(name: AllowSpecificOrigins,
+                                  builder =>
+                                  {
+                                      builder
+                                      .WithOrigins(urls.ToArray())
+                                      .AllowAnyMethod()
+                                      .AllowAnyHeader()
+                                      .AllowCredentials();
+                                  });
+            });
             services.AddControllers();
             services.AddSignalR();
             services.AddSingleton<HubEventEmitter>();
@@ -43,6 +60,7 @@ namespace LiveWallpaperCore.LocalServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -53,6 +71,8 @@ namespace LiveWallpaperCore.LocalServer
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseCors(AllowSpecificOrigins);
 
             app.UseEndpoints(endpoints =>
             {
