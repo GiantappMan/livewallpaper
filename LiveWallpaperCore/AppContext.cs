@@ -102,9 +102,9 @@ namespace LiveWallpaperCore
         /// <returns></returns>
         static int GetPort()
         {
-            //#if DEBUG
-            //            return 5001;
-            //#endif
+#if DEBUG
+            return 5001;
+#endif
             TcpListener l = new TcpListener(IPAddress.Loopback, 0);
             l.Start();
             int port = ((IPEndPoint)l.LocalEndpoint).Port;
