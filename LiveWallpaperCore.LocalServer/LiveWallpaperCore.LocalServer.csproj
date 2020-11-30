@@ -24,9 +24,5 @@
     <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 
 </Project>
