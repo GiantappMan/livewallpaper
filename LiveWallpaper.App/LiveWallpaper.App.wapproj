@@ -56,7 +56,6 @@
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\LiveWallpaperCore\LiveWallpaperCore.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>5D8F116BA76C9BCC60685B6B86FA6D4F75F3ECF3</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

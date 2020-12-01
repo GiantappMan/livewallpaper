@@ -1,4 +1,4 @@
-﻿using DZY.Util.Common.Helpers;
+﻿using Common.Helpers;
 using LiveWallpaperCore.LocalServer.Models;
 using System;
 using System.Reflection;
