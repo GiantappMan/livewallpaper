@@ -2,10 +2,8 @@
 using LiveWallpaperCore.LocalServer.Models;
 using LiveWallpaperCore.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Localization.Internal;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,7 +51,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                     }
                     catch (Exception ex)
                     {
-
+                        System.Diagnostics.Debug.WriteLine(ex);
                     }
                 }, 1000);
             }
