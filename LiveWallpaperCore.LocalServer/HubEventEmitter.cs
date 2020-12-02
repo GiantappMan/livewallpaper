@@ -23,6 +23,11 @@ namespace LiveWallpaperCore.LocalServer
             return _hubContext.Clients.Client(connectionId);
         }
 
+        public IClientProxy AllClient()
+        {
+            return _hubContext.Clients.All;
+        }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;

@@ -12,7 +12,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
     public class LiveWallpaperHub : Hub
     {
         HubEventEmitter _hubEventEmitter;
-        string _lastConnectionId;
+        //string _lastConnectionId;
         RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
@@ -46,7 +46,8 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                     try
                     {
                         System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
-                        var client = _hubEventEmitter.GetClient(_lastConnectionId);
+                        //向所有客户端推送，刷新后也能显示
+                        var client = _hubEventEmitter.AllClient();
                         await client.SendAsync("SetupPlayerProgressChanged", e);
                     }
                     catch (Exception ex)
@@ -68,7 +69,7 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                 //开始成功
                 _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
                 WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
-                _lastConnectionId = Context.ConnectionId;
+                //_lastConnectionId = Context.ConnectionId;
             }
 
             return result;
