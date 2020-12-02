@@ -31,11 +31,14 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         {
             return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
         }
-
-        public BaseApiResult SetupPlayer(string wallpaperPath, string customDownloadUrl)
+        public BaseApiResult SetupPlayerByPath(string wallpaperPath, string customDownloadUrl)
+        {
+            var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
+            return SetupPlayer(wpType, customDownloadUrl);
+        }
+        public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
         {
             string url = customDownloadUrl;
-            var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
             if (string.IsNullOrEmpty(url))
                 url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
 
@@ -57,7 +60,10 @@ namespace LiveWallpaperCore.LocalServer.Hubs
                 }, 1000);
             }
 
-            var result = WallpaperApi.SetupPlayer(wpType.Value, url, (async _ =>
+            _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+            WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
+            WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+            var result = WallpaperApi.SetupPlayer(wpType, url, (async _ =>
             {
                 //设置完成
                 await _lastSetupPlayerRaiseLimiter.WaitExit();
@@ -67,8 +73,8 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             if (result.Ok)
             {
                 //开始成功
-                _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-                WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+                //_lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+                //WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
                 //_lastConnectionId = Context.ConnectionId;
             }
 
