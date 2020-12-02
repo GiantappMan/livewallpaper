@@ -32,10 +32,10 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
         }
 
-        public BaseApiResult SetupPlayer(string path)
+        public BaseApiResult SetupPlayer(string wallpaperPath, string customDownloadUrl)
         {
-            string url = null;
-            var wpType = WallpaperApi.GetWallpaperType(path);
+            string url = customDownloadUrl;
+            var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
             if (string.IsNullOrEmpty(url))
                 url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
 
