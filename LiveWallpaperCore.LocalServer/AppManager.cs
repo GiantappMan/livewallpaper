@@ -78,13 +78,13 @@ namespace LiveWallpaperCore.LocalServer
         {
             try
             {
-                await _startupManager.Set(setting.General.StartWithWindows);
+                await _startupManager.Set(setting.General.StartWithSystem);
                 await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
                 //更细内存对象
                 UserSetting = setting;
                 //检查开机启动
-                if (setting?.General?.StartWithWindows != null)
-                    setting.General.StartWithWindows = await _startupManager.Check();
+                if (setting?.General?.StartWithSystem != null)
+                    setting.General.StartWithSystem = await _startupManager.Check();
             }
             catch (Exception ex)
             {
