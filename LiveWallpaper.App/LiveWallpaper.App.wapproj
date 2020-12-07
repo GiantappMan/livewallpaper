@@ -110,6 +110,7 @@
     <Content Include="Images\SplashScreen\SplashScreen.scale-150.png" />
     <Content Include="Images\SplashScreen\SplashScreen.scale-200.png" />
     <Content Include="Images\SplashScreen\SplashScreen.scale-400.png" />
+    <Content Include="Images\logo.png" />
     <Content Include="Images\Store\StoreLogo.scale-100.png" />
     <Content Include="Images\Store\StoreLogo.scale-125.png" />
     <Content Include="Images\Store\StoreLogo.scale-150.png" />
