@@ -67,7 +67,7 @@ namespace LiveWallpaperCore
 
             _btnMainUI = new ToolStripMenuItem()
             {
-                Text = "主界面"
+                Text = "打开Web控制台"
             };
             _btnMainUI.Click += BtnMainUI_Click;
             _contextMenu.Items.Add(_btnMainUI);
@@ -121,14 +121,15 @@ namespace LiveWallpaperCore
                     //todo use32.setactive
                     return;
                 }
-                string apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                string uiExe = Path.Combine(apptEntryDir, "UI", "livewallpaper_dart.exe");
-                _uiProcess = Process.Start(uiExe);
-                _ = Task.Run(() =>
-                {
-                    _uiProcess.WaitForExit();
-                    _uiProcess = null;
-                });
+                //string apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                //string uiExe = Path.Combine(apptEntryDir, "UI", "livewallpaper_dart.exe");
+                //_uiProcess = Process.Start(uiExe);
+                //_ = Task.Run(() =>
+                //{
+                //    _uiProcess.WaitForExit();
+                //    _uiProcess = null;
+                //});
+                Process.Start(new ProcessStartInfo("https://livewallpaper.giantapp.cn/local/wallpapers") { UseShellExecute = true });
             }
             catch (Exception ex)
             {
