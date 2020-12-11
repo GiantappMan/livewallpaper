@@ -4,6 +4,7 @@ using LiveWallpaperCore.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -31,6 +32,25 @@ namespace LiveWallpaperCore.LocalServer.Hubs
         {
             return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
         }
+
+        public Task<BaseApiResult> DeleteWallpaper(string path)
+        {
+            return WallpaperApi.DeleteWallpaper(path);
+        }
+
+        public async Task<BaseApiResult> ExploreFile(string path)
+        {
+            try
+            {
+                await Task.Run(() => Process.Start("Explorer.exe", $" /select, {path}"));
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
+            return BaseApiResult.SuccessState();
+        }
+
         public BaseApiResult SetupPlayerByPath(string wallpaperPath, string customDownloadUrl)
         {
             var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
