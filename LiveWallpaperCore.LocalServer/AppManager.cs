@@ -1,4 +1,5 @@
 ﻿using Common.Helpers;
+using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaperCore.LocalServer.Models;
 using System;
 using System.Reflection;
@@ -50,6 +51,8 @@ namespace LiveWallpaperCore.LocalServer
                     string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
                     _startupManager = new DesktopStartupHelper(AppName, path);
                 }
+
+                var result = await WallpaperApi.SetOptions(UserSetting.Wallpaper);
             }
             catch (Exception ex)
             {
