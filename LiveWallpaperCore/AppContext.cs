@@ -124,7 +124,7 @@ namespace LiveWallpaperCore
                 //    _uiProcess.WaitForExit();
                 //    _uiProcess = null;
                 //});
-                Process.Start(new ProcessStartInfo("https://livewallpaper.giantapp.cn/local/wallpapers") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo("https://livewallpaper.giantapp.cn/local") { UseShellExecute = true });
             }
             catch (Exception ex)
             {
