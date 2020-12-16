@@ -16,7 +16,9 @@ namespace LiveWallpaperCore.LocalServer.Controllers
 
         public ActionResult Image(string localPath)
         {
-            var ext = Path.GetExtension(localPath).Replace(".", ""); ;
+            var ext = Path.GetExtension(localPath).Replace(".", "");
+            if (!System.IO.File.Exists(localPath))
+                return null;
             return base.File(new FileStream(localPath, FileMode.Open), $"image/{ext}");
         }
     }

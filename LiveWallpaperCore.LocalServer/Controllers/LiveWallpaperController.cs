@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Giantapp.LiveWallpaper.Engine;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -19,19 +20,19 @@ namespace LiveWallpaperCore.LocalServer.Controllers
         //https://docs.microsoft.com/zh-cn/aspnet/core/mvc/models/file-uploads?view=aspnetcore-5.0#file-upload-scenarios
         [RequestSizeLimit(10L * 1024L * 1024L * 1024L)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10L * 1024L * 1024L * 1024L)]
-        public async Task<IActionResult> UploadWallpaper(IFormCollection files)
+        public async Task<IActionResult> CreateWallpaperDraft(IFormCollection fc)
         {
-            foreach (var formFile in files)
+            if (fc.Files.Count > 0 && fc.Files[0].Length > 0)
             {
-                //    //if (formFile.Value.Length > 0)
-                //    //{
-                //    //    var filePath = Path.GetTempFileName();
-
-                //    //    using (var stream = System.IO.File.Create(filePath))
-                //    //    {
-                //    //        await formFile.CopyToAsync(stream);
-                //    //    }
-                //    //}
+                var formFile = fc.Files[0];
+                var targetDir = await WallpaperApi.CreateWallpaperDraft(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, new WallpaperProjectInfo()
+                {
+                    File = formFile.FileName
+                });
+                //AppManager.UserSetting.Wallpaper.WallpaperSaveDir;
+                var filePath = Path.Combine(targetDir, formFile.FileName);
+                using var stream = System.IO.File.Create(filePath);
+                await formFile.CopyToAsync(stream);
             }
             return null;
 
