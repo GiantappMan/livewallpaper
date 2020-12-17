@@ -28,9 +28,9 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             return result;
         }
 
-        public Task<BaseApiResult> ShowWallpaper(string path)
+        public Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
         {
-            return WallpaperApi.ShowWallpaper(new WallpaperModel() { Path = path });
+            return WallpaperApi.ShowWallpaper(path);
         }
 
         public Task<BaseApiResult> DeleteWallpaper(string path)

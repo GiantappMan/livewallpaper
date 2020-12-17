@@ -20,34 +20,28 @@ namespace LiveWallpaperCore.LocalServer.Controllers
         //https://docs.microsoft.com/zh-cn/aspnet/core/mvc/models/file-uploads?view=aspnetcore-5.0#file-upload-scenarios
         [RequestSizeLimit(10L * 1024L * 1024L * 1024L)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10L * 1024L * 1024L * 1024L)]
-        public async Task<IActionResult> CreateWallpaperDraft(IFormCollection fc)
+        public async Task<WallpaperModel> CreateWallpaperDraft(IFormCollection fc)
         {
             if (fc.Files.Count > 0 && fc.Files[0].Length > 0)
             {
                 var formFile = fc.Files[0];
-                var targetDir = await WallpaperApi.CreateWallpaperDraft(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, new WallpaperProjectInfo()
+                var info = new WallpaperProjectInfo()
                 {
                     File = formFile.FileName
-                });
-                //AppManager.UserSetting.Wallpaper.WallpaperSaveDir;
-                var filePath = Path.Combine(targetDir, formFile.FileName);
-                using var stream = System.IO.File.Create(filePath);
+                };
+                var targetDir = await WallpaperApi.CreateWallpaperDraft(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, info);
+                var distFile = Path.Combine(targetDir, formFile.FileName);
+                using var stream = System.IO.File.Create(distFile);
                 await formFile.CopyToAsync(stream);
+
+                //new WallpaperModel()
+                //{
+                //    AbsolutePath = filePath,
+                //    Info = info
+                //};
+                return WallpaperApi.CreateWallpaperModel(distFile);
             }
             return null;
-
-            //return Json(files.Files.Count);
-        }
-
-        public async Task<IActionResult> Post(List<IFormFile> files)
-        {
-            long size = files.Sum(f => f.Length);
-
-
-            // Process uploaded files
-            // Don't rely on or trust the FileName property without validation.
-
-            return Ok(new { count = files.Count, size });
         }
     }
 }
