@@ -22,7 +22,7 @@ namespace LiveWallpaperCore.LocalServer.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = 10L * 1024L * 1024L * 1024L)]
         public async Task<WallpaperModel> CreateWallpaperDraft(IFormCollection fc)
         {
-            if (fc.Files.Count > 0 && fc.Files[0].Length > 0)
+            if (fc != null && fc.Files.Count > 0 && fc.Files[0].Length > 0)
             {
                 var formFile = fc.Files[0];
                 var info = new WallpaperProjectInfo()
