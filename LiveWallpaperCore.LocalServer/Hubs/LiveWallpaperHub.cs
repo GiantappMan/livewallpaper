@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Xabe.FFmpeg;
 
 namespace LiveWallpaperCore.LocalServer.Hubs
 {
@@ -26,6 +27,27 @@ namespace LiveWallpaperCore.LocalServer.Hubs
             await AppManager.WaitInitialized();
             var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
             return result;
+        }
+        public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
+        {
+            try
+            {
+                List<string> result = new List<string>();
+
+                for (int i = 0; i < 5; i++)
+                {
+                    string path = System.IO.Path.GetTempFileName() + ".png";
+                    IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, path, TimeSpan.FromSeconds(i * 2));
+                    IConversionResult r = await conversion.Start();
+                    result.Add(path);
+                }
+
+                return BaseApiResult<List<string>>.SuccessState(result);
+            }
+            catch (Exception error)
+            {
+                return BaseApiResult<List<string>>.ExceptionState(error);
+            }
         }
 
         public Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
