@@ -1,23 +1,20 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace LiveWallpaperCore.LocalServer.Controllers
 {
     public class LiveWallpaperController : Controller
     {
-        public IActionResult Index()
+        public IActionResult Version()
         {
-            return View();
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return Content(version.ToString());
         }
 
-        //https://serversideup.net/uploading-files-vuejs-axios/
-        //https://docs.microsoft.com/zh-cn/aspnet/core/mvc/models/file-uploads?view=aspnetcore-5.0#file-upload-scenarios
         [RequestSizeLimit(10L * 1024L * 1024L * 1024L)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10L * 1024L * 1024L * 1024L)]
         public async Task<WallpaperModel> CreateWallpaperDraft(IFormCollection fc)
@@ -34,12 +31,14 @@ namespace LiveWallpaperCore.LocalServer.Controllers
                 using var stream = System.IO.File.Create(distFile);
                 await formFile.CopyToAsync(stream);
 
-                //new WallpaperModel()
-                //{
-                //    AbsolutePath = filePath,
-                //    Info = info
-                //};
-                return WallpaperApi.CreateWallpaperModel(distFile);
+                var r = WallpaperApi.CreateWallpaperModel(distFile);
+                if (string.IsNullOrEmpty(r.Info.Title))
+                {
+                    int lastIndex = r.Info.File.LastIndexOf(".");
+                    r.Info.Title = r.Info.File.Remove(lastIndex);
+                }
+
+                return r;
             }
             return null;
         }

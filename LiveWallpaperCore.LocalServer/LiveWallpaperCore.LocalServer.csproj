@@ -4,6 +4,7 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
