@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Xabe.FFmpeg;
 
 namespace LiveWallpaper.LocalServer.Controllers
 {
@@ -21,11 +22,6 @@ namespace LiveWallpaper.LocalServer.Controllers
 
             var ext = Path.GetExtension(localPath).Replace(".", "");
             return base.File(new FileStream(localPath, FileMode.Open), $"image/{ext}");
-        }
-
-        public ActionResult VideoThumbnail(string video, int frameSeconds)
-        { //todo
-            throw new NotImplementedException();
         }
     }
 }

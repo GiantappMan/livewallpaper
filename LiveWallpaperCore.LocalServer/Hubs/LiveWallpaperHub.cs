@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
@@ -17,7 +19,6 @@ namespace LiveWallpaper.LocalServer.Hubs
         HubEventEmitter _hubEventEmitter;
         //string _lastConnectionId;
         RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -33,29 +34,22 @@ namespace LiveWallpaper.LocalServer.Hubs
 
         public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
         {
-            try
+            List<string> result = new List<string>();
+            for (int i = 1; i < 5; i++)
             {
-                //var callback = new Progress<ProgressInfo>((e) =>
-                //{
-                //    Debug.WriteLine($"{e.DownloadedBytes}/{e.TotalBytes}");
-                //});
-                //await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, callback);
-                List<string> result = new List<string>();
-
-                for (int i = 0; i < 5; i++)
+                string name = videoPath.GetHashCode().ToString();
+                int seconds = i * i + 5;
+                string distPath = Path.GetTempPath() + $"{name}_{seconds}.png";
+                if (!File.Exists(distPath))
                 {
-                    string path = System.IO.Path.GetTempFileName() + ".png";
-                    IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, path, TimeSpan.FromSeconds(i * 2));
-                    IConversionResult r = await conversion.Start();
-                    result.Add(path);
+                    IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, distPath, TimeSpan.FromSeconds(seconds));
+                    _ = await conversion.Start();
                 }
 
-                return BaseApiResult<List<string>>.SuccessState(result);
+                result.Add($@"http://127.0.0.1:{AppManager.RunningData.HostPort}/assets/Image/?localpath={WebUtility.UrlEncode(distPath)}");
             }
-            catch (Exception error)
-            {
-                return BaseApiResult<List<string>>.ExceptionState(error);
-            }
+
+            return BaseApiResult<List<string>>.SuccessState(result);
         }
 
         public Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
