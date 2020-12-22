@@ -13,6 +13,7 @@ namespace LiveWallpaper.LocalServer.Models
         public bool StartWithSystem { get; set; }
         public string CurrentLan { get; set; }
         public string[] LanOptions { get; private set; } = new string[] { "en-US", "el", "ru", "zh-CN" };
+        public string FFmpegPath { get; set; }
 
         public static GeneralSettting GetDefaultGeneralSettting()
         {
