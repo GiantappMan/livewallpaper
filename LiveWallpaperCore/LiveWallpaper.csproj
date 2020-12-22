@@ -20,11 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog" Version="4.7.5" />
+    <PackageReference Include="NLog" Version="4.7.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaperCore.LocalServer\LiveWallpaperCore.LocalServer.csproj" />
+    <ProjectReference Include="..\LiveWallpaperCore.LocalServer\LiveWallpaper.LocalServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

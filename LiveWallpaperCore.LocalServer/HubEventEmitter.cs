@@ -1,10 +1,10 @@
-﻿using LiveWallpaperCore.LocalServer.Hubs;
+﻿using LiveWallpaper.LocalServer.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperCore.LocalServer
+namespace LiveWallpaper.LocalServer
 {
     /// <summary>
     /// signalRhub 是立刻释放的，用这个类来发事件消息

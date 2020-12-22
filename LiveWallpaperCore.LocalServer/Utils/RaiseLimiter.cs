@@ -3,7 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperCore.LocalServer.Utils
+namespace LiveWallpaper.LocalServer.Utils
 {
     internal class RaiseLimiter
     {

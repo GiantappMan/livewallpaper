@@ -1,6 +1,6 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
-using LiveWallpaperCore.LocalServer.Models;
-using LiveWallpaperCore.LocalServer.Utils;
+using LiveWallpaper.LocalServer.Models;
+using LiveWallpaper.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
 
-namespace LiveWallpaperCore.LocalServer.Hubs
+namespace LiveWallpaper.LocalServer.Hubs
 {
     public class LiveWallpaperHub : Hub
     {

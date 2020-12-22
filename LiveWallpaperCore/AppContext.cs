@@ -1,5 +1,5 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
-using LiveWallpaperCore.LocalServer;
+using LiveWallpaper.LocalServer;
 using NLog;
 using System;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
 
-namespace LiveWallpaperCore
+namespace LiveWallpaper
 {
     public class AppContext : ApplicationContext
     {

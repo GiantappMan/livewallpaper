@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperCore.LocalServer.Controllers
+namespace LiveWallpaper.LocalServer.Controllers
 {
     public class AssetsController : Controller
     {

@@ -1,11 +1,11 @@
 ﻿using Common.Helpers;
 using Giantapp.LiveWallpaper.Engine;
-using LiveWallpaperCore.LocalServer.Models;
+using LiveWallpaper.LocalServer.Models;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace LiveWallpaperCore.LocalServer
+namespace LiveWallpaper.LocalServer
 {
     public class AppManager
     {

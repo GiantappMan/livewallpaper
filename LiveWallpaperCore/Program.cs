@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace LiveWallpaperCore
+namespace LiveWallpaper
 {
     class Program
     {

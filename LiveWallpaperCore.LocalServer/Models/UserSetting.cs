@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using static Giantapp.LiveWallpaper.Engine.ScreenOption;
 
-namespace LiveWallpaperCore.LocalServer.Models
+namespace LiveWallpaper.LocalServer.Models
 {
     public class GeneralSettting
     {

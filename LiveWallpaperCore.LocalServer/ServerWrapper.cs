@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace LiveWallpaperCore.LocalServer
+namespace LiveWallpaper.LocalServer
 {
     public class ServerWrapper
     {
