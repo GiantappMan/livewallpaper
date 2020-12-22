@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 
 namespace LiveWallpaper.LocalServer.Hubs
 {
@@ -16,6 +17,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         HubEventEmitter _hubEventEmitter;
         //string _lastConnectionId;
         RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -28,10 +30,16 @@ namespace LiveWallpaper.LocalServer.Hubs
             var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
             return result;
         }
+
         public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
         {
             try
             {
+                //var callback = new Progress<ProgressInfo>((e) =>
+                //{
+                //    Debug.WriteLine($"{e.DownloadedBytes}/{e.TotalBytes}");
+                //});
+                //await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, callback);
                 List<string> result = new List<string>();
 
                 for (int i = 0; i < 5; i++)
@@ -78,6 +86,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
             return SetupPlayer(wpType, customDownloadUrl);
         }
+
         public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
         {
             string url = customDownloadUrl;
