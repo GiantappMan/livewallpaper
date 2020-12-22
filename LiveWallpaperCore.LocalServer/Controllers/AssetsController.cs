@@ -22,5 +22,10 @@ namespace LiveWallpaper.LocalServer.Controllers
             var ext = Path.GetExtension(localPath).Replace(".", "");
             return base.File(new FileStream(localPath, FileMode.Open), $"image/{ext}");
         }
+
+        public ActionResult VideoThumbnail(string video, int frameSeconds)
+        { //todo
+            throw new NotImplementedException();
+        }
     }
 }
