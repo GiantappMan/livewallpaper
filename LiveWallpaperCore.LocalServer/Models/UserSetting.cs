@@ -16,27 +16,50 @@ namespace LiveWallpaper.LocalServer.Models
         /// <summary>
         /// 三方工具目录，例如ffmpeg
         /// </summary>
-        public string ThirdpartToolsDir { get; set; }
-
-        public static GeneralSettting GetDefaultGeneralSettting()
+        private string _ThirdpartToolsDir;
+        public string ThirdpartToolsDir
         {
-            return new GeneralSettting();
+            get
+            {
+                if (_ThirdpartToolsDir == null)
+                    _ThirdpartToolsDir = GetDefaultThirdpartToolsDir();
+
+                return _ThirdpartToolsDir;
+            }
+            set
+            {
+                ThirdpartToolsDir = value;
+            }
+        }
+
+        public static string GetDefaultThirdpartToolsDir()
+        {
+            string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            saveDir = Path.Combine(saveDir, "LiveWallpaper", "tools");
+            return saveDir;
         }
     }
 
     public class WallpaperSetting : LiveWallpaperOptions
     {
-        public string WallpaperSaveDir { get; set; }
-
-        public static WallpaperSetting GetDefaultWallpaperSetting()
+        public WallpaperSetting() : base(GetDefaultPlayerDir())
         {
-            string saveDir = GetDefaultSaveDir();
-            var r = new WallpaperSetting()
+
+        }
+        private string _WallpaperSaveDir;
+        public string WallpaperSaveDir
+        {
+            get
             {
-                WallpaperSaveDir = saveDir,
-            };
-            r.FixScreenOptions();
-            return r;
+                if (_WallpaperSaveDir == null)
+                    _WallpaperSaveDir = GetDefaultSaveDir();
+
+                return _WallpaperSaveDir;
+            }
+            set
+            {
+                WallpaperSaveDir = value;
+            }
         }
         public void FixScreenOptions()
         {
@@ -55,22 +78,18 @@ namespace LiveWallpaper.LocalServer.Models
             // 过滤移除的屏幕
             ScreenOptions = ScreenOptions.Where(m => WallpaperApi.Screens.Contains(m.Screen)).ToList();
         }
-
         public static string GetDefaultSaveDir()
         {
             string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
             saveDir = Path.Combine(saveDir, "LiveWallpaper");
             return saveDir;
         }
-        //public static uint[] ConveterToScreenIndexs(int displayIndex)
-        //{
-        //    uint[] screenIndexs;
-        //    if (displayIndex < 0)
-        //        screenIndexs = System.Windows.Forms.Screen.AllScreens.Select((m, i) => (uint)i).ToArray();
-        //    else
-        //        screenIndexs = new uint[] { (uint)displayIndex };
-        //    return screenIndexs;
-        //}
+        public static string GetDefaultPlayerDir()
+        {
+            string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            saveDir = Path.Combine(saveDir, "LiveWallpaper", "player");
+            return saveDir;
+        }
     }
 
     /// <summary>
@@ -78,17 +97,8 @@ namespace LiveWallpaper.LocalServer.Models
     /// </summary>
     public class UserSetting
     {
-        public GeneralSettting General { get; set; }
+        public GeneralSettting General { get; set; } = new GeneralSettting();
 
-        public WallpaperSetting Wallpaper { get; set; }
-
-        public static UserSetting GetDefaultSettting()
-        {
-            return new UserSetting()
-            {
-                General = GeneralSettting.GetDefaultGeneralSettting(),
-                Wallpaper = WallpaperSetting.GetDefaultWallpaperSetting()
-            };
-        }
+        public WallpaperSetting Wallpaper { get; set; } = new WallpaperSetting();
     }
 }

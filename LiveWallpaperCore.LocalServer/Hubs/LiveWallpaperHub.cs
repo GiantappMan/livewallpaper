@@ -11,6 +11,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
+using Xabe.FFmpeg.Exceptions;
 
 namespace LiveWallpaper.LocalServer.Hubs
 {
@@ -34,22 +35,38 @@ namespace LiveWallpaper.LocalServer.Hubs
 
         public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
         {
-            List<string> result = new List<string>();
-            for (int i = 1; i < 5; i++)
+            try
             {
-                string name = videoPath.GetHashCode().ToString();
-                int seconds = i * i + 5;
-                string distPath = Path.GetTempPath() + $"{name}_{seconds}.png";
-                if (!File.Exists(distPath))
+                List<string> result = new List<string>();
+                //最多截图四张截图
+                for (int i = 1; i < 5; i++)
                 {
-                    IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, distPath, TimeSpan.FromSeconds(seconds));
-                    _ = await conversion.Start();
+                    string name = videoPath.GetHashCode().ToString();
+                    int seconds = i * i + 5;
+                    string distPath = Path.GetTempPath() + $"{name}_{seconds}.png";
+                    if (!File.Exists(distPath))
+                    {
+                        var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
+                        //秒超过总长度
+                        if (seconds > mediaInfo.Duration.TotalSeconds)
+                            break;
+                        IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, distPath, TimeSpan.FromSeconds(seconds));
+                        _ = await conversion.Start();
+                    }
+
+                    result.Add(WebUtility.UrlEncode(distPath));
                 }
 
-                result.Add($@"http://127.0.0.1:{AppManager.RunningData.HostPort}/assets/Image/?localpath={WebUtility.UrlEncode(distPath)}");
+                return BaseApiResult<List<string>>.SuccessState(result);
             }
-
-            return BaseApiResult<List<string>>.SuccessState(result);
+            catch (FFmpegNotFoundException)
+            {
+                return BaseApiResult<List<string>>.ErrorState(ErrorType.NoFFmpeg);
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult<List<string>>.ExceptionState(ex);
+            }
         }
 
         public Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
@@ -57,9 +74,13 @@ namespace LiveWallpaper.LocalServer.Hubs
             return WallpaperApi.ShowWallpaper(path);
         }
 
-        public Task<BaseApiResult> DeleteWallpaper(string path)
+        public async Task<BaseApiResult> DeleteWallpaper(string path)
         {
-            return WallpaperApi.DeleteWallpaper(path);
+            string dir = Path.GetDirectoryName(path);
+            //不能删除非壁纸目录的文件
+            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                return BaseApiResult.ErrorState(ErrorType.Failed);
+            return await WallpaperApi.DeleteWallpaper(path);
         }
 
         public async Task<BaseApiResult> ExploreFile(string path)

@@ -42,5 +42,22 @@ namespace LiveWallpaper.LocalServer.Controllers
             }
             return null;
         }
+
+        [RequestSizeLimit(5 * 1024L * 1024L)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024L * 1024L)]
+        public async Task<string> UploadTmpFile(IFormCollection fc)
+        {
+            if (fc != null && fc.Files.Count > 0 && fc.Files[0].Length > 0)
+            {
+                var formFile = fc.Files[0];
+                string fileName = formFile.FileName;
+                var distFile = Path.Combine(Path.GetTempPath(), fileName);
+                using var stream = System.IO.File.Create(distFile);
+                await formFile.CopyToAsync(stream);
+
+                return distFile;
+            }
+            return null;
+        }
     }
 }

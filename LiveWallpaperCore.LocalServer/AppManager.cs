@@ -74,7 +74,7 @@ namespace LiveWallpaper.LocalServer
         {
             UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(_userSettingFilePath);
             if (UserSetting == null)
-                UserSetting = UserSetting.GetDefaultSettting();
+                UserSetting = new UserSetting();
             UserSetting.Wallpaper.FixScreenOptions();
         }
         internal static async Task SaveUserSetting(UserSetting setting)
