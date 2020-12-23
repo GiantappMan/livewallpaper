@@ -17,9 +17,11 @@ namespace LiveWallpaper.LocalServer.Hubs
 {
     public class LiveWallpaperHub : Hub
     {
+        bool isSettingupFFmpeg;
         HubEventEmitter _hubEventEmitter;
         //string _lastConnectionId;
         RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+        RaiseLimiter _ffmpegRaiseLimiter = new RaiseLimiter();
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -102,6 +104,37 @@ namespace LiveWallpaper.LocalServer.Hubs
             return SetupPlayer(wpType, customDownloadUrl);
         }
 
+        public BaseApiResult SetupFFmpeg()
+        {
+            if (isSettingupFFmpeg)
+                return BaseApiResult.BusyState();
+
+            isSettingupFFmpeg = true;
+            var progressInfo = new Progress<ProgressInfo>((e) =>
+            {
+                _ffmpegRaiseLimiter.Execute(async () =>
+                {
+                    try
+                    {
+                        Debug.WriteLine($"{e.DownloadedBytes} {e.TotalBytes}");
+                        //向所有客户端推送，刷新后也能显示
+                        var client = _hubEventEmitter.AllClient();
+                        await client.SendAsync("SetupFFmpegProgressChanged", e);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+                    }
+                }, 1000);
+            });
+            FFmpegDownloader.GetLatestVersion(FFmpegVersion.Full, AppManager.UserSetting.General.ThirdpartToolsDir, progressInfo).ContinueWith((t) =>
+            {
+                isSettingupFFmpeg = false;
+            });
+
+            return BaseApiResult.SuccessState();
+        }
+
         public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
         {
             string url = customDownloadUrl;
@@ -135,14 +168,6 @@ namespace LiveWallpaper.LocalServer.Hubs
                 await _lastSetupPlayerRaiseLimiter.WaitExit();
                 WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
             }));
-
-            if (result.Ok)
-            {
-                //开始成功
-                //_lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-                //WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
-                //_lastConnectionId = Context.ConnectionId;
-            }
 
             return result;
         }
