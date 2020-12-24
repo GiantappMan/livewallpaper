@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaperCore.LocalServer\LiveWallpaper.LocalServer.csproj" />
+    <ProjectReference Include="..\LiveWallpaper.LocalServer\LiveWallpaper.LocalServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

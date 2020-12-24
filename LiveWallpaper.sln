@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{CCE01828-8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaperEngineAPI", "..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj", "{30E41640-3C51-46E4-82E2-797C1881A37D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper", "LiveWallpaperCore\LiveWallpaper.csproj", "{5CBFD472-9092-4023-A7C7-60B3198CDA75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper", "LiveWallpaper\LiveWallpaper.csproj", "{5CBFD472-9092-4023-A7C7-60B3198CDA75}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper.LocalServer", "LiveWallpaperCore.LocalServer\LiveWallpaper.LocalServer.csproj", "{A567204A-96C7-45AD-AAE2-9472D1369417}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper.LocalServer", "LiveWallpaper.LocalServer\LiveWallpaper.LocalServer.csproj", "{A567204A-96C7-45AD-AAE2-9472D1369417}"
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "LiveWallpaper.App", "LiveWallpaper.App\LiveWallpaper.App.wapproj", "{FFD18CDE-91F1-493A-A249-2F6AC2A9B7C8}"
 EndProject
