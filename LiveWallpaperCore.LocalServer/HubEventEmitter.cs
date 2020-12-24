@@ -11,7 +11,7 @@ namespace LiveWallpaper.LocalServer
     /// </summary>
     public class HubEventEmitter : IHostedService
     {
-        IHubContext<LiveWallpaperHub> _hubContext;
+        readonly IHubContext<LiveWallpaperHub> _hubContext;
 
         public HubEventEmitter(IHubContext<LiveWallpaperHub> hubContext)
         {

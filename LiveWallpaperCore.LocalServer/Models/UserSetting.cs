@@ -28,7 +28,7 @@ namespace LiveWallpaper.LocalServer.Models
             }
             set
             {
-                ThirdpartToolsDir = value;
+                _ThirdpartToolsDir = value;
             }
         }
 
@@ -58,7 +58,7 @@ namespace LiveWallpaper.LocalServer.Models
             }
             set
             {
-                WallpaperSaveDir = value;
+                _WallpaperSaveDir = value;
             }
         }
         public void FixScreenOptions()

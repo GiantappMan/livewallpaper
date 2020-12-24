@@ -20,10 +20,11 @@ namespace LiveWallpaper.LocalServer.Hubs
     public class LiveWallpaperHub : Hub
     {
         bool isSettingupFFmpeg;
-        HubEventEmitter _hubEventEmitter;
+        readonly HubEventEmitter _hubEventEmitter;
+
         //string _lastConnectionId;
-        RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-        RaiseLimiter _ffmpegRaiseLimiter = new RaiseLimiter();
+        private RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+        readonly RaiseLimiter _ffmpegRaiseLimiter = new RaiseLimiter();
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -106,7 +107,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             return SetupPlayer(wpType, customDownloadUrl);
         }
 
-        private static CancellationTokenSource _ctsSetupFFmpeg = new CancellationTokenSource();
+        private static readonly CancellationTokenSource _ctsSetupFFmpeg = new CancellationTokenSource();
         public BaseApiResult SetupFFmpeg(string url)
         {
             if (isSettingupFFmpeg)

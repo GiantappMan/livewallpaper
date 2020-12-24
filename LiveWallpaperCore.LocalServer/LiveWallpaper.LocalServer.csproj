@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\gitee-private\dotnet\DotNetUtil\src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\gitee private\dotnet\DotNetUtil\src\Common\Common.csproj" />
     <ProjectReference Include="..\..\LiveWallpaperEngine\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
   </ItemGroup>
 

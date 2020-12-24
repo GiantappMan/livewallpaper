@@ -21,7 +21,7 @@
         </uap:DefaultTile>
       </uap:VisualElements>
       <Extensions>
-        <uap5:Extension Category="windows.startupTask" Executable="LiveWallpaperCore\LiveWallpaperCore.exe" EntryPoint="Windows.FullTrustApplication">
+        <uap5:Extension Category="windows.startupTask" Executable="LiveWallpaper\LiveWallpaper.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="LiveWallpaper" Enabled="true" DisplayName="LiveWallpaper" />
         </uap5:Extension>
         <uap:Extension Category="windows.protocol">
