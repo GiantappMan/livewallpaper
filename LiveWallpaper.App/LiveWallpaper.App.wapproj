@@ -63,7 +63,7 @@
     <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
     <AppInstallerUri>https://livewallpaper.giantapp.cn/download</AppInstallerUri>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <EntryPointProjectUniqueName>..\LiveWallpaperCore\LiveWallpaper.csproj</EntryPointProjectUniqueName>
+    <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <AppxBundle>Always</AppxBundle>
@@ -157,7 +157,7 @@
     <None Include="LiveWallpaper.App_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LiveWallpaperCore\LiveWallpaper.csproj">
+    <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
     </ProjectReference>
   </ItemGroup>
