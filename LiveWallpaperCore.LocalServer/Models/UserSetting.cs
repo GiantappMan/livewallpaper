@@ -21,7 +21,7 @@ namespace LiveWallpaper.LocalServer.Models
         {
             get
             {
-                if (_ThirdpartToolsDir == null)
+                if (string.IsNullOrEmpty(_ThirdpartToolsDir))
                     _ThirdpartToolsDir = GetDefaultThirdpartToolsDir();
 
                 return _ThirdpartToolsDir;
@@ -51,7 +51,7 @@ namespace LiveWallpaper.LocalServer.Models
         {
             get
             {
-                if (_WallpaperSaveDir == null)
+                if (string.IsNullOrEmpty(_WallpaperSaveDir))
                     _WallpaperSaveDir = GetDefaultSaveDir();
 
                 return _WallpaperSaveDir;
@@ -86,7 +86,7 @@ namespace LiveWallpaper.LocalServer.Models
         }
         public static string GetDefaultPlayerDir()
         {
-            string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             saveDir = Path.Combine(saveDir, "LiveWallpaper", "player");
             return saveDir;
         }

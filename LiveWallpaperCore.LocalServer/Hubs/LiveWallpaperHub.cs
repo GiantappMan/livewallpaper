@@ -107,7 +107,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             return SetupPlayer(wpType, customDownloadUrl);
         }
 
-        private static readonly CancellationTokenSource _ctsSetupFFmpeg = new CancellationTokenSource();
+        private static CancellationTokenSource _ctsSetupFFmpeg = new CancellationTokenSource();
         public BaseApiResult SetupFFmpeg(string url)
         {
             if (isSettingupFFmpeg)
@@ -123,8 +123,9 @@ namespace LiveWallpaper.LocalServer.Hubs
                     {
                         Debug.WriteLine($"{e.competed} {e.total}");
                         //向所有客户端推送，刷新后也能显示
+                        var percent = (int)(e.competed / e.total * 50);
                         var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("SetupFFmpegProgressChanged", e);
+                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type = "download" });
                     }
                     catch (Exception ex)
                     {
@@ -141,8 +142,9 @@ namespace LiveWallpaper.LocalServer.Hubs
                     {
                         Debug.WriteLine($"{e.competed} {e.total}");
                         //向所有客户端推送，刷新后也能显示
+                        var percent = 50 + (int)(e.competed / e.total * 50);
                         var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("SetupFFmpegProgressChanged", e);
+                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type = "decompress" });
                     }
                     catch (Exception ex)
                     {
@@ -151,13 +153,18 @@ namespace LiveWallpaper.LocalServer.Hubs
                 }, 1000);
             });
 
+            _ctsSetupFFmpeg?.Cancel();
+            _ctsSetupFFmpeg?.Dispose();
+
+            _ctsSetupFFmpeg = new CancellationTokenSource();
             NetworkHelper.DownloadAndDecompression(url,
-               Path.Combine(AppManager.UserSetting.General.ThirdpartToolsDir, "FFmpeg.7zp"),
+               Path.Combine(AppManager.UserSetting.General.ThirdpartToolsDir, "FFmpeg.7z"),
                 AppManager.UserSetting.General.ThirdpartToolsDir,
                 true,
-                _ctsSetupFFmpeg.Token,
                 progressInfo,
-                decompressProgress).
+                decompressProgress,
+                _ctsSetupFFmpeg.Token
+                ).
                 ContinueWith((t) =>
                 {
                     isSettingupFFmpeg = false;
