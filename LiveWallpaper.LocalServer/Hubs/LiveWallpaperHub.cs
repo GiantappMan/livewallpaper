@@ -113,9 +113,30 @@ namespace LiveWallpaper.LocalServer.Hubs
             if (isSettingupFFmpeg)
                 return BaseApiResult.BusyState();
 
-            isSettingupFFmpeg = true;
+            _ctsSetupFFmpeg?.Cancel();
+            _ctsSetupFFmpeg?.Dispose();
+            _ctsSetupFFmpeg = new CancellationTokenSource();
 
-            var progressInfo = new Progress<(float competed, float total)>((e) =>
+            isSettingupFFmpeg = true;
+            _ = InnerSetupFFmpeg(url, _ctsSetupFFmpeg);
+            return BaseApiResult.SuccessState();
+        }
+        public async Task<BaseApiResult> StopSetupFFmpeg()
+        {
+            _ctsSetupFFmpeg?.Cancel();
+            _ctsSetupFFmpeg?.Dispose();
+            _ctsSetupFFmpeg = null;
+            while (isSettingupFFmpeg)
+            {
+                await Task.Delay(1000);
+            }
+
+            return BaseApiResult.SuccessState();
+        }
+        public async Task InnerSetupFFmpeg(string url, CancellationTokenSource cts)
+        {
+            var client = _hubEventEmitter.AllClient();
+            Action<(float competed, float total), string> commonCallback = (e, type) =>
             {
                 _ffmpegRaiseLimiter.Execute(async () =>
                 {
@@ -124,53 +145,44 @@ namespace LiveWallpaper.LocalServer.Hubs
                         Debug.WriteLine($"{e.competed} {e.total}");
                         //向所有客户端推送，刷新后也能显示
                         var percent = (int)(e.competed / e.total * 50);
-                        var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type = "download" });
+                        if (type == "decompress")
+                            percent += 50;
+                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type });
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine(ex);
                     }
                 }, 1000);
-            });
+            };
+            var progressInfo = new Progress<(float competed, float total)>((e) => commonCallback(e, "download"));
+            var decompressProgress = new Progress<(float competed, float total)>((e) => commonCallback(e, "decompress"));
 
-            var decompressProgress = new Progress<(float competed, float total)>((e) =>
+            bool hasError = false;
+            try
             {
-                _ffmpegRaiseLimiter.Execute(async () =>
-                {
-                    try
-                    {
-                        Debug.WriteLine($"{e.competed} {e.total}");
-                        //向所有客户端推送，刷新后也能显示
-                        var percent = 50 + (int)(e.competed / e.total * 50);
-                        var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type = "decompress" });
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-                    }
-                }, 1000);
-            });
-
-            _ctsSetupFFmpeg?.Cancel();
-            _ctsSetupFFmpeg?.Dispose();
-
-            _ctsSetupFFmpeg = new CancellationTokenSource();
-            NetworkHelper.DownloadAndDecompression(url,
-               Path.Combine(AppManager.UserSetting.General.ThirdpartToolsDir, "FFmpeg.7z"),
-                AppManager.UserSetting.General.ThirdpartToolsDir,
-                true,
-                progressInfo,
-                decompressProgress,
-                _ctsSetupFFmpeg.Token
-                ).
-                ContinueWith((t) =>
-                {
-                    isSettingupFFmpeg = false;
-                });
-
-            return BaseApiResult.SuccessState();
+                string fileName = Path.GetFileName(url);
+                string distDir = Path.Combine(AppManager.UserSetting.General.ThirdpartToolsDir, "FFmpeg");
+                await NetworkHelper.DownloadAndDecompression(url,
+                     Path.Combine(distDir, fileName),
+                      distDir,
+                      true,
+                      progressInfo,
+                      decompressProgress,
+                      cts.Token
+                      );
+                isSettingupFFmpeg = false;
+            }
+            catch (Exception ex)
+            {
+                hasError = true;
+                Debug.WriteLine(ex);
+            }
+            finally
+            {
+                await _ffmpegRaiseLimiter.WaitExit();
+                await client.SendAsync("SetupFFmpegProgressChanged", new { percent = 100, type = "completed", successed = !hasError });
+            }
         }
 
         public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
