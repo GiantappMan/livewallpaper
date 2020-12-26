@@ -1,7 +1,9 @@
 ﻿using Common.Helpers;
 using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaper.LocalServer.Models;
+using LiveWallpaper.LocalServer.Utils;
 using System;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -13,6 +15,32 @@ namespace LiveWallpaper.LocalServer
         private static string _runningDataFilePath;
         private static string _userSettingFilePath;
         private static IStartupManager _startupManager = null;
+
+        public static string FFmpegSaveDir
+        {
+            get
+            {
+                string distDir = Path.Combine(UserSetting.General.ThirdpartToolsDir, "FFmpeg");
+                return distDir;
+            }
+        }
+
+        private static FileDownloader _FFMpegDownloader = null;
+        public static FileDownloader FFMpegDownloader
+        {
+            get
+            {
+                if (_FFMpegDownloader == null)
+                {
+                    _FFMpegDownloader = new FileDownloader
+                    {
+                        DistDir = FFmpegSaveDir
+                    };
+                }
+
+                return _FFMpegDownloader;
+            }
+        }
 
         #region properties
         public const string AppName = "LiveWallpaper";
@@ -77,6 +105,7 @@ namespace LiveWallpaper.LocalServer
                 UserSetting = new UserSetting();
             UserSetting.Wallpaper.FixScreenOptions();
         }
+
         internal static async Task SaveUserSetting(UserSetting setting)
         {
             try
@@ -88,11 +117,18 @@ namespace LiveWallpaper.LocalServer
                 //检查开机启动
                 if (setting?.General?.StartWithSystem != null)
                     setting.General.StartWithSystem = await _startupManager.Check();
+
+                if (_FFMpegDownloader != null)
+                {
+                    _FFMpegDownloader.DistDir = FFmpegSaveDir;
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
             }
         }
+
+
     }
 }

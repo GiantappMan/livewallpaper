@@ -14,17 +14,16 @@ using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 using Xabe.FFmpeg.Exceptions;
+using static LiveWallpaper.LocalServer.Utils.FileDownloader;
 
 namespace LiveWallpaper.LocalServer.Hubs
 {
     public class LiveWallpaperHub : Hub
     {
-        bool isSettingupFFmpeg;
         readonly HubEventEmitter _hubEventEmitter;
 
         //string _lastConnectionId;
         private RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-        readonly RaiseLimiter _ffmpegRaiseLimiter = new RaiseLimiter();
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -107,84 +106,29 @@ namespace LiveWallpaper.LocalServer.Hubs
             return SetupPlayer(wpType, customDownloadUrl);
         }
 
-        private static CancellationTokenSource _ctsSetupFFmpeg = new CancellationTokenSource();
         public BaseApiResult SetupFFmpeg(string url)
         {
-            if (isSettingupFFmpeg)
-                return BaseApiResult.BusyState();
-
-            _ctsSetupFFmpeg?.Cancel();
-            _ctsSetupFFmpeg?.Dispose();
-            _ctsSetupFFmpeg = new CancellationTokenSource();
-
-            isSettingupFFmpeg = true;
-            _ = InnerSetupFFmpeg(url, _ctsSetupFFmpeg);
-            return BaseApiResult.SuccessState();
+            AppManager.FFMpegDownloader.PrgoressEvent += FileDownloader_SetupFFmpegPrgoressEvent;
+            return AppManager.FFMpegDownloader.SetupFile(url);
         }
-        public async Task<BaseApiResult> StopSetupFFmpeg()
-        {
-            _ctsSetupFFmpeg?.Cancel();
-            _ctsSetupFFmpeg?.Dispose();
-            _ctsSetupFFmpeg = null;
-            while (isSettingupFFmpeg)
-            {
-                await Task.Delay(1000);
-            }
 
-            return BaseApiResult.SuccessState();
-        }
-        public async Task InnerSetupFFmpeg(string url, CancellationTokenSource cts)
+        private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
         {
             var client = _hubEventEmitter.AllClient();
-            Action<(float competed, float total), string> commonCallback = (e, type) =>
-            {
-                _ffmpegRaiseLimiter.Execute(async () =>
-                {
-                    try
-                    {
-                        Debug.WriteLine($"{e.competed} {e.total}");
-                        //向所有客户端推送，刷新后也能显示
-                        var percent = (int)(e.competed / e.total * 50);
-                        if (type == "decompress")
-                            percent += 50;
-                        await client.SendAsync("SetupFFmpegProgressChanged", new { e.competed, e.total, percent, type });
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-                    }
-                }, 1000);
-            };
-            var progressInfo = new Progress<(float competed, float total)>((e) => commonCallback(e, "download"));
-            var decompressProgress = new Progress<(float competed, float total)>((e) => commonCallback(e, "decompress"));
 
-            bool hasError = false;
-            try
+            await client.SendAsync("SetupFFmpegProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr });
+
+            if (e.Type == ProgressArgs.ActionType.Completed)
             {
-                string fileName = Path.GetFileName(url);
-                string distDir = Path.Combine(AppManager.UserSetting.General.ThirdpartToolsDir, "FFmpeg");
-                await NetworkHelper.DownloadAndDecompression(url,
-                     Path.Combine(distDir, fileName),
-                      distDir,
-                      true,
-                      progressInfo,
-                      decompressProgress,
-                      cts.Token
-                      );
-                isSettingupFFmpeg = false;
-            }
-            catch (Exception ex)
-            {
-                hasError = true;
-                Debug.WriteLine(ex);
-            }
-            finally
-            {
-                await _ffmpegRaiseLimiter.WaitExit();
-                await client.SendAsync("SetupFFmpegProgressChanged", new { percent = 100, type = "completed", successed = !hasError });
+                AppManager.FFMpegDownloader.PrgoressEvent -= FileDownloader_SetupFFmpegPrgoressEvent;
             }
         }
 
+        public Task<BaseApiResult> StopSetupFFmpeg()
+        {
+            return AppManager.FFMpegDownloader.StopSetupFile();
+
+        }
         public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
         {
             string url = customDownloadUrl;
