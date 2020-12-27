@@ -80,7 +80,7 @@ namespace LiveWallpaper.LocalServer
                     _startupManager = new DesktopStartupHelper(AppName, path);
                 }
 
-                var result = await WallpaperApi.SetOptions(UserSetting.Wallpaper);
+                await ApplySetting(UserSetting);
             }
             catch (Exception ex)
             {
@@ -110,18 +110,11 @@ namespace LiveWallpaper.LocalServer
         {
             try
             {
-                var r = await _startupManager.Set(setting.General.StartWithSystem);
                 await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
                 //更细内存对象
                 UserSetting = setting;
-                //检查开机启动
-                if (setting?.General?.StartWithSystem != null)
-                    setting.General.StartWithSystem = await _startupManager.Check();
 
-                if (_FFMpegDownloader != null)
-                {
-                    _FFMpegDownloader.DistDir = FFmpegSaveDir;
-                }
+                await ApplySetting(UserSetting);
             }
             catch (Exception ex)
             {
@@ -129,6 +122,24 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
+        private static async Task ApplySetting(UserSetting setting)
+        {
+            //设置开机启动
+            _ = await _startupManager.Set(setting.General.StartWithSystem);
+            // 更新开机启动结果
+            if (setting?.General?.StartWithSystem != null)
+                setting.General.StartWithSystem = await _startupManager.Check();
 
+            string ffmpegSaveDir = FFmpegSaveDir;
+            if (_FFMpegDownloader != null)
+            {
+                _FFMpegDownloader.DistDir = ffmpegSaveDir;
+            }
+
+            ProcessHelper.AddPathToEnvoirment(ffmpegSaveDir);
+
+            //设置壁纸参数
+            _ = await WallpaperApi.SetOptions(setting.Wallpaper);
+        }
     }
 }

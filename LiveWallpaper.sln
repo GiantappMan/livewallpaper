@@ -20,8 +20,6 @@ Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "LiveWallpaper.App", "LiveWa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LiveWallpaper", "LiveWallpaper", "{B472A003-F0C0-401F-9E74-6B5568D89C1A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "..\..\gitee private\dotnet\DotNetUtil\src\Common\Common.csproj", "{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,18 +84,6 @@ Global
 		{FFD18CDE-91F1-493A-A249-2F6AC2A9B7C8}.Release|x86.ActiveCfg = Release|x86
 		{FFD18CDE-91F1-493A-A249-2F6AC2A9B7C8}.Release|x86.Build.0 = Release|x86
 		{FFD18CDE-91F1-493A-A249-2F6AC2A9B7C8}.Release|x86.Deploy.0 = Release|x86
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|x64.Build.0 = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Debug|x86.Build.0 = Debug|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|x64.ActiveCfg = Release|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|x64.Build.0 = Release|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|x86.ActiveCfg = Release|Any CPU
-		{F4B9F4B5-628D-4933-AA50-634DEBDB8FB2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

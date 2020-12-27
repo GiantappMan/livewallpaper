@@ -41,6 +41,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             try
             {
+                //FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
                 List<string> result = new List<string>();
                 //最多截图四张截图
                 for (int i = 1; i < 5; i++)
@@ -116,7 +117,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             var client = _hubEventEmitter.AllClient();
 
-            await client.SendAsync("SetupFFmpegProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr });
+            await client.SendAsync("SetupFFmpegProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
 
             if (e.Type == ProgressArgs.ActionType.Completed)
             {
