@@ -72,7 +72,6 @@ namespace LiveWallpaper.LocalServer.Utils
            {
                try
                {
-                   Debug.WriteLine($"{arg.Completed} {arg.Total}");
                    //向所有客户端推送，刷新后也能显示
                    var percent = (int)(arg.Completed / arg.Total * 50);
                    if (arg.Type == ProgressArgs.ActionType.Decompress)
@@ -83,6 +82,7 @@ namespace LiveWallpaper.LocalServer.Utils
                    arg.Percent = percent;
                    arg.TypeStr = arg.Type.ToString().ToLower();
                    PrgoressEvent?.Invoke(null, arg);
+                   Debug.WriteLine($"{arg.Completed} {arg.Total} {arg.TypeStr}");
                }
                catch (Exception ex)
                {

@@ -110,7 +110,7 @@ namespace LiveWallpaper.LocalServer
         {
             try
             {
-                await _startupManager.Set(setting.General.StartWithSystem);
+                var r = await _startupManager.Set(setting.General.StartWithSystem);
                 await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
                 //更细内存对象
                 UserSetting = setting;

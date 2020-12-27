@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LiveWallpaper.LocalServer.Utils
@@ -8,6 +7,7 @@ namespace LiveWallpaper.LocalServer.Utils
     internal class RaiseLimiter
     {
         Func<Task> _nextTask;
+        readonly SemaphoreSlim _slim = new SemaphoreSlim(1, 1);
 
         private DateTime _timeoutTime;
 
@@ -16,10 +16,12 @@ namespace LiveWallpaper.LocalServer.Utils
         {
         }
 
-        internal void Execute(Func<Task> p, int interval)
+        internal async void Execute(Func<Task> p, int interval)
         {
             _timeoutTime = DateTime.Now.AddMilliseconds(interval);
+            await _slim.WaitAsync();
             _nextTask = p;
+            _slim.Release();
             Run(interval);
         }
 
@@ -32,6 +34,8 @@ namespace LiveWallpaper.LocalServer.Utils
             _running = true;
             while (_running)
             {
+                await _slim.WaitAsync();
+
                 if (DateTime.Now > _timeoutTime)
                 {
                     if (_nextTask != null)
@@ -44,8 +48,14 @@ namespace LiveWallpaper.LocalServer.Utils
                 if (_nextTask != null)
                     await _nextTask();
                 _nextTask = null;
+
+                _slim.Release();
+
                 await Task.Delay(interval);
             };
+
+            if (_slim.CurrentCount == 0)
+                _slim.Release();
         }
 
         internal Task WaitExit()
