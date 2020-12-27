@@ -26,12 +26,11 @@ namespace LiveWallpaper.LocalServer.Utils
             public bool Successed { get; set; }
         }
 
-        bool isBusy;
-
         readonly RaiseLimiter _raiseLimiter = new RaiseLimiter();
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
         public event EventHandler<ProgressArgs> PrgoressEvent;
+        public bool IsBusy { get; private set; }
         public string DistDir { get; internal set; }
 
         /// <summary>
@@ -42,14 +41,14 @@ namespace LiveWallpaper.LocalServer.Utils
         /// <returns></returns>
         public BaseApiResult SetupFile(string url)
         {
-            if (isBusy)
+            if (IsBusy)
                 return BaseApiResult.BusyState();
 
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
 
-            isBusy = true;
+            IsBusy = true;
             _ = InnerSetupFile(url, _cts);
             return BaseApiResult.SuccessState();
         }
@@ -58,7 +57,7 @@ namespace LiveWallpaper.LocalServer.Utils
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = null;
-            while (isBusy)
+            while (IsBusy)
             {
                 await Task.Delay(1000);
             }
@@ -126,7 +125,7 @@ namespace LiveWallpaper.LocalServer.Utils
             }
             finally
             {
-                isBusy = false;
+                IsBusy = false;
                 RaiseCallback(new ProgressArgs()
                 {
                     Total = 1,

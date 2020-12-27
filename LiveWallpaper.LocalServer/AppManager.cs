@@ -42,6 +42,20 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
+        private static FileDownloader _PlayerDownloader = null;
+        public static FileDownloader PlayerDownloader
+        {
+            get
+            {
+                if (_PlayerDownloader == null)
+                {
+                    _PlayerDownloader = new FileDownloader();
+                }
+
+                return _PlayerDownloader;
+            }
+        }
+
         #region properties
         public const string AppName = "LiveWallpaper";
         public static string AppDataDir { get; private set; }

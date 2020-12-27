@@ -1,5 +1,5 @@
-﻿using Common.Helpers;
-using Giantapp.LiveWallpaper.Engine;
+﻿using Giantapp.LiveWallpaper.Engine;
+using Giantapp.LiveWallpaper.Engine.Renders;
 using LiveWallpaper.LocalServer.Models;
 using LiveWallpaper.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
@@ -9,10 +9,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
-using Xabe.FFmpeg.Downloader;
 using Xabe.FFmpeg.Exceptions;
 using static LiveWallpaper.LocalServer.Utils.FileDownloader;
 
@@ -23,7 +21,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         readonly HubEventEmitter _hubEventEmitter;
 
         //string _lastConnectionId;
-        private RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+        //private RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
 
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
@@ -109,6 +107,9 @@ namespace LiveWallpaper.LocalServer.Hubs
 
         public BaseApiResult SetupFFmpeg(string url)
         {
+            if (AppManager.FFMpegDownloader.IsBusy)
+                return BaseApiResult.BusyState();
+
             AppManager.FFMpegDownloader.PrgoressEvent += FileDownloader_SetupFFmpegPrgoressEvent;
             return AppManager.FFMpegDownloader.SetupFile(url);
         }
@@ -130,47 +131,81 @@ namespace LiveWallpaper.LocalServer.Hubs
             return AppManager.FFMpegDownloader.StopSetupFile();
 
         }
-        public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
+
+        public BaseApiResult SetupPlayer(WallpaperType wpType, string url)
         {
-            string url = customDownloadUrl;
-            if (string.IsNullOrEmpty(url))
-                url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
+            if (AppManager.PlayerDownloader.IsBusy)
+                return BaseApiResult.BusyState();
 
-            void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, SetupPlayerProgressChangedArgs e)
+            AppManager.PlayerDownloader.PrgoressEvent += PlayerDownloader_PrgoressEvent;
+            string folder = null;
+            switch (wpType)
             {
-                _lastSetupPlayerRaiseLimiter.Execute(async () =>
-                {
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
-                        //向所有客户端推送，刷新后也能显示
-                        var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("SetupPlayerProgressChanged", e);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine(ex);
-                    }
-                }, 1000);
+                case WallpaperType.Video:
+                    folder = VideoRender.PlayerFolderName;
+                    break;
             }
-
-            _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-            WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
-            WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
-            var result = WallpaperApi.SetupPlayer(wpType, url, (async _ =>
-            {
-                //设置完成
-                await _lastSetupPlayerRaiseLimiter.WaitExit();
-                WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
-            }));
-
-            return result;
+            AppManager.PlayerDownloader.DistDir = Path.Combine(AppManager.UserSetting.Wallpaper.ExternalPlayerFolder, folder);
+            return AppManager.PlayerDownloader.SetupFile(url);
         }
 
+        private async void PlayerDownloader_PrgoressEvent(object sender, ProgressArgs e)
+        {
+            var client = _hubEventEmitter.AllClient();
+
+            await client.SendAsync("SetupPlayerProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
+
+            if (e.Type == ProgressArgs.ActionType.Completed)
+            {
+                AppManager.PlayerDownloader.PrgoressEvent -= PlayerDownloader_PrgoressEvent;
+            }
+        }
         public Task<BaseApiResult> StopSetupPlayer()
         {
-            return WallpaperApi.StopSetupPlayer();
+            return AppManager.PlayerDownloader.StopSetupFile();
+
         }
+        //public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
+        //{
+        //    string url = customDownloadUrl;
+        //    if (string.IsNullOrEmpty(url))
+        //        url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
+
+        //    void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, SetupPlayerProgressChangedArgs e)
+        //    {
+        //        _lastSetupPlayerRaiseLimiter.Execute(async () =>
+        //        {
+        //            try
+        //            {
+        //                System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
+        //                //向所有客户端推送，刷新后也能显示
+        //                var client = _hubEventEmitter.AllClient();
+        //                await client.SendAsync("SetupPlayerProgressChanged", e);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                System.Diagnostics.Debug.WriteLine(ex);
+        //            }
+        //        }, 1000);
+        //    }
+
+        //    _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
+        //    WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
+        //    WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
+        //    var result = WallpaperApi.SetupPlayer(wpType, url, (async _ =>
+        //    {
+        //        //设置完成
+        //        await _lastSetupPlayerRaiseLimiter.WaitExit();
+        //        WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
+        //    }));
+
+        //    return result;
+        //}
+
+        //public Task<BaseApiResult> StopSetupPlayer()
+        //{
+        //    return WallpaperApi.StopSetupPlayer();
+        //}
 
         public async Task<BaseApiResult<UserSetting>> GetUserSetting()
         {
