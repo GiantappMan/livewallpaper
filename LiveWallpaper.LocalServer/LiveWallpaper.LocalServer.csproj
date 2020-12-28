@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="DesktopBridge.Helpers" Version="1.2.2" />
     <PackageReference Include="DotNetUtil.Common" Version="2.0.11" />
-    <PackageReference Include="NLog" Version="4.7.5" />
+    <PackageReference Include="NLog" Version="4.7.6" />
     <PackageReference Include="Xabe.FFmpeg" Version="4.4.0" />
   </ItemGroup>
 

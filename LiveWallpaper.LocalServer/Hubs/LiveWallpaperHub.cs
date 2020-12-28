@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Windows.Storage;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Exceptions;
 using static LiveWallpaper.LocalServer.Utils.FileDownloader;
@@ -90,6 +91,15 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             try
             {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+                //uwp 真实存储路径不一样
+                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                if (path.Contains(appData))
+                {
+                    string realAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Local");
+                    path = path.Replace(appData, realAppData);
+                }
                 await Task.Run(() => Process.Start("Explorer.exe", $" /select, {path}"));
             }
             catch (Exception ex)
@@ -99,11 +109,11 @@ namespace LiveWallpaper.LocalServer.Hubs
             return BaseApiResult.SuccessState();
         }
 
-        public BaseApiResult SetupPlayerByPath(string wallpaperPath, string customDownloadUrl)
-        {
-            var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
-            return SetupPlayer(wpType, customDownloadUrl);
-        }
+        //public BaseApiResult SetupPlayerByPath(string wallpaperPath, string customDownloadUrl)
+        //{
+        //    var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
+        //    return SetupPlayer(wpType, customDownloadUrl);
+        //}
 
         public BaseApiResult SetupFFmpeg(string url)
         {
@@ -129,11 +139,13 @@ namespace LiveWallpaper.LocalServer.Hubs
         public Task<BaseApiResult> StopSetupFFmpeg()
         {
             return AppManager.FFMpegDownloader.StopSetupFile();
-
         }
 
         public BaseApiResult SetupPlayer(WallpaperType wpType, string url)
         {
+            if (string.IsNullOrEmpty(url))
+                return BaseApiResult.ErrorState(ErrorType.Failed, "The parameter cannot be null");
+
             if (AppManager.PlayerDownloader.IsBusy)
                 return BaseApiResult.BusyState();
 
