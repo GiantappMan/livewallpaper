@@ -95,6 +95,14 @@ namespace LiveWallpaper.LocalServer
                 }
 
                 await ApplySetting(UserSetting);
+
+                if (RunningData.CurrentWalpapers != null)
+                {
+                    foreach (var item in RunningData.CurrentWalpapers)
+                    {
+                        await WallpaperApi.ShowWallpaper(item.Value, item.Key);
+                    }
+                }
             }
             catch (Exception ex)
             {
