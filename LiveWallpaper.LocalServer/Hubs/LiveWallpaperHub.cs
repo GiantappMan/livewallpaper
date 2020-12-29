@@ -73,9 +73,11 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
         }
 
-        public Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
+        public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
         {
-            return WallpaperApi.ShowWallpaper(path);
+            var model = await WallpaperApi.ShowWallpaper(path);
+            await AppManager.SaveCurrentWalpapers();
+            return model;
         }
 
         public async Task<BaseApiResult> DeleteWallpaper(string path)
@@ -172,10 +174,10 @@ namespace LiveWallpaper.LocalServer.Hubs
                 AppManager.PlayerDownloader.PrgoressEvent -= PlayerDownloader_PrgoressEvent;
             }
         }
+
         public Task<BaseApiResult> StopSetupPlayer()
         {
             return AppManager.PlayerDownloader.StopSetupFile();
-
         }
         //public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
         //{

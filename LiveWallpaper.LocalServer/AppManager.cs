@@ -120,13 +120,35 @@ namespace LiveWallpaper.LocalServer
             UserSetting.Wallpaper.FixScreenOptions();
         }
 
+        internal static async Task SaveCurrentWalpapers()
+        {
+            RunningData.CurrentWalpapers = WallpaperApi.CurrentWalpapers;
+            await SaveRunningData(RunningData);
+        }
+
         internal static async Task SaveUserSetting(UserSetting setting)
         {
             try
             {
                 await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
-                //更细内存对象
+                //更新内存对象
                 UserSetting = setting;
+
+                await ApplySetting(UserSetting);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+        }
+
+        internal static async Task SaveRunningData(RunningData data)
+        {
+            try
+            {
+                await JsonHelper.JsonSerializeAsync(data, _runningDataFilePath);
+                //更新内存对象
+                RunningData = data;
 
                 await ApplySetting(UserSetting);
             }
