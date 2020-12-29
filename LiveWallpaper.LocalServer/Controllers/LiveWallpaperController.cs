@@ -33,11 +33,11 @@ namespace LiveWallpaper.LocalServer.Controllers
                 if (fc != null && fc.Files.Count > 0 && fc.Files[0].Length > 0)
                 {
                     var formFile = fc.Files[0];
-                    var info = new WallpaperProjectInfo()
-                    {
-                        File = formFile.FileName
-                    };
                     string distPath = Path.Combine(distDir, formFile.FileName);
+
+                    if (!Directory.Exists(distDir))
+                        Directory.CreateDirectory(distDir);
+
                     using var stream = System.IO.File.Create(distPath);
                     await formFile.CopyToAsync(stream);
 

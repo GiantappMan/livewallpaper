@@ -79,16 +79,6 @@ namespace LiveWallpaper.LocalServer.Hubs
             await AppManager.SaveCurrentWalpapers();
             return model;
         }
-
-        public async Task<BaseApiResult> DeleteWallpaper(string path)
-        {
-            string dir = Path.GetDirectoryName(path);
-            //不能删除非壁纸目录的文件
-            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
-                return BaseApiResult.ErrorState(ErrorType.Failed);
-            return await WallpaperApi.DeleteWallpaper(path);
-        }
-
         public async Task<BaseApiResult> ExploreFile(string path)
         {
             try
@@ -256,6 +246,56 @@ namespace LiveWallpaper.LocalServer.Hubs
                 Ok = true,
                 Data = AppManager.RunningData
             };
+        }
+        public BaseApiResult<string> GetDraftDir()
+        {
+            var r = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+            return BaseApiResult<string>.SuccessState(r);
+        }
+        public async Task<BaseApiResult> UpdateProjectInfo(string destDir, WallpaperProjectInfo info)
+        {
+            try
+            {
+                await WallpaperApi.UpdateProjectInfo(destDir, info);
+                return BaseApiResult.SuccessState();
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
+        }
+        //删除整个壁纸目录
+        public async Task<BaseApiResult> DeleteWallpaper(string path)
+        {
+            string dir = Path.GetDirectoryName(path);
+            //不能删除非壁纸目录的文件
+            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                return BaseApiResult.ErrorState(ErrorType.Failed);
+            return await WallpaperApi.DeleteWallpaper(path);
+        }
+        //删除特定文件
+        public async Task<BaseApiResult> DeleteFile(string path)
+        {
+            string dir = Path.GetDirectoryName(path);
+            //不能删除非壁纸目录的文件
+            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                return BaseApiResult.ErrorState(ErrorType.Failed);
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (File.Exists(path))
+                        File.Delete(path);
+                });
+
+                return BaseApiResult.SuccessState();
+
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
         }
     }
 }
