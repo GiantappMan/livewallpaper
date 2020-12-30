@@ -38,6 +38,8 @@ namespace LiveWallpaper.LocalServer.Hubs
 
         public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
         {
+            if (string.IsNullOrEmpty(videoPath))
+                return BaseApiResult<List<string>>.ErrorState(ErrorType.Failed, "path cannot be null");
             try
             {
                 //FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
@@ -247,9 +249,40 @@ namespace LiveWallpaper.LocalServer.Hubs
                 Data = AppManager.RunningData
             };
         }
-        public BaseApiResult<string> GetDraftDir()
+        public async Task<BaseApiResult<string>> GetDraftDir()
         {
+            string lastDraftPath = AppManager.RunningData.LastDraftPath;
+            if (!string.IsNullOrEmpty(lastDraftPath))
+            {
+                string projectPath = Path.Combine(lastDraftPath, "project.json");
+                if (!File.Exists(projectPath) && Directory.Exists(lastDraftPath))
+                {
+                    await Task.Run(() =>
+                    {
+                        var files = Directory.GetFiles(lastDraftPath);
+                        foreach (var file in files)
+                        {
+                            try
+                            {
+                                //删除老文件
+                                File.Delete(file);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                                continue;
+                            }
+                        }
+                    });
+                    //返回上一次的临时目录，防止创建太多无用目录
+                    return BaseApiResult<string>.SuccessState(lastDraftPath);
+                }
+            }
+
             var r = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+            AppManager.RunningData.LastDraftPath = r;
+            await AppManager.SaveRunningData(AppManager.RunningData);
+
             return BaseApiResult<string>.SuccessState(r);
         }
         public async Task<BaseApiResult> UpdateProjectInfo(string destDir, WallpaperProjectInfo info)
