@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -60,7 +59,9 @@ namespace LiveWallpaper.LocalServer.Hubs
                         _ = await conversion.Start();
                     }
 
-                    result.Add(WebUtility.UrlEncode(distPath));
+                    distPath = distPath.Replace(@"\", @"\\");
+                    //result.Add(WebUtility.UrlEncode(distPath));
+                    result.Add(distPath);
                 }
 
                 return BaseApiResult<List<string>>.SuccessState(result);
@@ -307,28 +308,103 @@ namespace LiveWallpaper.LocalServer.Hubs
             return await WallpaperApi.DeleteWallpaper(path);
         }
         //删除特定文件
-        public async Task<BaseApiResult> DeleteFile(string path)
+        public async Task<BaseApiResult> DeleteFiles(List<string> paths)
         {
-            string dir = Path.GetDirectoryName(path);
-            //不能删除非壁纸目录的文件
-            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
-                return BaseApiResult.ErrorState(ErrorType.Failed);
+            Exception ex = null;
+            foreach (var path in paths)
+            {
+                if (string.IsNullOrEmpty(path))
+                    continue;
+
+                try
+                {
+                    string dir = Path.GetDirectoryName(path);
+                    //不能删除非壁纸目录的文件
+                    if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                        continue;
+
+                    await Task.Run(() =>
+                    {
+                        if (File.Exists(path))
+                            File.Delete(path);
+                    });
+                }
+                catch (Exception _ex)
+                {
+                    ex = _ex;
+                }
+            }
+
+            if (ex == null)
+                return BaseApiResult.SuccessState();
+            else
+                return BaseApiResult.ExceptionState(ex);
+        }
+
+        public async Task<BaseApiResult> MoveFile(string path, string dist, bool deleteSource)
+        {
+            if (!HasReadPermission(Path.GetDirectoryName(path)))
+                return BaseApiResult.ErrorState(ErrorType.NoPermission);
+
+            if (!HasWritePermission(Path.GetDirectoryName(dist)))
+                return BaseApiResult.ErrorState(ErrorType.NoPermission);
 
             try
             {
                 await Task.Run(() =>
                 {
-                    if (File.Exists(path))
-                        File.Delete(path);
+                    if (deleteSource)
+                        File.Move(path, dist, true);
+                    else
+                        File.Copy(path, dist, true);
                 });
-
-                return BaseApiResult.SuccessState();
-
             }
             catch (Exception ex)
             {
                 return BaseApiResult.ExceptionState(ex);
             }
+            return BaseApiResult.SuccessState();
         }
+
+        #region private
+
+        private static bool HasReadPermission(string dir)
+        {
+            if (!dir.EndsWith("\\"))
+                dir += "\\";
+
+            List<string> allowDirs = new List<string>();
+            var tmpDir = Path.GetTempPath();
+            allowDirs.Add(tmpDir);
+            allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+
+            foreach (var item in allowDirs)
+            {                
+                if (dir.StartsWith(item))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasWritePermission(string dir)
+        {
+            if (!dir.EndsWith("\\"))
+                dir += "\\";
+
+            //不能删除非壁纸目录的文件
+            List<string> allowDirs = new List<string>
+            {
+                AppManager.UserSetting.Wallpaper.WallpaperSaveDir
+            };
+
+            foreach (var item in allowDirs)
+                if (dir.StartsWith(item))
+                    return true;
+
+            return false;
+        }
+
+        #endregion
     }
 }
