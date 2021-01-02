@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Xabe.FFmpeg;
@@ -19,22 +18,22 @@ namespace LiveWallpaper.LocalServer.Hubs
     public class LiveWallpaperHub : Hub
     {
         readonly HubEventEmitter _hubEventEmitter;
-
-        //string _lastConnectionId;
-        //private RaiseLimiter _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
             _hubEventEmitter = hubEventEmitter;
         }
-
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
             await AppManager.WaitInitialized();
             var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
             return result;
         }
-
+        public async Task<BaseApiResult<WallpaperModel>> GetWallpaper(string path)
+        {
+            await AppManager.WaitInitialized();
+            var result = await WallpaperApi.GetWallpaper(path);
+            return result;
+        }
         public async Task<BaseApiResult<List<string>>> GetThumbnails(string videoPath)
         {
             if (string.IsNullOrEmpty(videoPath))
@@ -75,7 +74,6 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult<List<string>>.ExceptionState(ex);
             }
         }
-
         public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
         {
             var model = await WallpaperApi.ShowWallpaper(path);
@@ -103,13 +101,6 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
             return BaseApiResult.SuccessState();
         }
-
-        //public BaseApiResult SetupPlayerByPath(string wallpaperPath, string customDownloadUrl)
-        //{
-        //    var wpType = WallpaperApi.GetWallpaperType(wallpaperPath);
-        //    return SetupPlayer(wpType, customDownloadUrl);
-        //}
-
         public BaseApiResult SetupFFmpeg(string url)
         {
             if (AppManager.FFMpegDownloader.IsBusy)
@@ -118,24 +109,10 @@ namespace LiveWallpaper.LocalServer.Hubs
             AppManager.FFMpegDownloader.PrgoressEvent += FileDownloader_SetupFFmpegPrgoressEvent;
             return AppManager.FFMpegDownloader.SetupFile(url);
         }
-
-        private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
-        {
-            var client = _hubEventEmitter.AllClient();
-
-            await client.SendAsync("SetupFFmpegProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
-
-            if (e.Type == ProgressArgs.ActionType.Completed)
-            {
-                AppManager.FFMpegDownloader.PrgoressEvent -= FileDownloader_SetupFFmpegPrgoressEvent;
-            }
-        }
-
         public Task<BaseApiResult> StopSetupFFmpeg()
         {
             return AppManager.FFMpegDownloader.StopSetupFile();
         }
-
         public BaseApiResult SetupPlayer(WallpaperType wpType, string url)
         {
             if (string.IsNullOrEmpty(url))
@@ -155,65 +132,10 @@ namespace LiveWallpaper.LocalServer.Hubs
             AppManager.PlayerDownloader.DistDir = Path.Combine(AppManager.UserSetting.Wallpaper.ExternalPlayerFolder, folder);
             return AppManager.PlayerDownloader.SetupFile(url);
         }
-
-        private async void PlayerDownloader_PrgoressEvent(object sender, ProgressArgs e)
-        {
-            var client = _hubEventEmitter.AllClient();
-
-            await client.SendAsync("SetupPlayerProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
-
-            if (e.Type == ProgressArgs.ActionType.Completed)
-            {
-                AppManager.PlayerDownloader.PrgoressEvent -= PlayerDownloader_PrgoressEvent;
-            }
-        }
-
         public Task<BaseApiResult> StopSetupPlayer()
         {
             return AppManager.PlayerDownloader.StopSetupFile();
         }
-        //public BaseApiResult SetupPlayer(WallpaperType wpType, string customDownloadUrl)
-        //{
-        //    string url = customDownloadUrl;
-        //    if (string.IsNullOrEmpty(url))
-        //        url = WallpaperApi.PlayerUrls.FirstOrDefault(m => m.Type == wpType).DownloadUrl;
-
-        //    void WallpaperManager_SetupPlayerProgressChangedEvent(object sender, SetupPlayerProgressChangedArgs e)
-        //    {
-        //        _lastSetupPlayerRaiseLimiter.Execute(async () =>
-        //        {
-        //            try
-        //            {
-        //                System.Diagnostics.Debug.WriteLine($"{e.ProgressPercentage} {e.ActionType}");
-        //                //向所有客户端推送，刷新后也能显示
-        //                var client = _hubEventEmitter.AllClient();
-        //                await client.SendAsync("SetupPlayerProgressChanged", e);
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                System.Diagnostics.Debug.WriteLine(ex);
-        //            }
-        //        }, 1000);
-        //    }
-
-        //    _lastSetupPlayerRaiseLimiter = new RaiseLimiter();
-        //    WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
-        //    WallpaperApi.SetupPlayerProgressChangedEvent += WallpaperManager_SetupPlayerProgressChangedEvent;
-        //    var result = WallpaperApi.SetupPlayer(wpType, url, (async _ =>
-        //    {
-        //        //设置完成
-        //        await _lastSetupPlayerRaiseLimiter.WaitExit();
-        //        WallpaperApi.SetupPlayerProgressChangedEvent -= WallpaperManager_SetupPlayerProgressChangedEvent;
-        //    }));
-
-        //    return result;
-        //}
-
-        //public Task<BaseApiResult> StopSetupPlayer()
-        //{
-        //    return WallpaperApi.StopSetupPlayer();
-        //}
-
         public async Task<BaseApiResult<UserSetting>> GetUserSetting()
         {
             await AppManager.WaitInitialized();
@@ -224,7 +146,6 @@ namespace LiveWallpaper.LocalServer.Hubs
                 Data = AppManager.UserSetting
             };
         }
-
         public async Task<BaseApiResult> SetUserSetting(UserSetting setting)
         {
             await AppManager.WaitInitialized();
@@ -240,7 +161,6 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult.ExceptionState(ex);
             }
         }
-
         public async Task<BaseApiResult<RunningData>> GetRunningData()
         {
             await AppManager.WaitInitialized();
@@ -340,7 +260,6 @@ namespace LiveWallpaper.LocalServer.Hubs
             else
                 return BaseApiResult.ExceptionState(ex);
         }
-
         public async Task<BaseApiResult> MoveFile(string path, string dist, bool deleteSource)
         {
             if (!HasReadPermission(Path.GetDirectoryName(path)))
@@ -365,9 +284,29 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
             return BaseApiResult.SuccessState();
         }
-
         #region private
+        private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
+        {
+            var client = _hubEventEmitter.AllClient();
 
+            await client.SendAsync("SetupFFmpegProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
+
+            if (e.Type == ProgressArgs.ActionType.Completed)
+            {
+                AppManager.FFMpegDownloader.PrgoressEvent -= FileDownloader_SetupFFmpegPrgoressEvent;
+            }
+        }
+        private async void PlayerDownloader_PrgoressEvent(object sender, ProgressArgs e)
+        {
+            var client = _hubEventEmitter.AllClient();
+
+            await client.SendAsync("SetupPlayerProgressChanged", new { e.Completed, e.Total, e.Percent, e.TypeStr, e.Successed });
+
+            if (e.Type == ProgressArgs.ActionType.Completed)
+            {
+                AppManager.PlayerDownloader.PrgoressEvent -= PlayerDownloader_PrgoressEvent;
+            }
+        }
         private static bool HasReadPermission(string dir)
         {
             if (!dir.EndsWith("\\"))
@@ -379,14 +318,13 @@ namespace LiveWallpaper.LocalServer.Hubs
             allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
 
             foreach (var item in allowDirs)
-            {                
+            {
                 if (dir.StartsWith(item))
                     return true;
             }
 
             return false;
         }
-
         private static bool HasWritePermission(string dir)
         {
             if (!dir.EndsWith("\\"))
@@ -404,7 +342,6 @@ namespace LiveWallpaper.LocalServer.Hubs
 
             return false;
         }
-
         #endregion
     }
 }
