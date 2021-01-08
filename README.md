@@ -36,7 +36,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://www.mscoder.cn/"><img src="https://avatars3.githubusercontent.com/u/80653?v=4?s=100" width="100px;" alt=""/><br /><sub><b>代码抄写狮</b></sub></a><br /><a href="#maintenance-DaZiYuan" title="Maintenance">🚧</a></td>
+    <td align="center"><a href="https://www.mscoder.cn/"><img src="https://avatars3.githubusercontent.com/u/80653?v=4?s=100" width="100px;" alt=""/><br /><sub><b>代码抄写狮</b></sub></a><br /><a href="#maintenance-DaZiYuan" title="Maintenance">🚧</a> <a href="https://github.com/giant-app/LiveWallpaper/commits?author=DaZiYuan" title="Code">💻</a> <a href="https://github.com/giant-app/LiveWallpaper/issues?q=author%3ADaZiYuan" title="Bug reports">🐛</a> <a href="#projectManagement-DaZiYuan" title="Project Management">📆</a></td>
   </tr>
 </table>
 
