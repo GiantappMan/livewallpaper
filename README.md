@@ -1,6 +1,6 @@
 # 巨应动态壁纸 2.0
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ----
@@ -38,6 +38,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://www.mscoder.cn/"><img src="https://avatars3.githubusercontent.com/u/80653?v=4?s=100" width="100px;" alt=""/><br /><sub><b>代码抄写狮</b></sub></a><br /><a href="#maintenance-DaZiYuan" title="Maintenance">🚧</a> <a href="https://github.com/giant-app/LiveWallpaper/commits?author=DaZiYuan" title="Code">💻</a> <a href="https://github.com/giant-app/LiveWallpaper/issues?q=author%3ADaZiYuan" title="Bug reports">🐛</a> <a href="#projectManagement-DaZiYuan" title="Project Management">📆</a></td>
     <td align="center"><a href="http://Empty... No!"><img src="https://avatars0.githubusercontent.com/u/7201687?v=4?s=100" width="100px;" alt=""/><br /><sub><b>The_BadUser</b></sub></a><br /><a href="#translation-vanja-san" title="Translation">🌍</a></td>
+    <td align="center"><a href="https://github.com/Laezor"><img src="https://avatars2.githubusercontent.com/u/32393101?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Laezor</b></sub></a><br /><a href="#translation-Laezor" title="Translation">🌍</a></td>
   </tr>
 </table>
 
