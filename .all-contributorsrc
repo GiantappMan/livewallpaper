@@ -16,6 +16,15 @@
         "bug",
         "projectManagement"
       ]
+    },
+    {
+      "login": "Laezor",
+      "name": "Laezor",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/32393101?v=4",
+      "profile": "https://github.com/Laezor",
+      "contributions": [
+        "translation"
+      ]
     }
   ],
   "contributorsPerLine": 7,
