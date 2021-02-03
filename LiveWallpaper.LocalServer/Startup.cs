@@ -30,7 +30,7 @@ namespace LiveWallpaper.LocalServer
         {
             services.AddCors(options =>
             {
-                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn" };
+                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
 #if DEBUG
                 urls.Add("http://localhost:3000");
 #endif
