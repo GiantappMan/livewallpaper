@@ -10,7 +10,7 @@ namespace LiveWallpaper.LocalServer.Models
 {
     public class GeneralSettting
     {
-        public bool StartWithSystem { get; set; }
+        public bool StartWithSystem { get; set; } = true;
         public string CurrentLan { get; set; }
         public string[] LanOptions { get; private set; } = new string[] { "en-US", "el", "ru", "zh-CN" };
         /// <summary>
