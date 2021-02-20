@@ -1,4 +1,5 @@
-﻿using Giantapp.LiveWallpaper.Engine;
+﻿using Common.Helpers;
+using Giantapp.LiveWallpaper.Engine;
 using Giantapp.LiveWallpaper.Engine.Renders;
 using LiveWallpaper.LocalServer.Models;
 using LiveWallpaper.LocalServer.Utils;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Xabe.FFmpeg;
@@ -283,6 +285,53 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult.ExceptionState(ex);
             }
             return BaseApiResult.SuccessState();
+        }
+        //下载壁纸
+        public Task<BaseApiResult> DownloadWallpaper(string wallpaper, string cover, WallpaperProjectInfo info)
+        {
+            if (wallpaper == null)
+                return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Failed));
+
+            string destFolder = null;
+
+            if (info != null && info.ID != null)
+                destFolder = Path.Combine(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, info.ID);
+            else
+                destFolder = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+
+            if (info == null)
+                info = new WallpaperProjectInfo();
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            _ = Task.Run(async () =>
+             {
+                 var wpProgressInfo = new Progress<(float competed, float total)>(async (e) =>
+                 {
+                     var client = _hubEventEmitter.AllClient();
+                     await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent = e.competed / e.total * 50, completed = false });
+                 });
+
+                 var coverProgressInfo = new Progress<(float competed, float total)>(async (e) =>
+                 {
+                     var client = _hubEventEmitter.AllClient();
+                     var percent = e.competed / e.total * 50 + 50;
+                     await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent, completed = percent == 100 });
+                 });
+
+                 info.File = Path.GetFileName(wallpaper);
+                 string destWp = Path.Combine(destFolder, info.File);
+                 await NetworkHelper.DownloadFileAsync(wallpaper, destWp, cts.Token, wpProgressInfo);
+                 if (cover != null)
+                 {
+                     info.Preview = Path.GetFileName(cover);
+                     string destCover = Path.Combine(destFolder, info.Preview);
+                     await NetworkHelper.DownloadFileAsync(cover, destCover, cts.Token, coverProgressInfo);
+                 }
+
+                 //生成json
+                 await UpdateProjectInfo(destFolder, info);
+             });
+            return Task.FromResult(BaseApiResult.SuccessState());
         }
         #region private
         private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
