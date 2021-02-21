@@ -305,18 +305,26 @@ namespace LiveWallpaper.LocalServer.Hubs
             CancellationTokenSource cts = new CancellationTokenSource();
             _ = Task.Run(async () =>
              {
-                 var wpProgressInfo = new Progress<(float competed, float total)>(async (e) =>
-                 {
-                     var client = _hubEventEmitter.AllClient();
-                     await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent = e.competed / e.total * 50, completed = false });
-                 });
+                 RaiseLimiter _raiseLimiter = new RaiseLimiter();
 
-                 var coverProgressInfo = new Progress<(float competed, float total)>(async (e) =>
-                 {
-                     var client = _hubEventEmitter.AllClient();
-                     var percent = e.competed / e.total * 50 + 50;
-                     await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent, completed = percent == 100 });
-                 });
+                 var wpProgressInfo = new Progress<(float competed, float total)>((e) =>
+                {
+                    _raiseLimiter.Execute(async () =>
+                    {
+                        var client = _hubEventEmitter.AllClient();
+                        await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent = e.competed / e.total * 50, completed = false });
+                    }, 1000);
+                });
+
+                 var coverProgressInfo = new Progress<(float competed, float total)>((e) =>
+                {
+                    _raiseLimiter.Execute(async () =>
+                    {
+                        var client = _hubEventEmitter.AllClient();
+                        var percent = e.competed / e.total * 50 + 50;
+                        await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent, completed = percent == 100 });
+                    }, 1000);
+                });
 
                  info.File = Path.GetFileName(wallpaper);
                  string destWp = Path.Combine(destFolder, info.File);
