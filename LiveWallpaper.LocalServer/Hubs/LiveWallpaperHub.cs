@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -23,6 +24,11 @@ namespace LiveWallpaper.LocalServer.Hubs
         public LiveWallpaperHub(HubEventEmitter hubEventEmitter)
         {
             _hubEventEmitter = hubEventEmitter;
+        }
+        public string GetClientVersion()
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return version.ToString();
         }
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
