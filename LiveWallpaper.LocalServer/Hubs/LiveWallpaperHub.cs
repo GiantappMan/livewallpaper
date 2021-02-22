@@ -318,7 +318,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                     _raiseLimiter.Execute(async () =>
                     {
                         var client = _hubEventEmitter.AllClient();
-                        await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent = e.competed / e.total * 50, completed = false });
+                        await client.SendAsync("DownloadWallpaperProgressChanged", new { path = wallpaper, e.competed, e.total, percent = e.competed / e.total * 50, completed = false });
                     }, 1000);
                 });
 
@@ -328,7 +328,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                     {
                         var client = _hubEventEmitter.AllClient();
                         var percent = e.competed / e.total * 50 + 50;
-                        await client.SendAsync("DownloadWallpaperProgressChanged", new { e.competed, e.total, percent, completed = percent == 100 });
+                        await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, e.competed, e.total, percent, completed = percent == 100 });
                     }, 1000);
                 });
 
