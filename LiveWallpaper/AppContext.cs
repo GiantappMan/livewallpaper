@@ -20,6 +20,7 @@ namespace LiveWallpaper
         private NotifyIcon _notifyIcon;
         private ContextMenuStrip _contextMenu;
         private ToolStripMenuItem _btnMainUI;
+        private ToolStripMenuItem _btnCommunity;
         private ToolStripMenuItem _btnExit;
         private System.ComponentModel.IContainer _components;
         #endregion
@@ -61,12 +62,21 @@ namespace LiveWallpaper
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
+
+            _btnCommunity = new ToolStripMenuItem()
+            {
+                Text = "壁纸社区"
+            };
+            _btnCommunity.Click += BtnCommunity_Click;
+            _contextMenu.Items.Add(_btnCommunity);
+
             _btnMainUI = new ToolStripMenuItem()
             {
-                Text = "打开Web控制台"
+                Text = "本地壁纸"
             };
             _btnMainUI.Click += BtnMainUI_Click;
             _contextMenu.Items.Add(_btnMainUI);
+
 
             _btnExit = new ToolStripMenuItem
             {
@@ -108,6 +118,17 @@ namespace LiveWallpaper
             return port;
         }
 
+        private void BtnCommunity_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("https://livewallpaper.giantapp.cn/wallpapers") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
             try
