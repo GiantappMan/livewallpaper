@@ -51,18 +51,15 @@ namespace LiveWallpaper.LocalServer.Hubs
                 //FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
                 List<string> result = new List<string>();
                 //最多截图四张截图
-                for (int i = 1; i < 5; i++)
+                var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
+                var spanDuration = mediaInfo.Duration.TotalSeconds / 4;
+                for (int i = 0; i < 4; i++)
                 {
                     string name = videoPath.GetHashCode().ToString();
-                    int seconds = i * i + 5;
-                    string distPath = Path.GetTempPath() + $"{name}_{seconds}.png";
+                    string distPath = Path.GetTempPath() + $"{name}_{i}.png";
                     if (!File.Exists(distPath))
                     {
-                        var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
-                        //秒超过总长度
-                        if (seconds > mediaInfo.Duration.TotalSeconds)
-                            break;
-                        IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, distPath, TimeSpan.FromSeconds(seconds));
+                        IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(videoPath, distPath, TimeSpan.FromSeconds(i * spanDuration));
                         _ = await conversion.Start();
                     }
 
@@ -270,6 +267,9 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public async Task<BaseApiResult> MoveFile(string path, string dist, bool deleteSource)
         {
+            if (string.IsNullOrEmpty(path))
+                return BaseApiResult.ErrorState(ErrorType.Failed);
+
             if (!HasReadPermission(Path.GetDirectoryName(path)))
                 return BaseApiResult.ErrorState(ErrorType.NoPermission);
 
