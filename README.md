@@ -1,4 +1,4 @@
-# 巨应动态壁纸 2.0
+# 巨应壁纸 2.x
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -6,8 +6,6 @@
 ----
 
 ## 开源动态壁纸软件，免费版 wallpaper engine
-
-## 下载地址
 
 [巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
 
