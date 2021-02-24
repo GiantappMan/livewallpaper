@@ -1,38 +1,19 @@
-# 巨应壁纸 2.x
+# 巨应壁纸 2.x，免费版动态壁纸软件 wallpaper engine
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ----
 
-## 开源动态壁纸软件，免费版 wallpaper engine
+下载地址：[巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
 
-下载[巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
-
-### 截图预览
-
-- 本地壁纸   
-![本地壁纸](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/local.png?raw=true)
-
-- 壁纸社区  
-![壁纸社区](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/wallpapers.png?raw=true)
-
-- 一键下载  
-![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.png?raw=true)
-
-- 客户端设置  
-![客户端设置](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/clientsetting.png?raw=true)
-
-- 少进程，低功耗  
-![少进程，低功耗](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/process.png?raw=true)
-
-- 切换壁纸.gif  
+### 壁纸切换
 ![切换壁纸](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/changewallpaper.gif?raw=true)
 
-- 一键下载.gif  
+### 壁纸下载
 ![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.gif?raw=true)
 
-### 版本特性：
+### 版本特色：
 
 - 壁纸核心端
   - [x] 提供 API 驱动壁纸核心功能
