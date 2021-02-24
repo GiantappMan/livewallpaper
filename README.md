@@ -54,6 +54,11 @@
 ### 分支管理
 - master 是最新版代码（当前是2.x)，新版本商店名为 巨应壁纸，老版本尚未更新（巨应动态壁纸）
 - 1.x 目前线上WPF开发的版本
+
+### 注意事项
+- 新版本巨应壁纸需要使用本地5001端口进行通信，请注意浏览器拦截(brave浏览器，及其他安全插件）
+
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
