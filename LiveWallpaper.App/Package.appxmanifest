@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap mp rescap">
-  <Identity Name="24765mscoder.107453A6A4A17" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="2.1.69.0" />
+  <Identity Name="24765mscoder.107453A6A4A17" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="2.1.70.0" />
   <Properties>
     <DisplayName>巨应壁纸</DisplayName>
     <PublisherDisplayName>Giantapp Studio</PublisherDisplayName>
