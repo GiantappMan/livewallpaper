@@ -62,7 +62,6 @@ namespace LiveWallpaper
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
-
             _btnCommunity = new ToolStripMenuItem()
             {
                 Text = "壁纸社区"
@@ -93,6 +92,7 @@ namespace LiveWallpaper
                 Visible = true
             };
 
+            _notifyIcon.MouseDoubleClick += NotifyIcon_MouseDoubleClick;
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
             WallpaperApi.Initlize(Dispatcher.CurrentDispatcher);
             Task.Run(() =>
@@ -108,14 +108,14 @@ namespace LiveWallpaper
         /// <returns></returns>
         static int GetPort()
         {
-//#if DEBUG
+            //#if DEBUG
             return 5001;
-//#endif
-            TcpListener l = new TcpListener(IPAddress.Loopback, 0);
-            l.Start();
-            int port = ((IPEndPoint)l.LocalEndpoint).Port;
-            l.Stop();
-            return port;
+            //#endif
+            //TcpListener l = new TcpListener(IPAddress.Loopback, 0);
+            //l.Start();
+            //int port = ((IPEndPoint)l.LocalEndpoint).Port;
+            //l.Stop();
+            //return port;
         }
 
         private void BtnCommunity_Click(object sender, EventArgs e)
@@ -133,18 +133,6 @@ namespace LiveWallpaper
         {
             try
             {
-                //if (_uiProcess != null)
-                //{
-                //    return;
-                //}
-                //string apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                //string uiExe = Path.Combine(apptEntryDir, "UI", "livewallpaper_dart.exe");
-                //_uiProcess = Process.Start(uiExe);
-                //_ = Task.Run(() =>
-                //{
-                //    _uiProcess.WaitForExit();
-                //    _uiProcess = null;
-                //});
                 Process.Start(new ProcessStartInfo("https://livewallpaper.giantapp.cn/local") { UseShellExecute = true });
             }
             catch (Exception ex)
@@ -161,6 +149,13 @@ namespace LiveWallpaper
                  BindingFlags.Instance | BindingFlags.NonPublic);
                 mi.Invoke(_notifyIcon, null);
             }
+        }
+
+        private void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
+                   BindingFlags.Instance | BindingFlags.NonPublic);
+            mi.Invoke(_notifyIcon, null);
         }
 
         private void BtnExit_Click(object Sender, EventArgs e)
