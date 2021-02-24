@@ -31,8 +31,8 @@
 - Win10
 
 ### 分支管理
-- master 是最新版代码（当前是2.x)，新版本商店名为 巨应壁纸，老版本尚未更新（巨应动态壁纸）
-- 1.x 目前线上WPF开发的版本
+- master 是最新版代码（当前是2.x)，新版本 [巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
+- 1.x 目前线上WPF开发的版本，老版本[巨应动态壁纸](https://www.microsoft.com/store/apps/9MV8GK87MZ05)，新版本稳定后将升级这个app
 
 ### 注意事项
 - 新版本巨应壁纸需要使用本地5001端口进行通信，请注意浏览器拦截(brave浏览器，及其他安全插件）
