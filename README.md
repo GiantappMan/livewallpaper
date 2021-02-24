@@ -7,7 +7,7 @@
 
 ## 开源动态壁纸软件，免费版 wallpaper engine
 
-[巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
+下载[巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
 
 ### 截图预览
 
