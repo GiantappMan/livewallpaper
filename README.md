@@ -7,6 +7,33 @@
 
 ## 开源动态壁纸软件，免费版 wallpaper engine
 
+## 下载地址
+
+[巨应壁纸](https://www.microsoft.com/store/apps/9N1S487WCGWR)  
+
+### 截图预览
+
+- 本地壁纸   
+![本地壁纸](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/local.png?raw=true)
+
+- 壁纸社区  
+![壁纸社区](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/wallpapers.png?raw=true)
+
+- 一键下载  
+![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.png?raw=true)
+
+- 客户端设置  
+![客户端设置](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/clientsetting.png?raw=true)
+
+- 少进程，低功耗  
+![少进程，低功耗](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/process.png?raw=true)
+
+- 切换壁纸.gif  
+![切换壁纸](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/changewallpaper.gif?raw=true)
+
+- 一键下载.gif  
+![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.gif?raw=true)
+
 ### 版本特性：
 
 - 壁纸核心端
@@ -25,7 +52,7 @@
 - Win10
 
 ### 分支管理
-- master 是最新版代码（当前是2.0)，开发中不完全可用
+- master 是最新版代码（当前是2.x)，新版本商店名为 巨应壁纸，老版本尚未更新（巨应动态壁纸）
 - 1.x 目前线上WPF开发的版本
 ## Contributors ✨
 
