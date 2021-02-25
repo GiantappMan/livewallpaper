@@ -1,0 +1,4 @@
+[submodule "LiveWallpaper/Assets/livewallpaper_i18n"]
+	path = LiveWallpaper/Assets/livewallpaper_i18n
+	url = https://github.com/giant-app/livewallpaper_i18n.git
+	branch = master
