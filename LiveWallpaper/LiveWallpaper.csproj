@@ -9,12 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\livewallpaper_i18n\.git" />
+    <None Remove="Assets\livewallpaper_i18n\zh.js" />
     <None Remove="logo128.ico" />
     <None Remove="NLog.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="livewallpaper_i18n\**">
+    <Content Include="Assets\livewallpaper_i18n\*.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="NLog.config">

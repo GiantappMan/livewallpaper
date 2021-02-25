@@ -26,6 +26,7 @@ namespace LiveWallpaper
         #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly ILanService _lanService = new LanService();
         private static Mutex _mutex;
 
         public AppContext()
@@ -59,28 +60,22 @@ namespace LiveWallpaper
 
         private void InitializeAppContextComponent()
         {
+            _lanService.CultureChanged += LanService_CultureChanged;
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
             _btnCommunity = new ToolStripMenuItem()
-            {
-                Text = "壁纸社区"
-            };
+            ;
             _btnCommunity.Click += BtnCommunity_Click;
             _contextMenu.Items.Add(_btnCommunity);
 
             _btnMainUI = new ToolStripMenuItem()
-            {
-                Text = "本地壁纸"
-            };
+            ;
             _btnMainUI.Click += BtnMainUI_Click;
             _contextMenu.Items.Add(_btnMainUI);
 
 
-            _btnExit = new ToolStripMenuItem
-            {
-                Text = "退出",
-            };
+            _btnExit = new ToolStripMenuItem();
             _btnExit.Click += BtnExit_Click;
             _contextMenu.Items.Add(_btnExit);
 
@@ -88,18 +83,31 @@ namespace LiveWallpaper
             {
                 Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
                 ContextMenuStrip = _contextMenu,
-                Text = "巨应壁纸",
                 Visible = true
             };
 
             _notifyIcon.MouseDoubleClick += NotifyIcon_MouseDoubleClick;
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
+            SetMenuText();
             WallpaperApi.Initlize(Dispatcher.CurrentDispatcher);
             Task.Run(() =>
             {
                 int port = GetPort();
                 ServerWrapper.Start(port);
             });
+        }
+
+        private void SetMenuText()
+        {
+            _btnCommunity.Text = _lanService.GetText("壁纸社区");
+            _btnMainUI.Text = _lanService.GetText("本地壁纸");
+            _btnExit.Text = _lanService.GetText("退出");
+            _notifyIcon.Text = _lanService.GetText("巨应壁纸");
+        }
+
+        private void LanService_CultureChanged(object sender, EventArgs e)
+        {
+            SetMenuText();
         }
 
         /// <summary>
