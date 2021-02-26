@@ -1,31 +1,57 @@
-﻿using LiveWallpaper.LocalServer;
+﻿using Common.Helpers;
+using LiveWallpaper.LocalServer;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace LiveWallpaper
 {
-    public class LanService : ILanService
+    public class LanService
     {
-        private string _culture;
-        public string Culture { get { return _culture; } }
+        private Dictionary<string, dynamic> dataDict = new Dictionary<string, dynamic>();
 
-        public event EventHandler CultureChanged;
 
-        public string GetText(string key)
+        public async Task<string> GetText(string key, string culture)
         {
-            return key;
-        }
+            if (!dataDict.ContainsKey(culture))
+            {
+                //怀疑用Environment.CurrentDirectory开机启动时目录会出错，待验证
+                string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string lanDir = Path.Combine(appDir, "Assets\\livewallpaper_i18n");
 
-        public void SetCulture(string culture)
-        {
-            if (_culture == culture)
-                return;
+                var files = Directory.GetFiles(lanDir, $"{culture}.json");
+                //找不到匹配的，找近似的。例如 zh-CHS找不到,zh也可以
+                if (files.Length == 0)
+                {
+                    bool isSubLan = culture.Split('-').Length > 1;
+                    if (isSubLan)
+                        files = Directory.GetFiles(lanDir, $"{culture.Split('-')[0]}*");
+                }
 
-            _culture = culture;
-            CultureChanged?.Invoke(this, new EventArgs());
+                if (files.Length == 0)
+                    return null;
+
+                string json = File.ReadAllText(files[0]);
+                if (string.IsNullOrEmpty(json))
+                    return null;
+
+                var data = JObject.Parse(json);
+                dataDict.Add(culture, data);
+            }
+
+            var tmp = key.Split(".");
+            JToken cultureObj = dataDict[culture];
+            foreach (var item in tmp)
+            {
+                cultureObj = cultureObj[item];
+            }
+
+            string result = cultureObj.Value<string>();
+            return result;
         }
     }
 }

@@ -26,12 +26,21 @@ namespace LiveWallpaper
         #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly ILanService _lanService = new LanService();
+        private static readonly LanService _lanService = new LanService();
         private static Mutex _mutex;
 
         public AppContext()
         {
-            InitializeAppContextComponent();
+            InitializeUI();
+
+            WallpaperApi.Initlize(Dispatcher.CurrentDispatcher);
+            AppManager.CultureChanged += LanService_CultureChanged;
+            SetMenuText();
+            _ = Task.Run(() =>
+            {
+                int port = GetPort();
+                ServerWrapper.Start(port);
+            });
             CheckMutex();
         }
 
@@ -58,9 +67,8 @@ namespace LiveWallpaper
             }
         }
 
-        private void InitializeAppContextComponent()
+        private void InitializeUI()
         {
-            _lanService.CultureChanged += LanService_CultureChanged;
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
@@ -88,21 +96,22 @@ namespace LiveWallpaper
 
             _notifyIcon.MouseDoubleClick += NotifyIcon_MouseDoubleClick;
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
-            SetMenuText();
-            WallpaperApi.Initlize(Dispatcher.CurrentDispatcher);
-            Task.Run(() =>
-            {
-                int port = GetPort();
-                ServerWrapper.Start(port);
-            });
         }
 
-        private void SetMenuText()
+        private async void SetMenuText()
         {
-            _btnCommunity.Text = _lanService.GetText("壁纸社区");
-            _btnMainUI.Text = _lanService.GetText("本地壁纸");
-            _btnExit.Text = _lanService.GetText("退出");
-            _notifyIcon.Text = _lanService.GetText("巨应壁纸");
+            if (AppManager.UserSetting == null)
+            {
+                await AppManager.LoadUserSetting();
+            }
+            string culture = AppManager.UserSetting.General.CurrentLan ?? Thread.CurrentThread.CurrentCulture.Name;
+            _ = Dispatcher.CurrentDispatcher.Invoke(async () =>
+              {
+                  _btnCommunity.Text = await _lanService.GetText("community.title", culture);
+                  _btnMainUI.Text = await _lanService.GetText("local.title", culture);
+                  _btnExit.Text = await _lanService.GetText("client.exit", culture);
+                  _notifyIcon.Text = await _lanService.GetText("common.appName", culture);
+              });
         }
 
         private void LanService_CultureChanged(object sender, EventArgs e)
