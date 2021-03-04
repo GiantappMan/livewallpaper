@@ -127,7 +127,7 @@ namespace LiveWallpaper
                 await AppManager.LoadUserSetting();
             }
             string culture = AppManager.UserSetting.General.CurrentLan ?? Thread.CurrentThread.CurrentCulture.Name;
-            var r = await _lanService.GetText(key, culture);
+            var r = await _lanService.GetTextAsync(key, culture);
             return r;
         }
 
@@ -154,22 +154,29 @@ namespace LiveWallpaper
 
         private void BtnCommunity_Click(object sender, EventArgs e)
         {
-            OpenUrl("https://livewallpaper.giantapp.cn/wallpapers");
+            OpenUrl("wallpapers");
         }
+
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
-            OpenUrl("https://livewallpaper.giantapp.cn/local");
+            OpenUrl("local");
         }
 
         private void BtnSetting_Click(object sender, EventArgs e)
         {
-            OpenUrl("https://livewallpaper.giantapp.cn/dashboard/client/setting");
+            OpenUrl("dashboard/client/setting");
         }
-
         private void OpenUrl(string url)
         {
             try
             {
+                string host = "https://livewallpaper.giantapp.cn/";
+                if (AppManager.UserSetting != null && AppManager.UserSetting.General.CurrentLan != null && AppManager.UserSetting.General.CurrentLan != "zh")
+                {
+                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}/";
+                }
+                url = $"{host}{url}";
+
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)

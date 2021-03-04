@@ -15,7 +15,14 @@ namespace LiveWallpaper
         private Dictionary<string, dynamic> dataDict = new Dictionary<string, dynamic>();
 
 
-        public async Task<string> GetText(string key, string culture)
+        public Task<string> GetTextAsync(string key, string culture)
+        {
+            return Task.Run(() =>
+            {
+                return GetText(key, culture);
+            });
+        }
+        public string GetText(string key, string culture)
         {
             if (!dataDict.ContainsKey(culture))
             {
@@ -32,15 +39,21 @@ namespace LiveWallpaper
                         files = Directory.GetFiles(lanDir, $"{culture.Split('-')[0]}*");
                 }
 
+                //找不到匹配语言，使用英文作为默认
                 if (files.Length == 0)
-                    return null;
+                {
+                    culture = "en";
+                    files = Directory.GetFiles(lanDir, "en*");
+                }
 
                 string json = File.ReadAllText(files[0]);
                 if (string.IsNullOrEmpty(json))
                     return null;
 
                 var data = JObject.Parse(json);
-                dataDict.Add(culture, data);
+
+                if (!dataDict.ContainsKey(culture))
+                    dataDict.Add(culture, data);
             }
 
             var tmp = key.Split(".");
