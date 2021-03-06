@@ -112,7 +112,7 @@ namespace LiveWallpaper
         {
             _ = _uiDispatcher.Invoke(async () =>
               {
-                  _btnCommunity.Text = await GetText("community.title");
+                  _btnCommunity.Text = await GetText("wallpapers.title");
                   _btnMainUI.Text = await GetText("local.title");
                   _btnExit.Text = await GetText("client.exit");
                   _btnSetting.Text = await GetText("common.settings");
