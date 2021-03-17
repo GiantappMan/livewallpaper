@@ -223,6 +223,30 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult.ExceptionState(ex);
             }
         }
+        public async Task<BaseApiResult> UpdateWallpaperOption(string destDir, WallpaperOption option)
+        {
+            try
+            {
+                await WallpaperApi.UpdateWallpaperOption(destDir, option);
+                return BaseApiResult.SuccessState();
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
+        }
+        public async Task<BaseApiResult<WallpaperOption>> GetWallpaperOption(string wallpaperDir)
+        {
+            try
+            {
+                var res = await WallpaperApi.GetWallpaperOption(wallpaperDir, new WallpaperOption());
+                return BaseApiResult<WallpaperOption>.SuccessState(res);
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult<WallpaperOption>.ExceptionState(ex);
+            }
+        }
         //删除整个壁纸目录
         public async Task<BaseApiResult> DeleteWallpaper(string path)
         {
