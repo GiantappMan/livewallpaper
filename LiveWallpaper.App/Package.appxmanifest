@@ -36,6 +36,8 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="videosLibrary" />
-    <rescap:Capability Name="runFullTrust" />
+	  <rescap:Capability Name="runFullTrust" />
+	  <!--允许管理员权限--><!--
+	  <rescap:Capability Name="allowElevation" />-->
   </Capabilities>
 </Package>
