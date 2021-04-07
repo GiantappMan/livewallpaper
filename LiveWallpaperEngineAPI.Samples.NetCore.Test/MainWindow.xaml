@@ -1,0 +1,56 @@
+﻿<Window
+    x:Class="LiveWallpaperEngine.Samples.NetCore.Test.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:giantappconfiger="clr-namespace:GiantappConfiger;assembly=GiantappConfiger"
+    xmlns:local="clr-namespace:LiveWallpaperEngine.Samples.NetCore.Test"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="LiveWallpaperEngine.Samples"
+    Width="800"
+    Height="450"
+    mc:Ignorable="d">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <Button
+                VerticalAlignment="Center"
+                Click="BtnSelect_Click"
+                Content="Show Wallpaper" />
+            <Button
+                VerticalAlignment="Center"
+                Click="BtnStop_Click"
+                Content="Stop" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock>Screen:</TextBlock>
+                <ItemsControl x:Name="monitors">
+                    <ItemsControl.ItemTemplate>
+                        <ItemContainerTemplate>
+                            <StackPanel>
+                                <CheckBox Content="{Binding DeviceName}" IsChecked="{Binding Checked}" />
+                            </StackPanel>
+                        </ItemContainerTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <giantappconfiger:ConfigControl x:Name="configer" BorderBrush="Gray" />
+        </ScrollViewer>
+        <Button Grid.Row="2" Click="BtnApply_Click">Apply Settings</Button>
+        <Grid
+            x:Name="popup"
+            Grid.RowSpan="3"
+            Background="LightGray"
+            Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock x:Name="txtPopup" />
+                <Button Click="BtnCancelSetupPlayer_Click">Cancel</Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

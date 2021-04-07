@@ -1,0 +1,25 @@
+{
+	"approved" : true,
+	"description" : "一个鼠标跟随的网格效果，支持鼠标运动过程中自动变换颜色",
+	"file" : "index.html",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"schemecolor" : 
+			{
+				"order" : 0,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0 0 0"
+			}
+		}
+	},
+	"monetization" : false,
+	"preview" : "preview.jpg",
+	"tags" : [ "Fantasy" ],
+	"title" : "鼠标跟随网格",
+	"type" : "web",
+	"visibility" : "public",
+	"workshopid" : 840063766
+}

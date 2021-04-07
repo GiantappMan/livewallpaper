@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LiveWallpaperEngineWebRender": {
+      "commandName": "Project",
+      "commandLineArgs": "file:///D:/gitee/LiveWallpaperEngine/LiveWallpaperEngine.Samples.NetCore.Test/bin/Debug/netcoreapp3.1/WallpaperSamples/web2/index.html --position=100,100"
+    }
+  }
+}

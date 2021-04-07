@@ -1,0 +1,19 @@
+{
+	"title": "Sheep",
+	"preview": "preview.jpg",
+	"file": "sheep.exe",
+	"authorsteamid": "76561197975619619",
+	"official" : true,
+	"timestamp": 0,
+	"general": {
+		"properties" : 
+		{
+			"schemecolor" : 
+			{
+				"text" : "Scheme color",
+				"type" : "color",
+				"value" : "0.19607843137254902 0.4470588235294118 0.25098039215686274"
+			}
+		}
+	}
+}
