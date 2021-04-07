@@ -497,7 +497,7 @@ namespace Giantapp.LiveWallpaper.Engine
                 if (File.Exists(path))
                 {
                     using FileStream fs = File.OpenRead(path);
-                    res = await JsonSerializer.DeserializeAsync<T>(fs);
+                    res = await JsonSerializer.DeserializeAsync<T>(fs, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
                 }
             }
             catch (Exception ex)

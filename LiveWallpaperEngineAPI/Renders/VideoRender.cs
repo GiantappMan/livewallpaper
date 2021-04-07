@@ -25,10 +25,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             if (info.Length == 0)
                 return null;
 
-            string args = $"\"{path}\" --hwdec=auto --panscan=1.0 --loop-file=inf --fs --geometry=-10000:-10000";
+            string args = $"\"{path}\" --hwdec=auto --panscan=1.0 --loop-file=inf --fs --geometry=-10000:-10000 --stop-screensaver=no";
             if (!model.Option.HardwareDecoding)
             {
-                args = $"\"{path}\" --hwdec=no --panscan=1.0 --loop-file=inf --fs --geometry=-10000:-10000";
+                args = $"\"{path}\" --hwdec=no --panscan=1.0 --loop-file=inf --fs --geometry=-10000:-10000 --stop-screensaver=no";
             }
 
             ProcessStartInfo r = new ProcessStartInfo(playerPath)
