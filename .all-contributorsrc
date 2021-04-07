@@ -43,6 +43,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "ADD-SP",
+      "name": "ADD-SP",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44437200?v=4",
+      "profile": "https://www.addesp.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
