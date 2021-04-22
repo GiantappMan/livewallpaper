@@ -2,7 +2,7 @@
   "profiles": {
     "LiveWallpaperEngineRender": {
       "commandName": "Project",
-      "commandLineArgs": "--Input sunrise.CR2 --Output sunrise.JPG"
+      "commandLineArgs": "--WindowLeft 1000  --WindowTop 233"
     }
   }
 }

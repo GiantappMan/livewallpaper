@@ -23,7 +23,15 @@ namespace LiveWallpaperEngineRender
                     var property = typeof(T).GetProperty(propertyName);
                     if (property != null && i < argsArray.Length - 1)
                     {
-                        property.SetValue(res, argsArray[i + 1]);
+                        var valueStr = argsArray[i + 1];
+                        object value = valueStr;
+
+                        switch (property.PropertyType.FullName)
+                        {
+                            case "System.Int32": value = int.Parse(valueStr); break;
+                        }
+
+                        property.SetValue(res, value);
                     }
                 }
             }

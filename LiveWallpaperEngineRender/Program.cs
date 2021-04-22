@@ -8,8 +8,8 @@ namespace LiveWallpaperEngineRender
 {
     public class LaunchOptions
     {
-        public string Input { get; set; }
-        public string Output { get; set; }
+        public int WindowLeft { get; set; }
+        public int WindowTop { get; set; }
     }
 
     static class Program
@@ -30,7 +30,12 @@ namespace LiveWallpaperEngineRender
 
             ListenConsole();
 
-            Application.Run(new RenderForm());
+            Application.Run(new RenderForm()
+            {
+                Left = e.WindowLeft,
+                Top = e.WindowTop,
+                StartPosition = FormStartPosition.Manual
+            });
         }
 
 
@@ -40,16 +45,7 @@ namespace LiveWallpaperEngineRender
             while (true)
             {
                 if (DateTime.Now - lastReadTime < TimeSpan.FromSeconds(1))
-                {
-                    try
-                    {
-                        await Task.Delay(1000);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw;
-                    }
-                }
+                    await Task.Delay(1000);
 
                 var command = await Console.In.ReadLineAsync();
                 if (command != null)
@@ -60,7 +56,11 @@ namespace LiveWallpaperEngineRender
                         form.Show();
                     });
                 }
-                lastReadTime = DateTime.Now;
+                else
+                {
+                    //非命令触发时才加调用限制
+                    lastReadTime = DateTime.Now;
+                }
             }
         }
 
