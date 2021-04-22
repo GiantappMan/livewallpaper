@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\logo128.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64;x86</Platforms>
@@ -34,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LiveWallpaper.LocalServer\LiveWallpaper.LocalServer.csproj" />
+    <ProjectReference Include="..\LiveWallpaper.UI\LiveWallpaper.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,6 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaper.LocalServer;
+using LiveWallpaper.UI;
 using NLog;
 using System;
 using System.Diagnostics;
@@ -19,10 +20,12 @@ namespace LiveWallpaper
         private NotifyIcon _notifyIcon;
         private ContextMenuStrip _contextMenu;
         private ToolStripMenuItem _btnMainUI;
+        private ToolStripMenuItem _btnMainUIWeb;
         private ToolStripMenuItem _btnCommunity;
         private ToolStripMenuItem _btnSetting;
         private ToolStripMenuItem _btnExit;
         private System.ComponentModel.IContainer _components;
+        private MainWindow _mainWindow = null;
         #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -84,6 +87,10 @@ namespace LiveWallpaper
             _btnMainUI.Click += BtnMainUI_Click;
             _contextMenu.Items.Add(_btnMainUI);
 
+            _btnMainUIWeb = new ToolStripMenuItem();
+            _btnMainUIWeb.Click += BtnMainUIWeb_Click;
+            //_contextMenu.Items.Add(_btnMainUIWeb);
+
             _btnSetting = new ToolStripMenuItem();
             _btnSetting.Click += BtnSetting_Click;
             string dir = Path.GetDirectoryName(Application.ExecutablePath);
@@ -114,6 +121,7 @@ namespace LiveWallpaper
               {
                   _btnCommunity.Text = await GetText("wallpapers.title");
                   _btnMainUI.Text = await GetText("local.title");
+                  _btnMainUIWeb.Text = await GetText("local.title") + "Web";
                   _btnExit.Text = await GetText("client.exit");
                   _btnSetting.Text = await GetText("common.settings");
                   _notifyIcon.Text = await GetText("common.appName");
@@ -159,13 +167,40 @@ namespace LiveWallpaper
 
         private void BtnMainUI_Click(object sender, EventArgs e)
         {
+            OpenLocalView();
+        }
+
+        private void BtnMainUIWeb_Click(object sender, EventArgs e)
+        {
             OpenUrl("local");
+        }
+
+        private void OpenLocalView()
+        {
+            //回归客户端界面，用户更喜欢客户端方式操作
+            if (_mainWindow == null)
+            {
+                _mainWindow = new MainWindow();
+                _mainWindow.Closed += _mainWindow_Closed;
+            }
+
+            _mainWindow.Show();
+
+            if (!_mainWindow.IsActive)
+                _mainWindow.Activate();
+        }
+
+        private void _mainWindow_Closed(object sender, EventArgs e)
+        {
+            _mainWindow.Closed -= _mainWindow_Closed;
+            _mainWindow = null;
         }
 
         private void BtnSetting_Click(object sender, EventArgs e)
         {
             OpenUrl("dashboard/client/setting");
         }
+
         private void OpenUrl(string url)
         {
             try
@@ -197,9 +232,10 @@ namespace LiveWallpaper
 
         private void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
-                   BindingFlags.Instance | BindingFlags.NonPublic);
-            mi.Invoke(_notifyIcon, null);
+            //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
+            //       BindingFlags.Instance | BindingFlags.NonPublic);
+            //mi.Invoke(_notifyIcon, null);
+            OpenLocalView();
         }
 
         private void BtnExit_Click(object Sender, EventArgs e)

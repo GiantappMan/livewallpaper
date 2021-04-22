@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LiveWallpaperEngineRender": {
+      "commandName": "Project",
+      "commandLineArgs": "--Input sunrise.CR2 --Output sunrise.JPG"
+    }
+  }
+}

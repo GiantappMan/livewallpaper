@@ -16,13 +16,17 @@
 
 ![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.gif?raw=true)
 
+###　应用特色：
+- 视频、Gif、图片壁纸软件
+- 轻量客户端，低耗、无打扰
+- 壁纸交流社区，投稿壁纸
+- 一键下载壁纸
+
 ### 版本特色：
 
-- 迷你壁纸客户端
-- 纯 Web 提供操作界面
-- 壁纸投稿功能
-- 一键下载
-- 网站由 Nuxt+TCB 实现，暂未开源
+- [ ] 客户端UI
+- [ ] 快速切换视频
+- [ ] 分组定时切换
 
 ### 编译环境：
 
