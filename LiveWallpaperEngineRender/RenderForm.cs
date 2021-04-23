@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 
 namespace LiveWallpaperEngineRender
 {
@@ -7,6 +8,16 @@ namespace LiveWallpaperEngineRender
         public RenderForm()
         {
             InitializeComponent();
+        }
+
+        internal void PlayVideo(string filePath)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void StopVideo()
+        {
+            throw new NotImplementedException();
         }
     }
 }

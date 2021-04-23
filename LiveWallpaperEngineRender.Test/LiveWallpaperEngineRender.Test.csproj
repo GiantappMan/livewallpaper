@@ -4,10 +4,15 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>D:\gitee\LiveWallpaper\LiveWallpaperEngineRender\bin\Debug\</OutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\LiveWallpaperEngineRender\RenderProtocols.cs" Link="RenderProtocols.cs" />
+  </ItemGroup>
 
 </Project>
