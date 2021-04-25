@@ -12,5 +12,6 @@
     <StackPanel>
         <Button Click="ButtonLaunch_Click">Launch</Button>
         <Button Click="ButtonPlay_Click">Play</Button>
+        <Button Click="ButtonStop_Click">Stop</Button>
     </StackPanel>
 </Window>

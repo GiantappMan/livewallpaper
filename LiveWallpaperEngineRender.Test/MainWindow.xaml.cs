@@ -78,5 +78,16 @@ namespace LiveWallpaperEngineRender.Test
             var json = JsonSerializer.Serialize(renderProtocol);
             _process.StandardInput.WriteLine(json);
         }
+
+        private void ButtonStop_Click(object sender, RoutedEventArgs e)
+        {
+            SendToRender(new RenderProtocol(new PlayVideoPayload()
+            {
+                Screen = new string[] { Screen.PrimaryScreen.DeviceName },
+            })
+            {
+                Command = ProtocolDefinition.StopVideo
+            });
+        }
     }
 }

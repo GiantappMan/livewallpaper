@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace LiveWallpaperEngineRender
 {
@@ -36,6 +37,17 @@ namespace LiveWallpaperEngineRender
                 }
             }
             return res;
+        }
+        internal static void InvokeIfRequired(Action a)
+        {
+            if (Application.OpenForms.Count == 0)
+                return;
+
+            var mainForm = Application.OpenForms[0];
+            if (mainForm.InvokeRequired)
+                mainForm.Invoke(a);
+            else
+                a();
         }
     }
 }

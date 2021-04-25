@@ -101,7 +101,6 @@ namespace LiveWallpaperEngineRender
                 if (DateTime.Now - lastReadConsoleTime < TimeSpan.FromSeconds(1))
                     await Task.Delay(1000);
 
-
                 var json = await Console.In.ReadLineAsync();
                 if (!string.IsNullOrEmpty(json))
                 {
@@ -131,18 +130,6 @@ namespace LiveWallpaperEngineRender
                     lastReadConsoleTime = DateTime.Now;
                 }
             }
-        }
-
-        private static void WinformInvoke(Action a)
-        {
-            if (Application.OpenForms.Count == 0)
-                return;
-
-            var mainForm = Application.OpenForms[0];
-            if (mainForm.InvokeRequired)
-                mainForm.Invoke(a);
-            else
-                a();
         }
     }
 }
