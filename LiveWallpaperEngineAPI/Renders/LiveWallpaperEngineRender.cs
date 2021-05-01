@@ -3,19 +3,27 @@ using Giantapp.LiveWallpaper.Engine.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WinAPI.Helpers;
 
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
-    //目前所有动态壁纸都是这个类实现，通过启用外部exe来渲染，以防止崩溃。
-    public abstract class ExternalProcessRender : BaseRender
+    /// <summary>
+    /// 显示视频壁纸，后期可能会增加Web显示
+    /// </summary>
+    public class LiveWallpaperEngineRender : BaseRender
     {
         private static readonly ProcessJobTracker _pj = new ProcessJobTracker();
-
-        protected ExternalProcessRender(WallpaperType type, List<string> extension, bool mouseEvent = true) : base(type, extension, mouseEvent)
+        public static string PlayerFolderName { get; } = "LiveWallpaperEngineRender1";
+        public LiveWallpaperEngineRender() : base(WallpaperType.Video,
+            new List<string>() {
+                ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm" }
+            , false)
         {
+
         }
 
         protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, bool closeBeforeOpening)
@@ -140,5 +148,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 return result;
             });
         }
+
     }
 }

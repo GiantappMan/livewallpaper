@@ -9,7 +9,7 @@ using WinAPI.Extension;
 
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
-    public class BaseRender : IRender
+    public abstract class BaseRender : IRender
     {
         private readonly List<RenderInfo> _currentWallpapers = new List<RenderInfo>();
         private CancellationTokenSource _showWallpaperCts = new CancellationTokenSource();

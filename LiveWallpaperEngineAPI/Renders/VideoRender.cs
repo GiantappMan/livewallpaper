@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
+    [Obsolete("使用EngineRender 代替")]
     public class VideoRender : ExternalProcessRender
     {
         //每次升级就修改这个文件名

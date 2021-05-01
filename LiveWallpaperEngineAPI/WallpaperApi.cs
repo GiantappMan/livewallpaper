@@ -62,7 +62,7 @@ namespace Giantapp.LiveWallpaper.Engine
             if (!Initialized)
             {
                 RenderManager.Renders.Add(new ExeRender());
-                RenderManager.Renders.Add(new VideoRender());
+                RenderManager.Renders.Add(new LiveWallpaperEngineRender());
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
@@ -582,7 +582,7 @@ namespace Giantapp.LiveWallpaper.Engine
                         distFolder = WebRender.PlayerFolderName;
                         break;
                     case WallpaperType.Video:
-                        distFolder = VideoRender.PlayerFolderName;
+                        distFolder = LiveWallpaperEngineRender.PlayerFolderName;
                         break;
                 }
                 SevenZip archiveFile = new SevenZip(zipFile);
