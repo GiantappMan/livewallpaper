@@ -318,8 +318,8 @@ namespace Giantapp.LiveWallpaper.Engine
                         existWallpaper.Option == wallpaper.Option)
                         continue;
 
-                    //关闭之前的壁纸
-                    await CloseWallpaper(screenItem);
+                    //关闭其他类型的壁纸
+                    await CloseWallpaperEx(currentRender.SupportType, screenItem);
                     var showResult = await currentRender.ShowWallpaper(wallpaper, screenItem);
                     if (!showResult.Ok)
                         return BaseApiResult<WallpaperModel>.ErrorState(showResult.Error, showResult.Message, wallpaper);
@@ -346,20 +346,32 @@ namespace Giantapp.LiveWallpaper.Engine
                 QuitBusyState(nameof(ShowWallpaper));
             }
         }
-
-        public static async Task<BaseApiResult> CloseWallpaper(params string[] screens)
+        public static Task<BaseApiResult> CloseWallpaper(params string[] screens)
+        {
+            return CloseWallpaperEx(null, screens);
+        }
+        public static async Task<BaseApiResult> CloseWallpaperEx(WallpaperType? excludeType = null, params string[] screens)
         {
             try
             {
                 if (!EnterBusyState(nameof(CloseWallpaper)))
                     return BaseApiResult.BusyState();
 
+                List<string> tmpCloseScreen = new();
                 foreach (var screenItem in screens)
                 {
                     if (CurrentWalpapers.ContainsKey(screenItem))
+                    {
+                        var currentWallpaper = CurrentWalpapers[screenItem];
+                        bool isExcluded = excludeType != null && currentWallpaper != null && currentWallpaper.RunningData.Type == excludeType;
                         CurrentWalpapers.Remove(screenItem);
+
+                        if (isExcluded)
+                            continue;
+                        tmpCloseScreen.Add(screenItem);
+                    }
                 }
-                await InnerCloseWallpaper(screens);
+                await InnerCloseWallpaper(tmpCloseScreen.ToArray());
                 return new BaseApiResult() { Ok = true };
             }
             catch (Exception ex)
@@ -690,14 +702,16 @@ namespace Giantapp.LiveWallpaper.Engine
                 {
                     var wallpaper = CurrentWalpapers[screen];
                     var currentRender = RenderManager.GetRender(wallpaper);
-                    currentRender.SetVolume(screen == Options.AudioScreen ? 100 : 0, screen);
+                    currentRender?.SetVolume(screen == Options.AudioScreen ? 100 : 0, screen);
                 }
             }
         }
         private static async Task InnerCloseWallpaper(params string[] screens)
         {
             foreach (var m in RenderManager.Renders)
+            {
                 await m.CloseWallpaperAsync(screens);
+            }
         }
         private static void StartTimer(bool enable)
         {

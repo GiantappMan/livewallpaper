@@ -32,26 +32,41 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         }
 
-        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, bool closeBeforeOpening)
+        protected override Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel nextWallpaper)
         {
-            //不论是否临时关闭，都需要关闭进程重启进程
-            foreach (var render in wallpaperRenders)
+            //还要继续播放视频壁纸，不用关闭
+            if (nextWallpaper != null && nextWallpaper.RunningData.Type == WallpaperType.Video)
             {
-                try
-                {
-                    var p = Process.GetProcessById(render.PId);
-                    p.Kill();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"InnerCloseWallpaper ex:{ex}");
-                }
-                finally
-                {
-                    if (SupportMouseEvent)
-                        await DesktopMouseEventReciver.RemoveHandle(render.ReceiveMouseEventHandle);
-                }
+                return Task.CompletedTask;
             }
+
+            //关闭壁纸
+            SendToRender(new RenderProtocol(new StopVideoPayload()
+            {
+                Screen = wallpaperRenders.Select(m => m.Screen).ToArray(),
+            })
+            {
+                Command = ProtocolDefinition.StopVideo
+            });
+
+            return Task.CompletedTask;
+            //foreach (var render in wallpaperRenders)
+            //{
+            //    try
+            //    {
+            //        var p = Process.GetProcessById(render.PId);
+            //        p.Kill();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine($"InnerCloseWallpaper ex:{ex}");
+            //    }
+            //    finally
+            //    {
+            //        if (SupportMouseEvent)
+            //            await DesktopMouseEventReciver.RemoveHandle(render.ReceiveMouseEventHandle);
+            //    }
+            //}
         }
 
         protected override async Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel wallpaper, CancellationToken ct, params string[] screens)
@@ -82,6 +97,17 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     var host = LiveWallpaperRenderForm.GetHost(screenItem);
                     host!.ShowWallpaper(new IntPtr(handle));
 
+                    infos.Add(new RenderInfo()
+                    {
+                        Wallpaper = wallpaper,
+                        Screen = screenItem
+                    });
+                }
+            }
+            else
+            {
+                foreach(var screenItem in screens)
+                {
                     infos.Add(new RenderInfo()
                     {
                         Wallpaper = wallpaper,

@@ -28,18 +28,18 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             foreach (var item in screens)
                 Debug.WriteLine($"show {GetType().Name} {item}");
 
-            List<RenderInfo> changedRender = new List<RenderInfo>();
+            List<RenderInfo> changedRenderInfo = new();
             //过滤无变化的屏幕
             var changedScreen = screens.Where(m =>
             {
                 bool ok = false;
-                var existRender = _currentWallpapers.FirstOrDefault(x => x.Screen == m);
-                if (existRender == null)
+                var existRenderInfo = _currentWallpapers.FirstOrDefault(x => x.Screen == m);
+                if (existRenderInfo == null)
                     ok = true;
                 else
                 {
-                    ok = existRender.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath;
-                    changedRender.Add(existRender);
+                    ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath;
+                    changedRenderInfo.Add(existRenderInfo);
                 }
                 return ok;
             }).ToArray();
@@ -47,7 +47,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             if (changedScreen.Length > 0)
             {
                 //关闭已经展现的壁纸
-                await InnerCloseWallpaperAsync(changedRender, true);
+                await CloseWallpaperExAsync(wallpaper, changedScreen);
 
                 _showWallpaperCts = new CancellationTokenSource();
                 var showResult = await InnerShowWallpaper(wallpaper, _showWallpaperCts.Token, changedScreen);
@@ -60,7 +60,11 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             return BaseApiResult<List<RenderInfo>>.SuccessState();
         }
-        public async Task CloseWallpaperAsync(params string[] screens)
+        public Task CloseWallpaperAsync(params string[] screens)
+        {
+            return CloseWallpaperExAsync(null, screens);
+        }
+        public async Task CloseWallpaperExAsync(WallpaperModel nextWallpaper = null, params string[] screens)
         {
             var playingWallpaper = _currentWallpapers.Where(m => screens.Contains(m.Screen)).ToList();
             if (playingWallpaper.Count == 0)
@@ -74,7 +78,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             _showWallpaperCts?.Dispose();
             _showWallpaperCts = null;
 
-            await InnerCloseWallpaperAsync(playingWallpaper);
+            await InnerCloseWallpaperAsync(playingWallpaper, nextWallpaper);
 
             playingWallpaper.ToList().ForEach(m =>
             {
@@ -88,7 +92,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         /// <param name="playingWallpaper"></param>
         /// <param name="closeBeforeOpening">是否是临时关闭，临时关闭表示马上又会继续播放其他壁纸</param>
         /// <returns></returns>
-        protected virtual Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, bool closeBeforeOpening = false)
+        protected virtual Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel nextWallpaper = null)
         {
             return Task.CompletedTask;
         }

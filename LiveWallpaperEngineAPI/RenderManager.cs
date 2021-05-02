@@ -38,6 +38,8 @@ namespace Giantapp.LiveWallpaper.Engine
 
         internal static IRender GetRender(WallpaperModel wallpaper)
         {
+            if (wallpaper == null)
+                return null;
             if (wallpaper.RunningData.Type != null)
                 return GetRender(wallpaper.RunningData.Type.Value);
             else if (!string.IsNullOrEmpty(wallpaper.RunningData.AbsolutePath))

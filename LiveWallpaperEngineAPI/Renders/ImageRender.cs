@@ -63,10 +63,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             }
         }
 
-        protected override Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, bool closeBeforeOpening)
+        protected override Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel nextWallpaper)
         {
             //临时关闭不用处理
-            if (closeBeforeOpening)
+            if (nextWallpaper != null)
                 return Task.CompletedTask;
 
             return Task.Run(() =>

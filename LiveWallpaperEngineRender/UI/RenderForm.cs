@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace LiveWallpaperEngineRender
@@ -10,6 +11,12 @@ namespace LiveWallpaperEngineRender
         public RenderForm()
         {
             InitializeComponent();
+            //UI
+            BackColor = Color.Magenta;
+            TransparencyKey = Color.Magenta;
+            ShowInTaskbar = false;
+            FormBorderStyle = FormBorderStyle.None;
+            //Opacity = 0;
         }
 
         internal void PlayVideo(string filePath)
