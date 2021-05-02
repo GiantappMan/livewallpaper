@@ -131,7 +131,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             switch (wpType)
             {
                 case WallpaperType.Video:
-                    folder = LiveWallpaperEngineRender.PlayerFolderName;
+                    folder = EngineRender.PlayerFolderName;
                     break;
             }
             AppManager.PlayerDownloader.DistDir = Path.Combine(AppManager.UserSetting.Wallpaper.ExternalPlayerFolder, folder);

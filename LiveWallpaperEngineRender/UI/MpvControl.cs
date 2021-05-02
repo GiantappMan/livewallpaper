@@ -60,9 +60,9 @@ namespace LiveWallpaperEngineRender
             _player?.API.SetPropertyString("stop-screensaver", "no");
             _player.Volume = _volume;
 
-            //_player?.Pause();
+            _player?.Pause();
             _player?.Load(path);
-            //_player?.Resume();
+            _player?.Resume();
         }
 
         public void Stop()
