@@ -117,7 +117,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 try
                 {
                     //多次pause可能导致视频无法恢复等问题
-                    if (wallpaper.IsPaused || wallpaper.PId == 0)
+                    if (wallpaper.IsPaused)
                         continue;
 
                     InnerPause(wallpaper);
@@ -143,10 +143,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             foreach (var wallpaper in playingWallpaper)
             {
                 try
-                {
-                    if (wallpaper.PId == 0)
-                        continue;
-
+                {                 
                     InnerResum(wallpaper);
                     wallpaper.IsPaused = false;
                 }

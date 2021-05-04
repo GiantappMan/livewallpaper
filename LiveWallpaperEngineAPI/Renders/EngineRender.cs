@@ -109,11 +109,23 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         }
         protected override void InnerPause(RenderInfo renderInfo)
         {
-            //todo
+            SendToRender(new RenderProtocol(new PauseVideoPayload()
+            {
+                Screen = new string[] { renderInfo.Screen },
+            })
+            {
+                Command = ProtocolDefinition.PauseVideo
+            });
         }
         protected override void InnerResum(RenderInfo renderInfo)
         {
-            //todo
+            SendToRender(new RenderProtocol(new ResumeVideoPayload()
+            {
+                Screen = new string[] { renderInfo.Screen },
+            })
+            {
+                Command = ProtocolDefinition.ResumVideo
+            });
         }
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {

@@ -34,6 +34,16 @@ namespace LiveWallpaperEngineRender
             _mpv?.Stop();
         }
 
+        internal void PauseVideo()
+        {
+            _mpv?.Pause();
+        }
+
+        internal void ResumeVideo()
+        {
+            _mpv?.Resum();
+        }
+
         private void ShowControl(Control control)
         {
             Util.InvokeIfRequired(() =>

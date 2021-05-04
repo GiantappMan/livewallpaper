@@ -101,11 +101,15 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         protected override void InnerPause(RenderInfo renderInfo)
         {
+            if (renderInfo.PId == 0)
+                return;
             var p = Process.GetProcessById(renderInfo.PId);
             p.Suspend();
         }
         protected override void InnerResum(RenderInfo renderInfo)
         {
+            if (renderInfo.PId == 0)
+                return;
             var p = Process.GetProcessById(renderInfo.PId);
             p.Resume();
         }

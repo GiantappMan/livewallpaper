@@ -12,6 +12,8 @@ namespace LiveWallpaperEngineRender
         //to render
         PlayVideo,
         StopVideo,
+        PauseVideo,
+        ResumVideo,
         //to parent
         Initlized
     }
@@ -60,6 +62,16 @@ namespace LiveWallpaperEngineRender
     }
 
     public class StopVideoPayload
+    {
+        public string[] Screen { get; set; }
+    }
+
+    public class PauseVideoPayload
+    {
+        public string[] Screen { get; set; }
+    }
+
+    public class ResumeVideoPayload
     {
         public string[] Screen { get; set; }
     }

@@ -60,7 +60,7 @@ namespace LiveWallpaperEngineRender
             Form currentForm = sender as Form;
             currentForm.HandleCreated -= Form_HandleCreated;
 
-            InitlizedPayload payload = new InitlizedPayload();
+            InitlizedPayload payload = new();
 
             foreach (var item in _allWindows)
             {
@@ -120,6 +120,20 @@ namespace LiveWallpaperEngineRender
                             foreach (var item in stopPayload.Screen)
                             {
                                 _allWindows[item].StopVideo();
+                            }
+                            break;
+                        case ProtocolDefinition.PauseVideo:
+                            var pausePayload = protocol.GetPayLoad<PauseVideoPayload>();
+                            foreach (var item in pausePayload.Screen)
+                            {
+                                _allWindows[item].PauseVideo();
+                            }
+                            break;
+                        case ProtocolDefinition.ResumVideo:
+                            var resumePayload = protocol.GetPayLoad<ResumeVideoPayload>();
+                            foreach (var item in resumePayload.Screen)
+                            {
+                                _allWindows[item].ResumeVideo();
                             }
                             break;
                     }
