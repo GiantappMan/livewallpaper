@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using WinAPI.Extension;
 using WinAPI.Helpers;
 
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
-    //目前所有动态壁纸都是这个类实现，通过启用外部exe来渲染，以防止崩溃。
+    //通过启用外部exe渲染
     public abstract class ExternalProcessRender : BaseRender
     {
         private static readonly ProcessJobTracker _pj = new ProcessJobTracker();
@@ -96,6 +97,17 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         protected virtual ProcessStartInfo GetRenderExeInfo(WallpaperModel model)
         {
             return new ProcessStartInfo(model.RunningData.AbsolutePath);
+        }
+
+        protected override void InnerPause(RenderInfo renderInfo)
+        {
+            var p = Process.GetProcessById(renderInfo.PId);
+            p.Suspend();
+        }
+        protected override void InnerResum(RenderInfo renderInfo)
+        {
+            var p = Process.GetProcessById(renderInfo.PId);
+            p.Resume();
         }
 
         protected virtual Task<RenderProcess> StartProcess(ProcessStartInfo info, CancellationToken ct)

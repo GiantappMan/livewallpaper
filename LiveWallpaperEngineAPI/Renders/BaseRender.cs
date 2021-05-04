@@ -120,8 +120,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     if (wallpaper.IsPaused || wallpaper.PId == 0)
                         continue;
 
-                    var p = Process.GetProcessById(wallpaper.PId);
-                    p.Suspend();
+                    InnerPause(wallpaper);
                     wallpaper.IsPaused = true;
                 }
                 catch (Exception ex)
@@ -130,6 +129,11 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     continue;
                 }
             }
+        }
+
+        protected virtual void InnerPause(RenderInfo renderInfo)
+        {
+
         }
 
         public void Resume(params string[] screens)
@@ -143,16 +147,20 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     if (wallpaper.PId == 0)
                         continue;
 
-                    var p = Process.GetProcessById(wallpaper.PId);
-                    p.Resume();
+                    InnerResum(wallpaper);
                     wallpaper.IsPaused = false;
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine(ex);
+                    Debug.WriteLine(ex);
                     continue;
                 }
             }
+        }
+
+        protected virtual void InnerResum(RenderInfo renderInfo)
+        {
+
         }
 
         public void SetVolume(int v, string screen)

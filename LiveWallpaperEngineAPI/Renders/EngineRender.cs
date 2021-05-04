@@ -50,23 +50,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             });
 
             return Task.CompletedTask;
-            //foreach (var render in wallpaperRenders)
-            //{
-            //    try
-            //    {
-            //        var p = Process.GetProcessById(render.PId);
-            //        p.Kill();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Debug.WriteLine($"InnerCloseWallpaper ex:{ex}");
-            //    }
-            //    finally
-            //    {
-            //        if (SupportMouseEvent)
-            //            await DesktopMouseEventReciver.RemoveHandle(render.ReceiveMouseEventHandle);
-            //    }
-            //}
         }
 
         protected override async Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel wallpaper, CancellationToken ct, params string[] screens)
@@ -77,7 +60,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             List<RenderInfo> infos = new();
             InitlizedPayload initlizedPayload = null;
-            //List<Task> tmpTasks = new();
 
             if (_renderProcess == null)
             {
@@ -92,8 +74,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     if (ct.IsCancellationRequested)
                         break;
 
-                    //var task = Task.Run(() =>
-                    //{
                     var host = LiveWallpaperRenderForm.GetHost(screenItem);
                     host!.ShowWallpaper(new IntPtr(handle));
 
@@ -106,7 +86,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             }
             else
             {
-                foreach(var screenItem in screens)
+                foreach (var screenItem in screens)
                 {
                     infos.Add(new RenderInfo()
                     {
@@ -115,20 +95,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     });
                 }
             }
-
-
-            //return Task.CompletedTask;
-            //}, ct);
-
-            //tmpTasks.Add(task);
-
-            //await Task.WhenAll(tmpTasks);
-            // todo 
-            //if (SupportMouseEvent && WallpaperApi.Options.ForwardMouseEvent && wallpaper.Option.EnableMouseEvent)
-            //{
-            //    foreach (var item in infos)
-            //        await DesktopMouseEventReciver.AddHandle(item.ReceiveMouseEventHandle, item.Screen);
-            //}
 
             //显示壁纸
             SendToRender(new RenderProtocol(new PlayVideoPayload()
@@ -141,7 +107,14 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             });
             return BaseApiResult<List<RenderInfo>>.SuccessState(infos);
         }
-
+        protected override void InnerPause(RenderInfo renderInfo)
+        {
+            //todo
+        }
+        protected override void InnerResum(RenderInfo renderInfo)
+        {
+            //todo
+        }
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             Debug.WriteLine(e.Data);
@@ -150,13 +123,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             var protocol = JsonSerializer.Deserialize<RenderProtocol>(e.Data);
             if (protocol != null)
                 _receivedCommand?.Invoke(this, protocol);
-
-            //switch (protocol.Command)
-            //{
-            //    case ProtocolDefinition.Initlized:
-            //        var payload = protocol.GetPayLoad<InitlizedPayload>();
-            //        break;
-            //}
         }
 
         private void Proc_Exited(object sender, EventArgs e)
@@ -195,18 +161,15 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             sw.Start();
             int timeout = 30 * 1000;
 
-            //info.WindowStyle = ProcessWindowStyle.Maximized;
-            //info.CreateNoWindow = true;
-
             InitlizedPayload result = null;
 
-            EventHandler<RenderProtocol> EngineRender__receivedCommand = (object sender, RenderProtocol e) =>
+            void EngineRender__receivedCommand(object sender, RenderProtocol e)
             {
                 if (e.Command == ProtocolDefinition.Initlized)
                 {
                     result = e.GetPayLoad<InitlizedPayload>();
                 }
-            };
+            }
 
             _receivedCommand += EngineRender__receivedCommand;
 
@@ -244,21 +207,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             _receivedCommand -= EngineRender__receivedCommand;
 
             return result;
-
-            //Process targetProcess = Process.Start(info);
-
-
-
-            //RenderProcess result = new RenderProcess()
-            //{
-            //    PId = targetProcess.Id,
-            //    HostHandle = targetProcess.MainWindowHandle,
-            //    ReceiveMouseEventHandle = targetProcess.MainWindowHandle
-            //};
-            ////壁纸引擎关闭后，关闭渲染进程
-            //_pj.AddProcess(targetProcess);
-            //targetProcess.Dispose();
-            //return result;
         }
 
         private void SendToRender(RenderProtocol renderProtocol)
