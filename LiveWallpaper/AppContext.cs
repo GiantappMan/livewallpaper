@@ -85,11 +85,11 @@ namespace LiveWallpaper
 
             _btnMainUI = new ToolStripMenuItem();
             _btnMainUI.Click += BtnMainUI_Click;
-            _contextMenu.Items.Add(_btnMainUI);
+            //_contextMenu.Items.Add(_btnMainUI);
 
             _btnMainUIWeb = new ToolStripMenuItem();
             _btnMainUIWeb.Click += BtnMainUIWeb_Click;
-            //_contextMenu.Items.Add(_btnMainUIWeb);
+            _contextMenu.Items.Add(_btnMainUIWeb);
 
             _btnSetting = new ToolStripMenuItem();
             _btnSetting.Click += BtnSetting_Click;
@@ -121,7 +121,7 @@ namespace LiveWallpaper
               {
                   _btnCommunity.Text = await GetText("wallpapers.title");
                   _btnMainUI.Text = await GetText("local.title");
-                  _btnMainUIWeb.Text = await GetText("local.title") + "Web";
+                  _btnMainUIWeb.Text = await GetText("local.title");
                   _btnExit.Text = await GetText("client.exit");
                   _btnSetting.Text = await GetText("common.settings");
                   _notifyIcon.Text = await GetText("common.appName");
