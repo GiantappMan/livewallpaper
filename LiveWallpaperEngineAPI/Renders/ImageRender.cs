@@ -81,7 +81,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                            continue;
                        _desktopFactory.SetWallpaper(monitoryId, oldWallpaper);
                        //还原旧壁纸后，这里多等一秒，否则切换视频壁纸会失败
-                       Thread.Sleep(1000);
+                       //Thread.Sleep(1000);
                    }
                    catch (Exception ex)
                    {
