@@ -117,7 +117,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 try
                 {
                     //多次pause可能导致视频无法恢复等问题
-                    if (wallpaper.IsPaused)
+                    if (wallpaper.IsPaused || wallpaper.PId == 0)
                         continue;
 
                     var p = Process.GetProcessById(wallpaper.PId);
@@ -140,6 +140,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             {
                 try
                 {
+                    if (wallpaper.PId == 0)
+                        continue;
+
                     var p = Process.GetProcessById(wallpaper.PId);
                     p.Resume();
                     wallpaper.IsPaused = false;
