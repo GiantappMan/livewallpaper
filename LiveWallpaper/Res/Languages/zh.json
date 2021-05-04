@@ -30,7 +30,8 @@
   "mainUI_refreshWallpaper": "刷新壁纸",
   "mainUI_createWallpaper": "创建壁纸",
   "mainUI_warning_loadError": "读取壁纸失败",
-  "mainUI_thirdParty_desc": "本项目完全开源，技术交流，不承担任何风险。\r 目前没有壁纸商店可用，请自行下载视频导入即可。",
+  "mainUI_thirdParty_desc": "本项目完全开源，技术交流，不承担任何风险。",
+  "download_wallpaper": "现在你可以使用我们新的预览版本一键下载壁纸。\r 或者仅使用新版网站，右键视频保存壁纸，使用本应用导入即可。",
   "mainUI_openLocalServer": "打开壁纸商城应用",
   "mainUI_downloadStore": "下载壁纸商店",
 

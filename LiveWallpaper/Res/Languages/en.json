@@ -30,7 +30,8 @@
   "mainUI_refreshWallpaper": "Refresh wallpaper",
   "mainUI_createWallpaper": "Create wallpaper",
   "mainUI_warning_loadError": "Failed to read wallpaper",
-  "mainUI_thirdParty_desc": "This project is completely open source and technically exchanged without any risk. \r There is currently no wallpaper store available, please download the video and import it yourself",
+  "mainUI_thirdParty_desc": "This project is completely open source and technically exchanged without any risk. ",
+  "download_wallpaper": "Now you can use our new preview version to download wallpapers with one click. \r Or just use the new version of the website, right-click the video to save the wallpaper, and use this application to import it.",
   "mainUI_openLocalServer": "Open local service",
   "mainUI_downloadStore": "Download store",
 

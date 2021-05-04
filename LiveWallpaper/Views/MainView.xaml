@@ -115,7 +115,7 @@
                         <iconPacks:PackIconMaterial
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Kind="AccountSettingsOutline" />                      
+                            Kind="AccountSettingsOutline" />
                     </Button>
                     <!--<ComboBox />-->
                     <StackPanel
@@ -155,10 +155,19 @@
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock
                         HorizontalAlignment="Stretch"
+                        lan:Xaml.Key="download_wallpaper"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                    <TextBlock TextAlignment="Center">
+                        <Hyperlink Click="Hyperlink_Click" NavigateUri="https://livewallpaper.giantapp.cn/wallpapers">https://livewallpaper.giantapp.cn/wallpapers</Hyperlink>
+                    </TextBlock>
+                    <TextBlock
+                        Margin="0,50,0,0"
+                        HorizontalAlignment="Stretch"
                         lan:Xaml.Key="mainUI_thirdParty_desc"
                         TextAlignment="Center"
                         TextWrapping="Wrap" />
-                    <TextBlock Margin="0,50,0,0" TextAlignment="Center">
+                    <TextBlock Margin="0,0,0,0" TextAlignment="Center">
                         <Hyperlink Click="Hyperlink_Click" NavigateUri="https://github.com/giant-app/LiveWallpaper">https://github.com/giant-app/LiveWallpaper</Hyperlink>
                     </TextBlock>
                     <!--<Button
