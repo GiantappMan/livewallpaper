@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using WinAPI.Helpers;
+using Windows.Storage;
 
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
@@ -145,6 +146,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         protected virtual ProcessStartInfo GetRenderProcessInfo(WallpaperModel model)
         {
             string playerPath = Path.Combine(WallpaperApi.Options.ExternalPlayerFolder, $@"{PlayerFolderName}\LiveWallpaperEngineRender.exe");
+
+            //测试发现，自己写的程序用假路径执行不了。mpv没问题
+            playerPath = GetRealPath(playerPath);
+            
             if (!File.Exists(playerPath))
                 return null;
 
@@ -162,6 +167,28 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 UseShellExecute = false,
             };
             return r;
+        }
+
+        public string GetRealPath(string path)
+        {
+            try
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+                //uwp 真实存储路径不一样
+                //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+                if (path.Contains(appData))
+                {
+                    string realAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Local");
+                    path = path.Replace(appData, realAppData);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                return null;
+            }
+            return path;
         }
 
         protected async Task<InitlizedPayload> StartProcess(ProcessStartInfo info, CancellationToken ct)
@@ -195,7 +222,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                 _renderProcess.Exited += Proc_Exited;
                 _renderProcess.OutputDataReceived += Proc_OutputDataReceived;
-                _renderProcess.Start();
+                var res = _renderProcess.Start();
                 _renderProcess.BeginOutputReadLine();
 
                 _pj.AddProcess(_renderProcess);
@@ -224,7 +251,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         private void SendToRender(RenderProtocol renderProtocol)
         {
             var json = JsonSerializer.Serialize(renderProtocol);
-            _renderProcess.StandardInput.WriteLine(json);
+            _renderProcess?.StandardInput.WriteLine(json);
         }
     }
 }

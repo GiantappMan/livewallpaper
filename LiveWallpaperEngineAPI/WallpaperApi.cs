@@ -64,6 +64,7 @@ namespace Giantapp.LiveWallpaper.Engine
             {
                 RenderManager.Renders.Add(new ExeRender());
                 RenderManager.Renders.Add(new EngineRender());
+                //RenderManager.Renders.Add(new VideoRender());
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
