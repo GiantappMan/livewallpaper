@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -37,7 +38,7 @@ namespace LiveWallpaperEngineRender
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            ListenConsole();
+            Task.Run(ListenConsole);
 
             foreach (var screen in Screen.AllScreens)
             {
@@ -94,14 +95,14 @@ namespace LiveWallpaperEngineRender
             return result;
         }
 
-        private static async void ListenConsole()
+        private static void ListenConsole()
         {
             while (true)
             {
                 if (DateTime.Now - lastReadConsoleTime < TimeSpan.FromSeconds(1))
-                    await Task.Delay(1000);
+                    Thread.Sleep(1000);
 
-                var json = await Console.In.ReadLineAsync();
+                var json = Console.In.ReadLine();
                 if (!string.IsNullOrEmpty(json))
                 {
                     var protocol = JsonSerializer.Deserialize<RenderProtocol>(json);

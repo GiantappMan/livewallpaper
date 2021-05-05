@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>x86</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Mpv.NET" Version="1.2.0" />

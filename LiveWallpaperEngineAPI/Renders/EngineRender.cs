@@ -54,7 +54,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         protected override async Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel wallpaper, CancellationToken ct, params string[] screens)
         {
-            ProcessStartInfo pInfo = await Task.Run(() => GetRenderExeInfo(wallpaper));
+            ProcessStartInfo pInfo = await Task.Run(() => GetRenderProcessInfo(wallpaper));
             if (pInfo == null)
                 return BaseApiResult<List<RenderInfo>>.ErrorState(ErrorType.NoPlayer);
 
@@ -142,7 +142,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             _renderProcess = null;
         }
 
-        protected virtual ProcessStartInfo GetRenderExeInfo(WallpaperModel model)
+        protected virtual ProcessStartInfo GetRenderProcessInfo(WallpaperModel model)
         {
             string playerPath = Path.Combine(WallpaperApi.Options.ExternalPlayerFolder, $@"{PlayerFolderName}\LiveWallpaperEngineRender.exe");
             if (!File.Exists(playerPath))
