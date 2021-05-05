@@ -1,4 +1,5 @@
 # 依赖库：
+# 管理员权限安装
 # Install-Module -Name 7Zip4Powershell
 
 
