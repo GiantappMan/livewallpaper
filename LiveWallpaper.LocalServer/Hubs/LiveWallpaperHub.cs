@@ -85,6 +85,14 @@ namespace LiveWallpaper.LocalServer.Hubs
             await AppManager.SaveCurrentWalpapers();
             return model;
         }
+        public Dictionary<string, WallpaperModel> GetRunningWallpapers()
+        {
+            return WallpaperApi.CurrentWalpapers;
+        }
+        public Task<BaseApiResult> CloseWallpaper(string[] screen)
+        {
+            return WallpaperApi.CloseWallpaper(screen);
+        }
         public async Task<BaseApiResult> ExploreFile(string path)
         {
             try
