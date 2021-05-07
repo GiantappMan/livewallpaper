@@ -66,7 +66,7 @@ namespace LiveWallpaperEngineRender.Test
             SendToRender(new RenderProtocol(new PlayVideoPayload()
             {
                 FilePath = @"D:\gitee\LiveWallpaper\LiveWallpaperEngineAPI.Samples.NetCore.Test\WallpaperSamples\video.mp4",
-                Screen = new string[] { Screen.PrimaryScreen.DeviceName },
+                Screen = new ScreenInfo[] { new(Screen.PrimaryScreen.DeviceName, true) },
             })
             {
                 Command = ProtocolDefinition.PlayVideo
@@ -83,7 +83,7 @@ namespace LiveWallpaperEngineRender.Test
         {
             SendToRender(new RenderProtocol(new PlayVideoPayload()
             {
-                Screen = new string[] { Screen.PrimaryScreen.DeviceName },
+                Screen = new ScreenInfo[] { new(Screen.PrimaryScreen.DeviceName, true) },
             })
             {
                 Command = ProtocolDefinition.StopVideo

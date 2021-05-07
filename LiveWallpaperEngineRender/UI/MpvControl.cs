@@ -18,7 +18,7 @@ namespace LiveWallpaperEngineRender
             BackColor = Color.Magenta;
         }
 
-        public void Play(string path)
+        public void Play(string path, bool hwdec = true, bool panscan = true)
         {
             if (_player == null)
             {
@@ -42,7 +42,7 @@ namespace LiveWallpaperEngineRender
                         Loop = true,
                         Volume = 0
                     };
-             
+
                     _player.AutoPlay = true;
                     //Play(_lastPath);
                 });
@@ -53,10 +53,26 @@ namespace LiveWallpaperEngineRender
 
             //_lastPath = path;
 
-            //防止视频黑边
-            _player.API.SetPropertyString("panscan", "1.0");
-            // 设置解码模式为自动，如果条件允许，MPV会启动硬件解码
-            _player?.API.SetPropertyString("hwdec", "auto");
+            if (panscan)
+            {
+                //防止视频黑边
+                _player.API.SetPropertyString("panscan", "1.0");
+            }
+            else
+            {
+                _player.API.SetPropertyString("panscan", "0.0");
+            }
+
+            if (hwdec)
+            {
+                // 设置解码模式为自动，如果条件允许，MPV会启动硬件解码
+                _player?.API.SetPropertyString("hwdec", "auto");
+            }
+            else
+            {
+                //软解，消耗cpu
+                _player?.API.SetPropertyString("hwdec", "no");
+            }
             //允许休眠
             _player?.API.SetPropertyString("stop-screensaver", "no");
             _player.Volume = _volume;

@@ -24,7 +24,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         private static Process _renderProcess;
         private event EventHandler<RenderProtocol> _receivedCommand;
 
-        public static string PlayerFolderName { get; } = "LiveWallpaperEngineRender1";
+        public static string PlayerFolderName { get; } = "LiveWallpaperEngineRender1.1";
         public EngineRender() : base(WallpaperType.Video,
             new List<string>() {
                 ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm" }
@@ -32,7 +32,29 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         {
 
         }
+        public override void SetVolume(int v, string screen)
+        {
+            SendToRender(new RenderProtocol(new SetAudioPayload()
+            {
+                AudioScreen = screen,
+                Volume = v
+            })
+            {
+                Command = ProtocolDefinition.SetAudio
+            });
 
+            //var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
+            //if (playingWallpaper != null)
+            //    AudioHelper.SetVolume(playingWallpaper.PId, v);
+        }
+
+        public override int GetVolume(string screen)
+        {
+            return 0;
+            //var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
+            //int result = AudioHelper.GetVolume(playingWallpaper.PId);
+            //return result;
+        }
         protected override Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel nextWallpaper)
         {
             //还要继续播放视频壁纸，不用关闭
@@ -97,11 +119,19 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 }
             }
 
+            var screen = screens.Select(m =>
+            {
+                var exists = WallpaperApi.Options.ScreenOptions.FirstOrDefault(e => e.Screen == m);
+                return new ScreenInfo(m, exists == null || exists.PanScan);
+            }).ToArray();
+
             //显示壁纸
             SendToRender(new RenderProtocol(new PlayVideoPayload()
             {
                 FilePath = wallpaper.RunningData.AbsolutePath,
-                Screen = screens,
+                Screen = screen,
+                HardwareDecoding = wallpaper.Option.HardwareDecoding,
+                AudioScreen = WallpaperApi.Options.AudioScreen
             })
             {
                 Command = ProtocolDefinition.PlayVideo
@@ -149,7 +179,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             //测试发现，自己写的程序用假路径执行不了。mpv没问题
             playerPath = GetRealPath(playerPath);
-            
+
             if (!File.Exists(playerPath))
                 return null;
 
@@ -169,7 +199,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             return r;
         }
 
-        public string GetRealPath(string path)
+        public static string GetRealPath(string path)
         {
             try
             {

@@ -3,6 +3,7 @@ using Giantapp.LiveWallpaper.Engine.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WinAPI.Extension;
@@ -18,7 +19,19 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         protected ExternalProcessRender(WallpaperType type, List<string> extension, bool mouseEvent = true) : base(type, extension, mouseEvent)
         {
         }
+        public override void SetVolume(int v, string screen)
+        {
+            var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
+            if (playingWallpaper != null)
+                AudioHelper.SetVolume(playingWallpaper.PId, v);
+        }
 
+        public override int GetVolume(string screen)
+        {
+            var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
+            int result = AudioHelper.GetVolume(playingWallpaper.PId);
+            return result;
+        }
         protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel nextWallpaper)
         {
             //不论是否临时关闭，都需要关闭进程重启进程

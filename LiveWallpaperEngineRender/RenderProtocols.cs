@@ -14,6 +14,7 @@ namespace LiveWallpaperEngineRender
         StopVideo,
         PauseVideo,
         ResumVideo,
+        SetAudio,
         //to parent
         Initlized
     }
@@ -55,10 +56,34 @@ namespace LiveWallpaperEngineRender
         public Dictionary<string, Int64> WindowHandles { get; set; } = new Dictionary<string, Int64>();
     }
 
+    public class ScreenInfo
+    {
+        public ScreenInfo(string screenName, bool panscan)
+        {
+            ScreenName = screenName;
+            Panscan = panscan;
+        }
+        public string ScreenName { get; set; }
+        public bool Panscan { get; set; }
+    }
+
     public class PlayVideoPayload
     {
         public string FilePath { get; set; }
-        public string[] Screen { get; set; }
+        public bool HardwareDecoding { get; set; } = true;
+        public ScreenInfo[] Screen { get; set; }
+        /// <summary>
+        /// 播放屏幕声音，只能播放一个，null都不播放
+        /// </summary>
+        public string AudioScreen { get; set; }
+    }
+    public class SetAudioPayload
+    {
+        public string AudioScreen { get; set; }
+        /// <summary>
+        /// 音量 0-100
+        /// </summary>
+        public int Volume { get; set; }
     }
 
     public class StopVideoPayload

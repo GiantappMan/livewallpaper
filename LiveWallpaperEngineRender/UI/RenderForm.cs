@@ -19,14 +19,17 @@ namespace LiveWallpaperEngineRender
             //Opacity = 0;
         }
 
-        internal void PlayVideo(string filePath)
+        internal void PlayVideo(string filePath, bool hardwareDecoding, int volume, bool panscan)
         {
             if (_mpv == null)
             {
                 _mpv = new MpvControl();
                 ShowControl(_mpv);
             }
-            _mpv.Play(filePath);
+
+            _mpv.SetVolume(volume);
+
+            _mpv.Play(filePath, hardwareDecoding, panscan);
         }
 
         internal void StopVideo()
@@ -43,7 +46,10 @@ namespace LiveWallpaperEngineRender
         {
             _mpv?.Resum();
         }
-
+        internal void SetVolume(int volume)
+        {
+            _mpv.SetVolume(volume);
+        }
         private void ShowControl(Control control)
         {
             Util.InvokeIfRequired(() =>

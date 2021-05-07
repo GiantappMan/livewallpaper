@@ -23,6 +23,16 @@ namespace Giantapp.LiveWallpaper.Engine
         /// 所影响的屏幕
         /// </summary>
         public string Screen { get; set; }
+
+        /// <summary>
+        /// 备注
+        /// </summary>
+        public string Remark { get; set; }
+
+        /// <summary>
+        /// 铺满没有黑边
+        /// </summary>
+        public bool PanScan { get; set; }
     }
     /// <summary>
     /// api 提供的选项

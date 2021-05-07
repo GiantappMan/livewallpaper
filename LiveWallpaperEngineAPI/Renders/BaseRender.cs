@@ -11,7 +11,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 {
     public abstract class BaseRender : IRender
     {
-        private readonly List<RenderInfo> _currentWallpapers = new List<RenderInfo>();
+        protected readonly List<RenderInfo> _currentWallpapers = new List<RenderInfo>();
         private CancellationTokenSource _showWallpaperCts = new CancellationTokenSource();
         public WallpaperType SupportType { get; private set; }
         public List<string> SupportExtension { get; private set; }
@@ -101,11 +101,14 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         {
         }
 
-        public int GetVolume(string screen)
+        public virtual void SetVolume(int v, string screen)
         {
-            var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
-            int result = AudioHelper.GetVolume(playingWallpaper.PId);
-            return result;
+
+        }
+
+        public virtual int GetVolume(string screen)
+        {
+            return 0;
         }
 
         public void Pause(params string[] screens)
@@ -143,7 +146,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             foreach (var wallpaper in playingWallpaper)
             {
                 try
-                {                 
+                {
                     InnerResum(wallpaper);
                     wallpaper.IsPaused = false;
                 }
@@ -158,13 +161,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         protected virtual void InnerResum(RenderInfo renderInfo)
         {
 
-        }
-
-        public void SetVolume(int v, string screen)
-        {
-            var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
-            if (playingWallpaper != null)
-                AudioHelper.SetVolume(playingWallpaper.PId, v);
         }
 
         protected virtual Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel wallpaper, CancellationToken ct, params string[] screens)

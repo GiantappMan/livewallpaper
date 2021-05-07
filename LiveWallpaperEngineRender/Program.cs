@@ -32,6 +32,7 @@ namespace LiveWallpaperEngineRender
         [STAThread]
         static void Main(string[] args)
         {
+            //MessageBox.Show("test");
             _launchArgs = Util.ParseArguments<LaunchOptions>(args);
 
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
@@ -111,9 +112,13 @@ namespace LiveWallpaperEngineRender
                     {
                         case ProtocolDefinition.PlayVideo:
                             var playPayload = protocol.GetPayLoad<PlayVideoPayload>();
-                            foreach (var item in playPayload.Screen)
+                            foreach (var screenItem in playPayload.Screen)
                             {
-                                _allWindows[item].PlayVideo(playPayload.FilePath);
+                                int volume = 0;
+                                if (playPayload.AudioScreen == screenItem.ScreenName)
+                                    volume = 100;
+
+                                _allWindows[screenItem.ScreenName].PlayVideo(playPayload.FilePath, playPayload.HardwareDecoding, volume, screenItem.Panscan);
                             }
                             break;
                         case ProtocolDefinition.StopVideo:
@@ -135,6 +140,16 @@ namespace LiveWallpaperEngineRender
                             foreach (var item in resumePayload.Screen)
                             {
                                 _allWindows[item].ResumeVideo();
+                            }
+                            break;
+                        case ProtocolDefinition.SetAudio:
+                            var audioPayload = protocol.GetPayLoad<SetAudioPayload>();
+                            foreach (var item in _allWindows)
+                            {
+                                if (item.Key == audioPayload.AudioScreen)
+                                    item.Value.SetVolume(audioPayload.Volume);
+                                else
+                                    item.Value.SetVolume(0);
                             }
                             break;
                     }
