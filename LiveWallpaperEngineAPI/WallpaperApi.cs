@@ -303,7 +303,7 @@ namespace Giantapp.LiveWallpaper.Engine
                     if (wallpaper.RunningData.Type == null)
                         throw new ArgumentException("Unsupported wallpaper type");
 
-                List<string> tmpPlayScrees = new();
+                List<string> needPlayScreens = new();
 
                 foreach (var screenItem in screens)
                 {
@@ -325,14 +325,19 @@ namespace Giantapp.LiveWallpaper.Engine
                     //关闭其他类型的壁纸
                     await CloseWallpaperEx(currentRender.SupportType, screenItem);
 
-                    tmpPlayScrees.Add(screenItem);
-
-                    CurrentWalpapers[screenItem] = wallpaper;
+                    needPlayScreens.Add(screenItem);
                 }
 
-                var showResult = await currentRender.ShowWallpaper(wallpaper, tmpPlayScrees.ToArray());
+                var showResult = await currentRender.ShowWallpaper(wallpaper, needPlayScreens.ToArray());
                 if (!showResult.Ok)
+                {
                     return BaseApiResult<WallpaperModel>.ErrorState(showResult.Error, showResult.Message, wallpaper);
+                }
+
+                foreach (var item in needPlayScreens)
+                {
+                    CurrentWalpapers[item] = wallpaper;
+                }
 
                 ApplyAudioSource();
 

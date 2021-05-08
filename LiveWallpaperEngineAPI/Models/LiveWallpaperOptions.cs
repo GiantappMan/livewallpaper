@@ -32,7 +32,7 @@ namespace Giantapp.LiveWallpaper.Engine
         /// <summary>
         /// 铺满没有黑边
         /// </summary>
-        public bool PanScan { get; set; }
+        public bool PanScan { get; set; } = true;
     }
     /// <summary>
     /// api 提供的选项

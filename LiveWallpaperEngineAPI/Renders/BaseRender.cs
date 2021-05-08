@@ -28,7 +28,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             foreach (var item in screens)
                 Debug.WriteLine($"show {GetType().Name} {item}");
 
-            List<RenderInfo> changedRenderInfo = new();
+            //List<RenderInfo> changedRenderInfo = new();
             //过滤无变化的屏幕
             var changedScreen = screens.Where(m =>
             {
@@ -38,8 +38,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     ok = true;
                 else
                 {
-                    ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath;
-                    changedRenderInfo.Add(existRenderInfo);
+                    //路径变化或者播放参数变化，都要重新播放
+                    ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath
+                    && existRenderInfo.Wallpaper.Option != wallpaper.Option;
+                    //changedRenderInfo.Add(existRenderInfo);
                 }
                 return ok;
             }).ToArray();
