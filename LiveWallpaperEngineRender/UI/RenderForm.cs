@@ -48,7 +48,7 @@ namespace LiveWallpaperEngineRender
         }
         internal void SetVolume(int volume)
         {
-            _mpv.SetVolume(volume);
+            _mpv?.SetVolume(volume);
         }
         private void ShowControl(Control control)
         {

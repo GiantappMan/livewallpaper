@@ -108,50 +108,14 @@ namespace LiveWallpaperEngineRender
                 {
                     var protocol = JsonSerializer.Deserialize<RenderProtocol>(json);
 
-                    switch (protocol.Command)
+                    try
                     {
-                        case ProtocolDefinition.PlayVideo:
-                            var playPayload = protocol.GetPayLoad<PlayVideoPayload>();
-                            foreach (var screenItem in playPayload.Screen)
-                            {
-                                int volume = 0;
-                                if (playPayload.AudioScreen == screenItem.ScreenName)
-                                    volume = 100;
-
-                                _allWindows[screenItem.ScreenName].PlayVideo(playPayload.FilePath, playPayload.HardwareDecoding, volume, screenItem.Panscan);
-                            }
-                            break;
-                        case ProtocolDefinition.StopVideo:
-                            var stopPayload = protocol.GetPayLoad<StopVideoPayload>();
-                            foreach (var item in stopPayload.Screen)
-                            {
-                                _allWindows[item].StopVideo();
-                            }
-                            break;
-                        case ProtocolDefinition.PauseVideo:
-                            var pausePayload = protocol.GetPayLoad<PauseVideoPayload>();
-                            foreach (var item in pausePayload.Screen)
-                            {
-                                _allWindows[item].PauseVideo();
-                            }
-                            break;
-                        case ProtocolDefinition.ResumVideo:
-                            var resumePayload = protocol.GetPayLoad<ResumeVideoPayload>();
-                            foreach (var item in resumePayload.Screen)
-                            {
-                                _allWindows[item].ResumeVideo();
-                            }
-                            break;
-                        case ProtocolDefinition.SetAudio:
-                            var audioPayload = protocol.GetPayLoad<SetAudioPayload>();
-                            foreach (var item in _allWindows)
-                            {
-                                if (item.Key == audioPayload.AudioScreen)
-                                    item.Value.SetVolume(audioPayload.Volume);
-                                else
-                                    item.Value.SetVolume(0);
-                            }
-                            break;
+                        ResolveCommand(protocol);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Livewallpaper Engine Render throw exception:{ex.Message}. Please restart app");
+                        break;
                     }
                 }
                 else
@@ -159,6 +123,53 @@ namespace LiveWallpaperEngineRender
                     //非命令触发时才加调用限制
                     lastReadConsoleTime = DateTime.Now;
                 }
+            }
+        }
+
+        private static void ResolveCommand(RenderProtocol protocol)
+        {
+            switch (protocol.Command)
+            {
+                case ProtocolDefinition.PlayVideo:
+                    var playPayload = protocol.GetPayLoad<PlayVideoPayload>();
+                    foreach (var screenItem in playPayload.Screen)
+                    {
+                        int volume = 0;
+                        if (playPayload.AudioScreen == screenItem.ScreenName)
+                            volume = 100;
+
+                        _allWindows[screenItem.ScreenName].PlayVideo(playPayload.FilePath, playPayload.HardwareDecoding, volume, screenItem.Panscan);
+                    }
+                    break;
+                case ProtocolDefinition.StopVideo:
+                    var stopPayload = protocol.GetPayLoad<StopVideoPayload>();
+                    foreach (var item in stopPayload.Screen)
+                    {
+                        _allWindows[item].StopVideo();
+                    }
+                    break;
+                case ProtocolDefinition.PauseVideo:
+                    var pausePayload = protocol.GetPayLoad<PauseVideoPayload>();
+                    foreach (var item in pausePayload.Screen)
+                    {
+                        _allWindows[item].PauseVideo();
+                    }
+                    break;
+                case ProtocolDefinition.ResumVideo:
+                    var resumePayload = protocol.GetPayLoad<ResumeVideoPayload>();
+                    foreach (var item in resumePayload.Screen)
+                    {
+                        _allWindows[item].ResumeVideo();
+                    }
+                    break;
+                case ProtocolDefinition.SetAudio:
+                    var audioPayload = protocol.GetPayLoad<SetAudioPayload>();
+                    foreach (var item in _allWindows)
+                    {
+                        if (item.Key == audioPayload.AudioScreen)
+                            item.Value.SetVolume(audioPayload.Volume);
+                    }
+                    break;
             }
         }
     }

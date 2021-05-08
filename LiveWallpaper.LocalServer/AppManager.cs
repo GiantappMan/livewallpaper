@@ -175,7 +175,8 @@ namespace LiveWallpaper.LocalServer
                 //更新内存对象
                 RunningData = data;
 
-                await ApplySetting(UserSetting);
+                //怀疑是重复的多余调用 2021-5-8
+                //await ApplySetting(UserSetting);
             }
             catch (Exception ex)
             {
