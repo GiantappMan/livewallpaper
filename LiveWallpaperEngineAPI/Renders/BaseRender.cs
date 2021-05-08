@@ -40,7 +40,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 {
                     //路径变化或者播放参数变化，都要重新播放
                     ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath
-                    && existRenderInfo.Wallpaper.Option != wallpaper.Option;
+                    || existRenderInfo.Wallpaper.Option != wallpaper.Option;
                     //changedRenderInfo.Add(existRenderInfo);
                 }
                 return ok;

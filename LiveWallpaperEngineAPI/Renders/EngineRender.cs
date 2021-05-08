@@ -102,7 +102,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                     infos.Add(new RenderInfo()
                     {
-                        Wallpaper = wallpaper,
+                        Wallpaper = wallpaper.Clone() as WallpaperModel,
                         Screen = screenItem
                     });
                 }
@@ -113,7 +113,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 {
                     infos.Add(new RenderInfo()
                     {
-                        Wallpaper = wallpaper,
+                        Wallpaper = wallpaper.Clone() as WallpaperModel,
                         Screen = screenItem
                     });
                 }

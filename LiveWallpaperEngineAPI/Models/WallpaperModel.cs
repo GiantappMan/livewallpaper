@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Helpers;
+using System;
 using System.Collections.Generic;
 
 namespace Giantapp.LiveWallpaper.Engine
@@ -223,7 +224,7 @@ namespace Giantapp.LiveWallpaper.Engine
         public string Visibility { get; set; }
         public List<string> Tags { get; set; }
     }
-    public class WallpaperModel
+    public class WallpaperModel : ICloneable
     {
         /// <summary>
         /// 壁纸可控参数
@@ -237,5 +238,12 @@ namespace Giantapp.LiveWallpaper.Engine
         /// 壁纸信息，服务端保存也是这些
         /// </summary>
         public WallpaperProjectInfo Info { get; set; } = new WallpaperProjectInfo();
+
+        public object Clone()
+        {
+            var json = JsonHelper.JsonSerialize(this);
+            var res = JsonHelper.JsonDeserialize<WallpaperModel>(json);
+            return res;
+        }
     }
 }
