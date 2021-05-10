@@ -91,6 +91,8 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public Task<BaseApiResult> CloseWallpaper(string[] screen)
         {
+            if (screen == null)
+                screen = WallpaperApi.Screens;
             return WallpaperApi.CloseWallpaper(screen);
         }
         public async Task<BaseApiResult> ExploreFile(string path)
