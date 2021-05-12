@@ -232,10 +232,10 @@ namespace LiveWallpaper
 
         private void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
-            //       BindingFlags.Instance | BindingFlags.NonPublic);
-            //mi.Invoke(_notifyIcon, null);
-            OpenLocalView();
+            MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
+                   BindingFlags.Instance | BindingFlags.NonPublic);
+            mi.Invoke(_notifyIcon, null);
+            //OpenLocalView();
         }
 
         private void BtnExit_Click(object Sender, EventArgs e)
