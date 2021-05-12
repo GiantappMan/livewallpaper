@@ -21,10 +21,10 @@ namespace Giantapp.LiveWallpaper.Engine
     {
         #region field
 
-        private static readonly ConcurrentDictionary<string, string> _busyMethods = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> _busyMethods = new();
         private static System.Timers.Timer _timer;
         private static Dispatcher _uiDispatcher;
-        private static CancellationTokenSource _ctsSetupPlayer = new CancellationTokenSource();
+        private static CancellationTokenSource _ctsSetupPlayer = new();
 
         #endregion
 
@@ -44,7 +44,7 @@ namespace Giantapp.LiveWallpaper.Engine
 
         public static bool Initialized { get; private set; }
 
-        public static readonly List<(WallpaperType Type, string DownloadUrl)> PlayerUrls = new List<(WallpaperType Type, string DownloadUrl)>()
+        public static readonly List<(WallpaperType Type, string DownloadUrl)> PlayerUrls = new()
         {
             (WallpaperType.Video,"https://github.com/giant-app/LiveWallpaper/releases/download/LiveWallpaperEngineRender/LiveWallpaperEngineRender.7z"),
             //(WallpaperType.Video,"https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/mpv.7z"),
@@ -112,14 +112,14 @@ namespace Giantapp.LiveWallpaper.Engine
                 if (!EnterBusyState(nameof(GetWallpapers)))
                     return new BaseApiResult<List<WallpaperModel>>() { Ok = false, Error = ErrorType.Busy };
 
-                DirectoryInfo dirInfo = new DirectoryInfo(dir);
+                DirectoryInfo dirInfo = new(dir);
                 if (!dirInfo.Exists)
                     return new BaseApiResult<List<WallpaperModel>>()
                     {
                         Ok = true
                     };
 
-                List<WallpaperModel> result = new List<WallpaperModel>();
+                List<WallpaperModel> result = new();
                 //test E:\SteamLibrary\steamapps\workshop\content\431960
                 //foreach (var item in Directory.EnumerateFiles(dir, "project.json", SearchOption.AllDirectories))
                 var files = await Task.Run(() => dirInfo.GetFiles("project.json", SearchOption.AllDirectories).OrderByDescending(m => m.CreationTime));
@@ -253,8 +253,10 @@ namespace Giantapp.LiveWallpaper.Engine
             if (string.IsNullOrEmpty(info.LocalID))
                 info.LocalID = wallpaperPath;
 
-            var res = new WallpaperModel();
-            res.Info = info;
+            var res = new WallpaperModel
+            {
+                Info = info
+            };
 
             if (readOption)
                 res.Option = await GetWallpaperOption(dir, new WallpaperOption());
@@ -284,6 +286,7 @@ namespace Giantapp.LiveWallpaper.Engine
 
                 Debug.WriteLine("ShowWallpaper {0} {1}", wallpaper.RunningData.AbsolutePath, string.Join("", screens));
 
+                screens = screens.Where(m => m != null).ToArray();
                 if (screens.Length == 0)
                     screens = Screens;
 
@@ -610,7 +613,7 @@ namespace Giantapp.LiveWallpaper.Engine
                         distFolder = EngineRender.PlayerFolderName;
                         break;
                 }
-                SevenZip archiveFile = new SevenZip(zipFile);
+                SevenZip archiveFile = new(zipFile);
                 archiveFile.UnzipProgressChanged += ArchiveFile_UnzipProgressChanged;
                 string dist = $@"{Options.ExternalPlayerFolder}\{distFolder}";
 
@@ -674,7 +677,7 @@ namespace Giantapp.LiveWallpaper.Engine
         }
         public static async Task DownloadFileAsync(string uri, string distFile, CancellationToken cancellationToken, Action<long, long> progressCallback = null)
         {
-            using HttpClient client = new HttpClient();
+            using HttpClient client = new();
             Debug.WriteLine($"download {uri}");
             using HttpResponseMessage response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
@@ -685,7 +688,7 @@ namespace Giantapp.LiveWallpaper.Engine
                     Directory.CreateDirectory(dir);
             });
 
-            using FileStream distFileStream = new FileStream(distFile, FileMode.OpenOrCreate, FileAccess.Write);
+            using FileStream distFileStream = new(distFile, FileMode.OpenOrCreate, FileAccess.Write);
             if (progressCallback != null)
             {
                 long length = response.Content.Headers.ContentLength ?? -1;

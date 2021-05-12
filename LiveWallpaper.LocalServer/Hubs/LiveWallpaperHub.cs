@@ -49,7 +49,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             try
             {
                 //FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
-                List<string> result = new List<string>();
+                List<string> result = new();
                 //最多截图四张截图
                 var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
                 var spanDuration = mediaInfo.Duration.TotalSeconds / 4;
@@ -79,9 +79,9 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult<List<string>>.ExceptionState(ex);
             }
         }
-        public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path)
+        public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path, string targetScreen)
         {
-            var model = await WallpaperApi.ShowWallpaper(path);
+            var model = await WallpaperApi.ShowWallpaper(path, targetScreen);
             await AppManager.SaveCurrentWalpapers();
             return model;
         }
@@ -342,10 +342,10 @@ namespace LiveWallpaper.LocalServer.Hubs
             if (info == null)
                 info = new WallpaperProjectInfo();
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             _ = Task.Run(async () =>
              {
-                 RaiseLimiter _raiseLimiter = new RaiseLimiter();
+                 RaiseLimiter _raiseLimiter = new();
 
                  var wpProgressInfo = new Progress<(float competed, float total)>((e) =>
                 {
@@ -409,7 +409,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             if (!dir.EndsWith("\\"))
                 dir += "\\";
 
-            List<string> allowDirs = new List<string>();
+            List<string> allowDirs = new();
             var tmpDir = Path.GetTempPath();
             allowDirs.Add(tmpDir);
             allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
@@ -428,7 +428,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                 dir += "\\";
 
             //不能删除非壁纸目录的文件
-            List<string> allowDirs = new List<string>
+            List<string> allowDirs = new()
             {
                 AppManager.UserSetting.Wallpaper.WallpaperSaveDir
             };

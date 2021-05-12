@@ -20,9 +20,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
     /// </summary>
     public class EngineRender : BaseRender
     {
-        private static readonly ProcessJobTracker _pj = new ProcessJobTracker();
+        private static readonly ProcessJobTracker _pj = new();
         private static Process _renderProcess;
-        private event EventHandler<RenderProtocol> _receivedCommand;
+        private event EventHandler<RenderProtocol> ReceivedCommand;
 
         public static string PlayerFolderName { get; } = "LiveWallpaperEngineRender1.1";
         public EngineRender() : base(WallpaperType.Video,
@@ -165,7 +165,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 return;
             var protocol = JsonSerializer.Deserialize<RenderProtocol>(e.Data);
             if (protocol != null)
-                _receivedCommand?.Invoke(this, protocol);
+                ReceivedCommand?.Invoke(this, protocol);
         }
 
         private void Proc_Exited(object sender, EventArgs e)
@@ -226,7 +226,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             if (_renderProcess != null)
                 return null;
 
-            Stopwatch sw = new Stopwatch();
+            Stopwatch sw = new();
             sw.Start();
             int timeout = 30 * 1000;
 
@@ -240,7 +240,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 }
             }
 
-            _receivedCommand += EngineRender__receivedCommand;
+            ReceivedCommand += EngineRender__receivedCommand;
 
             try
             {
@@ -273,12 +273,12 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 Debug.WriteLine(ex);
             }
 
-            _receivedCommand -= EngineRender__receivedCommand;
+            ReceivedCommand -= EngineRender__receivedCommand;
 
             return result;
         }
 
-        private void SendToRender(RenderProtocol renderProtocol)
+        private static void SendToRender(RenderProtocol renderProtocol)
         {
             var json = JsonSerializer.Serialize(renderProtocol);
             _renderProcess?.StandardInput.WriteLine(json);

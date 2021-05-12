@@ -26,8 +26,8 @@ namespace LiveWallpaper.LocalServer.Utils
             public bool Successed { get; set; }
         }
 
-        readonly RaiseLimiter _raiseLimiter = new RaiseLimiter();
-        private CancellationTokenSource _cts = new CancellationTokenSource();
+        readonly RaiseLimiter _raiseLimiter = new();
+        private CancellationTokenSource _cts = new();
 
         public event EventHandler<ProgressArgs> PrgoressEvent;
         public bool IsBusy { get; private set; }
