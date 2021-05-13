@@ -8,9 +8,9 @@ namespace LiveWallpaper
     class Program
     {
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.Run(new AppContext());
         }
     }

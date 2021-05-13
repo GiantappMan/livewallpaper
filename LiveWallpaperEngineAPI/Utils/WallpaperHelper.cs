@@ -23,7 +23,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         #region static
 
         //Dictionary<screenName,helper>
-        static readonly Dictionary<string, WallpaperHelper> _cacheInstances = new Dictionary<string, WallpaperHelper>();
+        static readonly Dictionary<string, WallpaperHelper> _cacheInstances = new();
         static IDesktopWallpaper _desktopWallpaperAPI;
         static uint _slideshowTick;
         static IntPtr _progman;
@@ -54,7 +54,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         static string GetDesktopWallpaper()
         {
             int MAX_PATH = 260;
-            string wallpaper = new string('\0', MAX_PATH);
+            string wallpaper = new('\0', MAX_PATH);
             _ = User32Wrapper.SystemParametersInfo(User32Wrapper.SPI_GETDESKWALLPAPER, (uint)wallpaper.Length, wallpaper, 0);
             return wallpaper.Substring(0, wallpaper.IndexOf('\0'));
         }

@@ -12,7 +12,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
     /// </summary>
     public partial class LiveWallpaperRenderForm : Form
     {
-        static readonly Dictionary<string, LiveWallpaperRenderForm> _hosts = new Dictionary<string, LiveWallpaperRenderForm>();
+        static readonly Dictionary<string, LiveWallpaperRenderForm> _hosts = new();
         readonly string _screenName;
 
         public LiveWallpaperRenderForm(string screenName)
