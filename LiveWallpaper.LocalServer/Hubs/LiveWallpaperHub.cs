@@ -136,7 +136,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             if (AppManager.PlayerDownloader.IsBusy)
                 return BaseApiResult.BusyState();
 
-            AppManager.PlayerDownloader.ProgressEvent += PlayerDownloader_PrgoressEvent;
+            AppManager.PlayerDownloader.ProgressEvent += PlayerDownloader_ProgressEvent;
             string folder = null;
             switch (wpType)
             {
@@ -393,7 +393,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                 AppManager.FFMpegDownloader.ProgressEvent -= FileDownloader_SetupFFmpegPrgoressEvent;
             }
         }
-        private async void PlayerDownloader_PrgoressEvent(object sender, ProgressArgs e)
+        private async void PlayerDownloader_ProgressEvent(object sender, ProgressArgs e)
         {
             var client = _hubEventEmitter.AllClient();
 
@@ -401,7 +401,7 @@ namespace LiveWallpaper.LocalServer.Hubs
 
             if (e.Type == ProgressArgs.ActionType.Completed)
             {
-                AppManager.PlayerDownloader.ProgressEvent -= PlayerDownloader_PrgoressEvent;
+                AppManager.PlayerDownloader.ProgressEvent -= PlayerDownloader_ProgressEvent;
             }
         }
         private static bool HasReadPermission(string dir)

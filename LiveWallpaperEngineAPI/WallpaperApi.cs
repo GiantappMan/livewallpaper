@@ -72,11 +72,6 @@ namespace Giantapp.LiveWallpaper.Engine
             Initialized = true;
         }
 
-        internal static void UIInvoke(Action a)
-        {
-            _uiDispatcher.Invoke(a);
-        }
-
         public static async Task<BaseApiResult<WallpaperModel>> GetWallpaper(string path)
         {
             try
@@ -475,6 +470,11 @@ namespace Giantapp.LiveWallpaper.Engine
         #endregion
 
         #region private
+
+        internal static void UIInvoke(Action a)
+        {
+            _uiDispatcher.Invoke(a);
+        }
 
         private static async Task<BaseApiResult> InnertSetupPlayer(WallpaperType type, string url)
         {
