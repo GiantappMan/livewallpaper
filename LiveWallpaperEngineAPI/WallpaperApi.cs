@@ -282,7 +282,7 @@ namespace Giantapp.LiveWallpaper.Engine
                     return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.Busy, null, wallpaper);
 
                 if (IsBusyState(nameof(SetupPlayer)))
-                    return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.Busy, null, wallpaper);
+                    return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.NoPlayer, null, wallpaper);
 
                 Debug.WriteLine("ShowWallpaper {0} {1}", wallpaper.RunningData.AbsolutePath, string.Join("", screens));
 

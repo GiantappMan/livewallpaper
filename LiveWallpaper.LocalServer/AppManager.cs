@@ -1,11 +1,11 @@
 ﻿using Common.Helpers;
+using Common.Windows.Helpers;
 using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaper.LocalServer.Models;
 using LiveWallpaper.LocalServer.Utils;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LiveWallpaper.LocalServer
@@ -13,8 +13,8 @@ namespace LiveWallpaper.LocalServer
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static string _runningDataFilePath;
-        private static string _userSettingFilePath;
+        private static readonly string _runningDataFilePath;
+        private static readonly string _userSettingFilePath;
         private static IStartupManager _startupManager = null;
 
 

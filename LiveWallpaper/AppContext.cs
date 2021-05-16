@@ -128,7 +128,7 @@ namespace LiveWallpaper
               });
         }
 
-        private async Task<string> GetText(string key)
+        private static async Task<string> GetText(string key)
         {
             if (AppManager.UserSetting == null)
             {
@@ -181,7 +181,7 @@ namespace LiveWallpaper
             if (_mainWindow == null)
             {
                 _mainWindow = new MainWindow();
-                _mainWindow.Closed += _mainWindow_Closed;
+                _mainWindow.Closed += MainWindow_Closed;
             }
 
             _mainWindow.Show();
@@ -190,9 +190,9 @@ namespace LiveWallpaper
                 _mainWindow.Activate();
         }
 
-        private void _mainWindow_Closed(object sender, EventArgs e)
+        private void MainWindow_Closed(object sender, EventArgs e)
         {
-            _mainWindow.Closed -= _mainWindow_Closed;
+            _mainWindow.Closed -= MainWindow_Closed;
             _mainWindow = null;
         }
 
@@ -201,7 +201,7 @@ namespace LiveWallpaper
             OpenUrl("dashboard/client/setting");
         }
 
-        private void OpenUrl(string url)
+        private static void OpenUrl(string url)
         {
             try
             {

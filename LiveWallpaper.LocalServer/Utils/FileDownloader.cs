@@ -29,7 +29,7 @@ namespace LiveWallpaper.LocalServer.Utils
         readonly RaiseLimiter _raiseLimiter = new();
         private CancellationTokenSource _cts = new();
 
-        public event EventHandler<ProgressArgs> PrgoressEvent;
+        public event EventHandler<ProgressArgs> ProgressEvent;
         public bool IsBusy { get; private set; }
         public string DistDir { get; internal set; }
 
@@ -80,7 +80,7 @@ namespace LiveWallpaper.LocalServer.Utils
 
                    arg.Percent = percent;
                    arg.TypeStr = arg.Type.ToString().ToLower();
-                   PrgoressEvent?.Invoke(null, arg);
+                   ProgressEvent?.Invoke(null, arg);
                    Debug.WriteLine($"{arg.Completed} {arg.Total} {arg.TypeStr}");
                }
                catch (Exception ex)
