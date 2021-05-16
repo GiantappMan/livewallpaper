@@ -79,8 +79,12 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult<List<string>>.ExceptionState(ex);
             }
         }
+
         public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path, string targetScreen)
         {
+            if (AppManager.PlayerDownloader.IsBusy)
+                return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.NoPlayer, null, null);
+
             var model = await WallpaperApi.ShowWallpaper(path, targetScreen);
             await AppManager.SaveCurrentWalpapers();
             return model;
