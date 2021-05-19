@@ -46,9 +46,12 @@ namespace Giantapp.LiveWallpaper.Engine
 
         public static readonly List<(WallpaperType Type, string DownloadUrl)> PlayerUrls = new()
         {
+#if MPV
+            (WallpaperType.Video, "https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/mpv.7z"),
+#else
             (WallpaperType.Video, "https://github.com/giant-app/LiveWallpaper/releases/download/2.2.83/LiveWallpaperEngineRender.7z"),
-            //(WallpaperType.Video,"https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/mpv.7z"),
-            (WallpaperType.Web,"https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/web.7z"),
+#endif
+            (WallpaperType.Web, "https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/web.7z"),
         };
 
         public static event EventHandler<SetupPlayerProgressChangedArgs> SetupPlayerProgressChangedEvent;
@@ -63,8 +66,11 @@ namespace Giantapp.LiveWallpaper.Engine
             if (!Initialized)
             {
                 RenderManager.Renders.Add(new ExeRender());
+#if MPV
+                RenderManager.Renders.Add(new VideoRender());
+#else
                 RenderManager.Renders.Add(new EngineRender());
-                //RenderManager.Renders.Add(new VideoRender());
+#endif
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
@@ -610,7 +616,11 @@ namespace Giantapp.LiveWallpaper.Engine
                         distFolder = WebRender.PlayerFolderName;
                         break;
                     case WallpaperType.Video:
+#if MPV
+                        distFolder = VideoRender.PlayerFolderName;
+#else
                         distFolder = EngineRender.PlayerFolderName;
+#endif
                         break;
                 }
                 SevenZip archiveFile = new(zipFile);

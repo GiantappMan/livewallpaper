@@ -11,8 +11,8 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 {
     public abstract class BaseRender : IRender
     {
-        protected readonly List<RenderInfo> _currentWallpapers = new List<RenderInfo>();
-        private CancellationTokenSource _showWallpaperCts = new CancellationTokenSource();
+        protected readonly List<RenderInfo> _currentWallpapers = new();
+        private CancellationTokenSource _showWallpaperCts = new();
         public WallpaperType SupportType { get; private set; }
         public List<string> SupportExtension { get; private set; }
         public bool SupportMouseEvent { get; private set; }

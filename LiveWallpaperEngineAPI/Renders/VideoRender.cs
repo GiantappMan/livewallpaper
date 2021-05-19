@@ -23,7 +23,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             if (!File.Exists(playerPath))
                 return null;
 
-            FileInfo info = new FileInfo(playerPath);
+            FileInfo info = new(playerPath);
             if (info.Length == 0)
                 return null;
 
@@ -33,7 +33,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 args = $"\"{path}\" --hwdec=no --panscan=1.0 --loop-file=inf --fs --geometry=-10000:-10000 --stop-screensaver=no";
             }
 
-            ProcessStartInfo r = new ProcessStartInfo(playerPath)
+            ProcessStartInfo r = new(playerPath)
             {
                 Arguments = args,
                 UseShellExecute = false

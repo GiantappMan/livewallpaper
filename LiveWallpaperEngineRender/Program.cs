@@ -23,7 +23,7 @@ namespace LiveWallpaperEngineRender
     static class Program
     {
         static LaunchOptions _launchArgs;
-        static Dictionary<string, RenderForm> _allWindows = new Dictionary<string, RenderForm>();
+        static readonly Dictionary<string, RenderForm> _allWindows = new();
         static DateTime lastReadConsoleTime = DateTime.Now;
 
         /// <summary>

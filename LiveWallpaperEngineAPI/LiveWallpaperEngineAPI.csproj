@@ -11,6 +11,10 @@
 		<Authors>Gianapp</Authors>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>TRACE</DefineConstants>
+	</PropertyGroup>
+
 	<ItemGroup>
 	  <Compile Include="..\LiveWallpaperEngineRender\RenderProtocols.cs" Link="Renders\RenderProtocols.cs" />
 	</ItemGroup>
