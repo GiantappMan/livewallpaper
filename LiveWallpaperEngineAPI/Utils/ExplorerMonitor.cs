@@ -24,7 +24,11 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             //explorer 进程已死
             if (ExploreProcess == null || ExploreProcess.HasExited)
             {
-                ExploreProcess = GetExplorer();
+                if (ExploreProcess != null && ExploreProcess.HasExited)
+                    ExploreProcess = null;
+                else
+                    ExploreProcess = GetExplorer();
+
                 bool nowCrashed = ExploreProcess == null;
                 if (Crashed != nowCrashed)
                 {

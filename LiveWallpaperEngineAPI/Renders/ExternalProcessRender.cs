@@ -14,7 +14,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
     //通过启用外部exe渲染
     public abstract class ExternalProcessRender : BaseRender
     {
-        private static readonly ProcessJobTracker _pj = new ProcessJobTracker();
+        private static readonly ProcessJobTracker _pj = new();
 
         protected ExternalProcessRender(WallpaperType type, List<string> extension, bool mouseEvent = true) : base(type, extension, mouseEvent)
         {
@@ -56,8 +56,8 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         protected override async Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel wallpaper, CancellationToken ct, params string[] screens)
         {
-            List<RenderInfo> infos = new List<RenderInfo>();
-            List<Task> tmpTasks = new List<Task>();
+            List<RenderInfo> infos = new();
+            List<Task> tmpTasks = new();
 
             ProcessStartInfo pInfo = await Task.Run(() => GetRenderExeInfo(wallpaper));
             if (pInfo == null)
@@ -131,7 +131,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         {
             return Task.Run(() =>
             {
-                Stopwatch sw = new Stopwatch();
+                Stopwatch sw = new();
                 sw.Start();
                 int timeout = 30 * 1000;
 
@@ -157,7 +157,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     }
                 }
 
-                RenderProcess result = new RenderProcess()
+                RenderProcess result = new()
                 {
                     PId = targetProcess.Id,
                     HostHandle = targetProcess.MainWindowHandle,

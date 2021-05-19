@@ -23,7 +23,7 @@ namespace LiveWallpaperEngine.Samples.NetCore.Test
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly List<Monitor> monitorsVM = new List<Monitor>();
+        readonly List<Monitor> monitorsVM = new();
         public MainWindow()
         {
             Activated += MainWindow_Activated;
@@ -192,7 +192,7 @@ namespace LiveWallpaperEngine.Samples.NetCore.Test
         private static string GetActiveWindowTitle()
         {
             const int nChars = 256;
-            StringBuilder Buff = new StringBuilder(nChars);
+            StringBuilder Buff = new(nChars);
             IntPtr handle = User32Wrapper.GetForegroundWindow();
 
             if (User32Wrapper.GetWindowText(handle, Buff, nChars) > 0)
