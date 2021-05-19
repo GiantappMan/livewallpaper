@@ -12,14 +12,14 @@ namespace LiveWallpaperEngineRender
 
         internal static T ParseArguments<T>(string[] argsArray) where T : new()
         {
-            T res = new T();
+            T res = new();
             for (int i = 0; i < argsArray.Length; i++)
             {
                 var item = argsArray[i];
 
                 if (item.StartsWith("--"))
                 {
-                    string propertyName = item.Substring(2);
+                    string propertyName = item[2..];
 
                     var property = typeof(T).GetProperty(propertyName);
                     if (property != null && i < argsArray.Length - 1)

@@ -14,7 +14,8 @@ namespace LiveWallpaperEngineRender
             //UI
             BackColor = Color.Magenta;
             TransparencyKey = Color.Magenta;
-            ShowInTaskbar = false;
+            //这句会导致windows+tab崩溃
+            //ShowInTaskbar = false;
             FormBorderStyle = FormBorderStyle.None;
             //Opacity = 0;
         }
