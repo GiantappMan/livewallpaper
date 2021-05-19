@@ -46,7 +46,7 @@ namespace Giantapp.LiveWallpaper.Engine
 
         public static readonly List<(WallpaperType Type, string DownloadUrl)> PlayerUrls = new()
         {
-            (WallpaperType.Video,"https://github.com/giant-app/LiveWallpaper/releases/download/LiveWallpaperEngineRender/LiveWallpaperEngineRender.7z"),
+            (WallpaperType.Video, "https://github.com/giant-app/LiveWallpaper/releases/download/2.2.83/LiveWallpaperEngineRender.7z"),
             //(WallpaperType.Video,"https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/mpv.7z"),
             (WallpaperType.Web,"https://github.com/giant-app/LiveWallpaperEngine/releases/download/v2.0.4/web.7z"),
         };

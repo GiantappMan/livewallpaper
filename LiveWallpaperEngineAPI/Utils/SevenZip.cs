@@ -1,6 +1,7 @@
 ﻿using SharpCompress.Archives;
 using SharpCompress.Archives.SevenZip;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,16 +38,15 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             //{
             //    archive.CompressedBytesRead += Archive_CompressedBytesRead;
             _total = archive.Entries.Sum(m => m.Size);
-            foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+            var reader = archive.ExtractAllEntries();
+            //foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+            while (reader.MoveToNextEntry())
             {
                 token.ThrowIfCancellationRequested();
-                entry.WriteToDirectory(path, new ExtractionOptions()
-                {
-                    ExtractFullPath = true,
-                    Overwrite = true
-                });
+                if (!reader.Entry.IsDirectory)
+                    reader.WriteEntryToDirectory(path, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
 
-                _completed += entry.Size;
+                _completed += reader.Entry.Size;
                 UnzipProgressChanged?.Invoke(this, new SevenZipUnzipProgressArgs()
                 {
                     Progress = (float)_completed / _total
