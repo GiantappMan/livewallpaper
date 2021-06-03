@@ -53,8 +53,9 @@ namespace LiveWallpaper
         {
             try
             {
-                _mutex = new Mutex(true, "Livewallpaper", out bool ret);
-
+                //_mutex = new Mutex(true, "Livewallpaper", out bool ret);
+                //兼容腾讯桌面，曲线救国...
+                _mutex = new Mutex(true, "cxWallpaperEngineGlobalMutex", out bool ret);
                 if (!ret)
                 {
                     _notifyIcon.ShowBalloonTip(5, await GetText("common.information"), await GetText("client.started"), ToolTipIcon.Info);
