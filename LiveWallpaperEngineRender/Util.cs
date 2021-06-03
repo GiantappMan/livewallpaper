@@ -9,7 +9,6 @@ namespace LiveWallpaperEngineRender
 {
     class Util
     {
-
         internal static T ParseArguments<T>(string[] argsArray) where T : new()
         {
             T res = new();

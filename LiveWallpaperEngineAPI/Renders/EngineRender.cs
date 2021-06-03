@@ -16,8 +16,10 @@ using Windows.Storage;
 namespace Giantapp.LiveWallpaper.Engine.Renders
 {
     /// <summary>
+    /// 暂时废弃，以后web看是否继续使用。废弃的原因是壁纸启动太慢，优点是分离进程，但是对用户意义似乎不大。
     /// 显示视频壁纸，后期可能会增加Web显示
     /// </summary>
+    [Obsolete]
     public class EngineRender : BaseRender
     {
         private static readonly ProcessJobTracker _pj = new();
