@@ -34,7 +34,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             foreach (var screenItem in notInitScreen)
             {
-                WallpaperApi.UIInvoke(() =>
+                WallpaperApi.InvokeIfRequired(() =>
                 {
                     var player = new MpvControl();
                     //初始化控件

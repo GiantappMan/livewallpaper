@@ -1,4 +1,5 @@
 ﻿using Common.Helpers;
+using Giantapp.LiveWallpaper.Engine.Forms;
 using Giantapp.LiveWallpaper.Engine.Renders;
 using Giantapp.LiveWallpaper.Engine.Utils;
 using System;
@@ -32,6 +33,9 @@ namespace Giantapp.LiveWallpaper.Engine
         {
             //怀疑某些系统用不了
             WallpaperHelper.DoSomeMagic();
+
+            //初始化winform窗口
+            LiveWallpaperRenderForm.GetHost(Screen.PrimaryScreen.DeviceName);
         }
 
         #region property
@@ -66,11 +70,11 @@ namespace Giantapp.LiveWallpaper.Engine
             if (!Initialized)
             {
                 RenderManager.Renders.Add(new ExeRender());
-//#if MPV
+                //#if MPV
                 RenderManager.Renders.Add(new VideoRender());
-//#else
+                //#else
                 //RenderManager.Renders.Add(new EngineRender());
-//#endif
+                //#endif
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
@@ -479,7 +483,22 @@ namespace Giantapp.LiveWallpaper.Engine
 
         internal static void UIInvoke(Action a)
         {
-            _uiDispatcher.Invoke(a);
+            a();
+            //_uiDispatcher.Invoke(a);
+        }
+        internal static void InvokeIfRequired(Action a)
+        {
+            if (Application.OpenForms.Count == 0)
+            {
+                a();
+                return;
+            }
+
+            var mainForm = Application.OpenForms[0];
+            if (mainForm.InvokeRequired)
+                mainForm.Invoke(a);
+            else
+                a();
         }
 
         private static async Task<BaseApiResult> InnertSetupPlayer(WallpaperType type, string url)
@@ -616,11 +635,11 @@ namespace Giantapp.LiveWallpaper.Engine
                         distFolder = WebRender.PlayerFolderName;
                         break;
                     case WallpaperType.Video:
-//#if MPV
-//                        distFolder = VideoRender.PlayerFolderName;
-//#else
-//                        distFolder = EngineRender.PlayerFolderName;
-//#endif
+                        //#if MPV
+                        //                        distFolder = VideoRender.PlayerFolderName;
+                        //#else
+                        //                        distFolder = EngineRender.PlayerFolderName;
+                        //#endif
                         break;
                 }
                 SevenZip archiveFile = new(zipFile);

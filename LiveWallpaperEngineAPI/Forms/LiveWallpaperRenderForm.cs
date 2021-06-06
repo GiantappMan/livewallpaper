@@ -38,7 +38,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             lastWallpaperHandle = wallpaperHandle;
 
             IntPtr hostForm = IntPtr.Zero;
-            WallpaperApi.UIInvoke(() =>
+            WallpaperApi.InvokeIfRequired(() =>
             {
                 try
                 {
@@ -65,7 +65,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             if (!_hosts.ContainsKey(screen))
             {
                 if (autoCreate)
-                    WallpaperApi.UIInvoke(() =>
+                    WallpaperApi.InvokeIfRequired(() =>
                     {
                         var host = _hosts[screen] = new LiveWallpaperRenderForm(screen);
                         host.Show();

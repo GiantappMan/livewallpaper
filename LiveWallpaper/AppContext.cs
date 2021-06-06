@@ -37,7 +37,7 @@ namespace LiveWallpaper
         {
             _uiDispatcher = Dispatcher.CurrentDispatcher;
             InitializeUI();
-
+            
             WallpaperApi.Initlize(_uiDispatcher);
             AppManager.CultureChanged += LanService_CultureChanged;
             SetMenuText();

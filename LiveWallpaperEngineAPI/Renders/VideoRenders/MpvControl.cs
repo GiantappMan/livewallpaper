@@ -34,16 +34,16 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
                 string appDir = System.IO.Path.GetDirectoryName(assembly.Location);
                 //仅使用32位
                 string dllPath = $@"{appDir}\lib\mpv-1.dll";
-                //if (IntPtr.Size == 4)
-                //{
-                //    // 32-bit
-                //}
-                //else if (IntPtr.Size == 8)
-                //{
-                //    // 64-bit
-                //    dllPath = $@"{appDir}\lib\mpv-1-x64.dll";
-                //}
-                WallpaperApi.UIInvoke(() =>
+                if (IntPtr.Size == 4)
+                {
+                    // 32-bit
+                }
+                else if (IntPtr.Size == 8)
+                {
+                    // 64-bit
+                    dllPath = $@"{appDir}\lib\mpv-1-x64.dll";
+                }
+                WallpaperApi.InvokeIfRequired(() =>
                 {
                     _player = new Mpv.NET.Player.MpvPlayer(GetHandle(), dllPath)
                     {
