@@ -169,9 +169,10 @@ namespace LiveWallpaper.LocalServer.Hubs
             await AppManager.WaitInitialized();
             try
             {
-                var result = await WallpaperApi.SetOptions(setting.Wallpaper);
+                //重复调用
+                //var result = await WallpaperApi.SetOptions(setting.Wallpaper);
                 //成功设置后保存，防止有异常导致启动崩溃
-                await AppManager.SaveUserSetting(setting);
+                var result = await AppManager.SaveUserSetting(setting);
                 return result;
             }
             catch (Exception ex)

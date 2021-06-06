@@ -142,7 +142,7 @@ namespace LiveWallpaper.LocalServer
             await SaveRunningData(RunningData);
         }
 
-        internal static async Task SaveUserSetting(UserSetting setting)
+        internal static async Task<BaseApiResult> SaveUserSetting(UserSetting setting)
         {
             try
             {
@@ -159,11 +159,13 @@ namespace LiveWallpaper.LocalServer
                 if (lanChanged)
                     CultureChanged?.Invoke(null, null);
 
-                await ApplySetting(UserSetting);
+                var result = await ApplySetting(UserSetting);
+                return result;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
+                return null;
             }
         }
 
@@ -184,7 +186,7 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
-        private static async Task ApplySetting(UserSetting setting)
+        private static async Task<BaseApiResult> ApplySetting(UserSetting setting)
         {
             //设置开机启动
             _ = await _startupManager.Set(setting.General.StartWithSystem);
@@ -201,7 +203,8 @@ namespace LiveWallpaper.LocalServer
             ProcessHelper.AddPathToEnvoirment(ffmpegSaveDir);
 
             //设置壁纸参数
-            _ = await WallpaperApi.SetOptions(setting.Wallpaper);
+            var r = await WallpaperApi.SetOptions(setting.Wallpaper);
+            return r;
         }
     }
 }

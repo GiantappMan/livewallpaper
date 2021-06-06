@@ -18,6 +18,14 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
             BackColor = Color.Magenta;
         }
 
+        private IntPtr? _cacheHandle;
+        public IntPtr GetHandle()
+        {
+            if (_cacheHandle == null)
+                _cacheHandle = this.Handle;
+            return _cacheHandle.Value;
+        }
+
         public void Play(string path, bool hwdec = true, bool panscan = true)
         {
             if (_player == null)
@@ -35,9 +43,9 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
                 //    // 64-bit
                 //    dllPath = $@"{appDir}\lib\mpv-1-x64.dll";
                 //}
-                Util.InvokeIfRequired(() =>
+                WallpaperApi.UIInvoke(() =>
                 {
-                    _player = new Mpv.NET.Player.MpvPlayer(Handle, dllPath)
+                    _player = new Mpv.NET.Player.MpvPlayer(GetHandle(), dllPath)
                     {
                         Loop = true,
                         Volume = 0
@@ -111,7 +119,6 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
                 v = 100;
 
             _volume = v;
-
             if (_player != null)
                 _player.Volume = v;
         }

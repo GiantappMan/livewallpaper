@@ -33,16 +33,16 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
             }
             return res;
         }
-        internal static void InvokeIfRequired(Action a)
-        {
-            if (Application.OpenForms.Count == 0)
-                return;
+        //internal static void InvokeIfRequired(Action a)
+        //{
+        //    if (Application.OpenForms.Count == 0)
+        //        return;
 
-            var mainForm = Application.OpenForms[0];
-            if (mainForm.InvokeRequired)
-                mainForm.Invoke(a);
-            else
-                a();
-        }
+        //    var mainForm = Application.OpenForms[0];
+        //    if (mainForm.InvokeRequired)
+        //        mainForm.Invoke(a);
+        //    else
+        //        a();
+        //}
     }
 }

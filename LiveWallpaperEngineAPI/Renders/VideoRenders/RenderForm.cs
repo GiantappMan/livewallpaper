@@ -53,7 +53,7 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
         }
         private void ShowControl(Control control)
         {
-            Util.InvokeIfRequired(() =>
+            WallpaperApi.UIInvoke(() =>
             {
                 Controls.Clear();
                 control.Dock = DockStyle.Fill;

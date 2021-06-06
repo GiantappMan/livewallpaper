@@ -14,6 +14,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
     {
         static readonly Dictionary<string, LiveWallpaperRenderForm> _hosts = new();
         readonly string _screenName;
+        IntPtr lastWallpaperHandle;
 
         public LiveWallpaperRenderForm(string screenName)
         {
@@ -31,6 +32,11 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
 
         internal void ShowWallpaper(IntPtr wallpaperHandle)
         {
+            if (lastWallpaperHandle == wallpaperHandle)
+                return;
+
+            lastWallpaperHandle = wallpaperHandle;
+
             IntPtr hostForm = IntPtr.Zero;
             WallpaperApi.UIInvoke(() =>
             {
