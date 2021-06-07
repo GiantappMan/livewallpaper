@@ -194,8 +194,8 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 
         public static void DoSomeMagic()
         {
-            //屏幕会闪两下
-            _ = User32Wrapper.SystemParametersInfo(User32Wrapper.SPI_SETCLIENTAREAANIMATION, 0, true, User32Wrapper.SPIF_UPDATEINIFILE | User32Wrapper.SPIF_SENDWININICHANGE);
+            //屏幕会闪两下，可以修复某些特殊情况不能用的问题，暂时还是屏蔽了体验不好
+            //_ = User32Wrapper.SystemParametersInfo(User32Wrapper.SPI_SETCLIENTAREAANIMATION, 0, true, User32Wrapper.SPIF_UPDATEINIFILE | User32Wrapper.SPIF_SENDWININICHANGE);
             _desktopWallpaperAPI = GetDesktopWallpaperAPI();
             _desktopWallpaperAPI?.GetSlideshowOptions(out _, out _slideshowTick);
             if (_slideshowTick < 86400000)
