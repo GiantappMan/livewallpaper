@@ -1,10 +1,7 @@
 ﻿using Giantapp.LiveWallpaper.Engine.Forms;
 using Giantapp.LiveWallpaper.Engine.VideoRenders;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +48,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                 //显示控件
                 _contrls.TryGetValue(screenItem, out MpvControl control);
-                host.ShowWallpaper(control.GetHandle());
 
                 //设置参数
                 var currentScreenOption = WallpaperApi.Options.ScreenOptions.FirstOrDefault(e => e.Screen == screenItem);
@@ -64,6 +60,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     volume = 100;
 
                 control.SetVolume(volume);
+
+                //播放后再显示
+                host.ShowWallpaper(control);
 
                 infos.Add(new RenderInfo()
                 {

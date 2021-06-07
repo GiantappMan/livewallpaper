@@ -22,7 +22,7 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
         public IntPtr GetHandle()
         {
             if (_cacheHandle == null)
-                _cacheHandle = this.Handle;
+                _cacheHandle = Handle;
             return _cacheHandle.Value;
         }
 

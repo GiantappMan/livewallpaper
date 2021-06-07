@@ -26,6 +26,7 @@ namespace LiveWallpaperEngine.Samples.NetCore.Test
         readonly List<Monitor> monitorsVM = new();
         public MainWindow()
         {
+            System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
             WallpaperApi.Initlize(Dispatcher);

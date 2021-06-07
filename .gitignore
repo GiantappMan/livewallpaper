@@ -12,3 +12,4 @@ BundleArtifacts
 /LiveWallpaper.App/_pkginfo.txt
 /LiveWallpaperEngineRender/lib/mpv-1.dll
 /LiveWallpaperEngineRender/lib/mpv-1-x64.dll
+/LiveWallpaper.App/*.cache

@@ -26,8 +26,47 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             TransparencyKey = Color.Magenta;
             ShowInTaskbar = false;
             FormBorderStyle = FormBorderStyle.None;
-            Opacity = 0;
+            //Opacity = 0;
             _hosts[screenName] = this;
+        }
+
+        private IntPtr? _cacheHandle;
+        public IntPtr GetHandle()
+        {
+            if (_cacheHandle == null)
+            {
+                this.InvokeIfRequired(() =>
+                {
+                    _cacheHandle = Handle;
+                });
+            }
+            return _cacheHandle.Value;
+        }
+
+        internal void ShowWallpaper(Control control)
+        {
+            IntPtr controlHandle = IntPtr.Zero;
+
+            this.InvokeIfRequired(() =>
+            {
+                controlHandle = control.Handle;
+                Controls.Clear();
+                control.Dock = DockStyle.Fill;
+                Controls.Add(control);
+                Opacity = 1;
+                Refresh();
+            });
+
+            if (lastWallpaperHandle == controlHandle)
+                return;
+
+            lastWallpaperHandle = controlHandle;
+
+            IntPtr hostForm = GetHandle();
+
+            var wpHelper = WallpaperHelper.GetInstance(_screenName);
+            //hostfrom下潜桌面
+            wpHelper.SendToBackground(hostForm);
         }
 
         internal void ShowWallpaper(IntPtr wallpaperHandle)
@@ -37,27 +76,21 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
 
             lastWallpaperHandle = wallpaperHandle;
 
-            IntPtr hostForm = IntPtr.Zero;
-            WallpaperApi.InvokeIfRequired(() =>
+            IntPtr hostForm = GetHandle();
+            this.InvokeIfRequired(() =>
             {
-                try
-                {
-                    Controls.Clear();
-                    Opacity = 1;
-                    hostForm = Handle;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"ShowWallpaper ex:{ex}");
-                }
+                Controls.Clear();
+                Refresh();
             });
 
+            var wpHelper = WallpaperHelper.GetInstance(_screenName);
             //hostfrom下潜桌面
-            WallpaperHelper.GetInstance(_screenName).SendToBackground(hostForm);
+            wpHelper.SendToBackground(hostForm);
             //壁纸parent改为hostform
             User32Wrapper.SetParent(wallpaperHandle, hostForm);
             //把壁纸全屏铺满 hostform
-            WallpaperHelper.FullScreen(wallpaperHandle, hostForm);
+            WallpaperHelper.FullScreen(wallpaperHandle, wpHelper.TargetBounds, hostForm);
+            //WallpaperHelper.FullScreen(wallpaperHandle, hostForm);        
         }
 
         public static LiveWallpaperRenderForm GetHost(string screen, bool autoCreate = true)

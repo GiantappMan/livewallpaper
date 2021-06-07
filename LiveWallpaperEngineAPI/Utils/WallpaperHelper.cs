@@ -30,6 +30,8 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         static IntPtr _workerw;
         static IntPtr _desktopWorkerw;
 
+        public Rectangle TargetBounds { get => _targetBounds; }
+
         #endregion
 
         #endregion

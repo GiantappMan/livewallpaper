@@ -4,6 +4,7 @@
     <OutputType>Library</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Platforms>x86;x64</Platforms>
   </PropertyGroup>
 
 </Project>

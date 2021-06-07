@@ -213,7 +213,8 @@ namespace Giantapp.LiveWallpaper.Engine
         public static async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string wallpaperPath, params string[] screens)
         {
             var wpModel = await CreateWallpaperModelFromDir(Path.GetDirectoryName(wallpaperPath));
-            if (wpModel == null)
+            //json为空，或者json和文件路径不一致
+            if (wpModel == null || wpModel.RunningData.AbsolutePath != wallpaperPath)
                 wpModel = new WallpaperModel()
                 {
                     RunningData = new WallpaperRunningData()

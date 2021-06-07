@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <Platforms>x86</Platforms>
+    <Platforms>x86;x64</Platforms>
     <Version>1.1.1</Version>
   </PropertyGroup>
   <ItemGroup>
