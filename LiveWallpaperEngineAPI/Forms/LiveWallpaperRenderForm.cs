@@ -35,7 +35,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
         {
             if (_cacheHandle == null)
             {
-                this.InvokeIfRequired(() =>
+                WallpaperApi.InvokeIfRequired(() =>
                 {
                     _cacheHandle = Handle;
                 });
@@ -47,20 +47,22 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
         {
             IntPtr controlHandle = IntPtr.Zero;
 
-            this.InvokeIfRequired(() =>
+            WallpaperApi.InvokeIfRequired(() =>
             {
                 controlHandle = control.Handle;
+
+                //控件未变
+                if (lastWallpaperHandle == controlHandle)
+                    return;
+
+                lastWallpaperHandle = controlHandle;
+
                 Controls.Clear();
                 control.Dock = DockStyle.Fill;
                 Controls.Add(control);
-                Opacity = 1;
+                //Opacity = 1;
                 Refresh();
             });
-
-            if (lastWallpaperHandle == controlHandle)
-                return;
-
-            lastWallpaperHandle = controlHandle;
 
             IntPtr hostForm = GetHandle();
 
@@ -77,7 +79,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             lastWallpaperHandle = wallpaperHandle;
 
             IntPtr hostForm = GetHandle();
-            this.InvokeIfRequired(() =>
+            WallpaperApi.InvokeIfRequired(() =>
             {
                 Controls.Clear();
                 Refresh();

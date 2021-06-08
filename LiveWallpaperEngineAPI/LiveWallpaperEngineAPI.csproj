@@ -18,6 +18,7 @@
 	<ItemGroup>
 	  <Compile Remove="Renders\VideoRenders\RenderForm.cs" />
 	  <Compile Remove="Renders\VideoRenders\RenderForm.Designer.cs" />
+	  <Compile Remove="Utils\ControlExtension.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

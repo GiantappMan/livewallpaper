@@ -33,9 +33,6 @@ namespace Giantapp.LiveWallpaper.Engine
         {
             //怀疑某些系统用不了
             WallpaperHelper.DoSomeMagic();
-
-            //初始化winform窗口
-            LiveWallpaperRenderForm.GetHost(Screen.PrimaryScreen.DeviceName);
         }
 
         #region property
@@ -78,7 +75,11 @@ namespace Giantapp.LiveWallpaper.Engine
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
+
+                //初始化winform主窗口
+                LiveWallpaperRenderForm.GetHost(Screen.PrimaryScreen.DeviceName);
             }
+
             Initialized = true;
         }
 
