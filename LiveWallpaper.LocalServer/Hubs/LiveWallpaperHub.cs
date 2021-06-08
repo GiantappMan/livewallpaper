@@ -131,25 +131,25 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             return AppManager.FFMpegDownloader.StopSetupFile();
         }
-        public BaseApiResult SetupPlayer(WallpaperType wpType, string url)
-        {
-            if (string.IsNullOrEmpty(url))
-                return BaseApiResult.ErrorState(ErrorType.Failed, "The parameter cannot be null");
+        //public BaseApiResult SetupPlayer(WallpaperType wpType, string url)
+        //{
+        //    if (string.IsNullOrEmpty(url))
+        //        return BaseApiResult.ErrorState(ErrorType.Failed, "The parameter cannot be null");
 
-            if (AppManager.PlayerDownloader.IsBusy)
-                return BaseApiResult.BusyState();
+        //    if (AppManager.PlayerDownloader.IsBusy)
+        //        return BaseApiResult.BusyState();
 
-            AppManager.PlayerDownloader.ProgressEvent += PlayerDownloader_ProgressEvent;
-            string folder = null;
-            switch (wpType)
-            {
-                //case WallpaperType.Video:
-                //    folder = EngineRender.PlayerFolderName;
-                //    break;
-            }
-            AppManager.PlayerDownloader.DistDir = Path.Combine(AppManager.UserSetting.Wallpaper.ExternalPlayerFolder, folder);
-            return AppManager.PlayerDownloader.SetupFile(url);
-        }
+        //    AppManager.PlayerDownloader.ProgressEvent += PlayerDownloader_ProgressEvent;
+        //    string folder = null;
+        //    switch (wpType)
+        //    {
+        //        //case WallpaperType.Video:
+        //        //    folder = EngineRender.PlayerFolderName;
+        //        //    break;
+        //    }
+        //    AppManager.PlayerDownloader.DistDir = Path.Combine(AppManager.UserSetting.Wallpaper.ExternalPlayerFolder, folder);
+        //    return AppManager.PlayerDownloader.SetupFile(url);
+        //}
         public Task<BaseApiResult> StopSetupPlayer()
         {
             return AppManager.PlayerDownloader.StopSetupFile();

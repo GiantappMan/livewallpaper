@@ -51,7 +51,7 @@
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
     <ProjectGuid>ffd18cde-91f1-493a-a249-2f6ac2a9b7c8</ProjectGuid>
-    <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
@@ -59,11 +59,11 @@
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <!--<PackageCertificateThumbprint>A16CDCC9A72EE6D43A669DCF0E5BE35951B915C1</PackageCertificateThumbprint>-->
     <!--<PackageCertificateThumbprint>16C485B3AD663226D82AC45A21AA8C6A524BC4DC</PackageCertificateThumbprint>-->
-	<!--<PackageCertificateThumbprint>5E45915E1A14F5325493813152D9C469DB25ED81</PackageCertificateThumbprint>-->
-	<AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <!--<PackageCertificateThumbprint>5E45915E1A14F5325493813152D9C469DB25ED81</PackageCertificateThumbprint>-->
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
-	<AppInstallerUri>https://livewallpaper.giantapp.cn/</AppInstallerUri>
+    <AppInstallerUri>https://livewallpaper.giantapp.cn/</AppInstallerUri>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <EntryPointProjectUniqueName>..\LiveWallpaper\LiveWallpaper.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>

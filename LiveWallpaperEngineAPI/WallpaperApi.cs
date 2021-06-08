@@ -2,6 +2,7 @@
 using Giantapp.LiveWallpaper.Engine.Forms;
 using Giantapp.LiveWallpaper.Engine.Renders;
 using Giantapp.LiveWallpaper.Engine.Utils;
+using Microsoft.Win32;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -33,6 +34,7 @@ namespace Giantapp.LiveWallpaper.Engine
         {
             //怀疑某些系统用不了
             WallpaperHelper.DoSomeMagic();
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
 
         #region property
@@ -808,6 +810,20 @@ namespace Giantapp.LiveWallpaper.Engine
         private static async void MaximizedMonitor_AppMaximized(object sender, AppMaximizedEvent e)
         {
             await HandleWindowMaximized(e.MaximizedScreens);
+        }
+
+        private static void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            Debug.WriteLine(e.Reason);
+            switch (e.Reason)
+            {
+                case SessionSwitchReason.SessionUnlock:
+                    Resume(Screens);
+                    break;
+                case SessionSwitchReason.SessionLock:
+                    Pause(Screens);
+                    break;
+            }
         }
 
         private static async Task HandleWindowMaximized(List<Screen> screens)
