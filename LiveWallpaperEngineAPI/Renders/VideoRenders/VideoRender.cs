@@ -62,7 +62,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 control.SetVolume(volume);
 
                 //播放后再显示
-                host.ShowWallpaper(control);
+                host.ShowWallpaper(control.GetHandle());
 
                 infos.Add(new RenderInfo()
                 {
