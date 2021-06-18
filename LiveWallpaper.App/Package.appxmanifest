@@ -2,8 +2,8 @@
 <Package xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap mp rescap">
   <Identity Name="24765mscoder.107453A6A4A17" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="2.3.86.0" />
   <Properties>
-    <DisplayName>巨应壁纸</DisplayName>
-    <PublisherDisplayName>Giantapp Studio</PublisherDisplayName>
+    <DisplayName>ms-resource:Resources/PackageDisplayName</DisplayName>
+    <PublisherDisplayName>ms-resource:Resources/PublisherDisplayName</PublisherDisplayName>
     <Logo>images\Store\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -16,7 +16,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
-      <uap:VisualElements DisplayName="LiveWallpaper V2 | 巨应壁纸" Description="LiveWallpaper.App" BackgroundColor="transparent" Square150x150Logo="images\Medium\Medium150x150Logo.png" Square44x44Logo="images\AppList\AppList.png">
+      <uap:VisualElements DisplayName="ms-resource:Resources/ApplicationDisplayName" Description="ms-resource:Resources/ApplicationDescription" BackgroundColor="transparent" Square150x150Logo="images\Medium\Medium150x150Logo.png" Square44x44Logo="images\AppList\AppList.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide\Wide310x150Logo.png" Square71x71Logo="images\Small\Small71x71Logo.png" Square310x310Logo="images\Large\Large310x310Logo.png">
         </uap:DefaultTile>
       </uap:VisualElements>
