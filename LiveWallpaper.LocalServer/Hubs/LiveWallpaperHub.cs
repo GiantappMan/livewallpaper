@@ -27,13 +27,13 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public string GetClientVersion()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            var version = Assembly.GetEntryAssembly().GetName().Version;
             return version.ToString();
         }
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
         {
             await AppManager.WaitInitialized();
-            var result = await WallpaperApi.GetWallpapers(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+            var result = await WallpaperApi.GetWallpapers();
             return result;
         }
         public async Task<BaseApiResult<WallpaperModel>> GetWallpaper(string path)
@@ -48,7 +48,18 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return BaseApiResult<List<string>>.ErrorState(ErrorType.Failed, "path cannot be null");
             try
             {
-                //FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
+                //只能使用工具目录下的ffmpeg，有些用户全局变量有，但是会报错
+                string ffmpegDir = GetUwpRealPath(AppManager.FFmpegSaveDir);
+
+                //本地调试又没有映射路径
+                if (Directory.Exists(AppManager.FFmpegSaveDir))
+                    FFmpeg.SetExecutablesPath(AppManager.FFmpegSaveDir);
+                //传到store的，又映射了...
+                else if (Directory.Exists(ffmpegDir))
+                    FFmpeg.SetExecutablesPath(ffmpegDir);
+                else
+                    return BaseApiResult<List<string>>.ErrorState(ErrorType.NoFFmpeg);
+
                 List<string> result = new();
                 //最多截图四张截图
                 var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
@@ -102,6 +113,25 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             try
             {
+                string tmpPath = GetUwpRealPath(path);
+
+                //uwp映射路径不存在，真实路径却存在
+                if (!File.Exists(tmpPath) && !Directory.Exists(tmpPath) &&
+                    (File.Exists(path) || Directory.Exists(path)))
+                    tmpPath = path;
+
+                await Task.Run(() => Process.Start("Explorer.exe", $" /select, {tmpPath}"));
+            }
+            catch (Exception ex)
+            {
+                return BaseApiResult.ExceptionState(ex);
+            }
+            return BaseApiResult.SuccessState();
+        }
+        private static string GetUwpRealPath(string path)
+        {
+            try
+            {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
                 //uwp 真实存储路径不一样
@@ -111,13 +141,13 @@ namespace LiveWallpaper.LocalServer.Hubs
                     string realAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Local");
                     path = path.Replace(appData, realAppData);
                 }
-                await Task.Run(() => Process.Start("Explorer.exe", $" /select, {path}"));
+
+                return path;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BaseApiResult.ExceptionState(ex);
+                return path;
             }
-            return BaseApiResult.SuccessState();
         }
         public BaseApiResult SetupFFmpeg(string url)
         {

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using LiveWallpaper.LocalServer.Hubs;
 using Microsoft.AspNetCore.Builder;
@@ -10,9 +12,9 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
 namespace LiveWallpaper.LocalServer
 {
     public class Startup
@@ -30,7 +32,7 @@ namespace LiveWallpaper.LocalServer
         {
             services.AddCors(options =>
             {
-                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
+                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", $"http://localhost:{ServerWrapper.HostPort}", $"http://127.0.0.1:{ServerWrapper.HostPort}", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
 #if DEBUG
                 urls.Add("http://localhost:3000");
 #endif
@@ -60,17 +62,25 @@ namespace LiveWallpaper.LocalServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
+
+            //手动指定路径，APP包装后启动路径不正确
+            var apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                 Path.Combine(apptEntryDir, "wwwroot")),
+            });
 
             app.UseRouting();
 
             app.UseAuthorization();
+
 
             app.UseCors(AllowSpecificOrigins);
 

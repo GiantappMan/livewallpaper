@@ -26,6 +26,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         void Resume(params string[] screens);
         void SetVolume(int v, string screen);
         int GetVolume(string screen);
-        Task CloseWallpaperAsync(params string[] screens);
+        Task CloseWallpaperAsync(WallpaperModel nextwp, params string[] screens);
     }
 }

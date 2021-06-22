@@ -1,6 +1,7 @@
 ﻿using Common.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Giantapp.LiveWallpaper.Engine
 {
@@ -119,10 +120,13 @@ namespace Giantapp.LiveWallpaper.Engine
         Video,
         Image,
         Web,
-        Exe
+        Exe,
+        Group
     }
     public class WallpaperOption : IEquatable<WallpaperOption>
     {
+        #region wallpaper
+
         /// <summary>
         /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
         /// </summary>
@@ -132,6 +136,35 @@ namespace Giantapp.LiveWallpaper.Engine
         /// 是否启用硬件解码，video才行。其他类型无效
         /// </summary>
         public bool HardwareDecoding { get; set; } = true;
+
+        #endregion
+
+        #region group
+
+        public TimeSpan? SwitchingInterval
+        {
+            get
+            {
+                //默认10分钟间隔
+                if (SwitchingIntervalString == null)
+                    return new TimeSpan(0, 10, 0);
+
+                TimeSpan.TryParse(SwitchingIntervalString, out TimeSpan r);
+                return r;
+            }
+        }
+
+        public string SwitchingIntervalString { get; set; }
+        /// <summary>
+        /// 最后播放的壁纸索引
+        /// </summary>
+        public int? LastWallpaperIndex { get; set; }
+        /// <summary>
+        /// 壁纸切换时间
+        /// </summary>
+        public DateTime WallpaperChangeTime { get; set; }
+
+        #endregion
 
         public static bool operator ==(WallpaperOption lhs, WallpaperOption rhs)
         {
@@ -146,7 +179,8 @@ namespace Giantapp.LiveWallpaper.Engine
             }
 
             var r = lhs.EnableMouseEvent == rhs.EnableMouseEvent
-                && lhs.HardwareDecoding == rhs.HardwareDecoding;
+                && lhs.HardwareDecoding == rhs.HardwareDecoding
+                && lhs.SwitchingIntervalString == rhs.SwitchingIntervalString;
 
             return r;
         }
@@ -191,6 +225,12 @@ namespace Giantapp.LiveWallpaper.Engine
             return r;
         }
     }
+    public enum PausedReason
+    {
+        None,
+        ScreenMaximized,
+        SessionLock
+    }
     public class WallpaperRunningData
     {
         /// <summary>
@@ -198,6 +238,7 @@ namespace Giantapp.LiveWallpaper.Engine
         /// </summary>
         public string Dir { get; set; }
         public bool IsPaused { get; set; }
+        public PausedReason PausedReason { get; set; }
         public bool IsStopedTemporary { get; set; }
         public string AbsolutePath { get; set; }
         private WallpaperType? _type;
@@ -212,14 +253,26 @@ namespace Giantapp.LiveWallpaper.Engine
             }
         }
     }
+
+    public class WallpaperInfoType
+    {
+        public static string Wallpaper { get; private set; } = "wallpaper";
+        public static string Group { get; private set; } = "group";
+    }
+
     public class WallpaperProjectInfo
     {
+        public List<WallpaperProjectInfo> GroupItems { get; set; }
         public string ID { get; set; }
         public string LocalID { get; set; }
         public string Description { get; set; }
         public string Title { get; set; }
         public string File { get; set; }
         public string Preview { get; set; }
+        /// <summary>
+        /// group，分组
+        /// null，壁纸
+        /// </summary>
         public string Type { get; set; }
         public string Visibility { get; set; }
         public List<string> Tags { get; set; }

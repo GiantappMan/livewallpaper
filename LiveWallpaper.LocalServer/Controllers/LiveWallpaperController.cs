@@ -11,7 +11,7 @@ namespace LiveWallpaper.LocalServer.Controllers
     {
         public IActionResult Version()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            var version = Assembly.GetEntryAssembly().GetName().Version;
             return Content(version.ToString());
         }
 

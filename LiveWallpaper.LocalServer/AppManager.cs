@@ -108,7 +108,8 @@ namespace LiveWallpaper.LocalServer
                 {
                     foreach (var item in RunningData.CurrentWalpapers)
                     {
-                        await WallpaperApi.ShowWallpaper(item.Value, item.Key);
+                        var r = await WallpaperApi.ShowWallpaper(item.Value, item.Key);
+                        System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
                     }
                 }
             }
@@ -201,6 +202,8 @@ namespace LiveWallpaper.LocalServer
             }
 
             ProcessHelper.AddPathToEnvoirment(ffmpegSaveDir);
+
+            WallpaperApi.WallpaperDir = UserSetting.Wallpaper.WallpaperSaveDir;
 
             //设置壁纸参数
             var r = await WallpaperApi.SetOptions(setting.Wallpaper);

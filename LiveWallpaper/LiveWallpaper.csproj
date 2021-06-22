@@ -7,14 +7,13 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\logo128.ico</ApplicationIcon>
     <Platforms>x64;x86</Platforms>
+    <Version>2.3.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Assets\livewallpaper_i18n\.git" />
-    <None Remove="Assets\livewallpaper_i18n\zh.js" />
     <None Remove="Assets\setting.png" />
     <None Remove="logo128.ico" />
-    <None Remove="NLog.config" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,9 +21,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\setting.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -35,7 +31,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LiveWallpaper.LocalServer\LiveWallpaper.LocalServer.csproj" />
-    <ProjectReference Include="..\LiveWallpaper.UI\LiveWallpaper.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

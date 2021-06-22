@@ -1,6 +1,5 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaper.LocalServer;
-using LiveWallpaper.UI;
 using NLog;
 using System;
 using System.Diagnostics;
@@ -19,13 +18,14 @@ namespace LiveWallpaper
         #region ui
         private NotifyIcon _notifyIcon;
         private ContextMenuStrip _contextMenu;
-        private ToolStripMenuItem _btnMainUI;
+        private ToolStripMenuItem _btnAbount;
+        private ToolStripMenuItem _btnOffline;
         private ToolStripMenuItem _btnMainUIWeb;
         private ToolStripMenuItem _btnCommunity;
         private ToolStripMenuItem _btnSetting;
         private ToolStripMenuItem _btnExit;
         private System.ComponentModel.IContainer _components;
-        private MainWindow _mainWindow = null;
+        //private MainWindow _mainWindow = null;
         #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -33,18 +33,21 @@ namespace LiveWallpaper
         private static Dispatcher _uiDispatcher;
         private static Mutex _mutex;
 
+        private static int _hostPort;
+
         public AppContext()
         {
+            _hostPort = GetPort();
+
             _uiDispatcher = Dispatcher.CurrentDispatcher;
             InitializeUI();
-            
+
             WallpaperApi.Initlize(_uiDispatcher);
             AppManager.CultureChanged += LanService_CultureChanged;
             SetMenuText();
             _ = Task.Run(() =>
             {
-                int port = GetPort();
-                ServerWrapper.Start(port);
+                ServerWrapper.Start(_hostPort);
             });
             CheckMutex();
         }
@@ -78,15 +81,20 @@ namespace LiveWallpaper
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
-            //_contextMenu.Items.Add(new ToolStripSeparator());
+            _btnAbount = new ToolStripMenuItem();
+            _btnAbount.Click += BtnAbount_Click;
+            _contextMenu.Items.Add(_btnAbount);
+            _contextMenu.Items.Add(new ToolStripSeparator());
+
+            _btnOffline = new ToolStripMenuItem();
+            _btnOffline.Click += BtnOffline_Click;
+            _contextMenu.Items.Add(_btnOffline);
+
+            _contextMenu.Items.Add(new ToolStripSeparator());
 
             _btnCommunity = new ToolStripMenuItem();
             _btnCommunity.Click += BtnCommunity_Click;
             _contextMenu.Items.Add(_btnCommunity);
-
-            _btnMainUI = new ToolStripMenuItem();
-            _btnMainUI.Click += BtnMainUI_Click;
-            //_contextMenu.Items.Add(_btnMainUI);
 
             _btnMainUIWeb = new ToolStripMenuItem();
             _btnMainUIWeb.Click += BtnMainUIWeb_Click;
@@ -116,12 +124,14 @@ namespace LiveWallpaper
             _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
         }
 
+
         private void SetMenuText()
         {
             _ = _uiDispatcher.Invoke(async () =>
               {
+                  _btnAbount.Text = await GetText("common.about");
                   _btnCommunity.Text = await GetText("wallpapers.title");
-                  _btnMainUI.Text = await GetText("local.title");
+                  _btnOffline.Text = await GetText("client.offline");
                   _btnMainUIWeb.Text = await GetText("local.title");
                   _btnExit.Text = await GetText("client.exit");
                   _btnSetting.Text = await GetText("common.settings");
@@ -161,14 +171,19 @@ namespace LiveWallpaper
             //return port;
         }
 
+        private void BtnAbount_Click(object sender, EventArgs e)
+        {
+            InnerOpenUrl("https://www.giantapp.cn/post/products/livewallpaperv2/");
+        }
+
         private void BtnCommunity_Click(object sender, EventArgs e)
         {
             OpenUrl("wallpapers");
         }
 
-        private void BtnMainUI_Click(object sender, EventArgs e)
+        private void BtnOffline_Click(object sender, EventArgs e)
         {
-            OpenLocalView();
+            OpenUrl("", $"http://localhost:{_hostPort}/offline/");
         }
 
         private void BtnMainUIWeb_Click(object sender, EventArgs e)
@@ -178,23 +193,23 @@ namespace LiveWallpaper
 
         private void OpenLocalView()
         {
-            //回归客户端界面，用户更喜欢客户端方式操作
-            if (_mainWindow == null)
-            {
-                _mainWindow = new MainWindow();
-                _mainWindow.Closed += MainWindow_Closed;
-            }
+            ////回归客户端界面，用户更喜欢客户端方式操作
+            //if (_mainWindow == null)
+            //{
+            //    _mainWindow = new MainWindow();
+            //    _mainWindow.Closed += MainWindow_Closed;
+            //}
 
-            _mainWindow.Show();
+            //_mainWindow.Show();
 
-            if (!_mainWindow.IsActive)
-                _mainWindow.Activate();
+            //if (!_mainWindow.IsActive)
+            //    _mainWindow.Activate();
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)
         {
-            _mainWindow.Closed -= MainWindow_Closed;
-            _mainWindow = null;
+            //_mainWindow.Closed -= MainWindow_Closed;
+            //_mainWindow = null;
         }
 
         private void BtnSetting_Click(object sender, EventArgs e)
@@ -202,17 +217,38 @@ namespace LiveWallpaper
             OpenUrl("dashboard/client/setting");
         }
 
-        private static void OpenUrl(string url)
+        private static void OpenUrl(string url, string host = null)
+        {
+            if (string.IsNullOrEmpty(host))
+                host = "https://livewallpaper.giantapp.cn/";
+
+            if (AppManager.UserSetting != null)
+            {
+                if (AppManager.UserSetting.General.CurrentLan == null)
+                {
+                    if (!Thread.CurrentThread.CurrentCulture.Name.StartsWith("zh"))
+                        //没有设置语言并且是非中文，默认打开英文网页
+                        host = $"{host}en/";
+                }
+                else if (AppManager.UserSetting.General.CurrentLan == "zh")
+                {
+                    //设置了配置，但是是中文不处理
+                }
+                else
+                {
+                    //根据配置打开网页
+                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}/";
+                }
+            }
+
+            url = $"{host}{url}";
+            InnerOpenUrl(url);
+        }
+
+        private static void InnerOpenUrl(string url)
         {
             try
             {
-                string host = "https://livewallpaper.giantapp.cn/";
-                if (AppManager.UserSetting != null && AppManager.UserSetting.General.CurrentLan != null && AppManager.UserSetting.General.CurrentLan != "zh")
-                {
-                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}/";
-                }
-                url = $"{host}{url}";
-
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)

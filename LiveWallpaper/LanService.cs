@@ -12,8 +12,7 @@ namespace LiveWallpaper
 {
     public class LanService
     {
-        private Dictionary<string, dynamic> dataDict = new Dictionary<string, dynamic>();
-
+        private readonly Dictionary<string, dynamic> dataDict = new Dictionary<string, dynamic>();
 
         public Task<string> GetTextAsync(string key, string culture)
         {
@@ -63,7 +62,9 @@ namespace LiveWallpaper
                 cultureObj = cultureObj[item];
             }
 
-            string result = cultureObj.Value<string>();
+            string result = key;
+            if (cultureObj != null)
+                result = cultureObj.Value<string>();
             return result;
         }
     }

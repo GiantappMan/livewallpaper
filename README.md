@@ -3,7 +3,9 @@
 A tiny non-disturbing Win10 (dynamic) wallpaper app
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [中文文档](https://github.com/giant-app/LiveWallpaper/blob/master/Docs/README_zh.md)
@@ -26,16 +28,19 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 
 ### Features
 
-- Mini wallpaper client
-- Pure Web interface
-- Wallpaper contribute
+- Lightweight client
+- Web UI
+- Wallpaper upload
 - Download the wallpaper with one click
-- The website is implemented by NUXT +TCB and is not open source yet
+- Offline access
+- No pop-up ads on the client
+- No VIP,free to use
 
 ### Build Environment
 
 - VS2019
 - Win10
+- The server site is not open source, the client web source code is [here](https://github.com/giant-app/LiveWallpaper/tree/master/livewallpaper-client-ui).
 
 ### Branch management
 
@@ -58,7 +63,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/DaZiYuan"><img src="https://avatars3.githubusercontent.com/u/80653?v=4?s=100" width="100px;" alt=""/><br /><sub><b>代码抄写狮</b></sub></a><br /><a href="#maintenance-DaZiYuan" title="Maintenance">🚧</a> <a href="https://github.com/giant-app/LiveWallpaper/commits?author=DaZiYuan" title="Code">💻</a> <a href="https://github.com/giant-app/LiveWallpaper/issues?q=author%3ADaZiYuan" title="Bug reports">🐛</a> <a href="#projectManagement-DaZiYuan" title="Project Management">📆</a></td>
     <td align="center"><a href="http://Empty... No!"><img src="https://avatars0.githubusercontent.com/u/7201687?v=4?s=100" width="100px;" alt=""/><br /><sub><b>The_BadUser</b></sub></a><br /><a href="#translation-vanja-san" title="Translation">🌍</a></td>
     <td align="center"><a href="https://github.com/Laezor"><img src="https://avatars2.githubusercontent.com/u/32393101?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Laezor</b></sub></a><br /><a href="#translation-Laezor" title="Translation">🌍</a></td>
-    <td align="center"><a href="https://github.com/rocksdanister"><img src="https://avatars.githubusercontent.com/u/17554161?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Dani John</b></sub></a><br /><a href="https://github.com/giant-app/LiveWallpaper/issues?q=author%3Arocksdanister" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://www.addesp.com"><img src="https://avatars.githubusercontent.com/u/44437200?v=4?s=100" width="100px;" alt=""/><br /><sub><b>ADD-SP</b></sub></a><br /><a href="https://github.com/giant-app/LiveWallpaper/commits?author=ADD-SP" title="Code">💻</a></td>
   </tr>
 </table>

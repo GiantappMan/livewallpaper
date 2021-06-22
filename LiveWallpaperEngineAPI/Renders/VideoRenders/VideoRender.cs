@@ -53,7 +53,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 var currentScreenOption = WallpaperApi.Options.ScreenOptions.FirstOrDefault(e => e.Screen == screenItem);
                 bool isPanScan = currentScreenOption == null || currentScreenOption.PanScan;
 
-                control.Play(wallpaper.RunningData.AbsolutePath, wallpaper.Option.HardwareDecoding, isPanScan);
+                control.Play(host.GetHandle(), wallpaper.RunningData.AbsolutePath, wallpaper.Option.HardwareDecoding, isPanScan);
 
                 int volume = 0;
                 if (screenItem == WallpaperApi.Options.AudioScreen)
@@ -61,8 +61,8 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                 control.SetVolume(volume);
 
-                //播放后再显示
-                host.ShowWallpaper(control.GetHandle());
+                ////播放后再显示
+                //host.ShowWallpaper();
 
                 infos.Add(new RenderInfo()
                 {

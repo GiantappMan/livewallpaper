@@ -43,33 +43,21 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             return _cacheHandle.Value;
         }
 
-        internal void ShowWallpaper(Control control)
-        {
-            IntPtr controlHandle = IntPtr.Zero;
+        //internal void ShowWallpaper()
+        //{
+        //    //WallpaperApi.InvokeIfRequired(() =>
+        //    //{
+        //    //    Controls.Clear();
+        //    //    //Opacity = 1;
+        //    //    Refresh();
+        //    //});
 
-            WallpaperApi.InvokeIfRequired(() =>
-            {
-                controlHandle = control.Handle;
+        //    IntPtr hostForm = GetHandle();
 
-                //控件未变
-                if (lastWallpaperHandle == controlHandle)
-                    return;
-
-                lastWallpaperHandle = controlHandle;
-
-                Controls.Clear();
-                control.Dock = DockStyle.Fill;
-                Controls.Add(control);
-                //Opacity = 1;
-                Refresh();
-            });
-
-            IntPtr hostForm = GetHandle();
-
-            var wpHelper = WallpaperHelper.GetInstance(_screenName);
-            //hostfrom下潜桌面
-            wpHelper.SendToBackground(hostForm);
-        }
+        //    var wpHelper = WallpaperHelper.GetInstance(_screenName);
+        //    //hostfrom下潜桌面
+        //    wpHelper.SendToBackground(hostForm);
+        //}
 
         internal void ShowWallpaper(IntPtr wallpaperHandle)
         {
@@ -104,6 +92,9 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
                     {
                         var host = _hosts[screen] = new LiveWallpaperRenderForm(screen);
                         host.Show();
+                        var wpHelper = WallpaperHelper.GetInstance(screen);
+                        //hostfrom下潜桌面
+                        wpHelper.SendToBackground(host.GetHandle());
                     });
             }
 

@@ -5,28 +5,17 @@ using System.Windows.Forms;
 
 namespace Giantapp.LiveWallpaper.Engine.VideoRenders
 {
-    public partial class MpvControl : UserControl
+    public partial class MpvControl
     {
         private Mpv.NET.Player.MpvPlayer _player;
-        //private string _lastPath;
         private int _volume;
 
         public MpvControl()
         {
-            InitializeComponent();
-            //UI
-            BackColor = Color.Magenta;
         }
 
-        private IntPtr? _cacheHandle;
-        public IntPtr GetHandle()
-        {
-            if (_cacheHandle == null)
-                _cacheHandle = Handle;
-            return _cacheHandle.Value;
-        }
 
-        public void Play(string path, bool hwdec = true, bool panscan = true)
+        public void Play(IntPtr renderHandle, string path, bool hwdec = true, bool panscan = true)
         {
             if (_player == null)
             {
@@ -45,7 +34,7 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
                 }
                 WallpaperApi.InvokeIfRequired(() =>
                 {
-                    _player = new Mpv.NET.Player.MpvPlayer(GetHandle(), dllPath)
+                    _player = new Mpv.NET.Player.MpvPlayer(renderHandle, dllPath)
                     {
                         Loop = true,
                         Volume = 0

@@ -28,7 +28,6 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             foreach (var item in screens)
                 Debug.WriteLine($"show {GetType().Name} {item}");
 
-            //List<RenderInfo> changedRenderInfo = new();
             //过滤无变化的屏幕
             var changedScreen = screens.Where(m =>
             {
@@ -38,21 +37,28 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     ok = true;
                 else
                 {
-                    //路径变化或者播放参数变化，都要重新播放
+                    //路径变化或者播放参数变化，都要重新播放，分组每次都要重新播放
                     ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath
+                    || existRenderInfo.Wallpaper.RunningData.Type == WallpaperType.Group
                     || existRenderInfo.Wallpaper.Option != wallpaper.Option;
-                    //changedRenderInfo.Add(existRenderInfo);
                 }
                 return ok;
             }).ToArray();
 
             if (changedScreen.Length > 0)
             {
-                //关闭已经展现的壁纸
-                await CloseWallpaperExAsync(wallpaper, changedScreen);
+                //每个render innershowwallpaper 内部处理
+                ////关闭已经展现的壁纸
+                //await CloseWallpaperAsync(wallpaper, changedScreen);
+
+                //处理关闭数据
+                CloseWallpaperData(changedScreen);
 
                 _showWallpaperCts = new CancellationTokenSource();
                 var showResult = await InnerShowWallpaper(wallpaper, _showWallpaperCts.Token, changedScreen);
+                //包含的壁纸已经删除
+                if (showResult == null)
+                    return BaseApiResult<List<RenderInfo>>.SuccessState();
                 if (!showResult.Ok)
                     return showResult;
 
@@ -62,15 +68,20 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             return BaseApiResult<List<RenderInfo>>.SuccessState();
         }
-        public Task CloseWallpaperAsync(params string[] screens)
+        public async Task CloseWallpaperAsync(WallpaperModel nextWallpaper, params string[] screens)
         {
-            return CloseWallpaperExAsync(null, screens);
+            var playingWallpaper = CloseWallpaperData(screens);
+            if (playingWallpaper.Count == 0)
+                return;
+
+            await InnerCloseWallpaperAsync(playingWallpaper, nextWallpaper);
         }
-        public async Task CloseWallpaperExAsync(WallpaperModel nextWallpaper = null, params string[] screens)
+
+        private List<RenderInfo> CloseWallpaperData(params string[] screens)
         {
             var playingWallpaper = _currentWallpapers.Where(m => screens.Contains(m.Screen)).ToList();
             if (playingWallpaper.Count == 0)
-                return;
+                return playingWallpaper;
 
             foreach (var item in screens)
                 Debug.WriteLine($"close {GetType().Name} {item}");
@@ -80,12 +91,11 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             _showWallpaperCts?.Dispose();
             _showWallpaperCts = null;
 
-            await InnerCloseWallpaperAsync(playingWallpaper, nextWallpaper);
-
             playingWallpaper.ToList().ForEach(m =>
             {
                 _currentWallpapers.Remove(m);
             });
+            return playingWallpaper;
         }
 
         /// <summary>

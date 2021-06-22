@@ -4,7 +4,6 @@
     <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
     <OutputType>Library</OutputType>
     <Platforms>x64;x86</Platforms>
-    <Version>2.2.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,5 +19,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LiveWallpaperEngineAPI\LiveWallpaperEngineAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>   
