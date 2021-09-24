@@ -1,4 +1,5 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaper.Forms;
 using LiveWallpaper.LocalServer;
 using NLog;
 using System;
@@ -32,6 +33,7 @@ namespace LiveWallpaper
         private static readonly LanService _lanService = new LanService();
         private static Dispatcher _uiDispatcher;
         private static Mutex _mutex;
+        private static MainForm _mainForm = null;
 
         private static int _hostPort;
 
@@ -139,7 +141,7 @@ namespace LiveWallpaper
               });
         }
 
-        private static async Task<string> GetText(string key)
+        internal static async Task<string> GetText(string key)
         {
             if (AppManager.UserSetting == null)
             {
@@ -267,12 +269,27 @@ namespace LiveWallpaper
             }
         }
 
-        private void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        private async void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
-                   BindingFlags.Instance | BindingFlags.NonPublic);
-            mi.Invoke(_notifyIcon, null);
+            //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
+            //       BindingFlags.Instance | BindingFlags.NonPublic);
+            //mi.Invoke(_notifyIcon, null);
+            if (_mainForm == null)
+            {
+                _mainForm = new MainForm();
+                _mainForm.Text = await GetText("common.appName");
+                _mainForm.FormClosed += _mainForm_FormClosed;
+                _mainForm.Show();
+            }
+            else
+                _mainForm.Activate();
             //OpenLocalView();
+        }
+
+        private void _mainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            _mainForm.FormClosed -= _mainForm_FormClosed;
+            _mainForm = null;
         }
 
         private void BtnExit_Click(object Sender, EventArgs e)
