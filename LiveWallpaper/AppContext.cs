@@ -190,12 +190,12 @@ namespace LiveWallpaper
 
         private void BtnMainUIWeb_Click(object sender, EventArgs e)
         {
-            OpenLocalView();
+            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
+            OpenLocalView(url);
         }
 
-        private async void OpenLocalView()
+        private async void OpenLocalView(string url)
         {
-            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
             if (_mainForm == null)
             {
                 _mainForm = new MainForm();
@@ -220,28 +220,39 @@ namespace LiveWallpaper
 
         private void BtnSetting_Click(object sender, EventArgs e)
         {
-            OpenUrl("/dashboard/client/setting");
+            string url = GetUrl("/setting", $"http://localhost:{_hostPort}/offline/");
+            OpenLocalView(url);
         }
 
         private static string GetUrl(string url, string host)
         {
-            if (AppManager.UserSetting != null)
+            //默认
+            string lan = "en";
+            if (AppManager.UserSetting.General.CurrentLan != null)
             {
-                if (AppManager.UserSetting.General.CurrentLan == null)
-                {
-                    if (!Thread.CurrentThread.CurrentCulture.Name.StartsWith("zh"))
-                        //没有设置语言并且是非中文，默认打开英文网页
-                        host = $"{host}en";
-                }
-                else if (AppManager.UserSetting.General.CurrentLan == "zh")
-                {
-                    //设置了配置，但是是中文不处理
-                }
-                else
-                {
-                    //根据配置打开网页
-                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}";
-                }
+                //根据配置打开网页
+                lan = AppManager.UserSetting.General.CurrentLan;
+            }
+            else
+            {
+                //没有配置，是中文系统
+                if (Thread.CurrentThread.CurrentCulture.Name.StartsWith("zh"))
+                    lan = "zh";
+            }
+
+            switch (lan)
+            {
+                case "zh":
+                    //中文在前端为默认语言
+                    //去掉第一个斜线否者会多
+                    //英语 xxxx/en/page
+                    //中文 xxxx/page
+                    if (url.StartsWith("/"))
+                        url = url.Substring(1);
+                    break;
+                default:
+                    url = $"{lan}{url}";
+                    break;
             }
 
             url = $"{host}{url}";
@@ -281,7 +292,8 @@ namespace LiveWallpaper
             //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
             //       BindingFlags.Instance | BindingFlags.NonPublic);
             //mi.Invoke(_notifyIcon, null);          
-            OpenLocalView();
+            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
+            OpenLocalView(url);
         }
 
         private void _mainForm_FormClosed(object sender, FormClosedEventArgs e)
