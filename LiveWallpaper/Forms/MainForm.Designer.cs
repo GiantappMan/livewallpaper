@@ -41,7 +41,7 @@ namespace LiveWallpaper.Forms
             this.webView2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.webView2.Location = new System.Drawing.Point(0, 0);
             this.webView2.Name = "webView2";
-            this.webView2.Size = new System.Drawing.Size(800, 450);
+            this.webView2.Size = new System.Drawing.Size(1108, 729);
             this.webView2.TabIndex = 0;
             this.webView2.ZoomFactor = 1D;
             // 
@@ -49,7 +49,7 @@ namespace LiveWallpaper.Forms
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1108, 729);
             this.Controls.Add(this.webView2);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";

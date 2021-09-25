@@ -15,7 +15,15 @@ namespace LiveWallpaper.Forms
         public MainForm()
         {
             InitializeComponent();
-            webView2.Source = new Uri("http://localhost:5001/offline/");
+            //todo 没装浏览器，显示下载链接
+        }
+
+        internal void Open(string url)
+        {
+            var uri = new Uri(url);
+            if (webView2.Source != null && webView2.Source.AbsoluteUri == uri.AbsoluteUri)
+                return;
+            webView2.Source = uri;
         }
     }
 }

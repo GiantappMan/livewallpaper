@@ -180,7 +180,7 @@ namespace LiveWallpaper
 
         private void BtnCommunity_Click(object sender, EventArgs e)
         {
-            OpenUrl("wallpapers");
+            OpenUrl("/wallpapers");
         }
 
         private void BtnOffline_Click(object sender, EventArgs e)
@@ -190,22 +190,26 @@ namespace LiveWallpaper
 
         private void BtnMainUIWeb_Click(object sender, EventArgs e)
         {
-            OpenUrl("local");
+            OpenLocalView();
         }
 
-        private void OpenLocalView()
+        private async void OpenLocalView()
         {
-            ////回归客户端界面，用户更喜欢客户端方式操作
-            //if (_mainWindow == null)
-            //{
-            //    _mainWindow = new MainWindow();
-            //    _mainWindow.Closed += MainWindow_Closed;
-            //}
+            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
+            if (_mainForm == null)
+            {
+                _mainForm = new MainForm();
+                _mainForm.Text = await GetText("common.appName");
+                _mainForm.FormClosed += _mainForm_FormClosed;
+                _mainForm.Show();
+            }
+            else
+                _mainForm.Activate();
 
-            //_mainWindow.Show();
+            if (_mainForm.WindowState == FormWindowState.Minimized)
+                _mainForm.WindowState = FormWindowState.Normal;
 
-            //if (!_mainWindow.IsActive)
-            //    _mainWindow.Activate();
+            _mainForm.Open(url);
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)
@@ -216,21 +220,18 @@ namespace LiveWallpaper
 
         private void BtnSetting_Click(object sender, EventArgs e)
         {
-            OpenUrl("dashboard/client/setting");
+            OpenUrl("/dashboard/client/setting");
         }
 
-        private static void OpenUrl(string url, string host = null)
+        private static string GetUrl(string url, string host)
         {
-            if (string.IsNullOrEmpty(host))
-                host = "https://livewallpaper.giantapp.cn/";
-
             if (AppManager.UserSetting != null)
             {
                 if (AppManager.UserSetting.General.CurrentLan == null)
                 {
                     if (!Thread.CurrentThread.CurrentCulture.Name.StartsWith("zh"))
                         //没有设置语言并且是非中文，默认打开英文网页
-                        host = $"{host}en/";
+                        host = $"{host}en";
                 }
                 else if (AppManager.UserSetting.General.CurrentLan == "zh")
                 {
@@ -239,12 +240,18 @@ namespace LiveWallpaper
                 else
                 {
                     //根据配置打开网页
-                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}/";
+                    host = $"{host}{AppManager.UserSetting.General.CurrentLan}";
                 }
             }
 
             url = $"{host}{url}";
-            InnerOpenUrl(url);
+            return url;
+        }
+
+        private static void OpenUrl(string url, string host = "https://livewallpaper.giantapp.cn/")
+        {
+            string r = GetUrl(url, host);
+            InnerOpenUrl(r);
         }
 
         private static void InnerOpenUrl(string url)
@@ -269,21 +276,12 @@ namespace LiveWallpaper
             }
         }
 
-        private async void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void NotifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
             //       BindingFlags.Instance | BindingFlags.NonPublic);
-            //mi.Invoke(_notifyIcon, null);
-            if (_mainForm == null)
-            {
-                _mainForm = new MainForm();
-                _mainForm.Text = await GetText("common.appName");
-                _mainForm.FormClosed += _mainForm_FormClosed;
-                _mainForm.Show();
-            }
-            else
-                _mainForm.Activate();
-            //OpenLocalView();
+            //mi.Invoke(_notifyIcon, null);          
+            OpenLocalView();
         }
 
         private void _mainForm_FormClosed(object sender, FormClosedEventArgs e)
