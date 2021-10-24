@@ -3,26 +3,85 @@ using Common.Windows.Helpers;
 using Giantapp.LiveWallpaper.Engine;
 using LiveWallpaper.LocalServer.Models;
 using LiveWallpaper.LocalServer.Utils;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
+using Windows.Storage;
+using Windows.UI.Notifications;
 
 namespace LiveWallpaper.LocalServer
 {
     public class AppManager
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static readonly string _runningDataFilePath;
-        private static readonly string _userSettingFilePath;
+        public static string RunningDataFilePath { get; private set; }
+        public static string UserSettingFilePath { get; private set; }
+        public static string CacheDir { get; private set; }
+        public static string ConfigDir { get; private set; }
+        public static string LogDir { get; private set; }
         private static IStartupManager _startupManager = null;
-
 
         static AppManager()
         {
-            //MyDocuments这个路径不会虚拟化，方便从Dart端读取 (Flutter 方案已放弃，注释先留着)
-            _runningDataFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\{AppName}\\runningData.json";
-            _userSettingFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\{AppName}\\Config\\userSetting.json";
+            //_runningDataFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\{AppName}\\runningData.json";
+            //runningdata目录修改为和配置一个目录2021.9.30
+            DesktopBridge.Helpers helpers = new();
+            if (helpers.IsRunningAsUwp())
+            {
+                //uwp放在包里面，卸载时可以清理干净
+                ConfigDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, $"Local\\{AppName}\\");
+            }
+            else
+            {
+                ConfigDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\{AppName}\\";
+            }
+            CacheDir = $"{ConfigDir}Cache\\";
+            RunningDataFilePath = $"{ConfigDir}Config\\runningData.json";
+            UserSettingFilePath = $"{ConfigDir}Config\\userSetting.json";
+            LogDir = $"{ConfigDir}/Logs";
+            ToastNotificationManagerCompat.OnActivated += ToastNotificationManagerCompat_OnActivated;
+        }
+
+        private static async void ToastNotificationManagerCompat_OnActivated(ToastNotificationActivatedEventArgsCompat e)
+        {
+            // Obtain the arguments from the notification
+            ToastArguments args = ToastArguments.Parse(e.Argument);
+            string actionString = "action";
+            if (args.Contains(actionString))
+            {
+                string action = args.Get(actionString);
+                switch (action)
+                {
+                    case "review":
+                        try
+                        {
+                            await OpenStoreReview();
+                            RunningData = await JsonHelper.JsonDeserializeFromFileAsync<RunningData>(RunningDataFilePath);
+                            RunningData.CurrentVersionReviewed = true;
+                            await JsonHelper.JsonSerializeAsync(RunningData, RunningDataFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine(ex);
+                        }
+                        break;
+                }
+            }
+            ToastNotificationManagerCompat.History.Clear();
+
+            // Obtain any user input (text boxes, menu selections) from the notification
+            //ValueSet userInput = toastArgs.UserInput;
+
+            //// Need to dispatch to UI thread if performing UI operations
+            //Application.Current.Dispatcher.Invoke(delegate
+            //{
+            //    // TODO: Show the corresponding content
+            //    MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
+            //});
         }
 
         #region properties
@@ -74,12 +133,31 @@ namespace LiveWallpaper.LocalServer
         public static event EventHandler CultureChanged;
         #endregion
 
+        public static async Task<bool> OpenStoreReview()
+        {
+            try
+            {
+                //旧方法，不推荐的方式.但是推荐的方式获取不到ID
+                var pfn = Package.Current.Id.FamilyName;
+                var uri = new Uri($"ms-windows-store://review/?PFN={pfn}");
+                bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+                return success;
+                //var id = Package.Current.Id.ProductId;
+                //bool ok = await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-windows-store://review/?ProductId=9WZDNCRFHVJL"));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                return false;
+            }
+        }
+
         public static async Task Initialize(int hostPort)
         {
             try
             {
                 //应用程序数据
-                RunningData = await JsonHelper.JsonDeserializeFromFileAsync<RunningData>(_runningDataFilePath);
+                RunningData = await JsonHelper.JsonDeserializeFromFileAsync<RunningData>(RunningDataFilePath);
                 if (RunningData == null)
                 {
                     //生成默认运行数据
@@ -87,13 +165,36 @@ namespace LiveWallpaper.LocalServer
                 }
                 //更新端口号
                 RunningData.HostPort = hostPort;
-                await JsonHelper.JsonSerializeAsync(RunningData, _runningDataFilePath);
+                var version = Assembly.GetEntryAssembly().GetName().Version.ToString();
+
+                if (RunningData.CurrentVersion == null)
+                {
+                    _ = ShowGuidToastAsync();//第一次启动
+                }
+
+                if (RunningData.CurrentVersion != version)
+                {
+                    RunningData.CurrentVersion = version;
+                    RunningData.CurrentVersionLaunchedCount = 0;
+                    RunningData.CurrentVersionReviewed = false;
+                }
+                else
+                {
+                    RunningData.CurrentVersionLaunchedCount++;
+                }
+
+                await JsonHelper.JsonSerializeAsync(RunningData, RunningDataFilePath);
+
+                if (!RunningData.CurrentVersionReviewed && RunningData.CurrentVersionLaunchedCount > 0 && RunningData.CurrentVersionLaunchedCount % 30 == 0)
+                {
+                    ShowReviewToast();
+                }
 
                 if (UserSetting == null)
                     await LoadUserSetting();
 
                 //开机启动
-                DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
+                DesktopBridge.Helpers helpers = new();
                 if (helpers.IsRunningAsUwp())
                     _startupManager = new DesktopBridgeStartupManager(AppName);
                 else
@@ -123,6 +224,71 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
+        public static async Task ShowGuidToastAsync()
+        {
+            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string imgPath = Path.Combine(appDir, "Assets\\guide.gif");
+            new ToastContentBuilder()
+             .AddText(await GetText("client.started"))
+             .AddHeroImage(new Uri(imgPath))
+             .AddButton(new ToastButtonDismiss(await GetText("common.ok")))
+             .Show();
+        }
+
+        private static async void ShowReviewToast()
+        {
+            var toastContent = new ToastContent()
+            {
+                Visual = new ToastVisual()
+                {
+                    BindingGeneric = new ToastBindingGeneric()
+                    {
+                        Children =
+                                {
+                                    new AdaptiveText()
+                                    {
+                                        Text =await GetText("common.reviewTitle")
+                                    },
+                                    new AdaptiveText()
+                                    {
+                                        Text = await GetText("common.reviewContent")
+                                    }
+                                }
+                    }
+                },
+                Actions = new ToastActionsCustom()
+                {
+                    Buttons =
+                            {
+                                new ToastButton(await GetText("common.thumbUp"), "action=review")
+                                {
+                                    ActivationType = ToastActivationType.Background
+                                },
+                                new ToastButtonDismiss(await GetText("common.close"))
+                            }
+                },
+                Launch = "action=viewEvent&eventId=63851"
+            };
+
+            // Create the toast notification
+            var toastNotif = new ToastNotification(toastContent.GetXml());
+
+            // And send the notification
+            ToastNotificationManagerCompat.CreateToastNotifier().Show(toastNotif);
+        }
+
+        public static async Task<string> GetText(string key)
+        {
+            if (UserSetting == null)
+            {
+                await LoadUserSetting();
+            }
+            string culture = UserSetting.General.CurrentLan ?? Thread.CurrentThread.CurrentCulture.Name;
+            var r = await LanService.Instance.GetTextAsync(key, culture);
+            return r;
+        }
+
+
         public static async Task WaitInitialized()
         {
             while (!Initialized)
@@ -131,7 +297,7 @@ namespace LiveWallpaper.LocalServer
 
         public static async Task LoadUserSetting()
         {
-            UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(_userSettingFilePath);
+            UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(UserSettingFilePath);
             if (UserSetting == null)
                 UserSetting = new UserSetting();
             UserSetting.Wallpaper.FixScreenOptions();
@@ -147,7 +313,7 @@ namespace LiveWallpaper.LocalServer
         {
             try
             {
-                await JsonHelper.JsonSerializeAsync(setting, _userSettingFilePath);
+                await JsonHelper.JsonSerializeAsync(setting, UserSettingFilePath);
 
                 bool lanChanged = false;
                 if (UserSetting.General.CurrentLan != setting.General.CurrentLan)
@@ -174,7 +340,7 @@ namespace LiveWallpaper.LocalServer
         {
             try
             {
-                await JsonHelper.JsonSerializeAsync(data, _runningDataFilePath);
+                await JsonHelper.JsonSerializeAsync(data, RunningDataFilePath);
                 //更新内存对象
                 RunningData = data;
 

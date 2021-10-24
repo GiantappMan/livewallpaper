@@ -18,7 +18,12 @@
               <b-icon pack="fas" icon="globe"></b-icon>
               {{ $t('common.multiLanguage') }}
             </template>
-            <b-select placeholder="" v-model="setting.general.currentLan">
+            <!-- 多语言修改立即保存 -->
+            <b-select
+              placeholder=""
+              v-model="setting.general.currentLan"
+              v-on:input="onSaveClick"
+            >
               <option
                 v-for="locale in availableLocales"
                 :key="locale.code"
@@ -43,18 +48,16 @@
               "
             ></b-input>
           </b-field>
-          <b-field :label="$t('dashboard.client.setting.thirdpartToolsDir')">
+          <b-field :label="$t('dashboard.client.setting.configDir')">
             <b-input
-              v-model="setting.general.thirdpartToolsDir"
-              :placeholder="
-                $t('dashboard.client.setting.thirdpartToolsDirTips')
-              "
+              readonly
+              v-model="setting.general.configDir"
               icon-pack="fas"
               icon-right="folder-open"
               icon-right-clickable
               @icon-right-click="
                 explore({
-                  path: setting.general.thirdpartToolsDir,
+                  path: setting.general.configDir,
                   handleClientApiException,
                 })
               "
@@ -95,12 +98,12 @@
               :left-label="true"
             ></b-switch>
           </b-field>
-          <b-field :label="$t('dashboard.client.setting.forwardMouseEvent')">
+          <!-- <b-field :label="$t('dashboard.client.setting.forwardMouseEvent')">
             <b-switch
               v-model="setting.wallpaper.forwardMouseEvent"
               :left-label="true"
             ></b-switch>
-          </b-field>
+          </b-field> -->
         </div>
         <hr class="is-medium" />
       </section>

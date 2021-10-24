@@ -2,8 +2,9 @@ import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/s
 import { delay, isVersionGreatherThan } from '../utils/common';
 class LivewallpaperApi {
     constructor() {
-        this.serverHost = `http://127.0.0.1:${5001}/`;
+        this.serverHost = `http://localhost:${5001}/`;
         this.serverUrl = `${this.serverHost}livewallpaper`;
+        this.downloadWallpaperHandlers = [];
     }
     async _enusureConnected() {
         var createNew = false;
@@ -74,9 +75,6 @@ class LivewallpaperApi {
         return path;
     }
     async getPlayerUrl() {
-        // 'https://livewallpaper-3ghxzy41e1b569c9-1304209797.tcloudbaseapp.com/livewallpaper-ui-dist/mpv.7z'
-        // 'https://6c69-livewallpaper-3ghxzy41e1b569c9-1304209797.tcb.qcloud.la/livewallpaper-assets/mpv.7z'
-        // 'https://github.com/giant-app/LiveWallpaper/releases/download/LiveWallpaperEngineRender/LiveWallpaperEngineRender.7z'
         if (!this._clientVersion) {
             this._clientVersion = await this.getClientVersion();
         }
@@ -186,9 +184,50 @@ class LivewallpaperApi {
 
         return response;
     }
-    async downloadWallpaper(wallpaper, callback) {
-        let completed = false;
-        const { wp, cover, info } = wallpaper
+    async stopDownloadWallpaper(wallpaper) {
+        let r = await this._invoke({
+            method: "StopDownloadWallpaper",
+            parameters: [wallpaper]
+        });
+        return r;
+    }
+    async onDownloadWallpaer(callback) {
+        await this._enusureConnected();
+
+        if (callback) {
+            var exist = this.downloadWallpaperHandlers.find(m => m === callback);
+            if (!exist)
+                this.downloadWallpaperHandlers.push(callback);
+
+            this.connection.off("DownloadWallpaperProgressChanged");
+            this.connection.on("DownloadWallpaperProgressChanged", (e) => {
+                for (let h of this.downloadWallpaperHandlers) {
+                    h(e);
+                }
+            });
+        }
+    }
+
+    async offDownloadWallpaper(callback) {
+        let i = this.downloadWallpaperHandlers.indexOf(callback);
+        if (i >= 0) {
+            this.downloadWallpaperHandlers.splice(i, 1);
+        }
+        if (this.downloadWallpaperHandlers.length === 0)
+            this.connection.off("DownloadWallpaperProgressChanged");
+    }
+
+    async downloadWallpaper(wallpaper) {
+        // let completed = false;
+        const { wp, wpCover, groupDir, wpTitle, wpId, wpType } = wallpaper
+        var info = {
+            title: wpTitle,
+            id: wpId,
+            type: wpType,
+        };
+        var response = await this.connection.invoke("DownloadWallpaperToGroup", wp, wpCover, info, groupDir);
+        return response;
+
         await this._enusureConnected();
         if (callback) {
             this.connection.on("DownloadWallpaperProgressChanged", (e) => {
@@ -201,7 +240,7 @@ class LivewallpaperApi {
                 }
             });
         }
-        const response = await this.connection.invoke("DownloadWallpaper", wp, cover, info);
+        response = await this.connection.invoke("DownloadWallpaper", wp, cover, info);
         console.log(response);
         if (response.ok) {
             while (!completed) {
@@ -321,6 +360,12 @@ class LivewallpaperApi {
         let r = await this._invoke({
             method: "GetWallpaperOption",
             parameters: [dir]
+        });
+        return r;
+    }
+    async openStoreReview() {
+        let r = await this._invoke({
+            method: "OpenStoreReview",
         });
         return r;
     }

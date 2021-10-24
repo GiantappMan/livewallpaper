@@ -21,7 +21,7 @@ namespace LiveWallpaper
         private ContextMenuStrip _contextMenu;
         private ToolStripMenuItem _btnAbount;
         private ToolStripMenuItem _btnOffline;
-        private ToolStripMenuItem _btnMainUIWeb;
+        private ToolStripMenuItem _btnLocalWallpaper;
         private ToolStripMenuItem _btnCommunity;
         private ToolStripMenuItem _btnSetting;
         private ToolStripMenuItem _btnExit;
@@ -30,19 +30,31 @@ namespace LiveWallpaper
         #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly LanService _lanService = new LanService();
         private static Dispatcher _uiDispatcher;
         private static Mutex _mutex;
         private static MainForm _mainForm = null;
+        private static string _clientVersion;
 
         private static int _hostPort;
 
         public AppContext()
         {
-            _hostPort = GetPort();
+            bool ok = CheckMutex();
+            if (!ok)
+            {
+                ShowToastAndExit();
+                return;
+            }
+            Init();
+        }
 
-            _uiDispatcher = Dispatcher.CurrentDispatcher;
+        private void Init()
+        {
             InitializeUI();
+            var version = Assembly.GetEntryAssembly().GetName().Version;
+            _clientVersion = version.ToString();
+            _hostPort = GetPort();
+            _uiDispatcher = Dispatcher.CurrentDispatcher;
 
             WallpaperApi.Initlize(_uiDispatcher);
             AppManager.CultureChanged += LanService_CultureChanged;
@@ -51,10 +63,45 @@ namespace LiveWallpaper
             {
                 ServerWrapper.Start(_hostPort);
             });
-            CheckMutex();
         }
 
-        private async void CheckMutex()
+        internal static string GetLocalHosst()
+        {
+            return $"http://localhost:{_hostPort}/";
+        }
+
+        private static async void ShowToastAndExit()
+        {
+            await AppManager.ShowGuidToastAsync();
+            //string title = await AppManager.GetText("client.started");
+            //string desc = await AppManager.GetText("common.information");
+            //var toastContent = new ToastContent()
+            //{
+            //    Visual = new ToastVisual()
+            //    {
+            //        BindingGeneric = new ToastBindingGeneric()
+            //        {
+            //            Children =
+            //                        {
+            //                            new AdaptiveText()
+            //                            {
+            //                                Text =  title
+            //                            },
+            //                            new AdaptiveText()
+            //                            {
+            //                                Text =desc
+            //                            }
+            //                        }
+            //        }
+            //    }
+            //};
+
+            //var toastNotif = new ToastNotification(toastContent.GetXml());
+            //ToastNotificationManagerCompat.CreateToastNotifier().Show(toastNotif);
+            Environment.Exit(0);
+        }
+
+        private static bool CheckMutex()
         {
             try
             {
@@ -63,55 +110,72 @@ namespace LiveWallpaper
                 _mutex = new Mutex(true, "cxWallpaperEngineGlobalMutex", out bool ret);
                 if (!ret)
                 {
-                    _notifyIcon.ShowBalloonTip(5, await GetText("common.information"), await GetText("client.started"), ToolTipIcon.Info);
-                    Environment.Exit(0);
-                    return;
+                    return false;
                 }
+                _mutex.ReleaseMutex();
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.Error(ex);
+                return false;
             }
             finally
             {
-                _mutex.ReleaseMutex();
             }
         }
 
         private void InitializeUI()
         {
+            string dir = Path.GetDirectoryName(Application.ExecutablePath);
+            string settingImage = Path.Combine(dir, "Assets", "setting.png");
+            string webImage = Path.Combine(dir, "Assets", "web.png");
+            string windowImage = Path.Combine(dir, "Assets", "window.png");
+            string exitImage = Path.Combine(dir, "Assets", "exit.png");
+
             _components = new System.ComponentModel.Container();
             _contextMenu = new ContextMenuStrip();
 
-            _btnAbount = new ToolStripMenuItem();
+            _btnAbount = new ToolStripMenuItem
+            {
+                //Image = Image.FromFile(webImage)
+            };
             _btnAbount.Click += BtnAbount_Click;
             _contextMenu.Items.Add(_btnAbount);
             _contextMenu.Items.Add(new ToolStripSeparator());
 
             _btnOffline = new ToolStripMenuItem();
-            _btnOffline.Click += BtnOffline_Click;
-            _contextMenu.Items.Add(_btnOffline);
+            //_btnOffline.Click += BtnOffline_Click;
+            //_contextMenu.Items.Add(_btnOffline);
 
-            _contextMenu.Items.Add(new ToolStripSeparator());
+            //_contextMenu.Items.Add(new ToolStripSeparator());
 
-            _btnCommunity = new ToolStripMenuItem();
+            _btnCommunity = new ToolStripMenuItem
+            {
+                Image = Image.FromFile(webImage)
+            };
             _btnCommunity.Click += BtnCommunity_Click;
             _contextMenu.Items.Add(_btnCommunity);
 
-            _btnMainUIWeb = new ToolStripMenuItem();
-            _btnMainUIWeb.Click += BtnMainUIWeb_Click;
-            _contextMenu.Items.Add(_btnMainUIWeb);
+            _btnLocalWallpaper = new ToolStripMenuItem
+            {
+                Image = Image.FromFile(windowImage)
+            };
+            _btnLocalWallpaper.Click += BtnMainUIWeb_Click;
+            _contextMenu.Items.Add(_btnLocalWallpaper);
 
             _btnSetting = new ToolStripMenuItem();
             _btnSetting.Click += BtnSetting_Click;
-            string dir = Path.GetDirectoryName(Application.ExecutablePath);
-            string imgPath = Path.Combine(dir, "Assets", "setting.png");
-            _btnSetting.Image = Image.FromFile(imgPath);
+
+            _btnSetting.Image = Image.FromFile(settingImage);
             _contextMenu.Items.Add(_btnSetting);
 
             _contextMenu.Items.Add(new ToolStripSeparator());
 
-            _btnExit = new ToolStripMenuItem();
+            _btnExit = new ToolStripMenuItem
+            {
+                Image = Image.FromFile(exitImage)
+            };
             _btnExit.Click += BtnExit_Click;
             _contextMenu.Items.Add(_btnExit);
 
@@ -123,7 +187,7 @@ namespace LiveWallpaper
             };
 
             _notifyIcon.MouseDoubleClick += NotifyIcon_MouseDoubleClick;
-            _notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
+            //_notifyIcon.MouseClick += new MouseEventHandler(NotifyIcon_MouseClick);
         }
 
 
@@ -131,25 +195,14 @@ namespace LiveWallpaper
         {
             _ = _uiDispatcher.Invoke(async () =>
               {
-                  _btnAbount.Text = await GetText("common.about");
-                  _btnCommunity.Text = await GetText("wallpapers.title");
-                  _btnOffline.Text = await GetText("client.offline");
-                  _btnMainUIWeb.Text = await GetText("local.title");
-                  _btnExit.Text = await GetText("client.exit");
-                  _btnSetting.Text = await GetText("common.settings");
-                  _notifyIcon.Text = await GetText("common.appName");
+                  _btnAbount.Text = await AppManager.GetText("common.about");
+                  _btnCommunity.Text = await AppManager.GetText("wallpapers.title");
+                  _btnOffline.Text = await AppManager.GetText("client.offline");
+                  _btnLocalWallpaper.Text = await AppManager.GetText("local.title");
+                  _btnExit.Text = await AppManager.GetText("client.exit");
+                  _btnSetting.Text = await AppManager.GetText("common.settings");
+                  _notifyIcon.Text = await AppManager.GetText("common.appName");
               });
-        }
-
-        internal static async Task<string> GetText(string key)
-        {
-            if (AppManager.UserSetting == null)
-            {
-                await AppManager.LoadUserSetting();
-            }
-            string culture = AppManager.UserSetting.General.CurrentLan ?? Thread.CurrentThread.CurrentCulture.Name;
-            var r = await _lanService.GetTextAsync(key, culture);
-            return r;
         }
 
         private void LanService_CultureChanged(object sender, EventArgs e)
@@ -185,12 +238,13 @@ namespace LiveWallpaper
 
         private void BtnOffline_Click(object sender, EventArgs e)
         {
-            OpenUrl("", $"http://localhost:{_hostPort}/offline/");
+            string url = GetUrl("", GetLocalHosst());
+            OpenLocalView(url);
         }
 
         private void BtnMainUIWeb_Click(object sender, EventArgs e)
         {
-            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
+            string url = GetUrl("", GetLocalHosst());
             OpenLocalView(url);
         }
 
@@ -198,9 +252,11 @@ namespace LiveWallpaper
         {
             if (_mainForm == null)
             {
-                _mainForm = new MainForm();
-                _mainForm.Text = await GetText("common.appName");
-                _mainForm.FormClosed += _mainForm_FormClosed;
+                _mainForm = new MainForm
+                {
+                    Text = await AppManager.GetText("common.appName")
+                };
+                _mainForm.FormClosed += MainForm_FormClosed;
                 _mainForm.Show();
             }
             else
@@ -209,6 +265,7 @@ namespace LiveWallpaper
             if (_mainForm.WindowState == FormWindowState.Minimized)
                 _mainForm.WindowState = FormWindowState.Normal;
 
+            url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
             _mainForm.Open(url);
         }
 
@@ -220,7 +277,7 @@ namespace LiveWallpaper
 
         private void BtnSetting_Click(object sender, EventArgs e)
         {
-            string url = GetUrl("/setting", $"http://localhost:{_hostPort}/offline/");
+            string url = GetUrl("/setting", GetLocalHosst());
             OpenLocalView(url);
         }
 
@@ -248,7 +305,7 @@ namespace LiveWallpaper
                     //英语 xxxx/en/page
                     //中文 xxxx/page
                     if (url.StartsWith("/"))
-                        url = url.Substring(1);
+                        url = url[1..];
                     break;
                 default:
                     url = $"{lan}{url}";
@@ -269,6 +326,7 @@ namespace LiveWallpaper
         {
             try
             {
+                url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)
@@ -292,13 +350,12 @@ namespace LiveWallpaper
             //MethodInfo mi = typeof(NotifyIcon).GetMethod("ShowContextMenu",
             //       BindingFlags.Instance | BindingFlags.NonPublic);
             //mi.Invoke(_notifyIcon, null);          
-            string url = GetUrl("", $"http://localhost:{_hostPort}/offline/");
-            OpenLocalView(url);
+            BtnMainUIWeb_Click(null, null);
         }
 
-        private void _mainForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            _mainForm.FormClosed -= _mainForm_FormClosed;
+            _mainForm.FormClosed -= MainForm_FormClosed;
             _mainForm = null;
         }
 

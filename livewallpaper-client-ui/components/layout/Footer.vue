@@ -55,7 +55,7 @@
               {{ $t('common.home') }}
             </nuxt-link>
 
-            <b-dropdown position="is-top-left">
+            <b-dropdown position="is-top-left" style="z-index: 30">
               <button
                 class="button is-light"
                 slot="trigger"
@@ -93,7 +93,7 @@
             <small>
               <a
                 target="_blank"
-                href="https://giantapp.cn/contact"
+                href="https://giantapp.cn/post/other/contact"
                 class="navbar-item"
               >
                 {{ $t('common.contact') }}

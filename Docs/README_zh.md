@@ -8,23 +8,17 @@
 
 ---
 
-### 壁纸切换
+### 使用教程
+[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)
 
-![切换壁纸](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/changewallpaper.gif?raw=true)
+### 图片
+![LocalWallpaper](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/1.png?raw=true)
 
-### 壁纸下载
+![Wallpaper Community](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/2.png?raw=true)
 
-![一键下载](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.gif?raw=true)
+![Setting Page](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/3.png?raw=true)
 
-###　应用特色：
-
-- 轻量客户端
-- 纯网页控制
-- 壁纸上传
-- 壁纸一键下载
-- 离线使用
-- 客户端无任何弹窗广告
-- 没有 VIP，免费使用
+![Notify Icon](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/4.png?raw=true)
 
 ### 编译环境：
 

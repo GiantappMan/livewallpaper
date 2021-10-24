@@ -132,10 +132,19 @@ namespace Giantapp.LiveWallpaper.Engine
         /// </summary>
         public bool EnableMouseEvent { get; set; } = true;
 
+        #region video
+
         /// <summary>
         /// 是否启用硬件解码，video才行。其他类型无效
         /// </summary>
         public bool HardwareDecoding { get; set; } = true;
+
+        /// <summary>
+        /// 音量0-100
+        /// </summary>
+        public int Volume { get; set; }
+
+        #endregion
 
         #endregion
 
@@ -149,7 +158,7 @@ namespace Giantapp.LiveWallpaper.Engine
                 if (SwitchingIntervalString == null)
                     return new TimeSpan(0, 10, 0);
 
-                TimeSpan.TryParse(SwitchingIntervalString, out TimeSpan r);
+                _ = TimeSpan.TryParse(SwitchingIntervalString, out TimeSpan r);
                 return r;
             }
         }
@@ -178,9 +187,9 @@ namespace Giantapp.LiveWallpaper.Engine
                 return false;
             }
 
-            var r = lhs.EnableMouseEvent == rhs.EnableMouseEvent
-                && lhs.HardwareDecoding == rhs.HardwareDecoding
-                && lhs.SwitchingIntervalString == rhs.SwitchingIntervalString;
+            var r = lhs?.EnableMouseEvent == rhs?.EnableMouseEvent
+                && lhs?.HardwareDecoding == rhs?.HardwareDecoding
+                && lhs?.SwitchingIntervalString == rhs?.SwitchingIntervalString;
 
             return r;
         }

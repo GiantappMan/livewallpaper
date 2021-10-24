@@ -10,6 +10,9 @@ namespace LiveWallpaper.LocalServer.Models
     {
         public int HostPort { get; set; }
         public Dictionary<string, WallpaperModel> CurrentWalpapers { get; set; }
+        public string CurrentVersion { get; set; }
+        public int CurrentVersionLaunchedCount { get; set; }
+        public bool CurrentVersionReviewed { get; set; }
         /// <summary>
         /// 最近一次草稿目录
         /// </summary>

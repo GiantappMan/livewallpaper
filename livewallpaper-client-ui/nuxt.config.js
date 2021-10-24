@@ -2,15 +2,17 @@ export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
   generate: {
-    dir: "../LiveWallpaper.LocalServer/wwwroot/offline"
+    dir: "../LiveWallpaper.LocalServer/wwwroot/"
   },
 
-  env: {
+  publicRuntimeConfig: {
     expectedClientVersion: process.env.expectedClientVersion,
+    releaseNotesUrl: process.env.releaseNotesUrl,
+    donateUrl: process.env.donateUrl
   },
 
   router: {
-    base: '/offline/'
+    base: '/'
   },
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -47,7 +49,13 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     '@nuxtjs/fontawesome',
+    '@nuxtjs/pwa',
   ],
+  pwa: {
+    icon: {
+      purpose: 'any'
+    }
+  },
   fontawesome: {
     icons: {
       solid: ['faUndo', 'faSyncAlt', 'faFileImage', 'faGlobe', 'faCaretUp',
@@ -55,7 +63,7 @@ export default {
         'faTrashAlt', 'faChevronLeft', 'faChevronRight', 'faFighterJet',
         'faQuestionCircle', 'faCaretDown', 'faCog', 'faSignOutAlt', 'faSignInAlt',
         'faUpload', 'faTimesCircle', 'faCheck', 'faBan', 'faVolumeUp', 'faVolumeMute',
-        'faDesktop', 'faClock','faLayerGroup'],
+        'faDesktop', 'faClock', 'faLayerGroup', 'faKey', 'faExclamationCircle'],
       // regular: [],
       // light: [],
       // duotone: [],
@@ -80,9 +88,10 @@ export default {
 
   i18n: {
     locales: [
-      { code: 'en', iso: 'en-US', file: 'en.json', name: "English" },
+      { code: 'en', iso: 'en', file: 'en.json', name: "English" },
       { code: 'ru', iso: 'ru', file: 'ru.json', name: "Русский" },
-      { code: 'zh', iso: 'zh-CN', file: 'zh.json', name: "中文" }
+      { code: 'zh', iso: 'zh', file: 'zh.json', name: "中文（简体）" },
+      { code: 'zh-cht', iso: 'zh-TW', file: 'zh-CHT.json', name: "中文（繁體）" },
     ],
     langDir: "livewallpaper_i18n/",
     defaultLocale: 'zh',
@@ -96,5 +105,7 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+    //分类css文件，不包含到页内
+    extractCSS: true,
   }
 }

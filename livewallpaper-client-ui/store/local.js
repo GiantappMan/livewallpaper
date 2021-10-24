@@ -16,8 +16,10 @@ export const state = () => ({
     expectedClientVersion: process.env.expectedClientVersion,
     isPlaying: false,
     wallpapers: [],
+    runningWallpapers: [],
     isLoading: false,
     isLoadingSetting: false,
+    currentAudioWP: null,
     setting: {
         general: {
             startWithSystem: false,
@@ -25,6 +27,7 @@ export const state = () => ({
         },
         wallpaper: {
             wallpaperSaveDir: undefined,
+            audioScreen: undefined,
             audioScreenOptions: [],
             appMaximizedEffectAllScreen: false,
             forwardMouseEvent: false,
@@ -71,14 +74,25 @@ export const mutations = {
         Vue.set(wallpaper, 'isBusy', busy)
     },
     setWallpaperOption(state, { wallpaper, option }) {
-        wallpaper.option = option
+        //有些脏数据可能没有id
+        let existWallpaper = state.runningWallpapers.find(m => (m.info.id && m.info.id === wallpaper.info.id)
+            || m.info.localID === wallpaper.info.localID);
+        if (existWallpaper)
+            existWallpaper.option = option
+        else
+            //分组下的
+            wallpaper.option = option;
     },
     removeWallpaper(state, wallpaper) {
         state.wallpapers.splice(state.wallpapers.indexOf(wallpaper), 1)
     },
+    setCurrentAudioWP(state, { currentAudioWP }) {
+        state.currentAudioWP = currentAudioWP;
+    },
     setRunningWallpaper(state, { runningWallpapers }) {
         for (const wpItem of state.wallpapers) {
             wpItem.runningData.isRunning = false;
+            wpItem.runningData.screens = [];
         }
 
         for (const screenName of Object.keys(runningWallpapers)) {
@@ -97,9 +111,10 @@ export const mutations = {
             }
         }
 
-        state.isPlaying = !!state.wallpapers.find(
+        state.runningWallpapers = state.wallpapers.filter(
             (m) => m.runningData.isRunning === true
-        )
+        );
+        state.isPlaying = state.runningWallpapers && state.runningWallpapers.length > 0;
     }
 }
 
@@ -119,7 +134,7 @@ export const actions = {
                 // commit('setLoading', false)
             })
     },
-    async closeWallpaper({ commit }, { handleClientApiException }) {
+    async closeWallpaper({ commit, dispatch }, { handleClientApiException }) {
         console.log("closeWallpaper")
         commit('setLoading', true)
         await livewallpaperApi.closeWallpaper()
@@ -130,8 +145,10 @@ export const actions = {
             .finally(() => {
                 commit('setLoading', false)
             })
+        //更新当前播放的壁纸信息
+        await dispatch('updateRunningWallpaper');
     },
-    async showWallpaper({ commit }, { wallpaper, screen, handleClientApiException, toast }) {
+    async showWallpaper({ commit, dispatch }, { wallpaper, screen, handleClientApiException, toast }) {
         console.log("showWallpaper")
         commit('setLoading', true)
         let r = await livewallpaperApi.showWallpaper(wallpaper, screen)
@@ -165,6 +182,9 @@ export const actions = {
             .finally(() => {
                 commit('setLoading', false)
             })
+
+        //更新当前播放的壁纸信息
+        await dispatch('updateRunningWallpaper');
         return r;
     },
     async exploreWallpaper({ commit }, { wallpaper, handleClientApiException }) {
@@ -179,16 +199,19 @@ export const actions = {
         console.log("explore")
         await livewallpaperApi.explore(path).catch(handleClientApiException);
     },
-    getClientVersion(context) {
+    async getClientVersion(context, args) {
+        const { handleClientApiException } = args || {};
         console.log("getClientVersion")
-        livewallpaperApi
+        await livewallpaperApi
             .getClientVersion()
             .then((res) => {
                 context.commit('setClientVersion', res)
                 context.commit('setExpectedClientVersion', process.env.expectedClientVersion)
             })
-            .catch(() => {
+            .catch((e) => {
                 context.commit('setClientVersion', null)
+                if (handleClientApiException)
+                    handleClientApiException(e);
             })
             .finally(() => {
             })
@@ -234,11 +257,16 @@ export const actions = {
         commit('setLoadingSetting', true)
         try {
             let r = await livewallpaperApi.setUserSetting(setting);
+            if (r.ok === true) {
+                commit('setSetting', setting)
+            }
             return r;
         } catch (error) {
             handleClientApiException(error)
         }
-        commit('setLoadingSetting', false)
+        finally {
+            commit('setLoadingSetting', false)
+        }
     },
     async refresh({ commit, dispatch }, { handleClientApiException }) {
         console.log("refresh")
@@ -264,22 +292,59 @@ export const actions = {
         console.log(res);
         commit('setWallpaperOption', { wallpaper, option: res.data })
     },
-    async setWallpaperOption({ commit }, { wallpaper, option }) {
+    async setWallpaperOption({ commit, dispatch }, { wallpaper, option }) {
         console.log("setWallpaperOption")
         let dir = wallpaper.runningData.dir;
         let res = await livewallpaperApi.updateWallpaperOption(dir, option)
         console.log(res);
-        commit('setWallpaperOption', { wallpaper, option: res.data })
+        if (res.ok === true)
+            commit('setWallpaperOption', { wallpaper, option })
+        dispatch('updateCurrentAudioWP');
     },
-    async updateRunningWallpaper({ commit }) {
+    async updateRunningWallpaper({ commit, state, dispatch }) {
         console.log("updateRunningWallpaper")
         try {
             let runningWallpapers = await livewallpaperApi.getRunningWallpapers()
             //去重
             commit('setRunningWallpaper', { runningWallpapers })
+
+            await dispatch('updateCurrentAudioWP')
         } catch (error) {
             //2.2版本以下不支持
             console.log(error);
         }
     },
+    async updateCurrentAudioWP({ commit, state, dispatch }) {
+        if (!state.runningWallpapers) {
+            commit('setCurrentAudioWP', { currentAudioWP: null });
+        }
+        else {
+            const audioScreen = state.setting.wallpaper.audioScreen
+            var currentAudioWP = state.runningWallpapers.find(
+                (m) => m.runningData.screens.indexOf(audioScreen) >= 0
+            )
+
+            if (currentAudioWP && currentAudioWP.info.type === 'group') {
+                //分组每次都要重新读取，因为分组下的index会变
+                await dispatch('loadWallpaperOption', { wallpaper: currentAudioWP })
+
+                if (currentAudioWP.option) {
+                    currentAudioWP = currentAudioWP.info.groupItemWallpaperModels[currentAudioWP.option.lastWallpaperIndex];
+                }
+            }
+
+            if (currentAudioWP && currentAudioWP.info.type === 'image') {
+                currentAudioWP = null;
+            }
+
+            if (currentAudioWP == state.currentAudioWP) {
+                return;
+            }
+
+            if (currentAudioWP && !currentAudioWP.option) {
+                await dispatch('loadWallpaperOption', { wallpaper: currentAudioWP })
+            }
+            commit('setCurrentAudioWP', { currentAudioWP });
+        }
+    }
 }

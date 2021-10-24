@@ -32,7 +32,7 @@ namespace LiveWallpaper.LocalServer
         {
             services.AddCors(options =>
             {
-                List<string> urls = new List<string>() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", $"http://localhost:{ServerWrapper.HostPort}", $"http://127.0.0.1:{ServerWrapper.HostPort}", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
+                List<string> urls = new() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", $"http://localhost:{ServerWrapper.HostPort}", $"http://127.0.0.1:{ServerWrapper.HostPort}", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
 #if DEBUG
                 urls.Add("http://localhost:3000");
 #endif
@@ -71,16 +71,16 @@ namespace LiveWallpaper.LocalServer
 
             //手动指定路径，APP包装后启动路径不正确
             var apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            app.UseFileServer(new FileServerOptions
+            var option = new FileServerOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                 Path.Combine(apptEntryDir, "wwwroot")),
-            });
+                FileProvider = new PhysicalFileProvider(Path.Combine(apptEntryDir, "wwwroot")),
+            };
+            option.StaticFileOptions.ServeUnknownFileTypes = true;
+            app.UseFileServer(option);
 
             app.UseRouting();
 
             app.UseAuthorization();
-
 
             app.UseCors(AllowSpecificOrigins);
 

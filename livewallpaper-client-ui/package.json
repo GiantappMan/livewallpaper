@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nuxt",
     "build": "nuxt build",
+    "analyze": "nuxt build -a",
     "start": "nuxt start",
     "generate": "nuxt generate"
   },
@@ -21,6 +22,7 @@
     "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
+    "@nuxtjs/pwa": "^3.3.5",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
     "prettier": "^2.2.1",

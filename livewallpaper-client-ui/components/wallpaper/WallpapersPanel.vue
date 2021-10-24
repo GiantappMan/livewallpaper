@@ -22,18 +22,18 @@
           <b-navbar-item
             value="all"
             :active="filterWpType === 'all'"
-            v-on:click="filterWpType = 'all'"
+            v-on:click="setFilterWpType('all')"
           >
             {{ $t('common.all') }}
           </b-navbar-item>
           <b-navbar-item
-            v-on:click="filterWpType = 'group'"
+            v-on:click="setFilterWpType('group')"
             :active="filterWpType === 'group'"
           >
             {{ $t('common.group') }}
           </b-navbar-item>
           <b-navbar-item
-            v-on:click="filterWpType = 'wallpaper'"
+            v-on:click="setFilterWpType('wallpaper')"
             :active="filterWpType === 'wallpaper'"
           >
             {{ $t('common.wallpaper') }}
@@ -214,18 +214,7 @@
               </div>
             </div>
           </div>
-
-          <client-only>
-            <Empty v-if="isWallpaperEmpty" pack="fas" icon="folder-open">
-              {{ $t('local.noWallpapers') }}
-            </Empty>
-          </client-only>
         </div>
-
-        <client-only>
-          <b-loading :closable="false" v-model="isLoading"></b-loading>
-        </client-only>
-
         <b-modal v-model="showOptionModal">
           <div class="setting-container" v-if="currentOptionWP">
             <section>
@@ -233,8 +222,11 @@
                 <template v-if="currentOptionWP.info.type === 'group'">
                   {{ $t('common.wallpaperGroup') }}
                 </template>
-                <template v-else>
+                <template v-else-if="currentOptionWP.info.type === 'video'">
                   {{ $t('common.videoWP') }}
+                </template>
+                <template v-else-if="currentOptionWP.info.type === 'image'">
+                  {{ $t('common.imageWP') }}
                 </template>
               </h2>
               <div class="setting-container" v-if="currentOption">
@@ -256,7 +248,7 @@
                     </b-timepicker>
                   </b-field>
                 </template>
-                <template v-else>
+                <template v-else-if="currentOptionWP.info.type === 'video'">
                   <b-field
                     :label="
                       currentOption.hardwareDecoding
@@ -269,6 +261,9 @@
                       :left-label="true"
                       v-model="currentOption.hardwareDecoding"
                     ></b-switch>
+                  </b-field>
+                  <b-field style="width: 251px" :label="$t('common.volume')">
+                    <b-slider v-model="currentOption.volume"></b-slider>
                   </b-field>
                 </template>
               </div>
@@ -291,6 +286,12 @@
           </div>
         </b-modal>
       </div>
+      <client-only>
+        <Empty v-if="isWallpaperEmpty" pack="fas" icon="folder-open">
+          {{ $t('local.noWallpapers') }}
+        </Empty>
+        <b-loading :closable="false" v-model="isBusy"></b-loading>
+      </client-only>
     </div>
     <b-navbar
       id="bottomBar"
@@ -348,6 +349,18 @@
               </div>
             </b-dropdown-item>
           </b-dropdown>
+          <b-slider
+            :title="currentAudioWP.info.title"
+            v-if="
+              currentAudioWP &&
+              currentAudioWP.option &&
+              setting.wallpaper.audioScreen != 'disabled'
+            "
+            style="width: 100px"
+            class="ml-4 mr-3"
+            v-on:change="currentAudioWPVolumeChanged"
+            v-bind:value="currentAudioWP.option.volume"
+          ></b-slider>
           <b-button
             style="margin-left: 0.5rem"
             v-if="isPlaying"
@@ -367,7 +380,7 @@
               icon-pack="fas"
               icon-left="sync-alt"
               v-on:click="refresh({ handleClientApiException })"
-              :loading="isLoading"
+              :loading="isBusy"
               >{{ $t('common.refresh') }}</b-button
             >
             <b-button
@@ -451,12 +464,18 @@ export default {
       setting: JSON.parse(JSON.stringify(this.$store.state.local.setting)),
       categoryOptions: ['all', 'wallpaper', 'group'],
       filterWpType: 'all',
+      firstLoading: false,
     }
   },
   computed: {
+    isBusy() {
+      return this.isLoading || this.isLoadingSetting || this.firstLoading
+    },
     isWallpaperEmpty() {
       const r =
-        !this.isLoading && (!this.wallpapers || this.wallpapers.length == 0)
+        !this.isLoading &&
+        !this.isLoadingSetting &&
+        (!this.wallpapers || this.wallpapers.length == 0)
       return r
     },
     settingLoaded() {
@@ -476,7 +495,15 @@ export default {
       }
       return this.wallpapers
     },
-    ...mapState(['wallpapers', 'serverHost', 'isLoading', 'isPlaying']),
+    ...mapState([
+      'wallpapers',
+      'serverHost',
+      'isLoading',
+      'isLoadingSetting',
+      'isPlaying',
+      'runningWallpapers',
+      'currentAudioWP',
+    ]),
   },
   mounted: function () {
     const switchingIntervalMinTime = new Date()
@@ -489,16 +516,29 @@ export default {
     window.removeEventListener('scroll', this.handleScroll)
   },
   async fetch() {
-    await this.refresh({
-      handleClientApiException: this.handleClientApiException,
-    })
-    if (!this.wallpapers) return
+    this.firstLoading = true
+    try {
+      if (!this.settingLoaded) {
+        await this.loadSetting({
+          handleClientApiException: () => {},
+        })
+        this.setting = JSON.parse(
+          JSON.stringify(this.$store.state.local.setting)
+        )
+      }
 
-    if (!this.settingLoaded) {
-      await this.loadSetting({
-        handleClientApiException: () => {},
+      if (!this.$store.state.local.setting) return
+
+      if (process.client) {
+        this.filterWpType = localStorage.getItem('filterWpType') || 'all'
+      }
+
+      await this.refresh({
+        handleClientApiException: this.handleClientApiException,
       })
-      this.setting = JSON.parse(JSON.stringify(this.$store.state.local.setting))
+    } catch (error) {
+    } finally {
+      this.firstLoading = false
     }
   },
   // call fetch only on client-side
@@ -514,7 +554,23 @@ export default {
       'closeWallpaper',
       'deleteWallpaper',
       'exploreWallpaper',
+      'updateCurrentAudioWP',
     ]),
+    setFilterWpType(type) {
+      this.filterWpType = type
+      localStorage.setItem('filterWpType', type)
+    },
+    async currentAudioWPVolumeChanged(e) {
+      let wallpaper = this.currentAudioWP
+      if (!wallpaper) return
+      let option = JSON.parse(JSON.stringify(wallpaper.option))
+      option.volume = e
+      await this.setWallpaperOption({
+        wallpaper,
+        option,
+        handleClientApiException: this.handleClientApiException,
+      })
+    },
     handleClientApiException(error) {
       this.$local.handleClientApiException(this, error)
     },
@@ -524,6 +580,9 @@ export default {
         setting: this.setting,
         handleClientApiException: this.handleClientApiException,
       })
+      this.updateCurrentAudioWP()
+      //创建新副本
+      this.setting = JSON.parse(JSON.stringify(this.setting))
     },
     handleScroll(event) {
       let bottomBarHeight = this.$el.querySelector('#bottomBar').clientHeight

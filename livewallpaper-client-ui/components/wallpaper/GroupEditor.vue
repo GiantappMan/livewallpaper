@@ -1,6 +1,6 @@
 <template>
   <div class="container main">
-    <nav class="breadcrumb" aria-label="breadcrumbs">
+    <!-- <nav class="breadcrumb" aria-label="breadcrumbs">
       <ul>
         <li>
           <b-navbar-item tag="nuxt-link" :to="localePath('/')">
@@ -14,7 +14,7 @@
         </li>
       </ul>
     </nav>
-    <hr class="is-medium" />
+    <hr class="is-medium" /> -->
     <section>
       <b-field :label="$t('dashboard.client.editor.title')">
         <b-input

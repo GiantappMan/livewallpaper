@@ -4,14 +4,18 @@ using Giantapp.LiveWallpaper.Engine.Renders;
 using LiveWallpaper.LocalServer.Models;
 using LiveWallpaper.LocalServer.Utils;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Storage;
+using Windows.UI.Notifications;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Exceptions;
 using static LiveWallpaper.LocalServer.Utils.FileDownloader;
@@ -360,13 +364,38 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
             return BaseApiResult.SuccessState();
         }
-        //下载壁纸
+        public Task<bool> OpenStoreReview()
+        {
+            return AppManager.OpenStoreReview();
+        }
+
+        public Task<BaseApiResult> StopDownloadWallpaper(string wallpaper)
+        {
+            if (_downloadingWallpapers.ContainsKey(wallpaper))
+            {
+                _downloadingWallpapers[wallpaper].Cancel(true);
+            }
+            return Task.FromResult(BaseApiResult.SuccessState());
+        }
+
+        static readonly ConcurrentDictionary<string, CancellationTokenSource> _downloadingWallpapers = new();
+
+        //兼容前端老版本
         public Task<BaseApiResult> DownloadWallpaper(string wallpaper, string cover, WallpaperProjectInfo info)
+        {
+            return DownloadWallpaperToGroup(wallpaper, cover, info, null);
+        }
+
+        //下载壁纸
+        public Task<BaseApiResult> DownloadWallpaperToGroup(string wallpaper, string cover, WallpaperProjectInfo info, string groupDir)
         {
             try
             {
                 if (wallpaper == null)
                     return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Failed));
+
+                if (_downloadingWallpapers.ContainsKey(wallpaper))
+                    return Task.FromResult(BaseApiResult.BusyState());
 
                 string destFolder = null;
 
@@ -379,16 +408,51 @@ namespace LiveWallpaper.LocalServer.Hubs
                     info = new WallpaperProjectInfo();
 
                 CancellationTokenSource cts = new();
+                _downloadingWallpapers[wallpaper] = cts;
                 _ = Task.Run(async () =>
                  {
                      RaiseLimiter _raiseLimiter = new();
+
+                     //string tag = "progressToast" + info.Title;
+                     //string group = "progressToastGroup";
+
+                     //new ToastContentBuilder()
+                     //  .AddVisualChild(new AdaptiveProgressBar()
+                     //  {
+                     //      Title = info.Title,
+                     //      Value = new BindableProgressBarValue("progressValue"),
+                     //      ValueStringOverride = new BindableString("progressValueString"),
+                     //      Status = new BindableString("progressStatus")
+                     //  }).Show(toast =>
+                     //  {
+                     //      toast.Tag = tag;
+                     //      toast.Group = group;
+
+                     //      toast.Data = new NotificationData(new Dictionary<string, string>()
+                     //    {
+                     //               { "progressValue", "0" },
+                     //               { "progressValueString", "进度" },
+                     //               { "progressStatus",GetText("local.downloading").Replace("{progress}%","") },
+                     //    });
+                     //  });
 
                      var wpProgressInfo = new Progress<(float competed, float total)>((e) =>
                     {
                         _raiseLimiter.Execute(async () =>
                         {
                             var client = _hubEventEmitter.AllClient();
-                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = wallpaper, e.competed, e.total, percent = e.competed / e.total * 90, completed = false });
+
+                            float percent = e.competed / e.total * 90;
+
+                            //ToastNotificationManagerCompat.CreateToastNotifier().Update(
+                            //    new NotificationData(new Dictionary<string, string>()
+                            //    {
+                            //        { "progressValue",  (percent/100).ToString() },
+                            //        { "progressValueString",(int)(percent)+"" },
+                            //        { "progressStatus", GetText("local.downloading").Replace("{progress}%","") },
+                            //  }), tag, group);
+
+                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = wallpaper, e.competed, e.total, percent, completed = false });
                         }, 1000);
                     });
 
@@ -398,22 +462,61 @@ namespace LiveWallpaper.LocalServer.Hubs
                         {
                             var client = _hubEventEmitter.AllClient();
                             var percent = e.competed / e.total * 10 + 90;
-                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, e.competed, e.total, percent, completed = percent == 100 });
+
+                            // ToastNotificationManagerCompat.CreateToastNotifier().Update(
+                            //  new NotificationData(new Dictionary<string, string>()
+                            //  {
+                            //         { "progressValue",  (percent/100).ToString() },
+                            //         { "progressValueString",(int)(percent)+"" },
+                            //         { "progressStatus", GetText("local.downloadComplete") },
+                            //}), tag, group);
+
+                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, e.competed, e.total, percent, completed = percent == 100, succeeded = true });
                         }, 1000);
                     });
 
                      info.File = Path.GetFileName(wallpaper);
                      string destWp = Path.Combine(destFolder, info.File);
-                     await NetworkHelper.DownloadFileAsync(wallpaper, destWp, cts.Token, wpProgressInfo);
-                     if (cover != null)
+                     try
                      {
-                         info.Preview = Path.GetFileName(cover);
-                         string destCover = Path.Combine(destFolder, info.Preview);
-                         await NetworkHelper.DownloadFileAsync(cover, destCover, cts.Token, coverProgressInfo);
-                     }
+                         await NetworkHelper.DownloadFileAsync(wallpaper, destWp, cts.Token, wpProgressInfo);
+                         if (cover != null)
+                         {
+                             info.Preview = Path.GetFileName(cover);
+                             string destCover = Path.Combine(destFolder, info.Preview);
+                             await NetworkHelper.DownloadFileAsync(cover, destCover, cts.Token, coverProgressInfo);
+                         }
 
-                     //生成json
-                     await UpdateProjectInfo(destFolder, info);
+                         //生成json
+                         await UpdateProjectInfo(destFolder, info);
+
+                         if (groupDir != null)
+                         {
+                             var wallpaper = await GetWallpaper(destFolder);
+                             var group = await GetWallpaper(groupDir);
+                             if (group != null)
+                             {
+                                 group.Data.Info.GroupItems.Insert(0, wallpaper.Data.Info);
+                                 await UpdateProjectInfo(groupDir, group.Data.Info);
+                             }
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         _raiseLimiter.Execute(async () =>
+                         {
+                             var client = _hubEventEmitter.AllClient();
+                             var percent = 100;
+                             //下载异常
+                             await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, percent, completed = true, succeeded = false });
+                         }, 1000);
+
+                         Debug.WriteLine(ex);
+                     }
+                     finally
+                     {
+                         _downloadingWallpapers.Remove(wallpaper, out _);
+                     }
                  });
                 return Task.FromResult(BaseApiResult.SuccessState());
             }
@@ -424,6 +527,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
         }
         #region private
+
         private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
         {
             var client = _hubEventEmitter.AllClient();

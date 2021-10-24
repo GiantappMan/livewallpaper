@@ -7,12 +7,17 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\logo128.ico</ApplicationIcon>
     <Platforms>x64;x86</Platforms>
-    <Version>2.3.3.0</Version>
+    <Version>2.4.5.7</Version>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\exit.png" />
+    <None Remove="Assets\guid.gif" />
+    <None Remove="Assets\guide.gif" />
     <None Remove="Assets\livewallpaper_i18n\.git" />
     <None Remove="Assets\setting.png" />
+    <None Remove="Assets\web.png" />
+    <None Remove="Assets\window.png" />
     <None Remove="logo128.ico" />
   </ItemGroup>
 
@@ -20,14 +25,25 @@
     <Content Include="Assets\livewallpaper_i18n\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\exit.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\guide.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\setting.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\web.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\window.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.961.33" />
-    <PackageReference Include="NLog" Version="4.7.10" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.992.28" />
   </ItemGroup>
 
   <ItemGroup>

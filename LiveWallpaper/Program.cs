@@ -1,15 +1,15 @@
-﻿using NLog;
+﻿using LiveWallpaper.LocalServer;
+using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using Windows.Storage;
 
 namespace LiveWallpaper
 {
     class Program
     {
-        private static Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         [STAThread]
         static void Main()
@@ -17,7 +17,7 @@ namespace LiveWallpaper
             //日志路径
             var config = new NLog.Config.LoggingConfiguration();
 
-            string logPath = Path.Combine(GetConfigDir(), "Logs/log.txt");
+            string logPath = Path.Combine(AppManager.LogDir, "log.txt");
             var logfile = new NLog.Targets.FileTarget("logfile") { FileName = logPath };
             var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
 
@@ -42,36 +42,11 @@ namespace LiveWallpaper
             OpenConfigFolder();
         }
 
-        public static string GetConfigDir()
-        {
-            DesktopBridge.Helpers helpers = new DesktopBridge.Helpers();
-            try
-            {
-                string path;
-                if (helpers.IsRunningAsUwp())
-                {
-                    //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
-                    path = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Local\\LiveWallpaper");
-                }
-                else
-                {
-                    path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                    path = Path.Combine(path, "LiveWallpaper");
-                }
-                return path;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
         public static void OpenConfigFolder()
         {
             try
             {
-                string path = GetConfigDir();
-                Process.Start("Explorer.exe", path);
+                Process.Start("Explorer.exe", AppManager.ConfigDir);
             }
             catch (Exception ex)
             {

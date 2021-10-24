@@ -13,6 +13,15 @@ namespace LiveWallpaper.LocalServer.Models
         public bool StartWithSystem { get; set; } = true;
         public string CurrentLan { get; set; }
         public string[] LanOptions { get; private set; } = new string[] { "en-US", "el", "ru", "zh-CN" };
+        public string ConfigDir
+        {
+            get
+            {
+                string saveDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                saveDir = Path.Combine(saveDir, "LiveWallpaper", "config");
+                return saveDir;
+            }
+        }
         /// <summary>
         /// 三方工具目录，例如ffmpeg
         /// </summary>
@@ -65,6 +74,9 @@ namespace LiveWallpaper.LocalServer.Models
         {
             if (ScreenOptions == null)
                 ScreenOptions = new List<ScreenOption>();
+
+            if (WallpaperApi.Screens == null)                
+                return;
 
             foreach (var screenItem in WallpaperApi.Screens)
             {

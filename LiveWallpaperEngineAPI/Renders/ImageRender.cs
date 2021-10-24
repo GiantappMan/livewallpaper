@@ -44,12 +44,21 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         private string GetMonitoryId(string screenName)
         {
+            var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == screenName);
+            if (screen == null)
+                return null;
+
             for (int i = 0; i < Screen.AllScreens.Length; i++)
             {
-                if (Screen.AllScreens[i].DeviceName == screenName)
+                string monitorId = _desktopFactory.GetMonitorDevicePathAt((uint)i);
+                var rect = _desktopFactory.GetMonitorRECT(monitorId);
+
+                if (rect.Left == screen.Bounds.Left
+                    && rect.Top == screen.Bounds.Top
+                    && rect.Right == screen.Bounds.Right
+                    && rect.Bottom == screen.Bounds.Bottom)
                 {
-                    string r = _desktopFactory.GetMonitorDevicePathAt((uint)i);
-                    return r;
+                    return monitorId;
                 }
             }
             return null;

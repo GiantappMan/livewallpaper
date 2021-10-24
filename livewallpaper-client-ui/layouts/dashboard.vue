@@ -25,7 +25,7 @@ export default {
               href: 'dashboard/wallpapers',
             },
             {
-              icon: 'file-image',
+              icon: 'upload',
               label: 'dashboard.menus.upload',
               href: 'dashboard/wallpapers/editor',
             },
@@ -40,7 +40,7 @@ export default {
               href: 'dashboard/account/profile',
             },
             {
-              icon: 'file-image',
+              icon: 'key',
               label: 'dashboard.menus.setpwd',
               href: 'dashboard/account/setpwd',
             },
@@ -50,7 +50,7 @@ export default {
           label: 'dashboard.menus.client',
           menus: [
             {
-              icon: 'list-alt',
+              icon: 'cog',
               label: 'dashboard.menus.localSettings',
               to: '/setting',
             },
@@ -60,9 +60,14 @@ export default {
               to: '/editor',
             },
             {
-              icon: 'file-image',
+              icon: 'layer-group',
               label: 'dashboard.menus.createGroup',
               to: '/group',
+            },
+            {
+              icon: 'exclamation-circle',
+              label: 'common.about',
+              to: '/about',
             },
           ],
         },

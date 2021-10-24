@@ -12,29 +12,26 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 
 ---
 
+### How to use
+
+[Youtube](https://www.youtube.com/watch?v=vTavq2PlAJA&t=351s)
+[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)
+
 ### Download Link
 
 [LiveWallpaper](https://www.microsoft.com/store/apps/9N1S487WCGWR)
 
 ---
 
-### Wallpaper Switch
+### Images
 
-![Wallpaper Switch](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/changewallpaper.gif?raw=true)
+![LocalWallpaper](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/1.png?raw=true)
 
-### Wallpaper Download
+![Wallpaper Community](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/2.png?raw=true)
 
-![Wallpaper Download](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/download.gif?raw=true)
+![Setting Page](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/3.png?raw=true)
 
-### Features
-
-- Lightweight client
-- Web UI
-- Wallpaper upload
-- Download the wallpaper with one click
-- Offline access
-- No pop-up ads on the client
-- No VIP,free to use
+![Notify Icon](https://github.com/giant-app/LiveWallpaper/blob/master/screenshots/4.png?raw=true)
 
 ### Build Environment
 

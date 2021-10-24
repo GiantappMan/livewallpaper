@@ -222,7 +222,7 @@ namespace Giantapp.LiveWallpaper.Engine
             if (info.Type == WallpaperInfoType.Group)
             {
                 info.File = groupLaunchFile;
-                await JsonHelper.JsonSerializeAsync(info.GroupItems, groupPath);
+                await JsonHelper.JsonSerializeAsync(info.Title, groupPath);
             }
 
             string jsonPath = Path.Combine(destDir, "project.json");
@@ -254,6 +254,8 @@ namespace Giantapp.LiveWallpaper.Engine
 
         public static async Task<WallpaperOption> GetWallpaperOption(string dir, WallpaperOption defaultValue = null)
         {
+            if (defaultValue == null)
+                defaultValue = new WallpaperOption();
             string optionPath = Path.Combine(dir, "option.json");
             var result = await ReadJsonObj(optionPath, defaultValue);
             return result;
@@ -276,7 +278,28 @@ namespace Giantapp.LiveWallpaper.Engine
             }
 
             string optionPath = Path.Combine(wallpaperDir, "option.json");
+            var oldOption = await GetWallpaperOption(wallpaperDir);
             await JsonHelper.JsonSerializeAsync(option, optionPath);
+
+            WallpaperModel runningWP = null;
+            List<string> runningWPScreens = new();
+            foreach (var item in CurrentWalpapers)
+            {
+                var tmpWallpaper = item.Value;
+                if (tmpWallpaper.RunningData.Dir == wallpaperDir)
+                {
+                    //有可能多个屏幕使用相同的壁纸
+                    runningWPScreens.Add(item.Key);
+                    runningWP = tmpWallpaper;
+                }
+            }
+
+            if (runningWP != null && runningWPScreens.Contains(Options.AudioScreen))
+                runningWP.Option = option;
+
+            //确保修改音量后生效
+            if (oldOption.Volume != option.Volume)
+                ApplyAudioSource();
         }
 
         public static async Task<WallpaperModel> CreateWallpaperModelFromDir(string dir, bool readOption = true)
@@ -828,7 +851,7 @@ namespace Giantapp.LiveWallpaper.Engine
             }
         }
 
-        private static void ApplyAudioSource()
+        private static async void ApplyAudioSource()
         {
             //设置音源
             foreach (var screen in Screens)
@@ -836,8 +859,21 @@ namespace Giantapp.LiveWallpaper.Engine
                 if (CurrentWalpapers.ContainsKey(screen))
                 {
                     var wallpaper = CurrentWalpapers[screen];
+                    if (wallpaper.Info.Type == WallpaperInfoType.Group)
+                    {
+                        //是分组就生效当前播放的壁纸
+                        var playingItem = wallpaper.Info.GroupItems[wallpaper.Option.LastWallpaperIndex.Value];
+                        var existWP = CacheWallpapers.FirstOrDefault(m => m.Info.ID != null && m.Info.ID == playingItem.ID || m.Info.LocalID == playingItem.LocalID);
+                        if (existWP != null)
+                        {
+                            wallpaper = existWP;
+                            if (wallpaper.Option == null)
+                                wallpaper.Option = await GetWallpaperOption(wallpaper.RunningData.Dir);
+                        }
+                    }
+
                     var currentRender = RenderManager.GetRender(wallpaper);
-                    currentRender?.SetVolume(screen == Options.AudioScreen ? 100 : 0, screen);
+                    currentRender?.SetVolume(screen == Options.AudioScreen ? wallpaper.Option.Volume : 0, screen);
                 }
             }
         }
@@ -893,8 +929,15 @@ namespace Giantapp.LiveWallpaper.Engine
                     }
                 }
             }
-            ExplorerMonitor.Check();
-            MaximizedMonitor.Check();
+            try
+            {
+                ExplorerMonitor.Check();
+                MaximizedMonitor.Check();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("check ex:", ex);
+            }
             _timer?.Start();
         }
 

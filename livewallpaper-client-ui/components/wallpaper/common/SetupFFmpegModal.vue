@@ -5,7 +5,7 @@
     :progress="progress"
     :completed="completed"
     :successed="successed"
-    defaultUrl="https://6c69-livewallpaper-3ghxzy41e1b569c9-1304209797.tcb.qcloud.la/livewallpaper-assets/ffmpeg.7z"
+    defaultUrl="http://localhost:5001/ffmpeg.7z"
     v-on:start="startCallback"
     v-on:stop="stopCallback"
   >
