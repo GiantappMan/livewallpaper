@@ -55,6 +55,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 CloseWallpaperData(changedScreen);
 
                 _showWallpaperCts = new CancellationTokenSource();
+
                 var showResult = await InnerShowWallpaper(wallpaper, _showWallpaperCts.Token, changedScreen);
                 //包含的壁纸已经删除
                 if (showResult == null)
@@ -66,8 +67,22 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 showResult.Data.ForEach(m => _currentWallpapers.Add(m));
             }
 
+            //会导致莫名其妙的卡死
+            //EnableSystemWallpaper();
+
             return BaseApiResult<List<RenderInfo>>.SuccessState();
         }
+
+        //private void EnableSystemWallpaper()
+        //{
+        //    //不包含图片壁纸，直接关闭，某些桌面管理软件会显示系统背景
+        //    var hasImageWallpaper = _currentWallpapers.Exists(m => m.Wallpaper.RunningData.Type == WallpaperType.Image);
+        //    if (_currentWallpapers.Count > 0 && !hasImageWallpaper)
+        //        WallpaperHelper.EnableSystemWallpaper(false);
+        //    else
+        //        WallpaperHelper.EnableSystemWallpaper(true);
+        //}
+
         public async Task CloseWallpaperAsync(WallpaperModel nextWallpaper, params string[] screens)
         {
             var playingWallpaper = CloseWallpaperData(screens);
@@ -75,6 +90,8 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 return;
 
             await InnerCloseWallpaperAsync(playingWallpaper, nextWallpaper);
+
+            //EnableSystemWallpaper();
         }
 
         private List<RenderInfo> CloseWallpaperData(params string[] screens)

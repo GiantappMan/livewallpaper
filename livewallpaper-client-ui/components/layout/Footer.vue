@@ -126,7 +126,24 @@ export default {
       return this.$i18n.locales.find((i) => i.code === this.$i18n.locale)
     },
   },
-  mounted() {},
+  async mounted() {
+    // const workbox = await window.$workbox
+    // if (workbox) {
+    //   workbox.addEventListener('installed', (event) => {
+    //     // If we don't do this we'll be displaying the notification after the initial installation, which isn't perferred.
+    //     if (event.isUpdate) {
+    //       this.$buefy.toast.open({
+    //         message: 'please refresh the page to update',
+    //         indefinite: true,
+    //         position: 'is-bottom',
+    //         type: 'is-link',
+    //         queue: false,
+    //       })
+    //       // whatever logic you want to use to notify the user that they need to refresh the page.
+    //     }
+    //   })
+    // }
+  },
 }
 </script>
 <style scoped></style>

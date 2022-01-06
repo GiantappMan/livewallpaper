@@ -14,8 +14,8 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 
 ### How to use
 
-[Youtube](https://www.youtube.com/watch?v=vTavq2PlAJA&t=351s)
-[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)
+[Youtube](https://www.youtube.com/watch?v=vTavq2PlAJA&t=351s)  
+[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)  
 
 ### Download Link
 

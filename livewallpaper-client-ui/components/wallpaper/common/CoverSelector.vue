@@ -12,7 +12,7 @@
           v-bind:style="{
             'background-image':
               'url(' +
-              `${$local.api.serverHost}assets/image/?localpath=${item}` +
+              `${$local.getApiInstance().serverHost}assets/image/?localpath=${item}` +
               ')',
           }"
         >
@@ -84,7 +84,7 @@ export default {
         return
       }
       this.isloading = true
-      this.$local.api
+      this.$local.getApiInstance()
         .getThumbnails(this.videoPath)
         .then((r) => {
           if (r.ok) {

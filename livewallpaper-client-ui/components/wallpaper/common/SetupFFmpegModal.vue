@@ -5,7 +5,7 @@
     :progress="progress"
     :completed="completed"
     :successed="successed"
-    defaultUrl="http://localhost:5001/ffmpeg.7z"
+    :defaultUrl="`${serverHost}ffmpeg.7z`"
     v-on:start="startCallback"
     v-on:stop="stopCallback"
   >
@@ -42,7 +42,13 @@
   </BaseProgressModal>
 </template>
 <script>
+import { createNamespacedHelpers } from 'vuex'
+const { mapState, mapGetters, mapActions, mapMutations } =
+  createNamespacedHelpers('local')
 export default {
+  computed: {
+    ...mapGetters(['serverHost']),
+  },
   data() {
     return {
       show: false,
@@ -63,7 +69,7 @@ export default {
     },
     startCallback(url, resolve) {
       let result = false
-      this.$local.api
+      this.$local.getApiInstance()
         .setupFFmpeg(
           url,
           function (e) {
@@ -85,7 +91,7 @@ export default {
         })
     },
     stopCallback(resolve) {
-      this.$local.api
+      this.$local.getApiInstance()
         .stopSetupFFmpeg()
         .catch((error) => this.$local.handleClientApiException(this, error))
         .finally(resolve)

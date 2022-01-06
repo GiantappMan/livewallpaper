@@ -91,6 +91,7 @@
                 v-on:click="onWPClick(item)"
               >
                 <img
+                  @error="replaceByDefault"
                   class="wp-cover"
                   v-bind:src="`${serverHost}assets/image/?localpath=${item.runningData.dir}//${item.info.preview}`"
                   v-bind:alt="item.info.title"
@@ -209,7 +210,7 @@
               ></b-loading>
             </div>
             <div class="card-content columns">
-              <div class="column is-12">
+              <div class="column is-12 wptitle">
                 {{ item.info.title }}
               </div>
             </div>
@@ -260,6 +261,13 @@
                       v-if="currentOption"
                       :left-label="true"
                       v-model="currentOption.hardwareDecoding"
+                    ></b-switch>
+                  </b-field>
+                  <b-field :label="$t('dashboard.client.setting.panScan')">
+                    <b-switch
+                      v-if="currentOption"
+                      :left-label="true"
+                      v-model="currentOption.isPanScan"
                     ></b-switch>
                   </b-field>
                   <b-field style="width: 251px" :label="$t('common.volume')">
@@ -411,7 +419,8 @@
 
 <script>
 import { createNamespacedHelpers } from 'vuex'
-const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
+const { mapState, mapGetters, mapActions, mapMutations } =
+  createNamespacedHelpers('local')
 export default {
   head() {
     return {
@@ -497,13 +506,13 @@ export default {
     },
     ...mapState([
       'wallpapers',
-      'serverHost',
       'isLoading',
       'isLoadingSetting',
       'isPlaying',
       'runningWallpapers',
       'currentAudioWP',
     ]),
+    ...mapGetters(['serverHost']),
   },
   mounted: function () {
     const switchingIntervalMinTime = new Date()
@@ -556,6 +565,9 @@ export default {
       'exploreWallpaper',
       'updateCurrentAudioWP',
     ]),
+    replaceByDefault(e) {
+      e.target.src = `${this.serverHost}default-fallback-image.webp`
+    },
     setFilterWpType(type) {
       this.filterWpType = type
       localStorage.setItem('filterWpType', type)
@@ -660,10 +672,11 @@ export default {
         switchingInterval.setMinutes(10)
 
         if (wallpaper && wallpaper.option.switchingInterval) {
-          switchingInterval.setHours(wallpaper.option.switchingInterval.hours)
-          switchingInterval.setMinutes(
-            wallpaper.option.switchingInterval.minutes
+          let { hours, minutes } = this.GetTimeSpan(
+            wallpaper.option.switchingInterval
           )
+          switchingInterval.setHours(hours)
+          switchingInterval.setMinutes(minutes)
         }
         this.switchingInterval = switchingInterval
       } catch (error) {
@@ -672,6 +685,19 @@ export default {
 
       this.currentOption = Object.assign({}, wallpaper.option)
       this.isOptionBusy = false
+    },
+    GetTimeSpan(timespan) {
+      let hours = 0
+      let minutes = 0
+      if (timespan) {
+        let array = timespan.split(':')
+        if (array) {
+          if (array.length > 0) hours = Number(array[0])
+          if (array.length > 1) minutes = Number(array[1])
+        }
+      }
+
+      return { hours, minutes }
     },
     async onStopPClick() {
       await this.closeWallpaper({
@@ -704,6 +730,9 @@ export default {
 }
 </script>
 <style scoped>
+.wptitle {
+  word-break: break-all;
+}
 .main {
   padding: 2px 3rem 2rem 3rem;
   min-height: 600px;

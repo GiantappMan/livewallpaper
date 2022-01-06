@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
+		<TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 		<UseWPF>true</UseWPF>
 		<Version>2.1.0</Version>
@@ -10,6 +10,7 @@
 		<PackageProjectUrl>https://github.com/giant-app/LiveWallpaperEngine</PackageProjectUrl>
 		<Authors>Gianapp</Authors>
 		<Platforms>x86;x64</Platforms>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 	  <DefineConstants>TRACE</DefineConstants>
@@ -35,10 +36,10 @@
 		<!--<PackageReference Include="DotNetUtil.Common" Version="2.0.10" />-->
 		<PackageReference Include="DotNetUtil.Common" Version="2.0.13" />
 		<PackageReference Include="DotNetUtil.Common.Windows" Version="1.0.2" />
-		<PackageReference Include="DotNetUtil.WinAPI" Version="2.0.21" />
+		<PackageReference Include="DotNetUtil.WinAPI" Version="2.0.22" />
 		<PackageReference Include="EventHook.Core.Temporary" Version="1.3.2" />
 		<PackageReference Include="NAudio" Version="2.0.1" />
-		<PackageReference Include="SharpCompress" Version="0.30.0" />
+		<PackageReference Include="SharpCompress" Version="0.30.1" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -39,7 +39,9 @@ namespace LiveWallpaper.LocalServer
             {
                 ConfigDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\{AppName}\\";
             }
-            CacheDir = $"{ConfigDir}Cache\\";
+            //https://github.com/MicrosoftEdge/WebView2Feedback/issues/1900
+            //CacheDir = $"{ConfigDir}Cache\\"; 配置路径过长导致webview2 service worker出bug
+            CacheDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\{AppName}\\Cache\\";
             RunningDataFilePath = $"{ConfigDir}Config\\runningData.json";
             UserSettingFilePath = $"{ConfigDir}Config\\userSetting.json";
             LogDir = $"{ConfigDir}/Logs";
@@ -130,6 +132,7 @@ namespace LiveWallpaper.LocalServer
         public static RunningData RunningData { get; private set; }
         public static UserSetting UserSetting { get; private set; }
         public static bool Initialized { get; private set; }
+        public static string EntryVersion { get; private set; }
         public static event EventHandler CultureChanged;
         #endregion
 
@@ -165,16 +168,16 @@ namespace LiveWallpaper.LocalServer
                 }
                 //更新端口号
                 RunningData.HostPort = hostPort;
-                var version = Assembly.GetEntryAssembly().GetName().Version.ToString();
+                EntryVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
 
                 if (RunningData.CurrentVersion == null)
                 {
                     _ = ShowGuidToastAsync();//第一次启动
                 }
 
-                if (RunningData.CurrentVersion != version)
+                if (RunningData.CurrentVersion != EntryVersion)
                 {
-                    RunningData.CurrentVersion = version;
+                    RunningData.CurrentVersion = EntryVersion;
                     RunningData.CurrentVersionLaunchedCount = 0;
                     RunningData.CurrentVersionReviewed = false;
                 }
@@ -185,7 +188,7 @@ namespace LiveWallpaper.LocalServer
 
                 await JsonHelper.JsonSerializeAsync(RunningData, RunningDataFilePath);
 
-                if (!RunningData.CurrentVersionReviewed && RunningData.CurrentVersionLaunchedCount > 0 && RunningData.CurrentVersionLaunchedCount % 30 == 0)
+                if (!RunningData.CurrentVersionReviewed && RunningData.CurrentVersionLaunchedCount > 0 && RunningData.CurrentVersionLaunchedCount % 15 == 0)
                 {
                     ShowReviewToast();
                 }
@@ -209,8 +212,14 @@ namespace LiveWallpaper.LocalServer
                 {
                     foreach (var item in RunningData.CurrentWalpapers)
                     {
-                        var r = await WallpaperApi.ShowWallpaper(item.Value, item.Key);
-                        System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
+                        string screen = item.Key;
+                        if (item.Value != null && item.Value.RunningData != null && item.Value.RunningData.Dir != null)
+                        {
+                            //重新读取模型，有可能保存的是脏数据
+                            var wallpaper = await WallpaperApi.CreateWallpaperModelFromDir(item.Value.RunningData.Dir, true);
+                            var r = await WallpaperApi.ShowWallpaper(wallpaper, screen);
+                            System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
+                        }
                     }
                 }
             }
@@ -229,9 +238,9 @@ namespace LiveWallpaper.LocalServer
             string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string imgPath = Path.Combine(appDir, "Assets\\guide.gif");
             new ToastContentBuilder()
-             .AddText(await GetText("client.started"))
+             .AddText(await GetText("clientStarted"))
              .AddHeroImage(new Uri(imgPath))
-             .AddButton(new ToastButtonDismiss(await GetText("common.ok")))
+             .AddButton(new ToastButtonDismiss(await GetText("ok")))
              .Show();
         }
 
@@ -247,11 +256,11 @@ namespace LiveWallpaper.LocalServer
                                 {
                                     new AdaptiveText()
                                     {
-                                        Text =await GetText("common.reviewTitle")
+                                        Text =await GetText("reviewTitle")
                                     },
                                     new AdaptiveText()
                                     {
-                                        Text = await GetText("common.reviewContent")
+                                        Text = await GetText("reviewContent")
                                     }
                                 }
                     }
@@ -260,11 +269,11 @@ namespace LiveWallpaper.LocalServer
                 {
                     Buttons =
                             {
-                                new ToastButton(await GetText("common.thumbUp"), "action=review")
+                                new ToastButton(await GetText("thumbUp"), "action=review")
                                 {
                                     ActivationType = ToastActivationType.Background
                                 },
-                                new ToastButtonDismiss(await GetText("common.close"))
+                                new ToastButtonDismiss(await GetText("close"))
                             }
                 },
                 Launch = "action=viewEvent&eventId=63851"
@@ -309,7 +318,7 @@ namespace LiveWallpaper.LocalServer
             await SaveRunningData(RunningData);
         }
 
-        internal static async Task<BaseApiResult> SaveUserSetting(UserSetting setting)
+        public static async Task<BaseApiResult> SaveUserSetting(UserSetting setting)
         {
             try
             {

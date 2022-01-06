@@ -1,0 +1,18 @@
+{
+  "lan": "中文（繁體）",
+  "clientStarted": "客戶端已啟動，請查看桌面右下角。",
+  "ok": "確定",
+  "reviewTitle": "這個版本還行嗎？",
+  "reviewContent": "你似乎已經用了一段時間巨應壁紙了，有什麼想告訴開發者的嗎？",
+  "thumbUp": "好評鼓勵",
+  "close": "關閉",
+  "about": "關於",
+  "wallpaperCommunity": "壁紙社區",
+  "wallpaperCommunityBrowser": "壁紙社區（瀏覽器）",
+  "localWallpaper": "本地壁紙",
+  "exit": "退出",
+  "settings": "設置",
+  "appName": "巨應壁紙",
+  "installWebview2Tips": "本功能需要微軟最新的webview2運行時支持，請手動安裝後，重新打開本窗口",
+  "installNow": "立刻安裝"
+}

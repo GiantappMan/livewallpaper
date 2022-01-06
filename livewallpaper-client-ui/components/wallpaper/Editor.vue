@@ -16,7 +16,10 @@
     </nav>
     <hr class="is-medium" /> -->
     <section>
-      <b-field :label="$t('common.wallpaper')">
+      <b-field
+        :label="$t('common.localWallpaper')"
+        :message="$t('dashboard.client.editor.localUploadMessage')"
+      >
         <Uploader
           ref="uploader"
           :file="filePath"
@@ -35,7 +38,7 @@
         />
       </b-field>
       <b-field
-        :label="$t('common.cover')"
+        :label="$t('common.cover') + ' (' + $t('common.optional') + ')'"
         v-if="fileType && fileType != 'image'"
       >
         <Cover
@@ -139,10 +142,7 @@ export default {
       }
     },
     canSave: function () {
-      let r =
-        this.filePath &&
-        this.title &&
-        (this.fileType === 'image' || this.coverPath)
+      let r = this.filePath && this.title
       return r
     },
   },
@@ -157,7 +157,7 @@ export default {
       //有文件有老封面才删，清除数据后不删
       console.log(this.filePath)
       if (oldValue && this.filePath) {
-        this.$local.api.deleteFiles([oldValue])
+        this.$local.getApiInstance().deleteFiles([oldValue])
       }
     },
   },
@@ -202,7 +202,7 @@ export default {
         tags: this.tags,
       }
       console.log('savelocal', info)
-      this.$local.api
+      this.$local.getApiInstance()
         .updateProjectInfo(this.wallpaperDir, info)
         .then((r) => {
           this.$buefy.dialog.confirm({
@@ -235,7 +235,7 @@ export default {
         return
       }
       this.isLoading = true
-      this.$local.api
+      this.$local.getApiInstance()
         .deleteFiles([this.filePath, this.coverPath])
         .then((r) => {
           this.filePath = null
@@ -279,7 +279,7 @@ export default {
       }
       this.isLoading = true
       var dist = `${this.wallpaperDir}\\preview.png`
-      this.$local.api
+      this.$local.getApiInstance()
         .moveFile(path, dist, false)
         .then(() => {
           this.coverPath = dist
@@ -293,7 +293,7 @@ export default {
         this.isLoading = true
 
         if (path) {
-          let res = await this.$local.api.getWallpaper(path)
+          let res = await this.$local.getApiInstance().getWallpaper(path)
           wallpaper = res.data
           if (!wallpaper) {
             alert("Wallpaper doesn't exist")
@@ -314,7 +314,7 @@ export default {
           }
         } else {
           //新建壁纸
-          let res = await this.$local.api.getDraftDir()
+          let res = await this.$local.getApiInstance().getDraftDir()
           console.log('draftDir', res.data)
           this.wallpaperDir = res.data
         }

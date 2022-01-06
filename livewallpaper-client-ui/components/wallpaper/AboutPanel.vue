@@ -19,6 +19,13 @@
         "
       >
       </b-field>
+      <client-only>
+        <b-field v-if="serverHost">
+          <a target="_blank" :href="`${serverHost}?p=${serverPort}`">
+            {{ `${serverHost}?p=${serverPort}` }}
+          </a>
+        </b-field>
+      </client-only>
       <b-field>
         <a target="_blank" :href="$config.releaseNotesUrl">
           {{ $t('common.releaseNotes') }}
@@ -31,7 +38,7 @@
       </b-field>
       <b-field>
         <b-button
-          v-on:click="$local.api.openStoreReview()"
+          v-on:click="$local.getApiInstance().openStoreReview()"
           target="_blank"
           href="#"
         >
@@ -44,11 +51,13 @@
 </template>
 <script>
 import { createNamespacedHelpers } from 'vuex'
-const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
+const { mapState, mapGetters, mapActions, mapMutations } =
+  createNamespacedHelpers('local')
 
 export default {
   computed: {
-    ...mapState(['clientVersion']),
+    ...mapState(['clientVersion', 'serverPort']),
+    ...mapGetters(['serverHost']),
   },
   data() {
     return {

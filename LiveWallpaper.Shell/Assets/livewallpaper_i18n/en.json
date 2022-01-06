@@ -1,0 +1,18 @@
+{
+  "lan": "English",
+  "clientStarted": "The client has been started, please check the bottom right of the desktop.",
+  "ok": "OK",
+  "reviewTitle": "Is this version okay?",
+  "reviewContent": "You seem to have been using LiveWallpaper for a while, is there anything you want to tell us?",
+  "thumbUp": "Give a thumb up",
+  "close": "Close",
+  "about": "About",
+  "wallpaperCommunity": "Wallpaper Community",
+  "wallpaperCommunityBrowser": "Wallpaper community via browser",
+  "localWallpaper": "Local Wallpaper",
+  "exit": "Exit",
+  "settings": "Settings",
+  "appName": "Livewallpaper",
+  "installWebview2Tips": "This function requires Microsoft's latest webview2 runtime support. Please reopen this window after manual installation",
+  "installNow": "Install now"
+}

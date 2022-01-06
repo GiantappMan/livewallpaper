@@ -2,7 +2,7 @@ export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
   generate: {
-    dir: "../LiveWallpaper.LocalServer/wwwroot/"
+    dir: "../LiveWallpaper.Shell/wwwroot/"
   },
 
   publicRuntimeConfig: {
@@ -12,7 +12,7 @@ export default {
   },
 
   router: {
-    base: '/'
+    base: '/',
   },
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -32,11 +32,13 @@ export default {
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
+    '~assets/scss/styles.scss',
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    '~/plugins/local.js',
+    { src: '~/plugins/local.js' },
+    { src: '~/plugins/route.client.js' }
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -54,6 +56,12 @@ export default {
   pwa: {
     icon: {
       purpose: 'any'
+    },
+    workbox: {
+      // https://pwa.nuxtjs.org/workbox
+      /* workbox options */
+      // 虽然缓存问题搞不定，还是打开因为webview2每个版本都清缓存
+      enabled: true,
     }
   },
   fontawesome: {
@@ -72,7 +80,7 @@ export default {
   },
 
   buefy: {
-    css: true,
+    css: false,
     materialDesignIcons: false,
     defaultIconPack: 'fas',
     defaultIconComponent: 'font-awesome-icon'

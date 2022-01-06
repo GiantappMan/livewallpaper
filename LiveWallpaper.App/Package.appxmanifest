@@ -8,7 +8,7 @@
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   IgnorableNamespaces="uap mp rescap com desktop">
-  <Identity Name="24765mscoder.107453A6A4A17" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="2.4.102.0" />
+  <Identity Name="24765mscoder.107453A6A4A17" Publisher="CN=49BC8659-1B4C-4520-B1FB-ED98CFA366C4" Version="2.5.1.0" />
   <Properties>
     <DisplayName>ms-resource:Resources/PackageDisplayName</DisplayName>
     <PublisherDisplayName>Giantapp Studio</PublisherDisplayName>
@@ -29,7 +29,7 @@
         </uap:DefaultTile>
       </uap:VisualElements>
       <Extensions>
-        <uap5:Extension Category="windows.startupTask" Executable="LiveWallpaper\LiveWallpaper.exe" EntryPoint="Windows.FullTrustApplication">
+        <uap5:Extension Category="windows.startupTask" Executable="LiveWallpaper.Shell\LiveWallpaper.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="LiveWallpaper" Enabled="true" DisplayName="LiveWallpaper" />
         </uap5:Extension>
         <uap:Extension Category="windows.protocol">
@@ -47,7 +47,7 @@
         <!--Register COM CLSID LocalServer32 registry key-->
         <com:Extension Category="windows.comServer">
           <com:ComServer>
-            <com:ExeServer Executable="LiveWallpaper\LiveWallpaper.exe" Arguments="-ToastActivated" DisplayName="Toast activator">
+            <com:ExeServer Executable="LiveWallpaper.Shell\LiveWallpaper.exe" Arguments="-ToastActivated" DisplayName="Toast activator">
               <com:Class Id="dec74eb7-0834-4c07-9656-e510e7d71f7a" DisplayName="Toast activator"/>
             </com:ExeServer>
           </com:ComServer>
@@ -58,7 +58,7 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="videosLibrary" />
-	  <rescap:Capability Name="runFullTrust" />
+	<rescap:Capability Name="runFullTrust" />
 	  <!--允许管理员权限--><!--
 	  <rescap:Capability Name="allowElevation" />-->
   </Capabilities>

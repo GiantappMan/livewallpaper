@@ -1,0 +1,54 @@
+﻿<Window
+    x:Class="LiveWallpaper.Shell.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:LiveWallpaper.Shell.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Width="{Binding WindowWidth, FallbackValue=1215, Mode=OneWay}"
+    Height="{Binding WindowHeight, FallbackValue=680, Mode=OneWay}"
+    MinWidth="785"
+    MinHeight="482"
+    d:DataContext="{d:DesignInstance local:MainViewModel,
+                                     IsDesignTimeCreatable=True}"
+    Closing="Window_Closing"
+    SizeChanged="Window_SizeChanged"
+    StateChanged="Window_StateChanged"
+    WindowState="{Binding WindowState, Mode=OneWay}"
+    mc:Ignorable="d">
+    <Grid>
+        <Wpf:WebView2 x:Name="webview2" Source="{Binding Url, Mode=OneWay}">
+            <Wpf:WebView2.Style>
+                <Style TargetType="Wpf:WebView2">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                            <Setter Property="Visibility" Value="Hidden" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Wpf:WebView2.Style>
+        </Wpf:WebView2>
+        <StackPanel
+            x:Name="tips"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Visibility="{Binding ShowTips, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <TextBlock
+                HorizontalAlignment="Stretch"
+                FontSize="20"
+                Text="{Binding TipsMessage}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Margin="0,10,0,0"
+                HorizontalAlignment="Center"
+                FontSize="20">
+                <Hyperlink Command="{Binding OpenDownloadUrlCommand}">
+                    <TextBlock Text="{Binding DownloadText}" />
+                </Hyperlink>
+            </TextBlock>
+        </StackPanel>
+        <hc:LoadingCircle Visibility="{Binding IsLoading, Converter={StaticResource Boolean2VisibilityConverter}}" />
+    </Grid>
+</Window>

@@ -43,22 +43,8 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             return _cacheHandle.Value;
         }
 
-        //internal void ShowWallpaper()
-        //{
-        //    //WallpaperApi.InvokeIfRequired(() =>
-        //    //{
-        //    //    Controls.Clear();
-        //    //    //Opacity = 1;
-        //    //    Refresh();
-        //    //});
 
-        //    IntPtr hostForm = GetHandle();
-
-        //    var wpHelper = WallpaperHelper.GetInstance(_screenName);
-        //    //hostfrom下潜桌面
-        //    wpHelper.SendToBackground(hostForm);
-        //}
-
+        [Obsolete]
         internal void ShowWallpaper(IntPtr wallpaperHandle)
         {
             if (lastWallpaperHandle == wallpaperHandle)
@@ -79,7 +65,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             //壁纸parent改为hostform
             User32Wrapper.SetParent(wallpaperHandle, hostForm);
             //把壁纸全屏铺满 hostform
-            WallpaperHelper.FullScreen(wallpaperHandle, wpHelper.TargetBounds, hostForm);
+            //WallpaperHelper.FullScreen(wallpaperHandle, wpHelper.TargetBounds, hostForm);
             //WallpaperHelper.FullScreen(wallpaperHandle, hostForm);        
         }
 

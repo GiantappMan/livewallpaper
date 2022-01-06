@@ -6,12 +6,12 @@
         v-model="innerFile"
         :disabled="!!innerFile"
         class="file-label"
-        accept="image/*,video/*"
+        accept="image/*,video/*,.flv"
       >
         <span class="file-cta">
           <b-icon class="file-icon" pack="fas" icon="upload"></b-icon>
           <span class="file-label">{{
-            $t('dashboard.client.editor.uploadTips')
+            $t('dashboard.client.editor.loadlUploadTips')
           }}</span>
         </span>
       </b-upload>
@@ -95,6 +95,11 @@ export default {
     upload(e) {
       this.innerProgress = 0
       this.fileType = e.type
+      if (!this.fileType) {
+        if (e.name.indexOf('.flv') >= 0) {
+          this.fileType = 'video/flv'
+        }
+      }
       console.log('fileType', this.fileType)
       var result = new Promise((resolve, reject) => {
         var config = {
@@ -102,7 +107,7 @@ export default {
           resolve,
           reject,
         }
-        this.tokenSource = this.$local.api.uploadFile(
+        this.tokenSource = this.$local.getApiInstance().uploadFile(
           this.$axios,
           e,
           this.uploadDir,

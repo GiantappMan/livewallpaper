@@ -1,6 +1,7 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -15,8 +16,8 @@ namespace LiveWallpaper.LocalServer.Controllers
             return Content(version.ToString());
         }
 
-        [RequestSizeLimit(10L * 1024L * 1024L * 1024L)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 10L * 1024L * 1024L * 1024L)]
+        [RequestSizeLimit(long.MaxValue)]
+        [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
         public async Task<BaseApiResult<string>> UploadFile(IFormCollection fc)
         {
             string distDir = fc["distDir"];

@@ -1,4 +1,4 @@
-import { livewallpaperApi } from "../utils/livewallpaperInstance"
+import { LivewallpaperApi } from "../utils/livewallpaperInstance"
 import { delay } from "../utils/common"
 import Vue from 'vue'
 
@@ -12,7 +12,8 @@ function compareLocalID(a, b) {
 
 export const state = () => ({
     clientVersion: undefined,
-    serverHost: livewallpaperApi.serverHost,
+    livewallpaperApi: undefined,
+    serverPort: undefined,
     expectedClientVersion: process.env.expectedClientVersion,
     isPlaying: false,
     wallpapers: [],
@@ -35,7 +36,22 @@ export const state = () => ({
     },
 })
 
+export const getters = {
+    serverHost: (state, getters) => {
+        if (state.livewallpaperApi) {
+            return state.livewallpaperApi.serverHost;
+        }
+        return "";
+    }
+}
+
 export const mutations = {
+    setApiInstance(state, instance) {
+        state.livewallpaperApi = instance;
+    },
+    setServerPort(state, port) {
+        state.serverPort = port;
+    },
     setIsPlaying(state, playing) {
         state.isPlaying = playing
     },
@@ -119,12 +135,18 @@ export const mutations = {
 }
 
 export const actions = {
+    setPort(context, port) {
+        let { commit, state } = context;
+        port = port || 5001
+        commit("setServerPort", port);
+        commit("setApiInstance", new LivewallpaperApi(port));
+    },
     async deleteWallpaper(context, { wallpaper, handleClientApiException, toast }) {
         console.log("deleteWallpaper")
-        let { commit } = context;
+        let { commit, state } = context;
         commit('setWallpaperBusy', { wallpaper, busy: true })
         // commit('setLoading', true)
-        await livewallpaperApi.deleteWallpaper(wallpaper)
+        await state.livewallpaperApi.deleteWallpaper(wallpaper)
             .then((r) => {
                 commit('removeWallpaper', wallpaper)
                 toast.open(this.$i18n.t('local.wallpaperDeleted'));
@@ -134,10 +156,10 @@ export const actions = {
                 // commit('setLoading', false)
             })
     },
-    async closeWallpaper({ commit, dispatch }, { handleClientApiException }) {
+    async closeWallpaper({ commit, dispatch, state }, { handleClientApiException }) {
         console.log("closeWallpaper")
         commit('setLoading', true)
-        await livewallpaperApi.closeWallpaper()
+        await state.livewallpaperApi.closeWallpaper()
             .then((r) => {
                 commit('setIsPlaying', false)
             })
@@ -148,10 +170,10 @@ export const actions = {
         //更新当前播放的壁纸信息
         await dispatch('updateRunningWallpaper');
     },
-    async showWallpaper({ commit, dispatch }, { wallpaper, screen, handleClientApiException, toast }) {
+    async showWallpaper({ commit, dispatch, state }, { wallpaper, screen, handleClientApiException, toast }) {
         console.log("showWallpaper")
         commit('setLoading', true)
-        let r = await livewallpaperApi.showWallpaper(wallpaper, screen)
+        let r = await state.livewallpaperApi.showWallpaper(wallpaper, screen)
             .then(async (r) => {
                 console.log(r)
                 if (!r.ok) {
@@ -187,22 +209,23 @@ export const actions = {
         await dispatch('updateRunningWallpaper');
         return r;
     },
-    async exploreWallpaper({ commit }, { wallpaper, handleClientApiException }) {
+    async exploreWallpaper({ commit, state }, { wallpaper, handleClientApiException }) {
         console.log("exploreWallpaper")
         commit('setWallpaperBusy', { wallpaper, busy: true })
         await delay(300);//延迟下，界面才有效果。。。
-        await livewallpaperApi.explore(wallpaper.runningData.absolutePath)
+        await state.livewallpaperApi.explore(wallpaper.runningData.absolutePath)
             .catch(handleClientApiException);
         commit('setWallpaperBusy', { wallpaper, busy: false })
     },
-    async explore(context, { path, handleClientApiException }) {
+    async explore({ state }, { path, handleClientApiException }) {
         console.log("explore")
-        await livewallpaperApi.explore(path).catch(handleClientApiException);
+        await state.livewallpaperApi.explore(path).catch(handleClientApiException);
     },
     async getClientVersion(context, args) {
+        let { state } = context;
         const { handleClientApiException } = args || {};
         console.log("getClientVersion")
-        await livewallpaperApi
+        await state.livewallpaperApi
             .getClientVersion()
             .then((res) => {
                 context.commit('setClientVersion', res)
@@ -218,7 +241,7 @@ export const actions = {
     },
     async getWallpaper({ state, dispatch }, { path }) {
         console.log("getWallpaper")
-        let { data } = await livewallpaperApi
+        let { data } = await state.livewallpaperApi
             .getWallpaper(path)
             .catch(() => {
             })
@@ -239,10 +262,11 @@ export const actions = {
 
         return data;
     },
-    async loadSetting({ commit, dispatch }, { handleClientApiException }) {
+    async loadSetting({ commit, dispatch, state }, { handleClientApiException }) {
         console.log("loadSetting")
         commit('setLoadingSetting', true)
-        await livewallpaperApi
+        await state
+            .livewallpaperApi
             .getUserSetting()
             .then(async (res) => {
                 commit('setSetting', res.data)
@@ -252,11 +276,11 @@ export const actions = {
                 commit('setLoadingSetting', false)
             })
     },
-    async saveSetting({ commit, dispatch }, { setting, handleClientApiException }) {
+    async saveSetting({ commit, dispatch, state }, { setting, handleClientApiException }) {
         console.log("saveSetting")
         commit('setLoadingSetting', true)
         try {
-            let r = await livewallpaperApi.setUserSetting(setting);
+            let r = await state.livewallpaperApi.setUserSetting(setting);
             if (r.ok === true) {
                 commit('setSetting', setting)
             }
@@ -268,12 +292,12 @@ export const actions = {
             commit('setLoadingSetting', false)
         }
     },
-    async refresh({ commit, dispatch }, { handleClientApiException }) {
+    async refresh({ commit, dispatch, state }, { handleClientApiException }) {
         console.log("refresh")
         commit('setLoading', true)
 
         try {
-            let res = await livewallpaperApi.getWallpapers()
+            let res = await state.livewallpaperApi.getWallpapers()
             commit('setWallpapers', res.data)
             await dispatch("updateRunningWallpaper");
         } catch (error) {
@@ -285,17 +309,17 @@ export const actions = {
             commit('setLoading', false)
         }
     },
-    async loadWallpaperOption({ commit }, { wallpaper }) {
+    async loadWallpaperOption({ commit, state }, { wallpaper }) {
         console.log("loadWallpaperOption")
         let dir = wallpaper.runningData.dir;
-        let res = await livewallpaperApi.getWallpaperOption(dir)
+        let res = await state.livewallpaperApi.getWallpaperOption(dir)
         console.log(res);
         commit('setWallpaperOption', { wallpaper, option: res.data })
     },
-    async setWallpaperOption({ commit, dispatch }, { wallpaper, option }) {
+    async setWallpaperOption({ commit, dispatch, state }, { wallpaper, option }) {
         console.log("setWallpaperOption")
         let dir = wallpaper.runningData.dir;
-        let res = await livewallpaperApi.updateWallpaperOption(dir, option)
+        let res = await state.livewallpaperApi.updateWallpaperOption(dir, option)
         console.log(res);
         if (res.ok === true)
             commit('setWallpaperOption', { wallpaper, option })
@@ -304,7 +328,7 @@ export const actions = {
     async updateRunningWallpaper({ commit, state, dispatch }) {
         console.log("updateRunningWallpaper")
         try {
-            let runningWallpapers = await livewallpaperApi.getRunningWallpapers()
+            let runningWallpapers = await state.livewallpaperApi.getRunningWallpapers()
             //去重
             commit('setRunningWallpaper', { runningWallpapers })
 

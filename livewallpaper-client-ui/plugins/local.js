@@ -1,11 +1,12 @@
 import OpenClientTips from '../components/wallpaper/common/OpenClientTips'
-import { livewallpaperApi } from "../utils/livewallpaperInstance"
 
-export default ({ app }, inject) => {
+export default ({ store, app }, inject) => {
     const common = {
         downloadUrl: "",
         appStoreUrl: "https://www.microsoft.com/store/apps/9N1S487WCGWR",
-        api: livewallpaperApi,
+        getApiInstance() {
+            return store.state.local.livewallpaperApi;
+        },
         handleClientApiException(page, error) {
             console.log(error)
             page.$buefy.modal.open({
@@ -45,7 +46,7 @@ export default ({ app }, inject) => {
             })
         },
         getOnlineUrl(path, culture) {
-            let url = `https://livewallpaper.giantapp.cn${culture === 'zh' ? '' : '/' + culture}/${path}`;
+            let url = `https://livewallpaper.giantapp.cn${culture === 'zh' ? '' : '/' + culture}/${path}?v=${app.$config.expectedClientVersion}`;
             return url
         }
     };

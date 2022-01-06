@@ -3,7 +3,7 @@
     <div class="uploader-show">
       <img
         v-if="uploadedPath"
-        v-bind:src="`${$local.api.serverHost}assets/image/?localpath=${uploadedPath}`"
+        v-bind:src="`${$local.getApiInstance().serverHost}assets/image/?localpath=${uploadedPath}`"
         alt="cover-preview-show"
         class="cover-preview-show"
       />
@@ -73,7 +73,7 @@ export default {
           resolve,
           reject,
         }
-        this.tokenSource = this.$local.api.uploadFile(
+        this.tokenSource = this.$local.getApiInstance().uploadFile(
           this.$axios,
           e,
           this.uploadDir,

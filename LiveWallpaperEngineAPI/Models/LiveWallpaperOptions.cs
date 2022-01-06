@@ -29,10 +29,10 @@ namespace Giantapp.LiveWallpaper.Engine
         /// </summary>
         public string Remark { get; set; }
 
-        /// <summary>
-        /// 铺满没有黑边
-        /// </summary>
-        public bool PanScan { get; set; } = true;
+        ///// <summary>
+        ///// 铺满没有黑边
+        ///// </summary>
+        //public bool PanScan { get; set; } = true;
     }
     /// <summary>
     /// api 提供的选项

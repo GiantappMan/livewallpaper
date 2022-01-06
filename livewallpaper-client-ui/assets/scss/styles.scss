@@ -1,0 +1,9 @@
+// Import Bulma's core
+@import '~bulma/sass/utilities/_all';
+
+// 自定义颜色
+@import '_variables';
+
+// Import Bulma and Buefy styles
+@import '~bulma';
+@import '~buefy/src/scss/buefy';

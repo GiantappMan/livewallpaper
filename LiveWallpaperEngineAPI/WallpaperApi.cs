@@ -36,6 +36,7 @@ namespace Giantapp.LiveWallpaper.Engine
             //怀疑某些系统用不了
             WallpaperHelper.DoSomeMagic();
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+            SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
         #region property
@@ -278,28 +279,16 @@ namespace Giantapp.LiveWallpaper.Engine
             }
 
             string optionPath = Path.Combine(wallpaperDir, "option.json");
-            var oldOption = await GetWallpaperOption(wallpaperDir);
             await JsonHelper.JsonSerializeAsync(option, optionPath);
 
-            WallpaperModel runningWP = null;
-            List<string> runningWPScreens = new();
-            foreach (var item in CurrentWalpapers)
+            var runningWPs = CurrentWalpapers.Where(m => m.Value.RunningData.Dir == wallpaperDir).ToList();
+            //修改的是当前运行壁纸的参数
+            if (runningWPs.Count > 0)
             {
-                var tmpWallpaper = item.Value;
-                if (tmpWallpaper.RunningData.Dir == wallpaperDir)
-                {
-                    //有可能多个屏幕使用相同的壁纸
-                    runningWPScreens.Add(item.Key);
-                    runningWP = tmpWallpaper;
-                }
+                string[] screens = runningWPs.Select(m => m.Key).ToArray();
+                //是当前壁纸，重新应用生效
+                await ShowWallpaper(runningWPs[0].Value.RunningData.AbsolutePath, screens);
             }
-
-            if (runningWP != null && runningWPScreens.Contains(Options.AudioScreen))
-                runningWP.Option = option;
-
-            //确保修改音量后生效
-            if (oldOption.Volume != option.Volume)
-                ApplyAudioSource();
         }
 
         public static async Task<WallpaperModel> CreateWallpaperModelFromDir(string dir, bool readOption = true)
@@ -337,6 +326,15 @@ namespace Giantapp.LiveWallpaper.Engine
             return res;
         }
 
+        public static async Task Dispose()
+        {
+            // 图片壁纸不关闭，可以不开客户端使用
+            await CloseWallpaperEx(WallpaperType.Image, Screens);
+
+            //还原系统壁纸
+            WallpaperHelper.EnableSystemWallpaper(true);
+        }
+
         public static async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(WallpaperModel wallpaper, params string[] screens)
         {
             if (!Initialized)
@@ -346,11 +344,6 @@ namespace Giantapp.LiveWallpaper.Engine
             {
                 if (IsBusyState(nameof(SetupPlayer)))
                     return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.NoPlayer, null, wallpaper);
-
-                //if (wallpaper.Info.Type == WallpaperInfoType.Group)
-                //{
-                //    return await ShowWallpaperGroup(wallpaper, screens);
-                //}
 
                 if (!EnterBusyState(nameof(ShowWallpaper)))
                     return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.Busy, null, wallpaper);
@@ -394,8 +387,17 @@ namespace Giantapp.LiveWallpaper.Engine
                     if (existWallpaper != null &&
                         existWallpaper.RunningData.AbsolutePath == wallpaper.RunningData.AbsolutePath &&
                         existWallpaper.RunningData.Type != WallpaperType.Group &&
-                        existWallpaper.Option == wallpaper.Option)
+                    WallpaperOption.EqualExceptVolume(existWallpaper.Option, wallpaper.Option))
+                    {
+                        if (existWallpaper.Option.Volume != wallpaper.Option.Volume)
+                        {
+                            //仅更新声音
+                            existWallpaper.Option = wallpaper.Option;
+                            ApplyAudioSource();
+                        }
                         continue;
+                    }
+
 
                     //关闭其他类型的壁纸
                     await CloseWallpaperEx(currentRender.SupportType, screenItem);
@@ -918,14 +920,15 @@ namespace Giantapp.LiveWallpaper.Engine
 
             if (e.SignalTime.Second == 0)
             {//分组一分钟检查一次              
-
                 foreach (var item in CurrentWalpapers.ToList())
                 {
                     var screen = item.Key;
                     var wallpaper = item.Value;
                     if (wallpaper.Info.Type == WallpaperInfoType.Group && wallpaper.Option.WallpaperChangeTime <= DateTime.Now)
                     {
-                        await ShowWallpaper(wallpaper, screen);
+                        // 有可能多款屏幕使用同一个分组
+                        var tmpScreens = CurrentWalpapers.Where(m => m.Value.RunningData.Dir == wallpaper.RunningData.Dir).Select(m => m.Key).ToArray();
+                        await ShowWallpaper(wallpaper, tmpScreens);
                     }
                 }
             }
@@ -973,6 +976,10 @@ namespace Giantapp.LiveWallpaper.Engine
             }
         }
 
+        private static void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
+        {
+            WallpaperHelper.UpdateScreenResolution();            
+        }
         private static async Task HandleWindowMaximized(List<Screen> screens)
         {
             var maximizedScreens = screens.Select((m, i) => m.DeviceName).ToList();

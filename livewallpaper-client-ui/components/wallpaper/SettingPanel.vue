@@ -63,24 +63,20 @@
               "
             ></b-input>
           </b-field>
-          <!-- 暂时没用这个目录了 -->
-          <!--
-               <b-field :label="$t('dashboard.client.setting.externalPlayerFolder')">
+
+          <b-field :label="$t('dashboard.client.setting.windowSize')">
             <b-input
-              v-model="setting.wallpaper.externalPlayerFolder"
-              :placeholder="
-                $t('dashboard.client.setting.externalPlayerFolderTips')
-              "
-              icon-pack="fas"
-              icon-right="folder-open"
-              icon-right-clickable
-              @icon-right-click="
-                explore({
-                  path:setting.wallpaper.externalPlayerFolder
-                  })
-              "
+              type="number"
+              v-model="setting.general.windowHeight"
+              :placeholder="$t('dashboard.client.setting.windowSizeHeightTips')"
             ></b-input>
-          </b-field> -->
+            <b-input
+              type="number"
+              v-model="setting.general.windowWidth"
+              :placeholder="$t('dashboard.client.setting.windowSizeWidthTips')"
+            ></b-input>
+            <b-button @click="reset">{{ $t('common.reset') }}</b-button>
+          </b-field>
         </div>
         <hr class="is-medium" />
       </section>
@@ -146,9 +142,9 @@
                 </option>
               </b-select>
             </b-field>
-            <b-field :label="$t('dashboard.client.setting.panScan')">
+            <!-- <b-field :label="$t('dashboard.client.setting.panScan')">
               <b-switch v-model="item.panScan" :left-label="true"></b-switch>
-            </b-field>
+            </b-field> -->
           </div>
           <hr class="is-medium" />
         </section>
@@ -211,6 +207,10 @@ export default {
   fetchOnServer: false,
   methods: {
     ...mapActions(['loadSetting', 'saveSetting', 'explore']),
+    reset() {
+      this.setting.general.windowWidth = null
+      this.setting.general.windowHeight = null
+    },
     handleClientApiException(error) {
       this.$local.handleClientApiException(this, error)
     },

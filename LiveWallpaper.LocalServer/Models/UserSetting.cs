@@ -40,6 +40,9 @@ namespace LiveWallpaper.LocalServer.Models
                 _ThirdpartToolsDir = value;
             }
         }
+        public string WindowHeight { get; set; }
+        public string WindowWidth { get; set; }
+        public string WindowState { get; set; }
 
         public static string GetDefaultThirdpartToolsDir()
         {
@@ -75,7 +78,7 @@ namespace LiveWallpaper.LocalServer.Models
             if (ScreenOptions == null)
                 ScreenOptions = new List<ScreenOption>();
 
-            if (WallpaperApi.Screens == null)                
+            if (WallpaperApi.Screens == null)
                 return;
 
             foreach (var screenItem in WallpaperApi.Screens)

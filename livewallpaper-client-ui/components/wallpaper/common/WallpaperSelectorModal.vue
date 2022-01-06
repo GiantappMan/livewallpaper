@@ -59,7 +59,8 @@
 </template>
 <script>
 import { createNamespacedHelpers } from 'vuex'
-const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
+const { mapState, mapGetters, mapActions, mapMutations } =
+  createNamespacedHelpers('local')
 
 export default {
   data() {
@@ -76,7 +77,8 @@ export default {
         !this.isLoading && (!this.wallpapers || this.wallpapers.length == 0)
       return r
     },
-    ...mapState(['wallpapers', 'serverHost', 'isLoading', 'isPlaying']),
+    ...mapState(['wallpapers', 'isLoading', 'isPlaying']),
+    ...mapGetters(['serverHost']),
   },
   watch: {
     innerShow: function (newVal, oldVal) {

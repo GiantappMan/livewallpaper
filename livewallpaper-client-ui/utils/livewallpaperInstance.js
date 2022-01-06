@@ -1,10 +1,10 @@
 import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr'
 import { delay, isVersionGreatherThan } from '../utils/common';
+let _downloadWallpaperHandlers = [];
+
 class LivewallpaperApi {
-    constructor() {
-        this.serverHost = `http://localhost:${5001}/`;
-        this.serverUrl = `${this.serverHost}livewallpaper`;
-        this.downloadWallpaperHandlers = [];
+    constructor(port = 5001) {
+        this.setPort(port);
     }
     async _enusureConnected() {
         var createNew = false;
@@ -39,6 +39,10 @@ class LivewallpaperApi {
             response = await this.connection.invoke(method);
         console.log('调用完成', method, response);
         return response;
+    }
+    async setPort(port) {
+        this.serverHost = `http://localhost:${port}/`;
+        this.serverUrl = `${this.serverHost}livewallpaper`;
     }
     isBusy(errorString) {
         return errorString === 'Busy';
@@ -195,28 +199,26 @@ class LivewallpaperApi {
         await this._enusureConnected();
 
         if (callback) {
-            var exist = this.downloadWallpaperHandlers.find(m => m === callback);
+            var exist = _downloadWallpaperHandlers.find(m => m === callback);
             if (!exist)
-                this.downloadWallpaperHandlers.push(callback);
+                _downloadWallpaperHandlers.push(callback);
 
             this.connection.off("DownloadWallpaperProgressChanged");
             this.connection.on("DownloadWallpaperProgressChanged", (e) => {
-                for (let h of this.downloadWallpaperHandlers) {
+                for (let h of _downloadWallpaperHandlers) {
                     h(e);
                 }
             });
         }
     }
-
     async offDownloadWallpaper(callback) {
-        let i = this.downloadWallpaperHandlers.indexOf(callback);
+        let i = _downloadWallpaperHandlers.indexOf(callback);
         if (i >= 0) {
-            this.downloadWallpaperHandlers.splice(i, 1);
+            _downloadWallpaperHandlers.splice(i, 1);
         }
-        if (this.downloadWallpaperHandlers.length === 0)
+        if (_downloadWallpaperHandlers.length === 0)
             this.connection.off("DownloadWallpaperProgressChanged");
     }
-
     async downloadWallpaper(wallpaper) {
         // let completed = false;
         const { wp, wpCover, groupDir, wpTitle, wpId, wpType } = wallpaper
@@ -371,5 +373,6 @@ class LivewallpaperApi {
     }
 }
 
-const livewallpaperApi = new LivewallpaperApi();
-export { livewallpaperApi };
+// const livewallpaperApi = new LivewallpaperApi();
+// export { livewallpaperApi };
+export { LivewallpaperApi };

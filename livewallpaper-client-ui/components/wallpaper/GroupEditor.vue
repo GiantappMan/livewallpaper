@@ -117,7 +117,8 @@
 
 <script>
 import { createNamespacedHelpers } from 'vuex'
-const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
+const { mapState, mapGetters, mapActions, mapMutations } =
+  createNamespacedHelpers('local')
 import draggable from 'vuedraggable'
 export default {
   components: {
@@ -167,7 +168,7 @@ export default {
       let r = this.title
       return r
     },
-    ...mapState(['serverHost']),
+    ...mapGetters(['serverHost']),
   },
   mounted() {},
   fetch() {
@@ -226,7 +227,7 @@ export default {
           }
         } else {
           //新建壁纸
-          let res = await this.$local.api.getDraftDir()
+          let res = await this.$local.getApiInstance().getDraftDir()
           console.log('draftDir', res.data)
           this.wallpaperDir = res.data
         }
@@ -250,7 +251,7 @@ export default {
         type: 'group',
         groupItems: this.groupItemWallpaperModels.map((m) => m.info),
       }
-      this.$local.api
+      this.$local.getApiInstance()
         .updateProjectInfo(this.wallpaperDir, info)
         .then((r) => {
           this.$buefy.dialog.confirm({

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using WinAPI;
 using WinAPI.Desktop.API;
@@ -19,16 +20,18 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         IntPtr _currentHandler;
         IntPtr? _parentHandler;
         Rectangle _targetBounds;
+        RECT _lastPos;
 
         #region static
 
-        //Dictionary<screenName,helper>
         static readonly Dictionary<string, WallpaperHelper> _cacheInstances = new();
         static IDesktopWallpaper _desktopWallpaperAPI;
         static uint _slideshowTick;
         static IntPtr _progman;
         static IntPtr _workerw;
         static IntPtr _desktopWorkerw;
+        //static uint? _defaultBackgroundColor;
+        public static bool? IsSystemWallpaperEnabled { get; private set; }
 
         public Rectangle TargetBounds { get => _targetBounds; }
 
@@ -37,6 +40,11 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         #endregion
 
         #region construct
+
+        static WallpaperHelper()
+        {
+            EnableSystemWallpaper(false);
+        }
 
         //禁止外部程序集直接构造
         private WallpaperHelper(Rectangle bounds)
@@ -58,7 +66,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             int MAX_PATH = 260;
             string wallpaper = new('\0', MAX_PATH);
             _ = User32Wrapper.SystemParametersInfo(User32Wrapper.SPI_GETDESKWALLPAPER, (uint)wallpaper.Length, wallpaper, 0);
-            return wallpaper.Substring(0, wallpaper.IndexOf('\0'));
+            return wallpaper[..wallpaper.IndexOf('\0')];
         }
 
         static void SetDesktopWallpaper(string filename)
@@ -104,6 +112,27 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             _parentHandler = null;
         }
 
+        public async void UpdatePosition(Rectangle bounds, int tryCount = 1)
+        {
+            _targetBounds = bounds;
+            var rect = new RECT(_targetBounds);
+
+            for (int i = 0; i < tryCount; i++)
+            {
+                //检查x秒，如果坐标有变化，重新应用
+                RECT tmp = new(rect);
+                _ = User32Wrapper.MapWindowPoints(IntPtr.Zero, _workerw, ref tmp, 2);
+                if (tmp != _lastPos)
+                {
+                    _lastPos = tmp;
+                    _ = User32WrapperEx.SetWindowPosEx(_currentHandler, _lastPos);
+                    System.Diagnostics.Debug.WriteLine($"set window pos ${_lastPos}");
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+
         public bool SendToBackground(IntPtr handler)
         {
             //处理alt+tab可以看见本程序
@@ -137,7 +166,9 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             _parentHandler = User32Wrapper.GetParent(_currentHandler);
 
             User32Wrapper.SetParent(_currentHandler, _workerw);
-            FullScreen(_currentHandler, new RECT(_targetBounds), _workerw);
+            System.Diagnostics.Debug.WriteLine($"FullScreen {_targetBounds}");
+            UpdatePosition(_targetBounds);
+            HideWindowBorder(_currentHandler);
             return true;
         }
 
@@ -178,7 +209,15 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             return _cacheInstances[screen];
         }
 
-        public static IDesktopWallpaper GetDesktopWallpaperAPI()
+        internal static void UpdateScreenResolution()
+        {
+            foreach (var item in _cacheInstances)
+            {
+                var bounds = Screen.AllScreens.ToList().First(m => m.DeviceName == item.Key).Bounds;
+                item.Value.UpdatePosition(bounds, 5);
+            }
+        }
+        private static IDesktopWallpaper GetDesktopWallpaperAPI()
         {
             try
             {
@@ -207,6 +246,39 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             _desktopWallpaperAPI?.SetSlideshowOptions(DesktopSlideshowOptions.DSO_SHUFFLEIMAGES, _slideshowTick);
         }
 
+        public static void EnableSystemWallpaper(bool enable)
+        {
+            if (IsSystemWallpaperEnabled == enable)
+                return;
+
+            IsSystemWallpaperEnabled = enable;
+
+            try
+            {
+                // win11会崩溃暂时屏蔽
+                //if (_desktopWallpaperAPI == null)
+                //    _desktopWallpaperAPI = GetDesktopWallpaperAPI();
+
+                //if (!enable)
+                //{
+                //    if (_defaultBackgroundColor == null)
+                //        _defaultBackgroundColor = _desktopWallpaperAPI.GetBackgroundColor();
+                //    // 显示黑色bg
+                //    _desktopWallpaperAPI.SetBackgroundColor(0);
+                //}
+                //else if (_defaultBackgroundColor != null)
+                //    //恢复默认色
+                //    _desktopWallpaperAPI.SetBackgroundColor(_defaultBackgroundColor.Value);
+
+                //_desktopWallpaperAPI.Enable(enable);
+            }
+            catch (Exception ex)
+            {
+                _desktopWallpaperAPI = null;
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+        }
+
         #endregion
 
         #region private
@@ -226,8 +298,13 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
                                             IntPtr.Zero,
                                             "SHELLDLL_DefView",
                                             IntPtr.Zero);
+
                 if (shelldll_defview != IntPtr.Zero)
                 {
+                    var tophandleClassName = User32Wrapper.GetClassName(tophandle);
+                    if (tophandleClassName != "WorkerW")
+                        return true;
+
                     _workerw = User32Wrapper.FindWindowEx(IntPtr.Zero,
                                              tophandle,
                                              "WorkerW",
@@ -242,16 +319,16 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             return _workerw;
         }
 
-        internal static void FullScreen(IntPtr mainWindowHandle, IntPtr containerHandle)
-        {
-            User32Wrapper.GetWindowRect(containerHandle, out RECT rect);
-            FullScreen(mainWindowHandle, rect, containerHandle);
-        }
+        //internal static void FullScreen(IntPtr mainWindowHandle, IntPtr containerHandle)
+        //{
+        //    User32Wrapper.GetWindowRect(containerHandle, out RECT rect);
+        //    FullScreen(mainWindowHandle, rect, containerHandle);
+        //}
 
-        public static void FullScreen(IntPtr targeHandler, RECT rect, IntPtr parent)
+        public static void HideWindowBorder(IntPtr targeHandler)
         {
-            _ = User32Wrapper.MapWindowPoints(IntPtr.Zero, parent, ref rect, 2);
-            _ = User32WrapperEx.SetWindowPosEx(targeHandler, rect);
+            //_ = User32Wrapper.MapWindowPoints(IntPtr.Zero, parent, ref rect, 2);
+            //_ = User32WrapperEx.SetWindowPosEx(targeHandler, rect);
 
             var style = User32Wrapper.GetWindowLong(targeHandler, WindowLongFlags.GWL_STYLE);
 
