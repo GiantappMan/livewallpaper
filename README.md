@@ -15,7 +15,7 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 ### How to use
 
 [Youtube](https://www.youtube.com/watch?v=vTavq2PlAJA&t=351s)  
-[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)  
+[Bilibili](https://www.bilibili.com/video/BV1ph411872V/)
 
 ### Download Link
 
@@ -42,7 +42,7 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 ### Branch management
 
 - **v2.x** is the latest version of the code, the new version [LiveWallpaper](https://www.microsoft.com/store/apps/9N1S487WCGWR)
-- **v1.x** current online version of WPF development, old version [LiveWallpaper Classic](https://www.microsoft.com/store/apps/9NK0K2HWJ7C0). This app will be updated when the new version is stable.
+- **v1.x** original old version [LiveWallpaper Classic](https://www.microsoft.com/store/apps/9NK0K2HWJ7C0)
 
 ### Attention
 
