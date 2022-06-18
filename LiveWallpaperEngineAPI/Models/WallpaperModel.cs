@@ -235,9 +235,26 @@ namespace Giantapp.LiveWallpaper.Engine
         public static string Group { get; private set; } = "group";
     }
 
+    public class GroupItemProjectInfo
+    {
+        public GroupItemProjectInfo()
+        {
+            
+        }
+        public GroupItemProjectInfo(WallpaperProjectInfo info)
+        {
+            ID = info.ID;
+            LocalID = info.LocalID;
+        }
+
+        public string ID { get; set; }
+        public string LocalID { get; set; }
+    }
+
     public class WallpaperProjectInfo
     {
-        public List<WallpaperProjectInfo> GroupItems { get; set; }
+
+        public List<GroupItemProjectInfo> GroupItems { get; set; }
         public string ID { get; set; }
         public string LocalID { get; set; }
         public string Description { get; set; }

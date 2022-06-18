@@ -14,3 +14,5 @@ BundleArtifacts
 /LiveWallpaperEngineRender/lib/mpv-1-x64.dll
 /LiveWallpaper.App/*.cache
 /livewallpaper-client-ui/yarn.lock
+/setup/publish
+/setup/dist

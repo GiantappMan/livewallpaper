@@ -16,7 +16,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         readonly IDesktopWallpaper _desktopFactory;
         readonly Dictionary<string, string> _oldWallpapers = new();
 
-        public ImageRender() : base(WallpaperType.Image, new List<string>() { ".jpg", ".jpeg", ".png", ".bmp" }, false)
+        public ImageRender() : base(WallpaperType.Image, new List<string>() { ".jpg", ".jpeg", ".bmp",".png",".jfif" }, false)
         {
             _desktopFactory = DesktopWallpaperFactory.Create();
         }

@@ -8,6 +8,7 @@ export default {
   publicRuntimeConfig: {
     expectedClientVersion: process.env.expectedClientVersion,
     releaseNotesUrl: process.env.releaseNotesUrl,
+    appStoreUrl: process.env.appStoreUrl,
     donateUrl: process.env.donateUrl
   },
 

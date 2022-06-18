@@ -199,7 +199,7 @@ namespace LiveWallpaper.LocalServer
                 //开机启动
                 DesktopBridge.Helpers helpers = new();
                 if (helpers.IsRunningAsUwp())
-                    _startupManager = new DesktopBridgeStartupManager(AppName);
+                    _startupManager = new DesktopBridgeStartupManager("LiveWallpaper2");
                 else
                 {
                     string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");

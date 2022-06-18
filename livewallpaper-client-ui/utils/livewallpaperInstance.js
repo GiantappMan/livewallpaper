@@ -7,26 +7,33 @@ class LivewallpaperApi {
         this.setPort(port);
     }
     async _enusureConnected() {
-        var createNew = false;
         try {
-            if (this.connection == null)
-                createNew = true;
-            else if (this.connection.state != HubConnectionState.Connected)
-                await this.connection.start();
-        } catch (e) {
-            createNew = true;
-        }
+            if (this.connection == null) {
+                this.connection = new HubConnectionBuilder()
+                    .withUrl(this.serverUrl)
+                    .configureLogging(LogLevel.Information)
+                    .build();
+                this.connection.onclose((error) => console.log("Connection Closed"));
+                this.connection.on("send", data => {
+                    console.log(data);
+                });
+            }
 
-        if (createNew) {
-            this.connection = new HubConnectionBuilder()
-                .withUrl(this.serverUrl)
-                .configureLogging(LogLevel.Information)
-                .build();
-            this.connection.onclose((error) => console.log("Connection Closed"));
-            this.connection.on("send", data => {
-                console.log(data);
-            });
-            await this.connection.start();
+            console.log("_enusureConnected started 0", this.connection.state)
+            if (this.connection.state == HubConnectionState.Disconnected)
+                await this.connection.start();
+
+            //等待连接成功
+            let waitingCount = 0;
+            while (this.connection.state != HubConnectionState.Connected && waitingCount < 60) {
+                waitingCount++;
+                console.log("_enusureConnected waiting ", waitingCount)
+                await delay(1000);
+            }
+
+            console.log("_enusureConnected started 1", this.connection.state)
+        } catch (error) {
+            console.log("_enusureConnected 1", error)
         }
     }
     async _invoke({ method, parameters }) {
@@ -324,6 +331,14 @@ class LivewallpaperApi {
         return r;
     }
     async updateProjectInfo(destDir, info) {
+        if (info.groupItems) {
+            info.groupItems = info.groupItems.map(m => {
+                return {
+                    id: m.id,
+                    localID: m.localID
+                };
+            });
+        }
         let r = await this._invoke({
             method: "UpdateProjectInfo",
             parameters: [destDir, info]

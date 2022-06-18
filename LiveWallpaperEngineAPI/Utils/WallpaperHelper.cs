@@ -167,7 +167,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 
             User32Wrapper.SetParent(_currentHandler, _workerw);
             System.Diagnostics.Debug.WriteLine($"FullScreen {_targetBounds}");
-            UpdatePosition(_targetBounds);
+            UpdatePosition(_targetBounds, 5);
             HideWindowBorder(_currentHandler);
             return true;
         }
@@ -213,7 +213,11 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         {
             foreach (var item in _cacheInstances)
             {
-                var bounds = Screen.AllScreens.ToList().First(m => m.DeviceName == item.Key).Bounds;
+                var tmpScreen = Screen.AllScreens.ToList().FirstOrDefault(m => m.DeviceName == item.Key);
+                if (tmpScreen == null)
+                    continue;
+
+                var bounds = tmpScreen.Bounds;
                 item.Value.UpdatePosition(bounds, 5);
             }
         }
@@ -287,8 +291,8 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             _progman = User32Wrapper.FindWindow("Progman", null);
             User32Wrapper.SendMessageTimeout(_progman,
                                    0x052C,
-                                   new IntPtr(0),
-                                   IntPtr.Zero,
+                                   new IntPtr(0xD),
+                                   new IntPtr(0x1),
                                    SendMessageTimeoutFlags.SMTO_NORMAL,
                                    1000,
                                    out IntPtr unusefulResult);

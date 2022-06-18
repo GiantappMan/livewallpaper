@@ -10,7 +10,10 @@
       >
       </b-field>
       <b-field
-        v-if="clientVersion && clientVersion != $config.expectedClientVersion"
+        v-if="
+          clientVersion &&
+          isNewerVersion(clientVersion, $config.expectedClientVersion)
+        "
         :label="
           $t('common.needUpgradeClient', {
             version: this.clientVersion,
@@ -18,6 +21,9 @@
           })
         "
       >
+        <a :href="$config.appStoreUrl" target="_blank">
+          <span> {{ $t('common.downloadClient') }} </span>
+        </a>
       </b-field>
       <client-only>
         <b-field v-if="serverHost">
@@ -74,6 +80,17 @@ export default {
     console.log(this.clientVersion)
   },
   methods: {
+    isNewerVersion(oldVer, newVer) {
+      const oldParts = oldVer.split('.')
+      const newParts = newVer.split('.')
+      for (var i = 0; i < newParts.length; i++) {
+        const a = ~~newParts[i] // parse int
+        const b = ~~oldParts[i] // parse int
+        if (a > b) return true
+        if (a < b) return false
+      }
+      return false
+    },
     handleClientApiException(error) {
       this.$local.handleClientApiException(this, error)
     },

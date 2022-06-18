@@ -80,7 +80,7 @@ namespace LiveWallpaper.Shell.Views
             }
             else
             {
-                WindowWidth = 1215;
+                WindowWidth = 1024;
                 WindowHeight = 680;
             }
         }
@@ -237,6 +237,11 @@ namespace LiveWallpaper.Shell.Views
         private bool _needSaveUserSetting = false;
         public MainWindow(string url)
         {
+            if (_vm.WindowWidth != null)
+                Width = _vm.WindowWidth.Value;
+            if (_vm.WindowHeight != null)
+                Height = _vm.WindowHeight.Value;
+
             InitializeComponent();
             DataContext = _vm;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;

@@ -111,7 +111,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
 
             groupWallpaper.Option.WallpaperChangeTime = DateTime.Now + groupWallpaper.Option.SwitchingInterval.Value;
 
-            WallpaperModel result = await WallpaperApi.GetModelFromCache(info);
+            WallpaperModel result = await WallpaperApi.GetModelFromCache(info.LocalID);
             return result;
         }
     }

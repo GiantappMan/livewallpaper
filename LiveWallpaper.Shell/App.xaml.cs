@@ -58,8 +58,8 @@ namespace LiveWallpaper.Shell
             bool ok = CheckMutex();
             if (!ok)
             {
-                ShowToastAndExit();
-                return;
+                ShowToastAndKillProcess();
+                //return;
             }
 
             CatchApplicationError();
@@ -393,10 +393,26 @@ namespace LiveWallpaper.Shell
             {
             }
         }
-        private static async void ShowToastAndExit()
+        private static async void ShowToastAndKillProcess()
         {
             await AppManager.ShowGuidToastAsync();
-            Environment.Exit(0);
+            //杀掉其他实例
+            try
+            {
+                var ps = Process.GetProcessesByName("livewallpaper2");
+                var cp = Process.GetCurrentProcess();
+                foreach (var p in ps)
+                {
+                    if (p.Id == cp.Id)
+                        continue;
+                    p.Kill();
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            //Environment.Exit(0);
         }
         public static void OpenConfigFolder()
         {

@@ -22,7 +22,7 @@
     </div>
     <footer class="card-footer">
       <p class="card-footer-item">
-        <a :href="$local.appStoreUrl" target="_blank" type="is-info is-light">
+        <a :href="$config.appStoreUrl" target="_blank" type="is-info is-light">
           <template
             v-if="clientVersion && clientVersion != expectedClientVersion"
           >

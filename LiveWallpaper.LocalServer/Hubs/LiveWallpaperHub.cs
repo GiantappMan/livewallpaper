@@ -496,7 +496,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                              var group = await GetWallpaper(groupDir);
                              if (group != null)
                              {
-                                 group.Data.Info.GroupItems.Insert(0, wallpaper.Data.Info);
+                                 group.Data.Info.GroupItems.Insert(0, new GroupItemProjectInfo(wallpaper.Data.Info));
                                  await UpdateProjectInfo(groupDir, group.Data.Info);
                              }
                          }

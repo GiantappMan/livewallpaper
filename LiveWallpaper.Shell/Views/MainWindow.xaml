@@ -7,8 +7,6 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:LiveWallpaper.Shell.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Width="{Binding WindowWidth, FallbackValue=1215, Mode=OneWay}"
-    Height="{Binding WindowHeight, FallbackValue=680, Mode=OneWay}"
     MinWidth="785"
     MinHeight="482"
     d:DataContext="{d:DesignInstance local:MainViewModel,
