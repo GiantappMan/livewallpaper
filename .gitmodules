@@ -1,7 +1,0 @@
-[submodule "livewallpaper-client-ui/livewallpaper_i18n"]
-	path = livewallpaper-client-ui/livewallpaper_i18n
-	url = https://github.com/giant-app/livewallpaper_i18n.git
-	branch = master
-[submodule "Mpv.NET-lib-"]
-	path = Mpv.NET-lib-
-	url = https://github.com/DaZiYuan/Mpv.NET-lib-.git

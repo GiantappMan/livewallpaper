@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "LiveWallpaperEngineRender": {
-      "commandName": "Project",
-      "commandLineArgs": "--WindowLeft 1000  --WindowTop 233"
-    }
-  }
-}

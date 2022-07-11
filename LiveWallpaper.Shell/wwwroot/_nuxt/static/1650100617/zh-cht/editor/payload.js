@@ -1,1 +1,0 @@
-__NUXT_JSONP__("/zh-cht/editor", {data:[{}],fetch:{},mutations:[]});
