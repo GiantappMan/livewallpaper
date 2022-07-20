@@ -233,7 +233,14 @@ namespace Giantapp.LiveWallpaper.Engine
         public static WallpaperType GetWallpaperType(string wallpaper)
         {
             var currentRender = RenderManager.GetRenderByExtension(Path.GetExtension(wallpaper));
-            return currentRender.SupportType;
+            if (currentRender != null)
+            {
+                return currentRender.SupportType;
+            }
+            else
+            {
+                return WallpaperType.Image;
+            }
         }
 
         public static async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string wallpaperPath, params string[] screens)

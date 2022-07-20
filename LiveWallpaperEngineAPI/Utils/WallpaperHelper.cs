@@ -191,7 +191,10 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             }), IntPtr.Zero);
 
             var desktopWallpaperAPI = GetDesktopWallpaperAPI();
-            RefreshWallpaper(desktopWallpaperAPI);
+            if (desktopWallpaperAPI != null)
+            {
+                RefreshWallpaper(desktopWallpaperAPI);
+            }
         }
 
         /// <summary>
@@ -354,8 +357,8 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 
             try
             {
-                desktopWallpaperAPI.Enable(false);
-                desktopWallpaperAPI.Enable(true);
+                desktopWallpaperAPI?.Enable(false);
+                desktopWallpaperAPI?.Enable(true);
             }
             catch (Exception ex)
             {

@@ -56,11 +56,11 @@ namespace LiveWallpaperEngineRender
             if (panscan)
             {
                 //防止视频黑边
-                _player.API.SetPropertyString("panscan", "1.0");
+                _player?.API.SetPropertyString("panscan", "1.0");
             }
             else
             {
-                _player.API.SetPropertyString("panscan", "0.0");
+                _player?.API.SetPropertyString("panscan", "0.0");
             }
 
             if (hwdec)
