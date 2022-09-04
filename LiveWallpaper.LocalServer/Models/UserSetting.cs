@@ -11,7 +11,7 @@ namespace LiveWallpaper.LocalServer.Models
     public class GeneralSettting
     {
         public bool StartWithSystem { get; set; } = true;
-        public string CurrentLan { get; set; }
+        public string? CurrentLan { get; set; }
         public string[] LanOptions { get; private set; } = new string[] { "en-US", "el", "ru", "zh-CN" };
         public string ConfigDir
         {
@@ -25,8 +25,8 @@ namespace LiveWallpaper.LocalServer.Models
         /// <summary>
         /// 三方工具目录，例如ffmpeg
         /// </summary>
-        private string _ThirdpartToolsDir;
-        public string ThirdpartToolsDir
+        private string? _ThirdpartToolsDir;
+        public string? ThirdpartToolsDir
         {
             get
             {
@@ -40,9 +40,9 @@ namespace LiveWallpaper.LocalServer.Models
                 _ThirdpartToolsDir = value;
             }
         }
-        public string WindowHeight { get; set; }
-        public string WindowWidth { get; set; }
-        public string WindowState { get; set; }
+        public string? WindowHeight { get; set; }
+        public string? WindowWidth { get; set; }
+        public string? WindowState { get; set; }
 
         public static string GetDefaultThirdpartToolsDir()
         {
@@ -58,7 +58,7 @@ namespace LiveWallpaper.LocalServer.Models
         {
 
         }
-        private string _WallpaperSaveDir;
+        private string? _WallpaperSaveDir;
         public string WallpaperSaveDir
         {
             get
@@ -75,11 +75,7 @@ namespace LiveWallpaper.LocalServer.Models
         }
         public void FixScreenOptions()
         {
-            if (ScreenOptions == null)
-                ScreenOptions = new List<ScreenOption>();
-
-            if (WallpaperApi.Screens == null)
-                return;
+            ScreenOptions ??= new List<ScreenOption>();
 
             foreach (var screenItem in WallpaperApi.Screens)
             {

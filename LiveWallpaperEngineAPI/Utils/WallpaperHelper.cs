@@ -25,7 +25,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         #region static
 
         static readonly Dictionary<string, WallpaperHelper> _cacheInstances = new();
-        static IDesktopWallpaper _desktopWallpaperAPI;
+        static IDesktopWallpaper? _desktopWallpaperAPI;
         static uint _slideshowTick;
         static IntPtr _progman;
         static IntPtr _workerw;
@@ -221,7 +221,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
                 item.Value.UpdatePosition(bounds, 5);
             }
         }
-        private static IDesktopWallpaper GetDesktopWallpaperAPI()
+        private static IDesktopWallpaper? GetDesktopWallpaperAPI()
         {
             try
             {
@@ -343,7 +343,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         }
 
         //刷新壁纸
-        public static IDesktopWallpaper RefreshWallpaper(IDesktopWallpaper desktopWallpaperAPI = null)
+        public static IDesktopWallpaper? RefreshWallpaper(IDesktopWallpaper? desktopWallpaperAPI = null)
         {
             var explorer = ExplorerMonitor.ExploreProcess;
             if (explorer == null)
@@ -354,8 +354,8 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 
             try
             {
-                desktopWallpaperAPI.Enable(false);
-                desktopWallpaperAPI.Enable(true);
+                desktopWallpaperAPI?.Enable(false);
+                desktopWallpaperAPI?.Enable(true);
             }
             catch (Exception ex)
             {

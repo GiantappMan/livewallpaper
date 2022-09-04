@@ -8,10 +8,10 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
     /// </summary>
     public static class ExplorerMonitor
     {
-        public static Process ExploreProcess { get; private set; }
+        public static Process? ExploreProcess { get; private set; }
         public static bool Crashed { get; private set; }
 
-        public static event EventHandler<bool> ExplorerChanged;
+        public static event EventHandler<bool>? ExplorerChanged;
 
         static ExplorerMonitor()
         {
@@ -47,7 +47,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             //}
         }
 
-        private static Process GetExplorer()
+        private static Process? GetExplorer()
         {
             var explorers = Process.GetProcessesByName("explorer");
             if (explorers.Length == 0)

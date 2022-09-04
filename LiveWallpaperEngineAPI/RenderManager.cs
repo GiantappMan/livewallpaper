@@ -13,7 +13,7 @@ namespace Giantapp.LiveWallpaper.Engine
     {
         public static List<IRender> Renders { get; set; } = new List<IRender>();
 
-        public static IRender GetRender(WallpaperType dType)
+        public static IRender? GetRender(WallpaperType dType)
         {
             foreach (var instance in Renders)
             {
@@ -24,8 +24,10 @@ namespace Giantapp.LiveWallpaper.Engine
             return null;
         }
 
-        public static IRender GetRenderByExtension(string extension)
+        public static IRender? GetRenderByExtension(string? extension)
         {
+            if (extension == null)
+                return null;
             foreach (var instance in Renders)
             {
                 var exist = instance.SupportExtension.FirstOrDefault(m => m == extension.ToLower());
@@ -36,7 +38,7 @@ namespace Giantapp.LiveWallpaper.Engine
             return null;
         }
 
-        internal static IRender GetRender(WallpaperModel wallpaper)
+        internal static IRender? GetRender(WallpaperModel wallpaper)
         {
             if (wallpaper == null)
                 return null;

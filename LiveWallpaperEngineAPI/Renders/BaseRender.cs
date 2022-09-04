@@ -12,7 +12,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
     public abstract class BaseRender : IRender
     {
         protected readonly List<RenderInfo> _currentWallpapers = new();
-        private CancellationTokenSource _showWallpaperCts = new();
+        private CancellationTokenSource? _showWallpaperCts = new();
         public WallpaperType SupportType { get; private set; }
         public List<string> SupportExtension { get; private set; }
         public bool SupportMouseEvent { get; private set; }
@@ -23,8 +23,11 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             SupportExtension = extension;
             SupportMouseEvent = supportMouseEvent;
         }
-        public async Task<BaseApiResult<List<RenderInfo>>> ShowWallpaper(WallpaperModel wallpaper, params string[] screens)
+        public async Task<BaseApiResult<List<RenderInfo>>> ShowWallpaper(WallpaperModel? wallpaper, params string[] screens)
         {
+            if (wallpaper == null)
+                return BaseApiResult<List<RenderInfo>>.ErrorState(ErrorType.Failed);
+
             foreach (var item in screens)
                 Debug.WriteLine($"show {GetType().Name} {item}");
 
@@ -38,9 +41,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 else
                 {
                     //路径变化或者播放参数变化，都要重新播放，分组每次都要重新播放
-                    ok = existRenderInfo.Wallpaper.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath
-                    || existRenderInfo.Wallpaper.RunningData.Type == WallpaperType.Group
-                    || existRenderInfo.Wallpaper.Option != wallpaper.Option;
+                    ok = existRenderInfo.Wallpaper?.RunningData.AbsolutePath != wallpaper.RunningData.AbsolutePath
+                    || existRenderInfo.Wallpaper?.RunningData.Type == WallpaperType.Group
+                    || existRenderInfo.Wallpaper?.Option != wallpaper.Option;
                 }
                 return ok;
             }).ToArray();
@@ -64,7 +67,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     return showResult;
 
                 //更新当前壁纸
-                showResult.Data.ForEach(m => _currentWallpapers.Add(m));
+                showResult.Data?.ForEach(m => _currentWallpapers.Add(m));
             }
 
             //会导致莫名其妙的卡死
@@ -83,7 +86,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         //        WallpaperHelper.EnableSystemWallpaper(true);
         //}
 
-        public async Task CloseWallpaperAsync(WallpaperModel nextWallpaper, params string[] screens)
+        public async Task CloseWallpaperAsync(WallpaperModel? nextWallpaper, params string[] screens)
         {
             var playingWallpaper = CloseWallpaperData(screens);
             if (playingWallpaper.Count == 0)
@@ -121,7 +124,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         /// <param name="playingWallpaper"></param>
         /// <param name="closeBeforeOpening">是否是临时关闭，临时关闭表示马上又会继续播放其他壁纸</param>
         /// <returns></returns>
-        protected virtual Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel nextWallpaper = null)
+        protected virtual Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel? nextWallpaper = null)
         {
             return Task.CompletedTask;
         }

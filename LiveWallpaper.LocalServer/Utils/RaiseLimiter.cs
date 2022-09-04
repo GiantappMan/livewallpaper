@@ -6,8 +6,8 @@ namespace LiveWallpaper.LocalServer.Utils
 {
     internal class RaiseLimiter
     {
-        Func<Task> _nextTask;
-        readonly SemaphoreSlim _slim = new SemaphoreSlim(1, 1);
+        Func<Task>? _nextTask;
+        readonly SemaphoreSlim _slim = new(1, 1);
 
         private DateTime _timeoutTime;
 

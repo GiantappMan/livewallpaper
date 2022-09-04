@@ -29,10 +29,13 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         public override int GetVolume(string screen)
         {
             var playingWallpaper = _currentWallpapers.Where(m => screen == m.Screen).FirstOrDefault();
+            if (playingWallpaper == null)
+                return 0;
+
             int result = AudioHelper.GetVolume(playingWallpaper.PId);
             return result;
         }
-        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel nextWallpaper)
+        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel? nextWallpaper)
         {
             //不论是否临时关闭，都需要关闭进程重启进程
             foreach (var render in wallpaperRenders)
@@ -59,7 +62,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             List<RenderInfo> infos = new();
             List<Task> tmpTasks = new();
 
-            ProcessStartInfo pInfo = await Task.Run(() => GetRenderExeInfo(wallpaper));
+            ProcessStartInfo? pInfo = await Task.Run(() => GetRenderExeInfo(wallpaper));
             if (pInfo == null)
                 return BaseApiResult<List<RenderInfo>>.ErrorState(ErrorType.NoPlayer);
 
@@ -78,7 +81,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                             return;
 
                         var host = LiveWallpaperRenderForm.GetHost(screenItem);
+#pragma warning disable CS0612 // 类型或成员已过时
                         host!.ShowWallpaper(processResult.HostHandle);
+#pragma warning restore CS0612 // 类型或成员已过时
 
                         infos.Add(new RenderInfo(processResult)
                         {
@@ -102,13 +107,19 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             if (SupportMouseEvent && WallpaperApi.Options.ForwardMouseEvent && wallpaper.Option.EnableMouseEvent)
             {
                 foreach (var item in infos)
+                {
+                    if (item.Screen == null)
+                        continue;
                     await DesktopMouseEventReciver.AddHandle(item.ReceiveMouseEventHandle, item.Screen);
+                }
             }
             return BaseApiResult<List<RenderInfo>>.SuccessState(infos);
         }
 
-        protected virtual ProcessStartInfo GetRenderExeInfo(WallpaperModel model)
+        protected virtual ProcessStartInfo? GetRenderExeInfo(WallpaperModel model)
         {
+            if (model.RunningData.AbsolutePath == null)
+                return null;
             return new ProcessStartInfo(model.RunningData.AbsolutePath);
         }
 
@@ -137,9 +148,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                 info.WindowStyle = ProcessWindowStyle.Maximized;
                 info.CreateNoWindow = true;
-                Process targetProcess = Process.Start(info);
+                Process? targetProcess = Process.Start(info);
 
-                while (targetProcess.MainWindowHandle == IntPtr.Zero)
+                while (targetProcess != null && targetProcess.MainWindowHandle == IntPtr.Zero)
                 {
                     if (ct.IsCancellationRequested)
                         targetProcess.Kill();
@@ -159,13 +170,13 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
                 RenderProcess result = new()
                 {
-                    PId = targetProcess.Id,
-                    HostHandle = targetProcess.MainWindowHandle,
-                    ReceiveMouseEventHandle = targetProcess.MainWindowHandle
+                    PId = targetProcess?.Id ?? -1,
+                    HostHandle = targetProcess?.MainWindowHandle ?? IntPtr.Zero,
+                    ReceiveMouseEventHandle = targetProcess?.MainWindowHandle ?? IntPtr.Zero
                 };
                 //壁纸引擎关闭后，关闭渲染进程
                 _pj.AddProcess(targetProcess);
-                targetProcess.Dispose();
+                targetProcess?.Dispose();
                 return result;
             });
         }

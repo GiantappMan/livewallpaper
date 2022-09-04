@@ -21,7 +21,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         private readonly string _zipFile;
         private long _total;
         private long _completed;
-        public event EventHandler<SevenZipUnzipProgressArgs> UnzipProgressChanged;
+        public event EventHandler<SevenZipUnzipProgressArgs>? UnzipProgressChanged;
 
 
         public SevenZip(string zipPath)

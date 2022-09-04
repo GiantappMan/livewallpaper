@@ -16,7 +16,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         readonly IDesktopWallpaper _desktopFactory;
         readonly Dictionary<string, string> _oldWallpapers = new();
 
-        public ImageRender() : base(WallpaperType.Image, new List<string>() { ".jpg", ".jpeg", ".bmp",".png",".jfif" }, false)
+        public ImageRender() : base(WallpaperType.Image, new List<string>() { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" }, false)
         {
             _desktopFactory = DesktopWallpaperFactory.Create();
         }
@@ -29,8 +29,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 {
                     CacheOldWallpaper(screenName, () => _desktopFactory.GetWallpaper(screenName));
 
-                    string monitoryId = GetMonitoryId(screenName);
-                    _desktopFactory.SetWallpaper(monitoryId, wallpaper.RunningData.AbsolutePath);
+                    string? monitoryId = GetMonitoryId(screenName);
+                    if (monitoryId != null)
+                        _desktopFactory.SetWallpaper(monitoryId, wallpaper.RunningData.AbsolutePath);
                 }
 
                 List<RenderInfo> infos = screens.Select(m => new RenderInfo()
@@ -42,8 +43,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             });
         }
 
-        private string GetMonitoryId(string screenName)
+        private string? GetMonitoryId(string? screenName)
         {
+            if (screenName == null)
+                return null;
             var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == screenName);
             if (screen == null)
                 return null;
@@ -72,7 +75,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             }
         }
 
-        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel nextWallpaper)
+        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel? nextWallpaper)
         {
             //临时关闭不用处理
             if (nextWallpaper != null)
@@ -80,7 +83,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
             foreach (var w in playingWallpaper)
             {
-                string monitoryId = GetMonitoryId(w.Screen);
+                string? monitoryId = GetMonitoryId(w.Screen);
                 try
                 {
                     var oldWallpaper = GetOldWallpaper(w.Screen);
@@ -98,8 +101,10 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             }
         }
 
-        private string GetOldWallpaper(string screen)
+        private string? GetOldWallpaper(string? screen)
         {
+            if (screen == null)
+                return null;
             if (_oldWallpapers.ContainsKey(screen))
                 return _oldWallpapers[screen];
             return null;

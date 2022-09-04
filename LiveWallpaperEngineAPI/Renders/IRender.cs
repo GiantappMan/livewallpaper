@@ -21,11 +21,11 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         /// 加载壁纸，内部处理重复开壁纸问题
         /// </summary>
         /// <param name="path"></param>
-        Task<BaseApiResult<List<RenderInfo>>> ShowWallpaper(WallpaperModel wallpaper, params string[] screen);
+        Task<BaseApiResult<List<RenderInfo>>> ShowWallpaper(WallpaperModel? wallpaper, params string[] screen);
         void Pause(params string[] screens);
         void Resume(params string[] screens);
         void SetVolume(int v, string screen);
         int GetVolume(string screen);
-        Task CloseWallpaperAsync(WallpaperModel nextwp, params string[] screens);
+        Task CloseWallpaperAsync(WallpaperModel? nextwp, params string[] screens);
     }
 }

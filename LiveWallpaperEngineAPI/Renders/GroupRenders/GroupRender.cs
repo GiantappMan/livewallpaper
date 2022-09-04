@@ -10,7 +10,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
 {
     public class GroupRender : BaseRender
     {
-        private IRender _currentRender;
+        private IRender? _currentRender;
 
         public GroupRender() : base(
             WallpaperType.Group,
@@ -21,7 +21,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
         }
         protected override async Task<BaseApiResult<List<RenderInfo>>> InnerShowWallpaper(WallpaperModel groupWallpaper, CancellationToken ct, params string[] screens)
         {
-            WallpaperModel wallpaper = null;
+            WallpaperModel? wallpaper = null;
 
             int tryCount = 0;
             //分组中壁纸已删除，使用下一个
@@ -29,12 +29,12 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
             {
                 wallpaper = await GetNextWallpaperFromGroup(groupWallpaper);
                 tryCount++;
-                if (tryCount >= groupWallpaper.Info.GroupItems.Count - 1)
+                if (groupWallpaper.Info.GroupItems == null || tryCount >= groupWallpaper.Info.GroupItems.Count - 1)
                     break;
             }
 
             if (wallpaper == null)
-                return null;
+                return BaseApiResult<List<RenderInfo>>.ErrorState(ErrorType.Failed);
 
             var oldRender = _currentRender;
             if (wallpaper.RunningData.Type == null)
@@ -61,8 +61,12 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
                 oldRender = null;
             }
 
+            if (_currentRender == null)
+            {
+                return BaseApiResult<List<RenderInfo>>.ErrorState(ErrorType.Failed);
+            }
             var result = await _currentRender.ShowWallpaper(wallpaper, screens);
-            if (result.Ok)
+            if (result.Ok && groupWallpaper.RunningData.Dir != null)
             {
                 //保存播放数据，下次播放下一张
                 await WallpaperApi.UpdateWallpaperOption(groupWallpaper.RunningData.Dir, groupWallpaper.Option);
@@ -73,45 +77,54 @@ namespace Giantapp.LiveWallpaper.Engine.Renders.GroupRenders
         }
         protected override void InnerResum(RenderInfo renderInfo)
         {
-            _currentRender?.Resume(renderInfo.Screen);
+            if (renderInfo.Screen != null)
+                _currentRender?.Resume(renderInfo.Screen);
         }
         protected override void InnerPause(RenderInfo renderInfo)
         {
-            _currentRender?.Pause(renderInfo.Screen);
+            if (renderInfo.Screen != null)
+                _currentRender?.Pause(renderInfo.Screen);
         }
-        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel nextWallpaper = null)
+        protected override async Task InnerCloseWallpaperAsync(List<RenderInfo> playingWallpaper, WallpaperModel? nextWallpaper = null)
         {
-            WallpaperModel tmpNext = nextWallpaper;
+            WallpaperModel? tmpNext = nextWallpaper;
             if (nextWallpaper != null && nextWallpaper.RunningData.Type == WallpaperType.Group)
             {
-                var nextInfo = nextWallpaper.Info.GroupItems[nextWallpaper.Option.LastWallpaperIndex ?? 0];
-                tmpNext = WallpaperApi.CacheWallpapers.Find(m => m.Info.LocalID == nextInfo.LocalID);
+                var nextInfo = nextWallpaper.Info.GroupItems?[nextWallpaper.Option.LastWallpaperIndex ?? 0];
+                if (nextInfo != null)
+                    tmpNext = WallpaperApi.CacheWallpapers?.Find(m => m.Info.LocalID == nextInfo.LocalID);
             }
-            await _currentRender?.CloseWallpaperAsync(tmpNext, playingWallpaper.Select(m => m.Screen).ToArray());
+            if (_currentRender != null && tmpNext != null)
+                await _currentRender.CloseWallpaperAsync(tmpNext, playingWallpaper.Select(m => m.Screen ?? string.Empty).ToArray());
         }
         public override int GetVolume(string screen)
         {
-            var r = _currentRender?.GetVolume(screen);
-            return r.Value;
+            if (_currentRender == null)
+                return 0;
+            var r = _currentRender.GetVolume(screen);
+            return r;
         }
         public override void SetVolume(int v, string screen)
         {
             _currentRender?.SetVolume(v, screen);
         }
-        private static async Task<WallpaperModel> GetNextWallpaperFromGroup(WallpaperModel groupWallpaper)
+        private static async Task<WallpaperModel?> GetNextWallpaperFromGroup(WallpaperModel groupWallpaper)
         {
             if (groupWallpaper.Option.LastWallpaperIndex == null)
                 groupWallpaper.Option.LastWallpaperIndex = 0;
-            else if (groupWallpaper.Option.LastWallpaperIndex >= groupWallpaper.Info.GroupItems.Count - 1)
+            else if (groupWallpaper.Option.LastWallpaperIndex >= groupWallpaper.Info.GroupItems?.Count - 1)
                 groupWallpaper.Option.LastWallpaperIndex = 0;
             else
                 groupWallpaper.Option.LastWallpaperIndex += 1;
 
-            var info = groupWallpaper.Info.GroupItems[groupWallpaper.Option.LastWallpaperIndex.Value];
+            var info = groupWallpaper.Info.GroupItems?[groupWallpaper.Option.LastWallpaperIndex.Value];
+            if (info == null)
+                return null;
 
-            groupWallpaper.Option.WallpaperChangeTime = DateTime.Now + groupWallpaper.Option.SwitchingInterval.Value;
+            if (groupWallpaper.Option.SwitchingInterval != null)
+                groupWallpaper.Option.WallpaperChangeTime = DateTime.Now + groupWallpaper.Option.SwitchingInterval.Value;
 
-            WallpaperModel result = await WallpaperApi.GetModelFromCache(info.LocalID);
+            WallpaperModel? result = await WallpaperApi.GetModelFromCache(info.LocalID);
             return result;
         }
     }

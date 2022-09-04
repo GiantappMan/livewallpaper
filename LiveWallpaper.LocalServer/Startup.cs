@@ -70,7 +70,7 @@ namespace LiveWallpaper.LocalServer
             //app.UseHttpsRedirection();
 
             //手动指定路径，APP包装后启动路径不正确
-            var apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var apptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
             var option = new FileServerOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(apptEntryDir, "wwwroot")),

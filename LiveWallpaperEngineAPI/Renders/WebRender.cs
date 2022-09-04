@@ -18,9 +18,12 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
 
         }
 
-        protected override ProcessStartInfo GetRenderExeInfo(WallpaperModel model)
+        protected override ProcessStartInfo? GetRenderExeInfo(WallpaperModel model)
         {
-            string path = model.RunningData.AbsolutePath;
+            string? path = model.RunningData.AbsolutePath;
+            if (WallpaperApi.Options.ExternalPlayerFolder == null)
+                return null;
+
             //文档：https://mpv.io/manual/stable/
             string playerPath = Path.Combine(WallpaperApi.Options.ExternalPlayerFolder, $@"{PlayerFolderName}\LiveWallpaperEngineWebRender.exe");
             if (!File.Exists(playerPath))

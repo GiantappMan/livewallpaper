@@ -45,19 +45,21 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                     break;
 
                 var host = LiveWallpaperRenderForm.GetHost(screenItem);
+                if (host == null)
+                    continue;
 
                 //显示控件
-                _contrls.TryGetValue(screenItem, out MpvControl control);
+                _contrls.TryGetValue(screenItem, out MpvControl? control);
 
                 //设置参数
-                var currentScreenOption = WallpaperApi.Options.ScreenOptions.FirstOrDefault(e => e.Screen == screenItem);
-                control.Play(host.GetHandle(), wallpaper.RunningData.AbsolutePath, wallpaper.Option.HardwareDecoding, wallpaper.Option.IsPanScan);
+                //var currentScreenOption = WallpaperApi.Options.ScreenOptions.FirstOrDefault(e => e.Screen == screenItem);
+                control?.Play(host.GetHandle(), wallpaper.RunningData.AbsolutePath, wallpaper.Option.HardwareDecoding, wallpaper.Option.IsPanScan);
 
                 int volume = 0;
                 if (screenItem == WallpaperApi.Options.AudioScreen)
                     volume = 100;
 
-                control.SetVolume(volume);
+                control?.SetVolume(volume);
 
                 ////播放后再显示
                 //host.ShowWallpaper();
@@ -72,7 +74,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             return Task.FromResult(BaseApiResult<List<RenderInfo>>.SuccessState(infos));
         }
 
-        protected override Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel nextWallpaper)
+        protected override Task InnerCloseWallpaperAsync(List<RenderInfo> wallpaperRenders, WallpaperModel? nextWallpaper)
         {
             //还要继续播放视频壁纸，不用关闭
             if (nextWallpaper != null && nextWallpaper.RunningData.Type == WallpaperType.Video)
@@ -83,25 +85,31 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
             //关闭壁纸
             foreach (var item in wallpaperRenders)
             {
-                _contrls.TryGetValue(item.Screen, out MpvControl control);
-                control.Stop();
+                if (item.Screen == null)
+                    continue;
+                _contrls.TryGetValue(item.Screen, out MpvControl? control);
+                control?.Stop();
             }
 
             return Task.CompletedTask;
         }
         protected override void InnerPause(RenderInfo renderInfo)
         {
-            _contrls.TryGetValue(renderInfo.Screen, out MpvControl control);
+            if (renderInfo.Screen == null)
+                return;
+            _contrls.TryGetValue(renderInfo.Screen, out MpvControl? control);
             control?.Pause();
         }
         protected override void InnerResum(RenderInfo renderInfo)
         {
-            _contrls.TryGetValue(renderInfo.Screen, out MpvControl control);
+            if (renderInfo.Screen == null)
+                return;
+            _contrls.TryGetValue(renderInfo.Screen, out MpvControl? control);
             control?.Resum();
         }
         public override void SetVolume(int v, string screen)
         {
-            _contrls.TryGetValue(screen, out MpvControl control);
+            _contrls.TryGetValue(screen, out MpvControl? control);
             control?.SetVolume(v);
         }
     }

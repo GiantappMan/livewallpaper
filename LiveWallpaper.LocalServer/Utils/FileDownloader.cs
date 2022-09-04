@@ -21,17 +21,17 @@ namespace LiveWallpaper.LocalServer.Utils
             public float Completed { get; set; }
             public float Total { get; set; }
             public ActionType Type { get; set; }
-            public string TypeStr { get; set; }
+            public string? TypeStr { get; set; }
             public int Percent { get; set; }
             public bool Successed { get; set; }
         }
 
         readonly RaiseLimiter _raiseLimiter = new();
-        private CancellationTokenSource _cts = new();
+        private CancellationTokenSource? _cts = new();
 
-        public event EventHandler<ProgressArgs> ProgressEvent;
+        public event EventHandler<ProgressArgs>? ProgressEvent;
         public bool IsBusy { get; private set; }
-        public string DistDir { get; internal set; }
+        public string? DistDir { get; internal set; }
 
         /// <summary>
         /// 下载并解压
@@ -92,6 +92,8 @@ namespace LiveWallpaper.LocalServer.Utils
         }
         public async Task InnerSetupFile(string url, CancellationTokenSource cts)
         {
+            if (DistDir == null)
+                return;
             var progressInfo = new Progress<(float competed, float total)>((e) => RaiseCallback(new ProgressArgs()
             {
                 Total = e.total,

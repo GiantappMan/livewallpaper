@@ -158,7 +158,7 @@ namespace LiveWallpaper.Shell.Views
 
         internal async Task SetupWebview(WebView2 webview2)
         {
-            if (_browserInit)
+            if (_browserInit || AppManager.EntryVersion == null)
                 return;
             try
             {
@@ -290,8 +290,11 @@ namespace LiveWallpaper.Shell.Views
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            AppManager.UserSetting.General.WindowWidth = Width.ToString();
-            AppManager.UserSetting.General.WindowHeight = Height.ToString();
+            if (AppManager.UserSetting != null)
+            {
+                AppManager.UserSetting.General.WindowWidth = Width.ToString();
+                AppManager.UserSetting.General.WindowHeight = Height.ToString();
+            }
             _needSaveUserSetting = true;
         }
 
@@ -299,7 +302,8 @@ namespace LiveWallpaper.Shell.Views
         {
             if (WindowState == WindowState.Minimized)
                 return;
-            AppManager.UserSetting.General.WindowState = this.WindowState.ToString();
+            if (AppManager.UserSetting != null)
+                AppManager.UserSetting.General.WindowState = this.WindowState.ToString();
             _needSaveUserSetting = true;
         }
     }

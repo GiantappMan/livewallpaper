@@ -7,7 +7,7 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
 {
     public partial class MpvControl
     {
-        private Mpv.NET.Player.MpvPlayer _player;
+        private Mpv.NET.Player.MpvPlayer? _player;
         private int _volume;
 
         public MpvControl()
@@ -15,12 +15,12 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
         }
 
 
-        public void Play(IntPtr renderHandle, string path, bool hwdec = true, bool panscan = true)
+        public void Play(IntPtr renderHandle, string? path, bool hwdec = true, bool panscan = true)
         {
             if (_player == null)
             {
-                var assembly = Assembly.GetEntryAssembly();
-                string appDir = System.IO.Path.GetDirectoryName(assembly.Location);
+                var assembly = Assembly.GetEntryAssembly()!;
+                string appDir = System.IO.Path.GetDirectoryName(assembly.Location)!;
                 string dllPath = $@"{appDir}\lib\mpv-2.dll";
                 //if (IntPtr.Size == 4)
                 //{
@@ -52,11 +52,11 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
             if (panscan)
             {
                 //防止视频黑边
-                _player.API.SetPropertyString("panscan", "1.0");
+                _player?.API.SetPropertyString("panscan", "1.0");
             }
             else
             {
-                _player.API.SetPropertyString("panscan", "0.0");
+                _player?.API.SetPropertyString("panscan", "0.0");
             }
 
             if (hwdec)
@@ -71,7 +71,8 @@ namespace Giantapp.LiveWallpaper.Engine.VideoRenders
             }
             //允许休眠
             _player?.API.SetPropertyString("stop-screensaver", "no");
-            _player.Volume = _volume;
+            if (_player != null)
+                _player.Volume = _volume;
 
             _player?.Pause();
             _player?.Load(path);

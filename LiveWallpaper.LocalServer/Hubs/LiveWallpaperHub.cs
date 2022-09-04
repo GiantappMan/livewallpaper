@@ -31,7 +31,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public string GetClientVersion()
         {
-            var version = Assembly.GetEntryAssembly().GetName().Version;
+            var version = Assembly.GetEntryAssembly()!.GetName().Version!;
             return version.ToString();
         }
         public async Task<BaseApiResult<List<WallpaperModel>>> GetWallpapers()
@@ -53,7 +53,7 @@ namespace LiveWallpaper.LocalServer.Hubs
             try
             {
                 //只能使用工具目录下的ffmpeg，有些用户全局变量有，但是会报错
-                string ffmpegDir = GetUwpRealPath(AppManager.FFmpegSaveDir);
+                string? ffmpegDir = GetUwpRealPath(AppManager.FFmpegSaveDir);
 
                 //本地调试又没有映射路径
                 if (Directory.Exists(AppManager.FFmpegSaveDir))
@@ -103,21 +103,20 @@ namespace LiveWallpaper.LocalServer.Hubs
             await AppManager.SaveCurrentWalpapers();
             return model;
         }
-        public Dictionary<string, WallpaperModel> GetRunningWallpapers()
+        public Dictionary<string, WallpaperModel?> GetRunningWallpapers()
         {
             return WallpaperApi.CurrentWalpapers;
         }
         public Task<BaseApiResult> CloseWallpaper(string[] screen)
         {
-            if (screen == null)
-                screen = WallpaperApi.Screens;
+            screen ??= WallpaperApi.Screens;
             return WallpaperApi.CloseWallpaper(screen);
         }
         public async Task<BaseApiResult> ExploreFile(string path)
         {
             try
             {
-                string tmpPath = GetUwpRealPath(path);
+                string? tmpPath = GetUwpRealPath(path);
 
                 //uwp映射路径不存在，真实路径却存在
                 if (!File.Exists(tmpPath) && !Directory.Exists(tmpPath) &&
@@ -132,10 +131,12 @@ namespace LiveWallpaper.LocalServer.Hubs
             }
             return BaseApiResult.SuccessState();
         }
-        private static string GetUwpRealPath(string path)
+        private static string? GetUwpRealPath(string? path)
         {
             try
             {
+                if (path == null)
+                    return null;
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
                 //uwp 真实存储路径不一样
@@ -225,7 +226,10 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public async Task<BaseApiResult<string>> GetDraftDir()
         {
-            string lastDraftPath = AppManager.RunningData.LastDraftPath;
+            if (AppManager.RunningData == null)
+                return BaseApiResult<string>.ErrorState(ErrorType.Uninitialized);
+
+            string? lastDraftPath = AppManager.RunningData.LastDraftPath;
             if (!string.IsNullOrEmpty(lastDraftPath))
             {
                 string projectPath = Path.Combine(lastDraftPath, "project.json");
@@ -253,16 +257,18 @@ namespace LiveWallpaper.LocalServer.Hubs
                 }
             }
 
-            var r = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+            var r = WallpaperApi.GetDraftDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir);
             AppManager.RunningData.LastDraftPath = r;
             await AppManager.SaveRunningData(AppManager.RunningData);
 
             return BaseApiResult<string>.SuccessState(r);
         }
-        public async Task<BaseApiResult> UpdateProjectInfo(string destDir, WallpaperProjectInfo info)
+        public async Task<BaseApiResult> UpdateProjectInfo(string destDir, WallpaperProjectInfo? info)
         {
             try
             {
+                if (info == null)
+                    return BaseApiResult.ErrorState(ErrorType.Failed);
                 await WallpaperApi.UpdateProjectInfo(destDir, info);
                 return BaseApiResult.SuccessState();
             }
@@ -298,16 +304,16 @@ namespace LiveWallpaper.LocalServer.Hubs
         //删除整个壁纸目录
         public async Task<BaseApiResult> DeleteWallpaper(string path)
         {
-            string dir = Path.GetDirectoryName(path);
+            string? dir = Path.GetDirectoryName(path);
             //不能删除非壁纸目录的文件
-            if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+            if (AppManager.UserSetting != null && dir != null && !dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
                 return BaseApiResult.ErrorState(ErrorType.Failed);
             return await WallpaperApi.DeleteWallpaper(path);
         }
         //删除特定文件
         public async Task<BaseApiResult> DeleteFiles(List<string> paths)
         {
-            Exception ex = null;
+            Exception? ex = null;
             foreach (var path in paths)
             {
                 if (string.IsNullOrEmpty(path))
@@ -315,9 +321,9 @@ namespace LiveWallpaper.LocalServer.Hubs
 
                 try
                 {
-                    string dir = Path.GetDirectoryName(path);
+                    string? dir = Path.GetDirectoryName(path);
                     //不能删除非壁纸目录的文件
-                    if (!dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                    if (AppManager.UserSetting != null && dir != null && !dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
                         continue;
 
                     await Task.Run(() =>
@@ -387,7 +393,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
 
         //下载壁纸
-        public Task<BaseApiResult> DownloadWallpaperToGroup(string wallpaper, string cover, WallpaperProjectInfo info, string groupDir)
+        public Task<BaseApiResult> DownloadWallpaperToGroup(string wallpaper, string cover, WallpaperProjectInfo info, string? groupDir)
         {
             try
             {
@@ -397,15 +403,20 @@ namespace LiveWallpaper.LocalServer.Hubs
                 if (_downloadingWallpapers.ContainsKey(wallpaper))
                     return Task.FromResult(BaseApiResult.BusyState());
 
-                string destFolder = null;
+                string? destFolder = null;
 
-                if (info != null && info.ID != null)
-                    destFolder = Path.Combine(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, info.ID);
-                else
-                    destFolder = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+                if (AppManager.UserSetting != null)
+                {
+                    if (info != null && info.ID != null)
+                        destFolder = Path.Combine(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, info.ID);
+                    else
+                        destFolder = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+                }
 
-                if (info == null)
-                    info = new WallpaperProjectInfo();
+                if (destFolder == null)
+                    return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Exception));
+
+                info ??= new WallpaperProjectInfo();
 
                 CancellationTokenSource cts = new();
                 _downloadingWallpapers[wallpaper] = cts;
@@ -494,10 +505,10 @@ namespace LiveWallpaper.LocalServer.Hubs
                          {
                              var wallpaper = await GetWallpaper(destFolder);
                              var group = await GetWallpaper(groupDir);
-                             if (group != null)
+                             if (group != null && wallpaper != null)
                              {
-                                 group.Data.Info.GroupItems.Insert(0, new GroupItemProjectInfo(wallpaper.Data.Info));
-                                 await UpdateProjectInfo(groupDir, group.Data.Info);
+                                 group.Data?.Info.GroupItems?.Insert(0, new GroupItemProjectInfo(wallpaper.Data?.Info));
+                                 await UpdateProjectInfo(groupDir, group.Data?.Info);
                              }
                          }
                      }
@@ -528,7 +539,7 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         #region private
 
-        private async void FileDownloader_SetupFFmpegPrgoressEvent(object sender, FileDownloader.ProgressArgs e)
+        private async void FileDownloader_SetupFFmpegPrgoressEvent(object? sender, FileDownloader.ProgressArgs e)
         {
             var client = _hubEventEmitter.AllClient();
 
@@ -539,7 +550,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                 AppManager.FFMpegDownloader.ProgressEvent -= FileDownloader_SetupFFmpegPrgoressEvent;
             }
         }
-        private async void PlayerDownloader_ProgressEvent(object sender, ProgressArgs e)
+        private async void PlayerDownloader_ProgressEvent(object? sender, ProgressArgs e)
         {
             var client = _hubEventEmitter.AllClient();
 
@@ -550,15 +561,18 @@ namespace LiveWallpaper.LocalServer.Hubs
                 AppManager.PlayerDownloader.ProgressEvent -= PlayerDownloader_ProgressEvent;
             }
         }
-        private static bool HasReadPermission(string dir)
+        private static bool HasReadPermission(string? dir)
         {
+            if (dir == null)
+                return false;
             if (!dir.EndsWith("\\"))
                 dir += "\\";
 
             List<string> allowDirs = new();
             var tmpDir = Path.GetTempPath();
             allowDirs.Add(tmpDir);
-            allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+            if (AppManager.UserSetting != null)
+                allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
 
             foreach (var item in allowDirs)
             {
@@ -568,16 +582,18 @@ namespace LiveWallpaper.LocalServer.Hubs
 
             return false;
         }
-        private static bool HasWritePermission(string dir)
+        private static bool HasWritePermission(string? dir)
         {
+            if (dir == null)
+                return false;
+
             if (!dir.EndsWith("\\"))
                 dir += "\\";
 
             //不能删除非壁纸目录的文件
-            List<string> allowDirs = new()
-            {
-                AppManager.UserSetting.Wallpaper.WallpaperSaveDir
-            };
+            List<string> allowDirs = new();
+            if (AppManager.UserSetting != null)
+                allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
 
             foreach (var item in allowDirs)
                 if (dir.StartsWith(item))

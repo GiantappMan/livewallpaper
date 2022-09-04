@@ -23,10 +23,10 @@ namespace Giantapp.LiveWallpaper.Engine
         /// 所有动作完成
         /// </summary>
         public bool AllCompleted { get; set; }
-        public BaseApiResult Result { get; set; }
-        public string Error { get; set; }
+        public BaseApiResult? Result { get; set; }
+        public string? Error { get; set; }
         public float ProgressPercentage { get; set; }
-        public string Path { get; set; }
+        public string? Path { get; set; }
     }
     //包含所有的错误类型
     public enum ErrorType
@@ -45,7 +45,7 @@ namespace Giantapp.LiveWallpaper.Engine
     }
     public class BaseApiResult<T> : BaseApiResult
     {
-        public T Data { get; set; }
+        public T? Data { get; set; }
         public static new BaseApiResult<T> BusyState()
         {
             return ErrorState(ErrorType.Busy);
@@ -54,11 +54,11 @@ namespace Giantapp.LiveWallpaper.Engine
         {
             return ErrorState(ErrorType.Exception, ex.Message);
         }
-        public static BaseApiResult<T> ErrorState(ErrorType type, string msg = null, T data = default)
+        public static BaseApiResult<T> ErrorState(ErrorType type, string? msg = null, T? data = default)
         {
             return new BaseApiResult<T>() { Ok = false, Error = type, Message = msg ?? type.ToString(), Data = data };
         }
-        public static BaseApiResult<T> SuccessState(T data = default)
+        public static BaseApiResult<T> SuccessState(T? data = default)
         {
             return new BaseApiResult<T>() { Ok = true, Data = data };
         }
@@ -75,7 +75,7 @@ namespace Giantapp.LiveWallpaper.Engine
                 return r;
             }
         }
-        public string Message { get; set; }
+        public string? Message { get; set; }
         public static BaseApiResult BusyState()
         {
             return ErrorState(ErrorType.Busy);
@@ -84,7 +84,7 @@ namespace Giantapp.LiveWallpaper.Engine
         {
             return ErrorState(ErrorType.Exception, ex.Message);
         }
-        public static BaseApiResult ErrorState(ErrorType type, string msg = null)
+        public static BaseApiResult ErrorState(ErrorType type, string? msg = null)
         {
             return new BaseApiResult() { Ok = false, Error = type, Message = msg ?? type.ToString() };
         }
@@ -95,8 +95,8 @@ namespace Giantapp.LiveWallpaper.Engine
     }
     public class RenderProcess
     {
-        public IntPtr HostHandle { get; set; }
-        public IntPtr ReceiveMouseEventHandle { get; set; }
+        public IntPtr HostHandle { get; set; } = IntPtr.Zero;
+        public IntPtr ReceiveMouseEventHandle { get; set; } = IntPtr.Zero;
         public int PId { get; set; }
     }
     public class RenderInfo : RenderProcess
@@ -111,8 +111,8 @@ namespace Giantapp.LiveWallpaper.Engine
             ReceiveMouseEventHandle = p.ReceiveMouseEventHandle;
             PId = p.PId;
         }
-        public WallpaperModel Wallpaper { get; set; }
-        public string Screen { get; set; }
+        public WallpaperModel? Wallpaper { get; set; }
+        public string? Screen { get; set; }
         public bool IsPaused { get; set; }
     }
     public enum WallpaperType
@@ -168,7 +168,7 @@ namespace Giantapp.LiveWallpaper.Engine
             }
         }
 
-        public string SwitchingIntervalString { get; set; }
+        public string? SwitchingIntervalString { get; set; }
         /// <summary>
         /// 最后播放的壁纸索引
         /// </summary>
@@ -195,7 +195,7 @@ namespace Giantapp.LiveWallpaper.Engine
             var r = lhs?.EnableMouseEvent == rhs?.EnableMouseEvent
                 && lhs?.HardwareDecoding == rhs?.HardwareDecoding
                 && lhs?.SwitchingIntervalString == rhs?.SwitchingIntervalString
-                && lhs?.IsPanScan == rhs.IsPanScan;
+                && lhs?.IsPanScan == rhs?.IsPanScan;
 
             return r;
         }
@@ -211,20 +211,20 @@ namespace Giantapp.LiveWallpaper.Engine
         /// <summary>
         /// 壁纸所在文件夹
         /// </summary>
-        public string Dir { get; set; }
+        public string? Dir { get; set; }
         public bool IsPaused { get; set; }
         public PausedReason PausedReason { get; set; }
         public bool IsStopedTemporary { get; set; }
-        public string AbsolutePath { get; set; }
+        public string? AbsolutePath { get; set; }
         private WallpaperType? _type;
-        public string TypeString { get; private set; }
+        public string? TypeString { get; private set; }
         public WallpaperType? Type
         {
             get => _type;
             set
             {
                 _type = value;
-                TypeString = value.ToString();
+                TypeString = value?.ToString();
             }
         }
     }
@@ -239,35 +239,35 @@ namespace Giantapp.LiveWallpaper.Engine
     {
         public GroupItemProjectInfo()
         {
-            
+
         }
-        public GroupItemProjectInfo(WallpaperProjectInfo info)
+        public GroupItemProjectInfo(WallpaperProjectInfo? info)
         {
-            ID = info.ID;
-            LocalID = info.LocalID;
+            ID = info?.ID;
+            LocalID = info?.LocalID;
         }
 
-        public string ID { get; set; }
-        public string LocalID { get; set; }
+        public string? ID { get; set; }
+        public string? LocalID { get; set; }
     }
 
     public class WallpaperProjectInfo
     {
 
-        public List<GroupItemProjectInfo> GroupItems { get; set; }
-        public string ID { get; set; }
-        public string LocalID { get; set; }
-        public string Description { get; set; }
-        public string Title { get; set; }
-        public string File { get; set; }
-        public string Preview { get; set; }
+        public List<GroupItemProjectInfo>? GroupItems { get; set; }
+        public string? ID { get; set; }
+        public string? LocalID { get; set; }
+        public string? Description { get; set; }
+        public string? Title { get; set; }
+        public string? File { get; set; }
+        public string? Preview { get; set; }
         /// <summary>
         /// group，分组
         /// null，壁纸
         /// </summary>
-        public string Type { get; set; }
-        public string Visibility { get; set; }
-        public List<string> Tags { get; set; }
+        public string? Type { get; set; }
+        public string? Visibility { get; set; }
+        public List<string>? Tags { get; set; }
     }
     public class WallpaperModel : ICloneable
     {

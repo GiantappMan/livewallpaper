@@ -21,7 +21,7 @@ namespace LiveWallpaperEngineRender
 
     public class RenderProtocol
     {
-        private object _payload;
+        private object? _payload;
 
         public RenderProtocol()
         {
@@ -34,14 +34,14 @@ namespace LiveWallpaperEngineRender
         }
 
         public ProtocolDefinition Command { get; set; }
-        public string PayloadJson { get; set; }
+        public string? PayloadJson { get; set; }
         public void SetPayLoad<T>(T obj) where T : class
         {
             PayloadJson = JsonSerializer.Serialize(obj);
             _payload = obj;
         }
 
-        public T GetPayLoad<T>() where T : class
+        public T? GetPayLoad<T>() where T : class
         {
             if (_payload == null && !string.IsNullOrEmpty(PayloadJson))
             {
@@ -69,17 +69,17 @@ namespace LiveWallpaperEngineRender
 
     public class PlayVideoPayload
     {
-        public string FilePath { get; set; }
+        public string? FilePath { get; set; }
         public bool HardwareDecoding { get; set; } = true;
-        public ScreenInfo[] Screen { get; set; }
+        public ScreenInfo[]? Screen { get; set; }
         /// <summary>
         /// 播放屏幕声音，只能播放一个，null都不播放
         /// </summary>
-        public string AudioScreen { get; set; }
+        public string? AudioScreen { get; set; }
     }
     public class SetAudioPayload
     {
-        public string AudioScreen { get; set; }
+        public string? AudioScreen { get; set; }
         /// <summary>
         /// 音量 0-100
         /// </summary>
@@ -88,16 +88,16 @@ namespace LiveWallpaperEngineRender
 
     public class StopVideoPayload
     {
-        public string[] Screen { get; set; }
+        public string[]? Screen { get; set; }
     }
 
     public class PauseVideoPayload
     {
-        public string[] Screen { get; set; }
+        public string[]? Screen { get; set; }
     }
 
     public class ResumeVideoPayload
     {
-        public string[] Screen { get; set; }
+        public string[]? Screen { get; set; }
     }
 }

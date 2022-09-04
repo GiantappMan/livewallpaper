@@ -85,7 +85,7 @@ namespace LiveWallpaper.Shell
         }
         public static App Instance => (App)Current;
         public IServiceProvider? Services { get; private set; }
-        public Action<string> SDkLog { get; private set; }
+        public Action<string>? SDkLog { get; private set; }
 
         /// <summary>
         /// Configures the services for the application.

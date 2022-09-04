@@ -19,32 +19,31 @@ namespace LiveWallpaper
 
         }
 
-        private static LanService _instance;
+        private static LanService? _instance;
         public static LanService Instance
         {
             get
             {
-                if (_instance == null)
-                    _instance = new LanService();
+                _instance ??= new LanService();
                 return _instance;
             }
         }
 
         private readonly ConcurrentDictionary<string, dynamic> dataDict = new();
 
-        public Task<string> GetTextAsync(string key, string culture)
+        public Task<string?> GetTextAsync(string key, string culture)
         {
             return Task.Run(() =>
             {
                 return GetText(key, culture);
             });
         }
-        public string GetText(string key, string culture)
+        public string? GetText(string key, string culture)
         {
             if (!dataDict.ContainsKey(culture))
             {
                 //怀疑用Environment.CurrentDirectory开机启动时目录会出错，待验证
-                string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
                 string lanDir = Path.Combine(appDir, "Assets\\livewallpaper_i18n");
 
                 var files = Directory.GetFiles(lanDir, $"{culture}.json");

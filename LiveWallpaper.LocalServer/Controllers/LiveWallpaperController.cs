@@ -12,8 +12,8 @@ namespace LiveWallpaper.LocalServer.Controllers
     {
         public IActionResult Version()
         {
-            var version = Assembly.GetEntryAssembly().GetName().Version;
-            return Content(version.ToString());
+            var version = Assembly.GetEntryAssembly()?.GetName().Version;
+            return Content(version?.ToString() ?? string.Empty);
         }
 
         [RequestSizeLimit(long.MaxValue)]
@@ -26,7 +26,7 @@ namespace LiveWallpaper.LocalServer.Controllers
 
             //string dir = Path.GetDirectoryName(distDir);
             //不能操作非壁纸目录
-            if (!distDir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+            if (AppManager.UserSetting != null && !distDir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
                 return BaseApiResult<string>.ErrorState(ErrorType.Failed);
 
             try

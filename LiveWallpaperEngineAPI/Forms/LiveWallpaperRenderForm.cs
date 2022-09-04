@@ -40,6 +40,10 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
                     _cacheHandle = Handle;
                 });
             }
+
+            if (_cacheHandle == null)
+                return IntPtr.Zero;
+
             return _cacheHandle.Value;
         }
 
@@ -69,7 +73,7 @@ namespace Giantapp.LiveWallpaper.Engine.Forms
             //WallpaperHelper.FullScreen(wallpaperHandle, hostForm);        
         }
 
-        public static LiveWallpaperRenderForm GetHost(string screen, bool autoCreate = true)
+        public static LiveWallpaperRenderForm? GetHost(string screen, bool autoCreate = true)
         {
             if (!_hosts.ContainsKey(screen))
             {

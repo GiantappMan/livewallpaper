@@ -23,7 +23,7 @@ namespace LiveWallpaper.LocalServer
         public static string CacheDir { get; private set; }
         public static string ConfigDir { get; private set; }
         public static string LogDir { get; private set; }
-        private static IStartupManager _startupManager = null;
+        private static IStartupManager? _startupManager = null;
 
         static AppManager()
         {
@@ -87,53 +87,49 @@ namespace LiveWallpaper.LocalServer
         }
 
         #region properties
-        public static string FFmpegSaveDir
+        public static string? FFmpegSaveDir
         {
             get
             {
+                if (UserSetting == null || UserSetting.General.ThirdpartToolsDir == null)
+                    return null;
                 string distDir = Path.Combine(UserSetting.General.ThirdpartToolsDir, "FFmpeg");
                 return distDir;
             }
         }
 
-        private static FileDownloader _FFMpegDownloader = null;
+        private static FileDownloader? _FFMpegDownloader = null;
         public static FileDownloader FFMpegDownloader
         {
             get
             {
-                if (_FFMpegDownloader == null)
+                _FFMpegDownloader ??= new FileDownloader
                 {
-                    _FFMpegDownloader = new FileDownloader
-                    {
-                        DistDir = FFmpegSaveDir
-                    };
-                }
+                    DistDir = FFmpegSaveDir
+                };
 
                 return _FFMpegDownloader;
             }
         }
 
-        private static FileDownloader _PlayerDownloader = null;
+        private static FileDownloader? _PlayerDownloader = null;
         public static FileDownloader PlayerDownloader
         {
             get
             {
-                if (_PlayerDownloader == null)
-                {
-                    _PlayerDownloader = new FileDownloader();
-                }
+                _PlayerDownloader ??= new FileDownloader();
 
                 return _PlayerDownloader;
             }
         }
 
         public const string AppName = "LiveWallpaper";
-        public static string AppDataDir { get; private set; }
-        public static RunningData RunningData { get; private set; }
-        public static UserSetting UserSetting { get; private set; }
+        public static string? AppDataDir { get; private set; }
+        public static RunningData? RunningData { get; private set; }
+        public static UserSetting? UserSetting { get; private set; }
         public static bool Initialized { get; private set; }
-        public static string EntryVersion { get; private set; }
-        public static event EventHandler CultureChanged;
+        public static string? EntryVersion { get; private set; }
+        public static event EventHandler? CultureChanged;
         #endregion
 
         public static async Task<bool> OpenStoreReview()
@@ -161,21 +157,17 @@ namespace LiveWallpaper.LocalServer
             {
                 //应用程序数据
                 RunningData = await JsonHelper.JsonDeserializeFromFileAsync<RunningData>(RunningDataFilePath);
-                if (RunningData == null)
-                {
-                    //生成默认运行数据
-                    RunningData = new RunningData();
-                }
+                RunningData ??= new RunningData();
                 //更新端口号
                 RunningData.HostPort = hostPort;
-                EntryVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
+                EntryVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
 
                 if (RunningData.CurrentVersion == null)
                 {
                     _ = ShowGuidToastAsync();//第一次启动
                 }
 
-                if (RunningData.CurrentVersion != EntryVersion)
+                if (RunningData.CurrentVersion != EntryVersion && EntryVersion != null)
                 {
                     RunningData.CurrentVersion = EntryVersion;
                     RunningData.CurrentVersionLaunchedCount = 0;
@@ -202,26 +194,23 @@ namespace LiveWallpaper.LocalServer
                     _startupManager = new DesktopBridgeStartupManager("LiveWallpaper2");
                 else
                 {
-                    string path = Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe");
+                    string path = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
                     _startupManager = new DesktopStartupHelper(AppName, path);
                 }
 
                 await ApplySetting(UserSetting);
 
-                if (RunningData.CurrentWalpapers != null)
+                foreach (var item in RunningData.CurrentWalpapers)
                 {
-                    foreach (var item in RunningData.CurrentWalpapers)
+                    string screen = item.Key;
+                    if (item.Value != null && item.Value.RunningData != null && item.Value.RunningData.Dir != null)
                     {
-                        string screen = item.Key;
-                        if (item.Value != null && item.Value.RunningData != null && item.Value.RunningData.Dir != null)
-                        {
-                            //重新读取模型，有可能保存的是脏数据
-                            var wallpaper = await WallpaperApi.CreateWallpaperModelFromDir(item.Value.RunningData.Dir, true);
-                            if (wallpaper == null)
-                                continue;
-                            var r = await WallpaperApi.ShowWallpaper(wallpaper, screen);
-                            System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
-                        }
+                        //重新读取模型，有可能保存的是脏数据
+                        var wallpaper = await WallpaperApi.CreateWallpaperModelFromDir(item.Value.RunningData.Dir, true);
+                        if (wallpaper == null)
+                            continue;
+                        var r = await WallpaperApi.ShowWallpaper(wallpaper, screen);
+                        System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
                     }
                 }
             }
@@ -237,7 +226,7 @@ namespace LiveWallpaper.LocalServer
 
         public static async Task ShowGuidToastAsync()
         {
-            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
             string imgPath = Path.Combine(appDir, "Assets\\guide.gif");
             new ToastContentBuilder()
              .AddText(await GetText("clientStarted"))
@@ -288,12 +277,14 @@ namespace LiveWallpaper.LocalServer
             ToastNotificationManagerCompat.CreateToastNotifier().Show(toastNotif);
         }
 
-        public static async Task<string> GetText(string key)
+        public static async Task<string?> GetText(string key)
         {
             if (UserSetting == null)
             {
                 await LoadUserSetting();
             }
+            if (UserSetting == null)
+                return string.Empty;
             string culture = UserSetting.General.CurrentLan ?? Thread.CurrentThread.CurrentCulture.Name;
             var r = await LanService.Instance.GetTextAsync(key, culture);
             return r;
@@ -309,25 +300,30 @@ namespace LiveWallpaper.LocalServer
         public static async Task LoadUserSetting()
         {
             UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(UserSettingFilePath);
-            if (UserSetting == null)
-                UserSetting = new UserSetting();
+            UserSetting ??= new UserSetting();
             UserSetting.Wallpaper.FixScreenOptions();
         }
 
         internal static async Task SaveCurrentWalpapers()
         {
-            RunningData.CurrentWalpapers = WallpaperApi.CurrentWalpapers;
-            await SaveRunningData(RunningData);
+            if (RunningData != null)
+            {
+                RunningData.CurrentWalpapers = WallpaperApi.CurrentWalpapers;
+                await SaveRunningData(RunningData);
+            }
         }
 
-        public static async Task<BaseApiResult> SaveUserSetting(UserSetting setting)
+        public static async Task<BaseApiResult> SaveUserSetting(UserSetting? setting)
         {
             try
             {
+                if (UserSetting == null)
+                    return BaseApiResult.ErrorState(ErrorType.Uninitialized);
+
                 await JsonHelper.JsonSerializeAsync(setting, UserSettingFilePath);
 
                 bool lanChanged = false;
-                if (UserSetting.General.CurrentLan != setting.General.CurrentLan)
+                if (UserSetting.General.CurrentLan != setting?.General.CurrentLan)
                     lanChanged = true;
 
                 //更新内存对象
@@ -335,7 +331,7 @@ namespace LiveWallpaper.LocalServer
 
                 //多语言变化
                 if (lanChanged)
-                    CultureChanged?.Invoke(null, null);
+                    CultureChanged?.Invoke(null, new EventArgs());
 
                 var result = await ApplySetting(UserSetting);
                 return result;
@@ -343,7 +339,7 @@ namespace LiveWallpaper.LocalServer
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex);
-                return null;
+                return BaseApiResult.ExceptionState(ex);
             }
         }
 
@@ -364,23 +360,24 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
-        private static async Task<BaseApiResult> ApplySetting(UserSetting setting)
+        private static async Task<BaseApiResult> ApplySetting(UserSetting? setting)
         {
+            if (setting == null)
+                return BaseApiResult.ErrorState(ErrorType.Failed);
             //设置开机启动
-            _ = await _startupManager.Set(setting.General.StartWithSystem);
+            if (_startupManager != null)
+                _ = await _startupManager.Set(setting.General.StartWithSystem);
             // 更新开机启动结果
-            if (setting?.General?.StartWithSystem != null)
+            if (setting.General?.StartWithSystem != null && _startupManager != null)
                 setting.General.StartWithSystem = await _startupManager.Check();
 
-            string ffmpegSaveDir = FFmpegSaveDir;
+            string? ffmpegSaveDir = FFmpegSaveDir;
             if (_FFMpegDownloader != null)
-            {
                 _FFMpegDownloader.DistDir = ffmpegSaveDir;
-            }
 
             ProcessHelper.AddPathToEnvoirment(ffmpegSaveDir);
 
-            WallpaperApi.WallpaperDir = UserSetting.Wallpaper.WallpaperSaveDir;
+            WallpaperApi.WallpaperDir = UserSetting?.Wallpaper.WallpaperSaveDir;
 
             //设置壁纸参数
             var r = await WallpaperApi.SetOptions(setting.Wallpaper);

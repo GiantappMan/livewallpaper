@@ -32,7 +32,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         }
         private static readonly List<TargetWindow> _targetWindows = new();
         private static readonly EventHookFactory eventHookFactory = new();
-        private static MouseWatcher mouseWatcher;
+        private static MouseWatcher? mouseWatcher;
         private static bool started = false;
         private static DateTime _nextSendTime;
 

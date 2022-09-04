@@ -22,12 +22,12 @@ namespace Giantapp.LiveWallpaper.Engine
         /// <summary>
         /// 所影响的屏幕
         /// </summary>
-        public string Screen { get; set; }
+        public string? Screen { get; set; }
 
         /// <summary>
         /// 备注
         /// </summary>
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
 
         ///// <summary>
         ///// 铺满没有黑边
@@ -39,7 +39,7 @@ namespace Giantapp.LiveWallpaper.Engine
     /// </summary>
     public class LiveWallpaperOptions
     {
-        private readonly string _defaultExternalPlayerFolder;
+        private readonly string? _defaultExternalPlayerFolder;
         public LiveWallpaperOptions()
         {
 
@@ -56,11 +56,11 @@ namespace Giantapp.LiveWallpaper.Engine
         /// <summary>
         /// 屏幕参数
         /// </summary>
-        public List<ScreenOption> ScreenOptions { get; set; }
+        public List<ScreenOption> ScreenOptions { get; set; } = new();
         /// <summary>
         /// 壁纸音源来源哪块屏幕， 非屏幕值表示禁用
         /// </summary>
-        public string AudioScreen { get; set; }
+        public string? AudioScreen { get; set; }
         /// <summary>
         /// 屏幕最大化是否影响所有屏幕
         /// </summary>
@@ -70,11 +70,11 @@ namespace Giantapp.LiveWallpaper.Engine
         /// </summary>
         public bool ForwardMouseEvent { get; set; } = true;
 
-        private string _externalPlayerFolder;
+        private string? _externalPlayerFolder;
         /// <summary>
         /// 视频播放器，浏览器等存储位置
         /// </summary>
-        public string ExternalPlayerFolder
+        public string? ExternalPlayerFolder
         {
             get
             {
@@ -86,7 +86,7 @@ namespace Giantapp.LiveWallpaper.Engine
 
                     //默认位置
                     var assembly = Assembly.GetEntryAssembly();
-                    string appDir = Path.GetDirectoryName(assembly.Location);
+                    string? appDir = Path.GetDirectoryName(assembly?.Location);
                     return $@"{appDir}\players\";
                 }
 

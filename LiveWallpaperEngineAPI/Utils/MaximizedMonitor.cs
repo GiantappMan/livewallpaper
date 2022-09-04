@@ -8,17 +8,17 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 {
     public class AppMaximizedEvent : EventArgs
     {
-        public List<Screen> MaximizedScreens { get; set; }
+        public List<Screen>? MaximizedScreens { get; set; }
     }
 
     public static class MaximizedMonitor
     {
-        static Process _cp;
+        static Process? _cp;
         static List<Screen> _maximizedScreens = new List<Screen>();
 
         public static List<Screen> MaximizedScreens { get => _maximizedScreens; }
 
-        public static event EventHandler<AppMaximizedEvent> AppMaximized;
+        public static event EventHandler<AppMaximizedEvent>? AppMaximized;
 
         public static void Check()
         {
