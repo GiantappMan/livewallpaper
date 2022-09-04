@@ -1,12 +1,6 @@
 /*!
-  * vue-router v3.5.3
-  * (c) 2021 Evan You
-  * @license MIT
-  */
-
-/*!
- * Vue.js v2.6.14
- * (c) 2014-2021 Evan You
+ * Vue.js v2.7.10
+ * (c) 2014-2022 Evan You
  * Released under the MIT License.
  */
 
@@ -20,14 +14,6 @@
 /*!
  * vuex v3.6.2
  * (c) 2021 Evan You
- * @license MIT
- */
-
-
-/**!
- * Sortable 1.10.2
- * @author	RubaXa   <trash@rubaxa.org>
- * @author	owenm    <owen23355@gmail.com>
  * @license MIT
  */
 
@@ -58,3 +44,11 @@
  */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+
+/**!
+ * Sortable 1.10.2
+ * @author	RubaXa   <trash@rubaxa.org>
+ * @author	owenm    <owen23355@gmail.com>
+ * @license MIT
+ */

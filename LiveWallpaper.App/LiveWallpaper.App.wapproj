@@ -112,7 +112,6 @@
     <Content Include="Images\Wide\Wide310x150Logo.scale-150.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-200.png" />
     <Content Include="Images\Wide\Wide310x150Logo.scale-400.png" />
-    <Content Include="Package.StoreAssociation.xml" />
     <PRIResource Include="Strings\zh-chs-Hans\Resources.resw" />
     <PRIResource Include="Strings\en\Resources.resw" />
   </ItemGroup>
