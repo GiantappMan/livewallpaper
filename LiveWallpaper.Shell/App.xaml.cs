@@ -55,6 +55,7 @@ namespace LiveWallpaper.Shell
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            WallpaperApi.Log = SDKLog;
             bool ok = CheckMutex();
             if (!ok)
             {
@@ -69,6 +70,11 @@ namespace LiveWallpaper.Shell
             //base.OnStartup(e);
         }
 
+        private void SDKLog(string log)
+        {
+            _logger.Log(LogLevel.Info, $"sdk log:{log}");
+        }
+
         #region properties
 
         #region IOC
@@ -79,6 +85,7 @@ namespace LiveWallpaper.Shell
         }
         public static App Instance => (App)Current;
         public IServiceProvider? Services { get; private set; }
+        public Action<string> SDkLog { get; private set; }
 
         /// <summary>
         /// Configures the services for the application.

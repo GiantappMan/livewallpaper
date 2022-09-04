@@ -4,7 +4,8 @@
 		<TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 		<UseWPF>true</UseWPF>
-		<Version>2.1.0</Version>
+	    <Nullable>enable</Nullable>
+	    <Version>2.1.0</Version>
 		<RootNamespace>Giantapp.LiveWallpaper.Engine</RootNamespace>
 		<Description>无界面 Windows 10 动态壁纸引擎API。支持视频，网页壁纸，EXE壁纸，图片壁纸 | Windows 10 Dynamic Wallpaper Engine API without UI.Support video, HTML, EXE, IMG wallpaper.</Description>
 		<PackageProjectUrl>https://github.com/giant-app/LiveWallpaperEngine</PackageProjectUrl>

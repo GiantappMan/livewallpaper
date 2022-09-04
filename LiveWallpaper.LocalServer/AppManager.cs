@@ -217,6 +217,8 @@ namespace LiveWallpaper.LocalServer
                         {
                             //重新读取模型，有可能保存的是脏数据
                             var wallpaper = await WallpaperApi.CreateWallpaperModelFromDir(item.Value.RunningData.Dir, true);
+                            if (wallpaper == null)
+                                continue;
                             var r = await WallpaperApi.ShowWallpaper(wallpaper, screen);
                             System.Diagnostics.Debug.WriteLine($"{r.Ok},{r.Error}");
                         }

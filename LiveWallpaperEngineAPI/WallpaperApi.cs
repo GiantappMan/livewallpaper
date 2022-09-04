@@ -40,7 +40,7 @@ namespace Giantapp.LiveWallpaper.Engine
         }
 
         #region property
-
+        public static Action<string> Log { get; set; }
         public static string[] Screens { get; private set; }
         public static LiveWallpaperOptions Options { get; private set; } = new LiveWallpaperOptions();
 
@@ -982,16 +982,23 @@ namespace Giantapp.LiveWallpaper.Engine
 
         private static void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
         {
-            Debug.WriteLine(e.Reason);
-            switch (e.Reason)
+            try
             {
-                case SessionSwitchReason.SessionUnlock:
-                    var screensPausedBySessionLock = CurrentWalpapers.Where(m => m.Value.RunningData.IsPaused && m.Value.RunningData.PausedReason == PausedReason.SessionLock).Select(m => m.Key).ToArray();
-                    Resume(screensPausedBySessionLock);
-                    break;
-                case SessionSwitchReason.SessionLock:
-                    Pause(PausedReason.SessionLock, Screens);
-                    break;
+                Debug.WriteLine(e.Reason);
+                switch (e.Reason)
+                {
+                    case SessionSwitchReason.SessionUnlock:
+                        var screensPausedBySessionLock = CurrentWalpapers.Where(m => m.Value.RunningData.IsPaused && m.Value.RunningData.PausedReason == PausedReason.SessionLock).Select(m => m.Key).ToArray();
+                        Resume(screensPausedBySessionLock);
+                        break;
+                    case SessionSwitchReason.SessionLock:
+                        Pause(PausedReason.SessionLock, Screens);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"SystemEvents_SessionSwitch ex:{ex.Message}");
             }
         }
 
