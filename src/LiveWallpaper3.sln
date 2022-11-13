@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper", "LiveWallpa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{4BF212B6-7B7A-49CA-B153-EC997C8320EB}"
 	ProjectSection(SolutionItems) = preProject
+		..\docs\DEV.md = ..\docs\DEV.md
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GiantappUI.Services;
+using LiveWallpaper.NotifyIcons;
+using LiveWallpaper.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace LiveWallpaper
@@ -15,7 +13,16 @@ namespace LiveWallpaper
     {
         public App()
         {
+            AppNotifyIcon notifyIcon = new();
+            notifyIcon.Init();
 
+            //基础服务初始化
+            var services = new ServiceCollection();
+            services.AddSingleton<AppService>();
+            IocService.Init(new InitServiceOption() { AppName = nameof(LiveWallpaper) }, services);
+
+            var appService = IocService.GetService<AppService>()!;
+            appService.Init();
         }
     }
 }

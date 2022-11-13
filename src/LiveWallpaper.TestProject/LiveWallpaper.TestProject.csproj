@@ -1,12 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net462</TargetFramework>
+    <!--<TargetFramework>net7.0</TargetFramework>-->
+    <!--<ImplicitUsings>enable</ImplicitUsings>-->
     <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
-
+    <LangVersion>11</LangVersion>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
@@ -20,5 +19,4 @@
   <ItemGroup>
     <ProjectReference Include="..\LiveWallpaper\LiveWallpaper.csproj" />
   </ItemGroup>
-
 </Project>
