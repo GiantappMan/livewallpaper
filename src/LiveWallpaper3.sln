@@ -10,7 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{4BF212B6-7
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GiantappUI", "GiantappUI\GiantappUI.csproj", "{39D47227-E051-45F2-96CD-8494E25FC5E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GiantappUI", "GiantappUI\GiantappUI.csproj", "{39D47227-E051-45F2-96CD-8494E25FC5E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveWallpaper.TestProject", "LiveWallpaper.TestProject\LiveWallpaper.TestProject.csproj", "{7C2BE68D-BBFC-4CF3-9B8A-3436B943CD49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GiantappUI.TestProject", "GiantappUI.TestProject\GiantappUI.TestProject.csproj", "{AB810350-F3DC-4B89-8213-1A2CB0BCF14B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +30,14 @@ Global
 		{39D47227-E051-45F2-96CD-8494E25FC5E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39D47227-E051-45F2-96CD-8494E25FC5E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39D47227-E051-45F2-96CD-8494E25FC5E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C2BE68D-BBFC-4CF3-9B8A-3436B943CD49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C2BE68D-BBFC-4CF3-9B8A-3436B943CD49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C2BE68D-BBFC-4CF3-9B8A-3436B943CD49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C2BE68D-BBFC-4CF3-9B8A-3436B943CD49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB810350-F3DC-4B89-8213-1A2CB0BCF14B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB810350-F3DC-4B89-8213-1A2CB0BCF14B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB810350-F3DC-4B89-8213-1A2CB0BCF14B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB810350-F3DC-4B89-8213-1A2CB0BCF14B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
