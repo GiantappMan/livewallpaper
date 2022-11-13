@@ -10,4 +10,8 @@
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GiantappUI\GiantappUI.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -8,4 +8,8 @@
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MultiLanguageForXAML" Version="2.2.0" />
+  </ItemGroup>
+
 </Project>
