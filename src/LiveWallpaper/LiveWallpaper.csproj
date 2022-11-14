@@ -8,11 +8,20 @@
     <UseWPF>true</UseWPF>
     <LangVersion>11</LangVersion>
     <Platforms>x64</Platforms>
+    <AssemblyName>LiveWallpaper3</AssemblyName>
+    <PackageLicenseFile>license</PackageLicenseFile>
+    <Authors>DaZiYuan</Authors>
+    <Company>Giantapp Studio</Company>
+    <Version>3.0.0.0</Version>
+    <PackageIcon>logo.png</PackageIcon>
+    <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\license" Link="license">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
@@ -30,7 +39,7 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup>   
     <None Update="Assets\README.md">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
