@@ -27,6 +27,10 @@
 
   <ItemGroup>
     <PackageReference Include="HandyControl" Version="3.3.0" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.2.138-beta">
+      <!--<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

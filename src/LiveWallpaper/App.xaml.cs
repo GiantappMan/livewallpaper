@@ -3,7 +3,6 @@ using LiveWallpaper.NotifyIcons;
 using LiveWallpaper.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
-
 namespace LiveWallpaper
 {
     /// <summary>
