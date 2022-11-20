@@ -80,10 +80,6 @@ namespace LiveWallpaper.NotifyIcons
         {
 
         }
-        private void RestNowMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void NotifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
         {
         }

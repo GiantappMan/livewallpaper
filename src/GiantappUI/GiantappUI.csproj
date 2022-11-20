@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1418.22" />
     <PackageReference Include="MultiLanguageForXAML" Version="2.2.0" />
     <PackageReference Include="NLog" Version="5.0.5" />
     <PackageReference Include="System.Text.Json" Version="7.0.0" />
