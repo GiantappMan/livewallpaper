@@ -19,11 +19,14 @@ namespace LiveWallpaper.NotifyIcons
         private readonly MenuItem _wallpaperCommunityMenuItem = new();
         private readonly MenuItem _settingsMenuItem = new();
         private readonly MenuItem _exitMenuItem = new();
+
         public ContextMenu? Menu { private set; get; }
 
         internal void Init()
         {
             _aboutMenuItem.Click += AboutMenuItem_Click;
+            _localWallpaperMenuItem.Click += LocalWallpaperMenuItem_Click;
+            _wallpaperCommunityMenuItem.Click += WallpaperCommunityMenuItem_Click;
             _settingsMenuItem.Click += SettingMenuItem_Click;
             _exitMenuItem.Command = ControlCommands.ShutdownApp;
 
@@ -52,6 +55,7 @@ namespace LiveWallpaper.NotifyIcons
             _notifyIcon.Init();
             UpdateNotifyIconText();
         }
+
         #region public
         internal void UpdateNotifyIconText(string? lan = null)
         {
@@ -71,18 +75,29 @@ namespace LiveWallpaper.NotifyIcons
         #endregion
 
         #region callback
-
-        private void SettingMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
 
         }
+        private void WallpaperCommunityMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindow.ShowUI(MainWindow.PageType.Community);
+        }
+
+        private void LocalWallpaperMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindow.ShowUI(MainWindow.PageType.Local);
+        }
+        private void SettingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindow.ShowUI(MainWindow.PageType.Setting);
+        }
+
         private void NotifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
         {
+            MainWindow.ShowUI(MainWindow.PageType.Local);
         }
+
 
         #endregion
     }
