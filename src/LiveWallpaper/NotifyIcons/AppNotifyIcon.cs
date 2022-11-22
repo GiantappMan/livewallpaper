@@ -2,6 +2,7 @@
 using HandyControl.Interactivity;
 using MultiLanguageForXAML;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -73,11 +74,25 @@ namespace LiveWallpaper.NotifyIcons
         }
 
         #endregion
-
+        #region private
+        private static void OpenBrowser(string? url)
+        {
+            try
+            {
+                if (url == null)
+                    return;
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.ToString());
+            }
+        }
+        #endregion
         #region callback
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
-
+            OpenBrowser("https://mscoder.cn");
         }
         private void WallpaperCommunityMenuItem_Click(object sender, RoutedEventArgs e)
         {
