@@ -39,7 +39,7 @@ namespace LiveWallpaper
             Uri domain = new("https://clientV3.livewallpaper.giantapp.cn/index.html");
 #if DEBUG
             //本地开发
-            //domain = new("http://localhost:3000/index.html");
+            domain = new("http://localhost:3000");
 #endif
             Uri source = new($"{domain}#/settings");
             _mainWindow.webview2.Source = source;
