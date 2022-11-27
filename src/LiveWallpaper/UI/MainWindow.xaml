@@ -2,6 +2,7 @@
     x:Class="LiveWallpaper.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
@@ -13,6 +14,8 @@
     Height="450"
     d:DataContext="{d:DesignInstance vm:WebView2ShellViewModel,
                                      IsDesignTimeCreatable=True}"
+    lan:Xaml.Key="app_name"
+    Style="{StaticResource GiantappWindow}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>
