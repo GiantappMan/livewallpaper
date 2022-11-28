@@ -15,6 +15,6 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.4",
     "@heroicons/vue": "^2.0.13",
-    "@pinia/nuxt": "^0.4.5"
+    "@pinia/nuxt": "^0.4.6"
   }
 }
