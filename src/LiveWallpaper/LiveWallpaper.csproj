@@ -18,6 +18,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Img\logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Img\logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\license" Link="license">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>True</Pack>
@@ -44,6 +52,9 @@
   </ItemGroup>
 
   <ItemGroup>   
+    <None Update="Assets\Img\logo.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>   
     <None Update="Assets\README.md">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

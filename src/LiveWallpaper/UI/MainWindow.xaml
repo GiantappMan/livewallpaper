@@ -15,6 +15,7 @@
     d:DataContext="{d:DesignInstance vm:WebView2ShellViewModel,
                                      IsDesignTimeCreatable=True}"
     lan:Xaml.Key="app_name"
+    Icon="pack://application:,,,/LiveWallpaper3;component/Assets/Img/logo.png"
     Style="{StaticResource GiantappWindow}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">

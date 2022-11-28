@@ -46,6 +46,7 @@ namespace LiveWallpaper.NotifyIcons
 
             string ApptEntryDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
             string iconPath = Path.Combine(ApptEntryDir, "Assets\\Img\\logo.ico");
+            iconPath = "pack://application:,,,/LiveWallpaper3;component/Assets/Img/logo.png";
             _notifyIcon.Icon = new BitmapImage(new Uri(iconPath, UriKind.Absolute))
             {
                 DecodePixelWidth = 300,
