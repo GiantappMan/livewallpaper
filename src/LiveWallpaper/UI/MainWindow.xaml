@@ -2,7 +2,6 @@
     x:Class="LiveWallpaper.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
@@ -19,8 +18,8 @@
     Style="{StaticResource GiantappWindow}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid>
-        <Wpf:WebView2 x:Name="webview2" />
+    <Grid Background="#202020">
+        <Wpf:WebView2 x:Name="webview2" DefaultBackgroundColor="#202020" />
         <StackPanel
             x:Name="tips"
             HorizontalAlignment="Center"
