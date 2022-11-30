@@ -1,10 +1,7 @@
 <template>
     <div class="flex min-h-screen">
-        <div class="flex w-20 overflow-y-auto bg-menu-bg">
+        <div class="flex w-[74px] overflow-y-auto bg-menu-bg">
             <div class="flex flex-1 w-full flex-col items-center py-2">
-                <!-- <div class="flex flex-shrink-0 items-center">
-                    <img class="h-8 w-auto" src="~/assets/img/logo.png" alt="Live Wallpaper 3" />
-                </div> -->
                 <div class="w-full flex-1 space-y-1 px-2">
                     <nuxt-link v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href"
                         :class="[item.current ? 'bg-indigo-800 text-white' : 'text-indigo-100 hover:bg-indigo-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"

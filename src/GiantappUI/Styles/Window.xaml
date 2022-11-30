@@ -10,7 +10,7 @@
         <Setter Property="ResizeMode" Value="CanResizeWithGrip" />
         <Setter Property="Background" Value="#272727" />
         <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="#0666b2" />
+        <Setter Property="BorderBrush" Value="{DynamicResource WindowBorderActiveBrush}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
                 <WindowChrome

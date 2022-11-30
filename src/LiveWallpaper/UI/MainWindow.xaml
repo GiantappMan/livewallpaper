@@ -8,7 +8,6 @@
     xmlns:lan="clr-namespace:MultiLanguageForXAML;assembly=MultiLanguageForXAML"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:GiantappUI.ViewModels;assembly=GiantappUI"
-    Title="MainWindow"
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance vm:WebView2ShellViewModel,

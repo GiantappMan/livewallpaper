@@ -22,6 +22,9 @@ namespace LiveWallpaper
 
             var appService = IocService.GetService<AppService>()!;
             appService.Init();
+
+            //UI.SystemColorWindow test = new UI.SystemColorWindow();
+            //test.Show();
         }
     }
 }

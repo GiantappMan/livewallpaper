@@ -6,6 +6,9 @@
     ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
+            <SolidColorBrush x:Key="WindowButtonBackgroundBrush">#3d6ad1</SolidColorBrush>
+            <SolidColorBrush x:Key="WindowBorderActiveBrush">#2d5dcb</SolidColorBrush>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml" />

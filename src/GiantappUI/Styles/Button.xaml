@@ -11,7 +11,7 @@
                             x:Name="mouseOverBG"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Background="#1972b8"
+                            Background="{DynamicResource WindowButtonBackgroundBrush}"
                             Opacity="0.0" />
                         <Line
                             Margin="0,17,0,0"
@@ -45,7 +45,7 @@
                             x:Name="mouseOverBG"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Background="#1972b8"
+                            Background="{DynamicResource WindowButtonBackgroundBrush}"
                             Opacity="0.0" />
                         <Rectangle
                             Width="11"
@@ -79,7 +79,7 @@
                             x:Name="mouseOverBG"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
-                            Background="#1972b8"
+                            Background="{DynamicResource WindowButtonBackgroundBrush}"
                             Opacity="0.0" />
                         <Canvas
                             Width="11"
