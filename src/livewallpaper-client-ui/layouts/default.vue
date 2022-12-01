@@ -1,10 +1,10 @@
 <template>
     <div class="flex min-h-screen">
-        <div class="flex w-[74px] overflow-y-auto bg-menu-bg">
+        <div class="flex w-[74px] overflow-y-auto bg-app-dark-900">
             <div class="flex flex-1 w-full flex-col items-center py-2">
                 <div class="w-full flex-1 space-y-1 px-2">
                     <nuxt-link v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-indigo-800 text-white' : 'text-indigo-100 hover:bg-indigo-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
+                        :class="[item.current ? 'bg-app-theme-50 text-white' : 'text-indigo-100 hover:bg-app-theme-50 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
                         :aria-current="item.current ? 'page' : undefined">
                         <component :is="item.icon"
                             :class="[item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white', 'h-6 w-6']"
@@ -14,7 +14,7 @@
                 </div>
                 <div class="w-full px-2">
                     <nuxt-link v-for="item in sidebarBottomNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-indigo-800 text-white' : 'text-indigo-100 hover:bg-indigo-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
+                        :class="[item.current ? 'bg-app-theme-50 text-white' : 'text-indigo-100 hover:bg-app-theme-50 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
                         :aria-current="item.current ? 'page' : undefined">
                         <component :is="item.icon"
                             :class="[item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white', 'h-6 w-6']"
@@ -49,34 +49,33 @@
 </template>
   
 <script setup lang="ts">
-import { ref } from 'vue'
+
 import {
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-} from '@headlessui/vue'
-import {
-    Bars3BottomLeftIcon,
     CogIcon,
     HomeIcon,
-    PlusIcon,
     Squares2X2Icon,
 } from '@heroicons/vue/24/outline'
-import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 
-const sidebarTopNavigation = [
+const sidebarTopNavigation = reactive([
     { name: 'Local', href: '/', icon: HomeIcon, current: false },
     { name: 'Community', href: '/community', icon: Squares2X2Icon, current: false },
-]
+])
 
-const sidebarBottomNavigation = [
+const sidebarBottomNavigation = reactive([
     { name: 'Settings', href: '/settings', icon: CogIcon, current: false },
-]
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Sign out', href: '#' },
-]
+])
 
-const mobileMenuOpen = ref(false)
+const route = useRoute()
+const updateActive = () => {
+    sidebarTopNavigation.forEach((item) => {
+        item.current = route.path === item.href;
+    });
+    sidebarBottomNavigation.forEach((item) => {
+        item.current = route.path === item.href;
+    });
+}
+
+watch(() => route.params, () => {
+    updateActive()
+}, { immediate: true });
 </script>
