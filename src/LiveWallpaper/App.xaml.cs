@@ -18,7 +18,7 @@ namespace LiveWallpaper
             //基础服务初始化
             var services = new ServiceCollection();
             services.AddSingleton<AppService>();
-            IocService.Init(new InitServiceOption() { AppName = nameof(LiveWallpaper) }, services);
+            IocService.Init(new InitServiceOption() { AppName = "Livewallpaper3" }, services);
 
             var appService = IocService.GetService<AppService>()!;
             appService.Init();
