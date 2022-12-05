@@ -2,22 +2,22 @@
     <div class="flex min-h-screen">
         <div class="flex w-[74px] overflow-y-auto bg-app-dark-900">
             <div class="flex flex-1 w-full flex-col items-center py-2">
-                <div class="w-full flex-1 space-y-1 px-2">
+                <div class="w-full flex-1 space-y-1 px-1">
                     <nuxt-link v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-app-theme-50 text-white' : 'text-indigo-100 hover:bg-app-theme-50 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
+                        :class="[item.current ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-zinc-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
                         :aria-current="item.current ? 'page' : undefined">
                         <component :is="item.icon"
-                            :class="[item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white', 'h-6 w-6']"
+                            :class="[item.current ? 'text-white' : 'text-gray-400 group-hover:text-white', 'h-6 w-6']"
                             aria-hidden="true" />
                         <span class="mt-2">{{ item.name }}</span>
                     </nuxt-link>
                 </div>
                 <div class="w-full px-2">
                     <nuxt-link v-for="item in sidebarBottomNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-app-theme-50 text-white' : 'text-indigo-100 hover:bg-app-theme-50 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
+                        :class="[item.current ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-zinc-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
                         :aria-current="item.current ? 'page' : undefined">
                         <component :is="item.icon"
-                            :class="[item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white', 'h-6 w-6']"
+                            :class="[item.current ? 'text-white' : 'text-gray-400 group-hover:text-white', 'h-6 w-6']"
                             aria-hidden="true" />
                         <span class="mt-2">{{ item.name }}</span>
                     </nuxt-link>
