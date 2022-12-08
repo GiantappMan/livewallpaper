@@ -6,7 +6,7 @@
                     <NavMenu v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href" :name="item.name"
                         :icon="item.icon" :selected-icon="item.selectedIcon" :current="item.current" />
                 </div>
-                <div class="w-full px-1">
+                <div class="w-full px-1 mb-1">
                     <NavMenu v-for="item in sidebarBottomNavigation" :key="item.name" :to="item.href" :name="item.name"
                         :icon="item.icon" :selected-icon="item.selectedIcon" :current="item.current" />
                 </div>

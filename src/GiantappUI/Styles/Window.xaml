@@ -14,7 +14,7 @@
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
                 <WindowChrome
-                    CaptionHeight="38"
+                    CaptionHeight="48"
                     CornerRadius="0"
                     GlassFrameThickness="0"
                     NonClientFrameEdges="None" />
@@ -56,7 +56,7 @@
                                     </Grid.RowDefinitions>
                                     <Grid
                                         Grid.Row="0"
-                                        Height="38"
+                                        Height="48"
                                         VerticalAlignment="Top"
                                         Background="{DynamicResource TitleBackgroundBrush}">
                                         <Grid.ColumnDefinitions>

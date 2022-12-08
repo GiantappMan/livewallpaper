@@ -1,6 +1,7 @@
 ﻿using GiantappUI.ViewModels;
 using System;
 using System.Windows;
+using Windows.UI.Xaml.Controls;
 
 namespace LiveWallpaper
 {
@@ -24,7 +25,7 @@ namespace LiveWallpaper
             DataContext = new WebView2ShellViewModel();
         }
 
-        public static void ShowUI(PageType type)
+        public static async void ShowUI(PageType type)
         {
             if (_mainWindow != null)
             {
@@ -43,13 +44,29 @@ namespace LiveWallpaper
 #endif
             Uri source = new($"{domain}#/settings");
             _mainWindow.webview2.Source = source;
+
+            //修改滚动条样式
+            //await _mainWindow.webview2.EnsureCoreWebView2Async();
+            //await _mainWindow.webview2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+            //document.addEventListener('DOMContentLoaded', function() {
+            //  const style = document.createElement('style');
+            //  style.textContent = '/* width */ \
+            //::-webkit-scrollbar { \
+            //  width: 2px !important; \
+            //} \
+            // \
+            //::-webkit-scrollbar-track { \
+            //  background: #2b2b2b !important; \
+            //}';
+            //  document.head.append(style);
+            //}, false);");
         }
 
         private static void MainWindow_Closed(object sender, EventArgs e)
-        {
-            if (_mainWindow != null)
-                _mainWindow.Closed -= MainWindow_Closed;
-            _mainWindow = null;
+            {
+                if (_mainWindow != null)
+                    _mainWindow.Closed -= MainWindow_Closed;
+                _mainWindow = null;
+            }
         }
     }
-}
