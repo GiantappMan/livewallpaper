@@ -8,6 +8,7 @@
         <ResourceDictionary>
             <SolidColorBrush x:Key="WindowButtonBackgroundBrush">#2563eb</SolidColorBrush>
             <SolidColorBrush x:Key="WindowBorderActiveBrush">#2563eb</SolidColorBrush>
+            <SolidColorBrush x:Key="TitleBackgroundBrush">#18181b</SolidColorBrush>
 
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml" />

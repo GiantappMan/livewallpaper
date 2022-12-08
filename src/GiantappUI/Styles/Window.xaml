@@ -8,7 +8,7 @@
         <Setter Property="WindowStyle" Value="SingleBorderWindow" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="ResizeMode" Value="CanResizeWithGrip" />
-        <Setter Property="Background" Value="#272727" />
+        <Setter Property="Background" Value="{DynamicResource TitleBackgroundBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderBrush" Value="{DynamicResource WindowBorderActiveBrush}" />
         <Setter Property="WindowChrome.WindowChrome">
@@ -58,7 +58,7 @@
                                         Grid.Row="0"
                                         Height="38"
                                         VerticalAlignment="Top"
-                                        Background="#202020">
+                                        Background="{DynamicResource TitleBackgroundBrush}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition />
                                             <ColumnDefinition Width="Auto" />

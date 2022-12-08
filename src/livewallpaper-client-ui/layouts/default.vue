@@ -1,32 +1,20 @@
 <template>
     <div class="flex min-h-screen">
-        <div class="flex w-[74px] overflow-y-auto bg-app-dark-900">
-            <div class="flex flex-1 w-full flex-col items-center py-2">
+        <div class="flex w-[74px] overflow-y-auto bg-zinc-900">
+            <div class="flex flex-1 w-full flex-col items-center">
                 <div class="w-full flex-1 space-y-1 px-1">
-                    <nuxt-link v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-zinc-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
-                        :aria-current="item.current ? 'page' : undefined">
-                        <component :is="item.icon"
-                            :class="[item.current ? 'text-white' : 'text-gray-400 group-hover:text-white', 'h-6 w-6']"
-                            aria-hidden="true" />
-                        <span class="mt-2">{{ item.name }}</span>
-                    </nuxt-link>
+                    <NavMenu v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href" :name="item.name"
+                        :icon="item.icon" :selected-icon="item.selectedIcon" :current="item.current" />
                 </div>
-                <div class="w-full px-2">
-                    <nuxt-link v-for="item in sidebarBottomNavigation" :key="item.name" :to="item.href"
-                        :class="[item.current ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-zinc-800 hover:text-white', 'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium']"
-                        :aria-current="item.current ? 'page' : undefined">
-                        <component :is="item.icon"
-                            :class="[item.current ? 'text-white' : 'text-gray-400 group-hover:text-white', 'h-6 w-6']"
-                            aria-hidden="true" />
-                        <span class="mt-2">{{ item.name }}</span>
-                    </nuxt-link>
+                <div class="w-full px-1">
+                    <NavMenu v-for="item in sidebarBottomNavigation" :key="item.name" :to="item.href" :name="item.name"
+                        :icon="item.icon" :selected-icon="item.selectedIcon" :current="item.current" />
                 </div>
             </div>
         </div>
 
         <!-- Content area -->
-        <div class="flex flex-1 flex-col overflow-hidden bg-content-bg">
+        <div class="flex flex-1 flex-col overflow-hidden bg-neutral-800 ml-1 rounded-l-lg">
             <!-- Main content -->
             <div class="flex flex-1 items-stretch overflow-hidden">
                 <slot>
@@ -56,13 +44,20 @@ import {
     Squares2X2Icon,
 } from '@heroicons/vue/24/outline'
 
+import {
+    CogIcon as solidCogIcon,
+    HomeIcon as solidHomeIcon,
+    Squares2X2Icon as solidSquares2X2Icon,
+} from '@heroicons/vue/24/solid'
+import NavMenu from '~~/components/NavMenu.vue';
+
 const sidebarTopNavigation = reactive([
-    { name: 'Local', href: '/', icon: HomeIcon, current: false },
-    { name: 'Community', href: '/community', icon: Squares2X2Icon, current: false },
+    { name: 'Local', href: '/', icon: HomeIcon, selectedIcon: solidHomeIcon, current: false },
+    { name: 'Community', href: '/community', icon: Squares2X2Icon, selectedIcon: solidSquares2X2Icon, current: false },
 ])
 
 const sidebarBottomNavigation = reactive([
-    { name: 'Settings', href: '/settings', icon: CogIcon, current: false },
+    { name: 'Settings', href: '/settings', icon: CogIcon, selectedIcon: solidCogIcon, current: false },
 ])
 
 const route = useRoute()

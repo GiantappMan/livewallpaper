@@ -289,10 +289,10 @@
   resolved "https://registry.npmmirror.com/@esbuild/linux-loong64/-/linux-loong64-0.15.15.tgz#32c65517a09320b62530867345222fde7794fbe1"
   integrity sha512-lhz6UNPMDXUhtXSulw8XlFAtSYO26WmHQnCi2Lg2p+/TMiJKNLtZCYUxV4wG6rZMzXmr8InGpNwk+DLT2Hm0PA==
 
-"@headlessui/vue@^1.7.4":
-  version "1.7.4"
-  resolved "https://registry.npmmirror.com/@headlessui/vue/-/vue-1.7.4.tgz#c554e9ac893a2ec2f58eb8b6b9d80b8be03c5d0e"
-  integrity sha512-QHRlKCK/zRpjSjhth7c2CZvx5eMDFflXauqRdRJgp1CwScx6PwCpWiwDsjQcYM4z8Yik2ZvyX8W4PFT2Wsqqyw==
+"@headlessui/vue@^1.7.5":
+  version "1.7.5"
+  resolved "https://registry.npmmirror.com/@headlessui/vue/-/vue-1.7.5.tgz#d089e9f126976ad9740c8c54b1fa5132614f5e7f"
+  integrity sha512-WjMvaOoxNUqbJO9UxdDJQmCtZZTsTUh4VbAekfhnbFsLqLrbvct27g1Q8gjEJjI4EWHiofIPCUs7mDsuKvwlHw==
 
 "@heroicons/vue@^2.0.13":
   version "2.0.13"

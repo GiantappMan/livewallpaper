@@ -17,8 +17,8 @@
     Style="{StaticResource GiantappWindow}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid Background="#202020">
-        <Wpf:WebView2 x:Name="webview2" DefaultBackgroundColor="#202020" />
+    <Grid Background="{DynamicResource TitleBackgroundBrush}">
+        <Wpf:WebView2 x:Name="webview2" DefaultBackgroundColor="#18181b" />
         <StackPanel
             x:Name="tips"
             HorizontalAlignment="Center"
