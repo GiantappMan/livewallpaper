@@ -39,19 +39,18 @@ namespace LiveWallpaper.Services
         {
             //全局捕获异常
             CatchApplicationError();
-            var lanSetting = LoadUserConfig<Configs.LanguagesConfig>();
+            //加載用戶配置
+            var appSetting = LoadUserConfig<Configs.AppConfig>();
 
             //多语言初始化
             string i18nDir = Path.Combine(ApptEntryDir, "Assets\\Languages");
-            LanService.Init(new JsonFileDB(i18nDir), true, lanSetting?.CurrentLan, "en");
+            LanService.Init(new JsonFileDB(i18nDir), true, appSetting?.CurrentLan, "en");
 
             //检查单实例
             bool ok = CheckMutex();
             if (!ok)
                 ShowToastAndKillProcess();
 
-            //加載用戶配置
-            var appSetting = LoadUserConfig<Configs.SystemConfig>();
             ApplySetting(appSetting);
         }
         internal T LoadUserConfig<T>() where T : new()
@@ -76,9 +75,11 @@ namespace LiveWallpaper.Services
             var r = _desktopStartupHelper.Check();
             return r;
         }
-        internal void ApplySetting(Configs.SystemConfig setting)
+        internal void ApplySetting(Configs.AppConfig? config)
         {
-            _desktopStartupHelper.Set(setting.RunWhenStarts);
+            if (config == null)
+                return;
+            _desktopStartupHelper.Set(config.RunWhenStarts);
             SettingChanged?.Invoke(this, new EventArgs());
         }
         #endregion
