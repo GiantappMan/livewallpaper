@@ -1,4 +1,4 @@
-﻿namespace LiveWallpaper.UserConfigs
+﻿namespace LiveWallpaper.Configs
 {
     public class LanguagesConfig
     {

@@ -31,7 +31,7 @@ namespace LiveWallpaper.Services
             _desktopStartupHelper = new(AppName, exePath);
         }
         #region properties
-        public EventHandler<UserConfigs.SystemConfig>? SettingChanged;
+        public EventHandler? SettingChanged = null;
         #endregion
 
         #region public
@@ -39,8 +39,8 @@ namespace LiveWallpaper.Services
         {
             //全局捕获异常
             CatchApplicationError();
-            var lanSetting = LoadUserConfig<UserConfigs.LanguagesConfig>();
-            
+            var lanSetting = LoadUserConfig<Configs.LanguagesConfig>();
+
             //多语言初始化
             string i18nDir = Path.Combine(ApptEntryDir, "Assets\\Languages");
             LanService.Init(new JsonFileDB(i18nDir), true, lanSetting?.CurrentLan, "en");
@@ -49,9 +49,9 @@ namespace LiveWallpaper.Services
             bool ok = CheckMutex();
             if (!ok)
                 ShowToastAndKillProcess();
-            
+
             //加載用戶配置
-            var appSetting = LoadUserConfig<UserConfigs.SystemConfig>();
+            var appSetting = LoadUserConfig<Configs.SystemConfig>();
             ApplySetting(appSetting);
         }
         internal T LoadUserConfig<T>() where T : new()
@@ -76,12 +76,13 @@ namespace LiveWallpaper.Services
             var r = _desktopStartupHelper.Check();
             return r;
         }
-        internal void ApplySetting(UserConfigs.SystemConfig setting)
+        internal void ApplySetting(Configs.SystemConfig setting)
         {
             _desktopStartupHelper.Set(setting.RunWhenStarts);
-            SettingChanged?.Invoke(this, setting);
+            SettingChanged?.Invoke(this, new EventArgs());
         }
         #endregion
+
         #region private
         private bool CheckMutex()
         {

@@ -30,7 +30,7 @@ namespace LiveWallpaper.UI
             {
                 if (i.PropertyType == typeof(Color))
                 {
-                    ColorAndName cn = new ColorAndName();
+                    ColorAndName cn = new();
                     cn.Color = (Color)i.GetValue(new Color(), BindingFlags.GetProperty, null, null, null);
                     cn.Name = i.Name;
                     l.Add(cn);
@@ -44,6 +44,6 @@ namespace LiveWallpaper.UI
     class ColorAndName
     {
         public Color Color { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

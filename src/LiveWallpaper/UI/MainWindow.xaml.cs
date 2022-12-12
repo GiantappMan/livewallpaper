@@ -25,7 +25,7 @@ namespace LiveWallpaper
             DataContext = new WebView2ShellViewModel();
         }
 
-        public static async void ShowUI(PageType type)
+        public static void ShowUI(PageType type)
         {
             if (_mainWindow != null)
             {
@@ -63,10 +63,10 @@ namespace LiveWallpaper
         }
 
         private static void MainWindow_Closed(object sender, EventArgs e)
-            {
-                if (_mainWindow != null)
-                    _mainWindow.Closed -= MainWindow_Closed;
-                _mainWindow = null;
-            }
+        {
+            if (_mainWindow != null)
+                _mainWindow.Closed -= MainWindow_Closed;
+            _mainWindow = null;
         }
     }
+}

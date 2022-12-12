@@ -1,4 +1,4 @@
-﻿namespace LiveWallpaper.UserConfigs
+﻿namespace LiveWallpaper.Configs
 {
     /// <summary>
     /// 系统相关配置
