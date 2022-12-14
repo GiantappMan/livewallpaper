@@ -15,8 +15,8 @@
     public enum WallpaperBehavior
     {
         Pause,
-        Play,
-        Stop
+        Stop,
+        None,
     }
 
     /// <summary>
@@ -54,9 +54,14 @@
         public VideoPlayer DefaultVideoPlayer { get; set; }
 
         /// <summary>
-        /// 壁纸音源来源哪块屏幕， 非屏幕值表示禁用
+        /// 壁纸音源来源哪块屏幕， 小于0表示禁用
         /// </summary>
-        public uint AudioScreen { get; set; }
+        public int AudioScreen { get; set; }
+
+        /// <summary>
+        /// 默认音量
+        /// </summary>
+        public int Volume { get; set; }
 
         /// <summary>
         /// 屏幕最大化检查是否影响所有屏幕
