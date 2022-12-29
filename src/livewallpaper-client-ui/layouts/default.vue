@@ -52,12 +52,12 @@ import {
 import NavMenu from '~~/components/NavMenu.vue';
 
 const sidebarTopNavigation = reactive([
-    { name: 'Local', href: '/', icon: HomeIcon, selectedIcon: solidHomeIcon, current: false },
-    { name: 'Community', href: '/community', icon: Squares2X2Icon, selectedIcon: solidSquares2X2Icon, current: false },
+    { name: '本地壁纸', href: '/', icon: HomeIcon, selectedIcon: solidHomeIcon, current: false },
+    { name: '社区', href: '/community', icon: Squares2X2Icon, selectedIcon: solidSquares2X2Icon, current: false },
 ])
 
 const sidebarBottomNavigation = reactive([
-    { name: 'Settings', href: '/settings', icon: CogIcon, selectedIcon: solidCogIcon, current: false },
+    { name: '设置', href: '/settings', icon: CogIcon, selectedIcon: solidCogIcon, current: false },
 ])
 
 const route = useRoute()

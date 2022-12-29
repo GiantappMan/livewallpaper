@@ -2,31 +2,19 @@
     <div class="flex h-full w-full">
         <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
             <main class="flex flex-1 overflow-hidden">
-                <div class="flex flex-1 flex-col overflow-y-auto xl:overflow-hidden">
-                    <!-- Breadcrumb -->
-                    <nav aria-label="Breadcrumb" class="border-b xl:hidden">
-                        <div class="mx-auto flex max-w-3xl items-start py-3 px-4 sm:px-6 lg:px-8">
-                            <a href="#" class="-ml-1 inline-flex items-center space-x-3 text-sm font-medium ">
-                                <ChevronLeftIcon class="h-5 w-5 text-blue-gray-400" aria-hidden="true" />
-                                <span>Settings</span>
-                            </a>
-                        </div>
-                    </nav>
-
-                    <div class="flex flex-1 xl:overflow-hidden">
+                <div class="flex flex-1 flex-col overflow-y-auto">
+                    <div class="flex flex-1 overflow-hidden">
                         <!-- Secondary sidebar -->
-                        <nav aria-label="Sections"
-                            class="hidden w-96 flex-shrink-0 border-r border-black xl:flex xl:flex-col">
-                            <div class="flex h-16 flex-shrink-0 items-center border-b border-black px-6">
-                                <p class="text-lg font-medium text-white">Settings</p>
+                        <nav aria-label="Sections" class="w-96 flex-shrink-0 border-r border-zinc-900">
+                            <div class="flex h-16 flex-shrink-0 items-center px-6 ">
+                                <p class="text-xl font-medium text-white">设置</p>
                             </div>
-                            <div class="min-h-0 flex-1 overflow-y-auto">
-                                <a v-for="item in subNavigation" :key="item.name" :href="item.href"
-                                    :class="[item.current ? 'bg-blue-50 bg-opacity-50' : 'hover:bg-blue-50 hover:bg-opacity-50', 'flex p-6 border-b border-black']"
+                            <div class="min-h-0 flex-1 overflow-y-auto ">
+                                <a v-for="item in settingsMenu" :key="item.name" :href="item.href"
+                                    :class="[item.current ? 'bg-opacity-50' : 'hover:bg-opacity-50', ' mx-3 my-1 rounded-md flex p-3 border border-zinc-800 bg-zinc-900 ']"
                                     :aria-current="item.current ? 'page' : undefined">
-                                    <component :is="item.icon" class="-mt-0.5 h-6 w-6 flex-shrink-0 text-white"
-                                        aria-hidden="true" />
-                                    <div class="ml-3 text-sm">
+                                    <component :is="item.icon" class="h-6 w-6 text-white self-center" />
+                                    <div class="ml-4 text-sm">
                                         <p class="font-medium text-white">{{ item.name }}</p>
                                         <p class="mt-1 text-zinc-300">{{ item.description }}</p>
                                     </div>
@@ -35,7 +23,7 @@
                         </nav>
 
                         <!-- Main content -->
-                        <div class="flex-1 xl:overflow-y-auto">
+                        <div class="flex-1 overflow-y-auto">
                             <div class="mx-auto max-w-3xl py-10 px-4 sm:px-6 lg:py-12 lg:px-8">
                                 <h1 class="text-3xl font-bold tracking-tight ">Account</h1>
 
@@ -176,24 +164,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
-    BanknotesIcon,
-    Bars3Icon,
-    BellIcon,
+    Cog8ToothIcon,
+    RectangleGroupIcon,
     BookmarkSquareIcon,
-    CogIcon,
     FireIcon,
     HomeIcon,
     InboxIcon,
-    KeyIcon,
-    MagnifyingGlassCircleIcon,
-    PhotoIcon,
-    SquaresPlusIcon,
     UserIcon,
-    XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { ChevronLeftIcon } from '@heroicons/vue/20/solid'
 
 const navigation = [
     { name: 'Home', href: '#', icon: HomeIcon },
@@ -202,54 +181,19 @@ const navigation = [
     { name: 'Messages', href: '#', icon: InboxIcon },
     { name: 'Profile', href: '#', icon: UserIcon },
 ]
-const subNavigation = [
+const settingsMenu = [
     {
-        name: 'Account',
-        description: 'Ullamcorper id at suspendisse nec id volutpat vestibulum enim. Interdum blandit.',
+        name: '应用',
+        description: '应用程序通用设置',
         href: '#',
-        icon: CogIcon,
-        current: true,
-    },
-    {
-        name: 'Notifications',
-        description: 'Enim, nullam mi vel et libero urna lectus enim. Et sed in maecenas tellus.',
-        href: '#',
-        icon: BellIcon,
+        icon: Cog8ToothIcon,
         current: false,
     },
     {
-        name: 'Security',
-        description: 'Semper accumsan massa vel volutpat massa. Non turpis ut nulla aliquet turpis.',
+        name: '壁纸',
+        description: '壁纸相关参数设置',
         href: '#',
-        icon: KeyIcon,
-        current: false,
-    },
-    {
-        name: 'Appearance',
-        description: 'Magna nulla id sed ornare ipsum eget. Massa eget porttitor suscipit consequat.',
-        href: '#',
-        icon: PhotoIcon,
-        current: false,
-    },
-    {
-        name: 'Billing',
-        description: 'Orci aliquam arcu egestas turpis cursus. Lectus faucibus netus dui auctor mauris.',
-        href: '#',
-        icon: BanknotesIcon,
-        current: false,
-    },
-    {
-        name: 'Integrations',
-        description: 'Nisi, elit volutpat odio urna quis arcu faucibus dui. Mauris adipiscing pellentesque.',
-        href: '#',
-        icon: SquaresPlusIcon,
-        current: false,
-    },
-    {
-        name: 'Additional Resources',
-        description: 'Quis viverra netus donec ut auctor fringilla facilisis. Nunc sit donec cursus sit quis et.',
-        href: '#',
-        icon: MagnifyingGlassCircleIcon,
+        icon: RectangleGroupIcon,
         current: false,
     },
 ]
