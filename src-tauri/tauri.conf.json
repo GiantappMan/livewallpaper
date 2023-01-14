@@ -57,14 +57,10 @@
     "updater": {
       "active": false
     },
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": true,
-        "title": "livewallpaper",
-        "width": 800
-      }
-    ]
+    "windows": [],
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
   }
 }
