@@ -26,7 +26,7 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
         .add_item(exit);
 
     let handle = app.handle();
-    let tray_id = "livewallpaper3".to_string();
+    let tray_id = "LiveWallpaper3".to_string();
     SystemTray::new()
         .with_id(&tray_id)
         .with_menu(tray_menu)
@@ -58,6 +58,7 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
                         .build()
                         .expect("failed to create main window");
                         main_window.set_title("LiveWallpaper3").unwrap();
+                        //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
                         main_window.center().unwrap();
                         main_window.show().unwrap();
                     }

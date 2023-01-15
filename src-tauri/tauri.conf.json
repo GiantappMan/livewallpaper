@@ -7,8 +7,8 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "livewallpaper",
-    "version": "0.0.0"
+    "productName": "LiveWallpaper3",
+    "version": "3.0.0"
   },
   "tauri": {
     "allowlist": {
