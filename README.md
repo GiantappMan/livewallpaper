@@ -36,5 +36,5 @@
 
 ## 架构
 
-- [ ] dotnet4.6.2 [为什么不用最新版?](todo)
-- [ ] ~~rust 内核~~ [为何我割了 rust](todo)
+- [ ] dotnet4.6.2
+- [ ] 或者Rust [正在研究可行性](https://github.com/DaZiYuan/LiveWallpaper/tree/v3.x-rs)
