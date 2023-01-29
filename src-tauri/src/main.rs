@@ -10,6 +10,31 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+fn open_url(handle: &tauri::AppHandle, url: &str) {
+    let window = handle.get_window("main");
+    if window.is_some() {
+        let window = window.unwrap();
+        window.show().unwrap();
+        let js = &format!(
+            "window.location.href = '{}';
+            console.log(window.location.href);",
+            url
+        );
+        // println!("test{}", js);
+        window.eval(js).unwrap();
+        window.set_focus().unwrap();
+    } else {
+        let main_window =
+            tauri::WindowBuilder::new(handle, "main", tauri::WindowUrl::App(url.into()))
+                .build()
+                .expect("failed to create main window");
+        main_window.set_title("LiveWallpaper3").unwrap();
+        //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
+        main_window.center().unwrap();
+        main_window.show().unwrap();
+    }
+}
+
 fn create_tray(app: &tauri::App) -> tauri::Result<()> {
     let about = CustomMenuItem::new("about".to_string(), "About");
     let local = CustomMenuItem::new("local".to_string(), "Local");
@@ -33,10 +58,24 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
         .on_event(move |event| {
             match event {
                 SystemTrayEvent::MenuItemClick { id, .. } => {
-                    if id == "exit" {
-                        // exit the app
-                        handle.exit(0);
-                    } else if id == "about" {
+                    match id.as_str() {
+                        "local" => {
+                            open_url(&handle, "/local");
+                        }
+                        "community" => {
+                            open_url(&handle, "/community");
+                        }
+                        "settings" => {
+                            open_url(&handle, "/settings");
+                        }
+                        "about" => {
+                            open_url(&handle, "/about");
+                        }
+                        "exit" => {
+                            // exit the app
+                            handle.exit(0);
+                        }
+                        _ => {}
                     }
                 }
                 SystemTrayEvent::DoubleClick {
@@ -44,24 +83,25 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
                     size: _,
                     ..
                 } => {
-                    let window = handle.get_window("main");
-                    if window.is_some() {
-                        let window = window.unwrap();
-                        window.show().unwrap();
-                        window.set_focus().unwrap();
-                    } else {
-                        let main_window = tauri::WindowBuilder::new(
-                            &handle,
-                            "main",
-                            tauri::WindowUrl::App("index.html".into()),
-                        )
-                        .build()
-                        .expect("failed to create main window");
-                        main_window.set_title("LiveWallpaper3").unwrap();
-                        //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
-                        main_window.center().unwrap();
-                        main_window.show().unwrap();
-                    }
+                    open_url(&handle, "index.html");
+                    // let window = handle.get_window("main");
+                    // if window.is_some() {
+                    //     let window = window.unwrap();
+                    //     window.show().unwrap();
+                    //     window.set_focus().unwrap();
+                    // } else {
+                    //     let main_window = tauri::WindowBuilder::new(
+                    //         &handle,
+                    //         "main",
+                    //         tauri::WindowUrl::App("index.html".into()),
+                    //     )
+                    //     .build()
+                    //     .expect("failed to create main window");
+                    //     main_window.set_title("LiveWallpaper3").unwrap();
+                    //     //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
+                    //     main_window.center().unwrap();
+                    //     main_window.show().unwrap();
+                    // }
                 }
                 _ => {}
             }
