@@ -9,15 +9,15 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.2.0",
-    "next": "^13.0.0",
+    "next": "^13.1.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.2.2",
-    "@types/node": "^18.7.11",
-    "@types/react": "^18.0.17",
-    "@types/react-dom": "^18.0.6",
-    "typescript": "^4.7.4"
+    "@tauri-apps/cli": "^1.2.3",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "typescript": "^4.9.4"
   }
 }
