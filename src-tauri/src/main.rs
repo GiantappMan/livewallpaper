@@ -2,12 +2,22 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
+pub mod wallpaper;
+
 use tauri::{CustomMenuItem, Manager, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
+use wallpaper::Wallpaper;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
+    let res = Wallpaper::scan_folder("D:\\Livewallpaper\\");
+    println!("res:{:?}", res);
+    Ok(res)
 }
 
 fn open_url(handle: &tauri::AppHandle, url: &str) {
@@ -26,6 +36,7 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
     } else {
         let main_window =
             tauri::WindowBuilder::new(handle, "main", tauri::WindowUrl::App(url.into()))
+                .visible(false)
                 .build()
                 .expect("failed to create main window");
         main_window.set_title("LiveWallpaper3").unwrap();
@@ -116,7 +127,7 @@ fn main() {
             create_tray(app)?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, get_wallpapers])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|_app_handle, event| match event {
