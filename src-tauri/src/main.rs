@@ -2,6 +2,8 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
+pub mod mpv;
+pub mod render;
 pub mod wallpaper;
 
 use tauri::{CustomMenuItem, Manager, SystemTrayMenu, SystemTrayMenuItem};
@@ -15,9 +17,15 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
-    let res = Wallpaper::scan_folder("D:\\Livewallpaper\\");
+    let res = Wallpaper::get_wallpapers("D:\\Livewallpaper\\");
     println!("res:{:?}", res);
     Ok(res)
+}
+
+async fn set_wallpaper(path: &str) -> Result<(), String> {
+    let res = Wallpaper::set_wallpaper(path);
+    println!("res:{:?}", res);
+    Ok(())
 }
 
 fn open_url(handle: &tauri::AppHandle, url: &str) {
