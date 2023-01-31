@@ -2,7 +2,6 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-pub mod mpv;
 pub mod render;
 pub mod wallpaper;
 

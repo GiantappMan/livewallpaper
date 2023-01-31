@@ -25,3 +25,4 @@ dist-ssr
 *.sw?
 /src-tauri/resources/mpv/mpv-2.dll
 /src-tauri/resources/mpv/libmpv-2.dll
+/src-tauri/resources/mpv
