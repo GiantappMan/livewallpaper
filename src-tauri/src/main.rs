@@ -49,7 +49,17 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
         main_window.set_title("LiveWallpaper3").unwrap();
         //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
         main_window.center().unwrap();
-        main_window.show().unwrap();
+        // main_window.show().unwrap();
+
+        // tauri::async_runtime::spawn(async move {
+        //     // initialize your app here instead of sleeping :)
+        //     println!("Initializing...");
+        //     std::thread::sleep(std::time::Duration::from_millis(200));
+        //     println!("Done initializing.");
+
+        //     // After it's done, close the splashscreen and display the main window
+        //     main_window.show().unwrap();
+        // });
     }
 }
 
@@ -101,7 +111,7 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
                     size: _,
                     ..
                 } => {
-                    open_url(&handle, "index.html");
+                    open_url(&handle, "/local");
                     // let window = handle.get_window("main");
                     // if window.is_some() {
                     //     let window = window.unwrap();

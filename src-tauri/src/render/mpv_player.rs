@@ -36,6 +36,7 @@ impl MpvPlayer {
                 "no"
             }
         ));
+
         args.push(format!(
             "--panscan={}",
             if self.option.pan_scan { "1.0" } else { "0.0" }
@@ -48,7 +49,8 @@ impl MpvPlayer {
             .args(args)
             .spawn()
             .expect("failed to launch mpv");
-        mpv.wait().expect("failed to wait on mpv");
+
+        // mpv.wait().expect("failed to wait on mpv");
 
         println!("show");
     }
