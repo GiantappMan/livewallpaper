@@ -11,11 +11,12 @@ version = "3.0.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = {version = "1.2", features = [] }
+tauri-build = {version = "1.2", features = []}
 [dependencies]
-serde = {version = "1.0", features = ["derive"] }
+serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
-tauri = {version = "1.2", features = ["shell-open", "system-tray", "window-show"] }
+tauri = {version = "1.2", features = ["shell-open", "system-tray", "window-show"]}
+tokio = {version = "1.25.0", features = ["full"]}
 [features]
 # by default Tauri runs in production mode
 # when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
@@ -23,3 +24,12 @@ default = ["custom-protocol"]
 # this feature is used used for production builds where `devPath` points to the filesystem
 # DO NOT remove this
 custom-protocol = ["tauri/custom-protocol"]
+[dependencies.windows]
+features = [
+  "Data_Xml_Dom",
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_Threading",
+  "Win32_UI_WindowsAndMessaging",
+]
+version = "0.44.0"
