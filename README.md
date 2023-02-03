@@ -10,7 +10,7 @@
 ## 目标
 
 - [ ] 客户端
-  - [ ] WPF + Webview2
+  - [ ] Tauri
   - [ ] 传统安装包
   - [ ] AppStore
 - [ ] 壁纸内核
