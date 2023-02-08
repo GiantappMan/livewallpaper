@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 pub mod render;
+pub mod utils;
 pub mod wallpaper;
 
 use tauri::{CustomMenuItem, Manager, SystemTrayMenu, SystemTrayMenuItem};
