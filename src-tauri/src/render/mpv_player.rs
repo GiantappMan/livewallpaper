@@ -1,6 +1,6 @@
-use std::process::Command;
+use std::{process::Command, thread::spawn};
 
-use crate::utils::windows::get_window_handle;
+use crate::utils::windows::find_window_handle;
 
 pub struct Option {
     pub stop_screen_saver: bool,
@@ -52,9 +52,18 @@ impl MpvPlayer {
             .spawn()
             .expect("failed to launch mpv");
 
-        get_window_handle().await;
-        // mpv.wait().expect("failed to wait on mpv");
+        let handle = tokio::spawn(async move {
+            // tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            let pid = mpv.id();
+            println!("pid {}", pid);
+            find_window_handle(pid).await;
+        });
+
+        //get mpv handle
+
         println!("show");
+
+        handle.await.unwrap();
     }
 }
 

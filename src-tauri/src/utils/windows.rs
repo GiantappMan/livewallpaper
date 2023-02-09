@@ -1,14 +1,35 @@
-use std::process::Child;
-
 use windows::{
+    core::PCWSTR,
     Win32::Foundation::{BOOL, HWND, LPARAM},
-    Win32::UI::WindowsAndMessaging::{
-        EnumWindows, GetWindowInfo, GetWindowTextW, WINDOWINFO, WS_VISIBLE,
+    Win32::{
+        System::Threading::CreateProcessW,
+        UI::WindowsAndMessaging::{
+            EnumWindows, GetWindowInfo, GetWindowTextW, GetWindowThreadProcessId, WINDOWINFO,
+            WS_VISIBLE,
+        },
     },
 };
+pub async fn create_process(path: String, args: String) {
+    // unsafe {
+    //     CreateProcessW(
+    //         PCWSTR(path.as_ptr() as *const u16),
+    //         PCWSTR(args.as_ptr() as *const u16),
+    //         None,
+    //         None,
+    //         false.into(),
+    //         0,
+    //         None,
+    //         None,
+    //         None,
+    //         None,
+    //     );
+    // }
+}
 
-pub async fn get_window_handle() {
+pub async fn find_window_handle(pid: u32) {
+    // let mut test = 1;
     extern "system" fn enum_window(window: HWND, _: LPARAM) -> BOOL {
+        // test = 2;
         unsafe {
             let mut text: [u16; 512] = [0; 512];
             let len = GetWindowTextW(window, &mut text);
@@ -22,6 +43,11 @@ pub async fn get_window_handle() {
 
             if !text.is_empty() && info.dwStyle & WS_VISIBLE.0 != 0 {
                 println!("{} ({}, {})", text, info.rcWindow.left, info.rcWindow.top);
+
+                let pid: *mut u32 = &mut 0;
+
+                let res = GetWindowThreadProcessId(window, Some(pid));
+                println!("pid: {},res:{}", *pid, res);
             }
 
             true.into()
@@ -39,7 +65,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_window_handle() {
-        get_window_handle().await;
+        find_window_handle(0).await;
         print!("test_get_window_handle")
     }
+
+    // fn test_GetWindowThreadProcessId() {
+    //     let mut pid: u32 = 0;
+    //     unsafe {
+    //         GetWindowThreadProcessId(HWND(0), Some(pid as *mut u32));
+    //     }
+    // }
 }
