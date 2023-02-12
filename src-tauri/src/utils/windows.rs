@@ -10,10 +10,6 @@ use windows::{
     },
 };
 
-pub struct MyStruct {
-    value: i32,
-}
-
 pub async fn create_process(path: String, args: String) {
     // unsafe {
     //     CreateProcessW(
@@ -32,12 +28,13 @@ pub async fn create_process(path: String, args: String) {
 }
 
 pub async fn find_window_handle(pid: u32) {
-    // let mut test = 1;
+    struct EnumWindowsPayload {
+        pid: u32,
+        handle: HWND,
+    }
+
     extern "system" fn enum_window(window: HWND, data: LPARAM) -> BOOL {
-        // test = 2;
         unsafe {
-            let data = data.0 as *const MyStruct;
-            println!("data {}", (*data).value);
             let mut text: [u16; 512] = [0; 512];
             let len = GetWindowTextW(window, &mut text);
             let text = String::from_utf16_lossy(&text[..len as usize]);
@@ -49,12 +46,26 @@ pub async fn find_window_handle(pid: u32) {
             GetWindowInfo(window, &mut info).unwrap();
 
             if !text.is_empty() && info.dwStyle & WS_VISIBLE.0 != 0 {
-                println!("{} ({}, {})", text, info.rcWindow.left, info.rcWindow.top);
-
+                let data = data.0 as *mut EnumWindowsPayload;
+                // println!("data {} {}", (*data).pid, (*data).handle.0);
                 let pid: *mut u32 = &mut 0;
 
                 let res = GetWindowThreadProcessId(window, Some(pid));
-                println!("pid: {},res:{}", *pid, res);
+                if *pid == (*data).pid {
+                    (*data).handle = window;
+                    println!(
+                        "found pid: {},handle:{} res:{} {} ({}, {})",
+                        (*data).pid,
+                        window.0,
+                        res,
+                        text,
+                        info.rcWindow.left,
+                        info.rcWindow.top
+                    );
+                    return false.into();
+                } else {
+                    println!("{} ({}, {})", text, info.rcWindow.left, info.rcWindow.top);
+                }
             }
 
             true.into()
@@ -62,10 +73,13 @@ pub async fn find_window_handle(pid: u32) {
     }
 
     unsafe {
-        let data = MyStruct { value: 1 };
-        //data to buffer
-        let buffer = &data as *const MyStruct;
+        let box_data = Box::new(EnumWindowsPayload {
+            pid,
+            handle: HWND::default(),
+        });
+        let buffer = Box::into_raw(box_data);
         _ = EnumWindows(Some(enum_window), LPARAM(buffer as _)).ok();
+        println!("------end {} {}", (*buffer).pid, (*buffer).handle.0);
     }
 }
 
@@ -75,7 +89,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_window_handle() {
-        find_window_handle(0).await;
+        find_window_handle(18708).await;
         print!("test_get_window_handle")
     }
 
