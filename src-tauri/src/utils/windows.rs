@@ -9,6 +9,11 @@ use windows::{
         },
     },
 };
+
+pub struct MyStruct {
+    value: i32,
+}
+
 pub async fn create_process(path: String, args: String) {
     // unsafe {
     //     CreateProcessW(
@@ -28,9 +33,11 @@ pub async fn create_process(path: String, args: String) {
 
 pub async fn find_window_handle(pid: u32) {
     // let mut test = 1;
-    extern "system" fn enum_window(window: HWND, _: LPARAM) -> BOOL {
+    extern "system" fn enum_window(window: HWND, data: LPARAM) -> BOOL {
         // test = 2;
         unsafe {
+            let data = data.0 as *const MyStruct;
+            println!("data {}", (*data).value);
             let mut text: [u16; 512] = [0; 512];
             let len = GetWindowTextW(window, &mut text);
             let text = String::from_utf16_lossy(&text[..len as usize]);
@@ -55,7 +62,10 @@ pub async fn find_window_handle(pid: u32) {
     }
 
     unsafe {
-        _ = EnumWindows(Some(enum_window), LPARAM(0)).ok();
+        let data = MyStruct { value: 1 };
+        //data to buffer
+        let buffer = &data as *const MyStruct;
+        _ = EnumWindows(Some(enum_window), LPARAM(buffer as _)).ok();
     }
 }
 
