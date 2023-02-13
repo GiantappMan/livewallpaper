@@ -1,5 +1,7 @@
 use std::{process::Command, thread::spawn};
 
+use windows::Win32::Foundation::HWND;
+
 use crate::utils::windows::find_window_handle;
 
 pub struct Option {
@@ -47,23 +49,22 @@ impl MpvPlayer {
         args.push(format!("--hwdec={}", self.option.hwdec));
         println!("args:{:?}", args);
 
-        let mut mpv = Command::new("resources/mpv/mpv.exe")
+        let mpv = Command::new("resources/mpv/mpv.exe")
             .args(args)
             .spawn()
             .expect("failed to launch mpv");
 
+        let mut window_handle: HWND = HWND(0);
         let handle = tokio::spawn(async move {
-            // tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
             let pid = mpv.id();
-            println!("pid {}", pid);
-            find_window_handle(pid).await;
+            window_handle = find_window_handle(pid);
+            println!("pid {} , {}", pid, window_handle.0);
         });
 
-        //get mpv handle
-
-        println!("show");
-
         handle.await.unwrap();
+
+        println!("show {}", window_handle.0);
     }
 }
 

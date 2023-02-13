@@ -27,7 +27,7 @@ pub async fn create_process(path: String, args: String) {
     // }
 }
 
-pub async fn find_window_handle(pid: u32) {
+pub fn find_window_handle(pid: u32) -> HWND {
     struct EnumWindowsPayload {
         pid: u32,
         handle: HWND,
@@ -80,6 +80,8 @@ pub async fn find_window_handle(pid: u32) {
         let buffer = Box::into_raw(box_data);
         _ = EnumWindows(Some(enum_window), LPARAM(buffer as _)).ok();
         println!("------end {} {}", (*buffer).pid, (*buffer).handle.0);
+
+        (*buffer).handle
     }
 }
 
@@ -87,9 +89,9 @@ pub async fn find_window_handle(pid: u32) {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_get_window_handle() {
-        find_window_handle(18708).await;
+    #[test]
+    fn test_get_window_handle() {
+        find_window_handle(7796);
         print!("test_get_window_handle")
     }
 
