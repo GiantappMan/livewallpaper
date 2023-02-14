@@ -1,19 +1,20 @@
-use std::{process::Command, thread::spawn};
+use std::process::{Child, Command};
 
 use windows::Win32::Foundation::HWND;
 
 use crate::utils::windows::find_window_handle;
 
-pub struct Option {
+pub struct MpvPlayerOption {
     pub stop_screen_saver: bool,
     pub hwdec: String, //no/auto
     pub pan_scan: bool,
 }
 pub struct MpvPlayer {
-    pub option: Option,
+    pub option: MpvPlayerOption,
+    process: Option<Child>,
 }
 
-impl Option {
+impl MpvPlayerOption {
     pub fn new() -> Self {
         Self {
             stop_screen_saver: false,
@@ -26,11 +27,12 @@ impl Option {
 impl MpvPlayer {
     pub fn new() -> Self {
         Self {
-            option: Option::new(),
+            option: MpvPlayerOption::new(),
+            process: None,
         }
     }
 
-    pub async fn launch(&self) {
+    pub async fn launch(&mut self) {
         let mut args = vec![];
         args.push(format!(
             "--stop-screensaver={}",
@@ -49,20 +51,26 @@ impl MpvPlayer {
         args.push(format!("--hwdec={}", self.option.hwdec));
         println!("args:{:?}", args);
 
-        let mpv = Command::new("resources/mpv/mpv.exe")
-            .args(args)
-            .spawn()
-            .expect("failed to launch mpv");
-
-        let mut window_handle: HWND = HWND(0);
+        self.process = Some(
+            Command::new("resources/mpv/mpv.exe")
+                .args(args)
+                .spawn()
+                .expect("failed to launch mpv"),
+        );
+        let pid = self.process.as_ref().unwrap().id();
         let handle = tokio::spawn(async move {
-            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-            let pid = mpv.id();
-            window_handle = find_window_handle(pid);
+            let mut window_handle = HWND(0);
+            let expire_time = tokio::time::Instant::now() + tokio::time::Duration::from_secs(5);
+            while window_handle.0 == 0 && tokio::time::Instant::now() < expire_time {
+                window_handle = find_window_handle(pid, false);
+                tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+                println!("wait window_handle");
+            }
             println!("pid {} , {}", pid, window_handle.0);
+            return window_handle;
         });
 
-        handle.await.unwrap();
+        let window_handle: HWND = handle.await.unwrap();
 
         println!("show {}", window_handle.0);
     }
@@ -74,8 +82,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_launch() {
-        let mpv_player = MpvPlayer::new();
+        let mut mpv_player = MpvPlayer::new();
         mpv_player.launch().await;
-        println!("test_launch")
+        println!("test_launch");
+        mpv_player.process.unwrap().kill().unwrap();
+        println!("test_launch end")
     }
 }
