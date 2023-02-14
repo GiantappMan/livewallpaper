@@ -1,4 +1,7 @@
-use std::process::{Child, Command};
+use std::{
+    fmt::format,
+    process::{Child, Command},
+};
 
 use windows::Win32::Foundation::HWND;
 
@@ -32,7 +35,7 @@ impl MpvPlayer {
         }
     }
 
-    pub async fn launch(&mut self) {
+    pub async fn launch(&mut self, path: Option<String>) {
         let mut args = vec![];
         args.push(format!(
             "--stop-screensaver={}",
@@ -49,6 +52,9 @@ impl MpvPlayer {
         ));
 
         args.push(format!("--hwdec={}", self.option.hwdec));
+        if path.is_some() {
+            args.push(format!("\\{}\\", path.unwrap()));
+        }
         println!("args:{:?}", args);
 
         self.process = Some(
@@ -83,9 +89,32 @@ mod tests {
     #[tokio::test]
     async fn test_launch() {
         let mut mpv_player = MpvPlayer::new();
-        mpv_player.launch().await;
+        mpv_player.launch(None).await;
         println!("test_launch");
         mpv_player.process.unwrap().kill().unwrap();
         println!("test_launch end")
+    }
+
+    #[tokio::test]
+    async fn test_launch_with_video() {
+        let mut mpv_player = MpvPlayer::new();
+
+        mpv_player
+            .launch(Some("../wallpaper_samples/video.mp4".to_string()))
+            .await;
+        println!("test_launch_with_video");
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        mpv_player.process.unwrap().kill().unwrap();
+        println!("test_launch_with_video end")
+    }
+
+    #[tokio::test]
+    async fn test_set_video() {
+        let mut mpv_player = MpvPlayer::new();
+        mpv_player.launch(None).await;
+        println!("test_set_video");
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        mpv_player.process.unwrap().kill().unwrap();
+        println!("test_set_video end")
     }
 }
