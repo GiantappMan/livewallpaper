@@ -36,7 +36,7 @@ impl MpvPlayer {
     }
 
     pub async fn launch(&mut self, path: Option<String>) {
-        let mut args = vec![];
+        let mut args: Vec<String> = vec![];
         args.push(format!(
             "--stop-screensaver={}",
             if self.option.stop_screen_saver {
@@ -53,12 +53,12 @@ impl MpvPlayer {
 
         args.push(format!("--hwdec={}", self.option.hwdec));
         if path.is_some() {
-            args.push(format!("\\{}\\", path.unwrap()));
+            args.push(format!("{}", path.unwrap()));
         }
         println!("args:{:?}", args);
 
         self.process = Some(
-            Command::new("resources/mpv/mpv.exe")
+            Command::new("resources\\mpv\\mpv.exe")
                 .args(args)
                 .spawn()
                 .expect("failed to launch mpv"),
@@ -100,7 +100,7 @@ mod tests {
         let mut mpv_player = MpvPlayer::new();
 
         mpv_player
-            .launch(Some("../wallpaper_samples/video.mp4".to_string()))
+            .launch(Some("resources\\wallpaper_samples\\video.mp4".to_string()))
             .await;
         println!("test_launch_with_video");
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
