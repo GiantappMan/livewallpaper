@@ -11,6 +11,8 @@ pub struct MpvPlayerOption {
     pub stop_screen_saver: bool,
     pub hwdec: String, //no/auto
     pub pan_scan: bool,
+    pub loop_file: bool,
+    pub volume: u8,
 }
 pub struct MpvPlayer {
     pub option: MpvPlayerOption,
@@ -23,6 +25,8 @@ impl MpvPlayerOption {
             stop_screen_saver: false,
             hwdec: "auto".to_string(),
             pan_scan: true,
+            loop_file: true,
+            volume: 0,
         }
     }
 }
@@ -50,6 +54,13 @@ impl MpvPlayer {
             "--panscan={}",
             if self.option.pan_scan { "1.0" } else { "0.0" }
         ));
+
+        args.push(format!(
+            "--loop-file={}",
+            if self.option.loop_file { "inf" } else { "no" }
+        ));
+
+        args.push(format!("--volume={}", self.option.volume));
 
         args.push(format!("--hwdec={}", self.option.hwdec));
         if path.is_some() {
@@ -79,6 +90,12 @@ impl MpvPlayer {
         let window_handle: HWND = handle.await.unwrap();
 
         println!("show {}", window_handle.0);
+    }
+
+    pub async fn play(&mut self, path: String) {
+        let mut args: Vec<String> = vec![];
+        args.push(format!("loadfile \"{}\"", path));
+        println!("args:{:?}", args);
     }
 }
 
@@ -113,6 +130,10 @@ mod tests {
         let mut mpv_player = MpvPlayer::new();
         mpv_player.launch(None).await;
         println!("test_set_video");
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        mpv_player
+            .play("resources\\wallpaper_samples\\video.mp4".to_string())
+            .await;
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
         mpv_player.process.unwrap().kill().unwrap();
         println!("test_set_video end")
