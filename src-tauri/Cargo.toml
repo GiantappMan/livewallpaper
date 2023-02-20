@@ -33,3 +33,8 @@ features = [
   "Win32_UI_WindowsAndMessaging",
 ]
 version = "0.44.0"
+[dependencies.uuid]
+features = [
+  "v4", # Lets you generate random UUIDs
+]
+version = "1.3.0"

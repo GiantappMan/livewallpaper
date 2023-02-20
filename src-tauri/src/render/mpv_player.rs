@@ -1,13 +1,12 @@
-use std::{
-    fmt::format,
-    process::{Child, Command},
-};
-
+use crate::utils::windows::find_window_handle;
+use std::io;
+use std::process::{Child, Command};
+use tokio::net::windows::named_pipe;
+use uuid::Uuid;
 use windows::Win32::Foundation::HWND;
 
-use crate::utils::windows::find_window_handle;
-
 pub struct MpvPlayerOption {
+    pipe_name: String,
     pub stop_screen_saver: bool,
     pub hwdec: String, //no/auto
     pub pan_scan: bool,
@@ -22,6 +21,7 @@ pub struct MpvPlayer {
 impl MpvPlayerOption {
     pub fn new() -> Self {
         Self {
+            pipe_name: format!(r"\\.\pipe\{}", Uuid::new_v4().to_string()),
             stop_screen_saver: false,
             hwdec: "auto".to_string(),
             pan_scan: true,
@@ -63,6 +63,8 @@ impl MpvPlayer {
         args.push(format!("--volume={}", self.option.volume));
 
         args.push(format!("--hwdec={}", self.option.hwdec));
+
+        args.push(format!(r"--input-ipc-server={}", self.option.pipe_name));
         if path.is_some() {
             args.push(format!("{}", path.unwrap()));
         }
@@ -85,6 +87,39 @@ impl MpvPlayer {
             }
             println!("pid {} , {}", pid, window_handle.0);
             return window_handle;
+        });
+
+        let pipe_name = self.option.pipe_name.clone();
+
+        //读取mpv管道
+        tokio::spawn(async move {
+            let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+
+            let mut msg = vec![0; 1024];
+
+            loop {
+                // Wait for the pipe to be readable
+                println!("GOT = {:?}", String::from_utf8(msg.clone()));
+                //buffer to string
+                client.readable().await.unwrap();
+
+                // Try to read data, this may still fail with `WouldBlock`
+                // if the readiness event is a false positive.
+                match client.try_read(&mut msg) {
+                    Ok(n) => {
+                        msg.truncate(n);
+                        continue;
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                        println!("error = {:?}", e);
+                        continue;
+                    }
+                    Err(e) => {
+                        println!("error = {:?}", e);
+                        continue;
+                    }
+                }
+            }
         });
 
         let window_handle: HWND = handle.await.unwrap();
@@ -134,8 +169,8 @@ mod tests {
         mpv_player
             .play("resources\\wallpaper_samples\\video.mp4".to_string())
             .await;
-        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-        mpv_player.process.unwrap().kill().unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
+        // mpv_player.process.unwrap().kill().unwrap();
         println!("test_set_video end")
     }
 }

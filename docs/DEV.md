@@ -1,15 +1,17 @@
-# ¿ª·¢Ïà¹Ø
+# å¼€å‘ç›¸å…³
 
-## ±¾µØ¿ª·¢
+## æœ¬åœ°å¼€å‘
 
 ### IDE
 
-- vs2022
 - vscode
 
-## ´ò°ü
+## æ‰“åŒ…
 
-## ÆäËûÎÄµµ
+## å…¶ä»–æ–‡æ¡£
 
-- Ä¬ÈÏframework°æ±¾
-<https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies>
+- é»˜è®¤ framework ç‰ˆæœ¬
+  <https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies>
+
+- Tokio NamedPipe
+  <https://docs.rs/tokio/latest/tokio/net/windows/named_pipe/struct.NamedPipeClient.html>
