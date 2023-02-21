@@ -1,6 +1,8 @@
 use crate::utils::windows::find_window_handle;
+use std::error::Error;
 use std::io;
 use std::process::{Child, Command};
+use tokio::io::AsyncWriteExt;
 use tokio::net::windows::named_pipe;
 use uuid::Uuid;
 use windows::Win32::Foundation::HWND;
@@ -89,48 +91,71 @@ impl MpvPlayer {
             return window_handle;
         });
 
-        let pipe_name = self.option.pipe_name.clone();
+        // let pipe_name = self.option.pipe_name.clone();
 
-        //读取mpv管道
-        tokio::spawn(async move {
-            let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+        // //读取mpv管道
+        // tokio::spawn(async move {
+        //     let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
 
-            let mut msg = vec![0; 1024];
+        //     let mut msg = vec![0; 1024];
 
-            loop {
-                // Wait for the pipe to be readable
-                println!("GOT = {:?}", String::from_utf8(msg.clone()));
-                //buffer to string
-                client.readable().await.unwrap();
+        //     loop {
+        //         // Wait for the pipe to be readable
+        //         println!("GOT = {:?}", String::from_utf8(msg.clone()));
+        //         //buffer to string
+        //         client.readable().await.unwrap();
 
-                // Try to read data, this may still fail with `WouldBlock`
-                // if the readiness event is a false positive.
-                match client.try_read(&mut msg) {
-                    Ok(n) => {
-                        msg.truncate(n);
-                        continue;
-                    }
-                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                        println!("error = {:?}", e);
-                        continue;
-                    }
-                    Err(e) => {
-                        println!("error = {:?}", e);
-                        continue;
-                    }
-                }
-            }
-        });
+        //         // Try to read data, this may still fail with `WouldBlock`
+        //         // if the readiness event is a false positive.
+        //         match client.try_read(&mut msg) {
+        //             Ok(n) => {
+        //                 msg.truncate(n);
+        //                 continue;
+        //             }
+        //             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+        //                 println!("error = {:?}", e);
+        //                 continue;
+        //             }
+        //             Err(e) => {
+        //                 println!("error = {:?}", e);
+        //                 continue;
+        //             }
+        //         }
+        //     }
+        // });
 
         let window_handle: HWND = handle.await.unwrap();
 
         println!("show {}", window_handle.0);
     }
 
-    pub async fn play(&mut self, path: String) {
-        let mut args: Vec<String> = vec![];
-        args.push(format!("loadfile \"{}\"", path));
-        println!("args:{:?}", args);
+    pub async fn play(&mut self, path: String) -> Result<(), Box<dyn Error>> {
+        println!("play:{}", path);
+
+        let client = named_pipe::ClientOptions::new().open(&self.option.pipe_name)?;
+
+        loop {
+            client.writable().await?;
+            let command = format!(r#"{{ "command": ["loadfile", "{}"] }}"#, path);
+            let command = r#"{ "command": ["get_property", "time-pos"], "request_id": 100 }"#;
+            let command = br#"{ "command": ["stop"] }"#;
+            // println!("command:{}", command);
+            // match client.try_write(command) {
+            //     Ok(n) => {
+            //         println!("n:{}", n);
+            //         break;
+            //     }
+            //     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+            //         println!("error = {:?}", e);
+            //         continue;
+            //     }
+            //     Err(e) => {
+            //         println!("error = {:?}", e);
+            //         return Err(e.into());
+            //     }
+            // }
+        }
+        Ok(())
     }
 }
 
@@ -163,12 +188,15 @@ mod tests {
     #[tokio::test]
     async fn test_set_video() {
         let mut mpv_player = MpvPlayer::new();
-        mpv_player.launch(None).await;
+        mpv_player
+            .launch(Some("resources\\wallpaper_samples\\video.mp4".to_string()))
+            .await;
         println!("test_set_video");
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
         mpv_player
-            .play("resources\\wallpaper_samples\\video.mp4".to_string())
-            .await;
+            .play(r#"D:\code\github-categorized\tauri\livewallpaper\src-tauri\resources\wallpaper_samples\video.mp4"#.to_string())
+            .await
+            .unwrap();
         tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
         // mpv_player.process.unwrap().kill().unwrap();
         println!("test_set_video end")
