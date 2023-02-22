@@ -131,53 +131,7 @@ impl MpvPlayer {
 
     pub async fn play(&mut self, path: String) -> Result<(), Box<dyn Error>> {
         println!("play:{}", path);
-        let client = named_pipe::ClientOptions::new()
-            .open(r#"\\.\pipe\mpv-socket"#)
-            // .open(&self.option.pipe_name)
-            .unwrap();
 
-        loop {
-            // Wait for the pipe to be writable
-            client.writable().await?;
-
-            // Try to write data, this may still fail with `WouldBlock`
-            // if the readiness event is a false positive.
-            let cmd = r#"{"command":["loadfile","D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4","replace"],"request_id":4}"#;
-            match client.try_write(cmd.as_bytes()) {
-                Ok(n) => {
-                    client.readable().await?;
-                    println!("write {} bytes", n);
-
-                    // Creating the buffer **after** the `await` prevents it from
-                    // being stored in the async task.
-                    let mut buf = [0; 4096];
-
-                    // Try to read data, this may still fail with `WouldBlock`
-                    // if the readiness event is a false positive.
-                    match client.try_read(&mut buf) {
-                        Ok(0) => break,
-                        Ok(n) => {
-                            println!("read {} bytes", n);
-                            println!("GOT = {:?}", String::from_utf8(buf.to_vec()));
-                        }
-                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                            continue;
-                        }
-                        Err(e) => {
-                            return Err(e.into());
-                        }
-                    }
-
-                    break;
-                }
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                    continue;
-                }
-                Err(e) => {
-                    return Err(e.into());
-                }
-            }
-        }
         Ok(())
     }
 }
@@ -227,16 +181,57 @@ mod tests {
 
     #[tokio::test]
     async fn test_ipc() {
-        let mut mpv_player = MpvPlayer::new();
-
-        println!("test_ipc");
-        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-        mpv_player
-            .play(r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\video.mp4"#.to_string())
-            .await
+        let client = named_pipe::ClientOptions::new()
+            .open(r#"\\.\pipe\mpv-socket"#)
+            // .open(&self.option.pipe_name)
             .unwrap();
-        tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
-        // mpv_player.process.unwrap().kill().unwrap();
-        println!("test_ipc end")
+
+        loop {
+            // Wait for the pipe to be writable
+            client.writable().await.unwrap();
+
+            // Try to write data, this may still fail with `WouldBlock`
+            // if the readiness event is a false positive.
+            let cmd = r#"{"command":["loadfile","D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4","replace"],"request_id":4}
+            "#;
+
+            match client.try_write(cmd.as_bytes()) {
+                Ok(n) => {
+                    client.readable().await.unwrap();
+                    println!("write {} bytes", n);
+
+                    // Creating the buffer **after** the `await` prevents it from
+                    // being stored in the async task.
+                    let mut buf = [0; 4096];
+
+                    // Try to read data, this may still fail with `WouldBlock`
+                    // if the readiness event is a false positive.
+                    match client.try_read(&mut buf) {
+                        Ok(0) => break,
+                        Ok(n) => {
+                            println!("read {} bytes", n);
+                            //read 0,n from buffer
+                            println!("GOT = {:?}", String::from_utf8(buf.to_vec()));
+                        }
+                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            print!("error = {:?}", e);
+                            continue;
+                        }
+                        Err(e) => {
+                            print!("error = {:?}", e);
+                        }
+                    }
+
+                    break;
+                }
+                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                    print!("error = {:?}", e);
+                    continue;
+                }
+                Err(e) => {
+                    print!("error = {:?}", e);
+                }
+            }
+        }
     }
 }
