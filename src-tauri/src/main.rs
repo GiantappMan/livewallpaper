@@ -22,10 +22,8 @@ async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
     Ok(res)
 }
 
-async fn set_wallpaper(path: &str) -> Result<(), String> {
-    let res = Wallpaper::set_wallpaper(path);
-    println!("res:{:?}", res);
-    Ok(())
+async fn set_wallpaper(path: &str) {
+    Wallpaper::set_wallpaper(path).await;
 }
 
 fn open_url(handle: &tauri::AppHandle, url: &str) {

@@ -39,7 +39,7 @@ impl MpvPlayer {
         }
     }
 
-    pub async fn launch(&mut self, path: Option<String>) {
+    pub async fn launch(&mut self, path: Option<&str>) {
         let mut args: Vec<String> = vec![];
         args.push(format!(
             "--stop-screensaver={}",
@@ -150,7 +150,7 @@ mod tests {
         let mut mpv_player = MpvPlayer::new();
 
         mpv_player
-            .launch(Some("resources\\wallpaper_samples\\video.mp4".to_string()))
+            .launch(Some("resources\\wallpaper_samples\\video.mp4"))
             .await;
         println!("test_launch_with_video");
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
@@ -162,7 +162,7 @@ mod tests {
     async fn test_set_video() {
         let mut mpv_player = MpvPlayer::new();
         mpv_player
-            .launch(Some("resources\\wallpaper_samples\\video.mp4".to_string()))
+            .launch(Some("resources\\wallpaper_samples\\video.mp4"))
             .await;
         println!("test_set_video");
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;

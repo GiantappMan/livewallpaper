@@ -2,6 +2,8 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
+use crate::render::mpv_player::MpvPlayer;
+
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Wallpaper {
     pub path: String,
@@ -12,14 +14,9 @@ impl Wallpaper {
         Wallpaper { path }
     }
 
-    pub fn set_wallpaper(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        //运行Resources下的LiveWallpaperRenderer.exe作为子进程
-        let mut child = std::process::Command::new("resources/LiveWallpaperRenderer.exe")
-            .arg(path)
-            .spawn()?;
-        let exit_status = child.wait().unwrap();
-        println!("exit_status: {:?}", exit_status);
-        Ok(())
+    pub async fn set_wallpaper(path: &str) {
+        let mut mpv_player = MpvPlayer::new();
+        mpv_player.launch(Some(path)).await;
     }
 
     pub fn get_wallpapers(folder: &str) -> Vec<Wallpaper> {
@@ -59,11 +56,11 @@ mod tests {
         println!("{:?}", wallpapers);
     }
 
-    #[test]
-    fn test_set_wallpaper() {
+    #[tokio::test]
+    async fn test_set_wallpaper() {
         Wallpaper::set_wallpaper(
             r#"D:\Livewallpaper\859059a5619bf2b30774f00b454e4c01\1634301590758_0bhwl.mp4"#,
         )
-        .unwrap();
+        .await;
     }
 }
