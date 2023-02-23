@@ -1,9 +1,7 @@
 use crate::utils::windows::find_window_handle;
 use std::error::Error;
-use std::io;
 use std::process::{Child, Command};
-use tokio::io::AsyncWriteExt;
-use tokio::net::windows::named_pipe::{self, ClientOptions};
+use tokio::net::windows::named_pipe::{self};
 use uuid::Uuid;
 use windows::Win32::Foundation::HWND;
 
@@ -91,46 +89,44 @@ impl MpvPlayer {
             return window_handle;
         });
 
-        // let pipe_name = self.option.pipe_name.clone();
-
-        // //读取mpv管道
-        // tokio::spawn(async move {
-        //     let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
-
-        //     let mut msg = vec![0; 1024];
-
-        //     loop {
-        //         // Wait for the pipe to be readable
-        //         println!("GOT = {:?}", String::from_utf8(msg.clone()));
-        //         //buffer to string
-        //         client.readable().await.unwrap();
-
-        //         // Try to read data, this may still fail with `WouldBlock`
-        //         // if the readiness event is a false positive.
-        //         match client.try_read(&mut msg) {
-        //             Ok(n) => {
-        //                 msg.truncate(n);
-        //                 continue;
-        //             }
-        //             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-        //                 println!("error = {:?}", e);
-        //                 continue;
-        //             }
-        //             Err(e) => {
-        //                 println!("error = {:?}", e);
-        //                 continue;
-        //             }
-        //         }
-        //     }
-        // });
-
         let window_handle: HWND = handle.await.unwrap();
 
         println!("show {}", window_handle.0);
     }
 
-    pub async fn play(&mut self, path: String) -> Result<(), Box<dyn Error>> {
+    pub async fn play(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
         println!("play:{}", path);
+
+        let client = named_pipe::ClientOptions::new().open(&self.option.pipe_name)?;
+
+        let mut command = format!(r#"{{"command":["loadfile","{}","replace"]}}"#, path);
+        command = format!("{} \n", command); //要加换行符才行
+        println!("command:{}", command);
+        // Wait for the pipe to be writable
+        client.writable().await?;
+
+        match client.try_write(command.as_bytes()) {
+            Ok(n) => {
+                client.readable().await?;
+                println!("write {} bytes", n);
+                let mut buf = [0; 4096];
+
+                match client.try_read(&mut buf) {
+                    Ok(n) => {
+                        println!("read {} bytes", n);
+                        //read 0,n from buffer
+                        let msg = String::from_utf8(buf.to_vec())?;
+                        println!("GOT = {}", msg);
+                    }
+                    Err(e) => {
+                        print!("error = {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                print!("error = {:?}", e);
+            }
+        }
 
         Ok(())
     }
@@ -170,68 +166,72 @@ mod tests {
             .await;
         println!("test_set_video");
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-        mpv_player
-            .play(r#"resources\\wallpaper_samples\\video.mp4"#.to_string())
-            .await
-            .unwrap();
-        tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
-        // mpv_player.process.unwrap().kill().unwrap();
+        let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
+        mpv_player.play(path).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        mpv_player.process.unwrap().kill().unwrap();
         println!("test_set_video end")
     }
 
-    #[tokio::test]
-    async fn test_ipc() {
-        let client = named_pipe::ClientOptions::new()
-            .open(r#"\\.\pipe\mpv-socket"#)
-            // .open(&self.option.pipe_name)
-            .unwrap();
+    // #[tokio::test]
+    // async fn test_ipc() {
+    //     let client = named_pipe::ClientOptions::new()
+    //         .open(r#"\\.\pipe\mpv-socket"#)
+    //         // .open(&self.option.pipe_name)
+    //         .unwrap();
 
-        loop {
-            // Wait for the pipe to be writable
-            client.writable().await.unwrap();
+    //     let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
+    //     let command_str = format!(r#"{{"command":["loadfile","{}","replace"]}}"#, path);
+    //     let cmd = format!("{} \n", command_str); //要加换行符才行
+    //                                              // let cmd = "{\"command\":[\"loadfile\",\"D:\\\\code\\\\github-categorized\\\\tauri\\\\livewallpaper\\\\src-tauri\\\\resources\\\\wallpaper_samples\\\\audio.mp4\",\"replace\"]} \n";
 
-            // Try to write data, this may still fail with `WouldBlock`
-            // if the readiness event is a false positive.
-            let cmd = r#"{"command":["loadfile","D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4","replace"],"request_id":4}
-            "#;
+    //     // let buffer = [io::IoSlice::new(cmd.as_bytes())];
 
-            match client.try_write(cmd.as_bytes()) {
-                Ok(n) => {
-                    client.readable().await.unwrap();
-                    println!("write {} bytes", n);
+    //     loop {
+    //         // Wait for the pipe to be writable
+    //         client.writable().await.unwrap();
 
-                    // Creating the buffer **after** the `await` prevents it from
-                    // being stored in the async task.
-                    let mut buf = [0; 4096];
+    //         // Try to write data, this may still fail with `WouldBlock`
+    //         // if the readiness event is a false positive.
 
-                    // Try to read data, this may still fail with `WouldBlock`
-                    // if the readiness event is a false positive.
-                    match client.try_read(&mut buf) {
-                        Ok(0) => break,
-                        Ok(n) => {
-                            println!("read {} bytes", n);
-                            //read 0,n from buffer
-                            println!("GOT = {:?}", String::from_utf8(buf.to_vec()));
-                        }
-                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                            print!("error = {:?}", e);
-                            continue;
-                        }
-                        Err(e) => {
-                            print!("error = {:?}", e);
-                        }
-                    }
+    //         match client.try_write(cmd.as_bytes()) {
+    //             Ok(n) => {
+    //                 client.readable().await.unwrap();
+    //                 println!("write {} bytes", n);
 
-                    break;
-                }
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                    print!("error = {:?}", e);
-                    continue;
-                }
-                Err(e) => {
-                    print!("error = {:?}", e);
-                }
-            }
-        }
-    }
+    //                 // Creating the buffer **after** the `await` prevents it from
+    //                 // being stored in the async task.
+    //                 let mut buf = [0; 4096];
+
+    //                 // Try to read data, this may still fail with `WouldBlock`
+    //                 // if the readiness event is a false positive.
+    //                 match client.try_read(&mut buf) {
+    //                     Ok(0) => break,
+    //                     Ok(n) => {
+    //                         println!("read {} bytes", n);
+    //                         //read 0,n from buffer
+    //                         let msg = String::from_utf8(buf.to_vec()).unwrap();
+    //                         println!("GOT = {}", msg);
+    //                     }
+    //                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+    //                         print!("error = {}", e);
+    //                         continue;
+    //                     }
+    //                     Err(e) => {
+    //                         print!("error = {}", e);
+    //                     }
+    //                 }
+
+    //                 break;
+    //             }
+    //             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+    //                 print!("error = {:?}", e);
+    //                 continue;
+    //             }
+    //             Err(e) => {
+    //                 print!("error = {:?}", e);
+    //             }
+    //         }
+    //     }
+    // }
 }
