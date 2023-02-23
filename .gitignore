@@ -25,3 +25,9 @@ dist-ssr
 *.sw?
 /src-tauri/resources/mpv
 /src-tauri/resources/wallpaper_samples
+*.log*
+.nuxt
+.nitro
+.cache
+.output
+.env

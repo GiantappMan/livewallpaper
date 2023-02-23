@@ -5,7 +5,6 @@
 pub mod render;
 pub mod utils;
 pub mod wallpaper;
-
 use tauri::{CustomMenuItem, Manager, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
 use wallpaper::Wallpaper;

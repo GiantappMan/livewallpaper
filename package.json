@@ -1,23 +1,18 @@
 {
   "name": "livewallpaper",
   "private": true,
-  "version": "0.0.0",
   "scripts": {
-    "dev": "next dev -p 1420",
-    "build": "next build && next export -o dist",
-    "tauri": "tauri"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^1.2.0",
-    "next": "^13.1.6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "build": "nuxt generate",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.2.3",
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.0.27",
-    "@types/react-dom": "^18.0.10",
-    "typescript": "^4.9.4"
+    "nuxt": "^3.2.2"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.2.0"
   }
 }
