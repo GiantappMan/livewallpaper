@@ -1,12 +1,8 @@
 <template>
-  <div>
-    <NuxtLayout>
-      <NuxtLink to="/">Home</NuxtLink>
-      <NuxtLink to="/settings">Settings</NuxtLink>
-      <NuxtLink to="/local">Local</NuxtLink>
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <NuxtLayout>
+    <!-- <NuxtLoadingIndicator color="#2563eb" /> -->
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 <script lang="ts" setup>
 
@@ -16,3 +12,19 @@ onMounted(async () => {
   appWindow.show();
 });
 </script>
+<style>
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #9f9f9f;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #262626;
+  border-radius: 10px;
+}
+</style>
