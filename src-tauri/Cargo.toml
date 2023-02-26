@@ -11,12 +11,14 @@ version = "3.0.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = {version = "1.2", features = [] }
+tauri-build = {version = "1.2", features = []}
 [dependencies]
-serde = {version = "1.0", features = ["derive"] }
+serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
-tauri = {version = "1.2", features = ["shell-open", "system-tray", "window-show"] }
-tokio = {version = "1.25.0", features = ["full"] }
+tauri = {version = "1.2", features = ["shell-open", "system-tray", "window-show"]}
+tokio = {version = "1.25.0", features = ["full"]}
+toml = "0.7"
+winsafe = {version = "0", features = ["kernel"]}
 [features]
 # by default Tauri runs in production mode
 # when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
