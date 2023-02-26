@@ -57,7 +57,7 @@ const sidebarTopNavigation = reactive([
 ])
 
 const sidebarBottomNavigation = reactive([
-    { name: '设置', href: '/settings', icon: CogIcon, selectedIcon: solidCogIcon, current: false },
+    { name: '设置', href: '/settings/general', icon: CogIcon, selectedIcon: solidCogIcon, current: false },
 ])
 
 const route = useRoute()
@@ -66,7 +66,10 @@ const updateActive = () => {
         item.current = route.path === item.href;
     });
     sidebarBottomNavigation.forEach((item) => {
-        item.current = route.path === item.href;
+        if (item.href.startsWith('/settings'))
+            item.current = route.path.startsWith('/settings');
+        else
+            item.current = route.path === item.href;
     });
 }
 
