@@ -2,11 +2,13 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
+pub mod config;
 pub mod render;
 pub mod utils;
 pub mod wallpaper;
-pub mod config;
-use tauri::{CustomMenuItem, LogicalSize, Manager, Size, SystemTrayMenu, SystemTrayMenuItem};
+use tauri::{
+    CustomMenuItem, LogicalSize, Manager, Runtime, Size, SystemTrayMenu, SystemTrayMenuItem,
+};
 use tauri::{SystemTray, SystemTrayEvent};
 use wallpaper::Wallpaper;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -20,6 +22,24 @@ async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
     let res = Wallpaper::get_wallpapers("D:\\Livewallpaper\\");
     println!("res:{:?}", res);
     Ok(res)
+}
+
+#[tauri::command]
+async fn load_config<R: Runtime>(
+    config_type: String,
+    app: tauri::AppHandle<R>,
+    window: tauri::Window<R>,
+) -> Result<String, String> {
+    Ok("".to_string())
+}
+#[tauri::command]
+async fn save_config<R: Runtime>(
+    config_type: String,
+    json: String,
+    app: tauri::AppHandle<R>,
+    window: tauri::Window<R>,
+) -> Result<(), String> {
+    Ok(())
 }
 
 async fn set_wallpaper(path: &str) {
@@ -149,7 +169,12 @@ fn main() {
             create_tray(app)?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_wallpapers])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            get_wallpapers,
+            load_config,
+            save_config
+        ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|_app_handle, event| match event {
