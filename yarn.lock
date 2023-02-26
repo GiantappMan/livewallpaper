@@ -4792,11 +4792,6 @@ tar@^6.1.11, tar@^6.1.13:
     mkdirp "^1.0.3"
     yallist "^4.0.0"
 
-tauri-settings@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.npmmirror.com/tauri-settings/-/tauri-settings-0.3.0.tgz#8b3ccbfc8acad9aa3e063a3e597d915baa481c17"
-  integrity sha512-FLM44lqID/Cl+zEhqfAnN8XkQoihXyJSz4WA7FYtshSRq0J24ZJlhNILosS2sM1fGAvUzsj1PkrpLlwBndAbOA==
-
 terser@^5.15.1:
   version "5.16.5"
   resolved "https://registry.npmmirror.com/terser/-/terser-5.16.5.tgz#1c285ca0655f467f92af1bbab46ab72d1cb08e5a"

@@ -19,19 +19,6 @@
       "shell": {
         "all": false,
         "open": true
-      },
-      "fs": {
-        "createDir": true,
-        "readDir": true,
-        "readFile": true,
-        "writeFile": true,
-        "scope": [
-          "$APPCONFIG",
-          "$APPCONFIG/*"
-        ]
-      },
-      "path": {
-        "all": true
       }
     },
     "bundle": {

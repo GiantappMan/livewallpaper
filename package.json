@@ -18,7 +18,6 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.11",
     "@heroicons/vue": "^2.0.16",
-    "@tauri-apps/api": "^1.2.0",
-    "tauri-settings": "^0.3.0"
+    "@tauri-apps/api": "^1.2.0"
   }
 }
