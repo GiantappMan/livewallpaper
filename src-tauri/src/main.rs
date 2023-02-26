@@ -5,7 +5,7 @@
 pub mod render;
 pub mod utils;
 pub mod wallpaper;
-use tauri::{CustomMenuItem, Manager, SystemTrayMenu, SystemTrayMenuItem};
+use tauri::{CustomMenuItem, LogicalSize, Manager, Size, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
 use wallpaper::Wallpaper;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -44,6 +44,12 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
                 .visible(false)
                 .build()
                 .expect("failed to create main window");
+        main_window
+            .set_size(Size::Logical(LogicalSize {
+                width: 1024.0,
+                height: 700.0,
+            }))
+            .unwrap();
         main_window.set_title("LiveWallpaper3").unwrap();
         //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
         main_window.center().unwrap();

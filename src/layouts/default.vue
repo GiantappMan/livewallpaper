@@ -1,6 +1,6 @@
 <template>
-    <div class="flex h-screen">
-        <div class="flex w-[74px] overflow-y-auto bg-zinc-900">
+    <div class="flex h-screen bg-zinc-900">
+        <div class="flex w-[74px] overflow-y-auto">
             <div class="flex flex-1 w-full flex-col items-center">
                 <div class="w-full flex-1 space-y-1 px-1">
                     <NavMenu v-for="item in sidebarTopNavigation" :key="item.name" :to="item.href" :name="item.name"
@@ -52,7 +52,7 @@ import {
 import NavMenu from '~/components/NavMenu.vue';
 
 const sidebarTopNavigation = reactive([
-    { name: '本地壁纸', href: '/', icon: HomeIcon, selectedIcon: solidHomeIcon, current: false },
+    { name: '本地壁纸', href: '/local', icon: HomeIcon, selectedIcon: solidHomeIcon, current: false },
     { name: '社区', href: '/community', icon: Squares2X2Icon, selectedIcon: solidSquares2X2Icon, current: false },
 ])
 

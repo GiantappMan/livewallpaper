@@ -1,6 +1,6 @@
 <template>
     <div>
-        index
+        建设中
     </div>
 </template>
   
