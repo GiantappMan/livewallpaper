@@ -12,8 +12,8 @@ export default defineNuxtConfig({
     naiveUI: {
         themeOverrides: {
             common: {
-                primaryColor: '#ff0000',
-                primaryColorHover: '#8b0000'
+                primaryColor: '#2563eb',
+                primaryColorHover: '#2563eb'
             }
         }
     }

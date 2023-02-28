@@ -10,14 +10,28 @@
                 </div>
 
                 <div class="sm:col-span-6">
-                    <input type="text" name="url" id="url"
-                        class="mt-1 block w-full rounded-md border-blue-gray-300 text-blue-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+                    <n-input-group>
+                        <n-button type="error">
+                            X
+                        </n-button>
+                        <n-input placeholder="D:\Livewallpaper" />
+                        <n-button type="primary">
+                            选择
+                        </n-button>
+                    </n-input-group>
                 </div>
-                <button class="text-white">添加</button>
+                <n-button class="text-white" type="primary">添加</n-button>
             </div>
         </div>
     </div>
 </template>
 <script setup lang="ts">
+import { invoke } from '@tauri-apps/api/tauri'
+onMounted(async () => {
+    var test = await invoke("load_config", {
+        "configType": "wallpaper"
+    });
+    console.log(test);
+});
 
 </script>

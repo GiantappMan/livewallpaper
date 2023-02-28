@@ -30,6 +30,7 @@ async fn load_config<R: Runtime>(
     app: tauri::AppHandle<R>,
     window: tauri::Window<R>,
 ) -> Result<String, String> {
+    println!("load_config");
     Ok("".to_string())
 }
 #[tauri::command]
@@ -39,6 +40,7 @@ async fn save_config<R: Runtime>(
     app: tauri::AppHandle<R>,
     window: tauri::Window<R>,
 ) -> Result<(), String> {
+    println!("save_config");
     Ok(())
 }
 
