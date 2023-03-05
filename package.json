@@ -13,10 +13,10 @@
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
     "@tauri-apps/cli": "^1.2.3",
-    "nuxt": "^3.2.2"
+    "nuxt": "^3.2.3"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.11",
+    "@headlessui/vue": "^1.7.12",
     "@heroicons/vue": "^2.0.16",
     "@huntersofbook/naive-ui-nuxt": "^0.7.1",
     "@tauri-apps/api": "^1.2.0"

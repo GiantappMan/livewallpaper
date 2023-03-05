@@ -87,6 +87,10 @@ mod tests {
     fn test_read_config() {
         let config: Wallpaper =
             read_config("%localappdata%\\livewallpaper3\\configs\\config.json").unwrap();
+        // json
+        let json = serde_json::to_string(&config).unwrap();
+        print!("{}", json);
+
         println!("{:?}", config);
     }
 }
