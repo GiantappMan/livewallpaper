@@ -12,7 +12,7 @@ use tauri::{
 use tauri::{SystemTray, SystemTrayEvent};
 use wallpaper::Wallpaper;
 
-use crate::config::read_config;
+use crate::config::{read_config, write_config};
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -40,14 +40,22 @@ async fn load_config(config_type: String) -> Result<String, String> {
     }
 }
 #[tauri::command]
-async fn save_config<R: Runtime>(
-    config_type: String,
-    json: String,
-    app: tauri::AppHandle<R>,
-    window: tauri::Window<R>,
-) -> Result<(), String> {
-    println!("save_config");
-    Ok(())
+async fn save_config(config_type: String) -> Result<String, String> {
+    let json = "";
+    match config_type.as_str() {
+        "wallpaper" => {
+            let config: config::Wallpaper =
+                serde_json::from_str(&json).map_err(|e| e.to_string())?;
+            write_config(
+                "%localappdata%\\livewallpaper3\\configs\\wallpaper.json",
+                &config,
+            )
+            .map_err(|e| e.to_string())?;
+            println!("config_type:{},{}", config_type, json);
+            Ok(json.to_string())
+        }
+        _ => Ok("".to_string()),
+    }
 }
 
 async fn set_wallpaper(path: &str) {
