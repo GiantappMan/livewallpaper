@@ -10,10 +10,8 @@
 import { invoke } from '@tauri-apps/api/tauri'
 const wallpapers = ref<Array<any>>();
 
-
 onMounted(async () => {
     wallpapers.value = await invoke("get_wallpapers");
 });
-
 
 </script>

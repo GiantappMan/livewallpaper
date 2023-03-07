@@ -2,7 +2,7 @@
     <div class="flex w-full h-full flex-row overflow-hidden">
         <nav aria-label="Sections" class="w-96 flex-shrink-0 border-r border-black flex flex-col">
             <div class="flex h-16 flex-shrink-0 items-center border-b border-black px-6">
-                <p class="text-lg font-medium text-gray-200">Settings</p>
+                <p class="text-lg font-medium text-gray-200">设置</p>
             </div>
             <div class="h-full  flex-1 overflow-y-auto">
                 <NuxtLink v-for="item in subNavigation" :key="item.name" :to="item.href"

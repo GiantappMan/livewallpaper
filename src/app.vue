@@ -1,8 +1,10 @@
 <template>
-  <NuxtLayout>
-    <!-- <NuxtLoadingIndicator color="#2563eb" /> -->
-    <NuxtPage />
-  </NuxtLayout>
+  <n-message-provider>
+    <NuxtLayout>
+      <!-- <NuxtLoadingIndicator color="#2563eb" /> -->
+      <NuxtPage />
+    </NuxtLayout>
+  </n-message-provider>
 </template>
 <script lang="ts" setup>
 
