@@ -46,6 +46,7 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
         let main_window =
             tauri::WindowBuilder::new(handle, "main", tauri::WindowUrl::App(url.into()))
                 .visible(false)
+                .disable_file_drop_handler()
                 .build()
                 .expect("failed to create main window");
         main_window

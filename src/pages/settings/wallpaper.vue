@@ -9,16 +9,18 @@
                         <p class="mt-1 text-sm text-gray-300">支持从多个路径读取壁纸，保存时会按顺序查找第一个可用目录。</p>
                     </div>
                     <div class="col-span-6">
-                        <n-input-group v-if="config" v-for="(item, index) in config.paths" class="mb-1">
-                            <n-button type="info" @click="removePath(index)">
-                                Move
-                            </n-button>
-                            <n-input placeholder="D:\Livewallpaper" v-model:value="config.paths[index]"
-                                @blur="saveConfig" />
-                            <n-button type="error" @click="removePath(index)">
-                                X
-                            </n-button>
-                        </n-input-group>
+                        <draggable v-if="config" v-model="config.paths" item-key="id" handle=".handle" @end="saveConfig">
+                            <template #item="{ index }">
+                                <n-input-group class="mb-1">
+                                    <Bars3Icon class="w-8 h-8 text-white mr-2 handle self-center cursor-pointer" />
+                                    <n-input placeholder="D:\Livewallpaper" v-model:value="config.paths[index]" class="mr-2"
+                                        @blur="saveConfig" />
+                                    <n-button type="error" @click="removePath(index)">
+                                        X
+                                    </n-button>
+                                </n-input-group>
+                            </template>
+                        </draggable>
                     </div>
                 </div>
                 <n-button class="text-white" type="primary" @click="choosePath()">添加目录</n-button>
@@ -27,8 +29,10 @@
     </n-spin>
 </template>
 <script setup lang="ts">
+import draggable from 'vuedraggable'
 import { invoke } from '@tauri-apps/api/tauri'
-import { open, save } from '@tauri-apps/api/dialog';
+import { open } from '@tauri-apps/api/dialog';
+import { Bars3Icon } from '@heroicons/vue/24/outline'
 class WallpaperConfig {
     constructor(init?: Partial<WallpaperConfig>) {
         if (init)
