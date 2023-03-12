@@ -1,9 +1,9 @@
-use crate::config::{self, read_config, write_config, Wallpaper};
+use crate::config::{self, read_config, write_config, WallpaperConfig};
 //设置相关接口
 
 #[tauri::command]
-pub fn settings_load_wallpaper() -> Result<Wallpaper, String> {
-    let config: config::Wallpaper =
+pub fn settings_load_wallpaper() -> Result<WallpaperConfig, String> {
+    let config: config::WallpaperConfig =
         read_config("%localappdata%\\livewallpaper3\\configs\\wallpaper.json").map_err(|e| {
             println!("read_config error:{}", e.to_string());
             e.to_string()
@@ -12,7 +12,7 @@ pub fn settings_load_wallpaper() -> Result<Wallpaper, String> {
     Ok(config)
 }
 #[tauri::command]
-pub fn settings_save_wallpaper(config: Wallpaper) -> Result<Wallpaper, String> {
+pub fn settings_save_wallpaper(config: WallpaperConfig) -> Result<WallpaperConfig, String> {
     println!("save_wallpaper:{:?}", config);
     write_config(
         "%localappdata%\\livewallpaper3\\configs\\wallpaper.json",

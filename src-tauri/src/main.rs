@@ -7,22 +7,12 @@ pub mod config;
 pub mod render;
 pub mod utils;
 pub mod wallpaper;
-use tauri::{
-    CustomMenuItem, LogicalSize, Manager, Runtime, Size, SystemTrayMenu, SystemTrayMenuItem,
-};
+use tauri::{CustomMenuItem, LogicalSize, Manager, Size, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
-use wallpaper::Wallpaper;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
-async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
-    let res = Wallpaper::get_wallpapers("D:\\Livewallpaper\\");
-    println!("res:{:?}", res);
-    Ok(res)
 }
 
 fn open_url(handle: &tauri::AppHandle, url: &str) {
@@ -126,7 +116,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             greet,
-            get_wallpapers,
+            api::wallpaper::get_wallpapers,
             api::settings::settings_load_wallpaper,
             api::settings::settings_save_wallpaper,
         ])

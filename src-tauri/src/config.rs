@@ -11,12 +11,12 @@ use winsafe::ExpandEnvironmentStrings;
 pub struct General {}
 //壁纸设置
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Wallpaper {
+pub struct WallpaperConfig {
     //壁纸目录
     pub paths: Vec<String>,
 }
 
-impl Default for Wallpaper {
+impl Default for WallpaperConfig {
     fn default() -> Self {
         let mut paths = vec![];
         if std::path::Path::new("D:\\").exists() {
@@ -25,7 +25,7 @@ impl Default for Wallpaper {
             let tmp = ExpandEnvironmentStrings("%UserProfile%\\videos\\").unwrap();
             paths.push(tmp);
         }
-        Wallpaper { paths }
+        WallpaperConfig { paths }
     }
 }
 
@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_write_config() {
-        let config = Wallpaper {
+        let config = WallpaperConfig {
             paths: vec!["D:\\Livewallpaper\\".to_string()],
         };
         write_config(
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn test_read_config() {
-        let config: Wallpaper =
+        let config: WallpaperConfig =
             read_config("%localappdata%\\livewallpaper3\\configs\\config.json").unwrap();
         // json
         let json = serde_json::to_string(&config).unwrap();

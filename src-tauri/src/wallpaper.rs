@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fs;
 
 use serde::{Deserialize, Serialize};
@@ -19,7 +20,7 @@ impl Wallpaper {
         mpv_player.launch(Some(path)).await;
     }
 
-    pub fn get_wallpapers(folder: &str) -> Vec<Wallpaper> {
+    pub fn get_wallpapers(folder: &str) -> Result<Vec<Wallpaper>, Box<dyn Error>> {
         let mut wallpapers = Vec::new();
         let support_ext = vec![
             "jpg", "png", "jpeg", "bmp", "gif", "mp4", "webm", "mkv", "avi", "wmv", "mov", "flv",
@@ -27,13 +28,14 @@ impl Wallpaper {
         ];
         let exclude_files = vec!["cover.jpg", "cover.png"];
         //遍历folder下的所有文件
-        for entry in fs::read_dir(folder).unwrap() {
-            let entry = entry.unwrap();
+        for entry in fs::read_dir(folder)? {
+            let entry = entry?;
             let path = entry.path();
             let file_name = path.file_name().unwrap().to_str().unwrap();
-            //如果是文件夹，递归
             if path.is_dir() {
-                wallpapers.append(&mut Wallpaper::get_wallpapers(path.to_str().unwrap()));
+                //如果是文件夹，递归
+                let tmp = &mut Wallpaper::get_wallpapers(path.to_str().unwrap())?;
+                wallpapers.append(tmp);
             } else {
                 let ext = path.extension().unwrap().to_str().unwrap();
                 if support_ext.contains(&ext) && !exclude_files.contains(&file_name) {
@@ -42,7 +44,7 @@ impl Wallpaper {
             }
         }
 
-        wallpapers
+        Ok(wallpapers)
     }
 }
 
