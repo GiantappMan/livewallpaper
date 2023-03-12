@@ -10,11 +10,6 @@ pub mod wallpaper;
 use tauri::{CustomMenuItem, LogicalSize, Manager, Size, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 fn open_url(handle: &tauri::AppHandle, url: &str) {
     let window = handle.get_window("main");
     if window.is_some() {
@@ -115,8 +110,9 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet,
-            api::wallpaper::get_wallpapers,
+            api::wallpaper::wallpaper_open,
+            api::wallpaper::wallpaper_close,
+            api::wallpaper::wallpaper_get_list,
             api::settings::settings_load_wallpaper,
             api::settings::settings_save_wallpaper,
         ])

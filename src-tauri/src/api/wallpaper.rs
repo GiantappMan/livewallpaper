@@ -1,7 +1,28 @@
-use crate::{api::settings::settings_load_wallpaper, wallpaper::Wallpaper};
+use crate::{
+    api::settings::settings_load_wallpaper, render::mpv_player::MpvPlayer, wallpaper::Wallpaper,
+};
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Debug, Deserialize, Serialize)]
+pub struct WallpaperParam {
+    pub path: String,
+    pub screen_index: Option<i32>,
+}
 
 #[tauri::command]
-pub async fn get_wallpapers() -> Result<Vec<Wallpaper>, String> {
+pub async fn wallpaper_open(param: WallpaperParam) -> Result<bool, String> {
+    let mut mpv_player = MpvPlayer::new();
+    mpv_player.launch(Some(&param.path)).await;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn wallpaper_close(screen_index: i32) -> Result<bool, String> {
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn wallpaper_get_list() -> Result<Vec<Wallpaper>, String> {
     let config = settings_load_wallpaper().map_err(|e| {
         println!("settings_load_wallpaper error:{}", e.to_string());
         e.to_string()
