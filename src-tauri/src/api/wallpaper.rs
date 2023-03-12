@@ -1,16 +1,7 @@
-use crate::{
-    api::settings::settings_load_wallpaper, render::mpv_player::MpvPlayer, wallpaper::Wallpaper,
-};
-use serde::{Deserialize, Serialize};
-
-#[derive(Default, Debug, Deserialize, Serialize)]
-pub struct WallpaperParam {
-    pub path: String,
-    pub screen_index: Option<i32>,
-}
-
+use crate::{api::settings::settings_load_wallpaper, render::mpv_player::MpvPlayer};
+use crate::{wallpaper_manager::Wallpaper, wallpaper_manager::WallpaperManager};
 #[tauri::command]
-pub async fn wallpaper_open(param: WallpaperParam) -> Result<bool, String> {
+pub async fn wallpaper_open(param: Wallpaper) -> Result<bool, String> {
     let mut mpv_player = MpvPlayer::new();
     mpv_player.launch(Some(&param.path)).await;
     Ok(true)
@@ -31,7 +22,7 @@ pub async fn wallpaper_get_list() -> Result<Vec<Wallpaper>, String> {
 
     let mut res = Vec::new();
     for path in config.paths {
-        let mut wallpapers = Wallpaper::get_wallpapers(&path).map_err(|e| {
+        let mut wallpapers = WallpaperManager::get_wallpapers(&path).map_err(|e| {
             println!("get_wallpapers error:{}", e.to_string());
             e.to_string()
         })?;

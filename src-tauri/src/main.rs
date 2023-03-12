@@ -6,7 +6,7 @@ pub mod api;
 pub mod config;
 pub mod render;
 pub mod utils;
-pub mod wallpaper;
+pub mod wallpaper_manager;
 use tauri::{CustomMenuItem, LogicalSize, Manager, Size, SystemTrayMenu, SystemTrayMenuItem};
 use tauri::{SystemTray, SystemTrayEvent};
 

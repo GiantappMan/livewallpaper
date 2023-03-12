@@ -10,11 +10,14 @@ pub struct Wallpaper {
     pub path: String,
 }
 
-impl Wallpaper {
-    pub fn new(path: String) -> Wallpaper {
-        Wallpaper { path }
-    }
+//管理一块屏幕的壁纸播放
+#[derive(Default, Debug, Deserialize, Serialize)]
+pub struct WallpaperManager {
+    pub screen_index: i32,
+    pub current_wallpaper: Wallpaper,
+}
 
+impl WallpaperManager {
     pub async fn set_wallpaper(path: &str) {
         let mut mpv_player = MpvPlayer::new();
         mpv_player.launch(Some(path)).await;
@@ -34,12 +37,15 @@ impl Wallpaper {
             let file_name = path.file_name().unwrap().to_str().unwrap();
             if path.is_dir() {
                 //如果是文件夹，递归
-                let tmp = &mut Wallpaper::get_wallpapers(path.to_str().unwrap())?;
+                let tmp = &mut WallpaperManager::get_wallpapers(path.to_str().unwrap())?;
                 wallpapers.append(tmp);
             } else {
                 let ext = path.extension().unwrap().to_str().unwrap();
                 if support_ext.contains(&ext) && !exclude_files.contains(&file_name) {
-                    wallpapers.push(Wallpaper::new(path.to_str().unwrap().to_string()));
+                    wallpapers.push(Wallpaper {
+                        path: path.to_str().unwrap().to_string(),
+                        ..Default::default()
+                    });
                 }
             }
         }
@@ -54,13 +60,13 @@ mod tests {
 
     #[test]
     fn test_get_wallpapers() {
-        let wallpapers = Wallpaper::get_wallpapers("D:\\Livewallpaper\\");
+        let wallpapers = WallpaperManager::get_wallpapers("D:\\Livewallpaper\\");
         println!("{:?}", wallpapers);
     }
 
     #[tokio::test]
     async fn test_set_wallpaper() {
-        Wallpaper::set_wallpaper(
+        WallpaperManager::set_wallpaper(
             r#"D:\Livewallpaper\859059a5619bf2b30774f00b454e4c01\1634301590758_0bhwl.mp4"#,
         )
         .await;
