@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fs;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ lazy_static::lazy_static! {
 }
 impl WallpaperManager {
     pub async fn set_wallpaper(path: &str, screen_index: u32) -> Result<(), Box<dyn Error>> {
-        let mut map = WALLPAPER_MANAGERS.lock().ok().unwrap();
+        let mut map = WALLPAPER_MANAGERS.lock().await;
         let manager = map.iter_mut().find(|m| m.screen_index == screen_index);
         if manager.is_none() {
             //新建管理器
@@ -37,12 +37,14 @@ impl WallpaperManager {
             .find(|m| m.screen_index == screen_index)
             .unwrap();
         manager.current_wallpaper.path = path.to_string();
+
         manager
             .mpv_player
             .as_mut()
             .unwrap()
             .launch(Some(path))
             .await;
+
         Ok(())
     }
 
@@ -89,7 +91,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_set_wallpaper() {
-        WallpaperManager::set_wallpaper(
+        _ = WallpaperManager::set_wallpaper(
             r#"D:\Livewallpaper\859059a5619bf2b30774f00b454e4c01\1634301590758_0bhwl.mp4"#,
             0,
         )

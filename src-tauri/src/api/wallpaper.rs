@@ -1,11 +1,17 @@
+use serde::{Deserialize, Serialize};
+
 use crate::api::settings::settings_load_wallpaper;
 use crate::{wallpaper_manager::Wallpaper, wallpaper_manager::WallpaperManager};
 
-static mut MY_STATIC_VAR: i32 = 0;
+#[derive(Default, Debug, Deserialize, Serialize)]
+pub struct WallpaperOpenParam {
+    pub path: String,
+    pub screen_index: Option<u32>,
+}
 
 #[tauri::command]
-pub async fn wallpaper_open(param: Wallpaper) -> Result<bool, String> {
-    // WallpaperManager::set_wallpaper(&param.path, 0).await;
+pub async fn wallpaper_open(param: WallpaperOpenParam) -> Result<bool, String> {
+    _ = WallpaperManager::set_wallpaper(&param.path, param.screen_index.unwrap_or(0)).await;
     Ok(true)
 }
 
