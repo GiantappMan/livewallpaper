@@ -1,9 +1,11 @@
-use crate::{api::settings::settings_load_wallpaper, render::mpv_player::MpvPlayer};
+use crate::api::settings::settings_load_wallpaper;
 use crate::{wallpaper_manager::Wallpaper, wallpaper_manager::WallpaperManager};
+
+static mut MY_STATIC_VAR: i32 = 0;
+
 #[tauri::command]
 pub async fn wallpaper_open(param: Wallpaper) -> Result<bool, String> {
-    let mut mpv_player = MpvPlayer::new();
-    mpv_player.launch(Some(&param.path)).await;
+    // WallpaperManager::set_wallpaper(&param.path, 0).await;
     Ok(true)
 }
 

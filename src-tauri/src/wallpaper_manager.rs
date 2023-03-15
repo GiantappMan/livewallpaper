@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fs;
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
@@ -11,16 +12,38 @@ pub struct Wallpaper {
 }
 
 //管理一块屏幕的壁纸播放
-#[derive(Default, Debug, Deserialize, Serialize)]
+#[derive(Default)]
 pub struct WallpaperManager {
-    pub screen_index: i32,
+    pub screen_index: u32,
     pub current_wallpaper: Wallpaper,
+    pub mpv_player: Option<MpvPlayer>,
 }
-
+lazy_static::lazy_static! {
+    static ref WALLPAPER_MANAGERS: Mutex<Vec<WallpaperManager>> = Mutex::new(Vec::new());
+}
 impl WallpaperManager {
-    pub async fn set_wallpaper(path: &str) {
-        let mut mpv_player = MpvPlayer::new();
-        mpv_player.launch(Some(path)).await;
+    pub async fn set_wallpaper(path: &str, screen_index: u32) -> Result<(), Box<dyn Error>> {
+        let mut map = WALLPAPER_MANAGERS.lock().ok().unwrap();
+        let manager = map.iter_mut().find(|m| m.screen_index == screen_index);
+        if manager.is_none() {
+            //新建管理器
+            let mut new_manager = WallpaperManager::default();
+            new_manager.screen_index = screen_index;
+            new_manager.mpv_player = Some(MpvPlayer::new());
+            map.push(new_manager);
+        }
+        let mut manager = map
+            .iter_mut()
+            .find(|m| m.screen_index == screen_index)
+            .unwrap();
+        manager.current_wallpaper.path = path.to_string();
+        manager
+            .mpv_player
+            .as_mut()
+            .unwrap()
+            .launch(Some(path))
+            .await;
+        Ok(())
     }
 
     pub fn get_wallpapers(folder: &str) -> Result<Vec<Wallpaper>, Box<dyn Error>> {
@@ -68,6 +91,7 @@ mod tests {
     async fn test_set_wallpaper() {
         WallpaperManager::set_wallpaper(
             r#"D:\Livewallpaper\859059a5619bf2b30774f00b454e4c01\1634301590758_0bhwl.mp4"#,
+            0,
         )
         .await;
     }
