@@ -15,13 +15,14 @@ pub struct MpvPlayerOption {
 }
 pub struct MpvPlayer {
     pub option: MpvPlayerOption,
+    pub player_path: Option<String>,
     //当前播放路径
     pub current_path: Option<String>,
     process: Option<Child>,
 }
 
-impl MpvPlayerOption {
-    pub fn new() -> Self {
+impl Default for MpvPlayerOption {
+    fn default() -> Self {
         Self {
             pipe_name: format!(r"\\.\pipe\{}", Uuid::new_v4().to_string()),
             stop_screen_saver: false,
@@ -33,16 +34,18 @@ impl MpvPlayerOption {
     }
 }
 
-impl MpvPlayer {
-    pub fn new() -> Self {
+impl Default for MpvPlayer {
+    fn default() -> Self {
         Self {
-            option: MpvPlayerOption::new(),
+            option: MpvPlayerOption::default(),
             process: None,
             current_path: None,
+            player_path: Some("resources\\mpv\\mpv.exe".to_string()),
         }
     }
-
-    pub async fn launch(&mut self, path: Option<&str>) {
+}
+impl MpvPlayer {
+    pub async fn launch(&mut self, path: Option<&str>) -> Result<HWND, Box<dyn Error>> {
         let mut args: Vec<String> = vec![];
         args.push(format!(
             "--stop-screensaver={}",
@@ -74,8 +77,15 @@ impl MpvPlayer {
         }
         println!("args:{:?}", args);
 
+        //exe path
+        let ext_path = std::env::current_exe().unwrap();
+        let mpv_path = ext_path
+            .parent()
+            .unwrap()
+            .join(self.player_path.as_ref().unwrap());
+        println!("mpv_path:{}", mpv_path.to_str().unwrap());
         self.process = Some(
-            Command::new("resources\\mpv\\mpv.exe")
+            Command::new(mpv_path)
                 .args(args)
                 .spawn()
                 .expect("failed to launch mpv"),
@@ -93,9 +103,10 @@ impl MpvPlayer {
             return window_handle;
         });
 
-        let window_handle: HWND = handle.await.unwrap();
+        let window_handle: HWND = handle.await?;
 
         println!("show {}", window_handle.0);
+        Ok(window_handle)
     }
 
     pub async fn play(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
@@ -143,8 +154,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_launch() {
-        let mut mpv_player = MpvPlayer::new();
-        mpv_player.launch(None).await;
+        let mut mpv_player = MpvPlayer {
+            player_path: Some("..\\resources\\mpv\\mpv.exe".to_string()),
+            ..MpvPlayer::default()
+        };
+        _ = mpv_player.launch(None).await;
         println!("test_launch");
         mpv_player.process.unwrap().kill().unwrap();
         println!("test_launch end")
@@ -152,9 +166,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_launch_with_video() {
-        let mut mpv_player = MpvPlayer::new();
+        let mut mpv_player = MpvPlayer {
+            player_path: Some("..\\resources\\mpv\\mpv.exe".to_string()),
+            ..MpvPlayer::default()
+        };
 
-        mpv_player
+        _ = mpv_player
             .launch(Some("resources\\wallpaper_samples\\video.mp4"))
             .await;
         println!("test_launch_with_video");
@@ -165,8 +182,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_set_video() {
-        let mut mpv_player = MpvPlayer::new();
-        mpv_player
+        let mut mpv_player = MpvPlayer {
+            player_path: Some("..\\resources\\mpv\\mpv.exe".to_string()),
+            ..MpvPlayer::default()
+        };
+        _ = mpv_player
             .launch(Some("resources\\wallpaper_samples\\video.mp4"))
             .await;
         println!("test_set_video");

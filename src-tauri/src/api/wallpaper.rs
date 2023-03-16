@@ -11,7 +11,15 @@ pub struct WallpaperOpenParam {
 
 #[tauri::command]
 pub async fn wallpaper_open(param: WallpaperOpenParam) -> Result<bool, String> {
-    _ = WallpaperManager::set_wallpaper(&param.path, param.screen_index.unwrap_or(0)).await;
+    //双斜杠转义
+    let path = &param.path.replace("\\", "\\\\");
+    println!("wallpaper_open:{}", path);
+    _ = WallpaperManager::set_wallpaper(path, param.screen_index.unwrap_or(0))
+        .await
+        .map_err(|e| {
+            println!("set_wallpaper error:{}", e.to_string());
+            e.to_string()
+        })?;
     Ok(true)
 }
 

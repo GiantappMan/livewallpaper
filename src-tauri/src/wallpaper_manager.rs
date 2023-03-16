@@ -29,21 +29,24 @@ impl WallpaperManager {
             //新建管理器
             let mut new_manager = WallpaperManager::default();
             new_manager.screen_index = screen_index;
-            new_manager.mpv_player = Some(MpvPlayer::new());
-            map.push(new_manager);
-        }
-        let mut manager = map
-            .iter_mut()
-            .find(|m| m.screen_index == screen_index)
-            .unwrap();
-        manager.current_wallpaper.path = path.to_string();
+            new_manager.mpv_player = Some(MpvPlayer::default());
 
-        manager
-            .mpv_player
-            .as_mut()
-            .unwrap()
-            .launch(Some(path))
-            .await;
+            _ = new_manager
+                .mpv_player
+                .as_mut()
+                .unwrap()
+                .launch(Some(path))
+                .await;
+            map.push(new_manager);
+        } else {
+            let manager = map
+                .iter_mut()
+                .find(|m| m.screen_index == screen_index)
+                .unwrap();
+
+            manager.mpv_player.as_mut().unwrap().play(path).await?;
+        }
+        // manager.current_wallpaper.path = manager.mpv_player.unwrap().current_path.clone();
 
         Ok(())
     }
