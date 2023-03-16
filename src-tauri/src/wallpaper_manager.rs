@@ -31,22 +31,16 @@ impl WallpaperManager {
             new_manager.screen_index = screen_index;
             new_manager.mpv_player = Some(MpvPlayer::default());
 
-            _ = new_manager
-                .mpv_player
-                .as_mut()
-                .unwrap()
-                .launch(Some(path))
-                .await;
             map.push(new_manager);
-        } else {
-            let manager = map
-                .iter_mut()
-                .find(|m| m.screen_index == screen_index)
-                .unwrap();
-
-            manager.mpv_player.as_mut().unwrap().play(path).await?;
         }
-        // manager.current_wallpaper.path = manager.mpv_player.unwrap().current_path.clone();
+        let manager = map
+            .iter_mut()
+            .find(|m| m.screen_index == screen_index)
+            .unwrap();
+
+        let mpv_player = manager.mpv_player.as_mut().unwrap();
+        mpv_player.play(path).await?;
+        manager.current_wallpaper.path = mpv_player.current_path.clone().unwrap();
 
         Ok(())
     }
