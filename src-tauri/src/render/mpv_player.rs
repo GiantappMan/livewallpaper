@@ -15,6 +15,8 @@ pub struct MpvPlayerOption {
 }
 pub struct MpvPlayer {
     pub option: MpvPlayerOption,
+    //当前播放路径
+    pub current_path: Option<String>,
     process: Option<Child>,
 }
 
@@ -36,6 +38,7 @@ impl MpvPlayer {
         Self {
             option: MpvPlayerOption::new(),
             process: None,
+            current_path: None,
         }
     }
 
@@ -67,6 +70,7 @@ impl MpvPlayer {
         args.push(format!(r"--input-ipc-server={}", self.option.pipe_name));
         if path.is_some() {
             args.push(format!("{}", path.unwrap()));
+            self.current_path = Some(path.unwrap().to_string());
         }
         println!("args:{:?}", args);
 
@@ -113,6 +117,7 @@ impl MpvPlayer {
 
                 match client.try_read(&mut buf) {
                     Ok(n) => {
+                        self.current_path = Some(path.to_string());
                         println!("read {} bytes", n);
                         //read 0,n from buffer
                         let msg = String::from_utf8(buf.to_vec())?;
