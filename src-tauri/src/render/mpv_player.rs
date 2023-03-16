@@ -110,6 +110,21 @@ impl MpvPlayer {
     }
 
     pub async fn play(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+        println!("process is_some:{}", self.process.is_some());
+        if self.process.is_none() {
+            _ = self.launch(Some(path)).await?;
+            return Ok(());
+        }
+
+        //判断进程已退出
+        let child = self.process.as_mut().unwrap();
+        if let Ok(Some(status)) = child.try_wait() {
+            println!("process status: {:?}", status);
+            //进程已退出
+            _ = self.launch(Some(path)).await?;
+            return Ok(());
+        }
+
         println!("play:{}", path);
 
         let client = named_pipe::ClientOptions::new().open(&self.option.pipe_name)?;
@@ -198,65 +213,20 @@ mod tests {
         println!("test_set_video end")
     }
 
-    // #[tokio::test]
-    // async fn test_ipc() {
-    //     let client = named_pipe::ClientOptions::new()
-    //         .open(r#"\\.\pipe\mpv-socket"#)
-    //         // .open(&self.option.pipe_name)
-    //         .unwrap();
+    #[tokio::test]
+    async fn test_set_video_direct() {
+        let mut mpv_player = MpvPlayer {
+            player_path: Some("..\\resources\\mpv\\mpv.exe".to_string()),
+            ..MpvPlayer::default()
+        };
+        let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
+        mpv_player.play(path).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        mpv_player.process.take().unwrap().kill().unwrap();
 
-    //     let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
-    //     let command_str = format!(r#"{{"command":["loadfile","{}","replace"]}}"#, path);
-    //     let cmd = format!("{} \n", command_str); //要加换行符才行
-    //                                              // let cmd = "{\"command\":[\"loadfile\",\"D:\\\\code\\\\github-categorized\\\\tauri\\\\livewallpaper\\\\src-tauri\\\\resources\\\\wallpaper_samples\\\\audio.mp4\",\"replace\"]} \n";
-
-    //     // let buffer = [io::IoSlice::new(cmd.as_bytes())];
-
-    //     loop {
-    //         // Wait for the pipe to be writable
-    //         client.writable().await.unwrap();
-
-    //         // Try to write data, this may still fail with `WouldBlock`
-    //         // if the readiness event is a false positive.
-
-    //         match client.try_write(cmd.as_bytes()) {
-    //             Ok(n) => {
-    //                 client.readable().await.unwrap();
-    //                 println!("write {} bytes", n);
-
-    //                 // Creating the buffer **after** the `await` prevents it from
-    //                 // being stored in the async task.
-    //                 let mut buf = [0; 4096];
-
-    //                 // Try to read data, this may still fail with `WouldBlock`
-    //                 // if the readiness event is a false positive.
-    //                 match client.try_read(&mut buf) {
-    //                     Ok(0) => break,
-    //                     Ok(n) => {
-    //                         println!("read {} bytes", n);
-    //                         //read 0,n from buffer
-    //                         let msg = String::from_utf8(buf.to_vec()).unwrap();
-    //                         println!("GOT = {}", msg);
-    //                     }
-    //                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-    //                         print!("error = {}", e);
-    //                         continue;
-    //                     }
-    //                     Err(e) => {
-    //                         print!("error = {}", e);
-    //                     }
-    //                 }
-
-    //                 break;
-    //             }
-    //             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-    //                 print!("error = {:?}", e);
-    //                 continue;
-    //             }
-    //             Err(e) => {
-    //                 print!("error = {:?}", e);
-    //             }
-    //         }
-    //     }
-    // }
+        let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
+        mpv_player.play(path).await.unwrap();
+        mpv_player.process.take().unwrap().kill().unwrap();
+        println!("test_set_video_direct end")
+    }
 }
