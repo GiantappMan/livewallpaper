@@ -1,8 +1,10 @@
+//windows api封装
 use windows::{
+    s,
     Win32::Foundation::{BOOL, HWND, LPARAM},
     Win32::UI::WindowsAndMessaging::{
-        EnumWindows, GetWindowInfo, GetWindowTextW, GetWindowThreadProcessId, WINDOWINFO,
-        WS_VISIBLE,
+        EnumWindows, FindWindowA, FindWindowW, GetWindowInfo, GetWindowTextW,
+        GetWindowThreadProcessId, WINDOWINFO, WS_VISIBLE,
     },
 };
 
@@ -75,6 +77,14 @@ pub fn find_window_handle(pid: u32, print_log: bool) -> HWND {
     }
 }
 
+pub fn find_window(lpClassName: String) -> HWND {
+    unsafe {
+        let res = FindWindowA(s!("Progman"), None);
+        println!("find_window: {}", res.0);
+        res
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,5 +93,11 @@ mod tests {
     fn test_get_window_handle() {
         find_window_handle(0, true);
         print!("test_get_window_handle")
+    }
+
+    #[test]
+    fn test_find_window() {
+        find_window("Progman".to_string());
+        print!("test_find_window")
     }
 }
