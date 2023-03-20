@@ -3,8 +3,8 @@ use std::error::Error;
 use std::process::{Child, Command};
 use tokio::net::windows::named_pipe::{self};
 use uuid::Uuid;
-use windows::Win32::Foundation::HWND;
-
+use winsafe::prelude::*;
+use winsafe::HWND;
 pub struct MpvPlayerOption {
     pipe_name: String,
     pub stop_screen_saver: bool,
@@ -92,20 +92,20 @@ impl MpvPlayer {
         );
         let pid = self.process.as_ref().unwrap().id();
         let handle = tokio::spawn(async move {
-            let mut window_handle = HWND(0);
+            let mut window_handle = HWND::NULL;
             let expire_time = tokio::time::Instant::now() + tokio::time::Duration::from_secs(5);
-            while window_handle.0 == 0 && tokio::time::Instant::now() < expire_time {
-                window_handle = find_window_handle(pid, false);
+            while window_handle == HWND::NULL && tokio::time::Instant::now() < expire_time {
+                window_handle = find_window_handle(pid);
                 tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
                 println!("wait window_handle");
             }
-            println!("pid {} , {}", pid, window_handle.0);
+            println!("pid {} , {}", pid, window_handle);
             return window_handle;
         });
 
         let window_handle: HWND = handle.await?;
 
-        println!("show {}", window_handle.0);
+        println!("show {}", window_handle);
         Ok(window_handle)
     }
 
@@ -226,6 +226,7 @@ mod tests {
 
         let path = r#"D:\\code\\github-categorized\\tauri\\livewallpaper\\src-tauri\\resources\\wallpaper_samples\\audio.mp4"#;
         mpv_player.play(path).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
         mpv_player.process.take().unwrap().kill().unwrap();
         println!("test_set_video_direct end")
     }
