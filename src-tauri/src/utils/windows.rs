@@ -1,4 +1,4 @@
-//windows api封装
+//windows api简化
 use std::cell::RefCell;
 
 use winsafe::{co::WS, prelude::*};
@@ -26,12 +26,10 @@ pub fn find_window_handle(pid: u32) -> HWND {
     res.into_inner()
 }
 
-// pub fn find_window(lpClassName: String) -> HWND {
-// unsafe {
-//     let res = FindWindowA(s!("Progman"), None);
-//     println!("find_window: {}", res.0);
-//     res
-// }
+// pub fn send_message_timeout(hwnd: HWND) {
+//     unsafe {
+//         SendMessageTimeoutW(hwnd.to, 0xD, 0x1, 0x0u, 0, 1000, None).unwrap();
+//     }
 // }
 
 #[cfg(test)]
@@ -42,11 +40,5 @@ mod tests {
     fn test_get_window_handle() {
         let res = find_window_handle(0);
         println!("test_get_window_handle: {:?}", res)
-    }
-
-    #[test]
-    fn test_find_window() {
-        // find_window("Progman".to_string());
-        // print!("test_find_window")
     }
 }
