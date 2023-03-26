@@ -1,17 +1,19 @@
+//桌面相关api
+
+use std::cell::RefCell;
+use std::error::Error;
 use winsafe::co;
 use winsafe::msg::WndMsg;
-use winsafe::AtomStr;
-//桌面相关api
 use winsafe::prelude::*;
+use winsafe::AtomStr;
+use winsafe::EnumWindows;
 use winsafe::HWND;
-use winsafe::{co::WS, prelude::*};
-use winsafe::{EnumWindows, WINDOWINFO};
 
-pub fn get_worker_w() {
+fn _get_worker_w() -> HWND {
+    let result = RefCell::new(HWND::NULL);
     let progman = HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap_or(HWND::NULL);
-    println!("program: {:?}", progman);
     if progman != HWND::NULL {
-        let res = progman
+        progman
             .SendMessageTimeout(
                 WndMsg {
                     msg_id: 0x052C.into(),
@@ -21,11 +23,10 @@ pub fn get_worker_w() {
                 co::SMTO::NORMAL,
                 1000,
             )
-            .unwrap();
+            .unwrap_or_default();
     }
 
     EnumWindows(|top_handle: HWND| -> bool {
-        // println!("top_handle: {:?}", top_handle);
         let shell_dll_def_view =
             top_handle.FindWindowEx(None, AtomStr::from_str("SHELLDLL_DefView"), None);
 
@@ -35,28 +36,36 @@ pub fn get_worker_w() {
                     return true;
                 }
 
-                let class_name = top_handle.GetClassName().unwrap();
-                println!("top_handle:{},class_name: {:?}", top_handle, class_name);
+                let class_name = top_handle.GetClassName().unwrap_or_default();
                 if class_name != "WorkerW" {
                     return true;
                 }
 
-                let worker_w = HWND::NULL
+                let tmp = HWND::NULL
                     .FindWindowEx(Some(&top_handle), AtomStr::from_str("WorkerW"), None)
-                    .unwrap();
+                    .unwrap_or(HWND::NULL);
 
-                println!("worker_w: {:?}", worker_w);
-                println!("shell_dll_def_view: {:?}", shell_dll_def_view);
+                result.replace(tmp);
                 return true;
             }
-            Err(e) => {
-                let title = top_handle.GetWindowText().unwrap();
-                println!("top_handle {},title {},error: {:?}", top_handle, title, e);
+            Err(_) => {
                 return true;
             }
         };
     })
-    .unwrap();
+    .unwrap_or_default();
+
+    result.into_inner()
+}
+
+fn set_hwnd_wallpaper(hwnd: HWND, screen_index: Option<u8>) -> Result<(), Box<dyn Error>> {
+    let worker_w = _get_worker_w();
+    if worker_w == HWND::NULL {
+        return Ok(());
+    }
+
+    hwnd.SetParent(&worker_w)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -65,7 +74,8 @@ mod tests {
 
     #[test]
     fn test_get_worker_w() {
-        get_worker_w();
-        print!("test_get_worker_w")
+        let res = _get_worker_w();
+        println!("test_get_worker_w: {:?}", res);
+        assert_ne!(res, HWND::NULL);
     }
 }
