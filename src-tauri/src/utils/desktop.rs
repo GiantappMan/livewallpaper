@@ -1,14 +1,13 @@
 //桌面相关api
-
 use std::cell::RefCell;
 use std::error::Error;
 use winsafe::co;
 use winsafe::msg::WndMsg;
 use winsafe::prelude::*;
+use winsafe::prelude::*;
 use winsafe::AtomStr;
 use winsafe::EnumWindows;
 use winsafe::HWND;
-
 fn _get_worker_w() -> HWND {
     let result = RefCell::new(HWND::NULL);
     let progman = HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap_or(HWND::NULL);
@@ -58,18 +57,24 @@ fn _get_worker_w() -> HWND {
     result.into_inner()
 }
 
-fn set_hwnd_wallpaper(hwnd: HWND, screen_index: Option<u8>) -> Result<(), Box<dyn Error>> {
+fn set_hwnd_wallpaper(hwnd: HWND, screen_index: Option<u8>) -> bool {
     let worker_w = _get_worker_w();
     if worker_w == HWND::NULL {
-        return Ok(());
+        return false;
     }
 
-    hwnd.SetParent(&worker_w)?;
-    Ok(())
+    //如果hwnd.SetParent失败就返回false
+    if hwnd.SetParent(&worker_w).is_err() {
+        return false;
+    }
+
+    true
 }
 
 #[cfg(test)]
 mod tests {
+    use winsafe::{HPROCESS, STARTUPINFO};
+
     use super::*;
 
     #[test]
@@ -77,5 +82,33 @@ mod tests {
         let res = _get_worker_w();
         println!("test_get_worker_w: {:?}", res);
         assert_ne!(res, HWND::NULL);
+    }
+
+    #[test]
+    fn test_set_hwnd_wallpaper() {
+        //CreateProcess with notepad.exe and get hwnd
+        let mut startInfo = STARTUPINFO::default();
+        let mut pi = HPROCESS::CreateProcess(
+            None,
+            Some("notepad.exe"),
+            None,
+            None,
+            false,
+            co::CREATE::NoValue,
+            None,
+            None,
+            &mut startInfo,
+        )
+        .unwrap();
+
+        // let hwnd: HWND = HWND::from(pi.hProcess);
+        // pi.hProcess.CloseHandle().unwrap();
+
+        // pi.hProcess.WaitForSingleObject(None).unwrap();
+
+        // assert_ne!(hwnd, HWND::NULL);
+
+        // let res = set_hwnd_wallpaper(hwnd, None);
+        // assert_eq!(res, true);
     }
 }

@@ -2,9 +2,9 @@
 authors = ["Giantapp"]
 description = "LiveWallpaper3"
 edition = "2021"
-license = ""
+license = "GPL-3.0"
 name = "live_wallpaper"
-repository = ""
+repository = "https://github.com/DaZiYuan/livewallpaper.git"
 rust-version = "1.57"
 version = "3.0.0"
 
@@ -35,7 +35,7 @@ features = [
   "Win32_System_Threading",
   "Win32_UI_WindowsAndMessaging",
 ]
-version = "0.44.0"
+version = "0.47.0"
 [dependencies.uuid]
 features = [
   "v4", # Lets you generate random UUIDs
