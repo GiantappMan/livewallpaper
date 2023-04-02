@@ -87,13 +87,14 @@ pub fn set_pid_wallpaper(pid: u32, screen_index: Option<u8>) -> bool {
     if hwnd == HWND::NULL {
         return false;
     }
+
     _set_hwnd_wallpaper(hwnd, screen_index)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use winsafe::{HPROCESS, STARTUPINFO};
+    use winsafe::{HPROCESS, MONITORINFOEX, STARTUPINFO};
 
     #[test]
     fn test_get_worker_w() {
@@ -128,5 +129,42 @@ mod tests {
 
         std::thread::sleep(std::time::Duration::from_secs(5));
         pi.hProcess.TerminateProcess(0).unwrap();
+    }
+
+    #[test]
+    fn test_get_screen_size() {
+        use winsafe::prelude::*;
+        use winsafe::{HDC, HMONITOR, RECT};
+
+        let hdc: HDC = HDC::NULL; // initialized somewhere
+
+        hdc.EnumDisplayMonitors(None, |hmon: HMONITOR, hdc: HDC, rc: &RECT| -> bool {
+            //print all
+            println!("hmon: {:?}, hdc: {:?}, rc: {:?}", hmon, hdc, rc.to_string());
+
+            let mut mi = MONITORINFOEX::default();
+            hmon.GetMonitorInfo(&mut mi).unwrap();
+
+            //print all
+            println!(
+                "rcMonitor {:?}, rcWork {:?},dwFlags:{:?}",
+                mi.rcMonitor.to_string(),
+                mi.rcWork.to_string(),
+                mi.dwFlags
+            );
+
+            true
+        })
+        .unwrap();
+
+        // use winsafe::prelude::*;
+        // use winsafe::{HMONITOR, MONITORINFOEX};
+
+        // let hmon: HMONITOR; // initialized somewhere
+
+        // let mut mi = MONITORINFOEX::default();
+        // hmon.GetMonitorInfo(&mut mi).unwrap();
+
+        // println!("{}", mi.szDevice());
     }
 }
