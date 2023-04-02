@@ -125,5 +125,8 @@ mod tests {
         let res = set_pid_wallpaper(pid, None);
         println!("test_set_hwnd_wallpaper: {:?}", res);
         assert_eq!(res, true);
+
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        pi.hProcess.TerminateProcess(0).unwrap();
     }
 }
