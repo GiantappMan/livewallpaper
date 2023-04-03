@@ -11,23 +11,34 @@ use winsafe::HwndPlace;
 use winsafe::HWND;
 use winsafe::POINT;
 use winsafe::{HDC, HMONITOR, RECT};
-fn _create_worker_w() {
-    let progman = HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap_or(HWND::NULL);
+
+fn _create_worker_w() -> bool {
+    let progman =
+        HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap_or_else(|err| {
+            println!("Error finding window: {}", err);
+            HWND::NULL
+        });
     if progman == HWND::NULL {
         println!("_create_worker_w: progman is null");
-        return;
+        return false;
     }
-    progman
-        .SendMessageTimeout(
-            WndMsg {
-                msg_id: 0x052C.into(),
-                wparam: 0xD,
-                lparam: 0x1,
-            },
-            co::SMTO::NORMAL,
-            1000,
-        )
-        .unwrap_or_default();
+    let res = progman.SendMessageTimeout(
+        WndMsg {
+            msg_id: 0x052C.into(),
+            wparam: 0xD,
+            lparam: 0x1,
+        },
+        co::SMTO::NORMAL,
+        1000,
+    );
+    if let Err(err) = res {
+        println!("SendMessageTimeout err: {}", err);
+        false
+    } else {
+        // 如果没有错误，则清除输出
+        let _ = res.unwrap_or_default();
+        true
+    }
 }
 
 fn _get_worker_w() -> HWND {
@@ -149,6 +160,13 @@ pub fn set_pid_wallpaper(pid: u32, screen_index: Option<u8>) -> bool {
 mod tests {
     use super::*;
     use winsafe::{HPROCESS, STARTUPINFO};
+
+    #[test]
+    fn test_create_worker_w() {
+        let res = _create_worker_w();
+        println!("test_create_worker_w: {:?}", res);
+        assert_eq!(res, true);
+    }
 
     #[test]
     fn test_set_hwnd_wallpaper() {

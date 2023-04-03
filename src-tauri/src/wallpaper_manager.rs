@@ -1,10 +1,8 @@
+use crate::{render::mpv_player::MpvPlayer, utils::desktop};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
 use tokio::sync::Mutex;
-
-use serde::{Deserialize, Serialize};
-
-use crate::{render::mpv_player::MpvPlayer, utils::desktop};
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Wallpaper {
