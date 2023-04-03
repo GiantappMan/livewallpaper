@@ -1,6 +1,9 @@
 {
     "cSpell.words": [
         "APPCONFIG",
+        "hmon",
+        "HMONITOR",
+        "NOACTIVATE",
         "STARTUPINFO"
     ],
     "git.ignoreLimitWarning": true

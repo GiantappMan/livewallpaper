@@ -4,7 +4,7 @@ use tokio::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
-use crate::render::mpv_player::MpvPlayer;
+use crate::{render::mpv_player::MpvPlayer, utils::desktop};
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Wallpaper {
@@ -41,6 +41,9 @@ impl WallpaperManager {
         let mpv_player = manager.mpv_player.as_mut().unwrap();
         mpv_player.play(path).await?;
         manager.current_wallpaper.path = mpv_player.current_path.clone().unwrap();
+
+        let pid = mpv_player.pid.unwrap();
+        desktop::set_pid_wallpaper(pid, Some(0));
 
         Ok(())
     }

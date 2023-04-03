@@ -18,6 +18,7 @@ pub struct MpvPlayer {
     pub player_path: Option<String>,
     //当前播放路径
     pub current_path: Option<String>,
+    pub pid: Option<u32>,
     process: Option<Child>,
 }
 
@@ -41,6 +42,7 @@ impl Default for MpvPlayer {
             process: None,
             current_path: None,
             player_path: Some("resources\\mpv\\mpv.exe".to_string()),
+            pid: None,
         }
     }
 }
@@ -91,13 +93,14 @@ impl MpvPlayer {
                 .expect("failed to launch mpv"),
         );
         let pid = self.process.as_ref().unwrap().id();
+        self.pid = Some(pid);
         let handle = tokio::spawn(async move {
             let mut window_handle = HWND::NULL;
             let expire_time = tokio::time::Instant::now() + tokio::time::Duration::from_secs(5);
             while window_handle == HWND::NULL && tokio::time::Instant::now() < expire_time {
                 window_handle = find_window_handle(pid);
                 tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
-                println!("wait window_handle");
+                println!("wait pid{} window_handle", pid);
             }
             println!("pid {} , {}", pid, window_handle);
             return window_handle;
