@@ -19,7 +19,8 @@ serde_json = "1.0"
 tauri = {version = "1.2", features = ["dialog-open", "shell-open", "system-tray", "window-show"] }
 tokio = {version = "1.25.0", features = ["full"] }
 toml = "0.7"
-winsafe = {version = "0.0.15", features = ["kernel", "user"] }
+# winsafe = {version = "0.0.15", features = ["kernel", "user"] }
+winsafe = {git = "https://github.com/rodrigocfd/winsafe", features = ["kernel", "user"] }
 [features]
 # by default Tauri runs in production mode
 # when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL

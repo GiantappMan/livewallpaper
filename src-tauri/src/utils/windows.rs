@@ -14,7 +14,7 @@ pub fn find_window_handle(pid: u32) -> HWND {
 
         if !text.is_empty() && (info.dwStyle & WS::VISIBLE != WS::NoValue) {
             let (_, _pid) = hwnd.GetWindowThreadProcessId();
-            // println!("title:{},_pid:{},hwnd:{}", text, _pid, hwnd);//debug
+            //println!("title:{},_pid:{},hwnd:{}", text, _pid, hwnd); //debug
             if pid == _pid {
                 *res.borrow_mut() = hwnd;
             }
@@ -23,6 +23,7 @@ pub fn find_window_handle(pid: u32) -> HWND {
     })
     .unwrap();
 
+    println!("find_window_handle pid: {:?}, res: {:?}", pid, res.borrow()); //debug
     res.into_inner()
 }
 
