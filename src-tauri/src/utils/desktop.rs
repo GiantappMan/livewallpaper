@@ -122,16 +122,18 @@ fn _get_screen_size(screen_index: Option<u8>) -> Option<RECT> {
 
     let tmp_index = Rc::new(RefCell::new(0));
     hdc.EnumDisplayMonitors(None, |_: HMONITOR, _: HDC, rc: &RECT| -> bool {
-        if *tmp_index.borrow() != screen_index.unwrap_or(0) {
-            *tmp_index.borrow_mut() += 1;
-            return true;
+        if *tmp_index.borrow() == screen_index.unwrap_or(0) {
+            *result.borrow_mut() = Some(rc.clone());
         }
-
-        *result.borrow_mut() = Some(rc.clone());
+        *tmp_index.borrow_mut() += 1;
         true
     })
     .unwrap();
 
+    // println!(
+    //     "result: {:?}",
+    //     result.borrow().as_ref().unwrap().to_string()
+    // );
     result.take()
 }
 
