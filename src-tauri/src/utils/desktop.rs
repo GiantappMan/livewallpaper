@@ -8,21 +8,18 @@ use winsafe::prelude::*;
 use winsafe::AtomStr;
 use winsafe::EnumWindows;
 use winsafe::HwndPlace;
+use winsafe::PtsRc;
 use winsafe::HWND;
 use winsafe::POINT;
 use winsafe::{HDC, HMONITOR, RECT};
 
 fn _create_worker_w() -> bool {
-    let progman =
-        HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap_or_else(|err| {
-            println!("Error finding window: {}", err);
-            HWND::NULL
-        });
-    if progman == HWND::NULL {
+    let progman = HWND::FindWindow(Some(AtomStr::from_str("Progman")), None).unwrap();
+    if progman.is_none() {
         println!("_create_worker_w: progman is null");
         return false;
     }
-    let res = progman.SendMessageTimeout(
+    let res = progman.unwrap().SendMessageTimeout(
         WndMsg {
             msg_id: 0x052C.into(),
             wparam: 0xD,
@@ -41,15 +38,16 @@ fn _create_worker_w() -> bool {
     }
 }
 
-fn _get_worker_w() -> HWND {
-    let result = RefCell::new(HWND::NULL);
+fn _get_worker_w() -> Option<HWND> {
+    let result = RefCell::new(None);
     _create_worker_w();
     EnumWindows(|top_handle: HWND| -> bool {
-        let shell_dll_def_view =
-            top_handle.FindWindowEx(None, AtomStr::from_str("SHELLDLL_DefView"), None);
+        let shell_dll_def_view = top_handle
+            .FindWindowEx(None, AtomStr::from_str("SHELLDLL_DefView"), None)
+            .unwrap();
 
         match shell_dll_def_view {
-            Ok(shell_dll_def_view) => {
+            Some(shell_dll_def_view) => {
                 if shell_dll_def_view == HWND::NULL {
                     return true;
                 }
@@ -61,12 +59,12 @@ fn _get_worker_w() -> HWND {
 
                 let tmp = HWND::NULL
                     .FindWindowEx(Some(&top_handle), AtomStr::from_str("WorkerW"), None)
-                    .unwrap_or(HWND::NULL);
+                    .unwrap();
 
                 result.replace(tmp);
                 return true;
             }
-            Err(_) => {
+            None => {
                 return true;
             }
         };
@@ -77,9 +75,11 @@ fn _get_worker_w() -> HWND {
 
 fn _set_hwnd_wallpaper(hwnd: HWND, screen_index: Option<u8>) -> bool {
     let worker_w = _get_worker_w();
-    if worker_w == HWND::NULL {
+    if worker_w.is_none() {
         return false;
     }
+
+    let worker_w = worker_w.unwrap();
 
     //如果hwnd.SetParent失败就返回false，并打印错误
     if let Err(e) = hwnd.SetParent(&worker_w) {
@@ -92,18 +92,16 @@ fn _set_hwnd_wallpaper(hwnd: HWND, screen_index: Option<u8>) -> bool {
         return false;
     }
 
-    let screen_size = screen_size.unwrap();
-    let mut points = [POINT {
+    let mut screen_size = screen_size.unwrap();
+
+    println!("MapWindowPoints 0: {:?}", screen_size.to_string());
+    let res = HWND::MapWindowPoints(&HWND::NULL, &worker_w, PtsRc::Rc(&mut screen_size)).unwrap();
+    println!("MapWindowPoints 1: {:?}", screen_size.to_string());
+
+    let point = POINT {
         x: screen_size.left,
         y: screen_size.top,
-    }];
-
-    let res = HWND::MapWindowPoints(&HWND::NULL, &worker_w, &mut points).unwrap();
-    println!("MapWindowPoints: {:?}", res);
-    // println!("MapWindowPoints: {:?}", points.len());
-    let mut point = points[0];
-    point.x = 1920;
-
+    };
     let size = winsafe::SIZE {
         cx: screen_size.right - screen_size.left,
         cy: screen_size.bottom - screen_size.top,
@@ -124,16 +122,18 @@ fn _get_screen_size(screen_index: Option<u8>) -> Option<RECT> {
 
     let tmp_index = Rc::new(RefCell::new(0));
     hdc.EnumDisplayMonitors(None, |_: HMONITOR, _: HDC, rc: &RECT| -> bool {
-        if *tmp_index.borrow() != screen_index.unwrap_or(0) {
-            *tmp_index.borrow_mut() += 1;
-            return true;
+        if *tmp_index.borrow() == screen_index.unwrap_or(0) {
+            *result.borrow_mut() = Some(rc.clone());
         }
-
-        *result.borrow_mut() = Some(rc.clone());
+        *tmp_index.borrow_mut() += 1;
         true
     })
     .unwrap();
 
+    // println!(
+    //     "result: {:?}",
+    //     result.borrow().as_ref().unwrap().to_string()
+    // );
     result.take()
 }
 
@@ -173,7 +173,7 @@ mod tests {
         let mut si = STARTUPINFO::default();
         let pi = HPROCESS::CreateProcess(
             None,
-            Some("notepad.exe"),
+            Some("mspaint"),
             None,
             None,
             false,
@@ -188,7 +188,7 @@ mod tests {
         let pid = pi.dwProcessId;
         println!("pid: {:?}", pid);
 
-        let res = set_pid_wallpaper(pid, None);
+        let res = set_pid_wallpaper(pid, Some(0));
         println!("test_set_hwnd_wallpaper: {:?}", res);
         assert_eq!(res, true);
 
@@ -201,7 +201,7 @@ mod tests {
     fn test_get_worker_w() {
         let res = _get_worker_w();
         println!("test_get_worker_w: {:?}", res);
-        assert_ne!(res, HWND::NULL);
+        assert_ne!(res, None);
     }
 
     #[test]
