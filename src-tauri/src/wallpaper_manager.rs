@@ -23,6 +23,7 @@ impl WallpaperManager {
     pub async fn set_wallpaper(path: &str, screen_index: u32) -> Result<(), Box<dyn Error>> {
         let mut map = WALLPAPER_MANAGERS.lock().await;
         let manager = map.iter_mut().find(|m| m.screen_index == screen_index);
+        let mut is_new_manager = false;
         if manager.is_none() {
             //新建管理器
             let mut new_manager = WallpaperManager::default();
@@ -30,6 +31,7 @@ impl WallpaperManager {
             new_manager.mpv_player = Some(MpvPlayer::default());
 
             map.push(new_manager);
+            is_new_manager = true;
         }
         let manager = map
             .iter_mut()
@@ -40,9 +42,11 @@ impl WallpaperManager {
         mpv_player.play(path).await?;
         manager.current_wallpaper.path = mpv_player.current_path.clone().unwrap();
 
-        let pid = mpv_player.pid.unwrap();
-        desktop::set_pid_wallpaper(pid, Some(0));
-
+        if is_new_manager {
+            let pid = mpv_player.pid.unwrap();
+            desktop::set_pid_wallpaper(pid, Some(0));
+        }
+        
         Ok(())
     }
 
