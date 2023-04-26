@@ -112,11 +112,21 @@ impl MpvPlayer {
         Ok(window_handle)
     }
 
-    pub async fn play(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+    /// 播放视频。
+    ///
+    /// # 参数
+    /// * `path` - 路径。
+    ///
+    /// # 返回值
+    /// 开启新播放器Ok(true)，已有播放器返回Ok(false)。
+    ///
+    /// # 错误
+    /// 异常，将返回一个 `Box<dyn Error>` 类型的错误。
+    pub async fn play(&mut self, path: &str) -> Result<bool, Box<dyn Error>> {
         println!("process is_some:{}", self.process.is_some());
         if self.process.is_none() {
             _ = self.launch(Some(path)).await?;
-            return Ok(());
+            return Ok(true);
         }
 
         //判断进程已退出
@@ -125,7 +135,7 @@ impl MpvPlayer {
             println!("process status: {:?}", status);
             //进程已退出
             _ = self.launch(Some(path)).await?;
-            return Ok(());
+            return Ok(true);
         }
 
         println!("play:{}", path);
@@ -162,7 +172,7 @@ impl MpvPlayer {
             }
         }
 
-        Ok(())
+        Ok(false)
     }
 }
 
