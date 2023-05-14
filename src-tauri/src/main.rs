@@ -21,15 +21,16 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
             url
         );
 
-        //不hide的话，set_focus有时导致页面不执行js
+        //不hide的话，页面js不会立刻执行
         window.hide().unwrap();
         window.show().unwrap();
         window.eval(js).unwrap();
-
+        //bring to front
         window.set_focus().unwrap();
     } else {
         let main_window =
             tauri::WindowBuilder::new(handle, "main", tauri::WindowUrl::App(url.into()))
+                //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
                 .visible(false)
                 .disable_file_drop_handler()
                 .build()
@@ -41,8 +42,8 @@ fn open_url(handle: &tauri::AppHandle, url: &str) {
             }))
             .unwrap();
         main_window.set_title("LiveWallpaper3").unwrap();
-        //center 会动一下 https://github.com/tauri-apps/tauri/issues/4777
         main_window.center().unwrap();
+        main_window.show().unwrap();
     }
 }
 

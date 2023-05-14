@@ -11,6 +11,7 @@ interface Props {
 export default function NavMenu(props: Props) {
   return (
     <Link
+      prefetch={false}
       href={props.href}
       className={[
         props.current

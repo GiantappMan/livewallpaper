@@ -48,6 +48,7 @@ const SettingsPage = ({ children }: { children: React.ReactNode }) => {
           {subNavigation.map((item) => (
             <Link
               key={item.name}
+              prefetch={false}
               href={item.href}
               className={`${
                 item.current
