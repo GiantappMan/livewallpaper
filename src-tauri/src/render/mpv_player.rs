@@ -49,6 +49,7 @@ impl Default for MpvPlayer {
 impl MpvPlayer {
     pub async fn launch(&mut self, path: Option<&str>) -> Result<HWND, Box<dyn Error>> {
         let mut args: Vec<String> = vec![];
+        args.push("--no-border".to_string());
         args.push(format!(
             "--stop-screensaver={}",
             if self.option.stop_screen_saver {
@@ -73,6 +74,7 @@ impl MpvPlayer {
         args.push(format!("--hwdec={}", self.option.hwdec));
 
         args.push(format!(r"--input-ipc-server={}", self.option.pipe_name));
+
         if path.is_some() {
             args.push(format!("{}", path.unwrap()));
             self.current_path = Some(path.unwrap().to_string());
