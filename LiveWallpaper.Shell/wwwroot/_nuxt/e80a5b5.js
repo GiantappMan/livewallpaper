@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[23],{414:function(e,l,n){"use strict";n.r(l);var t={name:"LocalWallpapers"},o=n(24),component=Object(o.a)(t,(function(){return(0,this._self._c)("WallpapersPanel",{attrs:{editorRouterName:"editor-id"}})}),[],!1,null,null,null);l.default=component.exports;installComponents(component,{WallpapersPanel:n(407).default})}}]);

@@ -1,0 +1,1 @@
+__NUXT_JSONP__("/pt-BR/editor", {data:[{}],fetch:{},mutations:[]});

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Giantapp.LiveWallpaper.Engine.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -47,7 +48,7 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
         {
             if (screenName == null)
                 return null;
-            var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == screenName);
+            var screen = Screen.AllScreens.Select((m, Index) => new { Index, m.Bounds }).FirstOrDefault(m => WallpaperHelper.GetCustomScreenName(m.Index) == screenName);
             if (screen == null)
                 return null;
 

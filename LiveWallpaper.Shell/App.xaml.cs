@@ -30,7 +30,7 @@ namespace LiveWallpaper.Shell
         private readonly NotifyIcon _notifyIcon = new();
         private readonly ContextMenu _contextMenu = new();
         private readonly MenuItem _btnAbount = new();
-        private readonly MenuItem _btnOffline = new();
+        //private readonly MenuItem _btnOffline = new();
         private readonly MenuItem _btnLocalWallpaper = new();
         private readonly MenuItem _btnCommunity = new();
         private readonly MenuItem _btnCommunityWebView2 = new();
@@ -137,7 +137,7 @@ namespace LiveWallpaper.Shell
         }
         private void BtnAbount_Click(object sender, EventArgs e)
         {
-            OpenBrowser("https://www.giantapp.cn/post/products/livewallpaperv2/");
+            OpenBrowser("https://www.mscoder.cn/blog/info/643f89b3c28f94b0fd14296e");
         }
         private void BtnCommunity_Click(object sender, EventArgs e)
         {
@@ -300,10 +300,13 @@ namespace LiveWallpaper.Shell
             try
             {
                 url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
-                if (_hostPort != _defaultHostPort)
-                {
-                    url = $"{url}&p={_hostPort}";
-                }
+
+                //if (_hostPort != _defaultHostPort)
+                //{
+
+                //每次都带上端口号
+                url = $"{url}&p={_hostPort}";
+                //}
                 if (_mainWindow == null)
                 {
                     _mainWindow = new MainWindow(url)

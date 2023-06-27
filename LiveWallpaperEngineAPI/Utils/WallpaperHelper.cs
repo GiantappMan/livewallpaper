@@ -194,6 +194,10 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             RefreshWallpaper(desktopWallpaperAPI);
         }
 
+        public static string GetCustomScreenName(int screenIndex)
+        {
+            return $"Display{screenIndex}";
+        }
         /// <summary>
         /// 获取指定屏幕的实例
         /// </summary>
@@ -203,7 +207,10 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         {
             if (!_cacheInstances.ContainsKey(screen))
             {
-                var bounds = Screen.AllScreens.ToList().First(m => m.DeviceName == screen).Bounds;
+                var bounds = Screen.AllScreens.Select((m, Index) =>
+                    new { m.Bounds, Index })
+                    .First(m => GetCustomScreenName(m.Index) == screen).Bounds;
+
                 _cacheInstances.Add(screen, new WallpaperHelper(bounds));
             }
             return _cacheInstances[screen];
@@ -213,7 +220,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
         {
             foreach (var item in _cacheInstances)
             {
-                var tmpScreen = Screen.AllScreens.ToList().FirstOrDefault(m => m.DeviceName == item.Key);
+                var tmpScreen = Screen.AllScreens.Select((m, Index) => new { Index, m.Bounds }).ToList().FirstOrDefault(m => GetCustomScreenName(m.Index) == item.Key);
                 if (tmpScreen == null)
                     continue;
 
@@ -349,8 +356,7 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
             if (explorer == null)
                 return null;
 
-            if (desktopWallpaperAPI == null)
-                desktopWallpaperAPI = GetDesktopWallpaperAPI();
+            desktopWallpaperAPI ??= GetDesktopWallpaperAPI();
 
             try
             {

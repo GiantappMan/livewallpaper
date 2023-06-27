@@ -82,10 +82,15 @@ namespace Giantapp.LiveWallpaper.Engine
                 RenderManager.Renders.Add(new WebRender());
                 RenderManager.Renders.Add(new ImageRender());
                 RenderManager.Renders.Add(new GroupRender());
-                Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
+                //Screens = Screen.AllScreens.Select(m => m.DeviceName).ToArray();
+                //改用index，主板电池没电了，显卡驱动更新都会导致设备名变化
+                Screens = Screen.AllScreens.Select((m, i) => WallpaperHelper.GetCustomScreenName(i)).ToArray();
 
                 //初始化winform主窗口
-                LiveWallpaperRenderForm.GetHost(Screen.PrimaryScreen.DeviceName);
+                var tmpIndex = Screen.AllScreens.Select(m => m.DeviceName).ToList().IndexOf(Screen.PrimaryScreen.DeviceName);
+                if (tmpIndex < 0)
+                    tmpIndex = 0;
+                LiveWallpaperRenderForm.GetHost(WallpaperHelper.GetCustomScreenName(tmpIndex));
             }
 
             Initialized = true;

@@ -6,8 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{CCE01828-8EF4-4AA4-A7BC-5DE76B679545}"
 	ProjectSection(SolutionItems) = preProject
 		Docs\Build.md = Docs\Build.md
-		Docs\build_enginerender.ps1 = Docs\build_enginerender.ps1
-		Docs\build_webrender.ps1 = Docs\build_webrender.ps1
 		README.md = README.md
 		Docs\README_zh.md = Docs\README_zh.md
 	EndProjectSection
