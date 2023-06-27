@@ -44,6 +44,11 @@ export default {
               label: 'dashboard.menus.setpwd',
               href: 'dashboard/account/setpwd',
             },
+            {
+              icon: 'unlock',
+              label: 'dashboard.menus.pro',
+              href: 'dashboard/account/pro',
+            }
           ],
         },
         {
