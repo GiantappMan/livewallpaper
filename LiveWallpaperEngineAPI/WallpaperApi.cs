@@ -1048,7 +1048,14 @@ namespace Giantapp.LiveWallpaper.Engine
         }
         private static async Task HandleWindowMaximized(List<Screen> screens)
         {
-            var maximizedScreens = screens.Select((m, i) => m.DeviceName).ToList();
+            var maximizedScreens = screens.Select((m, i) =>
+            {
+                var tmpIndex = Screen.AllScreens.Select(m => m.DeviceName).ToList().IndexOf(m.DeviceName);
+                if (tmpIndex < 0)
+                    tmpIndex = 0;
+
+                return WallpaperHelper.GetCustomScreenName(tmpIndex);
+            }).ToList();
             bool anyScreenMaximized = maximizedScreens.Count > 0;
             foreach (var item in Options.ScreenOptions)
             {
