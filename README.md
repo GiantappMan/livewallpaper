@@ -7,7 +7,9 @@
 
 ---
 
-断更中...年底继续写
+- 客户端断更中...年底继续写
+- 当前我正在开发新版社区，基于Laf   
+如果你愿意支持我一下，可以通过[邀请链接注册](https://laf.run/signup?code=y0pRFfG)，你我可以获得10元[Laf](https://github.com/labring/laf)余额，可用于日后社区服务器开销
 
 ---
 
