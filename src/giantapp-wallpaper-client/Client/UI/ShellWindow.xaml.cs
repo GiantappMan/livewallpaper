@@ -1,4 +1,5 @@
 ﻿using Client.Libs;
+using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using Ookii.Dialogs.Wpf;
 using System;
@@ -193,6 +194,7 @@ public partial class ShellWindow : Window
         if (ClientApi != null)
         {
             webview2.CoreWebView2.AddHostObjectToScript("api", new Client.Apps.ApiObject());
+            webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         }
         webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.SetVirtualHostNameToFolderMapping("client.app", "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);

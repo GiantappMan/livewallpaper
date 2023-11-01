@@ -31,15 +31,3 @@ export async function setConfig(
   }
 }
 
-export async function showFolderDialog(): Promise<ApiResult<string>> {
-  try {
-    if (!window.chrome.webview) return;
-    const { api } = window.chrome.webview.hostObjects;
-    let res = await api.ShowFolderDialog();
-    return { error: null, data: res };
-  } catch (e) {
-    console.log(e);
-    debugger;
-    return { error: e, data: null };
-  }
-}

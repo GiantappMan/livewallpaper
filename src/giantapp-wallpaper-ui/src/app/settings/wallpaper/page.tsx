@@ -3,8 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import * as api from "@/lib/client/api";
-
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -12,11 +10,10 @@ import {
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
-import { useEffect, useState } from "react"
+import shellApi from "@/lib/client/shell";
 
 const FormSchema = z.object({
     paths: z.array(z.object({
@@ -67,20 +64,13 @@ export default function Page() {
         //     }
         // })
     }
-    function handleMessage(event) {
-        debugger
-        window.removeEventListener('message', handleMessage);
-        const message = event.data;
-    }
+    const openFileSelector = async (index: number) => {
+        const res = await shellApi.showFolderDialog();
+        if (res.error)
+            return alert(res.error ? res.error.message : "未知错误");
 
-    function sendMessageToWPFAndWait(message) {
-        window.addEventListener('message', handleMessage);
-        window.chrome.webview.postMessage(message);
-    }
-    const openFileSelector = async () => {
-        // let res = sendMessageToWPFAndWait('open-file-dialog');
-        const res = await api.showFolderDialog();
-        alert(res.data);
+        if (res.data)
+            form.setValue(`paths.${index}.path`, res.data);
     }
 
     return (
@@ -99,7 +89,7 @@ export default function Page() {
                                         <Input autoComplete="off" placeholder={index === 0 ? "壁纸保存目录" : "壁纸读取目录"} {...field}
                                             onBlur={(e) => handleInputChange(index, e.target.value)} />
                                     </FormControl>
-                                    <Button onClick={openFileSelector} type="button" className="items-center self-center">选择</Button>
+                                    <Button onClick={() => openFileSelector(index)} type="button" className="items-center self-center">选择</Button>
                                     {
                                         fields.length > 1 &&
                                         <Button className="items-center self-center" onClick={() => remove(index)}>X</Button>
