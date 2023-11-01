@@ -1,0 +1,7 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowButtonBackground">#dc2626</SolidColorBrush>
+    <SolidColorBrush x:Key="WindowButtonForeground">#7b7b7b</SolidColorBrush>
+    <SolidColorBrush x:Key="WindowBorderActive">#dc2626</SolidColorBrush>
+    <SolidColorBrush x:Key="TitleBackground">#0a0a0a</SolidColorBrush>
+    <SolidColorBrush x:Key="TitleForeground">#a8a29e</SolidColorBrush>
+</ResourceDictionary>

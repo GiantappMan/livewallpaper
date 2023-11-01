@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net462</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <LangVersion>11</LangVersion>
+    <Platforms>x64</Platforms>
+    <AssemblyName>LiveWallpaper3</AssemblyName>
+    <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
+    <Version>3.0.0</Version>
+    <PackageProjectUrl>https://giantapp.cn</PackageProjectUrl>
+    <Authors>巨应君 | Giantapp Studio</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Img\logo.ico" />
+    <None Remove="Assets\Img\logo.png" />
+    <None Remove="Assets\Languages\en.json" />
+    <None Remove="Assets\Languages\zh.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Languages\en.json" />
+    <EmbeddedResource Include="Assets\Languages\zh.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\UI\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HandyControl" Version="3.4.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2088.41" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="MultiLanguageForXAML" Version="2.3.0.1" />
+    <PackageReference Include="NLog" Version="5.2.5" />
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Img\logo.ico" />
+    <Resource Include="Assets\Img\logo.png" />
+  </ItemGroup>
+
+</Project>
