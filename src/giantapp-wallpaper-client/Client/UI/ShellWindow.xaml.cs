@@ -1,7 +1,6 @@
 ﻿using Client.Libs;
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
-using Ookii.Dialogs.Wpf;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -182,7 +181,7 @@ public partial class ShellWindow : Window
     {
         SizeChanged -= ShellWindow_SizeChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
-        webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
+        //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
         Instance = null;
         base.OnClosed(e);
         Configer.Save();
@@ -196,7 +195,7 @@ public partial class ShellWindow : Window
             webview2.CoreWebView2.AddHostObjectToScript("api", new Client.Apps.ApiObject());
             webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         }
-        webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+        //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.SetVirtualHostNameToFolderMapping("client.app", "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
 #if !DEBUG
         //禁用F12
@@ -208,31 +207,11 @@ public partial class ShellWindow : Window
 #endif
     }
 
-    private void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
-    {
-        var webView = sender as Microsoft.Web.WebView2.Wpf.WebView2;
-        var msg = e.TryGetWebMessageAsString();
-        if (msg == "open-file-dialog")
-        {
-            var dialog = new VistaFolderBrowserDialog
-            {
-                Description = "Please select a folder.",
-                UseDescriptionForTitle = true // This applies to the Vista style dialog only, not the old dialog.
-            };
-
-            if (!VistaFolderBrowserDialog.IsVistaFolderDialogSupported)
-            {
-                MessageBox.Show(this, "Because you are not using Windows Vista or later, the regular folder browser dialog will be used. Please use Windows Vista to see the new dialog.", "Sample folder browser dialog");
-            }
-
-            if (dialog.ShowDialog(this) == true)
-            {
-                // 将选择的文件夹路径发送回React应用程序
-                webView?.CoreWebView2.PostWebMessageAsString(dialog.SelectedPath);
-                //MessageBox.Show(this, $"The selected folder was:{Environment.NewLine}{dialog.SelectedPath}", "Sample folder browser dialog");
-            }
-        }
-    }
+    //private void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+    //{
+    //    var webView = sender as Microsoft.Web.WebView2.Wpf.WebView2;
+    //    var msg = e.TryGetWebMessageAsString();
+    //}
 
     #endregion
 
