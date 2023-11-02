@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'export',
-     distDir: '../GiantappWallpaper/Client/Assets/UI',
+     distDir: '../giantapp-wallpaper-client/Client/Assets/UI',
 }
 
 module.exports = nextConfig
