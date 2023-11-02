@@ -6,8 +6,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Media;
 
 namespace GiantappWallpaper;
 
@@ -36,7 +34,6 @@ public partial class ShellWindow : Window
         //本地开发
         _domain = new("http://localhost:3000/");
 #endif
-        //Uri source = new($"{domain}#/settings");
         webview2.Source = _domain;
         var config = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;

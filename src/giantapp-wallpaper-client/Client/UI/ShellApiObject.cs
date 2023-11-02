@@ -1,7 +1,9 @@
 ﻿using GiantappWallpaper;
+using Ookii.Dialogs.Wpf;
 //using Ookii.Dialogs.Wpf;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Client.UI;
@@ -13,57 +15,63 @@ namespace Client.UI;
 [ComVisible(true)]
 public class ShellApiObject
 {
-
-
-    ///// <summary>
-    ///// 三方库，感觉要崩
-    ///// </summary>
-    ///// <returns></returns>
-    //public string ShowFolderDialog()
-    //{
-    //    try
-    //    {
-    //        var dialog = new VistaFolderBrowserDialog
-    //        {
-    //            Description = "Please select a folder.",
-    //            UseDescriptionForTitle = true // This applies to the Vista style dialog only, not the old dialog.
-    //        };
-
-    //        if (!VistaFolderBrowserDialog.IsVistaFolderDialogSupported)
-    //        {
-    //            MessageBox.Show(ShellWindow.Instance, "Because you are not using Windows Vista or later, the regular folder browser dialog will be used. Please use Windows Vista to see the new dialog.", "Sample folder browser dialog");
-    //        }
-
-    //        if (dialog.ShowDialog(ShellWindow.Instance) == true)
-    //        {
-    //            // 将选择的文件夹路径发送回React应用程序
-    //            return dialog.SelectedPath;
-    //            //MessageBox.Show(this, $"The selected folder was:{Environment.NewLine}{dialog.SelectedPath}", "Sample folder browser dialog");
-    //        }
-    //        return "";
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return "";
-    //    }
-    //}
-
-    public string ShowFolderDialog()
+    /// <summary>
+    /// 三方库，感觉要崩
+    /// </summary>
+    /// <returns></returns>
+    public async Task<string> ShowFolderDialog()
     {
-        try
+        string res = string.Empty;
+
+        if (!VistaFolderBrowserDialog.IsVistaFolderDialogSupported)
+        {
+            return await ShowFolderDialogWinform();
+        }
+
+        //处理崩溃
+        //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/threading-model#re-entrancy
+        System.Threading.SynchronizationContext.Current.Post((_) =>
+        {
+            var dialog = new VistaFolderBrowserDialog
+            {
+                Description = "Please select a folder.",
+                UseDescriptionForTitle = true // This applies to the Vista style dialog only, not the old dialog.
+            };
+
+            if (dialog.ShowDialog(ShellWindow.Instance) == true)
+            {
+                // 将选择的文件夹路径发送回React应用程序
+                res = dialog.SelectedPath;
+            }
+        }, null);
+
+        while (string.IsNullOrEmpty(res))
+        {
+            await Task.Delay(100);
+        }
+        return res;
+    }
+
+    public async Task<string> ShowFolderDialogWinform()
+    {
+        string res = string.Empty;
+        //处理崩溃
+        //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/threading-model#re-entrancy
+        System.Threading.SynchronizationContext.Current.Post((_) =>
         {
             var dialog = new System.Windows.Forms.FolderBrowserDialog();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 // 将选择的文件夹路径发送回React应用程序
-                return dialog.SelectedPath;
-                //MessageBox.Show(this, $"The selected folder was:{Environment.NewLine}{dialog.SelectedPath}", "Sample folder browser dialog");
+                res = dialog.SelectedPath;
             }
-            return "";
-        }
-        catch (Exception ex)
+        }, null);
+
+        while (string.IsNullOrEmpty(res))
         {
-            return "";
+            await Task.Delay(100);
         }
+
+        return res;
     }
 }

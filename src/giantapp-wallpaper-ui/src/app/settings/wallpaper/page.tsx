@@ -44,7 +44,6 @@ export default function Page() {
 
     //读取配置
     const fetchConfig = useCallback(async () => {
-        debugger
         const config = await api.getConfig<Wallpaper>("Wallpaper")
         if (config.error || !config.data) {
             alert(config.error)
@@ -52,10 +51,9 @@ export default function Page() {
         }
 
         form.setValue("paths", config.data.saveDir?.map((item) => ({ path: item })) || [{ path: "" }])
-    }, [form]); // add dependencies here
+    }, [form]);
 
     useEffect(() => {
-        debugger
         if (!mounted) {
             setMounted(true);
             fetchConfig();
@@ -64,19 +62,22 @@ export default function Page() {
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
         const res = data.paths.filter((item) => item.path !== "");
-        // toast({
-        //     duration: 3000,
-        //     title: "You submitted the following values:",
-        //     description: (
-        //         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-        //             <code className="text-white">{JSON.stringify(res, null, 2)}</code>
-        //         </pre>
-        //     ),
-        // })
-
-        await api.setConfig("Wallpaper", {
-            saveDir: res.map((item) => item.path)
+        //去重
+        let saveDir = Array.from(new Set(res.map((item) => item.path)));
+        const saveRes = await api.setConfig("Wallpaper", {
+            saveDir
         })
+        if (saveRes.error) {
+            toast({
+                duration: 3000,
+                title: "保存失败",
+                description: saveRes.error.message,
+            });
+        }
+        else {
+            //更新UI
+            form.setValue("paths", saveDir.map((item) => ({ path: item })));
+        }
     }
     const openFileSelector = async (index: number) => {
         const res = await shellApi.showFolderDialog();
