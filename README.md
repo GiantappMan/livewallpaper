@@ -11,7 +11,7 @@
 
 ## 仓库地址
 
-<https://github.com/DaZiYuan/livewallpaper.git>
+<https://github.com/DaZiYuan/livewallpaper.git>  
 <https://gitee.com/DaZiYuan/liveWallpaper.git>  
 
 ## 为什么又放弃Tauri了？
