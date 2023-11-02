@@ -16,7 +16,7 @@ import { ThemeProvider } from '@/components/theme-providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import { Appearance } from '@/lib/client/types/configs/appearance';
-import * as api from "@/lib/client/api";
+import api from "@/lib/client/api";
 import { defaultConfig, useConfig } from '@/hooks/use-config';
 import { Toaster } from '@/components/ui/toaster';
 

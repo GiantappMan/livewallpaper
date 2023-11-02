@@ -14,7 +14,7 @@ import {
     SunIcon,
     DesktopIcon
 } from "@radix-ui/react-icons"
-import * as api from "@/lib/client/api";
+import api from "@/lib/client/api";
 import { Appearance } from "@/lib/client/types/configs/appearance";
 const Page = () => {
     const [mounted, setMounted] = React.useState(false)

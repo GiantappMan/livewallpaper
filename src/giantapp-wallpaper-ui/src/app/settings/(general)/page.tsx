@@ -3,7 +3,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import * as api from "@/lib/client/api";
+import api from "@/lib/client/api";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { General } from "@/lib/client/types/configs/general";
