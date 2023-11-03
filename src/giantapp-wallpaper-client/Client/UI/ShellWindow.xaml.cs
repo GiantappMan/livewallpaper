@@ -93,7 +93,7 @@ public partial class ShellWindow : Window
         appResources.MergedDictionaries.Add(themeDict);
     }
 
-    public static async void ShowShell(string? url = null)
+    public static async void ShowShell(string? url = "index.html")
     {
         Instance ??= new ShellWindow();
 
