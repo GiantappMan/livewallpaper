@@ -76,7 +76,7 @@ export default function Page() {
         }
         else {
             //更新UI
-            form.setValue("paths", saveDir.map((item) => ({ path: item })));
+            // form.setValue("paths", saveDir.map((item) => ({ path: item })));
         }
     }
     const openFileSelector = async (index: number) => {

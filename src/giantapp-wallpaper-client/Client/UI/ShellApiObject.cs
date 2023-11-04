@@ -18,7 +18,8 @@ public class ShellApiObject
     /// <returns></returns>
     public async Task<string> ShowFolderDialog()
     {
-        string res = string.Empty;
+        var res = string.Empty;
+        bool wait = true;
 
         if (!VistaFolderBrowserDialog.IsVistaFolderDialogSupported)
         {
@@ -40,9 +41,10 @@ public class ShellApiObject
                 // 将选择的文件夹路径发送回React应用程序
                 res = dialog.SelectedPath;
             }
+            wait = false;
         }, null);
 
-        while (string.IsNullOrEmpty(res))
+        while (wait)
         {
             await Task.Delay(100);
         }
@@ -51,7 +53,8 @@ public class ShellApiObject
 
     public async Task<string> ShowFolderDialogWinform()
     {
-        string res = string.Empty;
+        var res = string.Empty;
+        bool wait = true;
         //处理崩溃
         //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/threading-model#re-entrancy
         System.Threading.SynchronizationContext.Current.Post((_) =>
@@ -62,9 +65,10 @@ public class ShellApiObject
                 // 将选择的文件夹路径发送回React应用程序
                 res = dialog.SelectedPath;
             }
+            wait = false;
         }, null);
 
-        while (string.IsNullOrEmpty(res))
+        while (wait)
         {
             await Task.Delay(100);
         }
