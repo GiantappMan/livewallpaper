@@ -1,10 +1,7 @@
 ﻿using GiantappWallpaper;
 using Ookii.Dialogs.Wpf;
-//using Ookii.Dialogs.Wpf;
-using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace Client.UI;
 

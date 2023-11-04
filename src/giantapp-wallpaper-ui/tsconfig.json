@@ -33,7 +33,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "../GiantappWallpaper/Client/Assets/UI/types/**/*.ts"
+    "../giantapp-wallpaper-client/Client/Assets/UI/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

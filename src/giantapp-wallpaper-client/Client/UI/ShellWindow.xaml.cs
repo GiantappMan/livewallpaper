@@ -29,11 +29,6 @@ public partial class ShellWindow : Window
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
-
-#if DEBUG
-        //本地开发
-        _domain = new("http://localhost:3000/");
-#endif
         webview2.Source = _domain;
         var config = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;
@@ -95,6 +90,13 @@ public partial class ShellWindow : Window
 
     public static async void ShowShell(string? url = "index.html")
     {
+
+#if DEBUG
+        //本地开发
+        _domain = new("http://localhost:3000/");
+        url = null;
+#endif
+
         Instance ??= new ShellWindow();
 
         bool ok = await Task.Run(CheckWebView2);
