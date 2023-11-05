@@ -20,7 +20,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WallpaperCore\WallpaperCore.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="TestWallpapers\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

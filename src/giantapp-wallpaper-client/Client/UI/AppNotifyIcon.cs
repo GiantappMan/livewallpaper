@@ -3,6 +3,7 @@ using HandyControl.Controls;
 using HandyControl.Interactivity;
 using MultiLanguageForXAML;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -72,7 +73,22 @@ internal class AppNotifyIcon
 
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
     {
+        //系统浏览器打开网页
+        OpenBrowser("https://github.com/DaZiYuan/livewallpaper");
     }
 
+    private static void OpenBrowser(string? url)
+    {
+        try
+        {
+            if (url == null)
+                return;
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(ex.ToString());
+        }
+    }
     #endregion
 }
