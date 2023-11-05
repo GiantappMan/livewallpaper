@@ -112,7 +112,10 @@ export default function Page() {
                                             <Button type="button" onClick={() => openFileSelector(index)} className="items-center self-center">选择</Button>
                                             {
                                                 index > 0 &&
-                                                <Button type="button" className="items-center self-center" onClick={() => remove(index)}>X</Button>
+                                                <Button type="button" className="items-center self-center" onClick={() => {
+                                                    remove(index);
+                                                    form.handleSubmit(onSubmit)()
+                                                }}>X</Button>
                                             }
                                         </div>
                                     </FormItem>
