@@ -47,5 +47,10 @@
     <Resource Include="Assets\Img\logo.ico" />
     <Resource Include="Assets\Img\logo.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Assets\UI\.gitkeep">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

@@ -10,7 +10,7 @@ dependencies:
     version: registry.npmmirror.com/@heroicons/react@2.0.18(react@18.2.0)
   '@hookform/resolvers':
     specifier: ^3.3.2
-    version: registry.npmmirror.com/@hookform/resolvers@3.3.2(react-hook-form@7.47.0)
+    version: registry.npmmirror.com/@hookform/resolvers@3.3.2(react-hook-form@7.48.2)
   '@radix-ui/react-icons':
     specifier: ^1.3.0
     version: registry.npmmirror.com/@radix-ui/react-icons@1.3.0(react@18.2.0)
@@ -42,8 +42,8 @@ dependencies:
     specifier: ^2.0.0
     version: registry.npmmirror.com/clsx@2.0.0
   jotai:
-    specifier: ^2.5.0
-    version: registry.npmmirror.com/jotai@2.5.0(@types/react@18.2.34)(react@18.2.0)
+    specifier: ^2.5.1
+    version: registry.npmmirror.com/jotai@2.5.1(@types/react@18.2.34)(react@18.2.0)
   next:
     specifier: 14.0.1
     version: registry.npmmirror.com/next@14.0.1(react-dom@18.2.0)(react@18.2.0)
@@ -57,8 +57,8 @@ dependencies:
     specifier: ^18
     version: registry.npmmirror.com/react-dom@18.2.0(react@18.2.0)
   react-hook-form:
-    specifier: ^7.47.0
-    version: registry.npmmirror.com/react-hook-form@7.47.0(react@18.2.0)
+    specifier: ^7.48.2
+    version: registry.npmmirror.com/react-hook-form@7.48.2(react@18.2.0)
   tailwind-merge:
     specifier: ^2.0.0
     version: registry.npmmirror.com/tailwind-merge@2.0.0
@@ -215,7 +215,7 @@ packages:
       react: registry.npmmirror.com/react@18.2.0
     dev: false
 
-  registry.npmmirror.com/@hookform/resolvers@3.3.2(react-hook-form@7.47.0):
+  registry.npmmirror.com/@hookform/resolvers@3.3.2(react-hook-form@7.48.2):
     resolution: {integrity: sha512-Tw+GGPnBp+5DOsSg4ek3LCPgkBOuOgS5DsDV7qsWNH9LZc433kgsWICjlsh2J9p04H2K66hsXPPb9qn9ILdUtA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@hookform/resolvers/-/resolvers-3.3.2.tgz}
     id: registry.npmmirror.com/@hookform/resolvers/3.3.2
     name: '@hookform/resolvers'
@@ -223,7 +223,7 @@ packages:
     peerDependencies:
       react-hook-form: ^7.0.0
     dependencies:
-      react-hook-form: registry.npmmirror.com/react-hook-form@7.47.0(react@18.2.0)
+      react-hook-form: registry.npmmirror.com/react-hook-form@7.48.2(react@18.2.0)
     dev: false
 
   registry.npmmirror.com/@humanwhocodes/config-array@0.11.13:
@@ -302,7 +302,7 @@ packages:
     dev: true
 
   registry.npmmirror.com/@next/swc-darwin-arm64@14.0.1:
-    resolution: {integrity: sha512-JyxnGCS4qT67hdOKQ0CkgFTp+PXub5W1wsGvIq98TNbF3YEIN7iDekYhYsZzc8Ov0pWEsghQt+tANdidITCLaw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-14.0.1.tgz}
+    resolution: {integrity: sha512-JyxnGCS4qT67hdOKQ0CkgFTp+PXub5W1wsGvIq98TNbF3YEIN7iDekYhYsZzc8Ov0pWEsghQt+tANdidITCLaw==, tarball: https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-14.0.1.tgz}
     name: '@next/swc-darwin-arm64'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -313,7 +313,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-darwin-x64@14.0.1:
-    resolution: {integrity: sha512-625Z7bb5AyIzswF9hvfZWa+HTwFZw+Jn3lOBNZB87lUS0iuCYDHqk3ujuHCkiyPtSC0xFBtYDLcrZ11mF/ap3w==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-14.0.1.tgz}
+    resolution: {integrity: sha512-625Z7bb5AyIzswF9hvfZWa+HTwFZw+Jn3lOBNZB87lUS0iuCYDHqk3ujuHCkiyPtSC0xFBtYDLcrZ11mF/ap3w==, tarball: https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-14.0.1.tgz}
     name: '@next/swc-darwin-x64'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -324,7 +324,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-linux-arm64-gnu@14.0.1:
-    resolution: {integrity: sha512-iVpn3KG3DprFXzVHM09kvb//4CNNXBQ9NB/pTm8LO+vnnnaObnzFdS5KM+w1okwa32xH0g8EvZIhoB3fI3mS1g==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-14.0.1.tgz}
+    resolution: {integrity: sha512-iVpn3KG3DprFXzVHM09kvb//4CNNXBQ9NB/pTm8LO+vnnnaObnzFdS5KM+w1okwa32xH0g8EvZIhoB3fI3mS1g==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-14.0.1.tgz}
     name: '@next/swc-linux-arm64-gnu'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -336,7 +336,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-linux-arm64-musl@14.0.1:
-    resolution: {integrity: sha512-mVsGyMxTLWZXyD5sen6kGOTYVOO67lZjLApIj/JsTEEohDDt1im2nkspzfV5MvhfS7diDw6Rp/xvAQaWZTv1Ww==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-14.0.1.tgz}
+    resolution: {integrity: sha512-mVsGyMxTLWZXyD5sen6kGOTYVOO67lZjLApIj/JsTEEohDDt1im2nkspzfV5MvhfS7diDw6Rp/xvAQaWZTv1Ww==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-14.0.1.tgz}
     name: '@next/swc-linux-arm64-musl'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -348,7 +348,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-linux-x64-gnu@14.0.1:
-    resolution: {integrity: sha512-wMqf90uDWN001NqCM/auRl3+qVVeKfjJdT9XW+RMIOf+rhUzadmYJu++tp2y+hUbb6GTRhT+VjQzcgg/QTD9NQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-14.0.1.tgz}
+    resolution: {integrity: sha512-wMqf90uDWN001NqCM/auRl3+qVVeKfjJdT9XW+RMIOf+rhUzadmYJu++tp2y+hUbb6GTRhT+VjQzcgg/QTD9NQ==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-14.0.1.tgz}
     name: '@next/swc-linux-x64-gnu'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -360,7 +360,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-linux-x64-musl@14.0.1:
-    resolution: {integrity: sha512-ol1X1e24w4j4QwdeNjfX0f+Nza25n+ymY0T2frTyalVczUmzkVD7QGgPTZMHfR1aLrO69hBs0G3QBYaj22J5GQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-14.0.1.tgz}
+    resolution: {integrity: sha512-ol1X1e24w4j4QwdeNjfX0f+Nza25n+ymY0T2frTyalVczUmzkVD7QGgPTZMHfR1aLrO69hBs0G3QBYaj22J5GQ==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-14.0.1.tgz}
     name: '@next/swc-linux-x64-musl'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -372,7 +372,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-win32-arm64-msvc@14.0.1:
-    resolution: {integrity: sha512-WEmTEeWs6yRUEnUlahTgvZteh5RJc4sEjCQIodJlZZ5/VJwVP8p2L7l6VhzQhT4h7KvLx/Ed4UViBdne6zpIsw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-14.0.1.tgz}
+    resolution: {integrity: sha512-WEmTEeWs6yRUEnUlahTgvZteh5RJc4sEjCQIodJlZZ5/VJwVP8p2L7l6VhzQhT4h7KvLx/Ed4UViBdne6zpIsw==, tarball: https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-14.0.1.tgz}
     name: '@next/swc-win32-arm64-msvc'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -383,7 +383,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-win32-ia32-msvc@14.0.1:
-    resolution: {integrity: sha512-oFpHphN4ygAgZUKjzga7SoH2VGbEJXZa/KL8bHCAwCjDWle6R1SpiGOdUdA8EJ9YsG1TYWpzY6FTbUA+iAJeww==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-win32-ia32-msvc/-/swc-win32-ia32-msvc-14.0.1.tgz}
+    resolution: {integrity: sha512-oFpHphN4ygAgZUKjzga7SoH2VGbEJXZa/KL8bHCAwCjDWle6R1SpiGOdUdA8EJ9YsG1TYWpzY6FTbUA+iAJeww==, tarball: https://registry.npmmirror.com/@next/swc-win32-ia32-msvc/-/swc-win32-ia32-msvc-14.0.1.tgz}
     name: '@next/swc-win32-ia32-msvc'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -394,7 +394,7 @@ packages:
     optional: true
 
   registry.npmmirror.com/@next/swc-win32-x64-msvc@14.0.1:
-    resolution: {integrity: sha512-FFp3nOJ/5qSpeWT0BZQ+YE1pSMk4IMpkME/1DwKBwhg4mJLB9L+6EXuJi4JEwaJdl5iN+UUlmUD3IsR1kx5fAg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-14.0.1.tgz}
+    resolution: {integrity: sha512-FFp3nOJ/5qSpeWT0BZQ+YE1pSMk4IMpkME/1DwKBwhg4mJLB9L+6EXuJi4JEwaJdl5iN+UUlmUD3IsR1kx5fAg==, tarball: https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-14.0.1.tgz}
     name: '@next/swc-win32-x64-msvc'
     version: 14.0.1
     engines: {node: '>= 10'}
@@ -2321,7 +2321,7 @@ packages:
     version: 1.0.0
 
   registry.npmmirror.com/fsevents@2.3.3:
-    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/fsevents/-/fsevents-2.3.3.tgz}
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==, tarball: https://registry.npmmirror.com/fsevents/-/fsevents-2.3.3.tgz}
     name: fsevents
     version: 2.3.3
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2845,11 +2845,11 @@ packages:
     version: 1.21.0
     hasBin: true
 
-  registry.npmmirror.com/jotai@2.5.0(@types/react@18.2.34)(react@18.2.0):
-    resolution: {integrity: sha512-iPJDFrhNw3KU4o4SSAESeZoW+nM1L/76VULXZWF23qmivBEcbAQjiF5n1W4Hn5dXAol4tmtEYe4HH7d9emEz0Q==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/jotai/-/jotai-2.5.0.tgz}
-    id: registry.npmmirror.com/jotai/2.5.0
+  registry.npmmirror.com/jotai@2.5.1(@types/react@18.2.34)(react@18.2.0):
+    resolution: {integrity: sha512-vanPCCSuHczUXNbVh/iUunuMfrWRL4FdBtAbTRmrfqezJcKb8ybBTg8iivyYuUHapjcDETyJe1E4inlo26bVHA==, tarball: https://registry.npmmirror.com/jotai/-/jotai-2.5.1.tgz}
+    id: registry.npmmirror.com/jotai/2.5.1
     name: jotai
-    version: 2.5.0
+    version: 2.5.1
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=17.0.0'
@@ -3447,11 +3447,11 @@ packages:
       scheduler: registry.npmmirror.com/scheduler@0.23.0
     dev: false
 
-  registry.npmmirror.com/react-hook-form@7.47.0(react@18.2.0):
-    resolution: {integrity: sha512-F/TroLjTICipmHeFlMrLtNLceO2xr1jU3CyiNla5zdwsGUGu2UOxxR4UyJgLlhMwLW/Wzp4cpJ7CPfgJIeKdSg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/react-hook-form/-/react-hook-form-7.47.0.tgz}
-    id: registry.npmmirror.com/react-hook-form/7.47.0
+  registry.npmmirror.com/react-hook-form@7.48.2(react@18.2.0):
+    resolution: {integrity: sha512-H0T2InFQb1hX7qKtDIZmvpU1Xfn/bdahWBN1fH19gSe4bBEqTfmlr7H3XWTaVtiK4/tpPaI1F3355GPMZYge+A==, tarball: https://registry.npmmirror.com/react-hook-form/-/react-hook-form-7.48.2.tgz}
+    id: registry.npmmirror.com/react-hook-form/7.48.2
     name: react-hook-form
-    version: 7.47.0
+    version: 7.48.2
     engines: {node: '>=12.22.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18
