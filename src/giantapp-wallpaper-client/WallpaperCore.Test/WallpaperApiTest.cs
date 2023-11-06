@@ -11,5 +11,23 @@ namespace WallpaperCore.Test
 
             Assert.IsTrue(wallpapers.Length > 0);
         }
+
+        [TestMethod]
+        public void TestGetWallpaperMeta()
+        {
+
+        }
+
+        [TestMethod]
+        public void TestGetWallpaperMetaV2()
+        {
+
+        }
+
+        [TestMethod]
+        public void TestGetWallpaperSetting()
+        {
+
+        }
     }
 }
