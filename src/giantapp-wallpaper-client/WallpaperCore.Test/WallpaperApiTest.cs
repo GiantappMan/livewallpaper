@@ -4,9 +4,12 @@ namespace WallpaperCore.Test
     public class WallpaperApiTest
     {
         [TestMethod]
-        public void TestMethod1()
+        public void TestGetWallpapers()
         {
-            WallpaperApi.GetWallpapers("D:");
+            string testFolder = "TestWallpapers";
+            var wallpapers = WallpaperApi.GetWallpapers(testFolder);
+
+            Assert.IsTrue(wallpapers.Length > 0);
         }
     }
 }
