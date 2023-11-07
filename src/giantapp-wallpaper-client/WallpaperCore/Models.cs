@@ -79,60 +79,61 @@ public class WallpaperSetting
 /// </summary>
 public class Wallpaper
 {
+    public Wallpaper(string filePath)
+    {
+        LocalAbsolutePath = filePath;
+        Dir = Path.GetDirectoryName(filePath) ?? string.Empty;
+        FileName = Path.GetFileName(filePath);
+    }
+
     //描述数据
     public WallpaperMeta? Meta { get; set; }
 
     //设置
     public WallpaperSetting? Setting { get; set; }
 
+    //壁纸所在目录
+    public string? Dir { get; private set; }
+
+    //文件名
+    public string? FileName { get; private set; }
+
     //本地绝对路径
     public string? LocalAbsolutePath { get; set; }
 
-    public void LoadMeta(string filePath)
+    public void LoadMeta()
     {
         try
         {
             // 同目录包含[文件名].meta.json 的
-            string dir = Path.GetDirectoryName(filePath) ?? string.Empty;
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-            string metaJsonFile = Path.Combine(dir, $"{fileName}.meta.json");
-            string projectJsonFile = Path.Combine(dir, "project.json");
+            string fileName = Path.GetFileNameWithoutExtension(FileName);
+            string metaJsonFile = Path.Combine(Dir, $"{fileName}.meta.json");
             if (File.Exists(metaJsonFile))
             {
                 var metaJson = JsonConvert.DeserializeObject<WallpaperMeta>(File.ReadAllText(metaJsonFile));
                 Meta = metaJson;
             }
-            else if (File.Exists(projectJsonFile))
+            else
             {
-                //包含 project.json
-                //迁移数据到meta.json
-                var projectJson = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
-                if (projectJson != null)
+                Meta = new()
                 {
-                    var meta = new WallpaperMeta
-                    {
-                        Title = projectJson.Title,
-                        Description = projectJson.Description,
-                    };
-                    Meta = meta;
-                    File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(meta));
-                }
+                    Title = FileName
+                };
             }
         }
         catch (Exception ex)
         {
-            WallpaperApi.Logger?.Warn($"加载壁纸描述数据失败：{filePath} ${ex}");
+            WallpaperApi.Logger?.Warn($"加载壁纸描述数据失败：{LocalAbsolutePath} ${ex}");
         }
     }
 
-    public void LoadSetting(string filePath)
+    public void LoadSetting()
     {
         try
         {
             // 同目录包含[文件名].setting.json 的
-            string dir = Path.GetDirectoryName(filePath) ?? string.Empty;
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-            string settingJsonFile = Path.Combine(dir, $"{fileName}.setting.json");
+            string fileName = Path.GetFileNameWithoutExtension(FileName);
+            string settingJsonFile = Path.Combine(Dir, $"{fileName}.setting.json");
             if (File.Exists(settingJsonFile))
             {
                 var settingJson = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
@@ -141,22 +142,43 @@ public class Wallpaper
         }
         catch (Exception ex)
         {
-            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{filePath} ${ex}");
+            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{LocalAbsolutePath} ${ex}");
         }
     }
 
-    public static Wallpaper From(string filePath, bool loadMeta = true, bool loadSetting = true)
+    public static Wallpaper? From(string filePath, bool loadMeta = true, bool loadSetting = true)
     {
-        var data = new Wallpaper
+        var data = new Wallpaper(filePath);
+
+        string projectJsonFile = Path.Combine(data.Dir, "project.json");
+        if (File.Exists(projectJsonFile))
         {
-            LocalAbsolutePath = filePath
-        };
+            //包含 project.json
+            //迁移数据到meta.json
+            var projectJson = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
+            if (projectJson != null)
+            {
+                if (projectJson.File != data.FileName)
+                {
+                    //不是壁纸文件，可能是封面之类的
+                    return null;
+                }
+                var meta = new WallpaperMeta
+                {
+                    Title = projectJson.Title,
+                    Description = projectJson.Description,
+                };
+                data.Meta = meta;
+                //不修改内容，同时支持旧版
+                return data;
+            }
+        }
 
         if (loadMeta)
-            data.LoadMeta(filePath);
+            data.LoadMeta();
 
         if (loadSetting)
-            data.LoadSetting(filePath);
+            data.LoadSetting();
         return data;
     }
 }

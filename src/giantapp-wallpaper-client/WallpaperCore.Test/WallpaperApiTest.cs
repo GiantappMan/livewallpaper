@@ -21,7 +21,11 @@ namespace WallpaperCore.Test
         [TestMethod]
         public void TestGetWallpaperMetaV2()
         {
+            string testFolder = "TestWallpapers/v2";
+            var wallpapers = WallpaperApi.GetWallpapers(testFolder);
 
+            Assert.IsTrue(wallpapers.Length == 1);
+            Assert.IsNotNull(wallpapers[0]?.Meta?.Title);
         }
 
         [TestMethod]

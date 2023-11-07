@@ -46,7 +46,10 @@ public static class WallpaperApi
             // 符合支持格式的
             if (IsSupportedFile(fileInfo.Extension))
             {
-                Wallpaper wallpaper = Wallpaper.From(file);
+                Wallpaper? wallpaper = Wallpaper.From(file);
+                if (wallpaper == null)
+                    continue;
+
                 yield return wallpaper;
             }
         }
