@@ -71,7 +71,29 @@ public class PlaylistSetting
 //一个壁纸的设置
 public class WallpaperSetting
 {
+    /// <summary>
+    /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
+    /// </summary>
+    public bool EnableMouseEvent { get; set; } = true;
 
+    #region video
+
+    /// <summary>
+    /// 是否启用硬件解码，video才行。其他类型无效
+    /// </summary>
+    public bool HardwareDecoding { get; set; } = true;
+
+    /// <summary>
+    /// 是否铺满
+    /// </summary>
+    public bool IsPanScan { get; set; } = true;
+
+    /// <summary>
+    /// 音量0-100
+    /// </summary>
+    public int Volume { get; set; }
+
+    #endregion
 }
 
 /// <summary>

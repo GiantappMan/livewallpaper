@@ -15,7 +15,11 @@ namespace WallpaperCore.Test
         [TestMethod]
         public void TestGetWallpaperMeta()
         {
+            string testFolder = "TestWallpapers/meta";
+            var wallpapers = WallpaperApi.GetWallpapers(testFolder);
 
+            Assert.IsTrue(wallpapers.Length == 1);
+            Assert.IsTrue(wallpapers[0]?.Meta?.Title == "Test Title");
         }
 
         [TestMethod]
@@ -31,7 +35,11 @@ namespace WallpaperCore.Test
         [TestMethod]
         public void TestGetWallpaperSetting()
         {
+            string testFolder = "TestWallpapers/setting";
+            var wallpapers = WallpaperApi.GetWallpapers(testFolder);
 
+            Assert.IsTrue(wallpapers.Length == 1);
+            Assert.IsTrue(wallpapers[0]?.Setting?.Volume == 5);
         }
     }
 }
