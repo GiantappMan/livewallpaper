@@ -29,10 +29,15 @@ public static class WallpaperApi
     #region public method
 
     //一次性获取目录内的壁纸
-    public static Wallpaper[] GetWallpapers(string directory)
+    public static Wallpaper[] GetWallpapers(params string[] directories)
     {
-        var res = EnumerateWallpapersAsync(directory).ToArray();
-        return res;
+        var wallpapers = new List<Wallpaper>();
+        foreach (var directory in directories)
+        {
+            wallpapers.AddRange(EnumerateWallpapersAsync(directory));
+        }
+
+        return wallpapers.ToArray();
     }
 
     //枚举目录内的壁纸

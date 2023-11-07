@@ -1,7 +1,9 @@
-﻿using Client.Libs;
+﻿using Client.Apps.Configs;
+using Client.Libs;
 using Newtonsoft.Json;
 using System;
 using System.Runtime.InteropServices;
+using WallpaperCore;
 
 namespace Client.Apps;
 
@@ -61,5 +63,15 @@ public class ApiObject
         }
 
         return json;
+    }
+
+    public WallpaperCore.Wallpaper[] GetWallpapers()
+    {
+        var directories = Configer.Get<Configs.Wallpaper>()?.Directories;
+        if (directories == null)
+            return new WallpaperCore.Wallpaper[] { };
+
+        var res = WallpaperApi.GetWallpapers(directories);
+        return res;
     }
 }

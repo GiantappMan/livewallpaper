@@ -9,6 +9,8 @@
 
 ## [愿景](./docs/0.愿景.md)
 
+## [开发](./docs/1.开发.md)
+
 ## 仓库地址
 
 <https://github.com/DaZiYuan/livewallpaper.git>  
