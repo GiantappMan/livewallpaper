@@ -1,6 +1,7 @@
 interface API {
   GetConfig(key: string): Promise<string>;
   SetConfig(key: string, value: string);
+  addEventListener(type: string, listener: (e: any) => void);
 }
 
 interface Shell {

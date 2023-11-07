@@ -1,8 +1,26 @@
-import { ApiResult } from "./types";
+import EventEmitter from "events";
+import { ApiResult, InitProgressEvent } from "./types";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
 class API {
+  private emitter = new EventEmitter();
+
+  constructor() {
+    if (!window.chrome.webview) return;
+    const { api } = window.chrome.webview.hostObjects;
+
+    //注册InitProgressEvent事件
+    api.addEventListener("InitProgressEvent", (e: any) => {
+      this.emitter.emit(e);
+    });
+  }
+
+  // 暴露出事件
+  onInitProgress(callback: (e: InitProgressEvent) => void) {
+    this.emitter.on("initProgress", callback);
+  }
+
   async getConfig<T>(
     key: Key,
   ): Promise<ApiResult<T>> {

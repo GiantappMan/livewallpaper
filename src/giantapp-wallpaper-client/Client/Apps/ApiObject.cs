@@ -3,6 +3,7 @@ using Client.Libs;
 using Newtonsoft.Json;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using WallpaperCore;
 
 namespace Client.Apps;
@@ -18,6 +19,14 @@ public class CorrectConfigEventArgs : ConfigSetAfterEventArgs
     public object? Corrected { get; set; }
 }
 
+public class ProgressEventArgs : EventArgs
+{
+    public int Progress { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public bool IsCompleted { get; set; }
+    public bool IsError { get; set; }
+}
+
 /// <summary>
 /// 前端api
 /// </summary>
@@ -27,6 +36,26 @@ public class ApiObject
 {
     public static event EventHandler<ConfigSetAfterEventArgs>? ConfigSetAfterEvent;
     public static event EventHandler<CorrectConfigEventArgs>? CorrectConfigEvent;
+    public delegate void EventDelegate(string data);
+    public event EventDelegate? InitProgressEvent;
+
+    public ApiObject()
+    {
+        Task.Run(() =>
+        {
+            //模拟10秒进度
+            for (int i = 0; i < 1000; i++)
+            {
+                Task.Delay(1000).Wait();
+                string json = JsonConvert.SerializeObject(new ProgressEventArgs
+                {
+                    Progress = i * 10,
+                    Message = $"``初始化中{i * 10}%"
+                });
+                InitProgressEvent?.Invoke(json);
+            }
+        });
+    }
 
     public void SetConfig(string key, string json)
     {

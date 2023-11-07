@@ -31,6 +31,9 @@
     <None Update="Assets\UI\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Player\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HandyControl" Version="3.4.0" />
@@ -51,7 +54,7 @@
     <Resource Include="Assets\Img\logo.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Assets\UI\.gitkeep">
+    <None Update="Assets\**\.gitkeep">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
