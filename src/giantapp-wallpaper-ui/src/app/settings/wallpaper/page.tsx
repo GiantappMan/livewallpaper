@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/use-toast"
 import shellApi from "@/lib/client/shell";
 import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
-import { SettingWallpaper } from "@/lib/client/types/setting-wallpaper"
+import { SettingWallpaper } from "@/lib/client/types/setting"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const FormSchema = z.object({

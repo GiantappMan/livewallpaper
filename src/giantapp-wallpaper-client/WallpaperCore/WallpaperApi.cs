@@ -43,6 +43,10 @@ public static class WallpaperApi
     //枚举目录内的壁纸
     public static IEnumerable<Wallpaper> EnumerateWallpapersAsync(string directory)
     {
+        //目录不存在
+        if (!Directory.Exists(directory))
+            yield break;
+
         // 遍历目录文件，筛选壁纸
         foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
         {

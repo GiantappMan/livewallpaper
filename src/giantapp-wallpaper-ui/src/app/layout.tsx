@@ -15,7 +15,7 @@ import NavMenu from '@/components/nav-menu';
 import { ThemeProvider } from '@/components/theme-providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
-import { SettingAppearance } from '@/lib/client/types/setting-appearance';
+import { SettingAppearance } from '@/lib/client/types/setting';
 import api from "@/lib/client/api";
 import { defaultConfig, useConfig } from '@/hooks/use-config';
 import { Toaster } from '@/components/ui/toaster';
@@ -33,7 +33,7 @@ export default function RootLayout({
   const [sidebarTopNavigation] = useState([
     {
       name: "本地",
-      href: "/local",
+      href: "/",
       icon: HomeIcon,
       selectedIcon: solidHomeIcon,
       current: false,

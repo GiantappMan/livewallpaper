@@ -1,5 +1,6 @@
 import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
+import { Wallpaper } from "./types/wallpaper";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -51,7 +52,7 @@ class API {
     }
   }
 
-  async getWallpapers() {
+  async getWallpapers(): Promise<ApiResult<Wallpaper[]>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;

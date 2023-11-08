@@ -50,7 +50,7 @@ public class WallpaperMeta
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Author { get; set; }
-    public string? AuthorId { get; set; }
+    public string? AuthorID { get; set; }
     public DateTime? CreateTime { get; set; }
     public DateTime? UpdateTime { get; set; }
 }

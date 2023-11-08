@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using NLog;
 
@@ -90,6 +91,8 @@ public static class Configer
             {
                 if (_cache.TryGetValue(key, out object config))
                 {
+                    if (config is JObject)
+                        return JsonConvert.DeserializeObject<T>(config.ToString());
                     return (T)config;
                 }
             }

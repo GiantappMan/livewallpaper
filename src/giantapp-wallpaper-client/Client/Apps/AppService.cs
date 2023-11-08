@@ -76,7 +76,7 @@ internal class AppService
                 if (configWallpaper.Directories.Length == 0)
                 {
                     //给默认值
-                    string folder = GetDefaultSaveFolder();
+                    string folder = GetDefaultWallpaperSaveFolder();
                     configWallpaper.Directories = new string[] { folder };
                     e.Corrected = configWallpaper;
                 }
@@ -84,18 +84,12 @@ internal class AppService
         }
     }
 
-    private static string GetDefaultSaveFolder()
+    internal static string GetDefaultWallpaperSaveFolder()
     {
-        //从D盘检查，没有D盘就用C盘
-        string folder = @"D:\LiveWallpaper";
+        if (Directory.Exists(@"D:\"))
+            return @"D:\LiveWallpaper";
 
-        //判断D盘存不存在，就用C盘
-        if (!Directory.Exists(@"D:\"))
-        {
-            return folder;
-        }
-
-        folder = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
         folder = Path.Combine(folder, "LiveWallpaper");
         return folder;
     }

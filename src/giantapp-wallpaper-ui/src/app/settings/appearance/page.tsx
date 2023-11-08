@@ -15,7 +15,7 @@ import {
     DesktopIcon
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
-import { SettingAppearance } from "@/lib/client/types/setting-appearance";
+import { SettingAppearance } from "@/lib/client/types/setting";
 const Page = () => {
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = useConfig()

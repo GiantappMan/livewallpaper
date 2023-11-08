@@ -92,13 +92,13 @@ public class ApiObject
         return json;
     }
 
-    public Wallpaper[] GetWallpapers()
+    public string GetWallpapers()
     {
         var directories = Configer.Get<Configs.Wallpaper>()?.Directories;
-        if (directories == null)
-            return new Wallpaper[] { };
+        if (directories == null || directories.Length == 0)
+            directories = new string[] { AppService.GetDefaultWallpaperSaveFolder() };
 
         var res = WallpaperApi.GetWallpapers(directories);
-        return res;
+        return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
 }
