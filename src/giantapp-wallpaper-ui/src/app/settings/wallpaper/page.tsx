@@ -91,6 +91,18 @@ export default function Page() {
         form.handleSubmit(onSubmit)();
     }
 
+    const addFolder = async () => {
+        const res = await shellApi.showFolderDialog();
+        if (res.error)
+            return alert(res.error ? res.error.message : "未知错误");
+
+        if (res.data)
+            append({ path: res.data });
+
+        //提交表单
+        form.handleSubmit(onSubmit)();
+    }
+
     return (
         mounted ?
             <Form {...form}>
@@ -124,7 +136,7 @@ export default function Page() {
                         ))
                     }
 
-                    <Button type="button" onClick={() => append({ path: "" })}>添加目录</Button>
+                    <Button type="button" onClick={addFolder}>添加目录</Button>
                 </form>
             </Form>
             :
