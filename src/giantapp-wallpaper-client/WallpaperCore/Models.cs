@@ -49,6 +49,7 @@ public class WallpaperMeta
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
+    public string? Cover { get; set; }
     public string? Author { get; set; }
     public string? AuthorID { get; set; }
     public DateTime? CreateTime { get; set; }
@@ -189,6 +190,7 @@ public class Wallpaper
                 {
                     Title = projectJson.Title,
                     Description = projectJson.Description,
+                    Cover = projectJson.Preview
                 };
                 data.Meta = meta;
                 //不修改内容，同时支持旧版
