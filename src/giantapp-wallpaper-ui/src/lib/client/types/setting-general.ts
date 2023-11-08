@@ -1,4 +1,4 @@
-export type General = {
+export type SettingGeneral = {
   autoStart: boolean;
   hideWindow: boolean;
 };

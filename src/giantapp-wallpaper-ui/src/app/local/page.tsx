@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 const Page = () => {
-    return <div key="1" className="grid grid-cols-3 gap-4 p-4">
+    return <div key="1" className="grid grid-cols-4 gap-4 p-4">
         <div className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
             <img
                 alt="Wallpaper 1"

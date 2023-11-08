@@ -50,6 +50,19 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async getWallpapers() {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      var json = await api.GetWallpapers();
+      let res = JSON.parse(json);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

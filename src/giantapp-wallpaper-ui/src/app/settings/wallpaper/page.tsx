@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/use-toast"
 import shellApi from "@/lib/client/shell";
 import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
-import { Wallpaper } from "@/lib/client/types/configs/wallpaper"
+import { SettingWallpaper } from "@/lib/client/types/setting-wallpaper"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const FormSchema = z.object({
@@ -44,7 +44,7 @@ export default function Page() {
 
     //读取配置
     const fetchConfig = useCallback(async () => {
-        const config = await api.getConfig<Wallpaper>("Wallpaper")
+        const config = await api.getConfig<SettingWallpaper>("Wallpaper")
         if (config.error || !config.data) {
             alert(config.error)
             return

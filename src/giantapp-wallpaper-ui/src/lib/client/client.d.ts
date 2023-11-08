@@ -1,6 +1,7 @@
 interface API {
   GetConfig(key: string): Promise<string>;
   SetConfig(key: string, value: string);
+  GetWallpapers(): Promise<string>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

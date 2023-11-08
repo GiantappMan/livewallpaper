@@ -15,7 +15,7 @@ import NavMenu from '@/components/nav-menu';
 import { ThemeProvider } from '@/components/theme-providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
-import { Appearance } from '@/lib/client/types/configs/appearance';
+import { SettingAppearance } from '@/lib/client/types/setting-appearance';
 import api from "@/lib/client/api";
 import { defaultConfig, useConfig } from '@/hooks/use-config';
 import { Toaster } from '@/components/ui/toaster';
@@ -72,7 +72,7 @@ export default function RootLayout({
   const [_, setConfig] = useConfig()
   //读取主题设置
   const fetchConfig = async () => {
-    const { data } = await api.getConfig<Appearance>("Appearance");
+    const { data } = await api.getConfig<SettingAppearance>("Appearance");
     setConfig(data || defaultConfig);
     return data;
   };
