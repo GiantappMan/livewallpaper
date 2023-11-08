@@ -2,6 +2,8 @@
 using Client.Libs;
 using GiantappWallpaper;
 using Newtonsoft.Json;
+using System;
+using System.IO;
 using System.Reflection;
 
 namespace Client.Apps;
@@ -61,15 +63,41 @@ internal class AppService
         switch (e.Key)
         {
             case General.FullName:
-                var config = JsonConvert.DeserializeObject<General>(e.Json);
-                if (config != null)
+                var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
+                if (configGeneral != null)
                 {
                     bool tmp = autoStart.Check();
-                    config.AutoStart = tmp;//用真实情况修改返回值
-                    e.Corrected = config;
+                    configGeneral.AutoStart = tmp;//用真实情况修改返回值
+                    e.Corrected = configGeneral;
+                }
+                break;
+            case Wallpaper.FullName:
+                var configWallpaper = JsonConvert.DeserializeObject<Wallpaper>(e.Json) ?? new();
+                if (configWallpaper.Directories.Length == 0)
+                {
+                    //给默认值
+                    string folder = GetDefaultSaveFolder();
+                    configWallpaper.Directories = new string[] { folder };
+                    e.Corrected = configWallpaper;
                 }
                 break;
         }
+    }
+
+    private static string GetDefaultSaveFolder()
+    {
+        //从D盘检查，没有D盘就用C盘
+        string folder = @"D:\LiveWallpaper";
+
+        //判断D盘存不存在，就用C盘
+        if (!Directory.Exists(@"D:\"))
+        {
+            return folder;
+        }
+
+        folder = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        folder = Path.Combine(folder, "LiveWallpaper");
+        return folder;
     }
 
     private static void Api_SetConfigEvent(object sender, ConfigSetAfterEventArgs e)

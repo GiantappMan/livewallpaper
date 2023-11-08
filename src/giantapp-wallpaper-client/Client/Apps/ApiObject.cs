@@ -1,9 +1,7 @@
-﻿using Client.Apps.Configs;
-using Client.Libs;
+﻿using Client.Libs;
 using Newtonsoft.Json;
 using System;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using WallpaperCore;
 
 namespace Client.Apps;
@@ -36,25 +34,25 @@ public class ApiObject
 {
     public static event EventHandler<ConfigSetAfterEventArgs>? ConfigSetAfterEvent;
     public static event EventHandler<CorrectConfigEventArgs>? CorrectConfigEvent;
-    public delegate void EventDelegate(string data);
-    public event EventDelegate? InitProgressEvent;
+    //public delegate void EventDelegate(string data);
+    //public event EventDelegate? InitProgressEvent;
 
     public ApiObject()
     {
-        Task.Run(() =>
-        {
-            //模拟10秒进度
-            for (int i = 0; i < 1000; i++)
-            {
-                Task.Delay(1000).Wait();
-                string json = JsonConvert.SerializeObject(new ProgressEventArgs
-                {
-                    Progress = i * 10,
-                    Message = $"``初始化中{i * 10}%"
-                });
-                InitProgressEvent?.Invoke(json);
-            }
-        });
+        //Task.Run(() =>
+        //{
+        //    //模拟10秒进度
+        //    for (int i = 0; i < 1000; i++)
+        //    {
+        //        Task.Delay(1000).Wait();
+        //        string json = JsonConvert.SerializeObject(new ProgressEventArgs
+        //        {
+        //            Progress = i * 10,
+        //            Message = $"``初始化中{i * 10}%"
+        //        });
+        //        InitProgressEvent?.Invoke(json);
+        //    }
+        //});
     }
 
     public void SetConfig(string key, string json)
@@ -94,11 +92,11 @@ public class ApiObject
         return json;
     }
 
-    public WallpaperCore.Wallpaper[] GetWallpapers()
+    public Wallpaper[] GetWallpapers()
     {
         var directories = Configer.Get<Configs.Wallpaper>()?.Directories;
         if (directories == null)
-            return new WallpaperCore.Wallpaper[] { };
+            return new Wallpaper[] { };
 
         var res = WallpaperApi.GetWallpapers(directories);
         return res;

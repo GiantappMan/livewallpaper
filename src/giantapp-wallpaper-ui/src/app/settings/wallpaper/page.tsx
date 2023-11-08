@@ -20,7 +20,7 @@ import { Wallpaper } from "@/lib/client/types/configs/wallpaper"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const FormSchema = z.object({
-    paths: z.array(z.object({
+    directories: z.array(z.object({
         path: z.string(),
     }))
 })
@@ -30,13 +30,13 @@ export default function Page() {
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
-            paths: [{ path: "" }],
+            directories: [{ path: "" }],
         },
     })
     const { control } = form
     const { fields, append, remove } = useFieldArray({
         control,
-        name: "paths",
+        name: "directories",
         rules: {
             minLength: 1
         },
@@ -50,7 +50,7 @@ export default function Page() {
             return
         }
 
-        form.setValue("paths", config.data.saveDir?.map((item) => ({ path: item })) || [{ path: "" }])
+        form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
     }, [form]);
 
     useEffect(() => {
@@ -61,11 +61,11 @@ export default function Page() {
     }, [fetchConfig, mounted]);
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
-        const res = data.paths.filter((item) => item.path !== "");
+        const res = data.directories.filter((item) => item.path !== "");
         //去重
-        let saveDir = Array.from(new Set(res.map((item) => item.path)));
+        let directories = Array.from(new Set(res.map((item) => item.path)));
         const saveRes = await api.setConfig("Wallpaper", {
-            saveDir
+            directories
         })
         if (saveRes.error) {
             toast({
@@ -76,7 +76,7 @@ export default function Page() {
         }
         else {
             //更新UI
-            // form.setValue("paths", saveDir.map((item) => ({ path: item })));
+            // form.setValue("directories", directories.map((item) => ({ path: item })));
         }
     }
     const openFileSelector = async (index: number) => {
@@ -85,7 +85,7 @@ export default function Page() {
             return alert(res.error ? res.error.message : "未知错误");
 
         if (res.data)
-            form.setValue(`paths.${index}.path`, res.data);
+            form.setValue(`directories.${index}.path`, res.data);
 
         //提交表单
         form.handleSubmit(onSubmit)();
@@ -101,7 +101,7 @@ export default function Page() {
                             <FormField
                                 key={field.id}
                                 control={control}
-                                name={`paths.${index}.path`}
+                                name={`directories.${index}.path`}
                                 render={({ field }) => (
                                     <FormItem >
                                         <div className="flex w-full max-w-sm items-center space-x-2 space-y-0">

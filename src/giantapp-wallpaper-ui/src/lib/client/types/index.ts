@@ -3,9 +3,9 @@ export type ApiResult<T> = {
   data: T | null;
 };
 
-export interface InitProgressEvent {
-  type: "initProgress";
-  data: {
-    // ...event data
-  };
-}
+// export interface InitProgressEvent {
+//   type: "initProgress";
+//   data: {
+//     // ...event data
+//   };
+// }

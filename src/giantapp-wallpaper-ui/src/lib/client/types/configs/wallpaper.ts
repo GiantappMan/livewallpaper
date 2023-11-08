@@ -1,3 +1,3 @@
 export type Wallpaper = {
-  saveDir: string[];
+  directories: string[];
 };

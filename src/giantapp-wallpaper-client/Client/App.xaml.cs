@@ -84,7 +84,7 @@ public partial class App : Application
     private Mutex? _mutex;
     private void KillOldProcess()
     {
-        string[] AppNames = new string[] { "LiveWallpaper2", "LiveWallpaper3" };
+        string[] AppNames = new string[] {/*暂时支持一起开，方便下壁纸"LiveWallpaper2",*/ "LiveWallpaper3" };
         //杀掉其他实例
         foreach (var AppName in AppNames)
         {
