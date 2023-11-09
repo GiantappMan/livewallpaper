@@ -62,8 +62,10 @@ export default function Page() {
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
         const res = data.directories.filter((item) => item.path !== "");
-        //去重
-        let directories = Array.from(new Set(res.map((item) => item.path)));
+        let directories = Array.from(
+            new Set(res.map((item) => item.path.toLowerCase())),
+            (pathLowerCase) => res.find((item) => item.path.toLowerCase() === pathLowerCase)?.path
+        );
         const saveRes = await api.setConfig("Wallpaper", {
             directories
         })

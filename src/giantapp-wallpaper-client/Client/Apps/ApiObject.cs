@@ -94,11 +94,8 @@ public class ApiObject
 
     public string GetWallpapers()
     {
-        var directories = Configer.Get<Configs.Wallpaper>()?.Directories;
-        if (directories == null || directories.Length == 0)
-            directories = new string[] { AppService.GetDefaultWallpaperSaveFolder() };
-
-        var res = WallpaperApi.GetWallpapers(directories);
+        var directories = (Configer.Get<Configs.Wallpaper>() ?? new()).Directories;
+        var res = WallpaperApi.GetWallpapers(directories ?? Configs.Wallpaper.DefaultWallpaperSaveFolder);
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
 }

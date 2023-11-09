@@ -4,8 +4,10 @@ using GiantappWallpaper;
 using Newtonsoft.Json;
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -48,14 +50,7 @@ internal class AppService
             { _domainStr, "Assets/UI" }
         };
         var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
-        if (wallpaperConfig.Directories.Length == 0)
-        {
-            //给默认值
-            string folder = GetDefaultWallpaperSaveFolder();
-            wallpaperConfig.Directories = new string[] { folder };
-            Configer.Set(wallpaperConfig);
-        }
-
+        ApplyCustomFolderMapping(wallpaperConfig.Directories);
 
         //前端api
         var api = new ApiObject();
@@ -153,6 +148,27 @@ internal class AppService
         return res;
     }
 
+    //配置目录映射到网址
+    private static void ApplyCustomFolderMapping(string[]? directories)
+    {
+        if (directories == null || directories.Length == 0)
+            directories = Wallpaper.DefaultWallpaperSaveFolder;
+
+        var dict = new Dictionary<string, string>();
+        //第一个是网址和UI映射
+        var first = ShellWindow.CustomFolderMapping.FirstOrDefault();
+        dict.Add(first.Key, first.Value);
+
+        int index = 0;
+        foreach (var item in directories)
+        {
+            string url = $"{index++}.{_domainStr}";
+            dict.Add(url, item);
+        }
+
+        ShellWindow.CustomFolderMapping = dict;
+    }
+
     #endregion
     #region callback
     private static void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
@@ -170,25 +186,13 @@ internal class AppService
                 break;
             case Wallpaper.FullName:
                 var configWallpaper = JsonConvert.DeserializeObject<Wallpaper>(e.Json) ?? new();
-                if (configWallpaper.Directories.Length == 0)
+                if (configWallpaper.Directories == null || configWallpaper.Directories.Length == 0)
                 {
-                    //给默认值
-                    string folder = GetDefaultWallpaperSaveFolder();
-                    configWallpaper.Directories = new string[] { folder };
+                    configWallpaper.Directories = Wallpaper.DefaultWallpaperSaveFolder;
                     e.Corrected = configWallpaper;
                 }
                 break;
         }
-    }
-
-    internal static string GetDefaultWallpaperSaveFolder()
-    {
-        if (Directory.Exists(@"D:\"))
-            return @"D:\LiveWallpaper";
-
-        string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        folder = Path.Combine(folder, "LiveWallpaper");
-        return folder;
     }
 
     private static void Api_SetConfigEvent(object sender, ConfigSetAfterEventArgs e)
@@ -207,6 +211,13 @@ internal class AppService
                 if (configGeneral != null)
                 {
                     autoStart.Set(configGeneral.AutoStart);
+                }
+                break;
+            case Wallpaper.FullName:
+                var configWallpaper = JsonConvert.DeserializeObject<Wallpaper>(e.Json);
+                if (configWallpaper != null)
+                {
+                    ApplyCustomFolderMapping(configWallpaper.Directories);
                 }
                 break;
         }
