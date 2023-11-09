@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import api from "@/lib/client/api";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SettingGeneral } from "@/lib/client/types/setting-general";
+import { SettingGeneral } from "@/lib/client/types/setting";
 
 const Page = () => {
     const [mounted, setMounted] = React.useState(false)

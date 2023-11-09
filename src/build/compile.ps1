@@ -14,7 +14,7 @@ if ($key.Character -eq 'y') {
     # build frontend
     Set-Location ../giantapp-wallpaper-ui
     pnpm i
-    pnpm build
+    pnpm build:client
 }
 
 #返回build目录

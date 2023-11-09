@@ -37,7 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HandyControl" Version="3.4.0" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2088.41" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2151.40" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="MultiLanguageForXAML" Version="2.3.0.1" />
     <PackageReference Include="NLog" Version="5.2.5" />

@@ -20,7 +20,7 @@ public partial class ShellWindow : Window
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
-    static Uri _domain = new("https://client.app/");
+    static readonly Uri _domain = new("https://client.app/");
 
     #endregion
 
