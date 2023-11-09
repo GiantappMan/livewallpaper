@@ -2,6 +2,7 @@
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -20,7 +21,10 @@ public partial class ShellWindow : Window
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
-    static readonly Uri _domain = new("https://client.app/");
+    static readonly string _domainStr = "client.giantapp.cn";
+    static Uri _domain = new($"https://{_domainStr}/");
+
+    public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
 
     #endregion
 
@@ -195,7 +199,7 @@ public partial class ShellWindow : Window
             webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-        webview2.CoreWebView2.SetVirtualHostNameToFolderMapping("client.app", "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
+        webview2.CoreWebView2.SetVirtualHostNameToFolderMapping(_domainStr, "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
 #if !DEBUG
         //禁用F12
         webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;

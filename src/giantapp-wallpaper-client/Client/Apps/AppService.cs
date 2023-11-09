@@ -2,9 +2,12 @@
 using Client.Libs;
 using GiantappWallpaper;
 using Newtonsoft.Json;
+using NLog;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 
 namespace Client.Apps;
 
@@ -14,8 +17,12 @@ namespace Client.Apps;
 internal class AppService
 {
     public static readonly string ProductName = "LiveWallpaper3";
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private static readonly AutoStart autoStart;
+    //是否存关闭老进程
+    private static bool _killOldProcess = false;
+
     static AppService()
     {
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
@@ -25,6 +32,14 @@ internal class AppService
     #region public
     internal static void Init()
     {
+
+        //检查单实例
+        bool ok = CheckMutex();
+        if (!ok)
+        {
+            _killOldProcess = KillOldProcess();
+        }
+
         //前端api
         var api = new ApiObject();
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
@@ -41,7 +56,7 @@ internal class AppService
         }
         autoStart.Set(general.AutoStart);
 
-        if (!general.HideWindow)
+        if (_killOldProcess || general != null && !general.HideWindow)
             ShellWindow.ShowShell();
 
         //外观配置
@@ -55,8 +70,60 @@ internal class AppService
             return;
         ShellWindow.SetTheme(config.Theme, config.Mode);
     }
+
     #endregion
 
+    #region private
+
+    private static Mutex? _mutex;
+    private static bool CheckMutex()
+    {
+        try
+        {
+            //兼容腾讯桌面，曲线救国...
+            _mutex = new Mutex(true, "cxWallpaperEngineGlobalMutex", out bool ret);
+            if (!ret)
+            {
+                return false;
+            }
+            _mutex.ReleaseMutex();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Info(ex);
+            return false;
+        }
+    }
+
+    private static bool KillOldProcess()
+    {
+        var res = false;
+        string[] AppNames = new string[] {/*暂时支持一起开，方便下壁纸"LiveWallpaper2",*/ProductName };
+        //杀掉其他实例
+        foreach (var AppName in AppNames)
+        {
+            try
+            {
+                var ps = Process.GetProcessesByName(AppName);
+                var cp = Process.GetCurrentProcess();
+                foreach (var p in ps)
+                {
+                    if (p.Id == cp.Id)
+                        continue;
+                    p.Kill();
+                    res = true || res;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Info(ex);
+            }
+        }
+        return res;
+    }
+
+    #endregion
     #region callback
     private static void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
     {
