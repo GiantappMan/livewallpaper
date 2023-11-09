@@ -15,6 +15,8 @@ namespace GiantappWallpaper;
 public partial class App : Application
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    //是否存关闭老进程
+    private bool _killOldProcess = false;
     public App()
     {
         //多语言初始化
@@ -34,7 +36,9 @@ public partial class App : Application
         //检查单实例
         bool ok = CheckMutex();
         if (!ok)
-            KillOldProcess();
+        {
+            _killOldProcess = KillOldProcess();
+        }
     }
 
     #region override
@@ -44,9 +48,9 @@ public partial class App : Application
         _logger.Info($"{AppService.ProductName} Start");
         //业务逻辑初始化
         AppService.Init();
-        //读取配置，是否显示窗口
+        //杀了进程，或者取配置显示窗口
         var config = Configer.Get<General>();
-        if (config != null && !config.HideWindow)
+        if (_killOldProcess || config != null && !config.HideWindow)
             ShellWindow.ShowShell();
         base.OnStartup(e);
     }
@@ -82,8 +86,9 @@ public partial class App : Application
     }
 
     private Mutex? _mutex;
-    private void KillOldProcess()
+    private bool KillOldProcess()
     {
+        var res = false;
         string[] AppNames = new string[] {/*暂时支持一起开，方便下壁纸"LiveWallpaper2",*/ "LiveWallpaper3" };
         //杀掉其他实例
         foreach (var AppName in AppNames)
@@ -97,6 +102,7 @@ public partial class App : Application
                     if (p.Id == cp.Id)
                         continue;
                     p.Kill();
+                    res = true || res;
                 }
             }
             catch (Exception ex)
@@ -104,6 +110,7 @@ public partial class App : Application
                 _logger.Info(ex);
             }
         }
+        return res;
     }
 
     #endregion
