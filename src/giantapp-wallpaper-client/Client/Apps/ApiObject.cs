@@ -96,6 +96,12 @@ public class ApiObject
     {
         var directories = (Configer.Get<Configs.Wallpaper>() ?? new()).Directories;
         var res = WallpaperApi.GetWallpapers(directories ?? Configs.Wallpaper.DefaultWallpaperSaveFolder);
+        foreach (var item in res)
+        {
+            //把本地路径转换为网址
+            item.CoverPath = AppService.ConvertPathToUrl(item.CoverPath);
+            item.FilePath = AppService.ConvertPathToUrl(item.FilePath);
+        }
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
 }

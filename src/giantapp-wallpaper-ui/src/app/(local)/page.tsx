@@ -34,7 +34,7 @@ const Page = () => {
                                 alt="Wallpaper 1"
                                 className="w-full"
                                 height="200"
-                                src="/placeholder.svg"
+                                src={wallpaper?.coverPath || ""}
                                 style={{
                                     aspectRatio: "300/200",
                                     objectFit: "cover",

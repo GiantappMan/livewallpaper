@@ -96,6 +96,26 @@ internal class AppService
 #endif
     }
 
+    internal static string? ConvertPathToUrl(string? path)
+    {
+        //把壁纸目录，转换成对应的Url
+        if (path == null)
+            return null;
+
+        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
+        var directories = wallpaperConfig.Directories ?? Wallpaper.DefaultWallpaperSaveFolder;
+        for (int i = 0; i < directories.Length; i++)
+        {
+            var item = directories[i];
+            if (path.StartsWith(item))
+            {
+                path = $"https://{i}.{_domainStr}{path.Substring(item.Length)}";
+                break;
+            }
+        }
+        return path;
+    }
+
     #endregion
 
     #region private
@@ -222,5 +242,6 @@ internal class AppService
                 break;
         }
     }
+
     #endregion
 }

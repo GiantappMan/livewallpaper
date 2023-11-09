@@ -104,7 +104,7 @@ public class Wallpaper
 {
     public Wallpaper(string filePath)
     {
-        LocalAbsolutePath = filePath;
+        FilePath = filePath;
         Dir = Path.GetDirectoryName(filePath) ?? string.Empty;
         FileName = Path.GetFileName(filePath);
     }
@@ -121,8 +121,11 @@ public class Wallpaper
     //文件名
     public string? FileName { get; private set; }
 
-    //本地绝对路径
-    public string? LocalAbsolutePath { get; set; }
+    //壁纸路径
+    public string? FilePath { get; set; }
+
+    //封面路径
+    public string? CoverPath { get; set; }
 
     public void LoadMeta()
     {
@@ -133,8 +136,10 @@ public class Wallpaper
             string metaJsonFile = Path.Combine(Dir, $"{fileName}.meta.json");
             if (File.Exists(metaJsonFile))
             {
-                var metaJson = JsonConvert.DeserializeObject<WallpaperMeta>(File.ReadAllText(metaJsonFile));
-                Meta = metaJson;
+                var meta = JsonConvert.DeserializeObject<WallpaperMeta>(File.ReadAllText(metaJsonFile));
+                Meta = meta;
+                if (meta?.Cover != null)
+                    CoverPath = Path.Combine(Dir, meta.Cover);
             }
             else
             {
@@ -146,7 +151,7 @@ public class Wallpaper
         }
         catch (Exception ex)
         {
-            WallpaperApi.Logger?.Warn($"加载壁纸描述数据失败：{LocalAbsolutePath} ${ex}");
+            WallpaperApi.Logger?.Warn($"加载壁纸描述数据失败：{FilePath} ${ex}");
         }
     }
 
@@ -159,13 +164,13 @@ public class Wallpaper
             string settingJsonFile = Path.Combine(Dir, $"{fileName}.setting.json");
             if (File.Exists(settingJsonFile))
             {
-                var settingJson = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
-                Setting = settingJson;
+                var setting = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
+                Setting = setting;
             }
         }
         catch (Exception ex)
         {
-            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{LocalAbsolutePath} ${ex}");
+            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{FilePath} ${ex}");
         }
     }
 
@@ -193,6 +198,8 @@ public class Wallpaper
                     Cover = projectJson.Preview
                 };
                 data.Meta = meta;
+                if (meta?.Cover != null)
+                    data.CoverPath = Path.Combine(data.Dir, meta.Cover);
                 //不修改内容，同时支持旧版
                 return data;
             }
