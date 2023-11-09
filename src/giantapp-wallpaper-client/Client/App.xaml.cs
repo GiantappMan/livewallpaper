@@ -1,14 +1,10 @@
 ﻿using Client.UI;
 using MultiLanguageForXAML;
 using MultiLanguageForXAML.DB;
-using System.Diagnostics;
-using System.Threading;
-using System;
 using System.Windows;
 using Client.Libs;
 using NLog;
 using Client.Apps;
-using Client.Apps.Configs;
 
 namespace GiantappWallpaper;
 

@@ -1,4 +1,5 @@
-﻿using GiantappWallpaper;
+﻿using Client.Apps;
+using GiantappWallpaper;
 using HandyControl.Controls;
 using HandyControl.Interactivity;
 using MultiLanguageForXAML;
@@ -68,7 +69,7 @@ internal class AppNotifyIcon
 
     private void NotifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
     {
-        ShellWindow.ShowShell();
+        AppService.ShowShell();
     }
 
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)

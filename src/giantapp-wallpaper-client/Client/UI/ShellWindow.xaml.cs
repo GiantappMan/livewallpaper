@@ -21,8 +21,7 @@ public partial class ShellWindow : Window
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
-    static readonly string _domainStr = "client.giantapp.cn";
-    static Uri _domain = new($"https://{_domainStr}/");
+
 
     public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
 
@@ -33,7 +32,6 @@ public partial class ShellWindow : Window
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
-        webview2.Source = _domain;
         var config = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;
         const float defaultHeight = 680;
@@ -92,15 +90,8 @@ public partial class ShellWindow : Window
         appResources.MergedDictionaries.Add(themeDict);
     }
 
-    public static async void ShowShell(string? url = "index.html")
+    public static async void ShowShell(string? url)
     {
-
-#if DEBUG
-        //本地开发
-        _domain = new("http://localhost:3000/");
-        url = null;
-#endif
-
         Instance ??= new ShellWindow();
 
         bool ok = await Task.Run(CheckWebView2);
@@ -120,15 +111,6 @@ public partial class ShellWindow : Window
 
         if (Instance.Visibility == Visibility.Visible && !Instance.IsActive)
             Instance.Activate();
-
-        if (url != null)
-        {
-            url = $"{_domain}{url}";
-        }
-        else
-        {
-            url = $"{_domain}";
-        }
 
         Instance.webview2.Source = new Uri(url);
         Instance.webview2.NavigationCompleted += NavigationCompleted;
@@ -199,7 +181,12 @@ public partial class ShellWindow : Window
             webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-        webview2.CoreWebView2.SetVirtualHostNameToFolderMapping(_domainStr, "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
+
+        foreach (var item in CustomFolderMapping)
+        {
+            webview2.CoreWebView2.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
+        }
+
 #if !DEBUG
         //禁用F12
         webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;

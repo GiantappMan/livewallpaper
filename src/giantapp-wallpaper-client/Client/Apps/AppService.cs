@@ -20,6 +20,9 @@ internal class AppService
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private static readonly AutoStart autoStart;
+
+    static readonly string _domainStr = "client.giantapp.cn";
+
     //是否存关闭老进程
     private static bool _killOldProcess = false;
 
@@ -32,13 +35,27 @@ internal class AppService
     #region public
     internal static void Init()
     {
-
         //检查单实例
         bool ok = CheckMutex();
         if (!ok)
         {
             _killOldProcess = KillOldProcess();
         }
+
+        //ShellWindow初始化
+        ShellWindow.CustomFolderMapping = new()
+        {
+            { _domainStr, "Assets/UI" }
+        };
+        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
+        if (wallpaperConfig.Directories.Length == 0)
+        {
+            //给默认值
+            string folder = GetDefaultWallpaperSaveFolder();
+            wallpaperConfig.Directories = new string[] { folder };
+            Configer.Set(wallpaperConfig);
+        }
+
 
         //前端api
         var api = new ApiObject();
@@ -57,7 +74,7 @@ internal class AppService
         autoStart.Set(general.AutoStart);
 
         if (_killOldProcess || general != null && !general.HideWindow)
-            ShellWindow.ShowShell();
+            ShowShell();
 
         //外观配置
         var appearance = Configer.Get<Appearance>() ?? new();
@@ -69,6 +86,19 @@ internal class AppService
         if (config == null)
             return;
         ShellWindow.SetTheme(config.Theme, config.Mode);
+    }
+
+    internal static void ShowShell(string? path = "index.html")
+    {
+#if DEBUG
+        if (path == "index.html")
+            path = null;
+        //本地开发
+        ShellWindow.ShowShell($"http://localhost:3000/{path}");
+        return;
+#else
+        ShellWindow.ShowShell($"https://{_domainStr}/{path}");
+#endif
     }
 
     #endregion
