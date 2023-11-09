@@ -20,7 +20,8 @@ public partial class ShellWindow : Window
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
-    static readonly Uri _domain = new("https://client.app/");
+    static string _domainStr = "client.giantapp.cn";
+    static Uri _domain = new($"https://{_domainStr}/");
 
     #endregion
 
@@ -195,7 +196,7 @@ public partial class ShellWindow : Window
             webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-        webview2.CoreWebView2.SetVirtualHostNameToFolderMapping("client.app", "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
+        webview2.CoreWebView2.SetVirtualHostNameToFolderMapping(_domainStr, "Assets/UI", CoreWebView2HostResourceAccessKind.DenyCors);
 #if !DEBUG
         //禁用F12
         webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
