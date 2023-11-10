@@ -139,6 +139,10 @@ public partial class ShellWindow : Window
 
     private void ShellWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        if (WindowState == WindowState.Maximized)
+        {
+            return;
+        }
         //记录窗口大小
         ShellConfig config = new()
         {

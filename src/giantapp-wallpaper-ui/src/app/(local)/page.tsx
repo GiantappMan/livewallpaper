@@ -30,19 +30,21 @@ const Page = () => {
                         return <Skeleton key={index} className="h-[218px] w-full" />
                     return (
                         <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
-                            <img
-                                alt="Wallpaper 1"
-                                className="w-full"
-                                height="200"
-                                src={wallpaper?.coverPath || ""}
-                                style={{
-                                    aspectRatio: "300/200",
-                                    objectFit: "cover",
-                                }}
-                                width="300"
-                            />
+                            <picture>
+                                <img
+                                    alt="Wallpaper 1"
+                                    className="w-full"
+                                    height="200"
+                                    src={wallpaper?.coverPath || ""}
+                                    style={{
+                                        aspectRatio: "300/200",
+                                        objectFit: "cover",
+                                    }}
+                                    width="300"
+                                />
+                            </picture>
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                <div className="flex justify-center mt-2 space-x-2">
+                                <div className="flex justify-center mt-2 ">
                                     <Button
                                         aria-label="Screen Icon 1"
                                         className="m-2 flex items-center justify-center"
