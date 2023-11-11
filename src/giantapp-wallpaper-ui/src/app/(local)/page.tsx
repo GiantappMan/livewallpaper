@@ -36,7 +36,7 @@ const Page = () => {
                                         alt="Wallpaper 1"
                                         className="w-full"
                                         height="200"
-                                        src={wallpaper?.coverPath || ""}
+                                        src={wallpaper?.coverPath || "/wp-placeholder.webp"}
                                         style={{
                                             aspectRatio: "300/200",
                                             objectFit: "cover",
@@ -146,7 +146,7 @@ const Page = () => {
                                                     <circle cx="12" cy="12" r="3" />
                                                 </svg>
                                             </Button>
-                                            <div className="flex space-x-2">
+                                            <div className="flex ">
                                                 <Button
                                                     aria-label="Delete"
                                                     className="m-2 flex items-center justify-center"
