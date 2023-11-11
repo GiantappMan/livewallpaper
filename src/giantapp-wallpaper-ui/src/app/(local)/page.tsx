@@ -5,9 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
+import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
+    const [screens, setScreens] = useState<Screen[] | null>();
     const mounted = useMounted()
     const refresh = async () => {
         const res = await api.getWallpapers();
@@ -16,6 +18,24 @@ const Page = () => {
             return;
         }
         setWallpapers(res.data);
+
+        const screens = await api.getScreens();
+        if (screens.error) {
+            alert(screens.error);
+            return;
+        }
+
+        if (!screens.data)
+            return
+        //根据bounds x坐标排序,按逗号分隔，x坐标是第一个
+        let tmp = screens.data.sort((a, b) => {
+            const aX = a.bounds.split(",")[0];
+            const bX = b.bounds.split(",")[0];
+            return parseInt(aX) - parseInt(bX);
+        });
+
+        setScreens(tmp);
+        console.log(screens.data, tmp);
     }
 
     useEffect(() => {
@@ -29,8 +49,10 @@ const Page = () => {
                     if (!mounted)
                         return <Skeleton key={index} className="h-[218px] w-full" />
                     return (
-                        <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
-                            <div className="relative">
+                        <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105"
+                        >
+                            <div className="relative cursor-pointer"
+                                title="使所有屏幕生效">
                                 <picture>
                                     <img
                                         alt="Wallpaper 1"
@@ -47,81 +69,39 @@ const Page = () => {
                                 <div className="flex flex-col justify-between">
                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                                         <div className="flex justify-center mt-2 ">
-                                            <Button
-                                                aria-label="Screen Icon 1"
-                                                className="m-2 flex items-center justify-center"
-                                                title="Screen Icon 1"
-                                                variant="outline"
-                                            >
-                                                <svg
-                                                    className=" h-5 w-5"
-                                                    fill="none"
-                                                    height="24"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                    width="24"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
-                                                    <path d="M8 21h8" />
-                                                    <path d="M12 17v4" />
-                                                    <path d="m17 8 5-5" />
-                                                    <path d="M17 3h5v5" />
-                                                </svg>
-                                            </Button>
-                                            <Button
-                                                aria-label="Screen Icon 2"
-                                                className="m-2 flex items-center justify-center"
-                                                title="Screen Icon 2"
-                                                variant="outline"
-                                            >
-                                                <svg
-                                                    className=" h-5 w-5"
-                                                    fill="none"
-                                                    height="24"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                    width="24"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
-                                                    <path d="M8 21h8" />
-                                                    <path d="M12 17v4" />
-                                                    <path d="m17 8 5-5" />
-                                                    <path d="M17 3h5v5" />
-                                                </svg>
-                                            </Button>
-                                            <Button
-                                                aria-label="Screen Icon 3"
-                                                className="m-2 flex items-center justify-center"
-                                                title="Screen Icon 3"
-                                                variant="outline"
-                                            >
-                                                <svg
-                                                    className=" h-5 w-5"
-                                                    fill="none"
-                                                    height="24"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                    width="24"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
-                                                    <path d="M8 21h8" />
-                                                    <path d="M12 17v4" />
-                                                    <path d="m17 8 5-5" />
-                                                    <path d="M17 3h5v5" />
-                                                </svg>
-                                            </Button>
+                                            {
+                                                screens && screens?.length > 1 && screens?.map((screen, index) => {
+                                                    return (
+                                                        <div key={index} className="flex items-center justify-center">
+                                                            <Button
+                                                                aria-label="Screen Icon 1"
+                                                                className="m-2 flex items-center justify-center"
+                                                                title={`屏幕 ${screen.deviceName} 生效`}
+                                                                variant="outline"
+                                                            >
+                                                                <svg
+                                                                    className=" h-5 w-5"
+                                                                    fill="none"
+                                                                    height="24"
+                                                                    stroke="currentColor"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth="2"
+                                                                    viewBox="0 0 24 24"
+                                                                    width="24"
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                >
+                                                                    <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
+                                                                    <path d="M8 21h8" />
+                                                                    <path d="M12 17v4" />
+                                                                    <path d="m17 8 5-5" />
+                                                                    <path d="M17 3h5v5" />
+                                                                </svg>
+                                                            </Button>
+                                                        </div>
+                                                    )
+                                                })
+                                            }
                                         </div>
                                         <div className="flex justify-between px-2 pb-2 space-x-2">
                                             <Button

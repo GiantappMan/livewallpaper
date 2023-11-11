@@ -104,4 +104,10 @@ public class ApiObject
         }
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
+
+    public string GetScreens()
+    {
+        var screens = WallpaperApi.GetScreens();
+        return JsonConvert.SerializeObject(screens, Configer.JsonSettings);
+    }
 }

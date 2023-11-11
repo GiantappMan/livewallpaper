@@ -1,6 +1,7 @@
-import EventEmitter from "events";
+// import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper } from "./types/wallpaper";
+import { Screen } from "./types/screen";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -57,6 +58,19 @@ class API {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
       var json = await api.GetWallpapers();
+      let res = JSON.parse(json);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getScreens(): Promise<ApiResult<Screen[]>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      var json = await api.GetScreens();
       let res = JSON.parse(json);
       return { error: null, data: res };
     } catch (e) {

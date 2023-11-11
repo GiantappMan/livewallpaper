@@ -67,7 +67,7 @@ public static class WallpaperApi
     //获取屏幕信息
     public static Screen[] GetScreens()
     {
-        return new Screen[] { };
+        return Screen.AllScreens;
     }
 
     //显示壁纸
