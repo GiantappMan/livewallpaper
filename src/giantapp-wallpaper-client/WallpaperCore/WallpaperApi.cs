@@ -1,7 +1,11 @@
 ﻿using NLog;
+using System.Collections.Concurrent;
 
 namespace WallpaperCore;
 
+/// <summary>
+/// 暴露壁纸API
+/// </summary>
 public static class WallpaperApi
 {
     #region properties
@@ -19,6 +23,9 @@ public static class WallpaperApi
     public static string[] SupportedWebFormats { get; } = new string[] { ".html", ".htm" };
 
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
+    //运行中的屏幕和对应的播放列表，线程安全
+    public static ConcurrentDictionary<uint, Playlist> RunningPlaylists { get; } = new ConcurrentDictionary<uint, Playlist>();
 
     #endregion
 
@@ -73,16 +80,39 @@ public static class WallpaperApi
     //显示壁纸
     public static void ShowWallpaper(Playlist playList, uint screenIndex = 0)
     {
+        RunningPlaylists[screenIndex] = playList;
     }
 
     //关闭壁纸
     public static void CloseWallpaper(uint screenIndex = 0)
     {
+        RunningPlaylists.TryRemove(screenIndex, out _);
     }
 
     //删除壁纸
     public static void DeleteWallpaper(params Wallpaper[] wallpapers)
     {
+        foreach (var wallpaper in wallpapers)
+        {
+            try
+            {
+                File.Delete(wallpaper.FilePath);
+
+                //存在meta删除meta
+                string fileName = Path.GetFileNameWithoutExtension(wallpaper.FileName);
+                string metaJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
+                if (File.Exists(metaJsonFile))
+                    File.Delete(metaJsonFile);
+
+                //如果文件夹空了，删除文件夹
+                if (Directory.GetFiles(wallpaper.Dir).Length == 0)
+                    Directory.Delete(wallpaper.Dir);
+            }
+            catch (Exception ex)
+            {
+                Logger?.Warn($"删除壁纸失败：{wallpaper.FilePath} ${ex}");
+            }
+        }
     }
 
     //下载壁纸
