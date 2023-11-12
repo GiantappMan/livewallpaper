@@ -67,7 +67,7 @@ const Page = () => {
                                     />
                                 </picture>
                                 <div className="flex flex-col justify-between">
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                    <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                                         <div className="flex justify-center mt-2 ">
                                             {
                                                 screens && screens?.length > 1 && screens?.map((screen, index) => {
@@ -75,9 +75,9 @@ const Page = () => {
                                                         <div key={index} className="flex items-center justify-center">
                                                             <Button
                                                                 aria-label="Screen Icon 1"
-                                                                className="m-2 flex items-center justify-center"
+                                                                className="mr-2 flex items-center justify-center hover:text-primary"
                                                                 title={`屏幕 ${screen.deviceName} 生效`}
-                                                                variant="outline"
+                                                                variant="ghost"
                                                             >
                                                                 <svg
                                                                     className=" h-5 w-5"
@@ -103,12 +103,12 @@ const Page = () => {
                                                 })
                                             }
                                         </div>
-                                        <div className="flex justify-between px-2 pb-2 space-x-2">
+                                        <div className="flex justify-between">
                                             <Button
                                                 aria-label="Settings"
-                                                className="m-2 flex items-center justify-center"
+                                                className="m-2 flex items-center justify-center hover:text-primary"
                                                 title="Settings"
-                                                variant="outline"
+                                                variant="ghost"
                                             >
                                                 <svg
                                                     className=" h-5 w-5"
@@ -126,12 +126,12 @@ const Page = () => {
                                                     <circle cx="12" cy="12" r="3" />
                                                 </svg>
                                             </Button>
-                                            <div className="flex ">
+                                            <div className="flex">
                                                 <Button
                                                     aria-label="Delete"
-                                                    className="m-2 flex items-center justify-center"
+                                                    className="m-2 flex items-center justify-center hover:text-primary"
                                                     title="Delete"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                 >
                                                     <svg
                                                         className=" h-5 w-5"
@@ -150,9 +150,9 @@ const Page = () => {
                                                         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                                                     </svg>
                                                 </Button>
-                                                <Button aria-label="Edit" className="m-2 flex items-center justify-center" title="Edit" variant="outline">
+                                                <Button aria-label="Edit" className="my-2 flex items-center justify-center hover:text-primary" title="Edit" variant="ghost">
                                                     <svg
-                                                        className=" h-5 w-5"
+                                                        className="h-5 w-5"
                                                         fill="none"
                                                         height="24"
                                                         stroke="currentColor"
@@ -169,9 +169,9 @@ const Page = () => {
                                                 </Button>
                                                 <Button
                                                     aria-label="Open Folder"
-                                                    className="m-2 flex items-center justify-center"
+                                                    className="m-2 flex items-center justify-center hover:text-primary"
                                                     title="Open Folder"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                 >
                                                     <svg
                                                         className=" h-5 w-5"
@@ -195,7 +195,7 @@ const Page = () => {
                             </div>
                             <div className="px-6 py-4">
                                 <div className="font-bold text-xl mb-2">{wallpaper?.meta?.title}</div>
-                                <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p>
+                                {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
                             </div>
                         </div>
                     )
