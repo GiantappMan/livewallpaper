@@ -71,12 +71,12 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static void ShowWallpaper(Playlist playList, Screen? screen = null)
+    public static void ShowWallpaper(Playlist playList, uint screenIndex = 0)
     {
     }
 
     //关闭壁纸
-    public static void CloseWallpaper(Screen? screen = null)
+    public static void CloseWallpaper(uint screenIndex = 0)
     {
     }
 
@@ -86,12 +86,7 @@ public static class WallpaperApi
     }
 
     //下载壁纸
-    public static void DownloadWallpaper(Wallpaper wallpapers, Playlist? toPlaylist)
-    {
-    }
-
-    //预览壁纸
-    public static void PreviewWallpaper(Wallpaper wallpaper, Screen? screen = null)
+    public static void DownloadWallpaper(string saveDirectory, Wallpaper wallpapers, Playlist? toPlaylist)
     {
     }
 
@@ -112,12 +107,12 @@ public static class WallpaperApi
     #region internal methods
 
     //暂停壁纸
-    static void PauseWallpaper(Screen? screen = null)
+    static void PauseWallpaper(uint screenIndex = 0)
     {
     }
 
     //恢复壁纸
-    static void ResumeWallpaper(Screen? screen = null)
+    static void ResumeWallpaper(uint screenIndex = 0)
     {
     }
     #endregion

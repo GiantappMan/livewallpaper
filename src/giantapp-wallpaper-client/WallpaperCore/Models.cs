@@ -54,6 +54,7 @@ public class WallpaperMeta
     public string? AuthorID { get; set; }
     public DateTime? CreateTime { get; set; }
     public DateTime? UpdateTime { get; set; }
+    public WallpaperType Type { get; set; }
 }
 
 public class PlaylistMeta : WallpaperMeta
@@ -97,11 +98,26 @@ public class WallpaperSetting
     #endregion
 }
 
+public enum WallpaperType
+{
+    Img,
+    AnimatedImg,
+    Video,
+    Web,
+    Exe
+}
+
 /// <summary>
 /// 表示一个壁纸
 /// </summary>
 public class Wallpaper
 {
+    private static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
+    private static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm", ".mkv" };
+    private static readonly string[] WebExtension = new[] { ".html", ".htm" };
+    private static readonly string[] ExeExtension = new[] { ".exe" };
+    private static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
+
     public Wallpaper(string filePath)
     {
         FilePath = filePath;
@@ -148,6 +164,31 @@ public class Wallpaper
                     Title = FileName
                 };
             }
+            if (Meta == null)
+                return;
+
+            //设置type
+            string extension = Path.GetExtension(FileName);
+            if (ImgExtension.Contains(extension))
+            {
+                Meta.Type = WallpaperType.Img;
+            }
+            else if (VideoExtension.Contains(extension))
+            {
+                Meta.Type = WallpaperType.Video;
+            }
+            else if (WebExtension.Contains(extension))
+            {
+                Meta.Type = WallpaperType.Web;
+            }
+            else if (ExeExtension.Contains(extension))
+            {
+                Meta.Type = WallpaperType.Exe;
+            }
+            else if (AnimatedImgExtension.Contains(extension))
+            {
+                Meta.Type = WallpaperType.AnimatedImg;
+            }
         }
         catch (Exception ex)
         {
@@ -174,7 +215,7 @@ public class Wallpaper
         }
     }
 
-    public static Wallpaper? From(string filePath, bool loadMeta = true, bool loadSetting = true)
+    public static Wallpaper? From(string filePath, bool loadSetting = true)
     {
         var data = new Wallpaper(filePath);
 
@@ -205,8 +246,7 @@ public class Wallpaper
             }
         }
 
-        if (loadMeta)
-            data.LoadMeta();
+        data.LoadMeta();
 
         if (loadSetting)
             data.LoadSetting();
