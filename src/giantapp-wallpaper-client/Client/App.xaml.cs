@@ -1,7 +1,4 @@
-﻿using Client.UI;
-using MultiLanguageForXAML;
-using MultiLanguageForXAML.DB;
-using System.Windows;
+﻿using System.Windows;
 using Client.Libs;
 using NLog;
 using Client.Apps;
@@ -14,19 +11,8 @@ public partial class App : Application
 
     public App()
     {
-        //多语言初始化
-        string path = "Client.Assets.Languages";
-        LanService.Init(new EmbeddedJsonDB(path), true, "en");
-
-        //配置初始化
-        Configer.Init(AppService.ProductName);
-
         //日志初始化
         NLogHelper.Init(AppService.ProductName);
-
-        //托盘初始化
-        AppNotifyIcon notifyIcon = new();
-        notifyIcon.Init();
     }
 
     #region override

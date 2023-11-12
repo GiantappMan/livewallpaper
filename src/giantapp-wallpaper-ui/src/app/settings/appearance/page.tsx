@@ -15,13 +15,13 @@ import {
     DesktopIcon
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
-import { SettingAppearance } from "@/lib/client/types/setting";
+import { ConfigAppearance } from "@/lib/client/types/config";
 const Page = () => {
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = useConfig()
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
 
-    const saveConfig = async (configAppearance: SettingAppearance) => {
+    const saveConfig = async (configAppearance: ConfigAppearance) => {
         setConfig(configAppearance)
         setMode(configAppearance.mode)
 

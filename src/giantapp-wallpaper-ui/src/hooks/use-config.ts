@@ -1,13 +1,13 @@
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { SettingAppearance } from "@/lib/client/types/setting";
+import { ConfigAppearance } from "@/lib/client/types/config";
 
-export const defaultConfig: SettingAppearance = {
+export const defaultConfig: ConfigAppearance = {
   theme: "zinc",
   mode: "system",
 };
 
-const configAtom = atomWithStorage<SettingAppearance>("config", defaultConfig);
+const configAtom = atomWithStorage<ConfigAppearance>("config", defaultConfig);
 
 export function useConfig() {
   return useAtom(configAtom);

@@ -1,6 +1,9 @@
 ﻿using Client.Apps.Configs;
 using Client.Libs;
+using Client.UI;
 using GiantappWallpaper;
+using MultiLanguageForXAML.DB;
+using MultiLanguageForXAML;
 using Newtonsoft.Json;
 using NLog;
 using System;
@@ -20,18 +23,16 @@ internal class AppService
 {
     public static readonly string ProductName = "LiveWallpaper3";
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    private static readonly AutoStart autoStart;
-
+    private static readonly AutoStart _autoStart;
+    private static readonly AppNotifyIcon _notifyIcon = new();
     static readonly string _domainStr = "client.giantapp.cn";
-
     //是否存关闭老进程
     private static bool _killOldProcess = false;
 
     static AppService()
     {
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
-        autoStart = new(ProductName, exePath);
+        _autoStart = new(ProductName, exePath);
     }
 
     #region public
@@ -44,12 +45,24 @@ internal class AppService
             _killOldProcess = KillOldProcess();
         }
 
+        //配置初始化
+        Configer.Init(ProductName);
+
+        var generalConfig = Configer.Get<General>() ?? new();//常规设置
+        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();//壁纸设置
+
+        //多语言初始化
+        string path = "Client.Assets.Languages";
+        LanService.Init(new EmbeddedJsonDB(path), true, generalConfig.CurrentLan, "en");
+
+        //托盘初始化
+        _notifyIcon.Init();
+
         //ShellWindow初始化
         ShellWindow.CustomFolderMapping = new()
         {
             { _domainStr, "Assets/UI" }
         };
-        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
         ApplyCustomFolderMapping(wallpaperConfig.Directories);
 
         //前端api
@@ -58,17 +71,15 @@ internal class AppService
         ApiObject.CorrectConfigEvent += ApiObject_CorrectConfigEvent;
         ShellWindow.ClientApi = api;
 
-        //常规设置
-        var general = Configer.Get<General>() ?? new();
-        bool tmp = autoStart.Check();
-        if (tmp != general.AutoStart)
+        bool tmp = _autoStart.Check();
+        if (tmp != generalConfig.AutoStart)
         {
-            general.AutoStart = tmp;
-            Configer.Set(general);
+            generalConfig.AutoStart = tmp;
+            Configer.Set(generalConfig);
         }
-        autoStart.Set(general.AutoStart);
+        _autoStart.Set(generalConfig.AutoStart);
 
-        if (_killOldProcess || general != null && !general.HideWindow)
+        if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
             ShowShell();
 
         //外观配置
@@ -199,7 +210,7 @@ internal class AppService
                 var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
                 if (configGeneral != null)
                 {
-                    bool tmp = autoStart.Check();
+                    bool tmp = _autoStart.Check();
                     configGeneral.AutoStart = tmp;//用真实情况修改返回值
                     e.Corrected = configGeneral;
                 }
@@ -230,7 +241,8 @@ internal class AppService
                 var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
                 if (configGeneral != null)
                 {
-                    autoStart.Set(configGeneral.AutoStart);
+                    _autoStart.Set(configGeneral.AutoStart);
+                    _notifyIcon.UpdateNotifyIconText(configGeneral.CurrentLan);
                 }
                 break;
             case Wallpaper.FullName:

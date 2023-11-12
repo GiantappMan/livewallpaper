@@ -1,13 +1,14 @@
-export type SettingAppearance = {
+export type ConfigAppearance = {
   theme: string;
   mode: "system" | "light" | "dark";
 };
 
-export type SettingGeneral = {
+export type ConfigGeneral = {
   autoStart: boolean;
   hideWindow: boolean;
+  currentLan: string;
 };
 
-export type SettingWallpaper = {
+export type ConfigWallpaper = {
   directories: string[];
 };
