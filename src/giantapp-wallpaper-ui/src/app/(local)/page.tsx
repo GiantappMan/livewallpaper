@@ -7,6 +7,7 @@ import api from "@/lib/client/api";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
+import { ToolBar } from "./_components/tool-bar";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
@@ -42,7 +43,7 @@ const Page = () => {
         refresh();
     }, []);
 
-    return <div className="grid grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[100vh]">
+    return <div className="grid grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20">
         <>
             {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
@@ -201,6 +202,7 @@ const Page = () => {
                     )
                 })
             }
+            <ToolBar />
         </>
     </div >;
 };

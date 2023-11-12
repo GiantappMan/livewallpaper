@@ -75,6 +75,9 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
+      spacing: {
+        '18': '4.6rem',
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],
