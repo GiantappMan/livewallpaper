@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Pipes;
+using System.Net.Sockets;
 using System.Text;
 
 namespace WallpaperCore.Players;
@@ -14,6 +15,7 @@ public class MPVPlayer
 
     #region public properties
     public IntPtr MainHandle { get; private set; }
+    public string? IPCServerName { get; private set; }
 
     #region Options
 
@@ -22,11 +24,15 @@ public class MPVPlayer
     public string PanAndScan { get; set; } = "1.0";//0.0-1.0  铺满,防止视频黑边
 
     #endregion
+
     #endregion
 
     public MPVPlayer(string playerPath)
     {
         _playerPath = playerPath;
+        //IPCServerName = $@"\\.\pipe\mpv{Guid.NewGuid()}";
+        IPCServerName = $@"\\.\pipe\tmp\mpv-socket";
+        
     }
 
     public static MPVPlayer? From(string path)
@@ -38,7 +44,7 @@ public class MPVPlayer
         return new MPVPlayer(fullpath);
     }
 
-    public async Task<IntPtr?> Launch(string? playList = null)
+    public async Task<bool> Launch(string? playList = null)
     {
         Dispose();
         _process = new Process();
@@ -59,6 +65,9 @@ public class MPVPlayer
         //处理黑边
         args.Append($"--panscan={PanAndScan} ");
 
+        //icp
+        args.Append($"--input-ipc-server={IPCServerName} ");
+
         _process.StartInfo.Arguments = args.ToString();
         //process.StartInfo.UseShellExecute = false;
         //process.StartInfo.CreateNoWindow = true;
@@ -67,7 +76,7 @@ public class MPVPlayer
         //process.StartInfo.RedirectStandardError = true;
         var res = _process.Start();
         if (!res)
-            return null;
+            return res;
 
         //异步等待窗口句柄
         await Task.Run(() =>
@@ -79,7 +88,7 @@ public class MPVPlayer
         });
 
         MainHandle = _process.MainWindowHandle;
-        return MainHandle;
+        return res;
     }
 
     public void Dispose()
@@ -87,5 +96,40 @@ public class MPVPlayer
         _process?.CloseMainWindow();
         _process?.WaitForExit();
         _process = null;
+    }
+
+    public void GetInfo()
+    {
+        try
+        {
+            string command = "{\"command\": [\"get_property\", \"path\"]}";
+            using NamedPipeClientStream pipeClient = new(".", IPCServerName, PipeDirection.InOut);
+            pipeClient.Connect(10); // 连接超时时间
+
+            if (pipeClient.IsConnected)
+            {
+                // 发送命令
+                byte[] commandBytes = Encoding.UTF8.GetBytes(command);
+                pipeClient.Write(commandBytes, 0, commandBytes.Length);
+
+                // 读取响应
+                byte[] buffer = new byte[4096];
+                int bytesRead = pipeClient.Read(buffer, 0, buffer.Length);
+
+                // 将字节数组转换为字符串
+                string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine("mpv response: " + response);
+            }
+            else
+            {
+                Console.WriteLine("Failed to connect to mpv.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+
+        Console.ReadLine();
     }
 }
