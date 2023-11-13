@@ -146,5 +146,4 @@ public static class WallpaperApi
     {
     }
     #endregion
-
 }

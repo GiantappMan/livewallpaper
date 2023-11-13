@@ -28,6 +28,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\..\LICENSE.GPL" Link="LICENSE.GPL">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\..\LICENSE.LGPL" Link="LICENSE.LGPL">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Assets\UI\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
