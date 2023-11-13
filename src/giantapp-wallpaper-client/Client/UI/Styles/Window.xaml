@@ -19,7 +19,8 @@
                     CaptionHeight="48"
                     CornerRadius="0"
                     GlassFrameThickness="0"
-                    NonClientFrameEdges="None" />
+                    NonClientFrameEdges="None"
+                    ResizeBorderThickness="10" />
             </Setter.Value>
         </Setter>
         <Setter Property="Template">
@@ -102,7 +103,10 @@
                                                 Style="{DynamicResource BtnClose}" />
                                         </StackPanel>
                                     </Grid>
-                                    <ContentPresenter Grid.Row="1" Grid.RowSpan="1" />
+                                    <ContentPresenter
+                                        Grid.Row="1"
+                                        Grid.RowSpan="1"
+                                        Margin="2" />
                                 </Grid>
                             </Border>
                         </AdornerDecorator>
@@ -135,30 +139,27 @@
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="WindowStyle1" TargetType="{x:Type Window}">
-        <Setter Property="Foreground"
-                Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
-        <Setter Property="Background"
-                Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+    <!--<Style x:Key="WindowStyle1" TargetType="{x:Type Window}">
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Window}">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
                         <AdornerDecorator>
-                            <ContentPresenter/>
+                            <ContentPresenter />
                         </AdornerDecorator>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <Trigger Property="Window.ResizeMode"
-                     Value="CanResizeWithGrip">
-                <Setter Property="Template"
-                        Value="{StaticResource WindowTemplateKey}"/>
+            <Trigger Property="Window.ResizeMode" Value="CanResizeWithGrip">
+                <Setter Property="Template" Value="{StaticResource WindowTemplateKey}" />
             </Trigger>
         </Style.Triggers>
-    </Style>
+    </Style>-->
 </ResourceDictionary>
