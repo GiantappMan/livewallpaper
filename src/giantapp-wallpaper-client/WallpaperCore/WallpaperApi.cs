@@ -10,18 +10,6 @@ public static class WallpaperApi
 {
     #region properties
 
-    //支持的视频格式
-    public static string[] SupportedVideoFormats { get; } = new string[] { ".gif", ".mp4", ".webm", ".mkv", ".avi", ".wmv", ".mov", ".flv" };
-
-    //支持的图片格式
-    public static string[] SupportedImageFormats { get; } = new string[] { ".jpg", ".png", ".jpeg", ".bmp" };
-
-    //支持的应用程序格式
-    public static string[] SupportedApplicationFormats { get; } = new string[] { ".exe" };
-
-    //支持的网页格式
-    public static string[] SupportedWebFormats { get; } = new string[] { ".html", ".htm" };
-
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     //运行中的屏幕和对应的播放列表，线程安全
@@ -60,7 +48,7 @@ public static class WallpaperApi
             var fileInfo = new FileInfo(file);
 
             // 符合支持格式的
-            if (IsSupportedFile(fileInfo.Extension))
+            if (Wallpaper.IsSupportedFile(fileInfo.Extension))
             {
                 Wallpaper? wallpaper = Wallpaper.From(file);
                 if (wallpaper == null)
@@ -123,14 +111,6 @@ public static class WallpaperApi
     #endregion
 
     #region private methods
-    private static bool IsSupportedFile(string fileExtension)
-    {
-        var lowerCaseExtension = fileExtension.ToLower();
-        return SupportedImageFormats.Contains(lowerCaseExtension) ||
-               SupportedVideoFormats.Contains(lowerCaseExtension) ||
-               SupportedApplicationFormats.Contains(lowerCaseExtension) ||
-               SupportedWebFormats.Contains(lowerCaseExtension);
-    }
 
     #endregion
 

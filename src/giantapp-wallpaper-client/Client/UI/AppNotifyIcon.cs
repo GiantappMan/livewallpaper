@@ -1,5 +1,4 @@
 ﻿using Client.Apps;
-using GiantappWallpaper;
 using HandyControl.Controls;
 using HandyControl.Interactivity;
 using MultiLanguageForXAML;

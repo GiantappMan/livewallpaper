@@ -112,11 +112,11 @@ public enum WallpaperType
 /// </summary>
 public class Wallpaper
 {
-    private static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
-    private static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm", ".mkv" };
-    private static readonly string[] WebExtension = new[] { ".html", ".htm" };
-    private static readonly string[] ExeExtension = new[] { ".exe" };
-    private static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
+    public static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
+    public static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm", ".mkv" };
+    public static readonly string[] WebExtension = new[] { ".html", ".htm" };
+    public static readonly string[] ExeExtension = new[] { ".exe" };
+    public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
 
     public Wallpaper(string filePath)
     {
@@ -252,6 +252,16 @@ public class Wallpaper
             data.LoadSetting();
         return data;
     }
+    public static bool IsSupportedFile(string fileExtension)
+    {
+        var lowerCaseExtension = fileExtension.ToLower();
+        return ImgExtension.Contains(lowerCaseExtension) ||
+               VideoExtension.Contains(lowerCaseExtension) ||
+               ExeExtension.Contains(lowerCaseExtension) ||
+               WebExtension.Contains(lowerCaseExtension) ||
+               AnimatedImgExtension.Contains(lowerCaseExtension);
+    }
+
 }
 
 /// <summary>
