@@ -181,14 +181,14 @@ public partial class ShellWindow : Window
     {
         if (ClientApi != null)
         {
-            webview2.CoreWebView2.AddHostObjectToScript("api", new Client.Apps.ApiObject());
-            webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
+            webview2.CoreWebView2?.AddHostObjectToScript("api", new Client.Apps.ApiObject());
+            webview2.CoreWebView2?.AddHostObjectToScript("shell", new ShellApiObject());
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
         foreach (var item in CustomFolderMapping)
         {
-            webview2.CoreWebView2.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
+            webview2.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
         }
 
 #if !DEBUG
