@@ -10,7 +10,7 @@ namespace WallpaperCore.Test.Players
         {
             MPVPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
-            await _player.Launch(@"TestWallpapers\playlist.txt");
+            await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
             await Task.Delay(1000);
             _player.Dispose();
         }
@@ -20,8 +20,11 @@ namespace WallpaperCore.Test.Players
         {
             MPVPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
-            await _player.Launch(@"TestWallpapers\playlist.txt");
-            _player.GetInfo();
+            await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
+            var res = _player.GetInfo();
+            _player.Dispose();
+
+            Assert.IsNotNull(res);
         }
 
         private MPVPlayer? GetPlayer()

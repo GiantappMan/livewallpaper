@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using NLog;
+using System.Diagnostics;
 using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Text;
@@ -10,6 +11,7 @@ namespace WallpaperCore.Players;
 /// </summary>
 public class MPVPlayer
 {
+    private static Logger _logger = LogManager.GetCurrentClassLogger();
     private string? _playerPath;
     private Process? _process;
 
@@ -42,7 +44,7 @@ public class MPVPlayer
         return new MPVPlayer(fullpath);
     }
 
-    public async Task<bool> Launch(string? playList = null)
+    public async Task<bool> LaunchAsync(string? playList = null)
     {
         Dispose();
         _process = new Process();
@@ -96,11 +98,13 @@ public class MPVPlayer
         _process = null;
     }
 
-    public void GetInfo()
+    public string? GetInfo()
     {
+        var res = SendMessage(IPCServerName, "[\"get_property\", \"path\"]");
+        return res;
         try
         {
-            string command = "{\"command\": [\"get_property\", \"path\"]}";
+            string command = "{\"command\": [\"get_property\", \"path\"],\"request_id\":\"test\"}" + "\n";
             using NamedPipeClientStream pipeClient = new(IPCServerName);
             pipeClient.Connect(0); // 连接超时时间
 
@@ -116,18 +120,61 @@ public class MPVPlayer
 
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine("mpv response: " + response);
+                _logger.Info("mpv response: " + response);
+                return response;
             }
             else
             {
-                Console.WriteLine("Failed to connect to mpv.");
+                _logger.Warn("Failed to connect to mpv.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            _logger.Warn(ex, "Failed to get mpv info.");
         }
-
-        Console.ReadLine();
+        return null;
     }
+
+    #region private
+
+    private static string? SendMessage(string? serverName, string command)
+    {
+        if (serverName == null)
+            return null;
+
+        try
+        {
+            string id = Guid.NewGuid().ToString();
+            string sendContent = $@"{{""command"": {command},""request_id"":""{id}""}}" + "\n";
+            //sendContent = "{\"command\": [\"get_property\", \"path\"],\"request_id\":\"test\"}" + "\n";
+            using NamedPipeClientStream pipeClient = new(serverName);
+            pipeClient.Connect(0); // 连接超时时间
+
+            if (pipeClient.IsConnected)
+            {
+                // 发送命令
+                byte[] commandBytes = Encoding.UTF8.GetBytes(sendContent);
+                pipeClient.Write(commandBytes, 0, commandBytes.Length);
+
+                // 读取响应
+                byte[] buffer = new byte[4096];
+                int bytesRead = pipeClient.Read(buffer, 0, buffer.Length);
+
+                // 将字节数组转换为字符串
+                string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                _logger.Info("mpv response: " + response);
+                return response;
+            }
+            else
+            {
+                _logger.Warn("Failed to connect to mpv.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "Failed to get mpv info.");
+        }
+        return null;
+    }
+    #endregion
 }
