@@ -30,9 +30,7 @@ public class MPVPlayer
     public MPVPlayer(string playerPath)
     {
         _playerPath = playerPath;
-        //IPCServerName = $@"\\.\pipe\mpv{Guid.NewGuid()}";
-        IPCServerName = $@"\\.\pipe\tmp\mpv-socket";
-        
+        IPCServerName = $@"mpv{Guid.NewGuid()}";
     }
 
     public static MPVPlayer? From(string path)
@@ -65,15 +63,15 @@ public class MPVPlayer
         //处理黑边
         args.Append($"--panscan={PanAndScan} ");
 
-        //icp
+        //ipc
         args.Append($"--input-ipc-server={IPCServerName} ");
 
         _process.StartInfo.Arguments = args.ToString();
-        //process.StartInfo.UseShellExecute = false;
-        //process.StartInfo.CreateNoWindow = true;
-        //process.StartInfo.RedirectStandardInput = true;
-        //process.StartInfo.RedirectStandardOutput = true;
-        //process.StartInfo.RedirectStandardError = true;
+        //_process.StartInfo.UseShellExecute = false;
+        //_process.StartInfo.CreateNoWindow = true;
+        //_process.StartInfo.RedirectStandardInput = true;
+        //_process.StartInfo.RedirectStandardOutput = true;
+        //_process.StartInfo.RedirectStandardError = true;
         var res = _process.Start();
         if (!res)
             return res;
@@ -103,8 +101,8 @@ public class MPVPlayer
         try
         {
             string command = "{\"command\": [\"get_property\", \"path\"]}";
-            using NamedPipeClientStream pipeClient = new(".", IPCServerName, PipeDirection.InOut);
-            pipeClient.Connect(10); // 连接超时时间
+            using NamedPipeClientStream pipeClient = new(IPCServerName);
+            pipeClient.Connect(0); // 连接超时时间
 
             if (pipeClient.IsConnected)
             {
