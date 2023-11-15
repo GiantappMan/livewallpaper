@@ -2,18 +2,25 @@
 using NLog;
 using System.Diagnostics;
 using System.IO.Pipes;
-using System.Net.Sockets;
 using System.Text;
 
 namespace WallpaperCore.Players;
 
+public class MpvRequest
+{
+    [JsonProperty("command")]
+    public string[]? Command { get; set; }
+    [JsonProperty("request_id")]
+    public string? RequestId { get; set; }
+}
+
 /// <summary>
 /// mpv播放器管理，管道通信
 /// </summary>
-public class MPVPlayer
+public class MpvPlayer
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private string? _playerPath;
+    private readonly string? _playerPath;
     private Process? _process;
 
     #region public properties
@@ -30,24 +37,26 @@ public class MPVPlayer
 
     #endregion
 
-    public MPVPlayer(string playerPath)
+    public MpvPlayer(string playerPath)
     {
         _playerPath = playerPath;
         IPCServerName = $@"mpv{Guid.NewGuid()}";
     }
 
-    public static MPVPlayer? From(string path)
+    public static MpvPlayer? From(string path)
     {
         if (!File.Exists(path))
             return null;
 
         string fullpath = Path.GetFullPath(path);
-        return new MPVPlayer(fullpath);
+        return new MpvPlayer(fullpath);
     }
 
     public async Task<bool> LaunchAsync(string? playList = null)
     {
-        Dispose();
+        _process?.CloseMainWindow();
+        _process?.Dispose();
+
         _process = new Process();
         _process.StartInfo.FileName = _playerPath;
 
@@ -92,16 +101,21 @@ public class MPVPlayer
         return res;
     }
 
-    public void Dispose()
+    public void Quit()
     {
-        _process?.CloseMainWindow();
-        _process?.WaitForExit();
-        _process = null;
+        var res = SendMessage(IPCServerName, "quit");
     }
+
+    //public void Dispose()
+    //{
+    //    _process?.CloseMainWindow();
+    //    _process?.WaitForExit();
+    //    _process = null;
+    //}
 
     public string? GetPath()
     {
-        var res = SendMessage(IPCServerName, @"[""get_property"", ""path""]");
+        var res = SendMessage(IPCServerName, "get_property", "path");
         return res;
     }
 
@@ -109,11 +123,11 @@ public class MPVPlayer
     {
         if (_process == null)
             return;
-        var res = SendMessage(IPCServerName, $@"[""loadfile"", ""{file}""]");
+        SendMessage(IPCServerName, "loadfile", file, "replace");
     }
     #region private
 
-    private static string? SendMessage(string? serverName, string command)
+    private static string? SendMessage(string? serverName, params string[] command)
     {
         if (serverName == null)
             return null;
@@ -121,7 +135,7 @@ public class MPVPlayer
         try
         {
             string id = Guid.NewGuid().ToString();
-            string sendContent = $@"{{""command"": {command},""request_id"":""{id}""}}" + "\n";
+            //string sendContent = $@"{{""command"": {command},""request_id"":""{id}""}}" + "\n";
             //sendContent = "{\"command\": [\"get_property\", \"path\"],\"request_id\":\"test\"}" + "\n";
             using NamedPipeClientStream pipeClient = new(serverName);
             pipeClient.Connect(0); // 连接超时时间
@@ -129,6 +143,12 @@ public class MPVPlayer
             if (pipeClient.IsConnected)
             {
                 // 发送命令
+                var request = new MpvRequest
+                {
+                    Command = command,
+                    RequestId = id
+                };
+                var sendContent = JsonConvert.SerializeObject(request) + "\n";
                 byte[] commandBytes = Encoding.UTF8.GetBytes(sendContent);
                 pipeClient.Write(commandBytes, 0, commandBytes.Length);
 

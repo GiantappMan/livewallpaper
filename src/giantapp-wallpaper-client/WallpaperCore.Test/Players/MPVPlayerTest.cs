@@ -8,21 +8,20 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestLaunch()
         {
-            MPVPlayer? _player = GetPlayer();
+            MpvPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
-            await Task.Delay(1000);
-            _player.Dispose();
+            _player.Quit();
         }
 
         [TestMethod]
         public async Task TestGetPath()
         {
-            MPVPlayer? _player = GetPlayer();
+            MpvPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
             var res = _player.GetPath();
-            _player.Dispose();
+            _player.Quit();
 
             Assert.IsNotNull(res);
         }
@@ -30,16 +29,16 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestLoadFile()
         {
-            MPVPlayer? _player = GetPlayer();
+            MpvPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync();
             _player.LoadFile(@"TestWallpapers\audio.mp4");
-            _player.Dispose();
+            _player.Quit();
         }
 
-        private MPVPlayer? GetPlayer()
+        private MpvPlayer? GetPlayer()
         {
-            return MPVPlayer.From("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
+            return MpvPlayer.From("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
         }
     }
 }
