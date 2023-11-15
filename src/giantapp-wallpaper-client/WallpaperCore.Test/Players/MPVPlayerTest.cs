@@ -27,6 +27,16 @@ namespace WallpaperCore.Test.Players
             Assert.IsNotNull(res);
         }
 
+        [TestMethod]
+        public async Task TestLoadFile()
+        {
+            MPVPlayer? _player = GetPlayer();
+            Assert.IsNotNull(_player);
+            await _player.LaunchAsync();
+            _player.LoadFile(@"TestWallpapers\audio.mp4");
+            _player.Dispose();
+        }
+
         private MPVPlayer? GetPlayer()
         {
             return MPVPlayer.From("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");

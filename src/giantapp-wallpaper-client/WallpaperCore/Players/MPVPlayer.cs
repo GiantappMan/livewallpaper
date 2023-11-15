@@ -12,7 +12,7 @@ namespace WallpaperCore.Players;
 /// </summary>
 public class MPVPlayer
 {
-    private static Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private string? _playerPath;
     private Process? _process;
 
@@ -105,6 +105,12 @@ public class MPVPlayer
         return res;
     }
 
+    public void LoadFile(string file)
+    {
+        if (_process == null)
+            return;
+        var res = SendMessage(IPCServerName, $@"[""loadfile"", ""{file}""]");
+    }
     #region private
 
     private static string? SendMessage(string? serverName, string command)
@@ -152,5 +158,6 @@ public class MPVPlayer
         }
         return null;
     }
+
     #endregion
 }
