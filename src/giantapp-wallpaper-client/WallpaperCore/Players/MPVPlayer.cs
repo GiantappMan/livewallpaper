@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Newtonsoft.Json;
+using NLog;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Net.Sockets;
@@ -98,41 +99,10 @@ public class MPVPlayer
         _process = null;
     }
 
-    public string? GetInfo()
+    public string? GetPath()
     {
-        var res = SendMessage(IPCServerName, "[\"get_property\", \"path\"]");
+        var res = SendMessage(IPCServerName, @"[""get_property"", ""path""]");
         return res;
-        try
-        {
-            string command = "{\"command\": [\"get_property\", \"path\"],\"request_id\":\"test\"}" + "\n";
-            using NamedPipeClientStream pipeClient = new(IPCServerName);
-            pipeClient.Connect(0); // 连接超时时间
-
-            if (pipeClient.IsConnected)
-            {
-                // 发送命令
-                byte[] commandBytes = Encoding.UTF8.GetBytes(command);
-                pipeClient.Write(commandBytes, 0, commandBytes.Length);
-
-                // 读取响应
-                byte[] buffer = new byte[4096];
-                int bytesRead = pipeClient.Read(buffer, 0, buffer.Length);
-
-                // 将字节数组转换为字符串
-                string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                _logger.Info("mpv response: " + response);
-                return response;
-            }
-            else
-            {
-                _logger.Warn("Failed to connect to mpv.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Warn(ex, "Failed to get mpv info.");
-        }
-        return null;
     }
 
     #region private
@@ -163,7 +133,13 @@ public class MPVPlayer
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 _logger.Info("mpv response: " + response);
-                return response;
+
+                //查找id匹配的结果
+                var jobj = JsonConvert.DeserializeObject<dynamic>(response);
+                if (jobj?.request_id == id)
+                {
+                    return jobj.data;
+                }
             }
             else
             {

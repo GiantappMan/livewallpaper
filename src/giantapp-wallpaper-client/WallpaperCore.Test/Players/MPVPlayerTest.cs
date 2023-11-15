@@ -16,12 +16,12 @@ namespace WallpaperCore.Test.Players
         }
 
         [TestMethod]
-        public async Task TestGetPlayinfo()
+        public async Task TestGetPath()
         {
             MPVPlayer? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
-            var res = _player.GetInfo();
+            var res = _player.GetPath();
             _player.Dispose();
 
             Assert.IsNotNull(res);
