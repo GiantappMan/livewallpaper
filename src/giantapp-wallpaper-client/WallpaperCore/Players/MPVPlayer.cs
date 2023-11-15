@@ -19,9 +19,11 @@ public class MpvRequest
 /// </summary>
 public class MpvPlayer
 {
+    #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly string? _playerPath;
     private Process? _process;
+    #endregion
 
     #region public properties
     public IntPtr MainHandle { get; private set; }
@@ -103,7 +105,7 @@ public class MpvPlayer
 
     public void Quit()
     {
-        var res = SendMessage(IPCServerName, "quit");
+        SendMessage(IPCServerName, "quit");
     }
 
     //public void Dispose()
@@ -115,8 +117,12 @@ public class MpvPlayer
 
     public string? GetPath()
     {
-        var res = SendMessage(IPCServerName, "get_property", "path");
-        return res;
+        return SendMessage(IPCServerName, "get_property", "path")?.ToString();
+    }
+
+    public object? LoadList(string path)
+    {
+        return SendMessage(IPCServerName, "loadlist", path, "replace");
     }
 
     public void LoadFile(string file)
@@ -127,7 +133,7 @@ public class MpvPlayer
     }
     #region private
 
-    private static string? SendMessage(string? serverName, params string[] command)
+    private static object? SendMessage(string? serverName, params string[] command)
     {
         if (serverName == null)
             return null;

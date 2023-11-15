@@ -25,6 +25,15 @@ namespace WallpaperCore.Test.Players
 
             Assert.IsNotNull(res);
         }
+        [TestMethod]
+        public async Task TestLoadList()
+        {
+            MpvPlayer? _player = GetPlayer();
+            Assert.IsNotNull(_player);
+            await _player.LaunchAsync();
+            var res = _player.LoadList(@"TestWallpapers\playlist.txt");
+            _player.Quit();
+        }
 
         [TestMethod]
         public async Task TestLoadFile()
