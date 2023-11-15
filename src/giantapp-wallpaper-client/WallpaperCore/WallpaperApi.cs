@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System.Collections.Concurrent;
+using WallpaperCore.Players;
 
 namespace WallpaperCore;
 
@@ -13,7 +14,7 @@ public static class WallpaperApi
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     //运行中的屏幕和对应的播放列表，线程安全
-    public static ConcurrentDictionary<uint, Playlist> RunningPlaylists { get; } = new ConcurrentDictionary<uint, Playlist>();
+    public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new ConcurrentDictionary<uint, WallpaperManager>();
 
     #endregion
 
@@ -66,15 +67,28 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static void ShowWallpaper(Playlist playList, uint screenIndex = 0)
+    public static void ShowWallpaper(Playlist playlist, uint? screenIndex = 0)
     {
-        RunningPlaylists[screenIndex] = playList;
+        screenIndex ??= 0;
+        var manager = RunningWallpapers[screenIndex.Value];
+        if (manager == null)
+        {
+            RunningWallpapers.TryAdd(screenIndex.Value, new WallpaperManager()
+            {
+                Playlist = playlist,
+                ScreenIndex = screenIndex.Value
+            });
+        }
+        else
+        {
+            manager.Playlist = playlist;
+        }
     }
 
     //关闭壁纸
     public static void CloseWallpaper(uint screenIndex = 0)
     {
-        RunningPlaylists.TryRemove(screenIndex, out _);
+        RunningWallpapers.TryRemove(screenIndex, out _);
     }
 
     //删除壁纸

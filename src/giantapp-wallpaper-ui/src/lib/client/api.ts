@@ -78,6 +78,18 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async showWallpaper(wallpaper: Wallpaper, screenIndex?: number): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      await api.ShowWallpaper(JSON.stringify(wallpaper), screenIndex);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using WallpaperCore;
 
 namespace Client.Apps;
@@ -109,5 +110,16 @@ public class ApiObject
     {
         var screens = WallpaperApi.GetScreens();
         return JsonConvert.SerializeObject(screens, Configer.JsonSettings);
+    }
+
+    public void ShowWallpaper(string wallpaperJson, uint? screenIndex)
+    {
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, Configer.JsonSettings);
+        if (wallpaper == null)
+            return;
+        var playList = new Playlist();
+        playList.Wallpapers.Add(wallpaper);
+
+        WallpaperApi.ShowWallpaper(playList, screenIndex);
     }
 }

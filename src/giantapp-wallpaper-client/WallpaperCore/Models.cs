@@ -276,6 +276,6 @@ public class Playlist
     public PlaylistSetting? Setting { get; set; }
 
     //播放列表内的壁纸
-    public Wallpaper[] Wallpapers { get; set; } = new Wallpaper[0];
+    public List<Wallpaper> Wallpapers { get; set; } = new();
 }
 
