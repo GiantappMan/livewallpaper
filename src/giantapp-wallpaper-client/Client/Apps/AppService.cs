@@ -127,6 +127,27 @@ internal class AppService
         return path;
     }
 
+    internal static string? ConvertUrlToPath(string? path)
+    {
+        //把Url转换成本地路径
+        if (path == null)
+            return null;
+
+        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
+        var directories = wallpaperConfig.Directories ?? Wallpaper.DefaultWallpaperSaveFolder;
+        for (int i = 0; i < directories.Length; i++)
+        {
+            var item = directories[i];
+            if (path.StartsWith($"https://{i}.{_domainStr}"))
+            {
+                path = $"{item}{path.Substring($"https://{i}.{_domainStr}".Length)}";
+                break;
+            }
+        }
+        return path;
+       
+    }
+
     #endregion
 
     #region private
@@ -254,6 +275,7 @@ internal class AppService
                 break;
         }
     }
+
 
     #endregion
 }

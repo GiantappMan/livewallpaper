@@ -112,7 +112,7 @@ public class ApiObject
         return JsonConvert.SerializeObject(screens, Configer.JsonSettings);
     }
 
-    public void ShowWallpaper(string wallpaperJson, uint? screenIndex)
+    public void ShowWallpaper(string wallpaperJson, string? screenIndex)
     {
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, Configer.JsonSettings);
         if (wallpaper == null)
@@ -120,6 +120,15 @@ public class ApiObject
         var playList = new Playlist();
         playList.Wallpapers.Add(wallpaper);
 
-        WallpaperApi.ShowWallpaper(playList, screenIndex);
+
+        //把playlist里面的url转换成本地路径
+        foreach (var item in playList.Wallpapers)
+        {
+            item.CoverPath = AppService.ConvertUrlToPath(item.CoverPath);
+            item.FilePath = AppService.ConvertUrlToPath(item.FilePath);
+        }
+      
+
+        WallpaperApi.ShowWallpaper(playList, uint.Parse(screenIndex));
     }
 }

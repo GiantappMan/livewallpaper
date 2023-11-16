@@ -70,19 +70,22 @@ public static class WallpaperApi
     public static void ShowWallpaper(Playlist playlist, uint? screenIndex = 0)
     {
         screenIndex ??= 0;
-        var manager = RunningWallpapers[screenIndex.Value];
+        RunningWallpapers.TryGetValue(screenIndex.Value, out WallpaperManager manager);
         if (manager == null)
         {
-            RunningWallpapers.TryAdd(screenIndex.Value, new WallpaperManager()
+            manager = new WallpaperManager()
             {
                 Playlist = playlist,
                 ScreenIndex = screenIndex.Value
-            });
+            };
+            RunningWallpapers.TryAdd(screenIndex.Value, manager);
         }
         else
         {
             manager.Playlist = playlist;
         }
+
+        manager.Play();
     }
 
     //关闭壁纸

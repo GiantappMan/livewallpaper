@@ -39,6 +39,18 @@ const Page = () => {
         console.log(screens.data, tmp);
     }
 
+    const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
+        let screenIndex = screens?.findIndex((s) => s.deviceName === screen?.deviceName);
+        if (!screenIndex || screenIndex < 0)
+            screenIndex = 0
+        const res = await api.showWallpaper(wallpaper, screenIndex);
+        if (res.error) {
+            alert(res.error);
+            return;
+        }
+        refresh();
+    }
+
     useEffect(() => {
         refresh();
     }, []);
@@ -52,7 +64,9 @@ const Page = () => {
                     return (
                         <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105"
                         >
-                            <div className="relative cursor-pointer"
+                            <div className="relative cursor-pointer" onClick={() => {
+                                showWallpaper(wallpaper, null);
+                            }}
                                 title="使所有屏幕生效">
                                 <picture>
                                     <img
@@ -75,6 +89,9 @@ const Page = () => {
                                                     return (
                                                         <div key={index} className="flex items-center justify-center">
                                                             <Button
+                                                                onClick={() => {
+                                                                    showWallpaper(wallpaper, screen);
+                                                                }}
                                                                 aria-label="Screen Icon 1"
                                                                 className="mr-2 flex items-center justify-center hover:text-primary"
                                                                 title={`屏幕 ${screen.deviceName} 生效`}
