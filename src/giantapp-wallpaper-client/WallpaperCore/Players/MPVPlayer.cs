@@ -22,13 +22,12 @@ public class MpvPlayer
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly string? _playerPath;
-    private Process? _process;
     #endregion
 
     #region public properties
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
-
+    public Process? Process { get; private set; }
     #region Options
 
     public bool AutoHwdec { get; set; } = true;//auto 硬解,no 软解
@@ -56,11 +55,11 @@ public class MpvPlayer
 
     public async Task<bool> LaunchAsync(string? playList = null)
     {
-        _process?.CloseMainWindow();
-        _process?.Dispose();
+        Process?.CloseMainWindow();
+        Process?.Dispose();
 
-        _process = new Process();
-        _process.StartInfo.FileName = _playerPath;
+        Process = new Process();
+        Process.StartInfo.FileName = _playerPath;
 
         StringBuilder args = new();
 
@@ -80,28 +79,35 @@ public class MpvPlayer
         //ipc
         args.Append($"--input-ipc-server={IPCServerName} ");
 
-        _process.StartInfo.Arguments = args.ToString();
+        //循环播放
+        args.Append("--loop-file=inf ");
+
+        //列表循环播放
+        args.Append("--loop-playlist=inf ");
+
+        Process.StartInfo.Arguments = args.ToString();
         //_process.StartInfo.UseShellExecute = false;
         //_process.StartInfo.CreateNoWindow = true;
         //_process.StartInfo.RedirectStandardInput = true;
         //_process.StartInfo.RedirectStandardOutput = true;
         //_process.StartInfo.RedirectStandardError = true;
-        var res = _process.Start();
+        var res = Process.Start();
         if (!res)
             return res;
 
         //异步等待窗口句柄
         await Task.Run(() =>
         {
-            while (_process.MainWindowHandle == IntPtr.Zero)
+            while (Process.MainWindowHandle == IntPtr.Zero)
             {
                 Thread.Sleep(100);
             }
         });
 
-        MainHandle = _process.MainWindowHandle;
+        MainHandle = Process.MainWindowHandle;
         return res;
     }
+
 
     public void Quit()
     {
@@ -127,22 +133,26 @@ public class MpvPlayer
 
     public void LoadFile(string file)
     {
-        if (_process == null)
+        if (Process == null)
             return;
         SendMessage(IPCServerName, "loadfile", file, "replace");
     }
     #region private
 
-    private static object? SendMessage(string? serverName, params string[] command)
+    private object? SendMessage(string? serverName, params string[] command)
     {
         if (serverName == null)
             return null;
 
+        if (Process == null || Process.HasExited)
+        {
+            Process = null;
+            return null;
+        }
+
         try
         {
             string id = Guid.NewGuid().ToString();
-            //string sendContent = $@"{{""command"": {command},""request_id"":""{id}""}}" + "\n";
-            //sendContent = "{\"command\": [\"get_property\", \"path\"],\"request_id\":\"test\"}" + "\n";
             using NamedPipeClientStream pipeClient = new(serverName);
             pipeClient.Connect(0); // 连接超时时间
 

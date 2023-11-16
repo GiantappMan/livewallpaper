@@ -8,6 +8,7 @@ import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
+import { toast } from "@/components/ui/use-toast";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
@@ -15,14 +16,22 @@ const Page = () => {
     const refresh = async () => {
         const res = await api.getWallpapers();
         if (res.error) {
-            alert(res.error);
+            toast({
+                title: "获取壁纸列表失败",
+                description: res.error,
+                duration: 3000,
+            });
             return;
         }
         setWallpapers(res.data);
 
         const screens = await api.getScreens();
         if (screens.error) {
-            alert(screens.error);
+            toast({
+                title: "获取屏幕列表失败",
+                description: screens.error,
+                duration: 3000,
+            });
             return;
         }
 

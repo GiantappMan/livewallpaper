@@ -15,7 +15,8 @@ public class WallpaperManager
         var file = Playlist?.Wallpapers[0];
         if (file == null || file.FilePath == null)
             return;
-        await _player.LaunchAsync();
+        if (_player.Process == null || _player.Process.HasExited)
+            await _player.LaunchAsync();
         //_player.LoadList(file.FilePath);
         _player.LoadFile(file.FilePath);
     }
