@@ -1,0 +1,6 @@
+﻿FindWindow
+SendMessageTimeout
+SEND_MESSAGE_TIMEOUT_FLAGS
+EnumWindows
+FindWindowEx
+GetClassName

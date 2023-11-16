@@ -6,7 +6,7 @@ namespace WallpaperCore;
 //管理一个屏幕的壁纸播放
 public class WallpaperManager
 {
-    MpvPlayer _player = new("Assets\\Player\\mpv.exe");
+    readonly MpvPlayer _player = new("Assets\\Player\\mpv.exe");
     public Playlist? Playlist { get; set; }
     public uint ScreenIndex { get; set; }
 

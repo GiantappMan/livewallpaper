@@ -120,7 +120,7 @@ internal class AppService
             var item = directories[i];
             if (path.StartsWith(item))
             {
-                path = $"https://{i}.{_domainStr}{path.Substring(item.Length)}";
+                path = $"https://{i}.{_domainStr}{path[item.Length..]}";
                 break;
             }
         }
@@ -140,7 +140,7 @@ internal class AppService
             var item = directories[i];
             if (path.StartsWith($"https://{i}.{_domainStr}"))
             {
-                path = $"{item}{path.Substring($"https://{i}.{_domainStr}".Length)}";
+                path = $"{item}{path[$"https://{i}.{_domainStr}".Length..]}";
                 break;
             }
         }
