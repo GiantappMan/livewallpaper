@@ -5,7 +5,7 @@ namespace WallpaperCore;
 
 public static class DesktopManager
 {
-    public static object GetWorkerW()
+    public static IntPtr GetWorkerW()
     {
         HWND workerw = HWND.Null;
         var _progman = PInvoke.FindWindow("Progman", null);
@@ -54,6 +54,37 @@ public static class DesktopManager
 
             return true;
         }), new LPARAM());
-        return workerw;
+        return workerw.Value;
+    }
+
+    public static bool SendToBackground(IntPtr handler)
+    {
+        const uint WS_EX_TOOLWINDOW = 128u;
+
+        if (handler == IntPtr.Zero)
+            return false;
+
+        var _workerw = GetWorkerW();
+        if (_workerw == IntPtr.Zero)
+            return false;
+
+
+        var hwnd = new HWND(handler);
+        //处理alt+tab可以看见本程序
+        //https://stackoverflow.com/questions/357076/best-way-to-hide-a-window-from-the-alt-tab-program-switcher
+        int exStyle = PInvoke.GetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        exStyle |= (int)WS_EX_TOOLWINDOW;
+        _ = PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
+
+
+        //_ = PInvoke.GetWindowRect(hwnd, out _);
+
+        //_parentHandler = PInvoke.GetParent(_currentHandler);
+
+        PInvoke.SetParent(hwnd, new HWND(_workerw));
+        //System.Diagnostics.Debug.WriteLine($"FullScreen {_targetBounds}");
+        //UpdatePosition(_targetBounds, 5);
+        //HideWindowBorder(_currentHandler);
+        return true;
     }
 }

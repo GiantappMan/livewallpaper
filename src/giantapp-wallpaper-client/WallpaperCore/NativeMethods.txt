@@ -1,6 +1,12 @@
 ﻿FindWindow
 SendMessageTimeout
-SEND_MESSAGE_TIMEOUT_FLAGS
 EnumWindows
 FindWindowEx
 GetClassName
+GetWindowLong
+SetWindowLong
+GetWindowRect
+GetParent
+SetParent
+WS_EX_TOOLWINDOW = 0x00000080
+WindowStyles
