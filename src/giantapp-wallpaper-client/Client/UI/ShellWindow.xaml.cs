@@ -3,6 +3,7 @@ using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ public partial class ShellWindow : Window
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
 
+    public static bool DarkBackground { get; set; }
 
     public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
 
@@ -31,6 +33,10 @@ public partial class ShellWindow : Window
     {
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
+        if (DarkBackground)
+        {
+            webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
+        }
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
         var config = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;
@@ -87,6 +93,7 @@ public partial class ShellWindow : Window
         {
             Source = new Uri($"/LiveWallpaper3;component/UI/Themes/{mode}/{theme}.xaml", UriKind.RelativeOrAbsolute)
         };
+        DarkBackground = mode == "dark";
         appResources.MergedDictionaries.Add(themeDict);
     }
 

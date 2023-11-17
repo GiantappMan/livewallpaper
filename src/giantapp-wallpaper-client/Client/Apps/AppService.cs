@@ -79,12 +79,12 @@ internal class AppService
         }
         _autoStart.Set(generalConfig.AutoStart);
 
-        if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
-            ShowShell();
-
         //外观配置
         var appearance = Configer.Get<Appearance>() ?? new();
         ApplyTheme(appearance);
+
+        if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
+            ShowShell();
     }
 
     internal static void ApplyTheme(Appearance? config)
