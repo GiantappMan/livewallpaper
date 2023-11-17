@@ -50,8 +50,8 @@ const Page = () => {
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
         let screenIndex = screens?.findIndex((s) => s.deviceName === screen?.deviceName);
-        if (!screenIndex || screenIndex < 0)
-            screenIndex = 0
+        if (screenIndex < 0)
+            screenIndex = null;//所有屏幕
         const res = await api.showWallpaper(wallpaper, screenIndex);
         if (res.error) {
             alert(res.error);
@@ -98,8 +98,9 @@ const Page = () => {
                                                     return (
                                                         <div key={index} className="flex items-center justify-center">
                                                             <Button
-                                                                onClick={() => {
+                                                                onClick={(e) => {
                                                                     showWallpaper(wallpaper, screen);
+                                                                    e.stopPropagation();
                                                                 }}
                                                                 aria-label="Screen Icon 1"
                                                                 className="mr-2 flex items-center justify-center hover:text-primary"

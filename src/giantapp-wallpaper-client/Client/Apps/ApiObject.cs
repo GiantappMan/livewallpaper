@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using WallpaperCore;
 
 namespace Client.Apps;
@@ -127,8 +126,12 @@ public class ApiObject
             item.CoverPath = AppService.ConvertUrlToPath(item.CoverPath);
             item.FilePath = AppService.ConvertUrlToPath(item.FilePath);
         }
-      
 
-        WallpaperApi.ShowWallpaper(playList, uint.Parse(screenIndex));
+        var screens = WallpaperApi.GetScreens();
+        for (uint i = 0; i < screens.Length; i++)
+        {
+            if (screenIndex == null || uint.Parse(screenIndex) == i)
+                WallpaperApi.ShowWallpaper(playList, i);
+        }
     }
 }

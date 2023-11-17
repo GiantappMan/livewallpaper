@@ -1,6 +1,5 @@
 ﻿using NLog;
 using System.Collections.Concurrent;
-using WallpaperCore.Players;
 
 namespace WallpaperCore;
 
@@ -67,18 +66,17 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static void ShowWallpaper(Playlist playlist, uint? screenIndex = 0)
+    public static void ShowWallpaper(Playlist playlist, uint screenIndex = 0)
     {
-        screenIndex ??= 0;
-        RunningWallpapers.TryGetValue(screenIndex.Value, out WallpaperManager manager);
+        RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
         if (manager == null)
         {
             manager = new WallpaperManager()
             {
                 Playlist = playlist,
-                ScreenIndex = screenIndex.Value
+                ScreenIndex = screenIndex
             };
-            RunningWallpapers.TryAdd(screenIndex.Value, manager);
+            RunningWallpapers.TryAdd(screenIndex, manager);
         }
         else
         {
