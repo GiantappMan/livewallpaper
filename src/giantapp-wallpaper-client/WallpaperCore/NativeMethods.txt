@@ -8,5 +8,6 @@ SetWindowLong
 GetWindowRect
 GetParent
 SetParent
-WS_EX_TOOLWINDOW = 0x00000080
 WindowStyles
+MapWindowPoints
+SetWindowPos
