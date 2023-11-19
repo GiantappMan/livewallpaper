@@ -6,10 +6,14 @@ namespace WallpaperCore;
 
 public static class DesktopManager
 {
-    public static IntPtr GetWorkerW()
+    /// <summary>
+    /// 通过不公开命名创建workerW，此方法可以清除背景残影
+    /// </summary>
+    public static void CreateWorkerW()
     {
-        HWND workerw = HWND.Null;
         var _progman = PInvoke.FindWindow("Progman", null);
+        if (_progman == HWND.Null)
+            return;
         unsafe
         {
             PInvoke.SendMessageTimeout(_progman,
@@ -20,41 +24,46 @@ public static class DesktopManager
                                    1000
                                    );
         }
+    }
+    public static IntPtr GetWorkerW()
+    {
+        HWND workerw = HWND.Null;
+        CreateWorkerW();
         var enumWindowResult = PInvoke.EnumWindows(new Windows.Win32.UI.WindowsAndMessaging.WNDENUMPROC((tophandle, topparamhandle) =>
-        {
-            var shelldll_defview = PInvoke.FindWindowEx(tophandle,
-                                        HWND.Null,
-                                        "SHELLDLL_DefView",
-                                        null);
+     {
+         var shelldll_defview = PInvoke.FindWindowEx(tophandle,
+                                     HWND.Null,
+                                     "SHELLDLL_DefView",
+                                     null);
 
-            if (shelldll_defview != HWND.Null)
-            {
-                string tophandleClassName = string.Empty;
-                PWSTR pwstr;
-                unsafe
-                {
-                    char* value = stackalloc char[201];
-                    pwstr = new PWSTR(value);
-                }
-                if (PInvoke.GetClassName(tophandle, pwstr, 201) != 0)
-                {
-                    tophandleClassName = pwstr.ToString();
-                }
+         if (shelldll_defview != HWND.Null)
+         {
+             string tophandleClassName = string.Empty;
+             PWSTR pwstr;
+             unsafe
+             {
+                 char* value = stackalloc char[201];
+                 pwstr = new PWSTR(value);
+             }
+             if (PInvoke.GetClassName(tophandle, pwstr, 201) != 0)
+             {
+                 tophandleClassName = pwstr.ToString();
+             }
 
-                if (tophandleClassName != "WorkerW")
-                    return true;
+             if (tophandleClassName != "WorkerW")
+                 return true;
 
-                workerw = PInvoke.FindWindowEx(HWND.Null,
-                                         tophandle,
-                                         "WorkerW",
-                                        null);
+             workerw = PInvoke.FindWindowEx(HWND.Null,
+                                      tophandle,
+                                      "WorkerW",
+                                     null);
 
-                var _desktopWorkerw = tophandle;
-                return false;
-            }
+             var _desktopWorkerw = tophandle;
+             return false;
+         }
 
-            return true;
-        }), new LPARAM());
+         return true;
+     }), new LPARAM());
         return workerw.Value;
     }
 
@@ -67,43 +76,47 @@ public static class DesktopManager
         if (_workerw == IntPtr.Zero)
             return false;
 
-        var hwnd = new HWND(handler);
         //HideInAltTab(hwnd);
 
         //_ = PInvoke.GetWindowRect(hwnd, out _);
 
         //_parentHandler = PInvoke.GetParent(_currentHandler);
 
-        PInvoke.SetParent(hwnd, new HWND(_workerw));
         //System.Diagnostics.Debug.WriteLine($"FullScreen {_targetBounds}");
-        UpdatePosition(bounds, _workerw, 5);
+        UpdatePosition(bounds, handler, _workerw);
         //HideWindowBorder(_currentHandler);
         return true;
     }
 
-    public static void UpdatePosition(Rectangle bounds, IntPtr workerw, int tryCount = 1)
+    public static void UpdatePosition(Rectangle bounds, IntPtr target, IntPtr workerw)
     {
         var rect = new RECT(bounds);
+        var hwnd = new HWND(target);
+        var worker = new HWND(workerw);
 
-        RECT _lastPos = new();
-        for (int i = 0; i < tryCount; i++)
-        {
-            //检查x秒，如果坐标有变化，重新应用
-            //unsafe
-            //{
-            //    Span<Point> points = stackalloc Point[2];
-            //    _ = PInvoke.MapWindowPoints(HWND.Null, new HWND(workerw), points);
-            //}
-            RECT tmp = new(rect);
-            _ = MapWindowPoints(IntPtr.Zero, workerw, ref tmp, 2);
-            if (tmp.X != _lastPos.X || tmp.Y != _lastPos.Y || tmp.Width != _lastPos.Width || tmp.Height != _lastPos.Height)
-            {
-                _lastPos = tmp;
-                _ = PInvoke.SetWindowPos(new HWND(workerw), HWND.Null, _lastPos.X, _lastPos.Y, _lastPos.Width, _lastPos.Height, 0u);
-            }
-            //await Task.Delay(1000);
-            Thread.Sleep(1000);
-        }
+        //for (int i = 0; i < 1; i++)
+        //{
+        //检查x秒，如果坐标有变化，重新应用
+        //unsafe
+        //{
+        //    Span<Point> points = stackalloc Point[2];
+        //    _ = PInvoke.MapWindowPoints(HWND.Null, worker, points);
+
+
+        //先放到目标位置
+        _ = SetWindowPos(hwnd, HWND.Null, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0u);
+
+        PInvoke.SetParent(hwnd, worker);
+        RECT tmp = new(rect);
+        //转换坐标
+        _ = MapWindowPoints(target, workerw, ref tmp, 2);
+        //if (tmp.X != _lastPos.X || tmp.Y != _lastPos.Y || tmp.Width != _lastPos.Width || tmp.Height != _lastPos.Height)
+        //{
+        _ = SetWindowPos(hwnd, HWND.Null, tmp.X, tmp.Y, tmp.Width, tmp.Height, 0u);
+        //}
+        //await Task.Delay(1000);
+        //Thread.Sleep(1000);
+        //}
     }
 
     private static void HideInAltTab(HWND hwnd)
@@ -116,10 +129,10 @@ public static class DesktopManager
         _ = PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
     }
 
-    internal static bool SetWindowPosEx(IntPtr targeHandler, RECT rect)
-    {
-        return SetWindowPos(targeHandler, IntPtr.Zero, rect.X, rect.Y, rect.Width, rect.Height, 0u);
-    }
+    //internal static bool SetWindowPosEx(IntPtr targeHandler, RECT rect)
+    //{
+    //    return SetWindowPos(targeHandler, IntPtr.Zero, rect.X, rect.Y, rect.Width, rect.Height, 0u);
+    //}
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
