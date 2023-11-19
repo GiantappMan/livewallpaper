@@ -1,4 +1,5 @@
-﻿using Windows.Win32;
+﻿using System.Runtime.InteropServices;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 
 namespace WallpaperCore;
@@ -84,18 +85,25 @@ public static class DesktopManager
     {
         var rect = new RECT(bounds);
 
-        //for (int i = 0; i < tryCount; i++)
-        //{
-        //检查x秒，如果坐标有变化，重新应用
-        //unsafe
-        //{
-        //    Span<Point> points = stackalloc Point[2];
-        //    _ = PInvoke.MapWindowPoints(HWND.Null, new HWND(workerw), points);
-        //}
-        _ = PInvoke.SetWindowPos(new HWND(workerw), HWND.Null, bounds.Left, bounds.Top, bounds.Width, bounds.Height, 0u);
-
-        //Thread.Sleep(1000);
-        //}
+        RECT _lastPos = new();
+        for (int i = 0; i < tryCount; i++)
+        {
+            //检查x秒，如果坐标有变化，重新应用
+            //unsafe
+            //{
+            //    Span<Point> points = stackalloc Point[2];
+            //    _ = PInvoke.MapWindowPoints(HWND.Null, new HWND(workerw), points);
+            //}
+            RECT tmp = new(rect);
+            _ = MapWindowPoints(IntPtr.Zero, workerw, ref tmp, 2);
+            if (tmp.X != _lastPos.X || tmp.Y != _lastPos.Y || tmp.Width != _lastPos.Width || tmp.Height != _lastPos.Height)
+            {
+                _lastPos = tmp;
+                _ = PInvoke.SetWindowPos(new HWND(workerw), HWND.Null, _lastPos.X, _lastPos.Y, _lastPos.Width, _lastPos.Height, 0u);
+            }
+            //await Task.Delay(1000);
+            Thread.Sleep(1000);
+        }
     }
 
     private static void HideInAltTab(HWND hwnd)
@@ -107,4 +115,16 @@ public static class DesktopManager
         exStyle |= (int)WS_EX_TOOLWINDOW;
         _ = PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
     }
+
+    internal static bool SetWindowPosEx(IntPtr targeHandler, RECT rect)
+    {
+        return SetWindowPos(targeHandler, IntPtr.Zero, rect.X, rect.Y, rect.Width, rect.Height, 0u);
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    [DllImport("user32", ExactSpelling = true, SetLastError = true)]
+    internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In][Out] ref RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
 }
