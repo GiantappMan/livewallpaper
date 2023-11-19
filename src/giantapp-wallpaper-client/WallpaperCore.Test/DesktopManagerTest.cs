@@ -39,7 +39,7 @@ public class DesktopManagerTest
         var handler = p.MainWindowHandle;
         //Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); 多屏 DPI
 
-        var res = DesktopManager.SendHandleToDesktopBottom(handler, Screen.AllScreens[0].Bounds);
+        var res = DesktopManager.SendHandleToDesktopBottom(handler, Screen.AllScreens[1].Bounds);
         Assert.IsTrue(res);
         Thread.Sleep(5000);
         p.Kill();
