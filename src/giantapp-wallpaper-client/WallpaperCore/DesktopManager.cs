@@ -97,12 +97,6 @@ public static class DesktopManager
 
         //for (int i = 0; i < 1; i++)
         //{
-        //检查x秒，如果坐标有变化，重新应用
-        //unsafe
-        //{
-        //    Span<Point> points = stackalloc Point[2];
-        //    _ = PInvoke.MapWindowPoints(HWND.Null, worker, points);
-
 
         ////先放到目标位置
         //_ = SetWindowPos(hwnd, HWND.Null, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0u);
@@ -110,11 +104,23 @@ public static class DesktopManager
         PInvoke.SetParent(hwnd, worker);
         RECT tmp = new(rect);
         //转换坐标
+        Span<Point> points = new Point[2];
+        points[0].X = bounds.X;
+        points[0].Y = bounds.Y;
+        points[1].X = bounds.X + bounds.Width;
+        points[1].Y = bounds.Y + bounds.Height;
+        _ = PInvoke.MapWindowPoints(HWND.Null, worker, points);
+
         //_ = MapWindowPoints(target, workerw, ref tmp, 2);
         _ = MapWindowPoints(IntPtr.Zero, workerw, ref tmp, 2);
         //if (tmp.X != _lastPos.X || tmp.Y != _lastPos.Y || tmp.Width != _lastPos.Width || tmp.Height != _lastPos.Height)
         //{
-        _ = SetWindowPos(hwnd, HWND.Null, tmp.X, tmp.Y, tmp.Width, tmp.Height, 0u);
+        //_ = SetWindowPos(hwnd, HWND.Null, tmp.X, tmp.Y, tmp.Width, tmp.Height, 0u);
+        var x = points[0].X;
+        var y = points[0].Y;
+        var width = points[1].X - points[0].X;
+        var height = points[1].Y - points[0].Y;
+        _ = SetWindowPos(hwnd, HWND.Null, x, y, width, height, 0u);
         //}
         //await Task.Delay(1000);
         //Thread.Sleep(1000);

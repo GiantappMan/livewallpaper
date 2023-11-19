@@ -8,6 +8,5 @@ SetWindowLong
 GetWindowRect
 GetParent
 SetParent
-WindowStyles
 MapWindowPoints
 SetWindowPos
