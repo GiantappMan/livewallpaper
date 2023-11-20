@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Runtime.InteropServices;
-using Windows.Win32;
+﻿using Windows.Win32;
 using Windows.Win32.Foundation;
 
 namespace WallpaperCore;
@@ -73,8 +71,8 @@ public static class DesktopManager
         if (handler == IntPtr.Zero)
             return false;
 
-        var _workerw = GetWorkerW();
-        if (_workerw == IntPtr.Zero)
+        var workerw = GetWorkerW();
+        if (workerw == IntPtr.Zero)
             return false;
 
         //HideInAltTab(hwnd);
@@ -84,26 +82,15 @@ public static class DesktopManager
         //_parentHandler = PInvoke.GetParent(_currentHandler);
 
         //System.Diagnostics.Debug.WriteLine($"FullScreen {_targetBounds}");
-        UpdatePosition(bounds, handler, _workerw);
-        //HideWindowBorder(_currentHandler);
-        return true;
-    }
-
-    public static void UpdatePosition(Rectangle bounds, IntPtr target, IntPtr workerw)
-    {
-        var rect = new RECT(bounds);
-        var hwnd = new HWND(target);
+        var hwnd = new HWND(handler);
         var worker = new HWND(workerw);
 
-        //for (int i = 0; i < 1; i++)
-        //{
-
-        ////先放到目标位置
-        //_ = SetWindowPos(hwnd, HWND.Null, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0u);
+        //先放到屏幕外，防止产生残影
+        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, -10000, 0, 0, 0, 0u);
 
         PInvoke.SetParent(hwnd, worker);
-        RECT tmp = new(rect);
-        //转换坐标
+
+        //转换相对worker坐标
         Span<Point> points = new Point[2];
         points[0].X = bounds.X;
         points[0].Y = bounds.Y;
@@ -111,20 +98,14 @@ public static class DesktopManager
         points[1].Y = bounds.Y + bounds.Height;
         _ = PInvoke.MapWindowPoints(HWND.Null, worker, points);
 
-        //_ = MapWindowPoints(target, workerw, ref tmp, 2);
-        _ = MapWindowPoints(IntPtr.Zero, workerw, ref tmp, 2);
-        //if (tmp.X != _lastPos.X || tmp.Y != _lastPos.Y || tmp.Width != _lastPos.Width || tmp.Height != _lastPos.Height)
-        //{
-        //_ = SetWindowPos(hwnd, HWND.Null, tmp.X, tmp.Y, tmp.Width, tmp.Height, 0u);
+        //重新设置大小
         var x = points[0].X;
         var y = points[0].Y;
         var width = points[1].X - points[0].X;
         var height = points[1].Y - points[0].Y;
-        _ = SetWindowPos(hwnd, HWND.Null, x, y, width, height, 0u);
-        //}
-        //await Task.Delay(1000);
-        //Thread.Sleep(1000);
-        //}
+        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, x, y, width, height, 0u);
+        //HideWindowBorder(_currentHandler);
+        return true;
     }
 
     private static void HideInAltTab(HWND hwnd)
@@ -135,172 +116,5 @@ public static class DesktopManager
         int exStyle = PInvoke.GetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
         exStyle |= (int)WS_EX_TOOLWINDOW;
         _ = PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
-    }
-
-    //internal static bool SetWindowPosEx(IntPtr targeHandler, RECT rect)
-    //{
-    //    return SetWindowPos(targeHandler, IntPtr.Zero, rect.X, rect.Y, rect.Width, rect.Height, 0u);
-    //}
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-
-    [DllImport("user32", ExactSpelling = true, SetLastError = true)]
-    internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In][Out] ref RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
-}
-
-public struct RECT
-{
-    public int Left;
-
-    public int Top;
-
-    public int Right;
-
-    public int Bottom;
-
-    public int X
-    {
-        get
-        {
-            return Left;
-        }
-        set
-        {
-            Right -= Left - value;
-            Left = value;
-        }
-    }
-
-    public int Y
-    {
-        get
-        {
-            return Top;
-        }
-        set
-        {
-            Bottom -= Top - value;
-            Top = value;
-        }
-    }
-
-    public int Height
-    {
-        get
-        {
-            return Bottom - Top;
-        }
-        set
-        {
-            Bottom = value + Top;
-        }
-    }
-
-    public int Width
-    {
-        get
-        {
-            return Right - Left;
-        }
-        set
-        {
-            Right = value + Left;
-        }
-    }
-
-    public Point Location
-    {
-        get
-        {
-            return new Point(Left, Top);
-        }
-        set
-        {
-            X = value.X;
-            Y = value.Y;
-        }
-    }
-
-    public Size Size
-    {
-        get
-        {
-            return new Size(Width, Height);
-        }
-        set
-        {
-            Width = value.Width;
-            Height = value.Height;
-        }
-    }
-
-    public RECT(int left, int top, int right, int bottom)
-    {
-        Left = left;
-        Top = top;
-        Right = right;
-        Bottom = bottom;
-    }
-
-    public RECT(Rectangle r)
-        : this(r.Left, r.Top, r.Right, r.Bottom)
-    {
-    }
-
-    public static implicit operator Rectangle(RECT r)
-    {
-        return new Rectangle(r.Left, r.Top, r.Width, r.Height);
-    }
-
-    public static implicit operator RECT(Rectangle r)
-    {
-        return new RECT(r);
-    }
-
-    public static bool operator ==(RECT r1, RECT r2)
-    {
-        return r1.Equals(r2);
-    }
-
-    public static bool operator !=(RECT r1, RECT r2)
-    {
-        return !r1.Equals(r2);
-    }
-
-    public bool Equals(RECT r)
-    {
-        if (r.Left == Left && r.Top == Top && r.Right == Right)
-        {
-            return r.Bottom == Bottom;
-        }
-
-        return false;
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is RECT)
-        {
-            return Equals((RECT)obj);
-        }
-
-        if (obj is Rectangle)
-        {
-            return Equals(new RECT((Rectangle)obj));
-        }
-
-        return false;
-    }
-
-    public override int GetHashCode()
-    {
-        return ((Rectangle)this).GetHashCode();
-    }
-
-    public override string ToString()
-    {
-        return string.Format(CultureInfo.CurrentCulture, "{{Left={0},Top={1},Right={2},Bottom={3}}}", Left, Top, Right, Bottom);
     }
 }

@@ -1,8 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Media;
 
 namespace WallpaperCore.Test;
 
@@ -29,15 +26,14 @@ public class DesktopManagerTest
     [TestMethod]
     public void TestSendHandleToDesktopBottom()
     {
+        //单元测试，禁用DPI
         SetPerMonitorV2DpiAwareness();
         var p = Process.Start("TestWallpapers\\TestExeWallpaper.exe");
-        //var p = Process.Start("mspaint");
         while (p.MainWindowHandle == IntPtr.Zero)
         {
             Thread.Sleep(100);
         }
         var handler = p.MainWindowHandle;
-        //Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); 多屏 DPI
 
         var res = DesktopManager.SendHandleToDesktopBottom(handler, Screen.AllScreens[0].Bounds);
         Assert.IsTrue(res);
