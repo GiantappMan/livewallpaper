@@ -12,3 +12,6 @@ MapWindowPoints
 SetWindowPos
 SetProcessDpiAwarenessContext
 SetProcessDpiAwareness
+SetWindowLong
+WINDOW_STYLE
+WINDOW_EX_STYLE

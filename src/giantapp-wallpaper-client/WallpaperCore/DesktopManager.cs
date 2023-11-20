@@ -85,8 +85,10 @@ public static class DesktopManager
         var hwnd = new HWND(handler);
         var worker = new HWND(workerw);
 
+        BorderlessWindow(hwnd);
+
         //先放到屏幕外，防止产生残影
-        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, -10000, 0, 0, 0, 0u);
+        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, -10000, 0, 0, 0, Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
 
         PInvoke.SetParent(hwnd, worker);
 
@@ -103,6 +105,20 @@ public static class DesktopManager
         return true;
     }
 
+    #region private methods
+    private static void BorderlessWindow(HWND hwnd)
+    {
+        //移除一些窗体样式
+        var style = PInvoke.GetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_CAPTION;
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_THICKFRAME;
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_MINIMIZEBOX;
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_MAXIMIZEBOX;
+        style &= ~(int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_SYSMENU;
+        PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE, style);
+    }
+
     private static void HideInAltTab(HWND hwnd)
     {
         const uint WS_EX_TOOLWINDOW = 128u;
@@ -112,4 +128,5 @@ public static class DesktopManager
         exStyle |= (int)WS_EX_TOOLWINDOW;
         _ = PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
     }
+    #endregion
 }

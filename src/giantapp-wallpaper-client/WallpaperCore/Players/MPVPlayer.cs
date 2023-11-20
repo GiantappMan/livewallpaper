@@ -70,7 +70,7 @@ public class MpvPlayer
         args.Append("--stop-screensaver=no ");
 
         //设置解码模式为自动，如果条件允许，MPV会启动硬件解码
-        string hwdec = AutoHwdec ? "auto" : "no";
+        string hwdec = AutoHwdec ? "auto-safe" : "no";
         args.Append($"--hwdec={hwdec} ");
 
         //处理黑边
@@ -84,6 +84,12 @@ public class MpvPlayer
 
         //列表循环播放
         args.Append("--loop-playlist=inf ");
+
+        //最小化
+        args.Append("--window-minimized=yes ");
+
+        //允许屏保
+        args.Append("--stop-screensaver=no ");
 
         Process.StartInfo.Arguments = args.ToString();
         //_process.StartInfo.UseShellExecute = false;
