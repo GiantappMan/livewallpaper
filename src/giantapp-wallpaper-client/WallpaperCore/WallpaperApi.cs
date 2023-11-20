@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System.Collections.Concurrent;
+using Windows.Win32;
 
 namespace WallpaperCore;
 
@@ -16,6 +17,12 @@ public static class WallpaperApi
     public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new ConcurrentDictionary<uint, WallpaperManager>();
 
     #endregion
+
+    static WallpaperApi()
+    {
+        //单元测试，禁用DPI
+        SetPerMonitorV2DpiAwareness();
+    }
 
     #region events
 
@@ -62,7 +69,7 @@ public static class WallpaperApi
     //获取屏幕信息
     public static Screen[] GetScreens()
     {
-        var res= Screen.AllScreens;
+        var res = Screen.AllScreens;
         //根据bounds x坐标排序,按逗号分隔，x坐标是第一个
         Array.Sort(res, (a, b) =>
         {
@@ -134,6 +141,34 @@ public static class WallpaperApi
     #endregion
 
     #region private methods
+
+    static void SetPerMonitorV2DpiAwareness()
+    {
+        try
+        {
+            // 首先，尝试将DPI感知设置为PerMonitorV2
+            if (PInvoke.SetProcessDpiAwarenessContext(new Windows.Win32.UI.HiDpi.DPI_AWARENESS_CONTEXT(-4)))
+            {
+                Logger.Info("成功设置为PerMonitorV2 DPI感知。");
+            }
+            else
+            {
+                // 如果函数失败，可以尝试使用较旧的方法设置
+                if (PInvoke.SetProcessDpiAwareness(Windows.Win32.UI.HiDpi.PROCESS_DPI_AWARENESS.PROCESS_PER_MONITOR_DPI_AWARE).Succeeded)
+                {
+                    Logger.Info("成功设置为PerMonitor DPI感知。");
+                }
+                else
+                {
+                    Logger.Info("无法设置DPI感知。");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"设置DPI感知时出错：{ex.Message}");
+        }
+    }
 
     #endregion
 

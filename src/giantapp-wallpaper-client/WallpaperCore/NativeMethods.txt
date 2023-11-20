@@ -10,3 +10,5 @@ GetParent
 SetParent
 MapWindowPoints
 SetWindowPos
+SetProcessDpiAwarenessContext
+SetProcessDpiAwareness

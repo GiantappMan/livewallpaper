@@ -92,18 +92,13 @@ public static class DesktopManager
 
         //转换相对worker坐标
         Span<Point> points = new Point[2];
-        points[0].X = bounds.X;
-        points[0].Y = bounds.Y;
-        points[1].X = bounds.X + bounds.Width;
-        points[1].Y = bounds.Y + bounds.Height;
-        _ = PInvoke.MapWindowPoints(HWND.Null, worker, points);
+        points[0] = new Point(bounds.X, bounds.Y);
+        points[1] = new Point(bounds.Right, bounds.Bottom);
+        PInvoke.MapWindowPoints(HWND.Null, worker, points);
 
         //重新设置大小
-        var x = points[0].X;
-        var y = points[0].Y;
-        var width = points[1].X - points[0].X;
-        var height = points[1].Y - points[0].Y;
-        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, x, y, width, height, 0u);
+        var tmpBounds = new Rectangle(points[0].X, points[0].Y, points[1].X - points[0].X, points[1].Y - points[0].Y);
+        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, tmpBounds.X, tmpBounds.Y, tmpBounds.Width, tmpBounds.Height, 0u);
         //HideWindowBorder(_currentHandler);
         return true;
     }

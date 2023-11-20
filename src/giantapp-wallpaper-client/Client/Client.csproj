@@ -17,6 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AdditionalFiles Remove="app.manifest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="app.manifest" />
     <None Remove="Assets\Img\logo.ico" />
     <None Remove="Assets\Img\logo.png" />
     <None Remove="Assets\Languages\en.json" />
