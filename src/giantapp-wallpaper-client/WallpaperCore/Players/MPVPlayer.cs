@@ -28,16 +28,16 @@ public class MpvPlayer
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
     public Process? Process { get; private set; }
-    #region Options
 
-    public bool AutoHwdec { get; set; } = true;//auto 硬解,no 软解
+    #region Options
+    public bool AutoHwdec { get; set; } = true;//auto-safe 硬解,no 软解
 
     public string PanAndScan { get; set; } = "1.0";//0.0-1.0  铺满,防止视频黑边
-
     #endregion
 
     #endregion
 
+    #region public
     public MpvPlayer(string playerPath)
     {
         _playerPath = playerPath;
@@ -114,18 +114,10 @@ public class MpvPlayer
         return res;
     }
 
-
     public void Quit()
     {
         SendMessage(IPCServerName, "quit");
     }
-
-    //public void Dispose()
-    //{
-    //    _process?.CloseMainWindow();
-    //    _process?.WaitForExit();
-    //    _process = null;
-    //}
 
     public string? GetPath()
     {
@@ -143,8 +135,29 @@ public class MpvPlayer
             return;
         SendMessage(IPCServerName, "loadfile", file, "replace");
     }
-    #region private
 
+    public void Pause()
+    {
+
+    }
+
+    public void Resume()
+    {
+
+    }
+
+    public void Stop()
+    {
+
+    }
+
+    public void SetVolume(int volume)
+    {
+
+    }
+    #endregion
+
+    #region private
     private object? SendMessage(string? serverName, params string[] command)
     {
         if (serverName == null)
@@ -200,6 +213,5 @@ public class MpvPlayer
         }
         return null;
     }
-
     #endregion
 }
