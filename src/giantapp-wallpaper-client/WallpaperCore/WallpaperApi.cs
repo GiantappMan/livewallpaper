@@ -62,7 +62,15 @@ public static class WallpaperApi
     //获取屏幕信息
     public static Screen[] GetScreens()
     {
-        return Screen.AllScreens;
+        var res= Screen.AllScreens;
+        //根据bounds x坐标排序,按逗号分隔，x坐标是第一个
+        Array.Sort(res, (a, b) =>
+        {
+            var aBounds = a.Bounds;
+            var bBounds = b.Bounds;
+            return aBounds.X.CompareTo(bBounds.X);
+        });
+        return res;
     }
 
     //显示壁纸
@@ -83,7 +91,7 @@ public static class WallpaperApi
             manager.Playlist = playlist;
         }
 
-        manager.Play();
+        manager.Play(screenIndex);
     }
 
     //关闭壁纸

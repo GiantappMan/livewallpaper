@@ -37,21 +37,15 @@ const Page = () => {
 
         if (!screens.data)
             return
-        //根据bounds x坐标排序,按逗号分隔，x坐标是第一个
-        let tmp = screens.data.sort((a, b) => {
-            const aX = a.bounds.split(",")[0];
-            const bX = b.bounds.split(",")[0];
-            return parseInt(aX) - parseInt(bX);
-        });
 
-        setScreens(tmp);
-        console.log(screens.data, tmp);
+        setScreens(screens.data);
+        console.log(screens.data);
     }
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
         let screenIndex = screens?.findIndex((s) => s.deviceName === screen?.deviceName);
-        if (screenIndex < 0)
-            screenIndex = null;//所有屏幕
+        if (screenIndex === undefined || screenIndex < 0)
+            screenIndex = undefined;//所有屏幕
         const res = await api.showWallpaper(wallpaper, screenIndex);
         if (res.error) {
             alert(res.error);

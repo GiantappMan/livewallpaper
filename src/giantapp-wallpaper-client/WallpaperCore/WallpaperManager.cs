@@ -10,13 +10,17 @@ public class WallpaperManager
     public Playlist? Playlist { get; set; }
     public uint ScreenIndex { get; set; }
 
-    internal async void Play()
+    internal async void Play(uint screenIndex)
     {
         var file = Playlist?.Wallpapers[0];
         if (file == null || file.FilePath == null)
             return;
         if (_player.Process == null || _player.Process.HasExited)
+        {
             await _player.LaunchAsync();
+            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
+            DesktopManager.SendHandleToDesktopBottom(_player.MainHandle, bounds);
+        }
         //_player.LoadList(file.FilePath);
         _player.LoadFile(file.FilePath);
     }

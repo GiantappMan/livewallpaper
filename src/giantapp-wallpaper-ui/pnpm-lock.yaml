@@ -54,11 +54,11 @@ dependencies:
     specifier: ^2.5.1
     version: registry.npmmirror.com/jotai@2.5.1(@types/react@18.2.34)(react@18.2.0)
   next:
-    specifier: 14.0.2
-    version: registry.npmmirror.com/next@14.0.2(react-dom@18.2.0)(react@18.2.0)
+    specifier: 14.0.3
+    version: registry.npmmirror.com/next@14.0.3(react-dom@18.2.0)(react@18.2.0)
   next-themes:
     specifier: ^0.2.1
-    version: registry.npmmirror.com/next-themes@0.2.1(next@14.0.2)(react-dom@18.2.0)(react@18.2.0)
+    version: registry.npmmirror.com/next-themes@0.2.1(next@14.0.3)(react-dom@18.2.0)(react@18.2.0)
   react:
     specifier: ^18
     version: registry.npmmirror.com/react@18.2.0
@@ -95,8 +95,8 @@ devDependencies:
     specifier: ^8
     version: registry.npmmirror.com/eslint@8.52.0
   eslint-config-next:
-    specifier: 14.0.2
-    version: registry.npmmirror.com/eslint-config-next@14.0.2(eslint@8.52.0)(typescript@5.2.2)
+    specifier: 14.0.3
+    version: registry.npmmirror.com/eslint-config-next@14.0.3(eslint@8.52.0)(typescript@5.2.2)
   postcss:
     specifier: ^8
     version: registry.npmmirror.com/postcss@8.4.31
@@ -296,24 +296,24 @@ packages:
       '@jridgewell/resolve-uri': registry.npmmirror.com/@jridgewell/resolve-uri@3.1.1
       '@jridgewell/sourcemap-codec': registry.npmmirror.com/@jridgewell/sourcemap-codec@1.4.15
 
-  registry.npmmirror.com/@next/env@14.0.2:
-    resolution: {integrity: sha512-HAW1sljizEaduEOes/m84oUqeIDAUYBR1CDwu2tobNlNDFP3cSm9d6QsOsGeNlIppU1p/p1+bWbYCbvwjFiceA==, tarball: https://registry.npmmirror.com/@next/env/-/env-14.0.2.tgz}
+  registry.npmmirror.com/@next/env@14.0.3:
+    resolution: {integrity: sha512-7xRqh9nMvP5xrW4/+L0jgRRX+HoNRGnfJpD+5Wq6/13j3dsdzxO3BCXn7D3hMqsDb+vjZnJq+vI7+EtgrYZTeA==, tarball: https://registry.npmmirror.com/@next/env/-/env-14.0.3.tgz}
     name: '@next/env'
-    version: 14.0.2
+    version: 14.0.3
     dev: false
 
-  registry.npmmirror.com/@next/eslint-plugin-next@14.0.2:
-    resolution: {integrity: sha512-APrYFsXfAhnysycqxHcpg6Y4i7Ukp30GzVSZQRKT3OczbzkqGjt33vNhScmgoOXYBU1CfkwgtXmNxdiwv1jKmg==, tarball: https://registry.npmmirror.com/@next/eslint-plugin-next/-/eslint-plugin-next-14.0.2.tgz}
+  registry.npmmirror.com/@next/eslint-plugin-next@14.0.3:
+    resolution: {integrity: sha512-j4K0n+DcmQYCVnSAM+UByTVfIHnYQy2ODozfQP+4RdwtRDfobrIvKq1K4Exb2koJ79HSSa7s6B2SA8T/1YR3RA==, tarball: https://registry.npmmirror.com/@next/eslint-plugin-next/-/eslint-plugin-next-14.0.3.tgz}
     name: '@next/eslint-plugin-next'
-    version: 14.0.2
+    version: 14.0.3
     dependencies:
       glob: registry.npmmirror.com/glob@7.1.7
     dev: true
 
-  registry.npmmirror.com/@next/swc-darwin-arm64@14.0.2:
-    resolution: {integrity: sha512-i+jQY0fOb8L5gvGvojWyZMfQoQtDVB2kYe7fufOEiST6sicvzI2W5/EXo4lX5bLUjapHKe+nFxuVv7BA+Pd7LQ==, tarball: https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-darwin-arm64@14.0.3:
+    resolution: {integrity: sha512-64JbSvi3nbbcEtyitNn2LEDS/hcleAFpHdykpcnrstITFlzFgB/bW0ER5/SJJwUPj+ZPY+z3e+1jAfcczRLVGw==, tarball: https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-14.0.3.tgz}
     name: '@next/swc-darwin-arm64'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -321,10 +321,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-darwin-x64@14.0.2:
-    resolution: {integrity: sha512-zRCAO0d2hW6gBEa4wJaLn+gY8qtIqD3gYd9NjruuN98OCI6YyelmhWVVLlREjS7RYrm9OUQIp/iVJFeB6kP1hg==, tarball: https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-darwin-x64@14.0.3:
+    resolution: {integrity: sha512-RkTf+KbAD0SgYdVn1XzqE/+sIxYGB7NLMZRn9I4Z24afrhUpVJx6L8hsRnIwxz3ERE2NFURNliPjJ2QNfnWicQ==, tarball: https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-14.0.3.tgz}
     name: '@next/swc-darwin-x64'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
@@ -332,10 +332,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-linux-arm64-gnu@14.0.2:
-    resolution: {integrity: sha512-tSJmiaon8YaKsVhi7GgRizZoV0N1Sx5+i+hFTrCKKQN7s3tuqW0Rov+RYdPhAv/pJl4qiG+XfSX4eJXqpNg3dA==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-linux-arm64-gnu@14.0.3:
+    resolution: {integrity: sha512-3tBWGgz7M9RKLO6sPWC6c4pAw4geujSwQ7q7Si4d6bo0l6cLs4tmO+lnSwFp1Tm3lxwfMk0SgkJT7EdwYSJvcg==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-14.0.3.tgz}
     name: '@next/swc-linux-arm64-gnu'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -344,10 +344,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-linux-arm64-musl@14.0.2:
-    resolution: {integrity: sha512-dXJLMSEOwqJKcag1BeX1C+ekdPPJ9yXbWIt3nAadhbLx5CjACoB2NQj9Xcqu2tmdr5L6m34fR+fjGPs+ZVPLzA==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-linux-arm64-musl@14.0.3:
+    resolution: {integrity: sha512-v0v8Kb8j8T23jvVUWZeA2D8+izWspeyeDGNaT2/mTHWp7+37fiNfL8bmBWiOmeumXkacM/AB0XOUQvEbncSnHA==, tarball: https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-14.0.3.tgz}
     name: '@next/swc-linux-arm64-musl'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -356,10 +356,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-linux-x64-gnu@14.0.2:
-    resolution: {integrity: sha512-WC9KAPSowj6as76P3vf1J3mf2QTm3Wv3FBzQi7UJ+dxWjK3MhHVWsWUo24AnmHx9qDcEtHM58okgZkXVqeLB+Q==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-linux-x64-gnu@14.0.3:
+    resolution: {integrity: sha512-VM1aE1tJKLBwMGtyBR21yy+STfl0MapMQnNrXkxeyLs0GFv/kZqXS5Jw/TQ3TSUnbv0QPDf/X8sDXuMtSgG6eg==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-14.0.3.tgz}
     name: '@next/swc-linux-x64-gnu'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -368,10 +368,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-linux-x64-musl@14.0.2:
-    resolution: {integrity: sha512-KSSAwvUcjtdZY4zJFa2f5VNJIwuEVnOSlqYqbQIawREJA+gUI6egeiRu290pXioQXnQHYYdXmnVNZ4M+VMB7KQ==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-linux-x64-musl@14.0.3:
+    resolution: {integrity: sha512-64EnmKy18MYFL5CzLaSuUn561hbO1Gk16jM/KHznYP3iCIfF9e3yULtHaMy0D8zbHfxset9LTOv6cuYKJgcOxg==, tarball: https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-14.0.3.tgz}
     name: '@next/swc-linux-x64-musl'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -380,10 +380,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-win32-arm64-msvc@14.0.2:
-    resolution: {integrity: sha512-2/O0F1SqJ0bD3zqNuYge0ok7OEWCQwk55RPheDYD0va5ij7kYwrFkq5ycCRN0TLjLfxSF6xI5NM6nC5ux7svEQ==, tarball: https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-win32-arm64-msvc@14.0.3:
+    resolution: {integrity: sha512-WRDp8QrmsL1bbGtsh5GqQ/KWulmrnMBgbnb+59qNTW1kVi1nG/2ndZLkcbs2GX7NpFLlToLRMWSQXmPzQm4tog==, tarball: https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-14.0.3.tgz}
     name: '@next/swc-win32-arm64-msvc'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
@@ -391,10 +391,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-win32-ia32-msvc@14.0.2:
-    resolution: {integrity: sha512-vJI/x70Id0oN4Bq/R6byBqV1/NS5Dl31zC+lowO8SDu1fHmUxoAdILZR5X/sKbiJpuvKcCrwbYgJU8FF/Gh50Q==, tarball: https://registry.npmmirror.com/@next/swc-win32-ia32-msvc/-/swc-win32-ia32-msvc-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-win32-ia32-msvc@14.0.3:
+    resolution: {integrity: sha512-EKffQeqCrj+t6qFFhIFTRoqb2QwX1mU7iTOvMyLbYw3QtqTw9sMwjykyiMlZlrfm2a4fA84+/aeW+PMg1MjuTg==, tarball: https://registry.npmmirror.com/@next/swc-win32-ia32-msvc/-/swc-win32-ia32-msvc-14.0.3.tgz}
     name: '@next/swc-win32-ia32-msvc'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [ia32]
     os: [win32]
@@ -402,10 +402,10 @@ packages:
     dev: false
     optional: true
 
-  registry.npmmirror.com/@next/swc-win32-x64-msvc@14.0.2:
-    resolution: {integrity: sha512-Ut4LXIUvC5m8pHTe2j0vq/YDnTEyq6RSR9vHYPqnELrDapPhLNz9Od/L5Ow3J8RNDWpEnfCiQXuVdfjlNEJ7ug==, tarball: https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-14.0.2.tgz}
+  registry.npmmirror.com/@next/swc-win32-x64-msvc@14.0.3:
+    resolution: {integrity: sha512-ERhKPSJ1vQrPiwrs15Pjz/rvDHZmkmvbf/BjPN/UCOI++ODftT0GtasDPi0j+y6PPJi5HsXw+dpRaXUaw4vjuQ==, tarball: https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-14.0.3.tgz}
     name: '@next/swc-win32-x64-msvc'
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -2245,11 +2245,11 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  registry.npmmirror.com/eslint-config-next@14.0.2(eslint@8.52.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-CasWThlsyIcg/a+clU6KVOMTieuDhTztsrqvniP6AsRki9v7FnojTa7vKQOYM8QSOsQdZ/aElLD1Y2Oc8/PsIg==, tarball: https://registry.npmmirror.com/eslint-config-next/-/eslint-config-next-14.0.2.tgz}
-    id: registry.npmmirror.com/eslint-config-next/14.0.2
+  registry.npmmirror.com/eslint-config-next@14.0.3(eslint@8.52.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-IKPhpLdpSUyKofmsXUfrvBC49JMUTdeaD8ZIH4v9Vk0sC1X6URTuTJCLtA0Vwuj7V/CQh0oISuSTvNn5//Buew==, tarball: https://registry.npmmirror.com/eslint-config-next/-/eslint-config-next-14.0.3.tgz}
+    id: registry.npmmirror.com/eslint-config-next/14.0.3
     name: eslint-config-next
-    version: 14.0.2
+    version: 14.0.3
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0
       typescript: '>=3.3.1'
@@ -2257,7 +2257,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@next/eslint-plugin-next': registry.npmmirror.com/@next/eslint-plugin-next@14.0.2
+      '@next/eslint-plugin-next': registry.npmmirror.com/@next/eslint-plugin-next@14.0.3
       '@rushstack/eslint-patch': registry.npmmirror.com/@rushstack/eslint-patch@1.5.1
       '@typescript-eslint/parser': registry.npmmirror.com/@typescript-eslint/parser@6.9.1(eslint@8.52.0)(typescript@5.2.2)
       eslint: registry.npmmirror.com/eslint@8.52.0
@@ -2553,7 +2553,7 @@ packages:
     dev: true
 
   registry.npmmirror.com/esutils@2.0.3:
-    resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/esutils/-/esutils-2.0.3.tgz}
+    resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==, tarball: https://registry.npmmirror.com/esutils/-/esutils-2.0.3.tgz}
     name: esutils
     version: 2.0.3
     engines: {node: '>=0.10.0'}
@@ -3394,7 +3394,7 @@ packages:
     version: 1.4.0
     dev: true
 
-  registry.npmmirror.com/next-themes@0.2.1(next@14.0.2)(react-dom@18.2.0)(react@18.2.0):
+  registry.npmmirror.com/next-themes@0.2.1(next@14.0.3)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-B+AKNfYNIzh0vqQQKqQItTS8evEouKD7H5Hj3kmuPERwddR2TxvDSFZuTj6T7Jfn1oyeUyJMydPl1Bkxkh0W7A==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/next-themes/-/next-themes-0.2.1.tgz}
     id: registry.npmmirror.com/next-themes/0.2.1
     name: next-themes
@@ -3404,16 +3404,16 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      next: registry.npmmirror.com/next@14.0.2(react-dom@18.2.0)(react@18.2.0)
+      next: registry.npmmirror.com/next@14.0.3(react-dom@18.2.0)(react@18.2.0)
       react: registry.npmmirror.com/react@18.2.0
       react-dom: registry.npmmirror.com/react-dom@18.2.0(react@18.2.0)
     dev: false
 
-  registry.npmmirror.com/next@14.0.2(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-jsAU2CkYS40GaQYOiLl9m93RTv2DA/tTJ0NRlmZIBIL87YwQ/xR8k796z7IqgM3jydI8G25dXvyYMC9VDIevIg==, tarball: https://registry.npmmirror.com/next/-/next-14.0.2.tgz}
-    id: registry.npmmirror.com/next/14.0.2
+  registry.npmmirror.com/next@14.0.3(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-AbYdRNfImBr3XGtvnwOxq8ekVCwbFTv/UJoLwmaX89nk9i051AEY4/HAWzU0YpaTDw8IofUpmuIlvzWF13jxIw==, tarball: https://registry.npmmirror.com/next/-/next-14.0.3.tgz}
+    id: registry.npmmirror.com/next/14.0.3
     name: next
-    version: 14.0.2
+    version: 14.0.3
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -3427,7 +3427,7 @@ packages:
       sass:
         optional: true
     dependencies:
-      '@next/env': registry.npmmirror.com/@next/env@14.0.2
+      '@next/env': registry.npmmirror.com/@next/env@14.0.3
       '@swc/helpers': registry.npmmirror.com/@swc/helpers@0.5.2
       busboy: registry.npmmirror.com/busboy@1.6.0
       caniuse-lite: registry.npmmirror.com/caniuse-lite@1.0.30001559
@@ -3437,15 +3437,15 @@ packages:
       styled-jsx: registry.npmmirror.com/styled-jsx@5.1.1(react@18.2.0)
       watchpack: registry.npmmirror.com/watchpack@2.4.0
     optionalDependencies:
-      '@next/swc-darwin-arm64': registry.npmmirror.com/@next/swc-darwin-arm64@14.0.2
-      '@next/swc-darwin-x64': registry.npmmirror.com/@next/swc-darwin-x64@14.0.2
-      '@next/swc-linux-arm64-gnu': registry.npmmirror.com/@next/swc-linux-arm64-gnu@14.0.2
-      '@next/swc-linux-arm64-musl': registry.npmmirror.com/@next/swc-linux-arm64-musl@14.0.2
-      '@next/swc-linux-x64-gnu': registry.npmmirror.com/@next/swc-linux-x64-gnu@14.0.2
-      '@next/swc-linux-x64-musl': registry.npmmirror.com/@next/swc-linux-x64-musl@14.0.2
-      '@next/swc-win32-arm64-msvc': registry.npmmirror.com/@next/swc-win32-arm64-msvc@14.0.2
-      '@next/swc-win32-ia32-msvc': registry.npmmirror.com/@next/swc-win32-ia32-msvc@14.0.2
-      '@next/swc-win32-x64-msvc': registry.npmmirror.com/@next/swc-win32-x64-msvc@14.0.2
+      '@next/swc-darwin-arm64': registry.npmmirror.com/@next/swc-darwin-arm64@14.0.3
+      '@next/swc-darwin-x64': registry.npmmirror.com/@next/swc-darwin-x64@14.0.3
+      '@next/swc-linux-arm64-gnu': registry.npmmirror.com/@next/swc-linux-arm64-gnu@14.0.3
+      '@next/swc-linux-arm64-musl': registry.npmmirror.com/@next/swc-linux-arm64-musl@14.0.3
+      '@next/swc-linux-x64-gnu': registry.npmmirror.com/@next/swc-linux-x64-gnu@14.0.3
+      '@next/swc-linux-x64-musl': registry.npmmirror.com/@next/swc-linux-x64-musl@14.0.3
+      '@next/swc-win32-arm64-msvc': registry.npmmirror.com/@next/swc-win32-arm64-msvc@14.0.3
+      '@next/swc-win32-ia32-msvc': registry.npmmirror.com/@next/swc-win32-ia32-msvc@14.0.3
+      '@next/swc-win32-x64-msvc': registry.npmmirror.com/@next/swc-win32-x64-msvc@14.0.3
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
