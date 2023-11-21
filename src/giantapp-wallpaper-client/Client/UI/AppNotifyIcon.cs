@@ -27,6 +27,7 @@ internal class AppNotifyIcon
         _aboutMenuItem = new();
         _aboutMenuItem.Click += AboutMenuItem_Click;
         _exitMenuItem = new() { Command = ControlCommands.ShutdownApp };
+        _exitMenuItem.Click += ExitMenuItem_Click;
 
         Menu.Items.Add(_aboutMenuItem);
         Menu.Items.Add(_exitMenuItem);
@@ -47,7 +48,6 @@ internal class AppNotifyIcon
         UpdateNotifyIconText();
     }
 
-
     #region public
     public void UpdateNotifyIconText(string? lan = null)
     {
@@ -65,7 +65,6 @@ internal class AppNotifyIcon
 
     #region private
 
-
     private void NotifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
     {
         AppService.ShowShell();
@@ -75,6 +74,11 @@ internal class AppNotifyIcon
     {
         //系统浏览器打开网页
         OpenBrowser("https://github.com/DaZiYuan/livewallpaper");
+    }
+
+    private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AppService.Exit();
     }
 
     private static void OpenBrowser(string? url)

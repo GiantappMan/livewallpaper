@@ -10,6 +10,11 @@ public class WallpaperManager
     public Playlist? Playlist { get; set; }
     public uint ScreenIndex { get; set; }
 
+    internal void Dispose()
+    {
+        _player.Process?.CloseMainWindow();
+    }
+
     internal async void Play(uint screenIndex)
     {
         var file = Playlist?.Wallpapers[0];

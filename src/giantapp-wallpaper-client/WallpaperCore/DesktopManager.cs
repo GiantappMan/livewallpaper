@@ -5,6 +5,12 @@ namespace WallpaperCore;
 
 public static class DesktopManager
 {
+    public static void Refresh()
+    {
+        //实际测试，可以刷新
+        CreateWorkerW();
+    }
+
     /// <summary>
     /// 通过不公开命名创建workerW，此方法可以清除背景残影
     /// </summary>

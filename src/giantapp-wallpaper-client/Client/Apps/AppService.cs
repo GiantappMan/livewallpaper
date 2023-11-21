@@ -9,10 +9,11 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using WallpaperCore;
+using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 
 namespace Client.Apps;
 
@@ -49,7 +50,7 @@ internal class AppService
         Configer.Init(ProductName);
 
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
-        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();//壁纸设置
+        var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
 
         //多语言初始化
         string path = "Client.Assets.Languages";
@@ -113,8 +114,8 @@ internal class AppService
         if (path == null)
             return null;
 
-        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
-        var directories = wallpaperConfig.Directories ?? Wallpaper.DefaultWallpaperSaveFolder;
+        var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();
+        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
@@ -133,8 +134,8 @@ internal class AppService
         if (path == null)
             return null;
 
-        var wallpaperConfig = Configer.Get<Wallpaper>() ?? new();
-        var directories = wallpaperConfig.Directories ?? Wallpaper.DefaultWallpaperSaveFolder;
+        var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();
+        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
@@ -145,7 +146,12 @@ internal class AppService
             }
         }
         return path;
-       
+
+    }
+
+    internal static void Exit()
+    {
+        WallpaperApi.Dispose();
     }
 
     #endregion
@@ -204,7 +210,7 @@ internal class AppService
     private static void ApplyCustomFolderMapping(string[]? directories)
     {
         if (directories == null || directories.Length == 0)
-            directories = Wallpaper.DefaultWallpaperSaveFolder;
+            directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
 
         var dict = new Dictionary<string, string>();
         //第一个是网址和UI映射
@@ -236,11 +242,11 @@ internal class AppService
                     e.Corrected = configGeneral;
                 }
                 break;
-            case Wallpaper.FullName:
-                var configWallpaper = JsonConvert.DeserializeObject<Wallpaper>(e.Json) ?? new();
+            case ConfigWallpaper.FullName:
+                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json) ?? new();
                 if (configWallpaper.Directories == null || configWallpaper.Directories.Length == 0)
                 {
-                    configWallpaper.Directories = Wallpaper.DefaultWallpaperSaveFolder;
+                    configWallpaper.Directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
                     e.Corrected = configWallpaper;
                 }
                 break;
@@ -266,8 +272,8 @@ internal class AppService
                     _notifyIcon.UpdateNotifyIconText(configGeneral.CurrentLan);
                 }
                 break;
-            case Wallpaper.FullName:
-                var configWallpaper = JsonConvert.DeserializeObject<Wallpaper>(e.Json);
+            case ConfigWallpaper.FullName:
+                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
                 if (configWallpaper != null)
                 {
                     ApplyCustomFolderMapping(configWallpaper.Directories);
@@ -275,7 +281,6 @@ internal class AppService
                 break;
         }
     }
-
 
     #endregion
 }

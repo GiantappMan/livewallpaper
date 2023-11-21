@@ -38,7 +38,9 @@ namespace Client.Libs
                 }
                 else
                 {
-                    runKey.DeleteValue(_Key);
+                    //判断key存在
+                    if (runKey.GetValue(_Key) != null)
+                        runKey.DeleteValue(_Key);
                 }
                 return true;
             }

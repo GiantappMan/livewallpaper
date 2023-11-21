@@ -138,6 +138,17 @@ public static class WallpaperApi
     {
     }
 
+    public static void Dispose()
+    {
+        foreach (var item in RunningWallpapers)
+        {
+            item.Value.Dispose();
+        }
+
+        RunningWallpapers.Clear();
+        DesktopManager.Refresh();
+    }
+
     #endregion
 
     #region private methods
@@ -183,5 +194,6 @@ public static class WallpaperApi
     static void ResumeWallpaper(uint screenIndex = 0)
     {
     }
+
     #endregion
 }
