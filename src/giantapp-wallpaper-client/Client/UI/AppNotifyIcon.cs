@@ -31,7 +31,7 @@ internal class AppNotifyIcon
         _mainMenuItem = new MenuItem();
         _mainMenuItem.Click += MainMenuItem_Click;
 
-        _exitMenuItem = new() { Command = ControlCommands.ShutdownApp };
+        _exitMenuItem = new();
         _exitMenuItem.Click += ExitMenuItem_Click;
 
         Menu.Items.Add(_aboutMenuItem);

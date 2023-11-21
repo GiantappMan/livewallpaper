@@ -91,6 +91,9 @@ public class MpvPlayer
         //允许屏保
         args.Append("--stop-screensaver=no ");
 
+        //关闭logo显示
+        args.Append("--no-osc ");
+
         Process.StartInfo.Arguments = args.ToString();
         //_process.StartInfo.UseShellExecute = false;
         //_process.StartInfo.CreateNoWindow = true;

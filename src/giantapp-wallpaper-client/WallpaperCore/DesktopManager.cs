@@ -7,8 +7,8 @@ public static class DesktopManager
 {
     public static void Refresh()
     {
-        //实际测试，可以刷新
         CreateWorkerW();
+        //todo 貌似不能100%成功
     }
 
     /// <summary>

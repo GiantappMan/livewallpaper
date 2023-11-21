@@ -152,6 +152,8 @@ internal class AppService
     internal static void Exit()
     {
         WallpaperApi.Dispose();
+        //退出
+        System.Windows.Application.Current.Shutdown();
     }
 
     #endregion
