@@ -146,13 +146,12 @@ internal class AppService
             }
         }
         return path;
-
     }
 
     internal static void Exit()
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
-        if (config.KeepWallpaper)
+        if (!config.KeepWallpaper)
             WallpaperApi.Dispose();
         //退出
         System.Windows.Application.Current.Shutdown();
