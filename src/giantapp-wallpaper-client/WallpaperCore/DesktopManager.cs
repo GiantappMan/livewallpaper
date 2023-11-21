@@ -5,10 +5,10 @@ namespace WallpaperCore;
 
 public static class DesktopManager
 {
-    public static void Refresh()
+    public static unsafe void Refresh()
     {
-        CreateWorkerW();
-        //todo 貌似不能100%成功
+        //刷新桌面，清楚残影
+        PInvoke.SystemParametersInfo(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETDESKWALLPAPER, 0, null, Windows.Win32.UI.WindowsAndMessaging.SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS.SPIF_UPDATEINIFILE);
     }
 
     /// <summary>

@@ -151,9 +151,12 @@ internal class AppService
 
     internal static void Exit()
     {
-        WallpaperApi.Dispose();
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+        if (config.KeepWallpaper)
+            WallpaperApi.Dispose();
         //退出
         System.Windows.Application.Current.Shutdown();
+        DesktopManager.Refresh();
     }
 
     #endregion
@@ -230,6 +233,7 @@ internal class AppService
     }
 
     #endregion
+
     #region callback
     private static void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
     {

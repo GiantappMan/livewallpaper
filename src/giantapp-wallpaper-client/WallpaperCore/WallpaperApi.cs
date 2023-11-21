@@ -146,7 +146,6 @@ public static class WallpaperApi
         }
 
         RunningWallpapers.Clear();
-        DesktopManager.Refresh();
     }
 
     #endregion
