@@ -279,3 +279,10 @@ public class Playlist
     public List<Wallpaper> Wallpapers { get; set; } = new();
 }
 
+/// <summary>
+/// 当前壁纸播放状态，仅用于缓存和恢复状态
+/// </summary>
+public class WallpaperStatus
+{
+    public List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>? Data { get; set; }
+}

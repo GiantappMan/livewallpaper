@@ -17,10 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{7D4151FB-B
 	ProjectSection(SolutionItems) = preProject
 		..\..\docs\0.愿景.md = ..\..\docs\0.愿景.md
 		..\..\docs\1.开发.md = ..\..\docs\1.开发.md
+		..\..\docs\2.更新记录.md = ..\..\docs\2.更新记录.md
 		..\..\README.md = ..\..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestExeWallpaper", "TestExeWallpaper\TestExeWallpaper.csproj", "{32B6245B-6D24-4A89-A617-D29E5C9DFFF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestExeWallpaper", "TestExeWallpaper\TestExeWallpaper.csproj", "{32B6245B-6D24-4A89-A617-D29E5C9DFFF4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{AB5E502B-C7EC-46AA-8EB1-2F0784672384}"
 EndProject

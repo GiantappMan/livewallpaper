@@ -148,6 +148,19 @@ public static class WallpaperApi
         RunningWallpapers.Clear();
     }
 
+    //获取当前状态，用于缓存
+    public static WallpaperStatus GetStatus()
+    {
+        var res = new WallpaperStatus();
+        return res;
+    }
+
+    //设置当前状态，以便于新启动进程恢复
+    public static void SetStatus(WallpaperStatus status)
+    {
+
+    }
+
     #endregion
 
     #region private methods
