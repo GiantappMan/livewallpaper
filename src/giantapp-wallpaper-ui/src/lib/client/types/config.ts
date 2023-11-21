@@ -11,4 +11,5 @@ export type ConfigGeneral = {
 
 export type ConfigWallpaper = {
   directories: string[];
+  keepWallpaper: boolean;
 };

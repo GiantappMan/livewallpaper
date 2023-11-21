@@ -11,6 +11,9 @@ dependencies:
   '@hookform/resolvers':
     specifier: ^3.3.2
     version: registry.npmmirror.com/@hookform/resolvers@3.3.2(react-hook-form@7.48.2)
+  '@radix-ui/react-checkbox':
+    specifier: ^1.0.4
+    version: registry.npmmirror.com/@radix-ui/react-checkbox@1.0.4(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-dialog':
     specifier: ^1.0.5
     version: registry.npmmirror.com/@radix-ui/react-dialog@1.0.5(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
@@ -479,6 +482,37 @@ packages:
     dependencies:
       '@babel/runtime': registry.npmmirror.com/@babel/runtime@7.23.2
       '@radix-ui/react-primitive': registry.npmmirror.com/@radix-ui/react-primitive@1.0.3(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
+      '@types/react': registry.npmmirror.com/@types/react@18.2.34
+      '@types/react-dom': registry.npmmirror.com/@types/react-dom@18.2.14
+      react: registry.npmmirror.com/react@18.2.0
+      react-dom: registry.npmmirror.com/react-dom@18.2.0(react@18.2.0)
+    dev: false
+
+  registry.npmmirror.com/@radix-ui/react-checkbox@1.0.4(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-CBuGQa52aAYnADZVt/KBQzXrwx6TqnlwtcIPGtVt5JkkzQwMOLJjPukimhfKEr4GQNd43C+djUh5Ikopj8pSLg==, tarball: https://registry.npmmirror.com/@radix-ui/react-checkbox/-/react-checkbox-1.0.4.tgz}
+    id: registry.npmmirror.com/@radix-ui/react-checkbox/1.0.4
+    name: '@radix-ui/react-checkbox'
+    version: 1.0.4
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+    dependencies:
+      '@babel/runtime': registry.npmmirror.com/@babel/runtime@7.23.2
+      '@radix-ui/primitive': registry.npmmirror.com/@radix-ui/primitive@1.0.1
+      '@radix-ui/react-compose-refs': registry.npmmirror.com/@radix-ui/react-compose-refs@1.0.1(@types/react@18.2.34)(react@18.2.0)
+      '@radix-ui/react-context': registry.npmmirror.com/@radix-ui/react-context@1.0.1(@types/react@18.2.34)(react@18.2.0)
+      '@radix-ui/react-presence': registry.npmmirror.com/@radix-ui/react-presence@1.0.1(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
+      '@radix-ui/react-primitive': registry.npmmirror.com/@radix-ui/react-primitive@1.0.3(@types/react-dom@18.2.14)(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
+      '@radix-ui/react-use-controllable-state': registry.npmmirror.com/@radix-ui/react-use-controllable-state@1.0.1(@types/react@18.2.34)(react@18.2.0)
+      '@radix-ui/react-use-previous': registry.npmmirror.com/@radix-ui/react-use-previous@1.0.1(@types/react@18.2.34)(react@18.2.0)
+      '@radix-ui/react-use-size': registry.npmmirror.com/@radix-ui/react-use-size@1.0.1(@types/react@18.2.34)(react@18.2.0)
       '@types/react': registry.npmmirror.com/@types/react@18.2.34
       '@types/react-dom': registry.npmmirror.com/@types/react-dom@18.2.14
       react: registry.npmmirror.com/react@18.2.0
@@ -1349,7 +1383,7 @@ packages:
     dev: false
 
   registry.npmmirror.com/@radix-ui/react-use-previous@1.0.1(@types/react@18.2.34)(react@18.2.0):
-    resolution: {integrity: sha512-cV5La9DPwiQ7S0gf/0qiD6YgNqM5Fk97Kdrlc5yBcrF3jyEZQwm7vYFqMo4IfeHgJXsRaMvLABFtd0OVEmZhDw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@radix-ui/react-use-previous/-/react-use-previous-1.0.1.tgz}
+    resolution: {integrity: sha512-cV5La9DPwiQ7S0gf/0qiD6YgNqM5Fk97Kdrlc5yBcrF3jyEZQwm7vYFqMo4IfeHgJXsRaMvLABFtd0OVEmZhDw==, tarball: https://registry.npmmirror.com/@radix-ui/react-use-previous/-/react-use-previous-1.0.1.tgz}
     id: registry.npmmirror.com/@radix-ui/react-use-previous/1.0.1
     name: '@radix-ui/react-use-previous'
     version: 1.0.1

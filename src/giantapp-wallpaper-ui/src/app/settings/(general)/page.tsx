@@ -51,6 +51,7 @@ const Page = () => {
         {
             mounted ?
                 <>
+                    <h3 className="text-lg font-medium">常规设置</h3>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor="startup">开机启动</Label>
                         <Switch id="startup" checked={config.autoStart}

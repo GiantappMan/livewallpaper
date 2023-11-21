@@ -18,11 +18,14 @@ import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
 import { ConfigWallpaper } from "@/lib/client/types/config"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 
 const FormSchema = z.object({
     directories: z.array(z.object({
         path: z.string(),
-    }))
+    })),
+    keepWallpaper: z.boolean(),
 })
 
 export default function Page() {
@@ -31,6 +34,7 @@ export default function Page() {
         resolver: zodResolver(FormSchema),
         defaultValues: {
             directories: [{ path: "" }],
+            keepWallpaper: false,
         },
     })
     const { control } = form
@@ -51,6 +55,7 @@ export default function Page() {
         }
 
         form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
+        form.setValue("keepWallpaper", config.data.keepWallpaper);
     }, [form]);
 
     useEffect(() => {
@@ -67,7 +72,8 @@ export default function Page() {
             (pathLowerCase) => res.find((item) => item.path.toLowerCase() === pathLowerCase)?.path
         );
         const saveRes = await api.setConfig("Wallpaper", {
-            directories
+            directories,
+            keepWallpaper: data.keepWallpaper,
         })
         if (saveRes.error) {
             toast({
@@ -109,7 +115,7 @@ export default function Page() {
         mounted ?
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-                    <FormLabel>壁纸目录</FormLabel>
+                    <h3 className="mb-4 text-lg font-medium">壁纸目录</h3>
                     {
                         fields.map((field, index) => (
                             <FormField
@@ -139,6 +145,26 @@ export default function Page() {
                     }
 
                     <Button type="button" onClick={addFolder}>添加目录</Button>
+
+                    <FormItem>
+                        <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
+                        <FormField
+                            control={control}
+                            name="keepWallpaper"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center space-y-0 space-x-2">
+                                    <FormLabel htmlFor="keepWallpaper">客户端关闭后保留壁纸</FormLabel>
+                                    <FormControl>
+                                        <Switch id="keepWallpaper" checked={field.value}
+                                            onCheckedChange={() => {
+                                                field.onChange(!field.value);
+                                                form.handleSubmit(onSubmit)();
+                                            }} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    </FormItem>
                 </form>
             </Form>
             :

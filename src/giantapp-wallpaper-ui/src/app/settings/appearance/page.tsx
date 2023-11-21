@@ -38,7 +38,7 @@ const Page = () => {
 
     return <>
         <div className="space-y-1.5">
-            <Label className="text-xs">选择模式</Label>
+            <h3 className="mb-4 text-lg font-medium">选择模式</h3>
             <div className="grid grid-cols-3 gap-2">
                 {mounted ? (
                     <>
@@ -79,7 +79,7 @@ const Page = () => {
             </div>
         </div>
         <div className="space-y-1.5">
-            <Label className="text-xs">选择颜色</Label>
+            <h3 className="mb-4 text-lg font-medium">选择颜色</h3>
             <div className="grid grid-cols-3 gap-2">
                 {themes.map((theme) => {
                     const isActive = config.theme === theme.name

@@ -16,6 +16,7 @@ public class Wallpaper
 
     //壁纸目录，支持多个
     public string[]? Directories { get; set; }
+    public bool? KeepWallpaper { get; set; } = false;
 
     internal static void UpdateDefaultWallpaperSaveFolder()
     {
@@ -29,5 +30,4 @@ public class Wallpaper
         folder = Path.Combine(folder, "LiveWallpaper");
         DefaultWallpaperSaveFolder = new string[] { folder };
     }
-
 }
