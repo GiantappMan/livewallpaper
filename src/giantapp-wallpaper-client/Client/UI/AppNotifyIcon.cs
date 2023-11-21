@@ -16,20 +16,28 @@ internal class AppNotifyIcon
     private NotifyIcon? _notifyIcon;
     private MenuItem? _aboutMenuItem;
     private MenuItem? _exitMenuItem;
+    private MenuItem? _mainMenuItem;
     public static ContextMenu? Menu { private set; get; }
 
     internal void Init()
     {
         Menu = new()
         {
-            Width = 150
+            Width = 170
         };
         _aboutMenuItem = new();
         _aboutMenuItem.Click += AboutMenuItem_Click;
+
+        _mainMenuItem = new MenuItem();
+        _mainMenuItem.Click += MainMenuItem_Click;
+
         _exitMenuItem = new() { Command = ControlCommands.ShutdownApp };
         _exitMenuItem.Click += ExitMenuItem_Click;
 
         Menu.Items.Add(_aboutMenuItem);
+        Menu.Items.Add(new Separator());
+        Menu.Items.Add(_mainMenuItem);
+        Menu.Items.Add(new Separator());
         Menu.Items.Add(_exitMenuItem);
         Uri iconUri = new("pack://application:,,,/Assets/img/logo.ico");
         _notifyIcon = new()
@@ -57,6 +65,7 @@ internal class AppNotifyIcon
         _notifyIcon?.Dispatcher.BeginInvoke(() =>
         {
             _aboutMenuItem!.Header = LanService.Get("about");
+            _mainMenuItem!.Header = LanService.Get("open_main_panel");
             _exitMenuItem!.Header = LanService.Get("exit");
         });
     }
@@ -79,6 +88,11 @@ internal class AppNotifyIcon
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
     {
         AppService.Exit();
+    }
+
+    private void MainMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AppService.ShowShell();
     }
 
     private static void OpenBrowser(string? url)
