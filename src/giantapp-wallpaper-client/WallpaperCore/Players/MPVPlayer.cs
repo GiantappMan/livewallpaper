@@ -94,6 +94,12 @@ public class MpvPlayer
         //关闭logo显示
         args.Append("--no-osc ");
 
+        //初始坐标
+        args.Append("--geometry=-10000:-10000 ");
+
+        //消除边框
+        args.Append("--no-border ");
+
         Process.StartInfo.Arguments = args.ToString();
         //_process.StartInfo.UseShellExecute = false;
         //_process.StartInfo.CreateNoWindow = true;
