@@ -39,13 +39,8 @@ public class WallpaperManager
         //_player.LoadFile(Playlist.Wallpapers[0].FilePath);
     }
 
-    internal List<string> GetCacheData()
+    internal List<string> GetSnapshotData()
     {
         return new List<string>();
-    }
-
-    public static WallpaperManager FromCacheData(List<string> data)
-    {
-        return new WallpaperManager();
     }
 }

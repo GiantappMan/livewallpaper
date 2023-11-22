@@ -161,13 +161,13 @@ public static class WallpaperApi
     {
         var res = new WallpaperApiSnapshot
         {
-            Data = new List<(Playlist Playlist, int PlayIndex, uint ScreenIndex)>()
+            Data = new List<(Playlist Playlist, object PlayerData)>()
         };
         foreach (var item in RunningWallpapers)
         {
-            var index = item.Value.GetPlayIndex();
+            var snapshotData = item.Value.GetSnapshotData();
             if (item.Value.Playlist != null)
-                res.Data.Add((item.Value.Playlist, index, item.Value.ScreenIndex));
+                res.Data.Add((item.Value.Playlist, snapshotData));
         }
 
         return res;
