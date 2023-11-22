@@ -62,7 +62,7 @@ public class PlaylistMeta : WallpaperMeta
 
 }
 
-public enum PlayType
+public enum PlayMode
 {
     //顺序播放
     Order,
@@ -76,8 +76,9 @@ public enum PlayType
 /// </summary>
 public class PlaylistSetting
 {
-    public PlayType PlayType { get; set; } = PlayType.Order;
+    public PlayMode Mode { get; set; } = PlayMode.Order;
     public uint PlayIndex { get; set; } = 0;
+    public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
 }
 
 //一个壁纸的设置
@@ -271,7 +272,6 @@ public class Wallpaper
                WebExtension.Contains(lowerCaseExtension) ||
                AnimatedImgExtension.Contains(lowerCaseExtension);
     }
-
 }
 
 /// <summary>
@@ -294,5 +294,5 @@ public class Playlist
 /// </summary>
 public class WallpaperApiSnapshot
 {
-    public List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>? Data { get; set; }
+    public List<(Playlist Playlist, int PlayIndex, uint ScreenIndex)>? Data { get; set; }
 }

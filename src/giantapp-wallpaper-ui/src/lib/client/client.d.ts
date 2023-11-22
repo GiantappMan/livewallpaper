@@ -3,7 +3,7 @@ interface API {
   SetConfig(key: string, value: string);
   GetWallpapers(): Promise<string>;
   GetScreens(): Promise<string>;
-  ShowWallpaper(wallpaper: string, screenIndex: number | null | undefined);
+  ShowWallpaper(wallpaper: string);
   addEventListener(type: string, listener: (e: any) => void);
 }
 

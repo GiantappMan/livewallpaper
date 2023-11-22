@@ -2,6 +2,7 @@
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper } from "./types/wallpaper";
 import { Screen } from "./types/screen";
+import { Playlist } from "./types/playlist";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -79,11 +80,11 @@ class API {
     }
   }
 
-  async showWallpaper(wallpaper: Wallpaper, screenIndex?: number): Promise<ApiResult<null>> {
+  async showWallpaper(playlist: Playlist): Promise<ApiResult<null>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      await api.ShowWallpaper(JSON.stringify(wallpaper), screenIndex);
+      await api.ShowWallpaper(JSON.stringify(playlist));
       return { error: null, data: null };
     } catch (e) {
       console.log(e);

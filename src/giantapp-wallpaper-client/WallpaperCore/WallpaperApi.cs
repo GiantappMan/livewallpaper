@@ -81,24 +81,32 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static void ShowWallpaper(Playlist playlist, uint screenIndex)
+    public static bool ShowWallpaper(Playlist playlist)
     {
-        RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
-        if (manager == null)
+        if (playlist == null || playlist.Setting == null || playlist.Setting.ScreenIndexes.Length == 0)
+            return false;
+
+        foreach (var screenIndex in playlist.Setting.ScreenIndexes)
         {
-            manager = new WallpaperManager()
+            RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
+            if (manager == null)
             {
-                Playlist = playlist,
-                ScreenIndex = screenIndex
-            };
-            RunningWallpapers.TryAdd(screenIndex, manager);
-        }
-        else
-        {
-            manager.Playlist = playlist;
+                manager = new WallpaperManager()
+                {
+                    Playlist = playlist,
+                    ScreenIndex = screenIndex
+                };
+                RunningWallpapers.TryAdd(screenIndex, manager);
+            }
+            else
+            {
+                manager.Playlist = playlist;
+            }
+
+            manager.Play(screenIndex);
         }
 
-        manager.Play(screenIndex);
+        return true;
     }
 
     //关闭壁纸
@@ -153,7 +161,7 @@ public static class WallpaperApi
     {
         var res = new WallpaperApiSnapshot
         {
-            Data = new List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>()
+            Data = new List<(Playlist Playlist, int PlayIndex, uint ScreenIndex)>()
         };
         foreach (var item in RunningWallpapers)
         {

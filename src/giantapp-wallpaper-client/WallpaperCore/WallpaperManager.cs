@@ -15,7 +15,7 @@ public class WallpaperManager
         _player.Process?.CloseMainWindow();
     }
 
-    internal uint GetPlayIndex()
+    internal int GetPlayIndex()
     {
         return _player.GetPlayIndex();
     }

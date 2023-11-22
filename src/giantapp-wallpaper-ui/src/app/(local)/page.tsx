@@ -9,6 +9,7 @@ import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
 import { toast } from "@/components/ui/use-toast";
+import { PlayMode, Playlist } from "@/lib/client/types/playlist";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
@@ -44,9 +45,25 @@ const Page = () => {
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
         let screenIndex = screens?.findIndex((s) => s.deviceName === screen?.deviceName);
+        const allScreenIndexes = screens?.map((_, index) => index);
+        if (!allScreenIndexes)
+            return;
+        
+        let screenIndexes = [];
         if (screenIndex === undefined || screenIndex < 0)
-            screenIndex = undefined;//所有屏幕
-        const res = await api.showWallpaper(wallpaper, screenIndex);
+            screenIndexes = allScreenIndexes;
+        else
+            screenIndexes = [screenIndex];
+
+        const playlist: Playlist = {
+            wallpapers: [wallpaper],
+            setting: {
+                playIndex: 0,
+                mode: PlayMode.Order,
+                screenIndexes
+            }
+        }
+        const res = await api.showWallpaper(playlist);
         if (res.error) {
             alert(res.error);
             return;
