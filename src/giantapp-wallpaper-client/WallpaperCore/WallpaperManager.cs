@@ -15,10 +15,14 @@ public class WallpaperManager
         _player.Process?.CloseMainWindow();
     }
 
+    internal uint GetPlayIndex()
+    {
+        return _player.GetPlayIndex();
+    }
+
     internal async void Play(uint screenIndex)
     {
-        var file = Playlist?.Wallpapers[0];
-        if (file == null || file.FilePath == null)
+        if (Playlist == null || Playlist.Wallpapers.Count == 0)
             return;
         if (_player.Process == null || _player.Process.HasExited)
         {
@@ -26,7 +30,12 @@ public class WallpaperManager
             var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
             DesktopManager.SendHandleToDesktopBottom(_player.MainHandle, bounds);
         }
-        //_player.LoadList(file.FilePath);
-        _player.LoadFile(file.FilePath);
+
+        //生成playlist.txt
+        var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
+        var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
+        File.WriteAllLines(playlistPath, playlist);
+        _player.LoadList(playlistPath);
+        //_player.LoadFile(Playlist.Wallpapers[0].FilePath);
     }
 }

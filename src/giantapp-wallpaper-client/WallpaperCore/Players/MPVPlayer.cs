@@ -139,6 +139,13 @@ public class MpvPlayer
         SendMessage(IPCServerName, "loadfile", file, "replace");
     }
 
+    internal uint GetPlayIndex()
+    {
+        var res = SendMessage(IPCServerName, "get_property", "playlist-pos");
+        if (res == null)
+            return 0;
+        return Convert.ToUInt32(res);
+    }
     public void Pause()
     {
 
@@ -216,5 +223,6 @@ public class MpvPlayer
         }
         return null;
     }
+
     #endregion
 }

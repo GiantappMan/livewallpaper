@@ -20,7 +20,7 @@ public static class WallpaperApi
 
     static WallpaperApi()
     {
-        //单元测试，禁用DPI
+        //禁用DPI
         SetPerMonitorV2DpiAwareness();
     }
 
@@ -152,6 +152,14 @@ public static class WallpaperApi
     public static WallpaperStatus GetStatus()
     {
         var res = new WallpaperStatus();
+        res.Data = new List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>();
+        foreach (var item in RunningWallpapers)
+        {
+            var index = item.Value.GetPlayIndex();
+            if (item.Value.Playlist != null)
+                res.Data.Add((item.Value.Playlist, index, item.Value.ScreenIndex));
+        }
+
         return res;
     }
 

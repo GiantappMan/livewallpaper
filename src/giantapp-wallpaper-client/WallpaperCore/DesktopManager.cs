@@ -108,7 +108,7 @@ public static class DesktopManager
 
         //重新设置大小
         var tmpBounds = new Rectangle(points[0].X, points[0].Y, points[1].X - points[0].X, points[1].Y - points[0].Y);
-        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, tmpBounds.X, tmpBounds.Y, tmpBounds.Width, tmpBounds.Height, 0u);
+        _ = PInvoke.SetWindowPos(hwnd, HWND.Null, tmpBounds.X, tmpBounds.Y, tmpBounds.Width, tmpBounds.Height, Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
         return true;
     }
 
