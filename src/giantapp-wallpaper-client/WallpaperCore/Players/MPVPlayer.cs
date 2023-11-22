@@ -21,13 +21,13 @@ public class MpvPlayer
 {
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private readonly string? _playerPath;
     #endregion
 
     #region public properties
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
     public Process? Process { get; private set; }
+    public static string PlayerPath { get; set; } = "Assets\\Player\\mpv.exe";
 
     #region Options
     public bool AutoHwdec { get; set; } = true;//auto-safe 硬解,no 软解
@@ -38,9 +38,8 @@ public class MpvPlayer
     #endregion
 
     #region public
-    public MpvPlayer(string playerPath)
+    public MpvPlayer()
     {
-        _playerPath = playerPath;
         IPCServerName = $@"mpv{Guid.NewGuid()}";
     }
 
@@ -49,8 +48,7 @@ public class MpvPlayer
         if (!File.Exists(path))
             return null;
 
-        string fullpath = Path.GetFullPath(path);
-        return new MpvPlayer(fullpath);
+        return new MpvPlayer();
     }
 
     public async Task<bool> LaunchAsync(string? playList = null)
@@ -59,7 +57,7 @@ public class MpvPlayer
         Process?.Dispose();
 
         Process = new Process();
-        Process.StartInfo.FileName = _playerPath;
+        Process.StartInfo.FileName = PlayerPath;
 
         StringBuilder args = new();
 
@@ -170,6 +168,17 @@ public class MpvPlayer
     public void SetVolume(int volume)
     {
 
+    }
+
+    public List<string> GetCacheData()
+    {
+        //缓存当前实力需要的数据
+        return new();
+    }
+
+    public static MpvPlayer FromCacheData(List<string> status)
+    {
+        return new MpvPlayer();
     }
     #endregion
 

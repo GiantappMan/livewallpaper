@@ -1,4 +1,5 @@
-﻿using WallpaperCore.Players;
+﻿using System.IO;
+using WallpaperCore.Players;
 
 namespace WallpaperCore.Test.Players
 {
@@ -47,7 +48,9 @@ namespace WallpaperCore.Test.Players
 
         private MpvPlayer? GetPlayer()
         {
-            return MpvPlayer.From("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
+            string fullpath = Path.GetFullPath("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
+            MpvPlayer.PlayerPath = fullpath;
+            return new MpvPlayer();
         }
     }
 }

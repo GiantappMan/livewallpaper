@@ -6,7 +6,7 @@ namespace WallpaperCore;
 //管理一个屏幕的壁纸播放
 public class WallpaperManager
 {
-    readonly MpvPlayer _player = new("Assets\\Player\\mpv.exe");
+    readonly MpvPlayer _player = new();
     public Playlist? Playlist { get; set; }
     public uint ScreenIndex { get; set; }
 
@@ -37,5 +37,15 @@ public class WallpaperManager
         File.WriteAllLines(playlistPath, playlist);
         _player.LoadList(playlistPath);
         //_player.LoadFile(Playlist.Wallpapers[0].FilePath);
+    }
+
+    internal List<string> GetCacheData()
+    {
+        return new List<string>();
+    }
+
+    public static WallpaperManager FromCacheData(List<string> data)
+    {
+        return new WallpaperManager();
     }
 }

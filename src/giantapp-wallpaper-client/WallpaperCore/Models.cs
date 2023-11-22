@@ -62,12 +62,22 @@ public class PlaylistMeta : WallpaperMeta
 
 }
 
+public enum PlayType
+{
+    //顺序播放
+    Order,
+    //随机播放
+    Random,
+    //定时切换
+    Timer
+}
 /// <summary>
 /// playlist的设置
 /// </summary>
 public class PlaylistSetting
 {
-
+    public PlayType PlayType { get; set; } = PlayType.Order;
+    public uint PlayIndex { get; set; } = 0;
 }
 
 //一个壁纸的设置
@@ -280,9 +290,9 @@ public class Playlist
 }
 
 /// <summary>
-/// 当前壁纸播放状态，仅用于缓存和恢复状态
+/// 壁纸API快照信息
 /// </summary>
-public class WallpaperStatus
+public class WallpaperApiSnapshot
 {
     public List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>? Data { get; set; }
 }

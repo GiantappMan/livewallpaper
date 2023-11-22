@@ -14,7 +14,7 @@ public static class WallpaperApi
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     //运行中的屏幕和对应的播放列表，线程安全
-    public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new ConcurrentDictionary<uint, WallpaperManager>();
+    public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new();
 
     #endregion
 
@@ -81,7 +81,7 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static void ShowWallpaper(Playlist playlist, uint screenIndex = 0)
+    public static void ShowWallpaper(Playlist playlist, uint screenIndex)
     {
         RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
         if (manager == null)
@@ -148,11 +148,13 @@ public static class WallpaperApi
         RunningWallpapers.Clear();
     }
 
-    //获取当前状态，用于缓存
-    public static WallpaperStatus GetStatus()
+    //获取快照
+    public static WallpaperApiSnapshot GetSnapshot()
     {
-        var res = new WallpaperStatus();
-        res.Data = new List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>();
+        var res = new WallpaperApiSnapshot
+        {
+            Data = new List<(Playlist Playlist, uint PlayIndex, uint ScreenIndex)>()
+        };
         foreach (var item in RunningWallpapers)
         {
             var index = item.Value.GetPlayIndex();
@@ -163,10 +165,11 @@ public static class WallpaperApi
         return res;
     }
 
-    //设置当前状态，以便于新启动进程恢复
-    public static void SetStatus(WallpaperStatus status)
+    //恢复快照
+    public static void RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
     {
-
+        if (snapshot == null)
+            return;
     }
 
     #endregion

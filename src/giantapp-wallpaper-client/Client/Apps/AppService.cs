@@ -49,6 +49,8 @@ internal class AppService
         //配置初始化
         Configer.Init(ProductName);
 
+        //设置壁纸缓存状态
+        WallpaperApi.RestoreFromSnapshot(Configer.Get<WallpaperApiSnapshot>());
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
         var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
 
@@ -152,7 +154,10 @@ internal class AppService
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         if (!config.KeepWallpaper)
+        {
             WallpaperApi.Dispose();
+            Configer.Set<WallpaperApiSnapshot?>(null, true);
+        }
         //退出
         System.Windows.Application.Current.Shutdown();
         DesktopManager.Refresh();

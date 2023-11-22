@@ -119,7 +119,6 @@ public class ApiObject
         var playList = new Playlist();
         playList.Wallpapers.Add(wallpaper);
 
-
         //把playlist里面的url转换成本地路径
         foreach (var item in playList.Wallpapers)
         {
@@ -133,5 +132,9 @@ public class ApiObject
             if (screenIndex == null || uint.Parse(screenIndex) == i)
                 WallpaperApi.ShowWallpaper(playList, i);
         }
+
+        var status = WallpaperApi.GetSnapshot();
+        //保存播放状态
+        Configer.Set(status, true);
     }
 }
