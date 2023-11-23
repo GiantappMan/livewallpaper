@@ -74,11 +74,16 @@ public enum PlayMode
 /// <summary>
 /// playlist的设置
 /// </summary>
-public class PlaylistSetting
+public class PlaylistSetting : ICloneable
 {
     public PlayMode Mode { get; set; } = PlayMode.Order;
     public uint PlayIndex { get; set; } = 0;
     public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
 
 //一个壁纸的设置
@@ -277,7 +282,7 @@ public class Wallpaper
 /// <summary>
 /// 播放列表
 /// </summary>
-public class Playlist
+public class Playlist : ICloneable
 {
     //描述数据
     public PlaylistMeta? Meta { get; set; }
@@ -287,6 +292,21 @@ public class Playlist
 
     //播放列表内的壁纸
     public List<Wallpaper> Wallpapers { get; set; } = new();
+
+    public object Clone()
+    {
+        var res = new Playlist
+        {
+            Meta = Meta,
+            Setting = Setting?.Clone() as PlaylistSetting,
+            Wallpapers = new List<Wallpaper>()
+        };
+        foreach (var item in Wallpapers)
+        {
+            res.Wallpapers.Add(item);
+        }
+        return res;
+    }
 }
 
 /// <summary>

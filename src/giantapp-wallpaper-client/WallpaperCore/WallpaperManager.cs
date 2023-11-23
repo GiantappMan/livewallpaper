@@ -37,21 +37,21 @@ public class WallpaperManager
         return _mpvPlayer.GetPlayIndex();
     }
 
-    internal async void Play(uint screenIndex)
+    internal async Task Play()
     {
-        if (Playlist == null || Playlist.Wallpapers.Count == 0)
+        if (Playlist.Wallpapers.Count == 0)
             return;
 
         if (_mpvPlayer.Process == null || _mpvPlayer.Process.HasExited)
         {
             await _mpvPlayer.LaunchAsync();
-            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
+            var bounds = WallpaperApi.GetScreens()[ScreenIndex].Bounds;
             DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
         }
 
         //生成playlist.txt
         var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
-        var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
+        var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{ScreenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
         _mpvPlayer.LoadList(playlistPath);
     }

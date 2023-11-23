@@ -81,9 +81,9 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static bool ShowWallpaper(Playlist playlist, WallpaperManager? customManager = null)
+    public static async Task<bool> ShowWallpaper(Playlist playlist, WallpaperManager? customManager = null)
     {
-        if (playlist == null || playlist.Setting == null || playlist.Setting.ScreenIndexes.Length == 0)
+        if (playlist.Setting == null || playlist.Setting.ScreenIndexes.Length == 0)
             return false;
 
         foreach (var screenIndex in playlist.Setting.ScreenIndexes)
@@ -91,22 +91,13 @@ public static class WallpaperApi
             RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
             if (manager == null)
             {
-                if (customManager != null)
-                    manager = customManager;
-                else
-                    manager = new WallpaperManager()
-                    {
-                        Playlist = playlist,
-                        ScreenIndex = screenIndex
-                    };
+                manager = customManager ?? new WallpaperManager();
                 RunningWallpapers.TryAdd(screenIndex, manager);
             }
-            else
-            {
-                manager.Playlist = playlist;
-            }
 
-            manager.Play(screenIndex);
+            manager.ScreenIndex = screenIndex;
+            manager.Playlist = playlist.Clone() as Playlist;
+            await manager.Play();
         }
 
         return true;
@@ -166,18 +157,23 @@ public static class WallpaperApi
         {
             Data = new List<(Playlist Playlist, WallpaperManagerSnapshot PlayerData)>()
         };
+
         foreach (var item in RunningWallpapers)
         {
             var snapshotData = item.Value.GetSnapshotData();
             if (item.Value.Playlist != null)
+            {
+                if (item.Value.Playlist.Setting != null)
+                    item.Value.Playlist.Setting.ScreenIndexes = new uint[] { item.Key };
                 res.Data.Add((item.Value.Playlist, snapshotData));
+            }
         }
 
         return res;
     }
 
     //恢复快照
-    public static void RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
+    public static async Task RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
     {
         if (snapshot == null || snapshot.Data == null)
             return;
@@ -185,7 +181,7 @@ public static class WallpaperApi
         foreach (var item in snapshot.Data)
         {
             var manager = new WallpaperManager(item.SnapshotData);
-            ShowWallpaper(item.Playlist, manager);
+            await ShowWallpaper(item.Playlist, manager);
         }
     }
 

@@ -37,7 +37,7 @@ internal class AppService
     }
 
     #region public
-    internal static void Init()
+    internal static async void Init()
     {
         //检查单实例
         bool ok = CheckMutex();
@@ -50,7 +50,7 @@ internal class AppService
         Configer.Init(ProductName);
 
         //设置壁纸缓存状态
-        WallpaperApi.RestoreFromSnapshot(Configer.Get<WallpaperApiSnapshot>());
+        await WallpaperApi.RestoreFromSnapshot(Configer.Get<WallpaperApiSnapshot>());
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
         var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
 
