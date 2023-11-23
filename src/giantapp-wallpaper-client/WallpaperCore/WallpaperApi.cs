@@ -81,7 +81,7 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static bool ShowWallpaper(Playlist playlist)
+    public static bool ShowWallpaper(Playlist playlist, WallpaperManager? customManager = null)
     {
         if (playlist == null || playlist.Setting == null || playlist.Setting.ScreenIndexes.Length == 0)
             return false;
@@ -91,11 +91,14 @@ public static class WallpaperApi
             RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
             if (manager == null)
             {
-                manager = new WallpaperManager()
-                {
-                    Playlist = playlist,
-                    ScreenIndex = screenIndex
-                };
+                if (customManager != null)
+                    manager = customManager;
+                else
+                    manager = new WallpaperManager()
+                    {
+                        Playlist = playlist,
+                        ScreenIndex = screenIndex
+                    };
                 RunningWallpapers.TryAdd(screenIndex, manager);
             }
             else
@@ -161,7 +164,7 @@ public static class WallpaperApi
     {
         var res = new WallpaperApiSnapshot
         {
-            Data = new List<(Playlist Playlist, object PlayerData)>()
+            Data = new List<(Playlist Playlist, WallpaperManagerSnapshot PlayerData)>()
         };
         foreach (var item in RunningWallpapers)
         {
@@ -181,7 +184,8 @@ public static class WallpaperApi
 
         foreach (var item in snapshot.Data)
         {
-            ShowWallpaper(item.Playlist);
+            var manager = new WallpaperManager(item.SnapshotData);
+            ShowWallpaper(item.Playlist, manager);
         }
     }
 

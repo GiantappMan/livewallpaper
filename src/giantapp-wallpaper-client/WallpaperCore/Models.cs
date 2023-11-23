@@ -294,5 +294,5 @@ public class Playlist
 /// </summary>
 public class WallpaperApiSnapshot
 {
-    public List<(Playlist Playlist, object SnapshotData)>? Data { get; set; }
+    public List<(Playlist Playlist, WallpaperManagerSnapshot SnapshotData)>? Data { get; set; }
 }
