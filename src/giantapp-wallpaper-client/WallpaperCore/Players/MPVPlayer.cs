@@ -14,6 +14,13 @@ public class MpvRequest
     public string? RequestId { get; set; }
 }
 
+public class MpvPlayerSnapshot
+{
+    public string? IPCServerName { get; set; }
+    public int? PId { get; set; }
+    public string? ProcessName { get; set; }
+}
+
 /// <summary>
 /// mpv播放器管理，管道通信
 /// </summary>
@@ -38,9 +45,34 @@ public class MpvPlayer
     #endregion
 
     #region public
-    public MpvPlayer()
+    public MpvPlayer(MpvPlayerSnapshot? snapshot = null)
     {
-        IPCServerName = $@"mpv{Guid.NewGuid()}";
+        if (snapshot != null)
+        {
+            IPCServerName = snapshot.IPCServerName;
+            //检查旧进程是否还存在
+            if (snapshot.PId != null)
+            {
+                try
+                {
+                    Process = Process.GetProcessById(snapshot.PId.Value);
+                    if (Process == null || Process.HasExited || Process.ProcessName != snapshot.ProcessName)
+                    {
+                        Process = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "Failed to get mpv process.");
+                    Process = null;
+                }
+            }
+        }
+
+        if (Process == null)
+        {
+            IPCServerName = $@"mpv{Guid.NewGuid()}";
+        }
     }
 
     public static MpvPlayer? From(string path)
@@ -51,7 +83,7 @@ public class MpvPlayer
         return new MpvPlayer();
     }
 
-    public async Task<bool> LaunchAsync(string? playList = null)
+    public async Task<bool> LaunchAsync(string? playlist = null)
     {
         Process?.CloseMainWindow();
         Process?.Dispose();
@@ -61,8 +93,8 @@ public class MpvPlayer
 
         StringBuilder args = new();
 
-        if (playList != null)
-            args.Append($"--playlist={playList} ");
+        if (playlist != null)
+            args.Append($"--playlist={playlist} ");
 
         //允许休眠
         args.Append("--stop-screensaver=no ");
@@ -131,9 +163,9 @@ public class MpvPlayer
         return SendMessage(IPCServerName, "get_property", "path")?.ToString();
     }
 
-    public object? LoadList(string path)
+    public object? LoadList(string playlist)
     {
-        return SendMessage(IPCServerName, "loadlist", path, "replace");
+        return SendMessage(IPCServerName, "loadlist", playlist, "replace");
     }
 
     public void LoadFile(string file)
@@ -170,16 +202,17 @@ public class MpvPlayer
 
     }
 
-    public List<string> GetCacheData()
+    public MpvPlayerSnapshot GetSnapshot()
     {
         //缓存当前实力需要的数据
-        return new();
+        return new()
+        {
+            IPCServerName = IPCServerName,
+            PId = Process?.Id,
+            ProcessName = Process?.ProcessName
+        };
     }
 
-    public static MpvPlayer FromCacheData(List<string> status)
-    {
-        return new MpvPlayer();
-    }
     #endregion
 
     #region private

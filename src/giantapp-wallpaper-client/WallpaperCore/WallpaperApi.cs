@@ -176,8 +176,13 @@ public static class WallpaperApi
     //恢复快照
     public static void RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
     {
-        if (snapshot == null)
+        if (snapshot == null || snapshot.Data == null)
             return;
+
+        foreach (var item in snapshot.Data)
+        {
+            ShowWallpaper(item.Playlist);
+        }
     }
 
     #endregion

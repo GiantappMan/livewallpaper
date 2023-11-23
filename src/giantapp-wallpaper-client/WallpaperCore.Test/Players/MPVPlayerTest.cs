@@ -46,11 +46,30 @@ namespace WallpaperCore.Test.Players
             _player.Quit();
         }
 
-        private MpvPlayer? GetPlayer()
+        [TestMethod]
+        public async Task TestGetSnapshot()
+        {
+            MpvPlayer? _player = GetPlayer();
+            Assert.IsNotNull(_player);
+            await _player.LaunchAsync();
+            string videoFile = @"TestWallpapers\audio.mp4";
+            _player.LoadFile(videoFile);
+            var snapshot = _player.GetSnapshot();
+
+            //从快照恢复player
+            _player = GetPlayer(snapshot);
+            Assert.IsNotNull(_player);
+
+            var res = _player.GetPath();
+            Assert.IsTrue(res == videoFile);
+            _player.Quit();
+        }
+
+        private MpvPlayer? GetPlayer(MpvPlayerSnapshot? snapshot = null)
         {
             string fullpath = Path.GetFullPath("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
             MpvPlayer.PlayerPath = fullpath;
-            return new MpvPlayer();
+            return new MpvPlayer(snapshot);
         }
     }
 }
