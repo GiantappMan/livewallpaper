@@ -1,20 +1,57 @@
 import { Button } from "@/components/ui/button";
+import { Playlist } from "@/lib/client/types/playlist";
+import { Wallpaper } from "@/lib/client/types/wallpaper";
+import { useEffect, useState } from "react";
+import { Screen } from "@/lib/client/types/screen";
 
-export function ToolBar({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
+interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
+    playingPlaylist: Playlist[] | null | undefined
+    screens: Screen[] | null | undefined
+}
+
+export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
+    // const currentPlayList = playingPlaylist?.[0];
+    // const wallpapers = currentPlayList?.wallpapers.map(item => item?.meta?.thumbnail);
+    // const currentWallpaper = currentPlayList?.wallpapers[0];
+    const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null);
+    if (!playingPlaylist || !screens)
+        return;
+    let wallpapers: {
+        wallpaper: Wallpaper;
+        screen: Screen
+    }[] = [];
+    //遍历playingPlaylist，根据playIndex找到当前播放的wallpaper
+    playingPlaylist?.forEach(item => {
+        if (item.setting?.playIndex !== undefined) {
+            var currentWallpaper = item.wallpapers[item.setting?.playIndex];
+            var exist = wallpapers.some(x => x.wallpaper.filePath === currentWallpaper.filePath);
+            if (!exist)
+                wallpapers.push({
+                    wallpaper: currentWallpaper,
+                    screen: screens[item.setting.screenIndexes[0]]
+                });
+        }
+    });
+
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
-        <div className="flex items-center space-x-4">
-            <img
-                alt="Cover"
-                className="rounded-lg object-cover aspect-square"
-                height={50}
-                src="/placeholder.svg"
-                width={50}
-            />
-            <div className="flex flex-col text-sm">
-                <div className="font-semibold ">Song Title</div>
-                <div className="">Artist Name</div>
+        {wallpapers.map((item, index) => {
+            return <div key={index} className="flex items-center space-x-4">
+                <picture onClick={() => setSelectedWallpaper(item.wallpaper)}>
+                    <img
+                        alt="Cover"
+                        className="rounded-lg object-scale-cover  aspect-square"
+                        height={50}
+                        src={item.wallpaper.coverPath || "/wp-placeholder.webp"}
+                        width={50}
+                    />
+                </picture>
+                {selectedWallpaper === item.wallpaper && <div className="flex flex-col text-sm">
+                    <div className="font-semibold ">{item?.wallpaper.meta?.title}</div>
+                    <div className="">{item?.wallpaper.meta?.description}</div>
+                </div>}
             </div>
-        </div>
+        })}
+
         <div className="flex flex-col flex-1 items-center justify-between">
             <div className="space-x-4">
                 <Button variant="ghost" className="hover:text-primary">

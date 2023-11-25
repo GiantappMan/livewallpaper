@@ -135,10 +135,21 @@ public class ApiObject
         return res;
     }
 
-    public string GetPlayingWallpapers()
+    public string GetPlayingPlaylist()
     {
         var res = WallpaperApi.RunningWallpapers.Values.Select(m => m.Playlist);
-        //todo;
-        return "";
+
+        //转换路径
+        foreach (var item in res)
+        {
+            if (item == null)
+                continue;
+            foreach (var wallpaper in item.Wallpapers)
+            {
+                wallpaper.CoverPath = AppService.ConvertPathToUrl(wallpaper.CoverPath);
+                wallpaper.FilePath = AppService.ConvertPathToUrl(wallpaper.FilePath);
+            }
+        }
+        return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
 }

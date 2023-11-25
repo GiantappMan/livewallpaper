@@ -13,6 +13,7 @@ import { PlayMode, Playlist } from "@/lib/client/types/playlist";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
+    const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
     const mounted = useMounted()
     const refresh = async () => {
         const res = await api.getWallpapers();
@@ -40,7 +41,17 @@ const Page = () => {
             return
 
         setScreens(screens.data);
-        console.log(screens.data);
+
+        const _playingPlaylist = await api.getPlayingPlaylist();
+        if (_playingPlaylist.error) {
+            toast({
+                title: "获取正在播放的壁纸失败",
+                description: _playingPlaylist.error,
+                duration: 3000,
+            });
+            return;
+        }
+        setPlayingPlaylist(_playingPlaylist.data);
     }
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
@@ -240,7 +251,7 @@ const Page = () => {
                     )
                 })
             }
-            <ToolBar />
+            <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
         </>
     </div >;
 };

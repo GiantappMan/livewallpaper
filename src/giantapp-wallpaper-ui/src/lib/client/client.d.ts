@@ -4,6 +4,7 @@ interface API {
   GetWallpapers(): Promise<string>;
   GetScreens(): Promise<string>;
   ShowWallpaper(wallpaper: string);
+  GetPlayingPlaylist(): Promise<string>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 
