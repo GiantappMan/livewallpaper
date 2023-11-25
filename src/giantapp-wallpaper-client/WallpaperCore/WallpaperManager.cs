@@ -27,7 +27,6 @@ public class WallpaperManager
     }
 
     public Playlist? Playlist { get; set; }
-    public uint ScreenIndex { get; set; }
 
     internal void Dispose()
     {
@@ -43,19 +42,22 @@ public class WallpaperManager
 
     internal async Task Play()
     {
-        if (Playlist == null || Playlist.Wallpapers.Count == 0)
+        if (Playlist == null || Playlist.Wallpapers.Count == 0 || Playlist.Setting == null)
             return;
+
+        //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
+        uint screenIndex = Playlist.Setting.ScreenIndexes[0];
 
         if (_mpvPlayer.Process == null || _mpvPlayer.Process.HasExited)
         {
             await _mpvPlayer.LaunchAsync();
-            var bounds = WallpaperApi.GetScreens()[ScreenIndex].Bounds;
+            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
             DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
         }
 
         //生成playlist.txt
         var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
-        var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{ScreenIndex}.txt");
+        var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
         _mpvPlayer.LoadList(playlistPath);
     }

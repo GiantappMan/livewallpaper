@@ -95,8 +95,10 @@ public static class WallpaperApi
                 RunningWallpapers.TryAdd(screenIndex, manager);
             }
 
-            manager.ScreenIndex = screenIndex;
-            manager.Playlist = playlist.Clone() as Playlist;
+            var tmplist = (Playlist)playlist.Clone();
+            if (tmplist.Setting != null)
+                tmplist.Setting.ScreenIndexes = new uint[] { screenIndex };
+            manager.Playlist = tmplist;
             await manager.Play();
         }
 

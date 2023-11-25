@@ -1,6 +1,7 @@
 ﻿using Client.Libs;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using WallpaperCore;
@@ -115,7 +116,7 @@ public class ApiObject
     public async Task<bool> ShowWallpaper(string playlistJson)
     {
         var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, Configer.JsonSettings);
-        if (playlist.Wallpapers.Count == 0)
+        if (playlist == null || playlist.Wallpapers.Count == 0)
             return false;
 
         //把playlist里面的url转换成本地路径
@@ -132,5 +133,12 @@ public class ApiObject
         Configer.Set(status, true);
 
         return res;
+    }
+
+    public string GetPlayingWallpapers()
+    {
+        var res = WallpaperApi.RunningWallpapers.Values.Select(m => m.Playlist);
+        //todo;
+        return "";
     }
 }
