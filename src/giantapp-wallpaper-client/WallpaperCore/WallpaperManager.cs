@@ -12,6 +12,7 @@ public class WallpaperManagerSnapshot
 public class WallpaperManager
 {
     readonly MpvPlayer _mpvPlayer = new();
+    readonly bool _isRestore;
 
     public WallpaperManager(WallpaperManagerSnapshot? snapshot = null)
     {
@@ -20,6 +21,7 @@ public class WallpaperManager
             if (snapshot.MpvPlayerSnapshot != null)
             {
                 _mpvPlayer = new MpvPlayer(snapshot.MpvPlayerSnapshot);
+                _isRestore = true;
             }
         }
     }
@@ -30,6 +32,8 @@ public class WallpaperManager
     internal void Dispose()
     {
         _mpvPlayer.Process?.CloseMainWindow();
+        if (_isRestore)
+            _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
     }
 
     internal int GetPlayIndex()
@@ -39,7 +43,7 @@ public class WallpaperManager
 
     internal async Task Play()
     {
-        if (Playlist.Wallpapers.Count == 0)
+        if (Playlist == null || Playlist.Wallpapers.Count == 0)
             return;
 
         if (_mpvPlayer.Process == null || _mpvPlayer.Process.HasExited)

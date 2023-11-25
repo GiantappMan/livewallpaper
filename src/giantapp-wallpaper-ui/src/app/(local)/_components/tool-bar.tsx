@@ -68,7 +68,7 @@ export function ToolBar({ className, ...props }: React.HTMLAttributes<HTMLElemen
                     </svg>
                 </Button>
             </div>
-            <div className="w-full flex items-center justify-between text-xs">
+            <div style={{ width: '500px' }} className="flex items-center justify-between text-xs">
                 <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
