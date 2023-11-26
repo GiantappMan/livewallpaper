@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/lib/client/types/playlist";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
+import { cn } from "@/lib/utils";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[] | null | undefined
@@ -35,19 +36,20 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         {wallpapers.map((item, index) => {
+            const isSelected = selectedWallpaper === item.wallpaper;
             return <div key={index} className="flex items-center space-x-4">
-                <picture onClick={() => setSelectedWallpaper(item.wallpaper)}>
+                <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)}>
                     <img
                         alt="Cover"
-                        className="rounded-lg object-scale-cover  aspect-square"
+                        className={cn(["rounded-lg object-scale-cover aspect-square", isSelected ? " border-2 border-primary" : ""])}
                         height={50}
                         src={item.wallpaper.coverPath || "/wp-placeholder.webp"}
                         width={50}
                     />
                 </picture>
-                {selectedWallpaper === item.wallpaper && <div className="flex flex-col text-sm">
-                    <div className="font-semibold ">{item?.wallpaper.meta?.title}</div>
-                    <div className="">{item?.wallpaper.meta?.description}</div>
+                {isSelected && <div className="flex flex-col text-sm">
+                    <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
+                    <div >{item?.wallpaper.meta?.description}</div>
                 </div>}
             </div>
         })}
