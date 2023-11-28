@@ -31,7 +31,7 @@ public class WallpaperManager
     internal void Dispose()
     {
         _mpvPlayer.Process?.CloseMainWindow();
-        if (_isRestore)
+        if (_isRestore && _mpvPlayer.Process?.HasExited == false)
             _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
     }
 

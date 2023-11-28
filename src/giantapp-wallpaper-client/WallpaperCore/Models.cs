@@ -154,10 +154,24 @@ public class Wallpaper
     public string? FileName { get; private set; }
 
     //壁纸路径
-    public string? FilePath { get; set; }
+    private string? filePath;
+    public string? FilePath
+    {
+        get => filePath;
+        set
+        {
+            filePath = value;
+        }
+    }
 
     //封面路径
     public string? CoverPath { get; set; }
+
+    //前端用
+    public string? FileUrl { get; set; }
+
+    //前端用
+    public string? CoverUrl { get; set; }
 
     public void LoadMeta()
     {

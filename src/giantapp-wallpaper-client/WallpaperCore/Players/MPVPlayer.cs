@@ -34,7 +34,7 @@ public class MpvPlayer
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
     public Process? Process { get; private set; }
-    public static string PlayerPath { get; set; } = "Assets\\Player\\mpv.exe";
+    public static string PlayerPath { get; set; } = string.Empty;
 
     #region Options
     public bool AutoHwdec { get; set; } = true;//auto-safe 硬解,no 软解
@@ -45,6 +45,12 @@ public class MpvPlayer
     #endregion
 
     #region public
+    static MpvPlayer()
+    {
+        string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+        PlayerPath = Path.Combine(currentFolder, "Assets\\Player\\mpv.exe");
+        _logger.Info("PlayerPath: " + PlayerPath);
+    }
     public MpvPlayer(MpvPlayerSnapshot? snapshot = null)
     {
         if (snapshot != null)

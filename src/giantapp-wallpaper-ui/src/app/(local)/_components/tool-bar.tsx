@@ -25,7 +25,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     playingPlaylist?.forEach(item => {
         if (item.setting?.playIndex !== undefined) {
             var currentWallpaper = item.wallpapers[item.setting?.playIndex];
-            var exist = wallpapers.some(x => x.wallpaper.filePath === currentWallpaper.filePath);
+            var exist = wallpapers.some(x => x.wallpaper.fileUrl === currentWallpaper.fileUrl);
             if (!exist)
                 wallpapers.push({
                     wallpaper: currentWallpaper,
@@ -43,7 +43,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         alt="Cover"
                         className={cn(["rounded-lg object-scale-cover aspect-square", isSelected ? " border-2 border-primary" : ""])}
                         height={50}
-                        src={item.wallpaper.coverPath || "/wp-placeholder.webp"}
+                        src={item.wallpaper.coverUrl || "/wp-placeholder.webp"}
                         width={50}
                     />
                 </picture>

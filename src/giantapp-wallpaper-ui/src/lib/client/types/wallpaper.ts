@@ -1,8 +1,8 @@
 export type Wallpaper = {
   dir?: string;
   fileName?: string;
-  filePath?: string;
-  coverPath?: string;
+  fileUrl?: string;
+  coverUrl?: string;
   meta?: WallpaperMeta;
   setting?: WallpaperSetting;
 };

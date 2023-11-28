@@ -110,46 +110,6 @@ internal class AppService
 #endif
     }
 
-    internal static string? ConvertPathToUrl(string? path)
-    {
-        //把壁纸目录，转换成对应的Url
-        if (path == null)
-            return null;
-
-        var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();
-        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
-        for (int i = 0; i < directories.Length; i++)
-        {
-            var item = directories[i];
-            if (path.StartsWith(item))
-            {
-                path = $"https://{i}.{_domainStr}{path[item.Length..]}";
-                break;
-            }
-        }
-        return path;
-    }
-
-    internal static string? ConvertUrlToPath(string? path)
-    {
-        //把Url转换成本地路径
-        if (path == null)
-            return null;
-
-        var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();
-        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
-        for (int i = 0; i < directories.Length; i++)
-        {
-            var item = directories[i];
-            if (path.StartsWith($"https://{i}.{_domainStr}"))
-            {
-                path = $"{item}{path[$"https://{i}.{_domainStr}".Length..]}";
-                break;
-            }
-        }
-        return path;
-    }
-
     internal static void Exit()
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
@@ -163,6 +123,43 @@ internal class AppService
         DesktopManager.Refresh();
     }
 
+    internal static string? ConvertPathToUrl(ConfigWallpaper? wallpaperConfig, string? path)
+    {
+        //把壁纸目录，转换成对应的Url
+        if (wallpaperConfig == null || path == null)
+            return null;
+
+        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
+        for (int i = 0; i < directories.Length; i++)
+        {
+            var item = directories[i];
+            if (path.StartsWith(item))
+            {
+                path = $"https://{i}.{_domainStr}{path[item.Length..]}";
+                break;
+            }
+        }
+        return path;
+    }
+
+    internal static string? ConvertUrlToPath(ConfigWallpaper? wallpaperConfig, string? path)
+    {
+        //把Url转换成本地路径
+        if (wallpaperConfig == null || path == null)
+            return null;
+
+        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
+        for (int i = 0; i < directories.Length; i++)
+        {
+            var item = directories[i];
+            if (path.StartsWith($"https://{i}.{_domainStr}"))
+            {
+                path = $"{item}{path[$"https://{i}.{_domainStr}".Length..]}";
+                break;
+            }
+        }
+        return path;
+    }
     #endregion
 
     #region private

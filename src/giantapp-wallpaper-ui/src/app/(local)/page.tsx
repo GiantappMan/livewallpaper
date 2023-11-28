@@ -104,7 +104,7 @@ const Page = () => {
                                         alt="Wallpaper 1"
                                         className="w-full"
                                         height="200"
-                                        src={wallpaper?.coverPath || "/wp-placeholder.webp"}
+                                        src={wallpaper?.coverUrl || "/wp-placeholder.webp"}
                                         style={{
                                             aspectRatio: "300/200",
                                             objectFit: "cover",

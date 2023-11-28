@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using WallpaperCore;
+using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 
 namespace Client.Apps;
 
@@ -96,13 +97,13 @@ public class ApiObject
 
     public string GetWallpapers()
     {
-        var directories = (Configer.Get<Configs.Wallpaper>() ?? new()).Directories;
-        var res = WallpaperApi.GetWallpapers(directories ?? Configs.Wallpaper.DefaultWallpaperSaveFolder);
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+        var res = WallpaperApi.GetWallpapers(config.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder);
         foreach (var item in res)
         {
             //把本地路径转换为网址
-            item.CoverPath = AppService.ConvertPathToUrl(item.CoverPath);
-            item.FilePath = AppService.ConvertPathToUrl(item.FilePath);
+            item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
+            item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
         }
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
     }
@@ -119,11 +120,12 @@ public class ApiObject
         if (playlist == null || playlist.Wallpapers.Count == 0)
             return false;
 
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
         //把playlist里面的url转换成本地路径
         foreach (var item in playlist.Wallpapers)
         {
-            item.CoverPath = AppService.ConvertUrlToPath(item.CoverPath);
-            item.FilePath = AppService.ConvertUrlToPath(item.FilePath);
+            item.CoverUrl = AppService.ConvertUrlToPath(config, item.CoverPath);
+            item.FileUrl = AppService.ConvertUrlToPath(config, item.FilePath);
         }
 
         var res = await WallpaperApi.ShowWallpaper(playlist);
@@ -139,6 +141,7 @@ public class ApiObject
     {
         var res = WallpaperApi.RunningWallpapers.Values.Select(m => m.Playlist);
 
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
         //转换路径
         foreach (var item in res)
         {
@@ -146,8 +149,8 @@ public class ApiObject
                 continue;
             foreach (var wallpaper in item.Wallpapers)
             {
-                wallpaper.CoverPath = AppService.ConvertPathToUrl(wallpaper.CoverPath);
-                wallpaper.FilePath = AppService.ConvertPathToUrl(wallpaper.FilePath);
+                wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+                wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
             }
         }
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
