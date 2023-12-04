@@ -1,6 +1,7 @@
 ﻿using Client.Libs;
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,6 +23,8 @@ class ShellConfig
 
 public partial class ShellWindow : Window
 {
+    private static Logger _logger = LogManager.GetCurrentClassLogger();
+
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
@@ -102,6 +105,7 @@ public partial class ShellWindow : Window
 
     public static async void ShowShell(string? url)
     {
+        _logger.Info($"ShowShell {url}");
         Instance ??= new ShellWindow();
 
         bool ok = await Task.Run(CheckWebView2);
@@ -111,7 +115,7 @@ public partial class ShellWindow : Window
             Instance.loading.Visibility = Visibility.Collapsed;
             Instance.tips.Visibility = Visibility.Visible;
 
-            LoopCheckWebView2();
+            LoopCheckWebView2(url);
         }
         else
         {
@@ -133,7 +137,7 @@ public partial class ShellWindow : Window
 
     #region private
     //每秒检查1次，直到成功或者窗口关闭
-    private static void LoopCheckWebView2()
+    private static void LoopCheckWebView2(string? url)
     {
         Task.Run(async () =>
         {
@@ -149,8 +153,7 @@ public partial class ShellWindow : Window
                 {
                     Instance.Dispatcher.Invoke(() =>
                     {
-                        Instance.loading.Visibility = Visibility.Visible;
-                        Instance.tips.Visibility = Visibility.Collapsed;
+                        ShowShell(url);
                     });
                     break;
                 }
@@ -239,12 +242,15 @@ public partial class ShellWindow : Window
         }
 
 #if !DEBUG
-        //禁用F12
-        webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
-        //禁用右键菜单
-        webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-        //左下角提示
-        webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
+        if (webview2.CoreWebView2 != null)
+        {
+            //禁用F12
+            webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            //禁用右键菜单
+            webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+            //左下角提示
+            webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
+        }
 #endif
     }
 

@@ -97,7 +97,7 @@ internal class AppService
         ShellWindow.SetTheme(config.Theme, config.Mode);
     }
 
-    internal static void ShowShell(string? path = "index.html")
+    internal static void ShowShell(string? path = "index")
     {
 #if DEBUG
         if (path == "index.html")
@@ -106,7 +106,7 @@ internal class AppService
         ShellWindow.ShowShell($"http://localhost:3000/{path}");
         return;
 #else
-        ShellWindow.ShowShell($"https://{_domainStr}/{path}");
+        ShellWindow.ShowShell($"https://{_domainStr}/{path}.html");
 #endif
     }
 

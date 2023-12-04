@@ -103,7 +103,7 @@ internal class AppNotifyIcon
 
     private void SettingMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        AppService.ShowShell("/settings");
+        AppService.ShowShell("settings");
     }
 
     private static void OpenBrowser(string? url)

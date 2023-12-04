@@ -4,6 +4,6 @@
   "exit": "Exit",
   "open_main_panel": "Open main panel",
   "installNow": "Install now",
-  "installWebview2Tips": "This function requires Microsoft's latest webview2 runtime support. Please reopen this window after manual installation",
+  "installWebview2Tips": "You need to install the Microsoft WebView2 Runtime, click the blue text below to install.",
   "setting": "Setting"
 }
