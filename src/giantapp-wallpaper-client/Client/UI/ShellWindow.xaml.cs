@@ -3,8 +3,11 @@ using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -83,7 +86,7 @@ public partial class ShellWindow : Window
                 mode = "dark";
             }
         }
-        ResourceDictionary appResources = System.Windows.Application.Current.Resources;
+        ResourceDictionary appResources = Application.Current.Resources;
         var old = appResources.MergedDictionaries.FirstOrDefault(x => x.Source?.ToString().Contains("/LiveWallpaper3;component/UI/Themes") == true);
         if (old != null)
         {
@@ -107,6 +110,8 @@ public partial class ShellWindow : Window
             //没装webview2
             Instance.loading.Visibility = Visibility.Collapsed;
             Instance.tips.Visibility = Visibility.Visible;
+
+            LoopCheckWebView2();
         }
         else
         {
@@ -127,6 +132,32 @@ public partial class ShellWindow : Window
     #endregion
 
     #region private
+    //每秒检查1次，直到成功或者窗口关闭
+    private static void LoopCheckWebView2()
+    {
+        Task.Run(async () =>
+        {
+            while (true)
+            {
+                await Task.Delay(1000);
+                if (Instance == null)
+                {
+                    break;
+                }
+                bool ok = await Task.Run(CheckWebView2);
+                if (ok)
+                {
+                    Instance.Dispatcher.Invoke(() =>
+                    {
+                        Instance.loading.Visibility = Visibility.Visible;
+                        Instance.tips.Visibility = Visibility.Collapsed;
+                    });
+                    break;
+                }
+            }
+        });
+    }
+
     static bool CheckWebView2()
     {
         try
@@ -136,7 +167,7 @@ public partial class ShellWindow : Window
         }
         catch (WebView2RuntimeNotFoundException e)
         {
-            System.Diagnostics.Debug.WriteLine(e);
+            Debug.WriteLine(e);
         }
         return false;
     }
@@ -170,7 +201,16 @@ public partial class ShellWindow : Window
 
     private void DownloadHyperlink_Click(object sender, RoutedEventArgs e)
     {
-
+        try
+        {
+            string dir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+            var setupPath = Path.Combine(dir, "Assets/MicrosoftEdgeWebview2Setup.exe");
+            Process.Start(new ProcessStartInfo(setupPath) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+        }
     }
 
     protected override void OnClosed(EventArgs e)
