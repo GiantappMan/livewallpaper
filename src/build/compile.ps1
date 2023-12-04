@@ -29,3 +29,11 @@ DeletePath -path $buildDist
 # build sln
 # Invoke-MsBuild -Path $sln -MsBuildParameters "-t:restore /target:Clean;Build /property:Configuration=Release;OutputPath=$buildDist" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLogOnFailure
 Invoke-MsBuild -Path $sln -MsBuildParameters "-t:restore /target:Clean;Publish /p:PublishProfile=./FolderProfile.pubxml" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLogOnFailure
+
+# inno setup 打包
+$innoSetup = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+$innoSetupScript = "$PSScriptRoot\installer.iss"
+$innoSetupOutput = "$PSScriptRoot\dist"
+DeletePath -path $innoSetupOutput
+& $innoSetup $innoSetupScript
+
