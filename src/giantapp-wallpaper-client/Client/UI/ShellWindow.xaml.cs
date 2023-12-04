@@ -1,6 +1,8 @@
-﻿using Client.Libs;
+﻿using Client.Apps.Configs;
+using Client.Libs;
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Win32;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -37,6 +39,22 @@ public partial class ShellWindow : Window
 
     public ShellWindow()
     {
+        var appearance = Configer.Get<Appearance>() ?? new();
+        if (appearance.Mode == "system")
+        {
+            //监控系统主题变化
+            SystemEvents.UserPreferenceChanged += (s, e) =>
+            {
+                if (e.Category == UserPreferenceCategory.General)
+                {
+                    Debouncer.Shared.Delay(() =>
+                    {
+                        SetTheme(appearance.Theme, appearance.Mode);
+                    }, 1000);
+                }
+            };
+        }
+
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
         if (DarkBackground)
@@ -69,8 +87,37 @@ public partial class ShellWindow : Window
 
     #region public
 
-    [DllImport("UXTheme.dll", SetLastError = true, EntryPoint = "#138")]
-    public static extern bool ShouldSystemUseDarkMode();
+    public static bool ShouldAppsUseDarkMode()
+    {
+        try
+        {
+            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key != null)
+            {
+                int appsUseLightTheme = (int)key.GetValue("AppsUseLightTheme", -1);
+                if (appsUseLightTheme == 0)
+                {
+                    // 当前使用暗色主题
+                    return true;
+                }
+                else if (appsUseLightTheme == 1)
+                {
+                    // 当前使用亮色主题
+                    return false;
+                }
+                else
+                {
+                    // 无法确定当前主题
+                }
+                key.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Info(ex);
+        }
+        return true;
+    }
 
 
     public static void SetTheme(string theme, string mode)
@@ -79,7 +126,7 @@ public partial class ShellWindow : Window
         theme = theme.First().ToString().ToUpper() + theme[1..];
         if (mode == "system")
         {
-            bool darkMode = ShouldSystemUseDarkMode();
+            bool darkMode = ShouldAppsUseDarkMode();
             if (!darkMode)
             {
                 mode = "light";
