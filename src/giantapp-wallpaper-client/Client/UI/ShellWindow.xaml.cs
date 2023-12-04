@@ -238,6 +238,8 @@ public partial class ShellWindow : Window
 
         foreach (var item in CustomFolderMapping)
         {
+            if (!Directory.Exists(item.Value))
+                continue;
             webview2.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
         }
 
