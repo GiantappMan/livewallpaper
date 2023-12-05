@@ -1,5 +1,5 @@
-﻿using System.Runtime.InteropServices;
-using System.Timers;
+﻿using System.Timers;
+using Windows.Win32;
 
 namespace WallpaperCore;
 
@@ -10,24 +10,6 @@ public class WindowStateChecker
     {
         Maximized,
         NotMaximized
-    }
-
-    [DllImport("user32.dll")]
-    static extern IntPtr GetForegroundWindow();
-
-    [DllImport("user32.dll")]
-    static extern bool IsZoomed(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
     }
 
     private readonly System.Timers.Timer? _timer;
@@ -43,24 +25,26 @@ public class WindowStateChecker
 
     private void CheckWindowState(object source, ElapsedEventArgs e)
     {
-        IntPtr hWnd = GetForegroundWindow();
+        var hWnd = PInvoke.GetForegroundWindow();
         WindowState state = IsWindowMaximized(hWnd) ? WindowState.Maximized : WindowState.NotMaximized;
         WindowStateChanged?.Invoke(state, hWnd);
     }
 
     public static bool IsWindowMaximized(IntPtr hWnd)
     {
-        if (IsZoomed(hWnd))
+        var handle = new Windows.Win32.Foundation.HWND(hWnd);
+        if (PInvoke.IsZoomed(handle))
         {
             return true;
         }
         else
         {
-            GetWindowRect(hWnd, out RECT rect);
+            //屏幕几乎遮挡完桌面，也认为是最大化
+            PInvoke.GetWindowRect(handle, out Windows.Win32.Foundation.RECT rect);
             var screen = Screen.FromHandle(hWnd);
-            double? windowArea = (rect.Right - rect.Left) * (rect.Bottom - rect.Top);
+            double? windowArea = rect.Width * rect.Height;
             double? screenArea = screen.Bounds.Width * screen.Bounds.Height;
-            var tmp = windowArea / screenArea >= 0.95;
+            var tmp = windowArea / screenArea >= 0.9;
             return tmp;
         }
     }
