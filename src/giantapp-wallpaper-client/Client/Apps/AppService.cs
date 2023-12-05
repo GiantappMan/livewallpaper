@@ -100,7 +100,7 @@ internal class AppService
     internal static void ShowShell(string? path = "index")
     {
 #if DEBUG
-        if (path == "index.html")
+        if (path == "index")
             path = null;
         //本地开发
         ShellWindow.ShowShell($"http://localhost:3000/{path}");
