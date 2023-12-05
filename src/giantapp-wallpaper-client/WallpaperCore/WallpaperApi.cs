@@ -20,8 +20,16 @@ public static class WallpaperApi
 
     static WallpaperApi()
     {
+        WindowStateChecker.Instance.WindowStateChanged += Instance_WindowStateChanged;
+        WindowStateChecker.Instance.Start();
+
         //禁用DPI
         SetPerMonitorV2DpiAwareness();
+    }
+
+    private static void Instance_WindowStateChanged(WindowStateChecker.WindowState state, Screen targetScreen)
+    {
+
     }
 
     #region events
@@ -150,6 +158,8 @@ public static class WallpaperApi
         }
 
         RunningWallpapers.Clear();
+        WindowStateChecker.Instance.WindowStateChanged -= Instance_WindowStateChanged;
+        WindowStateChecker.Instance.Stop();
     }
 
     //获取快照

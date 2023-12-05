@@ -5,17 +5,10 @@ namespace WallpaperCore;
 
 public class WindowStateChecker
 {
-    // 定义一个枚举类型，表示窗口的状态
-    public enum WindowState
-    {
-        Maximized,
-        NotMaximized
-    }
-
+    #region private fields
     private readonly System.Timers.Timer? _timer;
-
-    // 定义一个事件，当窗口状态改变时触发
-    public event Action<WindowState, IntPtr>? WindowStateChanged;
+    private readonly Dictionary<string, WindowState> _previousStates = new();
+    #endregion
 
     public WindowStateChecker()
     {
@@ -23,11 +16,33 @@ public class WindowStateChecker
         _timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
     }
 
+    #region properties
+    public static WindowStateChecker Instance { get; } = new();
+
+    // 定义一个枚举类型，表示窗口的状态
+    public enum WindowState
+    {
+        Maximized,
+        NotMaximized
+    }
+    public event Action<WindowState, Screen>? WindowStateChanged;
+    #endregion
+
     private void CheckWindowState(object source, ElapsedEventArgs e)
     {
+        _timer?.Stop();
+
         var hWnd = PInvoke.GetForegroundWindow();
         WindowState state = IsWindowMaximized(hWnd) ? WindowState.Maximized : WindowState.NotMaximized;
-        WindowStateChanged?.Invoke(state, hWnd);
+        var screen = Screen.FromHandle(hWnd);
+
+        if (!_previousStates.TryGetValue(screen.DeviceName, out var previousState) || state != previousState)
+        {
+            WindowStateChanged?.Invoke(state, screen);
+            _previousStates[screen.DeviceName] = state;
+        }
+
+        _timer?.Start();
     }
 
     public static bool IsWindowMaximized(IntPtr hWnd)
@@ -49,18 +64,14 @@ public class WindowStateChecker
         }
     }
 
-    public static Screen GetScreenFromWindow(IntPtr hWnd)
-    {
-        return Screen.FromHandle(hWnd);
-    }
-
-    public void StartChecking()
+    public void Start()
     {
         _timer?.Start(); // 开始定时器
     }
 
-    public void StopChecking()
+    public void Stop()
     {
         _timer?.Stop(); // 停止定时器
+        _previousStates.Clear();
     }
 }
