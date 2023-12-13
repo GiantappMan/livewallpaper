@@ -49,8 +49,15 @@ internal class AppService
         //配置初始化
         Configer.Init(ProductName);
 
-        //设置壁纸缓存状态
-        await WallpaperApi.RestoreFromSnapshot(Configer.Get<WallpaperApiSnapshot>());
+        //从快照恢复壁纸
+        var snapshot = Configer.Get<WallpaperApiSnapshot>();
+        if (snapshot != null)
+        {
+            await WallpaperApi.RestoreFromSnapshot(snapshot);
+            //重新获取快照，有可能pid重新生成了
+            Configer.Set(WallpaperApi.GetSnapshot(), true);
+        }
+
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
         var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
 

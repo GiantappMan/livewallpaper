@@ -12,7 +12,7 @@ public class WindowStateChecker
 
     public WindowStateChecker()
     {
-        _timer = new(1000); // 设置定时器的间隔为1秒
+        _timer = new(1000);
         _timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
     }
 
@@ -32,14 +32,17 @@ public class WindowStateChecker
     {
         _timer?.Stop();
 
-        var hWnd = PInvoke.GetForegroundWindow();
-        WindowState state = IsWindowMaximized(hWnd) ? WindowState.Maximized : WindowState.NotMaximized;
-        var screen = Screen.FromHandle(hWnd);
-
-        if (!_previousStates.TryGetValue(screen.DeviceName, out var previousState) || state != previousState)
+        if (WindowStateChanged != null)
         {
-            WindowStateChanged?.Invoke(state, screen);
-            _previousStates[screen.DeviceName] = state;
+            var hWnd = PInvoke.GetForegroundWindow();
+            WindowState state = IsWindowMaximized(hWnd) ? WindowState.Maximized : WindowState.NotMaximized;
+            var screen = Screen.FromHandle(hWnd);
+
+            if (!_previousStates.TryGetValue(screen.DeviceName, out var previousState) || state != previousState)
+            {
+                WindowStateChanged.Invoke(state, screen);
+                _previousStates[screen.DeviceName] = state;
+            }
         }
 
         _timer?.Start();
