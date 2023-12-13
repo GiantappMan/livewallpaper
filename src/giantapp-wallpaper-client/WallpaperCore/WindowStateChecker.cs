@@ -60,6 +60,7 @@ public class WindowStateChecker
             //屏幕几乎遮挡完桌面，也认为是最大化
             PInvoke.GetWindowRect(handle, out Windows.Win32.Foundation.RECT rect);
             var screen = Screen.FromHandle(hWnd);
+            //System.Diagnostics.Debug.WriteLine($"{handle}, {rect.X},{rect.Y},{rect.Width},{rect.Height}");
             double? windowArea = rect.Width * rect.Height;
             double? screenArea = screen.Bounds.Width * screen.Bounds.Height;
             var tmp = windowArea / screenArea >= 0.9;

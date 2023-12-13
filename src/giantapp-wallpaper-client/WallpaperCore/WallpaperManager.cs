@@ -69,4 +69,12 @@ public class WallpaperManager
             MpvPlayerSnapshot = _mpvPlayer.GetSnapshot()
         };
     }
+
+    internal void Pause()
+    {
+    }
+
+    internal void Resume()
+    {
+    }
 }

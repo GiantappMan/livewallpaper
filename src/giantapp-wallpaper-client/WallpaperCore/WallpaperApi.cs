@@ -29,7 +29,18 @@ public static class WallpaperApi
 
     private static void Instance_WindowStateChanged(WindowStateChecker.WindowState state, Screen targetScreen)
     {
-
+        System.Diagnostics.Debug.WriteLine($"{state},{targetScreen.DeviceName}");
+        var screenIndex = GetScreens().ToList().FindIndex(x => x.DeviceName == targetScreen.DeviceName);
+        if (state == WindowStateChecker.WindowState.Maximized)
+        {
+            //暂停壁纸
+            PauseWallpaper(screenIndex);
+        }
+        else
+        {
+            //恢复壁纸
+            ResumeWallpaper(screenIndex);
+        }
     }
 
     #region events
@@ -96,13 +107,7 @@ public static class WallpaperApi
 
         foreach (var screenIndex in playlist.Setting.ScreenIndexes)
         {
-            RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
-            if (manager == null)
-            {
-                manager = customManager ?? new WallpaperManager();
-                RunningWallpapers.TryAdd(screenIndex, manager);
-            }
-
+            var manager = GetRunningManager(screenIndex, customManager);
             var tmplist = (Playlist)playlist.Clone();
             if (tmplist.Setting != null)
                 tmplist.Setting.ScreenIndexes = new uint[] { screenIndex };
@@ -201,6 +206,18 @@ public static class WallpaperApi
 
     #region private methods
 
+    private static WallpaperManager GetRunningManager(uint screenIndex, WallpaperManager? customManager = null)
+    {
+        RunningWallpapers.TryGetValue(screenIndex, out WallpaperManager manager);
+        if (manager == null)
+        {
+            manager = customManager ?? new WallpaperManager();
+            RunningWallpapers.TryAdd(screenIndex, manager);
+        }
+
+        return manager;
+    }
+
     static void SetPerMonitorV2DpiAwareness()
     {
         try
@@ -234,13 +251,21 @@ public static class WallpaperApi
     #region internal methods
 
     //暂停壁纸
-    static void PauseWallpaper(uint screenIndex = 0)
+    static void PauseWallpaper(int screenIndex = 0)
     {
+        if (screenIndex < 0)
+            return;
+        var manger = GetRunningManager((uint)screenIndex);
+        manger.Pause();
     }
 
     //恢复壁纸
-    static void ResumeWallpaper(uint screenIndex = 0)
+    static void ResumeWallpaper(int screenIndex = 0)
     {
+        if (screenIndex < 0)
+            return;
+        var manger = GetRunningManager((uint)screenIndex);
+        manger.Resume();
     }
 
     #endregion
