@@ -72,9 +72,11 @@ public class WallpaperManager
 
     internal void Pause()
     {
+        _mpvPlayer.Pause();
     }
 
     internal void Resume()
     {
+        _mpvPlayer.Resume();
     }
 }

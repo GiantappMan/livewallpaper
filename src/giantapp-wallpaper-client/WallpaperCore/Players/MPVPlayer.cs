@@ -9,7 +9,7 @@ namespace WallpaperCore.Players;
 public class MpvRequest
 {
     [JsonProperty("command")]
-    public string[]? Command { get; set; }
+    public object[]? Command { get; set; }
     [JsonProperty("request_id")]
     public string? RequestId { get; set; }
 }
@@ -190,12 +190,12 @@ public class MpvPlayer
     }
     public void Pause()
     {
-
+        SendMessage(IPCServerName, "set_property", "pause", true);
     }
 
     public void Resume()
     {
-
+        SendMessage(IPCServerName, "set_property", "pause", false);
     }
 
     public void Stop()
@@ -222,7 +222,7 @@ public class MpvPlayer
     #endregion
 
     #region private
-    private object? SendMessage(string? serverName, params string[] command)
+    private object? SendMessage(string? serverName, params object[] command)
     {
         if (serverName == null)
             return null;
@@ -258,6 +258,7 @@ public class MpvPlayer
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 _logger.Info("mpv response: " + response);
+                Debug.WriteLine("mpv response: " + response);
 
                 //查找id匹配的结果
                 var jobj = JsonConvert.DeserializeObject<dynamic>(response);
