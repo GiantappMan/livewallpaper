@@ -19,3 +19,5 @@ SystemParametersInfo
 IsZoomed
 GetForegroundWindow
 GetWindowRect
+GetWindowText
+GetWindowTextLength

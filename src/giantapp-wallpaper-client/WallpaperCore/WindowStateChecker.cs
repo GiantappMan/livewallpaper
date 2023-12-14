@@ -1,4 +1,8 @@
-﻿using System.Timers;
+﻿//# define PrintInfo
+#if PrintInfo
+using System.Runtime.InteropServices;
+#endif
+using System.Timers;
 using Windows.Win32;
 
 namespace WallpaperCore;
@@ -51,8 +55,28 @@ public class WindowStateChecker
     public static bool IsWindowMaximized(IntPtr hWnd)
     {
         var handle = new Windows.Win32.Foundation.HWND(hWnd);
+#if PrintInfo
+        int bufferSize = PInvoke.GetWindowTextLength(handle) + 1;
+        string windowName;
+        unsafe
+        {
+            fixed (char* windowNameChars = new char[bufferSize])
+            {
+                if (PInvoke.GetWindowText(handle, windowNameChars, bufferSize) == 0)
+                {
+                    int errorCode = Marshal.GetLastWin32Error();
+                }
+
+                windowName = new(windowNameChars);
+            }
+        }
+#endif
+
         if (PInvoke.IsZoomed(handle))
         {
+#if PrintInfo
+            System.Diagnostics.Debug.WriteLine($"{handle} {windowName} is IsZoomed");
+#endif
             return true;
         }
         else
@@ -60,10 +84,14 @@ public class WindowStateChecker
             //屏幕几乎遮挡完桌面，也认为是最大化
             PInvoke.GetWindowRect(handle, out Windows.Win32.Foundation.RECT rect);
             var screen = Screen.FromHandle(hWnd);
-            //System.Diagnostics.Debug.WriteLine($"{handle}, {rect.X},{rect.Y},{rect.Width},{rect.Height}");
             double? windowArea = rect.Width * rect.Height;
             double? screenArea = screen.Bounds.Width * screen.Bounds.Height;
             var tmp = windowArea / screenArea >= 0.9;
+#if PrintInfo
+            System.Diagnostics.Debug.WriteLine($"{handle} {windowName} windowArea, {rect.X},{rect.Y},{rect.Width},{rect.Height}");
+            System.Diagnostics.Debug.WriteLine($"{handle} {windowName} screenArea, {screen.DeviceName},{screen.Bounds.Width},{screen.Bounds.Height}");
+            System.Diagnostics.Debug.WriteLine($"{handle} {windowName} IsZoomed: {windowArea / screenArea}, {tmp}");
+#endif
             return tmp;
         }
     }
