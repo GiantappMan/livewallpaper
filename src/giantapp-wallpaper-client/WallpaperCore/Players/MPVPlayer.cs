@@ -61,7 +61,12 @@ public class MpvPlayer
             {
                 try
                 {
-                    Process = Process.GetProcessById(snapshot.PId.Value);
+                    var runningProcesses = Process.GetProcesses();
+                    if (runningProcesses.Any(p => p.Id == snapshot.PId.Value))
+                    {
+                        Process = Process.GetProcessById(snapshot.PId.Value);
+                    }
+
                     if (Process == null || Process.HasExited || Process.ProcessName != snapshot.ProcessName)
                     {
                         Process = null;

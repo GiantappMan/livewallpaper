@@ -11,7 +11,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -25,7 +24,7 @@ class ShellConfig
 
 public partial class ShellWindow : Window
 {
-    private static Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     #region properties
     public static ShellWindow? Instance { get; private set; }

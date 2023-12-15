@@ -1,4 +1,5 @@
-﻿using Client.Apps.Configs;
+﻿//#define DEBUG_LOCAL
+using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
 using GiantappWallpaper;
@@ -106,7 +107,7 @@ internal class AppService
 
     internal static void ShowShell(string? path = "index")
     {
-#if DEBUG
+#if DEBUG_LOCAL && DEBUG
         if (path == "index")
             path = null;
         //本地开发

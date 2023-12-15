@@ -9,7 +9,7 @@ public class WindowStateCheckerTest
     public void TestIsWindowMaximized()
     {
         //启动notepad，并最大化窗口
-        ProcessStartInfo psi = new("notepad.exe")
+        ProcessStartInfo psi = new("mspaint.exe")
         {
             WindowStyle = ProcessWindowStyle.Maximized
         };
