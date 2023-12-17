@@ -30,6 +30,7 @@ public static class WallpaperApi
     private static void Instance_WindowStateChanged(WindowStateChecker.WindowState state, Screen targetScreen)
     {
         System.Diagnostics.Debug.WriteLine($"{state},{targetScreen.DeviceName}");
+        Logger.Info($"{state},{targetScreen.DeviceName}");
         var screenIndex = GetScreens().ToList().FindIndex(x => x.DeviceName == targetScreen.DeviceName);
         if (state == WindowStateChecker.WindowState.Maximized)
         {

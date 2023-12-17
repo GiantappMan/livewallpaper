@@ -18,7 +18,7 @@ public class WindowStateChecker
 
     public WindowStateChecker()
     {
-        _timer = new(3000);
+        _timer = new(1000);
         _timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
         _checkHandles = GetAllMaximizedWindow();
     }
@@ -108,7 +108,6 @@ public class WindowStateChecker
                 if (state == WindowState.Maximized && !tmpCheckHandles.Contains(item))
                     tmpCheckHandles.Add(item);
                 _tmpCurrentScreenState[Screen.FromHandle(item)] = state;
-
             }
             _checkHandles = tmpCheckHandles;
 
