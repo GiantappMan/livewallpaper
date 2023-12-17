@@ -1,9 +1,10 @@
-﻿# define PrintInfo
+﻿//# define PrintInfo
 #if PrintInfo
 using System.Runtime.InteropServices;
 #endif
 using System.Timers;
 using Windows.Win32;
+using Windows.Win32.Foundation;
 
 namespace WallpaperCore;
 
@@ -12,19 +13,18 @@ public class WindowStateChecker
     #region private fields
     private readonly System.Timers.Timer? _timer;
     private readonly Dictionary<string, WindowState> _cacheScreenState = new();
-    private readonly List<IntPtr> _maximizedWindows = new();
+    private List<IntPtr> _checkHandles = new();//等待检查的窗口
     #endregion
 
     public WindowStateChecker()
     {
-        _timer = new(1000);
+        _timer = new(3000);
         _timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
-        _maximizedWindows = GetAllMaximizedWindow();
+        _checkHandles = GetAllMaximizedWindow();
     }
 
     #region properties
     public static WindowStateChecker Instance { get; } = new();
-
     // 定义一个枚举类型，表示窗口的状态
     public enum WindowState
     {
@@ -58,24 +58,6 @@ public class WindowStateChecker
                 return true;
             }
 
-            //获取ClassName
-            const int bufferSize = 256;
-            string className;
-            unsafe
-            {
-                fixed (char* classNameChars = new char[bufferSize])
-                {
-                    PInvoke.GetClassName(tophandle, classNameChars, bufferSize);
-                    className = new(classNameChars);
-                }
-            }
-            //过滤掉一些不需要的窗口
-            string[] ignoreClass = new string[] { "WorkerW", "Progman" };
-            if (ignoreClass.Contains(className))
-            {
-                return true;
-            }
-
             if (IsWindowMaximized(tophandle))
             {
                 list.Add(tophandle);
@@ -86,21 +68,63 @@ public class WindowStateChecker
         return list;
     }
 
+    private static string GetClassName(HWND tophandle)
+    {
+        const int bufferSize = 256;
+        string className;
+        unsafe
+        {
+            fixed (char* classNameChars = new char[bufferSize])
+            {
+                PInvoke.GetClassName(tophandle, classNameChars, bufferSize);
+                className = new(classNameChars);
+            }
+        }
+        return className;
+    }
+
     private void CheckWindowState(object source, ElapsedEventArgs e)
     {
         _timer?.Stop();
 
         if (WindowStateChanged != null)
         {
+            //把当前窗口加入到检查列表
             var hWnd = PInvoke.GetForegroundWindow();
-            WindowState state = IsWindowMaximized(hWnd) ? WindowState.Maximized : WindowState.NotMaximized;
-            var screen = Screen.FromHandle(hWnd);
+            if (!_checkHandles.Contains(hWnd))
+                _checkHandles.Add(hWnd);
 
-            if (!_cacheScreenState.TryGetValue(screen.DeviceName, out var previousState) || state != previousState)
+            //临时检查列表
+            var tmpCheckHandles = new List<IntPtr>();
+            //当前屏幕状态，默认没有最大化
+            Dictionary<Screen, WindowState> _tmpCurrentScreenState = new();
+            foreach (var item in Screen.AllScreens)
+                _tmpCurrentScreenState.Add(item, WindowState.NotMaximized);
+            //遍历检查列表
+            foreach (var item in _checkHandles)
             {
-                WindowStateChanged.Invoke(state, screen);
-                _cacheScreenState[screen.DeviceName] = state;
+                WindowState state = IsWindowMaximized(item) ? WindowState.Maximized : WindowState.NotMaximized;
+                //只保留有遮挡的屏幕数据
+                if (state == WindowState.Maximized && !tmpCheckHandles.Contains(item))
+                    tmpCheckHandles.Add(item);
+                _tmpCurrentScreenState[Screen.FromHandle(item)] = state;
+
             }
+            _checkHandles = tmpCheckHandles;
+
+            //更新数据
+            foreach (var item in _tmpCurrentScreenState)
+            {
+                var screen = item.Key;
+                var screenName = screen.DeviceName;
+                var state = item.Value;
+                if (!_cacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
+                {
+                    WindowStateChanged.Invoke(state, screen);
+                    _cacheScreenState[screenName] = state;
+                }
+            }
+
         }
 
         _timer?.Start();
@@ -109,7 +133,16 @@ public class WindowStateChecker
 
     public static bool IsWindowMaximized(IntPtr hWnd)
     {
-        var handle = new Windows.Win32.Foundation.HWND(hWnd);
+        HWND handle = new(hWnd);
+
+        //过滤掉一些不需要的窗口
+        string className = GetClassName(handle);
+        string[] ignoreClass = new string[] { "WorkerW", "Progman" };
+        if (ignoreClass.Contains(className))
+        {
+            return false;
+        }
+
 #if PrintInfo
         int bufferSize = PInvoke.GetWindowTextLength(handle) + 1;
         string windowName;
@@ -130,14 +163,14 @@ public class WindowStateChecker
         if (PInvoke.IsZoomed(handle))
         {
 #if PrintInfo
-            System.Diagnostics.Debug.WriteLine($"{handle} {windowName} is IsZoomed");
+            System.Diagnostics.Debug.WriteLine($"{handle},{windowName},{className} is IsZoomed");
 #endif
             return true;
         }
         else
         {
             //屏幕几乎遮挡完桌面，也认为是最大化
-            PInvoke.GetWindowRect(handle, out Windows.Win32.Foundation.RECT rect);
+            PInvoke.GetWindowRect(handle, out var rect);
             var screen = Screen.FromHandle(hWnd);
             double? windowArea = rect.Width * rect.Height;
             double? screenArea = screen.Bounds.Width * screen.Bounds.Height;
@@ -146,9 +179,9 @@ public class WindowStateChecker
 #if PrintInfo
             if (tmp)
             {
-                System.Diagnostics.Debug.WriteLine($"{handle.Value} {windowName} windowArea, {rect.X},{rect.Y},{rect.Width},{rect.Height}");
-                System.Diagnostics.Debug.WriteLine($"{handle.Value} {windowName} screenArea, {screen.DeviceName},{screen.Bounds.Width},{screen.Bounds.Height}");
-                System.Diagnostics.Debug.WriteLine($"{handle.Value} {windowName} IsZoomed: {windowArea / screenArea}, {tmp}");
+                System.Diagnostics.Debug.WriteLine($"{handle.Value},{windowName} windowArea,{className} {rect.X},{rect.Y},{rect.Width},{rect.Height}");
+                System.Diagnostics.Debug.WriteLine($"{handle.Value},{windowName} screenArea,{className} , {screen.DeviceName},{screen.Bounds.Width},{screen.Bounds.Height}");
+                System.Diagnostics.Debug.WriteLine($"{handle.Value},{windowName},{className} IsZoomed: {windowArea / screenArea}, {tmp}");
             }
 #endif
             return tmp;
