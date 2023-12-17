@@ -21,3 +21,6 @@ GetForegroundWindow
 GetWindowRect
 GetWindowText
 GetWindowTextLength
+IsWindowVisible
+DwmGetWindowAttribute
+GetClassName
