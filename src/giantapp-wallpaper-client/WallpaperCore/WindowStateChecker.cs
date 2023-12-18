@@ -39,25 +39,7 @@ public class WindowStateChecker
     {
         var list = new List<IntPtr>();
         PInvoke.EnumWindows(new Windows.Win32.UI.WindowsAndMessaging.WNDENUMPROC((tophandle, topparamhandle) =>
-        {
-            //判断窗口是否可见
-            if (!PInvoke.IsWindowVisible(tophandle))
-            {
-                return true;
-            }
-
-            //判断UWP程序是否可见
-            int cloakedVal;
-            unsafe
-            {
-                PInvoke.DwmGetWindowAttribute(tophandle, Windows.Win32.Graphics.Dwm.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloakedVal, sizeof(int));
-            }
-
-            if (cloakedVal != 0)
-            {
-                return true;
-            }
-
+        {       
             if (IsWindowMaximized(tophandle))
             {
                 list.Add(tophandle);
@@ -133,6 +115,23 @@ public class WindowStateChecker
     public static bool IsWindowMaximized(IntPtr hWnd)
     {
         HWND handle = new(hWnd);
+        //判断窗口是否可见
+        if (!PInvoke.IsWindowVisible(handle))
+        {
+            return false;
+        }
+
+        //判断UWP程序是否可见
+        int cloakedVal;
+        unsafe
+        {
+            PInvoke.DwmGetWindowAttribute(handle, Windows.Win32.Graphics.Dwm.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloakedVal, sizeof(int));
+        }
+
+        if (cloakedVal != 0)
+        {
+            return false;
+        }
 
         //过滤掉一些不需要的窗口
         string className = GetClassName(handle);

@@ -232,8 +232,17 @@ public class MpvPlayer
         if (serverName == null)
             return null;
 
-        if (Process == null || Process.HasExited)
+        try
         {
+            if (Process == null || Process.HasExited)
+            {
+                Process = null;
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "Failed to get mpv process.");
             Process = null;
             return null;
         }

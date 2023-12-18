@@ -38,19 +38,22 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         {wallpapers.map((item, index) => {
             const isSelected = selectedWallpaper === item.wallpaper;
             return <div key={index} className="flex items-center space-x-4">
-                <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)}>
+                <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
                     <img
                         alt="Cover"
-                        className={cn(["rounded-lg object-scale-cover aspect-square", isSelected ? " border-2 border-primary" : ""])}
+                        title={item.wallpaper.meta?.title}
+                        className={cn(["rounded-lg object-scale-cover aspect-square", wallpapers.length > 1 && isSelected ? " border-2 border-primary" : ""])}
                         height={50}
                         src={item.wallpaper.coverUrl || "/wp-placeholder.webp"}
                         width={50}
                     />
                 </picture>
-                {isSelected && <div className="flex flex-col text-sm">
-                    <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
-                    <div >{item?.wallpaper.meta?.description}</div>
-                </div>}
+                {
+                    (wallpapers.length === 1 || isSelected) && <div className="flex flex-col text-sm">
+                        <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
+                        <div >{item?.wallpaper.meta?.description}</div>
+                    </div>
+                }
             </div>
         })}
 
@@ -152,5 +155,5 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                 </svg>
             </Button>
         </div>
-    </div>
+    </div >
 }
