@@ -98,7 +98,7 @@ const Page = () => {
                             <div className="relative cursor-pointer" onClick={() => {
                                 showWallpaper(wallpaper, null);
                             }}
-                                title="使所有屏幕生效">
+                                title="点击使所有屏幕生效">
                                 <picture>
                                     <img
                                         alt="Wallpaper 1"
@@ -126,7 +126,7 @@ const Page = () => {
                                                                 }}
                                                                 aria-label="Screen Icon 1"
                                                                 className="mr-2 flex items-center justify-center hover:text-primary"
-                                                                title={`屏幕 ${screen.deviceName} 生效`}
+                                                                title={`点击使屏幕 ${screen.deviceName} 生效`}
                                                                 variant="ghost"
                                                             >
                                                                 <svg

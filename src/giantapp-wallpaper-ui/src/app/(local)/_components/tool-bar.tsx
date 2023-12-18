@@ -35,29 +35,31 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     });
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
-        {wallpapers.map((item, index) => {
-            const isSelected = selectedWallpaper === item.wallpaper;
-            return <div key={index} className="flex items-center space-x-4">
-                <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
-                    <img
-                        alt="Cover"
-                        title={item.wallpaper.meta?.title}
-                        className={cn(["rounded-lg object-scale-cover aspect-square", wallpapers.length > 1 && isSelected ? " border-2 border-primary" : ""])}
-                        height={50}
-                        src={item.wallpaper.coverUrl || "/wp-placeholder.webp"}
-                        width={50}
-                    />
-                </picture>
-                {
-                    (wallpapers.length === 1 || isSelected) && <div className="flex flex-col text-sm">
-                        <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
-                        <div >{item?.wallpaper.meta?.description}</div>
-                    </div>
-                }
-            </div>
-        })}
+        <div className="flex flex-wrap flex-initial w-1/4 overflow-auto h-full">
+            {[...wallpapers, ...wallpapers, ...wallpapers, ...wallpapers, ...wallpapers].map((item, index) => {
+                const isSelected = selectedWallpaper === item.wallpaper;
+                return <div key={index} className="flex items-center space-x-4 p-1">
+                    <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
+                        <img
+                            alt="Cover"
+                            title={item.wallpaper.meta?.title}
+                            className={cn(["rounded-lg object-scale-cover aspect-square", wallpapers.length > 1 && isSelected ? " border-2 border-primary" : ""])}
+                            height={50}
+                            src={item.wallpaper.coverUrl || "/wp-placeholder.webp"}
+                            width={50}
+                        />
+                    </picture>
+                    {
+                        (wallpapers.length === 1 || isSelected) && <div className="flex flex-col text-sm">
+                            <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
+                            <div >{item?.wallpaper.meta?.description}</div>
+                        </div>
+                    }
+                </div>
+            })}
+        </div>
 
-        <div className="flex flex-col flex-1 items-center justify-between">
+        <div className="flex flex-col flex-1 w-1/2 items-center justify-between">
             <div className="space-x-4">
                 <Button variant="ghost" className="hover:text-primary">
                     <svg
@@ -116,7 +118,8 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
             </div>
         </div>
-        <div className="flex items-center">
+
+        <div className="flex flex-initial w-1/4 items-center justify-end">
             <Button variant="ghost" className="hover:text-primary">
                 <svg
                     className=" h-6 w-6 "

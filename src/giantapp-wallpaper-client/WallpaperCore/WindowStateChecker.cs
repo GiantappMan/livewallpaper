@@ -105,7 +105,6 @@ public class WindowStateChecker
                     _cacheScreenState[screenName] = state;
                 }
             }
-
         }
 
         _timer?.Start();

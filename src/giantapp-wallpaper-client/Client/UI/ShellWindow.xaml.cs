@@ -118,7 +118,6 @@ public partial class ShellWindow : Window
         return true;
     }
 
-
     public static void SetTheme(string theme, string mode)
     {
         //首字母大写
