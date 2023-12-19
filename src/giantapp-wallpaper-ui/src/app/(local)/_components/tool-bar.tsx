@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/lib/client/types/playlist";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
 import { cn } from "@/lib/utils";
 
@@ -11,10 +11,15 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
-    // const currentPlayList = playingPlaylist?.[0];
-    // const wallpapers = currentPlayList?.wallpapers.map(item => item?.meta?.thumbnail);
-    // const currentWallpaper = currentPlayList?.wallpapers[0];
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null);
+
+    useEffect(() => {
+        //判断selectedWallpaper是否已经被playingPlaylist移除
+        var exist = playingPlaylist?.some(x => x.wallpapers.some(y => y.fileUrl === selectedWallpaper?.fileUrl));
+        if (!exist)
+            setSelectedWallpaper(null); // 当playingPlaylist变化时重置selectedWallpaper
+    }, [playingPlaylist, selectedWallpaper?.fileUrl]);
+
     if (!playingPlaylist || !screens)
         return;
     let wallpapers: {
@@ -35,8 +40,8 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     });
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
-        <div className="flex flex-wrap flex-initial w-1/4 overflow-auto h-full">
-            {[...wallpapers, ...wallpapers, ...wallpapers, ...wallpapers, ...wallpapers].map((item, index) => {
+        <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
+            {[...wallpapers].map((item, index) => {
                 const isSelected = selectedWallpaper === item.wallpaper;
                 return <div key={index} className="flex items-center space-x-4 p-1">
                     <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
@@ -50,7 +55,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         />
                     </picture>
                     {
-                        (wallpapers.length === 1 || isSelected) && <div className="flex flex-col text-sm">
+                        (wallpapers.length === 1) && <div className="flex flex-col text-sm truncate">
                             <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
                             <div >{item?.wallpaper.meta?.description}</div>
                         </div>
@@ -61,7 +66,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
 
         <div className="flex flex-col flex-1 w-1/2 items-center justify-between">
             <div className="space-x-4">
-                <Button variant="ghost" className="hover:text-primary">
+                <Button variant="ghost" className="hover:text-primary" title="上一个壁纸">
                     <svg
                         className="h-5 w-5 "
                         fill="none"
@@ -78,7 +83,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="22 19 13 12 22 5 22 19" />
                     </svg>
                 </Button>
-                <Button variant="ghost" className="hover:text-primary">
+                <Button variant="ghost" className="hover:text-primary" title="播放">
                     <svg
                         className="h-5 w-5 "
                         fill="none"
@@ -94,7 +99,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                 </Button>
-                <Button variant="ghost" className="hover:text-primary">
+                <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
                     <svg
                         className=" h-5 w-5 "
                         fill="none"
@@ -112,11 +117,11 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </svg>
                 </Button>
             </div>
-            <div style={{ width: '500px' }} className="flex items-center justify-between text-xs">
+            {(selectedWallpaper || wallpapers.length === 1) && <div className="flex items-center justify-between text-xs w-full">
                 <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
-            </div>
+            </div>}
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">

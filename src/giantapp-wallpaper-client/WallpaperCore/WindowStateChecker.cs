@@ -73,15 +73,15 @@ public class WindowStateChecker
             //下次有限检查的句柄
             var nextCheckHandles = new List<IntPtr>();
             //当前屏幕状态，默认没有最大化
-            Dictionary<Screen, WindowState> currentScreenState = new();
+            Dictionary<string, WindowState> currentScreenState = new();
             foreach (var item in Screen.AllScreens)
-                currentScreenState.Add(item, WindowState.NotMaximized);
+                currentScreenState.Add(item.DeviceName, WindowState.NotMaximized);
             //遍历检查列表
             foreach (var item in _checkHandles)
             {
                 var screen = Screen.FromHandle(item);
                 //已经有其他程序最大化
-                if (currentScreenState[screen] == WindowState.Maximized)
+                if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName] == WindowState.Maximized)
                     continue;
 
                 WindowState state = IsWindowMaximized(item) ? WindowState.Maximized : WindowState.NotMaximized;
@@ -96,15 +96,15 @@ public class WindowStateChecker
                     //debug
                 }
 
-                currentScreenState[screen] = state;
+                currentScreenState[screen.DeviceName] = state;
             }
             _checkHandles = nextCheckHandles;
 
             //更新数据
             foreach (var item in currentScreenState)
             {
-                var screen = item.Key;
-                var screenName = screen.DeviceName;
+                var screen = Screen.AllScreens.First(m => m.DeviceName == item.Key);
+                var screenName = item.Key;
                 var state = item.Value;
                 if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
                 {
