@@ -170,8 +170,7 @@ public partial class ShellWindow : Window
         if (Instance.WindowState == WindowState.Minimized)
             Instance.WindowState = WindowState.Normal;
 
-        if (Instance.Visibility == Visibility.Visible && !Instance.IsActive)
-            Instance.Activate();
+        Instance.Activate();
 
         Instance.webview2.Source = new Uri(url);
         Instance.webview2.NavigationCompleted += NavigationCompleted;
