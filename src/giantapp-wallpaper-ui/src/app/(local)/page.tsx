@@ -101,7 +101,7 @@ const Page = () => {
                                 title="点击使所有屏幕生效">
                                 <picture>
                                     <img
-                                        alt="Wallpaper 1"
+                                        alt="壁纸封面"
                                         className="w-full"
                                         height="200"
                                         src={wallpaper?.coverUrl || "/wp-placeholder.webp"}
@@ -114,9 +114,9 @@ const Page = () => {
                                 </picture>
                                 <div className="flex flex-col justify-between">
                                     <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                        <div className="flex justify-center mt-2 ">
+                                        <div className="flex flex-wrap w-full justify-center">
                                             {
-                                                screens && screens?.length > 1 && screens?.map((screen, index) => {
+                                                screens && screens?.length > 1 && [...screens]?.map((screen, index) => {
                                                     return (
                                                         <div key={index} className="flex items-center justify-center">
                                                             <Button
@@ -124,21 +124,19 @@ const Page = () => {
                                                                     showWallpaper(wallpaper, screen);
                                                                     e.stopPropagation();
                                                                 }}
-                                                                aria-label="Screen Icon 1"
-                                                                className="mr-2 flex items-center justify-center hover:text-primary"
+                                                                aria-label={`点击使屏幕 ${screen.deviceName} 生效`}
+                                                                className="flex items-center justify-center hover:text-primary lg:px-3 px-1"
                                                                 title={`点击使屏幕 ${screen.deviceName} 生效`}
                                                                 variant="ghost"
                                                             >
                                                                 <svg
-                                                                    className=" h-5 w-5"
+                                                                    className="h-5 w-5"
                                                                     fill="none"
-                                                                    height="24"
                                                                     stroke="currentColor"
                                                                     strokeLinecap="round"
                                                                     strokeLinejoin="round"
                                                                     strokeWidth="2"
                                                                     viewBox="0 0 24 24"
-                                                                    width="24"
                                                                     xmlns="http://www.w3.org/2000/svg"
                                                                 >
                                                                     <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
@@ -156,20 +154,18 @@ const Page = () => {
                                         <div className="flex justify-between">
                                             <Button
                                                 aria-label="Settings"
-                                                className="m-2 flex items-center justify-center hover:text-primary"
+                                                className="px-3 flex items-center justify-center hover:text-primary"
                                                 title="Settings"
                                                 variant="ghost"
                                             >
                                                 <svg
-                                                    className=" h-5 w-5"
+                                                    className="h-5 w-5"
                                                     fill="none"
-                                                    height="24"
                                                     stroke="currentColor"
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
                                                     strokeWidth="2"
                                                     viewBox="0 0 24 24"
-                                                    width="24"
                                                     xmlns="http://www.w3.org/2000/svg"
                                                 >
                                                     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -179,20 +175,18 @@ const Page = () => {
                                             <div className="flex">
                                                 <Button
                                                     aria-label="Delete"
-                                                    className="m-2 flex items-center justify-center hover:text-primary"
+                                                    className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
                                                     title="Delete"
                                                     variant="ghost"
                                                 >
                                                     <svg
-                                                        className=" h-5 w-5"
+                                                        className="h-5 w-5"
                                                         fill="none"
-                                                        height="24"
                                                         stroke="currentColor"
                                                         strokeLinecap="round"
                                                         strokeLinejoin="round"
                                                         strokeWidth="2"
                                                         viewBox="0 0 24 24"
-                                                        width="24"
                                                         xmlns="http://www.w3.org/2000/svg"
                                                     >
                                                         <path d="M3 6h18" />
@@ -200,7 +194,7 @@ const Page = () => {
                                                         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                                                     </svg>
                                                 </Button>
-                                                <Button aria-label="Edit" className="my-2 flex items-center justify-center hover:text-primary" title="Edit" variant="ghost">
+                                                <Button aria-label="Edit" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="Edit" variant="ghost">
                                                     <svg
                                                         className="h-5 w-5"
                                                         fill="none"
@@ -219,7 +213,7 @@ const Page = () => {
                                                 </Button>
                                                 <Button
                                                     aria-label="Open Folder"
-                                                    className="m-2 flex items-center justify-center hover:text-primary"
+                                                    className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
                                                     title="Open Folder"
                                                     variant="ghost"
                                                 >
@@ -244,7 +238,7 @@ const Page = () => {
                                 </div>
                             </div>
                             <div className="px-6 py-4">
-                                <div className="font-bold text-xl mb-2">{wallpaper?.meta?.title}</div>
+                                <div className="font-bold text-sm mb-2 lg:text-xl">{wallpaper?.meta?.title}</div>
                                 {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
                             </div>
                         </div>
