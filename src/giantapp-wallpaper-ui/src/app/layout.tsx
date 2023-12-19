@@ -38,13 +38,13 @@ export default function RootLayout({
       selectedIcon: solidHomeIcon,
       current: false,
     },
-    {
-      name: "旧社区",
-      href: "/community-old",
-      icon: Squares2X2Icon,
-      selectedIcon: solidSquares2X2Icon,
-      current: false,
-    },
+    // {
+    //   name: "旧社区",
+    //   href: "/community-old",
+    //   icon: Squares2X2Icon,
+    //   selectedIcon: solidSquares2X2Icon,
+    //   current: false,
+    // },
     {
       name: "社区",
       href: "/community",

@@ -73,6 +73,28 @@ export function SidebarNav({ className, ...props }: React.HTMLAttributes<HTMLEle
         </svg>
       ),
     },
+    {
+      name: "关于",
+      href: "/settings/about",
+      icon: (
+        <svg
+          className=" h-4 w-4"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16s1 0 1-1-1-4-1-4" />
+          <path d="M12 8s-1 0-1 1 1 4 1 4" />
+        </svg>
+      ),
+    },
   ]
   return (
     <aside className="flex flex-col gap-4 px-4 py-6 text-sm font-medium">
