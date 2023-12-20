@@ -32,15 +32,18 @@ type WallpaperWrapper = {
 
 export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     const [selectedWallpaper, setSelectedWallpaper] = useState<WallpaperWrapper | null>(null);
+    const [isPaused, setIsPaused] = useState<boolean>(false);
 
     const handlePlayClick = useCallback(() => {
         var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
         api.resumeWallpaper(index);
+        setIsPaused(false);
     }, [screens, selectedWallpaper?.screen.deviceName]);
 
     const handlePauseClick = useCallback(() => {
         var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
         api.pauseWallpaper(index);
+        setIsPaused(true);
     }, [screens, selectedWallpaper?.screen.deviceName]);
 
     useEffect(() => {
@@ -111,39 +114,43 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="22 19 13 12 22 5 22 19" />
                     </svg>
                 </Button>
-                <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
-                    <svg
-                        className="h-5 w-5 "
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        width="24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                </Button>
-                <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
-                    <svg
-                        className="h-5 w-5 "
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        width="24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <rect height="20" rx="2" ry="2" width="6" x="4" y="2" />
-                        <rect height="20" rx="2" ry="2" width="6" x="14" y="2" />
-                    </svg>
-                </Button>
+                {
+                    isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
+                        <svg
+                            className="h-5 w-5 "
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                    </Button>
+                }
+                {
+                    !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
+                        <svg
+                            className="h-5 w-5 "
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <rect height="20" rx="2" ry="2" width="6" x="4" y="2" />
+                            <rect height="20" rx="2" ry="2" width="6" x="14" y="2" />
+                        </svg>
+                    </Button>
+                }
                 <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
                     <svg
                         className=" h-5 w-5 "
