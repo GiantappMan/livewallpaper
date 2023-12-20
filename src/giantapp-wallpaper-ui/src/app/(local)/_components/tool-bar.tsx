@@ -4,6 +4,21 @@ import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { useEffect, useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
 import { cn } from "@/lib/utils";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Slider } from "@/components/ui/slider"
+
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[] | null | undefined
@@ -99,6 +114,23 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                 </Button>
+                <Button variant="ghost" className="hover:text-primary" title="暂停">
+                    <svg
+                        className="h-5 w-5 "
+                        fill="none"
+                        height="24"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        width="24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <rect height="20" rx="2" ry="2" width="6" x="4" y="2" />
+                        <rect height="20" rx="2" ry="2" width="6" x="14" y="2" />
+                    </svg>
+                </Button>
                 <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
                     <svg
                         className=" h-5 w-5 "
@@ -125,43 +157,65 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
-            <Button variant="ghost" className="hover:text-primary">
-                <svg
-                    className=" h-6 w-6 "
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                </svg>
-            </Button>
-            <Button variant="ghost" className="hover:text-primary">
-                <svg
-                    className=" h-6 w-6"
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <line x1="8" x2="21" y1="6" y2="6" />
-                    <line x1="8" x2="21" y1="12" y2="12" />
-                    <line x1="8" x2="21" y1="18" y2="18" />
-                    <line x1="3" x2="3.01" y1="6" y2="6" />
-                    <line x1="3" x2="3.01" y1="12" y2="12" />
-                    <line x1="3" x2="3.01" y1="18" y2="18" />
-                </svg>
-            </Button>
+            {(selectedWallpaper || wallpapers.length === 1) && <>
+                <Popover>
+                    <PopoverTrigger>
+                        <Button variant="ghost" className="hover:text-primary px-3" title="音量">
+                            <svg
+                                className=" h-6 w-6 "
+                                fill="none"
+                                height="24"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                width="24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            </svg>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                        <Slider defaultValue={[33]} max={100} step={1} />
+                    </PopoverContent>
+                </Popover>
+                <Sheet>
+                    <SheetTrigger>
+                        <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
+                            <svg
+                                className=" h-6 w-6"
+                                fill="none"
+                                height="24"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                width="24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <line x1="8" x2="21" y1="6" y2="6" />
+                                <line x1="8" x2="21" y1="12" y2="12" />
+                                <line x1="8" x2="21" y1="18" y2="18" />
+                                <line x1="3" x2="3.01" y1="6" y2="6" />
+                                <line x1="3" x2="3.01" y1="12" y2="12" />
+                                <line x1="3" x2="3.01" y1="18" y2="18" />
+                            </svg>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                        <SheetHeader>
+                            <SheetTitle>播放列表</SheetTitle>
+                            <SheetDescription>
+                                This action cannot be undone. This will permanently delete your account
+                                and remove your data from our servers.
+                            </SheetDescription>
+                        </SheetHeader>
+                    </SheetContent>
+                </Sheet>
+            </>}
         </div>
     </div >
 }
