@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 
@@ -154,5 +155,23 @@ public class ApiObject
             }
         }
         return JsonConvert.SerializeObject(res, Configer.JsonSettings);
+    }
+
+    public void PauseWallpaper(string? screenIndexStr)
+    {
+        bool ok = int.TryParse(screenIndexStr, out int screenIndex);
+        if (ok && screenIndex > 0)
+            WallpaperApi.PauseWallpaper(screenIndex);
+        else
+            WallpaperApi.PauseWallpaper();
+    }
+
+    public void ResumeWallpaper(string? screenIndexStr)
+    {
+        bool ok = int.TryParse(screenIndexStr, out int screenIndex);
+        if (ok && screenIndex > 0)
+            WallpaperApi.ResumeWallpaper(screenIndex);
+        else
+            WallpaperApi.ResumeWallpaper();
     }
 }

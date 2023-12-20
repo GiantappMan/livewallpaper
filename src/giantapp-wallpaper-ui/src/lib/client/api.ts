@@ -104,6 +104,30 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async pauseWallpaper(screenIndex?: number): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      await api.PauseWallpaper(screenIndex);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async resumeWallpaper(screenIndex?: number): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      await api.ResumeWallpaper(screenIndex);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

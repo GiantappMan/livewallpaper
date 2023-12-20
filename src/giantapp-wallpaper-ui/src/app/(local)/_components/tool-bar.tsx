@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/lib/client/types/playlist";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
 import { cn } from "@/lib/utils";
 import {
@@ -18,29 +18,42 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
-
+import api from "@/lib/client/api";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[] | null | undefined
     screens: Screen[] | null | undefined
 }
 
+type WallpaperWrapper = {
+    wallpaper: Wallpaper;
+    screen: Screen;
+}
+
 export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
-    const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null);
+    const [selectedWallpaper, setSelectedWallpaper] = useState<WallpaperWrapper | null>(null);
+
+    const handlePlayClick = useCallback(() => {
+        var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
+        api.resumeWallpaper(index);
+    }, [screens, selectedWallpaper?.screen.deviceName]);
+
+    const handlePauseClick = useCallback(() => {
+        var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
+        api.pauseWallpaper(index);
+    }, [screens, selectedWallpaper?.screen.deviceName]);
 
     useEffect(() => {
         //判断selectedWallpaper是否已经被playingPlaylist移除
-        var exist = playingPlaylist?.some(x => x.wallpapers.some(y => y.fileUrl === selectedWallpaper?.fileUrl));
+        var exist = playingPlaylist?.some(x => x.wallpapers.some(y => y.fileUrl === selectedWallpaper?.wallpaper.fileUrl));
         if (!exist)
             setSelectedWallpaper(null); // 当playingPlaylist变化时重置selectedWallpaper
-    }, [playingPlaylist, selectedWallpaper?.fileUrl]);
+    }, [playingPlaylist, selectedWallpaper?.wallpaper.fileUrl]);
 
     if (!playingPlaylist || !screens)
         return;
-    let wallpapers: {
-        wallpaper: Wallpaper;
-        screen: Screen
-    }[] = [];
+
+    let wallpapers: WallpaperWrapper[] = [];
     //遍历playingPlaylist，根据playIndex找到当前播放的wallpaper
     playingPlaylist?.forEach(item => {
         if (item.setting?.playIndex !== undefined) {
@@ -59,7 +72,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
             {[...wallpapers].map((item, index) => {
                 const isSelected = selectedWallpaper === item.wallpaper;
                 return <div key={index} className="flex items-center space-x-4 p-1">
-                    <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item.wallpaper)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
+                    <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
                         <img
                             alt="Cover"
                             title={item.wallpaper.meta?.title}
@@ -98,7 +111,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="22 19 13 12 22 5 22 19" />
                     </svg>
                 </Button>
-                <Button variant="ghost" className="hover:text-primary" title="播放">
+                <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
                     <svg
                         className="h-5 w-5 "
                         fill="none"
@@ -114,7 +127,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                 </Button>
-                <Button variant="ghost" className="hover:text-primary" title="暂停">
+                <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
                     <svg
                         className="h-5 w-5 "
                         fill="none"

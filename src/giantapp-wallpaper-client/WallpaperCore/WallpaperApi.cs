@@ -156,6 +156,36 @@ public static class WallpaperApi
     {
     }
 
+    //暂停壁纸
+    public static void PauseWallpaper(params int[] screenIndexs)
+    {
+        if (screenIndexs.Length == 0)
+            screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
+
+        foreach (var screenIndex in screenIndexs)
+        {
+            if (screenIndex < 0)
+                continue;
+            var manger = GetRunningManager((uint)screenIndex);
+            manger.Pause();
+        }
+    }
+
+    //恢复壁纸
+    public static void ResumeWallpaper(params int[] screenIndexs)
+    {
+        if (screenIndexs.Length == 0)
+            screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
+
+        foreach (var screenIndex in screenIndexs)
+        {
+            if (screenIndex < 0)
+                continue;
+            var manger = GetRunningManager((uint)screenIndex);
+            manger.Resume();
+        }
+    }
+
     public static void Dispose()
     {
         foreach (var item in RunningWallpapers)
@@ -250,24 +280,6 @@ public static class WallpaperApi
     #endregion
 
     #region internal methods
-
-    //暂停壁纸
-    static void PauseWallpaper(int screenIndex = 0)
-    {
-        if (screenIndex < 0)
-            return;
-        var manger = GetRunningManager((uint)screenIndex);
-        manger.Pause();
-    }
-
-    //恢复壁纸
-    static void ResumeWallpaper(int screenIndex = 0)
-    {
-        if (screenIndex < 0)
-            return;
-        var manger = GetRunningManager((uint)screenIndex);
-        manger.Resume();
-    }
 
     #endregion
 }
