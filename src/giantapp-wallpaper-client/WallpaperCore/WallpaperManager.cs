@@ -27,6 +27,7 @@ public class WallpaperManager
     }
 
     public Playlist? Playlist { get; set; }
+    public bool IsPaused { get; private set; }
 
     internal void Dispose()
     {
@@ -70,13 +71,20 @@ public class WallpaperManager
         };
     }
 
-    internal void Pause()
+    internal void Pause(bool updateStatus = true)
     {
         _mpvPlayer.Pause();
+
+        if (updateStatus)
+            IsPaused = true;
     }
 
-    internal void Resume()
+    internal void Resume(bool updateStatus = true)
     {
         _mpvPlayer.Resume();
+
+        if (updateStatus)
+            IsPaused = false;
+
     }
 }

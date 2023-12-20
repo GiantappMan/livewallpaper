@@ -32,15 +32,20 @@ public static class WallpaperApi
         System.Diagnostics.Debug.WriteLine($"{state},{targetScreen.DeviceName}");
         Logger.Info($"{state},{targetScreen.DeviceName}");
         var screenIndex = GetScreens().ToList().FindIndex(x => x.DeviceName == targetScreen.DeviceName);
+        var manger = GetRunningManager((uint)screenIndex);
         if (state == WindowStateChecker.WindowState.Maximized)
         {
             //暂停壁纸
-            PauseWallpaper(screenIndex);
+            manger.Pause(false);
         }
         else
         {
+            //用户已手动暂停壁纸
+            if (manger.IsPaused)
+                return;
+
             //恢复壁纸
-            ResumeWallpaper(screenIndex);
+            manger.Resume(false);
         }
     }
 
