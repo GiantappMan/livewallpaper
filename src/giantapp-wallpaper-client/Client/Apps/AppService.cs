@@ -239,6 +239,7 @@ internal class AppService
         }
 
         ShellWindow.CustomFolderMapping = dict;
+        ShellWindow.ApplyCustomFolderMapping();
     }
 
     #endregion

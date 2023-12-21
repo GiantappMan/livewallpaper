@@ -177,6 +177,17 @@ public partial class ShellWindow : Window
         Instance.Show();
     }
 
+    public static void ApplyCustomFolderMapping(Microsoft.Web.WebView2.Wpf.WebView2? webview2 = null)
+    {
+        webview2 ??= Instance?.webview2;
+        foreach (var item in CustomFolderMapping)
+        {
+            if (!Directory.Exists(item.Value))
+                continue;
+            webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
+        }
+    }
+
     #endregion
 
     #region private
@@ -280,12 +291,7 @@ public partial class ShellWindow : Window
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-        foreach (var item in CustomFolderMapping)
-        {
-            if (!Directory.Exists(item.Value))
-                continue;
-            webview2.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
-        }
+        ApplyCustomFolderMapping(webview2);
 
 #if !DEBUG
         if (webview2.CoreWebView2 != null)
