@@ -144,6 +144,8 @@ internal class AppService
             if (path.StartsWith(item))
             {
                 path = $"https://{i}.{_domainStr}{path[item.Length..]}";
+                //replase \\ to //
+                path = path.Replace("\\", "/");
                 break;
             }
         }
