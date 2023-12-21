@@ -179,7 +179,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         <div className="flex flex-initial w-1/4 items-center justify-end">
             {(selectedWallpaper || wallpapers.length === 1) && <>
                 <Popover>
-                    <PopoverTrigger>
+                    <PopoverTrigger asChild>
                         <Button variant="ghost" className="hover:text-primary px-3" title="音量">
                             <svg
                                 className=" h-6 w-6 "
@@ -202,7 +202,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </PopoverContent>
                 </Popover>
                 <Sheet>
-                    <SheetTrigger>
+                    <SheetTrigger asChild>
                         <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
                             <svg
                                 className=" h-6 w-6"

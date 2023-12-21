@@ -25,7 +25,6 @@ const Page = () => {
             });
             return;
         }
-        setWallpapers(res.data);
 
         const screens = await api.getScreens();
         if (screens.error) {
@@ -40,8 +39,6 @@ const Page = () => {
         if (!screens.data)
             return
 
-        setScreens(screens.data);
-
         const _playingPlaylist = await api.getPlayingPlaylist();
         if (_playingPlaylist.error) {
             toast({
@@ -51,6 +48,9 @@ const Page = () => {
             });
             return;
         }
+        
+        setWallpapers(res.data);
+        setScreens(screens.data);
         setPlayingPlaylist(_playingPlaylist.data);
     }
 
