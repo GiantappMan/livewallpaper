@@ -14,6 +14,8 @@ export type PlaylistSetting = {
     mode: PlayMode;
     playIndex: number;
     screenIndexes: number[];
+    isPaused?: boolean;
+    volume?: number;
 }
 
 export type PlaylistMeta = WallpaperMeta & {

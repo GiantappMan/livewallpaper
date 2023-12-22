@@ -79,6 +79,8 @@ public class PlaylistSetting : ICloneable
     public PlayMode Mode { get; set; } = PlayMode.Order;
     public uint PlayIndex { get; set; } = 0;
     public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
+    public bool IsPaused { get; set; }
+    public int Volume { get; set; }
 
     public object Clone()
     {

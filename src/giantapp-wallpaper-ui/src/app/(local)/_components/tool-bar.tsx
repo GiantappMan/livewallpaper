@@ -21,74 +21,102 @@ import { Slider } from "@/components/ui/slider"
 import api from "@/lib/client/api";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
-    playingPlaylist: Playlist[] | null | undefined
-    screens: Screen[] | null | undefined
+    playingPlaylist: Playlist[]
+    screens: Screen[]
 }
 
-type WallpaperWrapper = {
-    wallpaper: Wallpaper;
+type PlaylistWrapper = {
+    current: Wallpaper;
+    playlist?: Playlist;
     screen: Screen;
 }
 
 export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
-    const [selectedWallpaper, setSelectedWallpaper] = useState<WallpaperWrapper | null>(null);
+    const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
+    const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
     const [isPaused, setIsPaused] = useState<boolean>(false);
 
+    useEffect(() => {
+        let tmpPlaylists: PlaylistWrapper[] = [];
+        playingPlaylist?.forEach(item => {
+            if (item.setting?.playIndex !== undefined) {
+                var currentWallpaper = item.wallpapers[item.setting?.playIndex];
+                var exist = tmpPlaylists.some(x => x.current.fileUrl === currentWallpaper.fileUrl);
+                if (!exist)
+                    tmpPlaylists.push({
+                        current: currentWallpaper,
+                        playlist: item,
+                        screen: screens[item.setting.screenIndexes[0]],
+                    });
+            }
+        });
+        setPlaylists(tmpPlaylists);
+    }, [playingPlaylist, screens]);
+
     const handlePlayClick = useCallback(() => {
-        var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
+        var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
         api.resumeWallpaper(index);
-        setIsPaused(false);
-    }, [screens, selectedWallpaper?.screen.deviceName]);
+        //更新playlist对应屏幕的ispaused
+        var tmpPlaylists = [...playlists];
+        //没有选中，就影响所有playlist
+        tmpPlaylists.forEach(element => {
+            if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
+                return;
+            if (element.playlist && element.playlist.setting) {
+                element.playlist.setting.isPaused = false;
+            }
+        });
+        setPlaylists(tmpPlaylists);
+    }, [playlists, screens, selectedPlaylist]);
 
     const handlePauseClick = useCallback(() => {
-        var index = screens?.findIndex(x => x.deviceName === selectedWallpaper?.screen.deviceName);
+        var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
         api.pauseWallpaper(index);
-        setIsPaused(true);
-    }, [screens, selectedWallpaper?.screen.deviceName]);
+        //更新playlist对应屏幕的ispaused
+        var tmpPlaylists = [...playlists];
+        //没有选中，就影响所有playlist
+        tmpPlaylists.forEach(element => {
+            if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
+                return;
+            if (element.playlist && element.playlist.setting) {
+                element.playlist.setting.isPaused = true;
+            }
+        });
+        setPlaylists(tmpPlaylists);
+    }, [playlists, screens, selectedPlaylist]);
 
     useEffect(() => {
-        //判断selectedWallpaper是否已经被playingPlaylist移除
-        var exist = playingPlaylist?.some(x => x.wallpapers.some(y => y.fileUrl === selectedWallpaper?.wallpaper.fileUrl));
+        //选中播放列表已移除
+        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current.fileUrl));
         if (!exist)
-            setSelectedWallpaper(null); // 当playingPlaylist变化时重置selectedWallpaper
-    }, [playingPlaylist, selectedWallpaper?.wallpaper.fileUrl]);
+            setSelectedPlaylist(null);
 
-    if (!playingPlaylist || !screens)
-        return;
-
-    let wallpapers: WallpaperWrapper[] = [];
-    //遍历playingPlaylist，根据playIndex找到当前播放的wallpaper
-    playingPlaylist?.forEach(item => {
-        if (item.setting?.playIndex !== undefined) {
-            var currentWallpaper = item.wallpapers[item.setting?.playIndex];
-            var exist = wallpapers.some(x => x.wallpaper.fileUrl === currentWallpaper.fileUrl);
-            if (!exist)
-                wallpapers.push({
-                    wallpaper: currentWallpaper,
-                    screen: screens[item.setting.screenIndexes[0]]
-                });
-        }
-    });
+        //设置isPaused
+        var isPaused = playlists.some(x => x.playlist?.setting?.isPaused);
+        if (selectedPlaylist)
+            isPaused = selectedPlaylist.playlist?.setting?.isPaused || false;
+        setIsPaused(isPaused);
+    }, [playlists, selectedPlaylist]);
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
-            {[...wallpapers].map((item, index) => {
-                const isSelected = selectedWallpaper === item.wallpaper;
+            {playlists.map((item, index) => {
+                const isSelected = selectedPlaylist?.current === item.current;
                 return <div key={index} className="flex items-center space-x-4 p-1">
-                    <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(item)} className={cn({ "cursor-pointer": wallpapers.length > 1 })}>
+                    <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(item)} className={cn({ "cursor-pointer": playlists.length > 1 })}>
                         <img
                             alt="Cover"
-                            title={item.wallpaper.meta?.title}
-                            className={cn(["rounded-lg object-scale-cover aspect-square", wallpapers.length > 1 && isSelected ? " border-2 border-primary" : ""])}
+                            title={item.current.meta?.title}
+                            className={cn(["rounded-lg object-scale-cover aspect-square", playlists.length > 1 && isSelected ? " border-2 border-primary" : ""])}
                             height={50}
-                            src={item.wallpaper.coverUrl || "/wp-placeholder.webp"}
+                            src={item.current.coverUrl || "/wp-placeholder.webp"}
                             width={50}
                         />
                     </picture>
                     {
-                        (wallpapers.length === 1) && <div className="flex flex-col text-sm truncate">
-                            <div className="font-semibold">{item?.wallpaper.meta?.title}</div>
-                            <div >{item?.wallpaper.meta?.description}</div>
+                        (playlists.length === 1) && <div className="flex flex-col text-sm truncate">
+                            <div className="font-semibold">{item?.current.meta?.title}</div>
+                            <div >{item?.current.meta?.description}</div>
                         </div>
                     }
                 </div>
@@ -169,7 +197,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </svg>
                 </Button>
             </div>
-            {(selectedWallpaper || wallpapers.length === 1) && <div className="flex items-center justify-between text-xs w-full">
+            {(selectedPlaylist || playlists.length === 1) && <div className="flex items-center justify-between text-xs w-full">
                 <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
@@ -177,30 +205,30 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
-            {(selectedWallpaper || wallpapers.length === 1) && <>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" className="hover:text-primary px-3" title="音量">
-                            <svg
-                                className=" h-6 w-6 "
-                                fill="none"
-                                height="24"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                width="24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                            </svg>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                        <Slider defaultValue={[33]} max={100} step={1} />
-                    </PopoverContent>
-                </Popover>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" className="hover:text-primary px-3" title="音量">
+                        <svg
+                            className=" h-6 w-6 "
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        </svg>
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                    <Slider defaultValue={[33]} max={100} step={1} />
+                </PopoverContent>
+            </Popover>
+            {(selectedPlaylist || playlists.length === 1) && <>
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">

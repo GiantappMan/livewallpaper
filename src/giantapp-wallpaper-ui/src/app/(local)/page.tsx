@@ -248,7 +248,7 @@ const Page = () => {
                 })
             }
             {
-                wallpapers && wallpapers.length > 0 && <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
+                wallpapers && wallpapers.length > 0 && playingPlaylist && screens && <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
             }
         </div>
         {

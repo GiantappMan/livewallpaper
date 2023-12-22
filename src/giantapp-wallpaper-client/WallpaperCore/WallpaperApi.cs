@@ -41,7 +41,7 @@ public static class WallpaperApi
         else
         {
             //用户已手动暂停壁纸
-            if (manger.IsPaused)
+            if (manger.Playlist == null || manger.Playlist.Setting == null || manger.Playlist.Setting.IsPaused)
                 return;
 
             //恢复壁纸
