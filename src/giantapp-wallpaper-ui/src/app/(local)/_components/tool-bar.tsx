@@ -35,6 +35,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
     const [isPaused, setIsPaused] = useState<boolean>(false);
+    const [volume, setVolume] = useState<number>(0);
 
     useEffect(() => {
         let tmpPlaylists: PlaylistWrapper[] = [];
@@ -85,6 +86,12 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         setPlaylists(tmpPlaylists);
     }, [playlists, screens, selectedPlaylist]);
 
+    const handleVolumeChange = useCallback((value: number) => {
+        var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
+        api.setVolume(value, index)
+        setVolume(value);
+    }, [screens, selectedPlaylist?.screen.deviceName]);
+
     useEffect(() => {
         //选中播放列表已移除
         var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current.fileUrl));
@@ -92,10 +99,16 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
             setSelectedPlaylist(null);
 
         //设置isPaused
-        var isPaused = playlists.some(x => x.playlist?.setting?.isPaused);
+        var isPaused = playlists.some(x => x.playlist?.setting.isPaused);
         if (selectedPlaylist)
-            isPaused = selectedPlaylist.playlist?.setting?.isPaused || false;
+            isPaused = selectedPlaylist.playlist?.setting.isPaused || false;
         setIsPaused(isPaused);
+
+        var volume = Math.max(...playlists.map(item => item.playlist?.setting.volume || 0));
+        if (selectedPlaylist)
+            volume = selectedPlaylist.playlist?.setting.volume || 0;
+        setVolume(volume);
+
     }, [playlists, selectedPlaylist]);
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
@@ -225,7 +238,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent>
-                    <Slider defaultValue={[33]} max={100} step={1} />
+                    <Slider value={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChange} />
                 </PopoverContent>
             </Popover>
             {(selectedPlaylist || playlists.length === 1) && <>

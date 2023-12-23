@@ -42,7 +42,7 @@ public class WallpaperManager
 
     internal async Task Play()
     {
-        if (Playlist == null || Playlist.Wallpapers.Count == 0 || Playlist.Setting == null)
+        if (Playlist == null || Playlist.Wallpapers.Count == 0)
             return;
 
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
@@ -59,6 +59,7 @@ public class WallpaperManager
         var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
+        _mpvPlayer.SetVolume(Playlist.Setting.Volume);
         _mpvPlayer.LoadList(playlistPath);
     }
 
@@ -75,7 +76,7 @@ public class WallpaperManager
         _mpvPlayer.Pause();
 
         if (updateStatus)
-            if (Playlist != null && Playlist.Setting != null)
+            if (Playlist != null)
                 Playlist.Setting.IsPaused = true;
     }
 
@@ -84,7 +85,14 @@ public class WallpaperManager
         _mpvPlayer.Resume();
 
         if (updateStatus)
-            if (Playlist != null && Playlist.Setting != null)
+            if (Playlist != null)
                 Playlist.Setting.IsPaused = false;
+    }
+
+    internal void SetVolume(int volume)
+    {
+        _mpvPlayer.SetVolume(volume);
+        if (Playlist != null)
+            Playlist.Setting.Volume = volume;
     }
 }

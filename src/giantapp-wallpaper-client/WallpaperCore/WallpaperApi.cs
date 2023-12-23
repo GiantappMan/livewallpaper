@@ -191,6 +191,20 @@ public static class WallpaperApi
         }
     }
 
+    //设置音量
+    public static void SetVolume(int volume, int? screenIndex = null)
+    {
+        if (screenIndex == null)
+            screenIndex = 0;
+
+        var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
+        foreach (var item in screenIndexs)
+        {
+            var manger = GetRunningManager((uint)item);
+            manger.SetVolume(item == screenIndex ? volume : 0);
+        }
+    }
+
     public static void Dispose()
     {
         foreach (var item in RunningWallpapers)

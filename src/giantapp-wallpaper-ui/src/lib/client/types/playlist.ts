@@ -23,7 +23,7 @@ export type PlaylistMeta = WallpaperMeta & {
 };
 
 export type Playlist = {
-    meta?: PlaylistMeta;
-    setting?: PlaylistSetting;
+    meta: PlaylistMeta;
+    setting: PlaylistSetting;
     wallpapers: Wallpaper[];
 };

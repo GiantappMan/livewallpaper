@@ -301,10 +301,10 @@ public class Wallpaper
 public class Playlist : ICloneable
 {
     //描述数据
-    public PlaylistMeta? Meta { get; set; }
+    public PlaylistMeta Meta { get; set; } = new();
 
     //设置
-    public PlaylistSetting? Setting { get; set; }
+    public PlaylistSetting Setting { get; set; } = new();
 
     //播放列表内的壁纸
     public List<Wallpaper> Wallpapers { get; set; } = new();
@@ -314,7 +314,7 @@ public class Playlist : ICloneable
         var res = new Playlist
         {
             Meta = Meta,
-            Setting = Setting?.Clone() as PlaylistSetting,
+            Setting = (PlaylistSetting)Setting.Clone(),
             Wallpapers = new List<Wallpaper>()
         };
         foreach (var item in Wallpapers)

@@ -210,7 +210,7 @@ public class MpvPlayer
 
     public void SetVolume(int volume)
     {
-
+        SendMessage(IPCServerName, "set_property", "volume", volume);
     }
 
     public MpvPlayerSnapshot GetSnapshot()

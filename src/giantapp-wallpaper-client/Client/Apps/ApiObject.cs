@@ -174,4 +174,16 @@ public class ApiObject
         else
             WallpaperApi.ResumeWallpaper();
     }
+
+    public void SetVolume(string volume, string screenIndexStr)
+    {
+        bool ok = int.TryParse(screenIndexStr, out int screenIndex);
+        if (ok)
+        {
+            if (screenIndex < 1)
+                WallpaperApi.SetVolume(int.Parse(volume));
+            else
+                WallpaperApi.SetVolume(int.Parse(volume), screenIndex);
+        }
+    }
 }

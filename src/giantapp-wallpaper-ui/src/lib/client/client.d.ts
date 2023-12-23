@@ -7,6 +7,7 @@ interface API {
   GetPlayingPlaylist(): Promise<string>;
   PauseWallpaper(screenIndex?: number): Promise<void>;
   ResumeWallpaper(screenIndex?: number): Promise<void>;
+  SetVolume(volume: number, screenIndex?: number): Promise<void>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 
