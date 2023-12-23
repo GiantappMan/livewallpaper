@@ -180,11 +180,15 @@ public partial class ShellWindow : Window
     public static void ApplyCustomFolderMapping(Microsoft.Web.WebView2.Wpf.WebView2? webview2 = null)
     {
         webview2 ??= Instance?.webview2;
+        if (webview2 == null)
+            return;
+
         foreach (var item in CustomFolderMapping)
         {
             if (!Directory.Exists(item.Value))
                 continue;
-            webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.DenyCors);
+            webview2?.CoreWebView2?.ClearVirtualHostNameToFolderMapping(item.Key);
+            webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.Allow);
         }
     }
 

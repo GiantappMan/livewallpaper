@@ -2,6 +2,7 @@
 #if PrintInfo
 using System.Runtime.InteropServices;
 #endif
+using Microsoft.Win32;
 using System.Diagnostics;
 using System.Timers;
 using Windows.Win32;
@@ -15,7 +16,25 @@ public class WindowStateChecker
     private readonly System.Timers.Timer? _timer;
     private readonly Dictionary<string, WindowState> _globalCacheScreenState = new();
     private List<IntPtr> _checkHandles = new();//等待检查的窗口
+
+    //是否已锁屏
+    private static bool _isLocked = false;
+
     #endregion
+    static WindowStateChecker()
+    {
+        SystemEvents.SessionSwitch += (s, e) =>
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock)
+            {
+                _isLocked = true;
+            }
+            else if (e.Reason == SessionSwitchReason.SessionUnlock)
+            {
+                _isLocked = false;
+            }
+        };
+    }
 
     public WindowStateChecker()
     {
@@ -120,6 +139,9 @@ public class WindowStateChecker
 
     public static bool IsWindowMaximized(IntPtr hWnd)
     {
+        if (_isLocked)
+            return true;
+
         HWND handle = new(hWnd);
         //判断窗口是否可见
         if (!PInvoke.IsWindowVisible(handle))
