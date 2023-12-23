@@ -240,7 +240,7 @@ public class MpvPlayer
                 return null;
             }
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             _logger.Warn(ex, "Failed to get mpv process.");
             Process = null;
