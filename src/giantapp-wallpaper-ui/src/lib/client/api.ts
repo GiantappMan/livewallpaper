@@ -133,13 +133,26 @@ class API {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      await api.SetVolume(volume.toString(), screenIndex.toString());
+      await api.SetVolume(volume.toString(), screenIndex + "");
       return { error: null, data: null };
     } catch (e) {
       console.log(e);
       return { error: e, data: null };
     }
   }
+
+  async getVersion(): Promise<ApiResult<string>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      var res = await api.GetVersion();
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
 }
 
 const api = new API();

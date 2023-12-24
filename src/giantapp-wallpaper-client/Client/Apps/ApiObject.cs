@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -185,5 +186,23 @@ public class ApiObject
             else
                 WallpaperApi.SetVolume(int.Parse(volume), screenIndex);
         }
+    }
+
+    public string GetVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        //获取 AssemblyInformationalVersionAttribute
+        var attribute = assembly.GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false).FirstOrDefault();
+        if (attribute != null)
+        {
+            var version = ((AssemblyInformationalVersionAttribute)attribute).InformationalVersion;
+            //忽略+号后的内容
+            var index = version.IndexOf('+');
+            if (index > 0)
+                version = version.Substring(0, index);
+            return version;
+        }
+        var version1 = Assembly.GetExecutingAssembly().GetName().Version;
+        return version1.ToString();
     }
 }
