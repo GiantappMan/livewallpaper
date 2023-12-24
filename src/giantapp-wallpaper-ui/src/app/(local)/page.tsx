@@ -73,7 +73,8 @@ const Page = () => {
                 playIndex: 0,
                 mode: PlayMode.Order,
                 screenIndexes
-            }
+            },
+            meta: {}
         }
         const res = await api.showWallpaper(playlist);
         if (res.error) {

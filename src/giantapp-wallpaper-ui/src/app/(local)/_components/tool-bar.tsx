@@ -86,11 +86,23 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         setPlaylists(tmpPlaylists);
     }, [playlists, screens, selectedPlaylist]);
 
-    const handleVolumeChange = useCallback((value: number) => {
-        var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
-        api.setVolume(value, index)
-        setVolume(value);
-    }, [screens, selectedPlaylist?.screen.deviceName]);
+    const handleVolumeChange = useCallback((value: number[]) => {
+        var tmpPlaylists = [...playlists];
+        tmpPlaylists.forEach((element, index) => {
+            if (!element.playlist)
+                return;
+
+            //选中的屏幕，或者没有选中就影响有声音的屏幕
+            if (selectedPlaylist && element.screen.deviceName === selectedPlaylist.screen.deviceName ||
+                !selectedPlaylist && element.playlist.setting.volume > 0) {
+                api.setVolume(value[0], index)
+                setVolume(value[0]);
+                element.playlist.setting.volume = value[0];
+            }
+            else
+                element.playlist.setting.volume = 0;
+        });
+    }, [playlists, selectedPlaylist]);
 
     useEffect(() => {
         //选中播放列表已移除
