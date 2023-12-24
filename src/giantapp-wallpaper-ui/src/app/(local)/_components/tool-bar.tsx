@@ -39,10 +39,11 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
-    const [singleMode, setSingleMode] = useState<boolean>(true);
+    const [singlePlaylistMode, setSinglePlaylistMode] = useState<boolean>(true);
+    const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
 
     useEffect(() => {
-        setSingleMode(playlists.length === 1);
+        setSinglePlaylistMode(playlists.length === 1);
     }, [playlists]);
 
     useEffect(() => {
@@ -61,6 +62,29 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         });
         setPlaylists(tmpPlaylists);
     }, [playingPlaylist, screens]);
+
+    useEffect(() => {
+        //选中播放列表已移除
+        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current.fileUrl));
+        if (!exist)
+            setSelectedPlaylist(null);
+
+        //设置isPaused
+        var isPaused = playlists.some(x => x.playlist?.setting.isPaused);
+        if (selectedPlaylist)
+            isPaused = selectedPlaylist.playlist?.setting.isPaused || false;
+        setIsPaused(isPaused);
+
+        var volume = Math.max(...playlists.map(item => item.playlist?.setting.volume || 0));
+        if (selectedPlaylist)
+            volume = selectedPlaylist.playlist?.setting.volume || 0;
+        setVolume(volume);
+
+        var showPlaylistButton = playlists.some(x => x.playlist && x.playlist.wallpapers.length > 1);
+        if (selectedPlaylist)
+            showPlaylistButton = !!selectedPlaylist.playlist && selectedPlaylist.playlist.wallpapers.length > 1;
+        setShowPlaylistButton(showPlaylistButton);
+    }, [playlists, selectedPlaylist]);
 
     const handlePlayClick = useCallback(() => {
         var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
@@ -112,25 +136,6 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         });
     }, [playlists, selectedPlaylist]);
 
-    useEffect(() => {
-        //选中播放列表已移除
-        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current.fileUrl));
-        if (!exist)
-            setSelectedPlaylist(null);
-
-        //设置isPaused
-        var isPaused = playlists.some(x => x.playlist?.setting.isPaused);
-        if (selectedPlaylist)
-            isPaused = selectedPlaylist.playlist?.setting.isPaused || false;
-        setIsPaused(isPaused);
-
-        var volume = Math.max(...playlists.map(item => item.playlist?.setting.volume || 0));
-        if (selectedPlaylist)
-            volume = selectedPlaylist.playlist?.setting.volume || 0;
-        setVolume(volume);
-
-    }, [playlists, selectedPlaylist]);
-
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playlists.map((item, index) => {
@@ -143,11 +148,11 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         </Button>
                     }
                     {
-                        (singleMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(item)} className={cn([{ "cursor-pointer": !singleMode }, "mr-2"])}>
+                        (singlePlaylistMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
                             <img
                                 alt="Cover"
                                 title={item.current.meta?.title}
-                                className={cn(["rounded-lg object-scale-cover aspect-square", !singleMode && isSelected ? " border-2 border-primary" : ""])}
+                                className={cn(["rounded-lg object-scale-cover aspect-square", !singlePlaylistMode && isSelected ? " border-2 border-primary" : ""])}
                                 height={50}
                                 src={item.current.coverUrl || "/wp-placeholder.webp"}
                                 width={50}
@@ -155,7 +160,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         </picture>
                     }
                     {
-                        (singleMode || isSelected) && <div className="flex flex-col text-sm truncate">
+                        (singlePlaylistMode || isSelected) && <div className="flex flex-col text-sm truncate">
                             <div className="font-semibold">{item?.current.meta?.title}</div>
                             <div >{item?.current.meta?.description}</div>
                         </div>
@@ -167,7 +172,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         <div className="flex flex-col flex-1 w-1/2 items-center justify-between">
             <div className="space-x-4">
                 {
-                    <Button variant="ghost" className="hover:text-primary" title="上一个壁纸">
+                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title="上一个壁纸">
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -223,7 +228,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </Button>
                 }
                 {
-                    <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
+                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
                         <svg
                             className=" h-5 w-5 "
                             fill="none"
@@ -242,7 +247,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </Button>
                 }
             </div>
-            {(selectedPlaylist || singleMode) && <div className="flex items-center justify-between text-xs w-full">
+            {(selectedPlaylist || singlePlaylistMode) && <div className="flex items-center justify-between text-xs w-full">
                 <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
@@ -273,7 +278,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     <Slider value={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChange} />
                 </PopoverContent>
             </Popover>
-            {(selectedPlaylist || singleMode) && <>
+            {(selectedPlaylist || singlePlaylistMode) && showPlaylistButton && <>
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">

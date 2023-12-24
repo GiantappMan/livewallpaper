@@ -146,7 +146,7 @@ export default function Page() {
 
                     <Button type="button" onClick={addFolder}>添加目录</Button>
 
-                    <FormItem>
+                    {/* <FormItem>
                         <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
                         <FormField
                             control={control}
@@ -164,7 +164,7 @@ export default function Page() {
                                 </FormItem>
                             )}
                         />
-                    </FormItem>
+                    </FormItem> */}
                 </form>
             </Form>
             :
