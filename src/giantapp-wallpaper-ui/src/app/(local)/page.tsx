@@ -156,9 +156,9 @@ const Page = () => {
                                         </div>
                                         <div className="flex justify-between">
                                             <Button
-                                                aria-label="Settings"
+                                                aria-label="设置"
                                                 className="px-3 flex items-center justify-center hover:text-primary"
-                                                title="Settings"
+                                                title="设置"
                                                 variant="ghost"
                                             >
                                                 <svg
@@ -177,9 +177,9 @@ const Page = () => {
                                             </Button>
                                             <div className="flex">
                                                 <Button
-                                                    aria-label="Delete"
+                                                    aria-label="删除"
                                                     className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                    title="Delete"
+                                                    title="删除"
                                                     variant="ghost"
                                                 >
                                                     <svg
@@ -197,7 +197,7 @@ const Page = () => {
                                                         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                                                     </svg>
                                                 </Button>
-                                                <Button aria-label="Edit" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="Edit" variant="ghost">
+                                                <Button aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
                                                     <svg
                                                         className="h-5 w-5"
                                                         fill="none"
@@ -215,9 +215,9 @@ const Page = () => {
                                                     </svg>
                                                 </Button>
                                                 <Button
-                                                    aria-label="Open Folder"
+                                                    aria-label="打开文件夹"
                                                     className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                    title="Open Folder"
+                                                    title="打开文件夹"
                                                     variant="ghost"
                                                 >
                                                     <svg
@@ -248,18 +248,51 @@ const Page = () => {
                     )
                 })
             }
+            {/* 创建按钮 */}
+            {wallpapers && wallpapers.length > 0 && < div className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
+                <div
+                    className="w-full"
+                    height="200"
+                    style={{
+                        aspectRatio: "300/200",
+                        objectFit: "cover",
+                    }}
+                    width="300"
+                >
+                    <Button
+                        aria-label="创建壁纸"
+                        className="flex w-full h-full hover:text-primary"
+                        title="创建壁纸"
+                        variant="ghost"
+                    >
+                        <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                    </Button>
+                </div>
+            </div>
+            }
             {
                 wallpapers && wallpapers.length > 0 && playingPlaylist && screens && <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
             }
-        </div>
+        </div >
         {
             (!wallpapers || wallpapers.length === 0) &&
             <div className="flex items-center justify-center min-h-screen -mt-20">
                 <div className="flex flex-col items-center justify-center">
                     <h2 className="text-xl font-semibold mb-2">没有找到壁纸</h2>
-                    <p className="text-gray-500 mb-4">你可以添加一个壁纸或者修改壁纸扫描目录。</p>
+                    <p className="text-gray-500 mb-4">你可以创建一个壁纸或者修改壁纸扫描目录。</p>
                     <div className="flex space-x-4">
-                        <Button variant="outline" >添加壁纸</Button>
+                        <Button variant="outline" >创建壁纸</Button>
                         <Button variant="outline">
                             <Link href="/settings/wallpaper">
                                 修改目录
