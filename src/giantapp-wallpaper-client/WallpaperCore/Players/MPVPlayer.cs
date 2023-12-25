@@ -34,6 +34,7 @@ public class MpvPlayer
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
     public Process? Process { get; private set; }
+    public bool ProcessLaunched { get; private set; }
     public static string PlayerPath { get; set; } = string.Empty;
 
     #region Options
@@ -69,13 +70,13 @@ public class MpvPlayer
 
                     if (Process == null || Process.HasExited || Process.ProcessName != snapshot.ProcessName)
                     {
-                        Process = null;
+                        ProcessLaunched = false;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.Warn(ex, "Failed to get mpv process.");
-                    Process = null;
+                    ProcessLaunched = false;
                 }
             }
         }
@@ -96,72 +97,83 @@ public class MpvPlayer
 
     public async Task<bool> LaunchAsync(string? playlist = null)
     {
-        Process?.CloseMainWindow();
-        Process?.Dispose();
-
-        Process = new Process();
-        Process.StartInfo.FileName = PlayerPath;
-
-        StringBuilder args = new();
-
-        if (playlist != null)
-            args.Append($"--playlist={playlist} ");
-
-        //允许休眠
-        args.Append("--stop-screensaver=no ");
-
-        //设置解码模式为自动，如果条件允许，MPV会启动硬件解码
-        string hwdec = AutoHwdec ? "auto-safe" : "no";
-        args.Append($"--hwdec={hwdec} ");
-
-        //处理黑边
-        args.Append($"--panscan={PanAndScan} ");
-
-        //ipc
-        args.Append($"--input-ipc-server={IPCServerName} ");
-
-        //循环播放
-        args.Append("--loop-file=inf ");
-
-        //列表循环播放
-        args.Append("--loop-playlist=inf ");
-
-        //最小化
-        args.Append("--window-minimized=yes ");
-
-        //允许屏保
-        args.Append("--stop-screensaver=no ");
-
-        //关闭logo显示
-        args.Append("--no-osc ");
-
-        //初始坐标
-        args.Append("--geometry=-10000:-10000 ");
-
-        //消除边框
-        args.Append("--no-border ");
-
-        Process.StartInfo.Arguments = args.ToString();
-        //_process.StartInfo.UseShellExecute = false;
-        //_process.StartInfo.CreateNoWindow = true;
-        //_process.StartInfo.RedirectStandardInput = true;
-        //_process.StartInfo.RedirectStandardOutput = true;
-        //_process.StartInfo.RedirectStandardError = true;
-        var res = Process.Start();
-        if (!res)
-            return res;
-
-        //异步等待窗口句柄
-        await Task.Run(() =>
+        try
         {
-            while (Process.MainWindowHandle == IntPtr.Zero)
-            {
-                Thread.Sleep(100);
-            }
-        });
+            Process?.CloseMainWindow();
+            Process?.Dispose();
 
-        MainHandle = Process.MainWindowHandle;
-        return res;
+            Process = new Process();
+            _logger.Error($"LaunchAsync {PlayerPath}");
+            Process.StartInfo.FileName = PlayerPath;
+
+            StringBuilder args = new();
+
+            if (playlist != null)
+                args.Append($"--playlist={playlist} ");
+
+            //允许休眠
+            args.Append("--stop-screensaver=no ");
+
+            //设置解码模式为自动，如果条件允许，MPV会启动硬件解码
+            string hwdec = AutoHwdec ? "auto-safe" : "no";
+            args.Append($"--hwdec={hwdec} ");
+
+            //处理黑边
+            args.Append($"--panscan={PanAndScan} ");
+
+            //ipc
+            args.Append($"--input-ipc-server={IPCServerName} ");
+
+            //循环播放
+            args.Append("--loop-file=inf ");
+
+            //列表循环播放
+            args.Append("--loop-playlist=inf ");
+
+            //最小化
+            args.Append("--window-minimized=yes ");
+
+            //允许屏保
+            args.Append("--stop-screensaver=no ");
+
+            //关闭logo显示
+            args.Append("--no-osc ");
+
+            //初始坐标
+            args.Append("--geometry=-10000:-10000 ");
+
+            //消除边框
+            args.Append("--no-border ");
+
+            Process.StartInfo.Arguments = args.ToString();
+            //_process.StartInfo.UseShellExecute = false;
+            //_process.StartInfo.CreateNoWindow = true;
+            //_process.StartInfo.RedirectStandardInput = true;
+            //_process.StartInfo.RedirectStandardOutput = true;
+            //_process.StartInfo.RedirectStandardError = true;
+            var res = Process.Start();
+            if (!res)
+                return res;
+
+            //异步等待窗口句柄
+            await Task.Run(() =>
+            {
+                while (Process.MainWindowHandle == IntPtr.Zero)
+                {
+                    Thread.Sleep(100);
+                }
+            });
+
+            MainHandle = Process.MainWindowHandle;
+            ProcessLaunched = true;
+            return res;
+        }
+        catch (Exception ex)
+        {
+            ProcessLaunched = false;
+            _logger.Error(ex, "Failed to launch mpv.");
+            return false;
+        }
     }
 
     public void Quit()
@@ -236,14 +248,14 @@ public class MpvPlayer
         {
             if (Process == null || Process.HasExited)
             {
-                Process = null;
+                ProcessLaunched = false;
                 return null;
             }
         }
         catch (InvalidOperationException ex)
         {
             _logger.Warn(ex, "Failed to get mpv process.");
-            Process = null;
+            ProcessLaunched = false;
             return null;
         }
 

@@ -27,11 +27,20 @@ public class NLogHelper
         var config = new NLog.Config.LoggingConfiguration();
 
         string logPath = Path.Combine(Folder, "log.txt");
-        var logfile = new NLog.Targets.FileTarget("logfile") { FileName = logPath };
+        string erroLlogPath = Path.Combine(Folder, "err.txt");
+        var logfile = new NLog.Targets.FileTarget("logfile") { FileName = logPath, MaxArchiveFiles = 3, ArchiveEvery = NLog.Targets.FileArchivePeriod.Month };
+        var erroLogfile = new NLog.Targets.FileTarget("erroLogfile")
+        {
+            FileName = erroLlogPath,
+            MaxArchiveFiles = 3,
+            ArchiveEvery = NLog.Targets.FileArchivePeriod.Month,
+            //Layout = "${longdate} ${uppercase:${level}} ${message} ${exception:format=toString} (line: ${callsite-linenumber})"
+        };
         var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
 
         config.AddRule(LogLevel.Info, LogLevel.Fatal, logconsole);
         config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+        config.AddRule(LogLevel.Error, LogLevel.Fatal, erroLogfile);
 
         // Apply config           
         LogManager.Configuration = config;
@@ -59,15 +68,18 @@ public class NLogHelper
     }
     public static void OpenConfigFolder()
     {
-        try
+        Debouncer.Shared.Delay(() =>
         {
-            Process.Start("Explorer.exe", Folder);
-        }
-        catch (Exception ex)
-        {
-            _logger.Warn("OpenConfigFolder:" + ex);
-            System.Windows.MessageBox.Show("OpenConfigFolder:" + ex);
-        }
+            try
+            {
+                Process.Start("Explorer.exe", Folder);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn("OpenConfigFolder:" + ex);
+                MessageBox.Show("OpenConfigFolder:" + ex);
+            }
+        }, 1000);
     }
 
     #endregion

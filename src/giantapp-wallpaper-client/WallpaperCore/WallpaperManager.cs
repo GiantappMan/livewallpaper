@@ -48,7 +48,7 @@ public class WallpaperManager
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
         uint screenIndex = Playlist.Setting.ScreenIndexes[0];
 
-        if (_mpvPlayer.Process == null || _mpvPlayer.Process.HasExited)
+        if (!_mpvPlayer.ProcessLaunched)
         {
             await _mpvPlayer.LaunchAsync();
             var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
