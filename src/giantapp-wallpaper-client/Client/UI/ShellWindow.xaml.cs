@@ -233,6 +233,19 @@ public partial class ShellWindow : Window
         }
         return false;
     }
+
+    private async void InitDargAndDrop()
+    {
+        // DragEnter 事件处理程序
+        await webview2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
+   "window.addEventListener('dragover',function(e){e.preventDefault();},false);" +
+   "window.addEventListener('drop',function(e){" +
+      "e.preventDefault();" +
+      "console.log(e.dataTransfer);" +
+      "console.log(e.dataTransfer.files[0])" +
+   "}, false);");
+    }
+
     #endregion
 
     #region callback
@@ -295,6 +308,7 @@ public partial class ShellWindow : Window
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
+        InitDargAndDrop();
         ApplyCustomFolderMapping(webview2);
 
 #if !DEBUG
