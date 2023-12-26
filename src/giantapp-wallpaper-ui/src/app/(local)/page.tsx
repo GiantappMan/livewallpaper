@@ -72,7 +72,9 @@ const Page = () => {
             setting: {
                 playIndex: 0,
                 mode: PlayMode.Order,
-                screenIndexes
+                screenIndexes,
+                volume: 0,
+                isPaused: false
             },
             meta: {}
         }
@@ -251,13 +253,7 @@ const Page = () => {
             {/* 创建按钮 */}
             {wallpapers && wallpapers.length > 0 && < div className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
                 <div
-                    className="w-full"
-                    height="200"
-                    style={{
-                        aspectRatio: "300/200",
-                        objectFit: "cover",
-                    }}
-                    width="300"
+                    className="w-full aspect-[3/2]"
                 >
                     <Button
                         aria-label="创建壁纸"
