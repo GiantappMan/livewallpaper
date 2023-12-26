@@ -199,10 +199,16 @@ public class ApiObject
             //忽略+号后的内容
             var index = version.IndexOf('+');
             if (index > 0)
-                version = version.Substring(0, index);
+                version = version[..index];
             return version;
         }
         var version1 = Assembly.GetExecutingAssembly().GetName().Version;
         return version1.ToString();
+    }
+
+    //前端上传文件
+    public bool CreateWallpaper()
+    {
+        return true;
     }
 }

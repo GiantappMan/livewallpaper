@@ -11,6 +11,8 @@ import { ToolBar } from "./_components/tool-bar";
 import { toast } from "@/components/ui/use-toast";
 import { PlayMode, Playlist } from "@/lib/client/types/playlist";
 import Link from "next/link";
+import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
+
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
@@ -255,25 +257,10 @@ const Page = () => {
                 <div
                     className="w-full aspect-[3/2]"
                 >
-                    <Button
-                        aria-label="创建壁纸"
-                        className="flex w-full h-full hover:text-primary"
-                        title="创建壁纸"
-                        variant="ghost"
-                    >
-                        <svg
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path d="M12 4v16m8-8H4" />
-                        </svg>
-                    </Button>
+                    <CreateWallpaperDialog />
+                    {/* <div className="px-6 py-4">
+                        <div className="font-bold text-sm mb-2 lg:text-xl">创建壁纸</div>
+                    </div> */}
                 </div>
             </div>
             }

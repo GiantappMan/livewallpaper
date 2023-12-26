@@ -33,7 +33,6 @@ public partial class ShellWindow : Window
     public static bool DarkBackground { get; set; }
 
     public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
-
     #endregion
 
     public ShellWindow()
@@ -308,7 +307,7 @@ public partial class ShellWindow : Window
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-        InitDargAndDrop();
+        //InitDargAndDrop();
         ApplyCustomFolderMapping(webview2);
 
 #if !DEBUG
