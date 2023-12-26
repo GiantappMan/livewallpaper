@@ -57,9 +57,17 @@ public class WallpaperMeta
     public WallpaperType Type { get; set; }
 }
 
+public enum PlaylistType
+{
+    //普通播放列表
+    Playlist,
+    //分组
+    Group
+}
+
 public class PlaylistMeta : WallpaperMeta
 {
-
+    public new PlaylistType Type { get; set; }
 }
 
 public enum PlayMode

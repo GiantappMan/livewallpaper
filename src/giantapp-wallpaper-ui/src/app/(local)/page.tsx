@@ -9,7 +9,7 @@ import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
 import { toast } from "@/components/ui/use-toast";
-import { PlayMode, Playlist } from "@/lib/client/types/playlist";
+import { PlayMode, Playlist, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
 import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
 
@@ -78,7 +78,8 @@ const Page = () => {
                 volume: 0,
                 isPaused: false
             },
-            meta: {}
+            meta: {
+            }
         }
         const res = await api.showWallpaper(playlist);
         if (res.error) {

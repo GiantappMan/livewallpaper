@@ -18,8 +18,13 @@ export type PlaylistSetting = {
     volume: number;
 }
 
+export enum PlaylistType {
+    Playlist,
+    Group
+}
+
 export type PlaylistMeta = WallpaperMeta & {
-    // Add additional properties here
+    type: PlaylistType;
 };
 
 export type Playlist = {
