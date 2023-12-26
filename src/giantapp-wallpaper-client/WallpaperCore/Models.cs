@@ -131,7 +131,7 @@ public enum WallpaperType
 public class Wallpaper
 {
     public static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
-    public static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".gif", ".webm", ".mkv" };
+    public static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv" };
     public static readonly string[] WebExtension = new[] { ".html", ".htm" };
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
@@ -201,26 +201,7 @@ public class Wallpaper
 
             //设置type
             string extension = Path.GetExtension(FileName);
-            if (ImgExtension.Contains(extension))
-            {
-                Meta.Type = WallpaperType.Img;
-            }
-            else if (VideoExtension.Contains(extension))
-            {
-                Meta.Type = WallpaperType.Video;
-            }
-            else if (WebExtension.Contains(extension))
-            {
-                Meta.Type = WallpaperType.Web;
-            }
-            else if (ExeExtension.Contains(extension))
-            {
-                Meta.Type = WallpaperType.Exe;
-            }
-            else if (AnimatedImgExtension.Contains(extension))
-            {
-                Meta.Type = WallpaperType.AnimatedImg;
-            }
+            Meta.Type = ResolveType(extension);
         }
         catch (Exception ex)
         {
@@ -268,7 +249,8 @@ public class Wallpaper
                 {
                     Title = projectJson.Title,
                     Description = projectJson.Description,
-                    Cover = projectJson.Preview
+                    Cover = projectJson.Preview,
+                    Type = ResolveType(Path.GetExtension(projectJson.File))
                 };
                 data.Meta = meta;
                 if (meta?.Cover != null)
@@ -284,6 +266,32 @@ public class Wallpaper
             data.LoadSetting();
         return data;
     }
+
+    public static WallpaperType ResolveType(string extension)
+    {
+        if (ImgExtension.Contains(extension))
+        {
+            return WallpaperType.Img;
+        }
+        else if (VideoExtension.Contains(extension))
+        {
+            return WallpaperType.Video;
+        }
+        else if (WebExtension.Contains(extension))
+        {
+            return WallpaperType.Web;
+        }
+        else if (ExeExtension.Contains(extension))
+        {
+            return WallpaperType.Exe;
+        }
+        else if (AnimatedImgExtension.Contains(extension))
+        {
+            return WallpaperType.AnimatedImg;
+        }
+        return WallpaperType.Video;
+    }
+
     public static bool IsSupportedFile(string fileExtension)
     {
         var lowerCaseExtension = fileExtension.ToLower();

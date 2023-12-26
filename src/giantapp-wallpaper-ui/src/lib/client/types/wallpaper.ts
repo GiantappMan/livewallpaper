@@ -7,13 +7,23 @@ export type Wallpaper = {
   setting?: WallpaperSetting;
 };
 
+export enum WallpaperType {
+  Img,
+  AnimatedImg,
+  Video,
+  Web,
+  Exe
+};
+
 export type WallpaperMeta = {
   title?: string;
   description?: string;
+  cover?: string;
   author?: string;
   authorID?: string;
   createTime?: Date;
   updateTime?: Date;
+  type?: WallpaperType;
 };
 
 export type WallpaperSetting = {

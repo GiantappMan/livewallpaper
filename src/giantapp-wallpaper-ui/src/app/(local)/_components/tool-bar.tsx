@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/lib/client/types/playlist";
-import { Wallpaper } from "@/lib/client/types/wallpaper";
+import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
 import { useCallback, useEffect, useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
 import { cn } from "@/lib/utils";
@@ -120,13 +120,22 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
 
     const handleVolumeChange = useCallback((value: number[]) => {
         var tmpPlaylists = [...playlists];
+        //从tmpPlaylists找目标列表，如果有选中的用选中的，如果没有选中的选有音量的，如果没有音量，选第一个视频壁纸
+        debugger
+        var target = tmpPlaylists.find(x => x.playlist && x.playlist.setting.volume > 0);
+        if (selectedPlaylist)
+            target = tmpPlaylists.find(x => x.screen.deviceName === selectedPlaylist.screen.deviceName);
+        if (!target)
+            target = tmpPlaylists.find(x => x.playlist && x.playlist.wallpapers.some(y => y.meta?.type === WallpaperType.Video));
+        if (!target)
+            return;
+
         tmpPlaylists.forEach((element, index) => {
             if (!element.playlist)
                 return;
 
             //选中的屏幕，或者没有选中就影响有声音的屏幕
-            if (selectedPlaylist && element.screen.deviceName === selectedPlaylist.screen.deviceName ||
-                !selectedPlaylist && element.playlist.setting.volume > 0) {
+            if (target === element) {
                 api.setVolume(value[0], index)
                 setVolume(value[0]);
                 element.playlist.setting.volume = value[0];
