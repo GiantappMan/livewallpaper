@@ -211,4 +211,17 @@ public class ApiObject
     {
         return true;
     }
+
+    //通过默认浏览器打开url
+    public void OpenUrl(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(url);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+    }
 }

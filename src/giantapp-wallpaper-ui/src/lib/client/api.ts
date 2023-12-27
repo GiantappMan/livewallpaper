@@ -153,6 +153,17 @@ class API {
     }
   }
 
+  async openUrl(url: string): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      api.OpenUrl(url);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

@@ -9,6 +9,7 @@ interface API {
   ResumeWallpaper(screenIndex?: number): Promise<void>;
   SetVolume(volume: string, screenIndex?: string): Promise<void>;
   GetVersion(): Promise<string>;
+  OpenUrl(url: string): Promise<void>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 
