@@ -24,11 +24,11 @@ const Page = () => {
 
     return <div className="h-screen flex flex-col items-start space-y-6">
         <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">关于</h1>
+            <h1 className="text-2xl font-semibold">关于</h1>
             <p className="text-lg text-primary">巨应壁纸{version}</p>
         </div>
         <div className="space-y-2">
-            <h2 className="text-2xl font-semibold mt-4">源码</h2>
+            <h1 className="text-2xl font-semibold mt-4">源码</h1>
             <div className="flex flex-col space-y-2">
                 <LinkClient
                     className="text-primary underline-offset-4 hover:underline" href="https://github.com/DaZiYuan/livewallpaper" target="_blank">

@@ -111,13 +111,13 @@ export default function Page() {
     return (
         <div className="h-screen space-y-6">
             <div className="space-y-2">
-                <h1 className="text-3xl font-semibold">壁纸设置</h1>
+                <h1 className="text-2xl font-semibold">壁纸设置</h1>
             </div>
             <div className="space-y-2">
                 {mounted ?
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-                            <h2 className="text-2xl font-semibold mt-4">保存目录</h2>
+                            <h2 className="font-semibold mt-4">保存目录</h2>
                             {
                                 fields.map((field, index) => (
                                     <FormField

@@ -38,10 +38,10 @@ const Page = () => {
 
     return <div className="h-screen space-y-6">
         <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">外观设置</h1>
+            <h1 className="text-2xl font-semibold">外观设置</h1>
         </div>
         <div className="space-y-2">
-            <h2 className="text-2xl font-semibold mt-4">主题模式</h2>
+            <h2 className="font-semibold mt-4">主题模式</h2>
             <div className="grid grid-cols-3 gap-2">
                 {mounted ? (
                     <>
@@ -82,7 +82,7 @@ const Page = () => {
             </div>
         </div>
         <div className="space-y-2">
-            <h2 className="text-2xl font-semibold mt-4">选择颜色</h2>
+            <h2 className="font-semibold mt-4">选择颜色</h2>
             <div className="grid grid-cols-3 gap-2">
                 {themes.map((theme) => {
                     const isActive = config.theme === theme.name

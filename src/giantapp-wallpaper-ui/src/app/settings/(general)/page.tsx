@@ -52,7 +52,7 @@ const Page = () => {
             mounted ?
                 <>
                     <div className="space-y-2">
-                        <h1 className="text-3xl font-semibold">常规设置</h1>
+                        <h1 className="text-2xl font-semibold">常规设置</h1>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor="startup">开机启动</Label>
