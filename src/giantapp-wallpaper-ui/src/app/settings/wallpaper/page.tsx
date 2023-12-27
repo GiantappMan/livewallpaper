@@ -109,41 +109,46 @@ export default function Page() {
     }
 
     return (
-        mounted ?
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-                    <h3 className="mb-4 text-lg font-medium">壁纸目录</h3>
-                    {
-                        fields.map((field, index) => (
-                            <FormField
-                                key={field.id}
-                                control={control}
-                                name={`directories.${index}.path`}
-                                render={({ field }) => (
-                                    <FormItem >
-                                        <div className="flex w-full max-w-sm items-center space-x-2 space-y-0">
-                                            <FormControl>
-                                                <Input autoComplete="off" placeholder={index === 0 ? "壁纸保存目录" : "壁纸读取目录"} {...field}
-                                                    onBlur={() => form.handleSubmit(onSubmit)()} />
-                                            </FormControl>
-                                            <Button type="button" onClick={() => openFileSelector(index)} className="items-center self-center">选择</Button>
-                                            {
-                                                index > 0 &&
-                                                <Button type="button" className="items-center self-center" onClick={() => {
-                                                    remove(index);
-                                                    form.handleSubmit(onSubmit)()
-                                                }}>X</Button>
-                                            }
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        ))
-                    }
+        <div className="h-screen space-y-6">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-semibold">壁纸设置</h1>
+            </div>
+            <div className="space-y-2">
+                {mounted ?
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+                            <h2 className="text-2xl font-semibold mt-4">保存目录</h2>
+                            {
+                                fields.map((field, index) => (
+                                    <FormField
+                                        key={field.id}
+                                        control={control}
+                                        name={`directories.${index}.path`}
+                                        render={({ field }) => (
+                                            <FormItem >
+                                                <div className="flex w-full max-w-sm items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <Input autoComplete="off" placeholder={index === 0 ? "壁纸保存目录" : "壁纸读取目录"} {...field}
+                                                            onBlur={() => form.handleSubmit(onSubmit)()} />
+                                                    </FormControl>
+                                                    <Button type="button" onClick={() => openFileSelector(index)} className="items-center self-center">选择</Button>
+                                                    {
+                                                        index > 0 &&
+                                                        <Button type="button" className="items-center self-center" onClick={() => {
+                                                            remove(index);
+                                                            form.handleSubmit(onSubmit)()
+                                                        }}>X</Button>
+                                                    }
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))
+                            }
 
-                    <Button type="button" onClick={addFolder}>添加目录</Button>
+                            <Button type="button" onClick={addFolder}>添加目录</Button>
 
-                    {/* <FormItem>
+                            {/* <FormItem>
                         <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
                         <FormField
                             control={control}
@@ -162,9 +167,12 @@ export default function Page() {
                             )}
                         />
                     </FormItem> */}
-                </form>
-            </Form>
-            :
-            <Skeleton className="h-8 w-32" />
+                        </form>
+                    </Form>
+                    :
+                    <Skeleton className="h-8 w-32" />
+                }
+            </div>
+        </div>
     )
 }

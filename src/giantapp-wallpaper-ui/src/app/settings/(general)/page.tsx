@@ -47,11 +47,13 @@ const Page = () => {
         }
     }, [mounted]);
 
-    return <>
+    return <div className="h-screen space-y-6">
         {
             mounted ?
                 <>
-                    <h3 className="text-lg font-medium">常规设置</h3>
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-semibold">常规设置</h1>
+                    </div>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor="startup">开机启动</Label>
                         <Switch id="startup" checked={config.autoStart}
@@ -128,7 +130,7 @@ const Page = () => {
                     <Skeleton className="h-8 w-32" />
                 </>
         }
-    </>
+    </div>
 };
 
 export default Page;

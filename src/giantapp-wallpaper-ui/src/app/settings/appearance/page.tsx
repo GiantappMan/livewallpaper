@@ -36,9 +36,12 @@ const Page = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    return <>
-        <div className="space-y-1.5">
-            <h3 className="mb-4 text-lg font-medium">选择模式</h3>
+    return <div className="h-screen space-y-6">
+        <div className="space-y-2">
+            <h1 className="text-3xl font-semibold">外观设置</h1>
+        </div>
+        <div className="space-y-2">
+            <h2 className="text-2xl font-semibold mt-4">主题模式</h2>
             <div className="grid grid-cols-3 gap-2">
                 {mounted ? (
                     <>
@@ -78,8 +81,8 @@ const Page = () => {
                 )}
             </div>
         </div>
-        <div className="space-y-1.5">
-            <h3 className="mb-4 text-lg font-medium">选择颜色</h3>
+        <div className="space-y-2">
+            <h2 className="text-2xl font-semibold mt-4">选择颜色</h2>
             <div className="grid grid-cols-3 gap-2">
                 {themes.map((theme) => {
                     const isActive = config.theme === theme.name
@@ -121,7 +124,7 @@ const Page = () => {
                 })}
             </div>
         </div>
-    </>;
+    </div>;
 };
 
 export default Page;
