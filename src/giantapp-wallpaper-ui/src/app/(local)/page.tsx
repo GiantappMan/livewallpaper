@@ -8,7 +8,7 @@ import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner"
 import { PlayMode, Playlist, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
 import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
@@ -21,17 +21,13 @@ const Page = () => {
     const refresh = async () => {
         const res = await api.getWallpapers();
         if (res.error) {
-            toast({
-                title: "获取壁纸列表失败",
-                description: res.error,
-                duration: 3000,
-            });
+            toast.error("获取壁纸列表失败")
             return;
         }
 
         const screens = await api.getScreens();
         if (screens.error) {
-            toast({
+            toast.error({
                 title: "获取屏幕列表失败",
                 description: screens.error,
                 duration: 3000,
@@ -44,11 +40,8 @@ const Page = () => {
 
         const _playingPlaylist = await api.getPlayingPlaylist();
         if (_playingPlaylist.error) {
-            toast({
-                title: "获取正在播放的壁纸失败",
-                description: _playingPlaylist.error,
-                duration: 3000,
-            });
+            toast.error("获取正在播放的壁纸失败")
+            console.log(_playingPlaylist.error)
             return;
         }
 

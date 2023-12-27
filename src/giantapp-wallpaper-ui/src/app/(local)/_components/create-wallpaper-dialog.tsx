@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UploadCloudIcon } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
 
 interface CreateWallpaperDialogProps {
 
@@ -53,6 +54,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                     <UploadCloudIcon className="text-foreground w-10 h-10" />
                     <p className="text-gray-500">点击上传或拖入文件到这里</p>
                 </div>
+                <Progress value={33} />
             </div>
             <DialogFooter>
                 <Button type="submit">保存</Button>

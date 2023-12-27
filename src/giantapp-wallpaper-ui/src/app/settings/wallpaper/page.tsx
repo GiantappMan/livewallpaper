@@ -12,7 +12,7 @@ import {
     FormLabel,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import shellApi from "@/lib/client/shell";
 import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
@@ -76,11 +76,8 @@ export default function Page() {
             keepWallpaper: data.keepWallpaper,
         })
         if (saveRes.error) {
-            toast({
-                duration: 3000,
-                title: "保存失败",
-                description: saveRes.error.message,
-            });
+            toast.error("保存失败");
+            console.error(saveRes.error);
         }
         else {
             //更新UI

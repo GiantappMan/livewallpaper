@@ -18,8 +18,7 @@ import { ThemeWrapper } from '@/components/theme-wrapper';
 import { ConfigAppearance } from '@/lib/client/types/config';
 import api from "@/lib/client/api";
 import { defaultConfig, useConfig } from '@/hooks/use-config';
-import { Toaster } from '@/components/ui/toaster';
-
+import { Toaster } from "@/components/ui/sonner"
 export const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
