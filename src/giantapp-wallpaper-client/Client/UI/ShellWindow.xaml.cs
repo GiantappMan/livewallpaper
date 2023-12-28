@@ -31,6 +31,7 @@ public partial class ShellWindow : Window
     public static object? ClientApi { get; set; }
 
     public static bool DarkBackground { get; set; }
+    public static bool AllowDragFile { get; set; } = false;
 
     public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
     #endregion
@@ -233,7 +234,8 @@ public partial class ShellWindow : Window
         return false;
     }
 
-    private async void InitDargAndDrop()
+    //禁用拖放文件打开新窗口
+    private async void DisableDragFile()
     {
         // DragEnter 事件处理程序
         await webview2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
@@ -307,7 +309,8 @@ public partial class ShellWindow : Window
         }
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-        //InitDargAndDrop();
+        if (!AllowDragFile)
+            DisableDragFile();
         ApplyCustomFolderMapping(webview2);
 
 #if !DEBUG
