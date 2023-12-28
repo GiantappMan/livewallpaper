@@ -216,6 +216,8 @@ public class WindowStateChecker
 
     public void Start()
     {
+        if (_timer != null && _timer.Enabled)
+            return;
         _timer?.Start(); // 开始定时器
     }
 

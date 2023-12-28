@@ -66,6 +66,7 @@ public class MpvPlayer
                     if (runningProcesses.Any(p => p.Id == snapshot.PId.Value))
                     {
                         Process = Process.GetProcessById(snapshot.PId.Value);
+                        ProcessLaunched = true;
                     }
 
                     if (Process == null || Process.HasExited || Process.ProcessName != snapshot.ProcessName)

@@ -207,7 +207,7 @@ public class ApiObject
     }
 
     //前端上传文件
-    public bool CreateWallpaper()
+    public bool CreateWallpaper(string any)
     {
         return true;
     }

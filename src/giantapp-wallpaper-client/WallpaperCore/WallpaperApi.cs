@@ -21,7 +21,6 @@ public static class WallpaperApi
     static WallpaperApi()
     {
         WindowStateChecker.Instance.WindowStateChanged += Instance_WindowStateChanged;
-        WindowStateChecker.Instance.Start();
 
         //禁用DPI
         SetPerMonitorV2DpiAwareness();
@@ -120,6 +119,8 @@ public static class WallpaperApi
             manager.Playlist = tmplist;
             await manager.Play();
         }
+
+        WindowStateChecker.Instance.Start();
 
         return true;
     }
