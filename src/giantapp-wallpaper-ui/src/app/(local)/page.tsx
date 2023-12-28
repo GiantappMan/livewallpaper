@@ -6,10 +6,10 @@ import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
 import { toast } from "sonner"
-import { PlayMode, Playlist, PlaylistType } from "@/lib/client/types/playlist";
+import { PlayMode, Playlist, PlaylistMeta, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
 import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
 
@@ -17,6 +17,7 @@ const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
+    const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const mounted = useMounted()
     const refresh = async () => {
         const res = await api.getWallpapers();
@@ -27,11 +28,7 @@ const Page = () => {
 
         const screens = await api.getScreens();
         if (screens.error) {
-            toast.error({
-                title: "获取屏幕列表失败",
-                description: screens.error,
-                duration: 3000,
-            });
+            toast.error("获取屏幕列表失败");
             return;
         }
 
@@ -72,7 +69,8 @@ const Page = () => {
                 isPaused: false
             },
             meta: {
-            }
+                type: PlaylistType.Playlist,
+            } as PlaylistMeta
         }
         const res = await api.showWallpaper(playlist);
         if (res.error) {
@@ -86,8 +84,38 @@ const Page = () => {
         refresh();
     }, []);
 
+    let dragCounter = 0;
+    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        console.log("drag over");
+        e.preventDefault();
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        console.log(e.dataTransfer?.files[0]);
+    }, []);
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        dragCounter++;
+        console.log("drag enter");
+        e.preventDefault();
+        setOpenCreateWallpaperDialog(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        dragCounter--;
+        if (dragCounter === 0) {
+            // setOpenCreateWallpaperDialog(false);
+            console.log("drag leave");
+        }
+        e.preventDefault();
+    };
     return <>
-        <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20">
+        <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}>
             {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                     if (!mounted)
@@ -251,7 +279,7 @@ const Page = () => {
                 <div
                     className="w-full aspect-[3/2]"
                 >
-                    <CreateWallpaperDialog />
+                    <CreateWallpaperDialog open={openCreateWallpaperDialog} onChange={(e) => setOpenCreateWallpaperDialog(e)} />
                     {/* <div className="px-6 py-4">
                         <div className="font-bold text-sm mb-2 lg:text-xl">创建壁纸</div>
                     </div> */}

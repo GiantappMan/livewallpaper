@@ -10,22 +10,23 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { UploadCloudIcon } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 interface CreateWallpaperDialogProps {
-
+    open: boolean
+    onChange: (open: boolean) => void
 }
 
 export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
-    return <Dialog>
+    return <Dialog open={props.open} onOpenChange={(e) => props.onChange(e)} >
         <DialogTrigger asChild>
             <Button
                 aria-label="创建壁纸"
                 className="flex w-full h-full hover:text-primary"
                 title="创建壁纸"
                 variant="ghost"
+                onClick={() => props.onChange(!props.open)}
             >
                 <svg
                     className="h-5 w-5"
