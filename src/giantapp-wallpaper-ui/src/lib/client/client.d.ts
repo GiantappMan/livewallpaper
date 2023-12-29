@@ -10,6 +10,7 @@ interface API {
   SetVolume(volume: string, screenIndex?: string): Promise<void>;
   GetVersion(): Promise<string>;
   OpenUrl(url: string): Promise<void>;
+  CreateWallpaper(fileName: string, content: string): Promise<void>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

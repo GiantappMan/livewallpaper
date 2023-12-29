@@ -90,11 +90,6 @@ const Page = () => {
         e.preventDefault();
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        console.log(e.dataTransfer?.files[0]);
-    }, []);
-
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         dragCounter++;
         console.log("drag enter");
@@ -115,7 +110,7 @@ const Page = () => {
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
-            onDrop={handleDrop}>
+        >
             {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                     if (!mounted)
