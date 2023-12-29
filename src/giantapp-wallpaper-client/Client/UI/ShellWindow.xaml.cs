@@ -242,8 +242,8 @@ public partial class ShellWindow : Window
    "window.addEventListener('dragover',function(e){e.preventDefault();},false);" +
    "window.addEventListener('drop',function(e){" +
       "e.preventDefault();" +
-      "console.log(e.dataTransfer);" +
-      "console.log(e.dataTransfer.files[0])" +
+      //"console.log(e.dataTransfer);" +
+      //"console.log(e.dataTransfer.files[0])" +
    "}, false);");
     }
 
