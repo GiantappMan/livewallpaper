@@ -1,6 +1,7 @@
 ﻿using Client.Libs;
 using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -208,18 +209,12 @@ public class ApiObject
     }
 
     //前端上传文件
-    public bool CreateWallpaper(string filename, string fileContentBase64)
+    public string UploadToTmp(string filename, string fileContentBase64)
     {
-        //byte[] fileContent = Encoding.Default.GetBytes(fileContentBinaryString);
-
         byte[] fileContent = Convert.FromBase64String(fileContentBase64);
-
-        var distFolder = "D://test";
-        filename = $"{distFolder}//{filename}";
-        // Now you have the file name and content, you can handle the file as needed.
-        // For example, you can save the file to disk:
-        System.IO.File.WriteAllBytes(filename, fileContent);
-        return true;
+        filename = Path.Combine(Path.GetTempPath(), filename);
+        File.WriteAllBytes(filename, fileContent);
+        return filename;
     }
 
     //通过默认浏览器打开url

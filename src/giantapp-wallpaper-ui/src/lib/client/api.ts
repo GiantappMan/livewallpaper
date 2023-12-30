@@ -165,11 +165,11 @@ class API {
     }
   }
 
-  async createWallpaper(fileName: string, content: string | ArrayBuffer): Promise<ApiResult<null>> {
+  async uploadToTmp(fileName: string, content: string | ArrayBuffer): Promise<ApiResult<null>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      api.CreateWallpaper(fileName, content.toString());
+      api.UploadToTmp(fileName, content.toString());
       return { error: null, data: null };
     } catch (e) {
       console.log(e);

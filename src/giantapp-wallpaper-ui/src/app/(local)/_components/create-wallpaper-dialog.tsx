@@ -103,7 +103,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         try {
             const base64String = await processFile(file, progressCallback);
             console.log("上传", new Date());
-            await api.createWallpaper(file.name, base64String);
+            await api.uploadToTmp(file.name, base64String);
             console.log("已上传", new Date());
             setUploadedFile(file.name);
         } catch (e) {
