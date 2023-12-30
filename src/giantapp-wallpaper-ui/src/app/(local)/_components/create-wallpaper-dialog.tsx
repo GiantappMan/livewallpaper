@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress"
 import { useCallback, useState } from "react"
 import { cn } from "@/lib/utils"
 import api from "@/lib/client/api"
+import { toast } from "sonner"
 
 interface CreateWallpaperDialogProps {
     open: boolean
@@ -23,6 +24,8 @@ interface CreateWallpaperDialogProps {
 
 export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const [isOver, setIsOver] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [uploading, setUploading] = useState(false);
 
     const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -34,25 +37,34 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         reader.onload = async (e) => {
             if (!e.target)
                 return;
-            const contents = new Uint8Array(e.target.result as ArrayBuffer);
-            if (contents) {
-                let binaryString = '';
-                const chunkSize = 5000; // Size of chunks to prevent stack overflow
+            try {
+                setUploading(true);
+                const contents = new Uint8Array(e.target.result as ArrayBuffer);
+                if (contents) {
+                    let binaryString = '';
+                    const chunkSize = 5000; // Size of chunks to prevent stack overflow
 
-                //打印进度
-                const totalProgress = contents.length / chunkSize
-                let currentProgress = 0
-                for (let i = 0; i < contents.length; i += chunkSize) {
-                    const subArray = Array.from(contents.subarray(i, i + chunkSize));
-                    binaryString += String.fromCharCode.apply(null, subArray);
                     //打印进度
-                    currentProgress += 1
-                    console.log(currentProgress / totalProgress)
+                    const totalProgress = contents.length / chunkSize
+                    let currentProgress = 0
+                    for (let i = 0; i < contents.length; i += chunkSize) {
+                        const subArray = Array.from(contents.subarray(i, i + chunkSize));
+                        binaryString += String.fromCharCode.apply(null, subArray);
+                        //打印进度
+                        currentProgress += 1
+                        console.log(currentProgress / totalProgress * 100)
+                        setProgress(currentProgress / totalProgress * 100)
+                    }
+                    let base64String = btoa(binaryString);
+                    console.log("upload", new Date())
+                    await api.createWallpaper(file.name, base64String)
+                    console.log("uploaded", new Date())
                 }
-                let base64String = btoa(binaryString);
-                console.log("upload", new Date())
-                await api.createWallpaper(file.name, base64String)
-                console.log("uploaded", new Date())
+            } catch (error) {
+                toast.error((error as any).message)
+            }
+            finally {
+                setUploading(false);
             }
         };
         reader.readAsArrayBuffer(file);
@@ -66,6 +78,12 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsOver(false);
+    }, []);
+
+    const handleSave = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        toast.success("保存成功")
+        console.log("save")
     }, []);
 
     return <Dialog open={props.open} onOpenChange={(e) => props.onChange(e)} >
@@ -92,29 +110,33 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>创建壁纸</DialogTitle>
-                <DialogDescription>
-                    本地壁纸，仅保存在你本机
-                </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col space-y-4">
-                <Input id="title" placeholder="输入标题" />
-                <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
-                        "border-primary bg-muted": isOver,
-                    }])}>
-                    <UploadCloudIcon className="text-foreground w-10 h-10" />
-                    <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击上传或拖入文件到这里"}</p>
+            <form onSubmit={handleSave}>
+                <DialogHeader>
+                    <DialogTitle>创建壁纸</DialogTitle>
+                    <DialogDescription>
+                        本地壁纸，仅保存在你本机
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col space-y-4">
+                    {uploading && <p className="text-gray-500">上传中...</p>}
+                    {progress > 0 && <p className="text-gray-500">上传进度：{progress}%</p>}
+                    <Input id="title" placeholder="输入标题" autoComplete="off" />
+                    <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
+                            "border-primary bg-muted": isOver,
+                        }])}>
+                        <UploadCloudIcon className="text-foreground w-10 h-10" />
+                        <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击上传或拖入文件到这里"}</p>
+                    </div>
+                    {uploading && <Progress value={progress} />}
                 </div>
-                <Progress value={33} />
-            </div>
-            <DialogFooter>
-                <Button type="submit">保存</Button>
-            </DialogFooter>
+                <DialogFooter>
+                    <Button type="submit">保存</Button>
+                </DialogFooter>
+            </form>
         </DialogContent>
     </Dialog>
 }

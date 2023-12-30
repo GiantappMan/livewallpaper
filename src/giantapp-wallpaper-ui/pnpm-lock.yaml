@@ -57,8 +57,8 @@ dependencies:
     specifier: ^0.7.0
     version: registry.npmmirror.com/class-variance-authority@0.7.0
   clsx:
-    specifier: ^2.0.0
-    version: registry.npmmirror.com/clsx@2.0.0
+    specifier: ^2.1.0
+    version: 2.1.0
   cmdk:
     specifier: ^0.2.0
     version: registry.npmmirror.com/cmdk@0.2.0(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
@@ -1059,6 +1059,16 @@ packages:
 
   /client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
+    dev: false
+
+  /clsx@2.0.0:
+    resolution: {integrity: sha512-rQ1+kcj+ttHG0MKVGBUXwayCCF1oh39BF5COIpRzuCEv8Mwjv0XucrI2ExNTOn9IlLifGClWQcU9BrZORvtw6Q==, tarball: https://registry.npmmirror.com/clsx/-/clsx-2.0.0.tgz}
+    engines: {node: '>=6'}
+    dev: false
+
+  /clsx@2.1.0:
+    resolution: {integrity: sha512-m3iNNWpd9rl3jvvcBnu70ylMdrXt8Vlq4HYadnU5fwcOtvkSQWPmj7amUcDT2qYI7risszBjI5AUIUox9D16pg==, tarball: https://registry.npmmirror.com/clsx/-/clsx-2.1.0.tgz}
+    engines: {node: '>=6'}
     dev: false
 
   /concat-map@0.0.1:
@@ -3550,14 +3560,7 @@ packages:
     name: class-variance-authority
     version: 0.7.0
     dependencies:
-      clsx: registry.npmmirror.com/clsx@2.0.0
-    dev: false
-
-  registry.npmmirror.com/clsx@2.0.0:
-    resolution: {integrity: sha512-rQ1+kcj+ttHG0MKVGBUXwayCCF1oh39BF5COIpRzuCEv8Mwjv0XucrI2ExNTOn9IlLifGClWQcU9BrZORvtw6Q==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/clsx/-/clsx-2.0.0.tgz}
-    name: clsx
-    version: 2.0.0
-    engines: {node: '>=6'}
+      clsx: 2.0.0
     dev: false
 
   registry.npmmirror.com/cmdk@0.2.0(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0):
