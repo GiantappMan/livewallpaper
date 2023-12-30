@@ -157,11 +157,12 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         </Button>
                     }
                     {
-                        (singlePlaylistMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
+                        (singlePlaylistMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
                             <img
                                 alt="Cover"
                                 title={item.current.meta?.title}
-                                className={cn(["rounded-lg object-scale-cover aspect-square", !singlePlaylistMode && isSelected ? " border-2 border-primary" : ""])}
+                                className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
+                                ])}
                                 height={50}
                                 src={item.current.coverUrl || "/wp-placeholder.webp"}
                                 width={50}
@@ -257,9 +258,9 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                 }
             </div>
             {(selectedPlaylist || singlePlaylistMode) && <div className="flex items-center justify-between text-xs w-full">
-                <div className="text-primary-600 dark:text-primary-400">00:00</div>
+                {/* <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
-                <div className="text-primary-600 dark:text-primary-400">04:30</div>
+                <div className="text-primary-600 dark:text-primary-400">04:30</div> */}
             </div>}
         </div>
 
