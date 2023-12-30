@@ -25,8 +25,8 @@ const formSchema = z.object({
     title: z.string(),
     file: z.instanceof(File, {
         message: "文件未上传",
-    }).refine((file) => file.size < 1024 * 1024 * 1000, {
-        message: "文件大小不能超过10MB",
+    }).refine((file) => file.size < 1024 * 1024 * 1024, {
+        message: "文件大小不能超过1G",
     }),
 })
 
@@ -111,7 +111,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const [progress, setProgress] = useState(0);
     const [uploading, setUploading] = useState(false);
     const uploadingFile = form.watch("file");
-    const [uploadedFile, setUploadedFile] = useState<string>();
+    const [uploadedFile, setUploadedFile] = useState<{
+        name: string,
+        path: string
+    }>();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     //每次打开重置状态
@@ -141,14 +144,21 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         };
         try {
             const base64String = await processFile(file, progressCallback, abortController);
-            await api.uploadToTmp(file.name, base64String);
-            setUploadedFile(file.name);
+            var { data } = await api.uploadToTmp(file.name, base64String);
+            console.log(data);
+            setUploadedFile({
+                name: file.name,
+                path: data || ""
+            });
+            const fileName = file.name.split(".")[0];
+            if (!form.getValues("title"))
+                form.setValue("title", fileName);
         } catch (e) {
             toast.error((e as any).message);
         } finally {
             setUploading(false);
         }
-    }, []);
+    }, [form]);
 
     const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -241,6 +251,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                     <FormItem>
                                         <FormControl>
                                             <Input {...field}
+                                                accept="image/*,video/*"
                                                 type="file"
                                                 value={undefined}
                                                 ref={fileInputRef}
@@ -280,7 +291,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                 <>
                                     <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
                                     <div className="flex justify-between items-center text-[#9CA3AF]">
-                                        <p>{uploadedFile}</p>
+                                        <p>{uploadedFile.name}</p>
                                         <Button type="button" variant="ghost" onClick={() => setUploadedFile(undefined)}>
                                             <DeleteIcon className="h-6 w-6" />
                                         </Button>

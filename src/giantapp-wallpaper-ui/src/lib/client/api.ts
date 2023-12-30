@@ -165,12 +165,12 @@ class API {
     }
   }
 
-  async uploadToTmp(fileName: string, content: string | ArrayBuffer): Promise<ApiResult<null>> {
+  async uploadToTmp(fileName: string, content: string | ArrayBuffer): Promise<ApiResult<string>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      api.UploadToTmp(fileName, content.toString());
-      return { error: null, data: null };
+      var data = await api.UploadToTmp(fileName, content.toString());
+      return { error: null, data };
     } catch (e) {
       console.log(e);
       return { error: e, data: null };

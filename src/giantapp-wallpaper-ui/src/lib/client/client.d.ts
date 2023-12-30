@@ -10,7 +10,7 @@ interface API {
   SetVolume(volume: string, screenIndex?: string): Promise<void>;
   GetVersion(): Promise<string>;
   OpenUrl(url: string): Promise<void>;
-  UploadToTmp(fileName: string, content: string): Promise<void>;
+  UploadToTmp(fileName: string, content: string): Promise<string>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 
