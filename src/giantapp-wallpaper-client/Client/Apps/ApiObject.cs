@@ -64,7 +64,7 @@ public class ApiObject
     public void SetConfig(string key, string json)
     {
         key = $"Client.Apps.Configs.{key}";
-        var obj = JsonConvert.DeserializeObject(json, Configer.JsonSettings);
+        var obj = JsonConvert.DeserializeObject(json, WallpaperApi.JsonSettings);
         Configer.Set(key, obj, true);
         if (ConfigSetAfterEvent != null && obj != null)
         {
@@ -80,7 +80,7 @@ public class ApiObject
     {
         key = $"Client.Apps.Configs.{key}";
         var config = Configer.Get<object>(key) ?? "";
-        var json = JsonConvert.SerializeObject(config, Configer.JsonSettings);
+        var json = JsonConvert.SerializeObject(config, WallpaperApi.JsonSettings);
         if (CorrectConfigEvent != null)
         {
             var e = new CorrectConfigEventArgs
@@ -91,7 +91,7 @@ public class ApiObject
             CorrectConfigEvent(this, e);
             if (e.Corrected != null)
             {
-                json = JsonConvert.SerializeObject(e.Corrected, Configer.JsonSettings);
+                json = JsonConvert.SerializeObject(e.Corrected, WallpaperApi.JsonSettings);
             }
         }
 
@@ -108,18 +108,18 @@ public class ApiObject
             item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
             item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
         }
-        return JsonConvert.SerializeObject(res, Configer.JsonSettings);
+        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
     public string GetScreens()
     {
         var screens = WallpaperApi.GetScreens();
-        return JsonConvert.SerializeObject(screens, Configer.JsonSettings);
+        return JsonConvert.SerializeObject(screens, WallpaperApi.JsonSettings);
     }
 
     public async Task<bool> ShowWallpaper(string playlistJson)
     {
-        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, Configer.JsonSettings);
+        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
         if (playlist == null || playlist.Wallpapers.Count == 0)
             return false;
 
@@ -156,7 +156,7 @@ public class ApiObject
                 wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
             }
         }
-        return JsonConvert.SerializeObject(res, Configer.JsonSettings);
+        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
     public void PauseWallpaper(string? screenIndexStr)
@@ -214,6 +214,15 @@ public class ApiObject
         filename = Path.Combine(Path.GetTempPath(), filename);
         File.WriteAllBytes(filename, fileContent);
         return filename;
+    }
+
+    public bool CreateWallpaper(string title, string path)
+    {
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+        if (config?.Directories == null || config.Directories.Length == 0)
+            return false;
+
+        return WallpaperApi.CreateWallpaper(title, path, config.Directories[0]);
     }
 
     //通过默认浏览器打开url

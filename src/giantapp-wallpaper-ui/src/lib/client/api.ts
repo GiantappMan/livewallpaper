@@ -176,6 +176,19 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async createWallpaper(title: string, path: string): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+
+      var res = await api.CreateWallpaper(title, path);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

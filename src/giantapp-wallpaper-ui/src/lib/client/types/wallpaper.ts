@@ -3,11 +3,12 @@ export type Wallpaper = {
   fileName?: string;
   fileUrl?: string;
   coverUrl?: string;
-  meta?: WallpaperMeta;
-  setting?: WallpaperSetting;
+  meta: WallpaperMeta;
+  setting: WallpaperSetting;
 };
 
 export enum WallpaperType {
+  NotSupported,
   Img,
   AnimatedImg,
   Video,

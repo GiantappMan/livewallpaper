@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using NLog;
+using WallpaperCore;
 
 namespace Client.Libs;
 
@@ -13,16 +14,6 @@ namespace Client.Libs;
 public static class Configer
 {
     public static string? Folder { get; private set; }
-    public static JsonSerializerSettings JsonSettings { get; private set; } = new()
-    {
-        Formatting = Formatting.Indented,
-        TypeNameHandling = TypeNameHandling.Auto,
-        ContractResolver = new DefaultContractResolver
-        {
-            NamingStrategy = new CamelCaseNamingStrategy()
-        }
-    };
-
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly ConcurrentDictionary<string, object> _cache = new();
 
@@ -48,7 +39,7 @@ public static class Configer
                 string key = kvp.Key;
                 object config = kvp.Value;
                 string filePath = Path.Combine(Folder, key + ".json");
-                string json = JsonConvert.SerializeObject(config, JsonSettings);
+                string json = JsonConvert.SerializeObject(config, WallpaperApi.JsonSettings);
                 File.WriteAllText(filePath, json);
             }
         }
@@ -104,7 +95,7 @@ public static class Configer
             {
 
                 string json = File.ReadAllText(filePath);
-                var config = JsonConvert.DeserializeObject<T>(json, JsonSettings);
+                var config = JsonConvert.DeserializeObject<T>(json, WallpaperApi.JsonSettings);
                 if (config != null)
                 {
                     // 将从文件中读取的配置存储到缓存中

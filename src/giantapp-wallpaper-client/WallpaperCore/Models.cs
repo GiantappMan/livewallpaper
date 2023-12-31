@@ -126,11 +126,12 @@ public class WallpaperSetting
 
 public enum WallpaperType
 {
+    NotSupported,
     Img,
     AnimatedImg,
     Video,
     Web,
-    Exe
+    Exe,
 }
 
 /// <summary>
@@ -152,10 +153,10 @@ public class Wallpaper
     }
 
     //描述数据
-    public WallpaperMeta? Meta { get; set; }
+    public WallpaperMeta Meta { get; set; } = new();
 
     //设置
-    public WallpaperSetting? Setting { get; set; }
+    public WallpaperSetting Setting { get; set; } = new();
 
     //壁纸所在目录
     public string? Dir { get; private set; }
@@ -193,19 +194,14 @@ public class Wallpaper
             if (File.Exists(metaJsonFile))
             {
                 var meta = JsonConvert.DeserializeObject<WallpaperMeta>(File.ReadAllText(metaJsonFile));
-                Meta = meta;
+                Meta = meta ?? new();
                 if (meta?.Cover != null)
                     CoverPath = Path.Combine(Dir, meta.Cover);
             }
             else
             {
-                Meta = new()
-                {
-                    Title = FileName
-                };
+                Meta.Title = FileName;
             }
-            if (Meta == null)
-                return;
 
             //设置type
             string extension = Path.GetExtension(FileName);
@@ -270,6 +266,9 @@ public class Wallpaper
 
         data.LoadMeta();
 
+        if (data.Meta.Type == WallpaperType.NotSupported)
+            return null;
+
         if (loadSetting)
             data.LoadSetting();
         return data;
@@ -297,7 +296,7 @@ public class Wallpaper
         {
             return WallpaperType.AnimatedImg;
         }
-        return WallpaperType.Video;
+        return WallpaperType.NotSupported;
     }
 
     public static bool IsSupportedFile(string fileExtension)

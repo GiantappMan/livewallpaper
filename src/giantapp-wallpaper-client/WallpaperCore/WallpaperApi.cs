@@ -1,4 +1,6 @@
-﻿using NLog;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using NLog;
 using System.Collections.Concurrent;
 using Windows.Win32;
 
@@ -15,6 +17,15 @@ public static class WallpaperApi
 
     //运行中的屏幕和对应的播放列表，线程安全
     public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new();
+    public static JsonSerializerSettings JsonSettings { get; private set; } = new()
+    {
+        Formatting = Formatting.Indented,
+        TypeNameHandling = TypeNameHandling.Auto,
+        ContractResolver = new DefaultContractResolver
+        {
+            NamingStrategy = new CamelCaseNamingStrategy()
+        }
+    };
 
     #endregion
 
@@ -238,6 +249,30 @@ public static class WallpaperApi
         }
 
         return res;
+    }
+
+    //创建壁纸
+    public static bool CreateWallpaper(string title, string path, string saveFolder)
+    {
+        var wallpaper = Wallpaper.From(path, false);
+        if (wallpaper == null)
+            return false;
+
+        //保存到目录
+        string extension = Path.GetExtension(path);
+        string saveFileName = Guid.NewGuid().ToString();
+        string savePath = Path.Combine(saveFolder, saveFileName + extension);
+        File.Copy(path, savePath);
+
+        //保存meta
+        wallpaper.Meta.Title = title;
+        string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
+        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(wallpaper.Meta, JsonSettings));
+
+        ////保存setting
+        //string settingJsonFile = Path.Combine(saveFolder, $"{saveName}.setting.json");
+        //File.WriteAllText(settingJsonFile, JsonConvert.SerializeObject(new PlaylistSetting(), JsonSettings));
+        return true;
     }
 
     //恢复快照

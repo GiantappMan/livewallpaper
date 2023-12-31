@@ -33,6 +33,7 @@ const formSchema = z.object({
 interface CreateWallpaperDialogProps {
     open: boolean
     onChange: (open: boolean) => void
+    createSuccess?: () => void
 }
 
 function processFile(file: File, onProgress: (progress: number) => void, controller: AbortController): Promise<string> {
@@ -182,7 +183,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         }
     }, [uploadFile, uploadingFile]);
 
-    function onSubmit(data: z.infer<typeof formSchema>) {
+    async function onSubmit(data: z.infer<typeof formSchema>) {
         if (!data.title)
             data.title = "未命名";
         console.log(data);
@@ -190,7 +191,13 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             toast.info("导入中，请稍等");
             return;
         }
-        toast.success(`保存成功，${JSON.stringify(data)}`);
+        var res = await api.createWallpaper(data.title, uploadedFile?.path || "");
+        if (!res.data)
+            toast.warning("创建失败，不支持的格式");
+        else {
+            toast.success(`创建成功`);
+            props.createSuccess?.();
+        }
     }
 
     return <Dialog open={props.open} onOpenChange={(e) => {

@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { PlayMode, Playlist, PlaylistMeta, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
 import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
+import { cn } from "@/lib/utils";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
@@ -105,12 +106,11 @@ const Page = () => {
         }
         e.preventDefault();
     };
-    return <>
-        <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20"
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-        >
+    return <div
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}>
+        <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
             {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                     if (!mounted)
@@ -270,17 +270,23 @@ const Page = () => {
                 })
             }
             {/* 创建按钮 */}
-            {wallpapers && wallpapers.length > 0 && < div className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
+            < div className={cn(["relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105",
+                {
+                    //隐藏
+                    "hidden": !wallpapers || wallpapers.length === 0
+                }])}>
                 <div
                     className="w-full aspect-[3/2]"
                 >
-                    <CreateWallpaperDialog open={openCreateWallpaperDialog} onChange={(e) => setOpenCreateWallpaperDialog(e)} />
-                    {/* <div className="px-6 py-4">
-                        <div className="font-bold text-sm mb-2 lg:text-xl">创建壁纸</div>
-                    </div> */}
+                    <CreateWallpaperDialog
+                        open={openCreateWallpaperDialog}
+                        onChange={(e) => setOpenCreateWallpaperDialog(e)}
+                        createSuccess={() => {
+                            setOpenCreateWallpaperDialog(false)
+                            refresh();
+                        }} />
                 </div>
             </div>
-            }
             {
                 wallpapers && wallpapers.length > 0 && playingPlaylist && screens && <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
             }
@@ -292,7 +298,7 @@ const Page = () => {
                     <h2 className="text-xl font-semibold mb-2">没有找到壁纸</h2>
                     <p className="text-gray-500 mb-4">你可以创建一个壁纸或者修改壁纸扫描目录。</p>
                     <div className="flex space-x-4">
-                        <Button variant="outline" >创建壁纸</Button>
+                        <Button variant="outline" onClick={() => setOpenCreateWallpaperDialog(true)} >创建壁纸</Button>
                         <Button variant="outline">
                             <Link href="/settings/wallpaper">
                                 修改目录
@@ -302,7 +308,7 @@ const Page = () => {
                 </div>
             </div>
         }
-    </>;
+    </div>
 };
 
 export default Page;
