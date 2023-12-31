@@ -40,6 +40,19 @@ const Page = () => {
                 </LinkClient>
             </div>
         </div>
+        <div className="space-y-2">
+            <h1 className="text-2xl font-semibold mt-4">其他链接</h1>
+            <div className="flex flex-col space-y-2">
+                <LinkClient
+                    className="text-primary underline-offset-4 hover:underline" href="https://support.qq.com/products/315103" target="_blank">
+                    意见反馈
+                </LinkClient>
+                <LinkClient
+                    className="text-primary underline-offset-4 hover:underline" href="https://afdian.net/a/giantapp" target="_blank">
+                    捐赠
+                </LinkClient>
+            </div>
+        </div>
         <div className="flex items-center space-x-2 text-lg text-primary ">
             <p>
                 <LinkClient className="underline-offset-4 hover:underline" href="https://www.mscoder.cn" target="_blank">巨应君</LinkClient> ❤ 出品
