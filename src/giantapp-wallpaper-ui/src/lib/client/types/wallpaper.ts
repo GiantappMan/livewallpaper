@@ -2,6 +2,7 @@ export type Wallpaper = {
   dir?: string;
   fileName?: string;
   fileUrl?: string;
+  filePath?: string;
   coverUrl?: string;
   meta: WallpaperMeta;
   setting: WallpaperSetting;

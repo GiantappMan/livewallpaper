@@ -285,6 +285,8 @@ public static class WallpaperApi
         if (wallpaper == null)
             return false;
 
+        if (!Directory.Exists(saveFolder))
+            Directory.CreateDirectory(saveFolder);
         //保存到目录
         string extension = Path.GetExtension(path);
         string saveFileName = Guid.NewGuid().ToString();

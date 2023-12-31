@@ -198,7 +198,20 @@ class API {
       var res = await api.DeleteWallpaper(JSON.stringify(wallpaper));
       return { error: null, data: null };
     } catch (e) {
-      console.log(e); 
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async explore(path: string): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      await api.Explore(path);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
       return { error: e, data: null };
     }
   }

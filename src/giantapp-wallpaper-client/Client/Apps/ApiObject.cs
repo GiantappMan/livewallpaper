@@ -244,4 +244,17 @@ public class ApiObject
             MessageBox.Show(ex.Message);
         }
     }
+
+    //打开对应文件夹，并选中文件
+    public void Explore(string path)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\"");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+    }
 }

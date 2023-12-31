@@ -126,6 +126,18 @@ const Page = () => {
         }
         refresh();
     }
+
+    const explorerWallpaper = async (wallpaper: Wallpaper) => {
+        if (!wallpaper.filePath)
+            return;
+
+        const res = await api.explore(wallpaper.filePath);
+        if (res.error) {
+            toast.error("打开壁纸文件夹失败");
+            return;
+        }
+    }
+
     return <div
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -303,6 +315,7 @@ const Page = () => {
                                                     </svg>
                                                 </Button> */}
                                                 <Button
+                                                    onClick={(e) => { explorerWallpaper(wallpaper); e.stopPropagation(); }}
                                                     aria-label="打开文件夹"
                                                     className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
                                                     title="打开文件夹"
