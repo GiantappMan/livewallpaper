@@ -28,7 +28,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
 OutputDir={#OutputDir}
-OutputBaseFilename={#ProductName} Installer v{#MyAppVersion}
+OutputBaseFilename={#ProductName}_Installer_v{#MyAppVersion}
 VersionInfoDescription={#ProductName} Installer v{#MyAppVersion}
 VersionInfoProductName={#ProductName} Installer v{#MyAppVersion}
 SetupIconFile=..\giantapp-wallpaper-client\Client\Assets\Img\logo.ico
