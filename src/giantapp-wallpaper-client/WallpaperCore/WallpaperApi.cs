@@ -151,7 +151,7 @@ public static class WallpaperApi
     public static void CloseWallpaper(uint screenIndex = 0)
     {
         var manager = GetRunningManager(screenIndex);
-        manager.Stop();
+        //manager.Stop();
         RunningWallpapers.TryRemove(screenIndex, out _);
     }
 
@@ -167,7 +167,7 @@ public static class WallpaperApi
                 if (isPlaying)
                 {
                     CloseWallpaper(item.Key);//正在播放关闭壁纸
-                    Thread.Sleep(1000);
+                    //Thread.Sleep(1000);
                 }
             }
 
@@ -300,6 +300,7 @@ public static class WallpaperApi
 
         //保存meta
         wallpaper.Meta.Title = title;
+        wallpaper.Meta.CreateTime = DateTime.Now;
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(wallpaper.Meta, JsonSettings));
 

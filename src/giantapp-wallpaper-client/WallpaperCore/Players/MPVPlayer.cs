@@ -146,8 +146,8 @@ public class MpvPlayer
             //消除边框
             args.Append("--no-border ");
 
-            //保持打开
-            args.Append("--keep-open=yes ");
+            ////保持打开
+            //args.Append("--keep-open=yes ");
 
             Process.StartInfo.Arguments = args.ToString();
             //_process.StartInfo.UseShellExecute = false;
@@ -222,10 +222,10 @@ public class MpvPlayer
     public void Stop()
     {
         ////mpv 关闭视频 进程会退出
-        //SendMessage(IPCServerName, "stop");
+        SendMessage(IPCServerName, "stop");
 
         //加载空文件
-        SendMessage(IPCServerName, "loadfile", "");
+        //SendMessage(IPCServerName, "loadfile", "");
     }
 
     public void SetVolume(int volume)

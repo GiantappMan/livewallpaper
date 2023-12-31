@@ -142,7 +142,7 @@ public class ApiObject
 
     public string GetPlayingPlaylist()
     {
-        var res = WallpaperApi.RunningWallpapers.Values.Select(m => m.Playlist);
+        var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Playlist != null).Select(m => m.Playlist);
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         //转换路径
