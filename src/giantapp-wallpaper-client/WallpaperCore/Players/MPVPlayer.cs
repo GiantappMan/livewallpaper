@@ -146,6 +146,9 @@ public class MpvPlayer
             //消除边框
             args.Append("--no-border ");
 
+            //保持打开
+            args.Append("--keep-open=yes ");
+
             Process.StartInfo.Arguments = args.ToString();
             //_process.StartInfo.UseShellExecute = false;
             //_process.StartInfo.CreateNoWindow = true;
@@ -218,8 +221,11 @@ public class MpvPlayer
 
     public void Stop()
     {
-        //mpv 关闭视频
-        SendMessage(IPCServerName, "stop");
+        ////mpv 关闭视频 进程会退出
+        //SendMessage(IPCServerName, "stop");
+
+        //加载空文件
+        SendMessage(IPCServerName, "loadfile", "");
     }
 
     public void SetVolume(int volume)
@@ -285,8 +291,8 @@ public class MpvPlayer
 
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                _logger.Info("mpv response: " + response);
-                Debug.WriteLine("mpv response: " + response);
+                _logger.Info(sendContent + "mpv response: " + response);
+                Debug.WriteLine(sendContent + "mpv response: " + response);
 
                 //查找id匹配的结果
                 var jobj = JsonConvert.DeserializeObject<dynamic>(response);

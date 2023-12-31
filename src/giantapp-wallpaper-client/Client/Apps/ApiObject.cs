@@ -225,11 +225,12 @@ public class ApiObject
         return WallpaperApi.CreateWallpaper(title, path, config.Directories[0]);
     }
 
-    public void DeleteWallpaper(string wallpaperJson)
+    public bool DeleteWallpaper(string wallpaperJson)
     {
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
         if (wallpaper != null)
-            WallpaperApi.DeleteWallpaper(wallpaper);
+            return WallpaperApi.DeleteWallpaper(wallpaper);
+        return false;
     }
 
     //通过默认浏览器打开url

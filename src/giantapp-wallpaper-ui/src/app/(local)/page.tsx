@@ -120,8 +120,8 @@ const Page = () => {
 
     const deleteWallpaper = async (wallpaper: Wallpaper) => {
         const res = await api.deleteWallpaper(wallpaper);
-        if (res.error) {
-            toast.error("删除壁纸失败");
+        if (!res.data) {
+            toast.error("删除壁纸失败，请重试");
             return;
         }
         refresh();
@@ -257,6 +257,7 @@ const Page = () => {
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
                                                         <Button
+                                                            onClick={(e) => e.stopPropagation()}
                                                             aria-label="删除"
                                                             className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
                                                             title="删除"
@@ -286,10 +287,14 @@ const Page = () => {
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
-                                                            <AlertDialogCancel>取消</AlertDialogCancel>
+                                                            <AlertDialogCancel onClick={(e) => {
+                                                                e.stopPropagation();
+                                                            }}>
+                                                                取消
+                                                            </AlertDialogCancel>
                                                             <AlertDialogAction onClick={(e) => {
                                                                 deleteWallpaper(wallpaper);
-                                                                e.preventDefault();
+                                                                e.stopPropagation();
                                                             }}>
                                                                 删除
                                                             </AlertDialogAction>

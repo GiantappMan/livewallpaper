@@ -209,7 +209,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     }
 
     return <Dialog open={props.open} onOpenChange={(e) => {
-        if (!e && (importing || !!uploadFile)) {
+        if (!e && (importing || importedFile)) {
             confirm("导入未完成，确定要关闭吗？") && props.onChange(e);
             return;
         }

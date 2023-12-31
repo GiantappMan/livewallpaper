@@ -156,8 +156,9 @@ public static class WallpaperApi
     }
 
     //删除壁纸
-    public static void DeleteWallpaper(params Wallpaper[] wallpapers)
+    public static bool DeleteWallpaper(params Wallpaper[] wallpapers)
     {
+        bool res = true;
         foreach (var wallpaper in wallpapers)
         {
             foreach (var item in RunningWallpapers)
@@ -166,6 +167,7 @@ public static class WallpaperApi
                 if (isPlaying)
                 {
                     CloseWallpaper(item.Key);//正在播放关闭壁纸
+                    Thread.Sleep(1000);
                 }
             }
 
@@ -190,9 +192,13 @@ public static class WallpaperApi
             }
             catch (Exception ex)
             {
+                res = false;
                 Logger?.Warn($"删除壁纸失败：{wallpaper.FilePath} ${ex}");
             }
+
+            res = res && true;
         }
+        return res;
     }
 
     //下载壁纸
@@ -233,8 +239,7 @@ public static class WallpaperApi
     //设置音量
     public static void SetVolume(int volume, int? screenIndex = null)
     {
-        if (screenIndex == null)
-            screenIndex = 0;
+        screenIndex ??= 0;
 
         var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
         foreach (var item in screenIndexs)

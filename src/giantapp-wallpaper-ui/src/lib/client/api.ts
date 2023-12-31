@@ -196,7 +196,7 @@ class API {
       const { api } = window.chrome.webview.hostObjects;
 
       var res = await api.DeleteWallpaper(JSON.stringify(wallpaper));
-      return { error: null, data: null };
+      return { error: null, data: res };
     } catch (e) {
       console.log(e);
       return { error: e, data: null };
