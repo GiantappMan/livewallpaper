@@ -189,6 +189,19 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async deleteWallpaper(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+
+      var res = await api.DeleteWallpaper(JSON.stringify(wallpaper));
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e); 
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

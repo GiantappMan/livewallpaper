@@ -95,4 +95,10 @@ public class WallpaperManager
         if (Playlist != null)
             Playlist.Setting.Volume = volume;
     }
+
+    internal void Stop()
+    {
+        _mpvPlayer.Stop();
+        Playlist = null;
+    }
 }

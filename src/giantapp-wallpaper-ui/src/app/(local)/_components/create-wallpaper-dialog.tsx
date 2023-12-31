@@ -110,21 +110,23 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     })
     const [isOver, setIsOver] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [uploading, setUploading] = useState(false);
-    const uploadingFile = form.watch("file");
-    const [uploadedFile, setUploadedFile] = useState<{
+    const [importing, setImporting] = useState(false);
+    const importingFile = form.watch("file");
+    const [importedFile, setImportedFile] = useState<{
         name: string,
         path: string
     }>();
+    const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     //每次打开重置状态
     useEffect(() => {
         if (!props.open) {
             setIsOver(false);
             setProgress(0);
-            setUploading(false);
-            setUploadedFile(undefined);
+            setImporting(false);
+            setImportedFile(undefined);
             abortController?.abort();
             form.reset();
         }
@@ -132,8 +134,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
     const uploadFile = useCallback(async (file: File) => {
         setProgress(0);
-        setUploading(true);
-        setUploadedFile(undefined);
+        setImporting(true);
+        setImportedFile(undefined);
 
         abortController?.abort();
         abortController = new AbortController();
@@ -147,7 +149,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             const base64String = await processFile(file, progressCallback, abortController);
             var { data } = await api.uploadToTmp(file.name, base64String);
             console.log(data);
-            setUploadedFile({
+            setImportedFile({
                 name: file.name,
                 path: data || ""
             });
@@ -157,7 +159,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         } catch (e) {
             toast.error((e as any).message);
         } finally {
-            setUploading(false);
+            setImporting(false);
+            inputRef.current?.focus();
         }
     }, [form]);
 
@@ -178,30 +181,35 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
     //form.file变化后自动上传
     useEffect(() => {
-        if (uploadingFile) {
-            uploadFile(uploadingFile);
+        if (importingFile) {
+            uploadFile(importingFile);
         }
-    }, [uploadFile, uploadingFile]);
+    }, [uploadFile, importingFile]);
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
+        if (uploading)
+            return;
+
         if (!data.title)
             data.title = "未命名";
         console.log(data);
-        if (uploading) {
+        if (importing) {
             toast.info("导入中，请稍等");
             return;
         }
-        var res = await api.createWallpaper(data.title, uploadedFile?.path || "");
+        setUploading(true);
+        var res = await api.createWallpaper(data.title, importedFile?.path || "");
         if (!res.data)
             toast.warning("创建失败，不支持的格式");
         else {
             toast.success(`创建成功`);
             props.createSuccess?.();
         }
+        setUploading(false);
     }
 
     return <Dialog open={props.open} onOpenChange={(e) => {
-        if (!e && uploading) {
+        if (!e && (importing || !!uploadFile)) {
             confirm("导入未完成，确定要关闭吗？") && props.onChange(e);
             return;
         }
@@ -246,7 +254,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormControl>
-                                            <Input autoFocus placeholder="输入标题" {...field} autoComplete="off" />
+                                            <Input autoFocus placeholder="输入标题" {...field} autoComplete="off" ref={inputRef} />
                                         </FormControl>
                                     </FormItem>
                                 )}
@@ -273,10 +281,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                     </FormItem>
                                 )}
                             />
-                            {!uploadedFile
+                            {!importedFile
                                 ?
                                 <>
-                                    {!uploading ?
+                                    {!importing ?
                                         <div
                                             onClick={() => { fileInputRef.current?.click() }}
                                             onDragOver={handleDragOver}
@@ -298,8 +306,12 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                 <>
                                     <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
                                     <div className="flex justify-between items-center text-[#9CA3AF]">
-                                        <p>{uploadedFile.name}</p>
-                                        <Button type="button" variant="ghost" onClick={() => setUploadedFile(undefined)}>
+                                        <p>{importedFile.name}</p>
+                                        <Button type="button" variant="ghost" onClick={() => {
+                                            setImportedFile(undefined);
+                                            if (fileInputRef.current)
+                                                fileInputRef.current.value = '';
+                                        }}>
                                             <DeleteIcon className="h-6 w-6" />
                                         </Button>
                                     </div>
@@ -308,7 +320,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                         </div>
                     </div>
                     <DialogFooter >
-                        <Button type="submit">保存</Button>
+                        <Button type="submit" disabled={uploading}>
+                            {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
+                            {uploading ? "创建中..." : "保存"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </Form>

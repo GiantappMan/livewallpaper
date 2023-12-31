@@ -219,10 +219,17 @@ public class ApiObject
     public bool CreateWallpaper(string title, string path)
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
-        if (config?.Directories == null || config.Directories.Length == 0)
+        if (config?.Directories == null || config.Directories.Length == 0 || string.IsNullOrEmpty(path))
             return false;
 
         return WallpaperApi.CreateWallpaper(title, path, config.Directories[0]);
+    }
+
+    public void DeleteWallpaper(string wallpaperJson)
+    {
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        if (wallpaper != null)
+            WallpaperApi.DeleteWallpaper(wallpaper);
     }
 
     //通过默认浏览器打开url

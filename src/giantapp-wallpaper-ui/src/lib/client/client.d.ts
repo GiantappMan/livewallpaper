@@ -12,6 +12,7 @@ interface API {
   OpenUrl(url: string): Promise<void>;
   UploadToTmp(fileName: string, content: string): Promise<string>;
   CreateWallpaper(title: string, path: string): Promise<boolean>;
+  DeleteWallpaper(wallpaperJSON: string): Promise<void>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

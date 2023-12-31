@@ -13,6 +13,17 @@ import { PlayMode, Playlist, PlaylistMeta, PlaylistType } from "@/lib/client/typ
 import Link from "next/link";
 import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
 import { cn } from "@/lib/utils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
@@ -106,6 +117,15 @@ const Page = () => {
         }
         e.preventDefault();
     };
+
+    const deleteWallpaper = async (wallpaper: Wallpaper) => {
+        const res = await api.deleteWallpaper(wallpaper);
+        if (res.error) {
+            toast.error("删除壁纸失败");
+            return;
+        }
+        refresh();
+    }
     return <div
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -222,27 +242,49 @@ const Page = () => {
                                                 </svg>
                                             </Button> */}
                                             <div className="flex">
-                                                <Button
-                                                    aria-label="删除"
-                                                    className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                    title="删除"
-                                                    variant="ghost"
-                                                >
-                                                    <svg
-                                                        className="h-5 w-5"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        viewBox="0 0 24 24"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                    >
-                                                        <path d="M3 6h18" />
-                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                    </svg>
-                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            aria-label="删除"
+                                                            className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
+                                                            title="删除"
+                                                            variant="ghost"
+                                                        >
+                                                            <svg
+                                                                className="h-5 w-5"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="2"
+                                                                viewBox="0 0 24 24"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                            >
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                            </svg>
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>删除确认</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                将彻底删除文件，并且无法恢复，确认删除？
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>取消</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={(e) => {
+                                                                deleteWallpaper(wallpaper);
+                                                                e.preventDefault();
+                                                            }}>
+                                                                删除
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+
                                                 {/* <Button aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
                                                     <svg
                                                         className="h-5 w-5"

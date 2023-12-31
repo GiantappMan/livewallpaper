@@ -223,7 +223,7 @@ public class Wallpaper
             if (File.Exists(settingJsonFile))
             {
                 var setting = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
-                Setting = setting;
+                Setting = setting ?? new();
             }
         }
         catch (Exception ex)

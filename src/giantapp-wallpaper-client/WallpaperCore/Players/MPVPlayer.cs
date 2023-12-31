@@ -218,7 +218,8 @@ public class MpvPlayer
 
     public void Stop()
     {
-
+        //mpv 关闭视频
+        SendMessage(IPCServerName, "stop");
     }
 
     public void SetVolume(int volume)

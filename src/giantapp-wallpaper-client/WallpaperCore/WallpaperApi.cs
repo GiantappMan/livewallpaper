@@ -74,6 +74,17 @@ public static class WallpaperApi
             wallpapers.AddRange(EnumerateWallpapersAsync(directory));
         }
 
+        //按meta.createTime创建日期倒序
+        wallpapers.Sort((a, b) =>
+        {
+            if (b.Meta.CreateTime == null || a.Meta.CreateTime == null)
+            {
+                return -1;
+            }
+            return b.Meta.CreateTime.Value.CompareTo(a.Meta.CreateTime.Value);
+        });
+
+
         return wallpapers.ToArray();
     }
 
@@ -139,6 +150,8 @@ public static class WallpaperApi
     //关闭壁纸
     public static void CloseWallpaper(uint screenIndex = 0)
     {
+        var manager = GetRunningManager(screenIndex);
+        manager.Stop();
         RunningWallpapers.TryRemove(screenIndex, out _);
     }
 
@@ -147,6 +160,15 @@ public static class WallpaperApi
     {
         foreach (var wallpaper in wallpapers)
         {
+            foreach (var item in RunningWallpapers)
+            {
+                bool isPlaying = item.Value.Playlist?.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl) ?? false;
+                if (isPlaying)
+                {
+                    CloseWallpaper(item.Key);//正在播放关闭壁纸
+                }
+            }
+
             try
             {
                 File.Delete(wallpaper.FilePath);
@@ -156,6 +178,11 @@ public static class WallpaperApi
                 string metaJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
                 if (File.Exists(metaJsonFile))
                     File.Delete(metaJsonFile);
+
+                //存在setting删除setting
+                string settingJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.setting.json");
+                if (File.Exists(settingJsonFile))
+                    File.Delete(settingJsonFile);
 
                 //如果文件夹空了，删除文件夹
                 if (Directory.GetFiles(wallpaper.Dir).Length == 0)
