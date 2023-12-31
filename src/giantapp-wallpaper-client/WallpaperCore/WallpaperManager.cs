@@ -61,6 +61,7 @@ public class WallpaperManager
         File.WriteAllLines(playlistPath, playlist);
         _mpvPlayer.SetVolume(Playlist.Setting.Volume);
         _mpvPlayer.LoadList(playlistPath);
+        _mpvPlayer.Resume();
     }
 
     internal WallpaperManagerSnapshot GetSnapshotData()

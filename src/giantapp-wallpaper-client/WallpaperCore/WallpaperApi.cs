@@ -151,8 +151,8 @@ public static class WallpaperApi
     public static void CloseWallpaper(uint screenIndex = 0)
     {
         var manager = GetRunningManager(screenIndex);
-        //manager.Stop();
-        RunningWallpapers.TryRemove(screenIndex, out _);
+        manager.Stop();
+        //RunningWallpapers.TryRemove(screenIndex, out _);
     }
 
     //删除壁纸
@@ -167,7 +167,7 @@ public static class WallpaperApi
                 if (isPlaying)
                 {
                     CloseWallpaper(item.Key);//正在播放关闭壁纸
-                    //Thread.Sleep(1000);
+                    Thread.Sleep(100);
                 }
             }
 

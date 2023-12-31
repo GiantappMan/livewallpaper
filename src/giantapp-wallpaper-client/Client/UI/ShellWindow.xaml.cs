@@ -186,7 +186,7 @@ public partial class ShellWindow : Window
         foreach (var item in CustomFolderMapping)
         {
             if (!Directory.Exists(item.Value))
-                continue;
+                Directory.CreateDirectory(item.Value);
             webview2?.CoreWebView2?.ClearVirtualHostNameToFolderMapping(item.Key);
             webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.Allow);
         }

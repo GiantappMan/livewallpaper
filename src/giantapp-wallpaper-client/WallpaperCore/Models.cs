@@ -256,6 +256,8 @@ public class Wallpaper
                     Cover = projectJson.Preview,
                     Type = ResolveType(Path.GetExtension(projectJson.File))
                 };
+                var fileInfo = new FileInfo(filePath);
+                meta.CreateTime = fileInfo.CreationTime;
                 data.Meta = meta;
                 if (meta?.Cover != null)
                     data.CoverPath = Path.Combine(data.Dir, meta.Cover);
