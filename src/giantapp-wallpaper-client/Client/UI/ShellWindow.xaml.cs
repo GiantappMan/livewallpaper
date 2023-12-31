@@ -242,8 +242,8 @@ public partial class ShellWindow : Window
    "window.addEventListener('dragover',function(e){e.preventDefault();},false);" +
    "window.addEventListener('drop',function(e){" +
       "e.preventDefault();" +
-      //"console.log(e.dataTransfer);" +
-      //"console.log(e.dataTransfer.files[0])" +
+   //"console.log(e.dataTransfer);" +
+   //"console.log(e.dataTransfer.files[0])" +
    "}, false);");
     }
 
@@ -294,9 +294,12 @@ public partial class ShellWindow : Window
         SizeChanged -= ShellWindow_SizeChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
+        //强制回收webview2
         Instance = null;
         base.OnClosed(e);
         Configer.Save();
+        webview2.Dispose();
+        GC.Collect();
     }
 
 

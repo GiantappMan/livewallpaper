@@ -117,11 +117,14 @@ const Page = () => {
                         return <Skeleton key={index} className="h-[218px] w-full" />
 
                     return (
-                        <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105"
+                        <div
+                            // onMouseEnter={() => setHoverWallpaper(wallpaper)}
+                            key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105"
                         >
-                            <div className="relative cursor-pointer" onClick={() => {
-                                showWallpaper(wallpaper, null);
-                            }}
+                            <div className="relative cursor-pointer"
+                                onClick={() => {
+                                    showWallpaper(wallpaper, null);
+                                }}
                                 title="点击使所有屏幕生效">
                                 {/* 图片 */}
                                 {wallpaper?.meta.type === WallpaperType.Img && <picture>
@@ -140,13 +143,13 @@ const Page = () => {
                                 }
                                 {/* 视频 */}
                                 {wallpaper?.meta.type === WallpaperType.Video && <video
-                                    autoPlay={true}
+                                    autoPlay={false}
                                     className="w-full"
                                     height="200"
                                     loop
                                     muted
                                     playsInline
-                                    poster={wallpaper?.coverUrl || "/wp-placeholder.webp"}
+                                    poster={wallpaper?.coverUrl || undefined}
                                     style={{
                                         aspectRatio: "300/200",
                                         objectFit: "cover",
@@ -156,8 +159,9 @@ const Page = () => {
                                 >
                                 </video>
                                 }
+                                {/* 遮罩 */}
                                 <div className="flex flex-col justify-between">
-                                    <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                    <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 hover:opacity-100 hover:scale-105 transition-opacity duration-500">
                                         <div className="flex flex-wrap w-full justify-center">
                                             {
                                                 screens && screens?.length > 1 && [...screens]?.map((screen, index) => {
