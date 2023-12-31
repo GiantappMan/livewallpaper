@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
-import { Wallpaper } from "@/lib/client/types/wallpaper";
+import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useCallback, useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
@@ -123,12 +123,13 @@ const Page = () => {
                                 showWallpaper(wallpaper, null);
                             }}
                                 title="点击使所有屏幕生效">
-                                <picture>
+                                {/* 图片 */}
+                                {wallpaper?.meta.type === WallpaperType.Img && <picture>
                                     <img
-                                        alt="壁纸封面"
+                                        alt={wallpaper?.meta.title}
                                         className="w-full"
                                         height="200"
-                                        src={wallpaper?.coverUrl || "/wp-placeholder.webp"}
+                                        src={wallpaper?.coverUrl || wallpaper?.fileUrl || "/wp-placeholder.webp"}
                                         style={{
                                             aspectRatio: "300/200",
                                             objectFit: "cover",
@@ -136,6 +137,25 @@ const Page = () => {
                                         width="300"
                                     />
                                 </picture>
+                                }
+                                {/* 视频 */}
+                                {wallpaper?.meta.type === WallpaperType.Video && <video
+                                    autoPlay={true}
+                                    className="w-full"
+                                    height="200"
+                                    loop
+                                    muted
+                                    playsInline
+                                    poster={wallpaper?.coverUrl || "/wp-placeholder.webp"}
+                                    style={{
+                                        aspectRatio: "300/200",
+                                        objectFit: "cover",
+                                    }}
+                                    src={wallpaper?.fileUrl}
+                                    width="300"
+                                >
+                                </video>
+                                }
                                 <div className="flex flex-col justify-between">
                                     <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                                         <div className="flex flex-wrap w-full justify-center">
