@@ -236,8 +236,8 @@ public class Wallpaper
     {
         var data = new Wallpaper(filePath);
 
-        var oldData = LoadOldData(data, filePath);
-        if (oldData != null)
+        var oldData = LoadOldData(data, out bool existProjectFile);
+        if (existProjectFile)
             data = oldData;
         else
         {
@@ -246,24 +246,24 @@ public class Wallpaper
                 data.LoadSetting();
         }
 
-        if (data.Meta.CreateTime == null)
+        if (data != null && data.Meta.CreateTime == null)
         {
             var fileInfo = new FileInfo(filePath);
             data.Meta.CreateTime = fileInfo.CreationTime;
         }
 
-        if (data.Meta.Type == WallpaperType.NotSupported)
+        if (data?.Meta.Type == WallpaperType.NotSupported)
             return null;
-
 
         return data;
     }
 
-    public static Wallpaper? LoadOldData(Wallpaper data, string filePath)
+    public static Wallpaper? LoadOldData(Wallpaper data, out bool existProjectFile)
     {
         string projectJsonFile = Path.Combine(data.Dir, "project.json");
         if (File.Exists(projectJsonFile))
         {
+            existProjectFile = true;
             //包含 project.json
             //迁移数据到meta.json
             var projectJson = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
@@ -289,6 +289,7 @@ public class Wallpaper
                 return data;
             }
         }
+        existProjectFile = false;
         return null;
     }
 
