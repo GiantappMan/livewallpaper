@@ -43,6 +43,9 @@ public class ApiObject
     //public delegate void EventDelegate(string data);
     //public event EventDelegate? InitProgressEvent;
 
+    //定义一个事件，表示前端需要刷新网页
+    public event EventHandler? RefreshPageEvent;
+
     public ApiObject()
     {
         //Task.Run(() =>
@@ -56,7 +59,8 @@ public class ApiObject
         //            Progress = i * 10,
         //            Message = $"``初始化中{i * 10}%"
         //        });
-        //        InitProgressEvent?.Invoke(json);
+        //        //InitProgressEvent?.Invoke(json);
+        //        RefreshPageEvent?.Invoke(this, EventArgs.Empty);
         //    }
         //});
     }
@@ -257,5 +261,10 @@ public class ApiObject
         {
             MessageBox.Show(ex.Message);
         }
+    }
+
+    internal void TriggerRefreshPageEvent()
+    {
+        RefreshPageEvent?.Invoke(this, EventArgs.Empty);
     }
 }

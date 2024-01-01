@@ -9,7 +9,7 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
+    // FormLabel,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -18,8 +18,8 @@ import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
 import { ConfigWallpaper } from "@/lib/client/types/config"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Switch } from "@/components/ui/switch"
+// import { Checkbox } from "@/components/ui/checkbox"
+// import { Switch } from "@/components/ui/switch"
 
 const FormSchema = z.object({
     directories: z.array(z.object({

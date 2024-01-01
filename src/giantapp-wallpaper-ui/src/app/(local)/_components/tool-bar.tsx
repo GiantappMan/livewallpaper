@@ -121,7 +121,6 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     const handleVolumeChange = useCallback((value: number[]) => {
         var tmpPlaylists = [...playlists];
         //从tmpPlaylists找目标列表，如果有选中的用选中的，如果没有选中的选有音量的，如果没有音量，选第一个视频壁纸
-        debugger
         var target = tmpPlaylists.find(x => x.playlist && x.playlist.setting.volume > 0);
         if (selectedPlaylist)
             target = tmpPlaylists.find(x => x.screen.deviceName === selectedPlaylist.screen.deviceName);

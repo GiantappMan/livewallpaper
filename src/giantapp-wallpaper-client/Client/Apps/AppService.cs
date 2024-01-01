@@ -27,6 +27,8 @@ internal class AppService
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly AutoStart _autoStart;
     private static readonly AppNotifyIcon _notifyIcon = new();
+    private static readonly ApiObject _apiObject = new();
+
     static readonly string _domainStr = "client.giantapp.cn";
     //是否存关闭老进程
     private static bool _killOldProcess = false;
@@ -77,10 +79,9 @@ internal class AppService
         ApplyCustomFolderMapping(wallpaperConfig.Directories);
 
         //前端api
-        var api = new ApiObject();
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
         ApiObject.CorrectConfigEvent += ApiObject_CorrectConfigEvent;
-        ShellWindow.ClientApi = api;
+        ShellWindow.ClientApi = _apiObject;
 
         bool tmp = _autoStart.Check();
         if (tmp != generalConfig.AutoStart)
@@ -295,6 +296,7 @@ internal class AppService
                 if (configWallpaper != null)
                 {
                     ApplyCustomFolderMapping(configWallpaper.Directories);
+                    _apiObject.TriggerRefreshPageEvent();
                 }
                 break;
         }

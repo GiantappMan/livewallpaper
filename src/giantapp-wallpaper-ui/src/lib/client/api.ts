@@ -1,4 +1,4 @@
-// import EventEmitter from "events";
+import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper } from "./types/wallpaper";
 import { Screen } from "./types/screen";
@@ -7,16 +7,26 @@ import { Playlist } from "./types/playlist";
 type Key = "Appearance" | "General" | "Wallpaper";
 
 class API {
-  // private emitter = new EventEmitter();
+  private emitter = new EventEmitter();
 
   constructor() {
-    // if (!window.chrome.webview) return;
-    // const { api } = window.chrome.webview.hostObjects;
+    if (typeof window === 'undefined' || !window.chrome.webview) return;
+    const { api } = window.chrome.webview.hostObjects;
 
     // //注册InitProgressEvent事件
     // api.addEventListener("InitProgressEvent", (e: any) => {
     //   this.emitter.emit(e);
     // });
+
+    // 注册RefreshPageEvent事件
+    api.addEventListener("RefreshPageEvent", (e: any) => {
+      console.log("RefreshPageEvent", e);
+      this.emitter.emit("RefreshPageEvent", e);
+    });
+  }
+
+  onRefreshPage(callback: (e: any) => void) {
+    this.emitter.on("RefreshPageEvent", callback);
   }
 
   // // 暴露出事件

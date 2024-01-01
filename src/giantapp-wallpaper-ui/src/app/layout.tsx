@@ -85,6 +85,11 @@ export default function RootLayout({
 
   useEffect(() => {
     fetchConfig();
+
+    api.onRefreshPage(() => {
+      console.log("refresh page");
+      window.location.reload();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
