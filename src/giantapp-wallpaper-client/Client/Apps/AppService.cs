@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Threading;
 using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
+using System.IO;
 
 namespace Client.Apps;
 
@@ -142,7 +143,7 @@ internal class AppService
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
-            if (path.StartsWith(item))
+            if (path.StartsWith(item + "\\"))
             {
                 path = $"https://{i}.{_domainStr}{path[item.Length..]}";
                 //replase \\ to //

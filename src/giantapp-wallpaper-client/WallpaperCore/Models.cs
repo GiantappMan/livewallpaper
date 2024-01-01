@@ -236,6 +236,31 @@ public class Wallpaper
     {
         var data = new Wallpaper(filePath);
 
+        var oldData = LoadOldData(data, filePath);
+        if (oldData != null)
+            data = oldData;
+        else
+        {
+            data.LoadMeta();
+            if (loadSetting)
+                data.LoadSetting();
+        }
+
+        if (data.Meta.CreateTime == null)
+        {
+            var fileInfo = new FileInfo(filePath);
+            data.Meta.CreateTime = fileInfo.CreationTime;
+        }
+
+        if (data.Meta.Type == WallpaperType.NotSupported)
+            return null;
+
+
+        return data;
+    }
+
+    public static Wallpaper? LoadOldData(Wallpaper data, string filePath)
+    {
         string projectJsonFile = Path.Combine(data.Dir, "project.json");
         if (File.Exists(projectJsonFile))
         {
@@ -256,8 +281,7 @@ public class Wallpaper
                     Cover = projectJson.Preview,
                     Type = ResolveType(Path.GetExtension(projectJson.File))
                 };
-                var fileInfo = new FileInfo(filePath);
-                meta.CreateTime = fileInfo.CreationTime;
+
                 data.Meta = meta;
                 if (meta?.Cover != null)
                     data.CoverPath = Path.Combine(data.Dir, meta.Cover);
@@ -265,15 +289,7 @@ public class Wallpaper
                 return data;
             }
         }
-
-        data.LoadMeta();
-
-        if (data.Meta.Type == WallpaperType.NotSupported)
-            return null;
-
-        if (loadSetting)
-            data.LoadSetting();
-        return data;
+        return null;
     }
 
     public static WallpaperType ResolveType(string extension)
