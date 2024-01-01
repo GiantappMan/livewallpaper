@@ -15,7 +15,6 @@ using System.Reflection;
 using System.Threading;
 using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
-using System.IO;
 
 namespace Client.Apps;
 
