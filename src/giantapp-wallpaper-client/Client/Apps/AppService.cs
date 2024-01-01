@@ -84,13 +84,13 @@ internal class AppService
         ApiObject.CorrectConfigEvent += ApiObject_CorrectConfigEvent;
         ShellWindow.ClientApi = _apiObject;
 
-        bool tmp = _autoStart.Check();
+        bool tmp = await _autoStart.Check();
         if (tmp != generalConfig.AutoStart)
         {
             generalConfig.AutoStart = tmp;
             Configer.Set(generalConfig);
         }
-        _autoStart.Set(generalConfig.AutoStart);
+        await _autoStart.Set(generalConfig.AutoStart);
 
         //外观配置
         var appearance = Configer.Get<Appearance>() ?? new();
@@ -249,7 +249,7 @@ internal class AppService
     #endregion
 
     #region callback
-    private static void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
+    private static async void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
     {
         switch (e.Key)
         {
@@ -257,7 +257,7 @@ internal class AppService
                 var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
                 if (configGeneral != null)
                 {
-                    bool tmp = _autoStart.Check();
+                    bool tmp = await _autoStart.Check();
                     configGeneral.AutoStart = tmp;//用真实情况修改返回值
                     e.Corrected = configGeneral;
                 }
@@ -273,7 +273,7 @@ internal class AppService
         }
     }
 
-    private static void Api_SetConfigEvent(object sender, ConfigSetAfterEventArgs e)
+    private static async void Api_SetConfigEvent(object sender, ConfigSetAfterEventArgs e)
     {
         switch (e.Key)
         {
@@ -288,7 +288,7 @@ internal class AppService
                 var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
                 if (configGeneral != null)
                 {
-                    _autoStart.Set(configGeneral.AutoStart);
+                    await _autoStart.Set(configGeneral.AutoStart);
                     _notifyIcon.UpdateNotifyIconText(configGeneral.CurrentLan);
                 }
                 break;

@@ -1,5 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
 
 namespace Client.Libs
 {
@@ -13,16 +17,89 @@ namespace Client.Libs
         //private readonly string ExecutablePath = System.Reflection.Assembly.GetEntryAssembly().Location;
 
         private readonly string _executablePath;
-        private readonly string _Key;
+        private readonly string _key;
 
         public AutoStart(string key, string executablePath)
         {
-            _Key = key;
+            _key = key;
             _executablePath = executablePath;
         }
 
         #region public
-        public bool Set(bool enabled)
+
+        public async Task<bool> Set(bool enabled)
+        {
+            if (IsRunningAsUwp())
+                return await UWPSet(enabled);
+            else
+                return DeskTopSet(enabled);
+        }
+
+        public async Task<bool> Check()
+        {
+            if (IsRunningAsUwp())
+                return await UWPCheck();
+            else
+                return DeskTopCheck();
+        }
+
+        public async Task<bool> UWPSet(bool enabled)
+        {
+            try
+            {
+                StartupTask startupTask = await StartupTask.GetAsync(_key);
+                if (!enabled && startupTask.State == StartupTaskState.Enabled)
+                {
+                    startupTask.Disable();
+                    return true;
+                }
+
+                if (enabled)
+                {
+                    switch (await startupTask.RequestEnableAsync())
+                    {
+                        case StartupTaskState.DisabledByUser:
+                            return false;
+                        case StartupTaskState.Enabled:
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UWPCheck()
+        {
+            try
+            {
+                bool result = false;
+                 switch ((await StartupTask.GetAsync(_key)).State)
+                {
+                    case StartupTaskState.Disabled:
+                        result = false;
+                        break;
+                    case StartupTaskState.DisabledByUser:
+                        result = false;
+                        break;
+                    case StartupTaskState.Enabled:
+                        result = true;
+                        break;
+                }
+
+                return result;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool DeskTopSet(bool enabled)
         {
             RegistryKey? runKey = null;
             try
@@ -34,13 +111,13 @@ namespace Client.Libs
                 }
                 if (enabled)
                 {
-                    runKey.SetValue(_Key, _executablePath);
+                    runKey.SetValue(_key, _executablePath);
                 }
                 else
                 {
                     //判断key存在
-                    if (runKey.GetValue(_Key) != null)
-                        runKey.DeleteValue(_Key);
+                    if (runKey.GetValue(_key) != null)
+                        runKey.DeleteValue(_key);
                 }
                 return true;
             }
@@ -66,7 +143,7 @@ namespace Client.Libs
             }
         }
 
-        public bool Check()
+        public bool DeskTopCheck()
         {
             RegistryKey? runKey = null;
             try
@@ -79,7 +156,7 @@ namespace Client.Libs
                 string[] runList = runKey.GetValueNames();
                 foreach (string item in runList)
                 {
-                    if (item.Equals(_Key, StringComparison.OrdinalIgnoreCase))
+                    if (item.Equals(_key, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
                 return false;
@@ -105,6 +182,7 @@ namespace Client.Libs
                 }
             }
         }
+
         #endregion
 
         #region private
@@ -130,6 +208,40 @@ namespace Client.Libs
             {
                 System.Diagnostics.Debug.WriteLine(e);
                 return null;
+            }
+        }
+        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+
+        public bool IsRunningAsUwp()
+        {
+            if (IsWindows7OrLower)
+            {
+                return false;
+            }
+            else
+            {
+                int length = 0;
+                StringBuilder sb = new(0);
+                GetCurrentPackageFullName(ref length, sb);
+
+                sb = new StringBuilder(length);
+                int result = GetCurrentPackageFullName(ref length, sb);
+
+                return result != APPMODEL_ERROR_NO_PACKAGE;
+            }
+        }
+
+        private bool IsWindows7OrLower
+        {
+            get
+            {
+                int versionMajor = Environment.OSVersion.Version.Major;
+                int versionMinor = Environment.OSVersion.Version.Minor;
+                double version = versionMajor + (double)versionMinor / 10;
+                return version <= 6.1;
             }
         }
         #endregion
