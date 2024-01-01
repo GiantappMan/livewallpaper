@@ -1,4 +1,4 @@
-# [巨应壁纸 3-Alpha1](https://github.com/DaZiYuan/livewallpaper/releases/tag/v3.0-alpha.1) 发布 
+# [巨应壁纸 3-Alpha1](https://github.com/DaZiYuan/livewallpaper/releases) 发布 
 
 如需访问线上版本代码，请查看分支 2.x。
 
