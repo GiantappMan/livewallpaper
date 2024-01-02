@@ -336,19 +336,36 @@ public partial class ShellWindow : Window
     private void CoreWebView2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
     {
         var uri = new Uri(e.Uri);
-        if (RewriteMapping.ContainsKey(uri.AbsolutePath))
+        //if rewrited
+        if (uri.Query.Contains("rewrited=true"))
+            return;
+        foreach (var item in RewriteMapping)
         {
-            e.Cancel = true;
-            string rewriteUrl = uri.AbsoluteUri + ".html";
-            webview2.CoreWebView2.Navigate(rewriteUrl);
+            ////通配符
+            //if (item.Key.Contains("*"))
+            //{
+            //用正则匹配
+            var matches = System.Text.RegularExpressions.Regex.Matches(uri.AbsolutePath, item.Key);
+            if (matches.Count > 0)
+            {
+                var oldContent = matches[0].Value;
+                var newContent = item.Value.Replace(item.Key, oldContent);
+                e.Cancel = true;
+                string rewriteUrl = uri.AbsoluteUri.Replace(oldContent, newContent) + "?rewrited=true";
+                webview2.CoreWebView2.Navigate(rewriteUrl);
+                break;
+            }
+            //}
+            ////全匹配
+            //else if (item.Key.Contains(uri.AbsolutePath))
+            //{
+            //    e.Cancel = true;
+            //    string rewriteUrl = uri.AbsoluteUri + ".html";
+            //    webview2.CoreWebView2.Navigate(rewriteUrl);
+            //    break;
+            //}
         }
     }
-    //private void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
-    //{
-    //    var webView = sender as Microsoft.Web.WebView2.Wpf.WebView2;
-    //    var msg = e.TryGetWebMessageAsString();
-    //}
-
     #endregion
 
 }

@@ -78,11 +78,12 @@ internal class AppService
         };
 
 #if !(DEBUG_LOCAL && DEBUG)
+        //除了需要刷新的页面和本地调试用，其他可以不设
         ShellWindow.RewriteMapping = new()
         {
             {"/index","/index.html" },
             {"/community","/community.html" },
-            { "/settings", "/settings.html" },
+            { "/settings(.*)", "/settings(.*).html" },
         };
 #endif
 
@@ -263,18 +264,16 @@ internal class AppService
         switch (e.Key)
         {
             case General.FullName:
-                var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
-                if (configGeneral != null)
-                {
-                    bool tmp = await _autoStart.Check();
-                    configGeneral.AutoStart = tmp;//用真实情况修改返回值
-                    e.Corrected = configGeneral;
-                }
+                var configGeneral = JsonConvert.DeserializeObject<General>(e.Json) ?? new();
+                bool tmp = await _autoStart.Check();
+                configGeneral.AutoStart = tmp;//用真实情况修改返回值
+                e.Corrected = configGeneral;
                 break;
             case ConfigWallpaper.FullName:
-                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json) ?? new();
-                if (configWallpaper.Directories == null || configWallpaper.Directories.Length == 0)
+                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
+                if (configWallpaper == null || configWallpaper.Directories.Length == 0)
                 {
+                    configWallpaper ??= new();
                     configWallpaper.Directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
                     e.Corrected = configWallpaper;
                 }

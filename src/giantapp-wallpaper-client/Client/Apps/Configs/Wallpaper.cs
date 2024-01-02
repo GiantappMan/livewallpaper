@@ -15,7 +15,7 @@ public class Wallpaper
     }
 
     //壁纸目录，支持多个
-    public string[]? Directories { get; set; }
+    public string[] Directories { get; set; } = new string[0];
     public bool KeepWallpaper { get; set; } = false;
 
     internal static void UpdateDefaultWallpaperSaveFolder()

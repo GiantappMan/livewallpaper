@@ -223,7 +223,7 @@ public class ApiObject
     public bool CreateWallpaper(string title, string path)
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
-        if (config?.Directories == null || config.Directories.Length == 0 || string.IsNullOrEmpty(path))
+        if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
             return false;
 
         return WallpaperApi.CreateWallpaper(title, path, config.Directories[0]);
