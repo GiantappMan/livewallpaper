@@ -238,14 +238,17 @@ public partial class ShellWindow : Window
     //禁用拖放文件打开新窗口
     private async void DisableDragFile()
     {
-        // DragEnter 事件处理程序
-        await webview2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
+        if (webview2.CoreWebView2 != null)
+        {
+            // DragEnter 事件处理程序
+            await webview2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
    "window.addEventListener('dragover',function(e){e.preventDefault();},false);" +
    "window.addEventListener('drop',function(e){" +
       "e.preventDefault();" +
    //"console.log(e.dataTransfer);" +
    //"console.log(e.dataTransfer.files[0])" +
    "}, false);");
+        }
     }
 
     #endregion
