@@ -70,7 +70,7 @@ export default function RootLayout({
 
   sidebarBottomNavigation.forEach((item) => {
     item.current = pathname === item.href
-    if (item.href === "/settings/general") {
+    if (item.href === "/settings/") {
       item.current = pathname.startsWith("/settings")
     }
   });

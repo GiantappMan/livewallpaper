@@ -50,7 +50,7 @@ export default function Page() {
     const fetchConfig = useCallback(async () => {
         const config = await api.getConfig<ConfigWallpaper>("Wallpaper")
         if (config.error || !config.data) {
-            alert(config.error)
+            toast.error(config.error)
             return
         }
 

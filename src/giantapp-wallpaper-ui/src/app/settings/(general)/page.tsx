@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { toast } from "sonner";
 
 const Page = () => {
     const languages = [
@@ -26,7 +27,7 @@ const Page = () => {
     const fetchConfig = async () => {
         const config = await api.getConfig<ConfigGeneral>("General")
         if (config.error || !config.data) {
-            alert(config.error)
+            toast.error("读取配置失败")
             return
         }
 
