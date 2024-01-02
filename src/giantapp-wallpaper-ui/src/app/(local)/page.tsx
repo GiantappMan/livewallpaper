@@ -358,7 +358,7 @@ const Page = () => {
             < div className={cn(["relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105",
                 {
                     //隐藏
-                    "hidden": !wallpapers || wallpapers.length === 0
+                    "hidden": !mounted || !wallpapers || wallpapers.length === 0
                 }])}>
                 <div
                     className="w-full aspect-[3/2]"

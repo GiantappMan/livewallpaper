@@ -76,6 +76,16 @@ internal class AppService
         {
             { _domainStr, "Assets/UI" }
         };
+
+#if !(DEBUG_LOCAL && DEBUG)
+        ShellWindow.RewriteMapping = new()
+        {
+            {"/index","/index.html" },
+            {"/community","/community.html" },
+            { "/settings", "/settings.html" },
+        };
+#endif
+
         ApplyCustomFolderMapping(wallpaperConfig.Directories);
 
         //前端api
@@ -115,7 +125,7 @@ internal class AppService
         ShellWindow.ShowShell($"http://localhost:3000/{path}");
         return;
 #else
-        ShellWindow.ShowShell($"https://{_domainStr}/{path}.html");
+        ShellWindow.ShowShell($"https://{_domainStr}/{path}");
 #endif
     }
 

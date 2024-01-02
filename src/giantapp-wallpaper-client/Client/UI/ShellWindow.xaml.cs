@@ -13,6 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using Windows.UI.Xaml.Controls;
 
 namespace GiantappWallpaper;
 
@@ -34,6 +35,7 @@ public partial class ShellWindow : Window
     public static bool AllowDragFile { get; set; } = false;
 
     public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
+    public static Dictionary<string, string> RewriteMapping { get; internal set; } = new();
     #endregion
 
     public ShellWindow()
@@ -61,6 +63,7 @@ public partial class ShellWindow : Window
             webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
         }
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
+
         var config = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;
         const float defaultHeight = 680;
@@ -85,7 +88,6 @@ public partial class ShellWindow : Window
     }
 
     #region public
-
     public static bool ShouldAppsUseDarkMode()
     {
         try
@@ -309,11 +311,12 @@ public partial class ShellWindow : Window
 
     private void Webview2_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
     {
-        if (ClientApi != null)
-        {
-            webview2.CoreWebView2?.AddHostObjectToScript("api", ClientApi);
-            webview2.CoreWebView2?.AddHostObjectToScript("shell", new ShellApiObject());
-        }
+        if (webview2.CoreWebView2 == null)
+            return;
+
+        webview2.CoreWebView2.AddHostObjectToScript("api", ClientApi);
+        webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
+        webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
         if (!AllowDragFile)
@@ -321,18 +324,25 @@ public partial class ShellWindow : Window
         ApplyCustomFolderMapping(webview2);
 
 #if !DEBUG
-        if (webview2.CoreWebView2 != null)
-        {
-            //禁用F12
-            webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
-            //禁用右键菜单
-            webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-            //左下角提示
-            webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
-        }
+        //禁用F12
+        webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+        //禁用右键菜单
+        webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+        //左下角提示
+        webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 #endif
     }
 
+    private void CoreWebView2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+    {
+        var uri = new Uri(e.Uri);
+        if (RewriteMapping.ContainsKey(uri.AbsolutePath))
+        {
+            e.Cancel = true;
+            string rewriteUrl = uri.AbsoluteUri + ".html";
+            webview2.CoreWebView2.Navigate(rewriteUrl);
+        }
+    }
     //private void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
     //{
     //    var webView = sender as Microsoft.Web.WebView2.Wpf.WebView2;
