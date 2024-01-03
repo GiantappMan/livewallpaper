@@ -30,33 +30,43 @@ const Page = () => {
     const [screens, setScreens] = useState<Screen[] | null>();
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const mounted = useMounted()
     const refresh = async () => {
-        const res = await api.getWallpapers();
-        if (res.error) {
+        setRefreshing(true);
+        try {
+            const res = await api.getWallpapers();
+            if (res.error) {
+                toast.error("获取壁纸列表失败")
+                return;
+            }
+
+            const screens = await api.getScreens();
+            if (screens.error) {
+                toast.error("获取屏幕列表失败");
+                return;
+            }
+
+            if (!screens.data)
+                return
+
+            const _playingPlaylist = await api.getPlayingPlaylist();
+            if (_playingPlaylist.error) {
+                toast.error("获取正在播放的壁纸失败")
+                console.log(_playingPlaylist.error)
+                return;
+            }
+
+            setWallpapers(res.data);
+            setScreens(screens.data);
+            setPlayingPlaylist(_playingPlaylist.data);
+        } catch (e) {
+            console.log(e)
             toast.error("获取壁纸列表失败")
-            return;
         }
-
-        const screens = await api.getScreens();
-        if (screens.error) {
-            toast.error("获取屏幕列表失败");
-            return;
+        finally {
+            setRefreshing(false);
         }
-
-        if (!screens.data)
-            return
-
-        const _playingPlaylist = await api.getPlayingPlaylist();
-        if (_playingPlaylist.error) {
-            toast.error("获取正在播放的壁纸失败")
-            console.log(_playingPlaylist.error)
-            return;
-        }
-
-        setWallpapers(res.data);
-        setScreens(screens.data);
-        setPlayingPlaylist(_playingPlaylist.data);
     }
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
@@ -358,7 +368,7 @@ const Page = () => {
             < div className={cn(["relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105",
                 {
                     //隐藏
-                    "hidden": !mounted || !wallpapers || wallpapers.length === 0
+                    "hidden": !mounted || !wallpapers || wallpapers.length === 0,
                 }])}>
                 <div
                     className="w-full aspect-[3/2]"
@@ -377,7 +387,7 @@ const Page = () => {
             }
         </div >
         {
-            (!wallpapers || wallpapers.length === 0) &&
+            mounted && !refreshing && (!wallpapers || wallpapers.length === 0) &&
             <div className="flex items-center justify-center min-h-screen -mt-20">
                 <div className="flex flex-col items-center justify-center">
                     <h2 className="text-xl font-semibold mb-2">没有找到壁纸</h2>
