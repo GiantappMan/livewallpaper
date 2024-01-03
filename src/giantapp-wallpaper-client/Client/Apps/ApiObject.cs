@@ -224,8 +224,13 @@ public class ApiObject
     public string UploadToTmp(string filename, string fileContentBase64)
     {
         byte[] fileContent = Convert.FromBase64String(fileContentBase64);
-        filename = Path.Combine(Path.GetTempPath(), filename);
+        //临时目录不存在则创建
+        if (!Directory.Exists(AppService.TempFolder))
+            Directory.CreateDirectory(AppService.TempFolder);
+
+        filename = Path.Combine(AppService.TempFolder, filename);
         File.WriteAllBytes(filename, fileContent);
+        var url = AppService.ConvertTmpPathToUrl(filename);
         return filename;
     }
 

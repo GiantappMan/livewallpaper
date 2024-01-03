@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Threading;
 using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
+using System.IO;
 
 namespace Client.Apps;
 
@@ -23,13 +24,11 @@ namespace Client.Apps;
 /// </summary>
 internal class AppService
 {
-    public static readonly string ProductName = "LiveWallpaper3";
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly AutoStart _autoStart;
     private static readonly AppNotifyIcon _notifyIcon = new();
     private static readonly ApiObject _apiObject = new();
 
-    static readonly string _domainStr = "client.giantapp.cn";
     //是否存关闭老进程
     private static bool _killOldProcess = false;
 
@@ -38,7 +37,14 @@ internal class AppService
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
         _autoStart = new(ProductName, exePath);
     }
+    #region properties
 
+    public static readonly string DomainStr = "client.giantapp.cn";
+    public static readonly string TempDomainStr = "tmp." + DomainStr;
+    public static readonly string ProductName = "LiveWallpaper3";
+    public static string TempFolder { get; private set; } = Path.Combine(Path.GetTempPath(), ProductName);
+
+    #endregion
     #region public
     internal static async void Init()
     {
@@ -74,7 +80,8 @@ internal class AppService
         //ShellWindow初始化
         ShellWindow.CustomFolderMapping = new()
         {
-            { _domainStr, "Assets/UI" }
+            { DomainStr, "Assets/UI" },
+            {TempDomainStr, TempFolder }
         };
 
 #if !(DEBUG_LOCAL && DEBUG)
@@ -142,7 +149,6 @@ internal class AppService
         System.Windows.Application.Current.Shutdown();
         DesktopManager.Refresh();
     }
-
     internal static string? ConvertPathToUrl(ConfigWallpaper? wallpaperConfig, string? path)
     {
         //把壁纸目录，转换成对应的Url
@@ -155,7 +161,7 @@ internal class AppService
             var item = directories[i];
             if (path.StartsWith(item + "\\"))
             {
-                path = $"https://{i}.{_domainStr}{path[item.Length..]}";
+                path = $"https://{i}.{DomainStr}{path[item.Length..]}";
                 //replase \\ to //
                 path = path.Replace("\\", "/");
                 break;
@@ -174,14 +180,22 @@ internal class AppService
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
-            if (path.StartsWith($"https://{i}.{_domainStr}"))
+            if (path.StartsWith($"https://{i}.{DomainStr}"))
             {
-                path = $"{item}{path[$"https://{i}.{_domainStr}".Length..]}";
+                path = $"{item}{path[$"https://{i}.{DomainStr}".Length..]}";
                 break;
             }
         }
         return path;
     }
+
+    internal static string ConvertTmpPathToUrl(string filename)
+    {
+        string path = $"https://{filename.Replace(TempFolder, TempDomainStr)}";
+        path = path.Replace("\\", "/");
+        return path;
+    }
+
     #endregion
 
     #region private
@@ -248,7 +262,7 @@ internal class AppService
         int index = 0;
         foreach (var item in directories)
         {
-            string url = $"{index++}.{_domainStr}";
+            string url = $"{index++}.{DomainStr}";
             dict.Add(url, item);
         }
 
