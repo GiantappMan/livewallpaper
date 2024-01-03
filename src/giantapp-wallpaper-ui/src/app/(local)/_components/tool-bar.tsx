@@ -29,7 +29,7 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 type PlaylistWrapper = {
-    current: Wallpaper;
+    current: Wallpaper | null;
     playlist?: Playlist;
     screen: Screen;
 }
@@ -38,12 +38,13 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
     const [isPaused, setIsPaused] = useState<boolean>(false);
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
     const [singlePlaylistMode, setSinglePlaylistMode] = useState<boolean>(true);
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
 
     useEffect(() => {
-        setSinglePlaylistMode(playlists.length === 1);
+        setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
     }, [playlists]);
 
     useEffect(() => {
@@ -51,7 +52,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         playingPlaylist?.forEach(item => {
             if (item.setting?.playIndex !== undefined) {
                 var currentWallpaper = item.wallpapers[item.setting?.playIndex];
-                var exist = tmpPlaylists.some(x => x.current.fileUrl === currentWallpaper.fileUrl);
+                var exist = tmpPlaylists.some(x => x.current?.fileUrl === currentWallpaper.fileUrl);
                 if (!exist)
                     tmpPlaylists.push({
                         current: currentWallpaper,
@@ -65,7 +66,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
 
     useEffect(() => {
         //选中播放列表已移除
-        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current.fileUrl));
+        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
         if (!exist)
             setSelectedPlaylist(null);
 
@@ -74,6 +75,12 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         if (selectedPlaylist)
             isPaused = selectedPlaylist.playlist?.setting.isPaused || false;
         setIsPaused(isPaused);
+
+        //设置isPlaying
+        var isPlaying = playlists.some(x => !!x.current);
+        if (selectedPlaylist)
+            isPlaying = !!selectedPlaylist.current;
+        setIsPlaying(isPlaying);
 
         var volume = Math.max(...playlists.map(item => item.playlist?.setting.volume || 0));
         if (selectedPlaylist)
@@ -118,6 +125,20 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         setPlaylists(tmpPlaylists);
     }, [playlists, screens, selectedPlaylist]);
 
+    const handleStopClick = useCallback(() => {
+        var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
+        api.stopWallpaper(index);
+        //更新playlist对应屏幕的ispaused
+        var tmpPlaylists = [...playlists];
+        //没有选中，就影响所有playlist
+        tmpPlaylists.forEach(element => {
+            if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
+                return;
+            element.current = null;
+        });
+        setPlaylists(tmpPlaylists);
+    }, [playlists, screens, selectedPlaylist]);
+
     const handleVolumeChange = useCallback((value: number[]) => {
         var tmpPlaylists = [...playlists];
         //从tmpPlaylists找目标列表，如果有选中的用选中的，如果没有选中的选有音量的，如果没有音量，选第一个视频壁纸
@@ -146,7 +167,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
-            {playlists.map((item, index) => {
+            {playlists.filter(x => x.current).map((item, index) => {
                 const isSelected = selectedPlaylist?.current === item.current;
                 return <div key={index} className="flex items-center p-1">
                     {
@@ -159,19 +180,19 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         (singlePlaylistMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
                             <img
                                 alt="Cover"
-                                title={item.current.meta?.title}
+                                title={item.current?.meta?.title}
                                 className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
                                 ])}
                                 height={50}
-                                src={item.current.coverUrl || "/wp-placeholder.webp"}
+                                src={item.current?.coverUrl || "/wp-placeholder.webp"}
                                 width={50}
                             />
                         </picture>
                     }
                     {
                         (singlePlaylistMode || isSelected) && <div className="flex flex-col text-sm truncate">
-                            <div className="font-semibold">{item?.current.meta?.title}</div>
-                            <div >{item?.current.meta?.description}</div>
+                            <div className="font-semibold">{item?.current?.meta?.title}</div>
+                            <div >{item?.current?.meta?.description}</div>
                         </div>
                     }
                 </div>
@@ -199,8 +220,26 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                         </svg>
                     </Button>
                 }
+                {/* 停止按钮 */}
+                {isPlaying && <Button variant="ghost" className="hover:text-primary" title="停止" onClick={handleStopClick}>
+                    <svg
+                        className="h-5 w-5 "
+                        fill="none"
+                        height="24"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        width="24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <rect height="20" rx="2" ry="2" width="20" x="2" y="2" />
+                    </svg>
+                </Button>
+                }
                 {
-                    isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
+                    isPlaying && isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -218,7 +257,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </Button>
                 }
                 {
-                    !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
+                    isPlaying && !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"

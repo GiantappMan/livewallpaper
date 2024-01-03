@@ -181,6 +181,15 @@ public class ApiObject
             WallpaperApi.ResumeWallpaper();
     }
 
+    public void StopWallpaper(string? screenIndexStr)
+    {
+        bool ok = int.TryParse(screenIndexStr, out int screenIndex);
+        if (ok && screenIndex > 0)
+            WallpaperApi.StopWallpaper(screenIndex);
+        else
+            WallpaperApi.StopWallpaper();
+    }
+
     public void SetVolume(string volume, string screenIndexStr)
     {
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);

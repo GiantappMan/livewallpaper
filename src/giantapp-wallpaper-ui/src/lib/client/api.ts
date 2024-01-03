@@ -139,6 +139,19 @@ class API {
     }
   }
 
+  async stopWallpaper(screenIndex?: number): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+
+      const { api } = window.chrome.webview.hostObjects;
+      await api.StopWallpaper(screenIndex);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   async setVolume(volume: number, screenIndex?: number): Promise<ApiResult<null>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };

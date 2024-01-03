@@ -221,10 +221,10 @@ public class MpvPlayer
 
     public void Stop()
     {
-        ////mpv 关闭视频 进程会退出
-        //SendMessage(IPCServerName, "stop");
-
-        Pause();
+        //mpv 关闭视频 进程会退出
+        SendMessage(IPCServerName, "stop");
+        ProcessLaunched = false;
+        //Pause();
 
         //加载空文件
         //SendMessage(IPCServerName, "loadfile", "");

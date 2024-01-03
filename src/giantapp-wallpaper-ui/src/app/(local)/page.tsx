@@ -159,7 +159,7 @@ const Page = () => {
                                 }}
                                 title="点击使所有屏幕生效">
                                 {/* 图片 */}
-                                {wallpaper?.meta.type === WallpaperType.Img && <picture>
+                                {(wallpaper?.meta.type === WallpaperType.Img || wallpaper?.meta.type === WallpaperType.AnimatedImg) && <picture>
                                     <img
                                         alt={wallpaper?.meta.title}
                                         className="w-full"

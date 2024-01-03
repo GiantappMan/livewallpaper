@@ -236,6 +236,21 @@ public static class WallpaperApi
         }
     }
 
+    //停止壁纸
+    public static void StopWallpaper(params int[] screenIndexs)
+    {
+        if (screenIndexs.Length == 0)
+            screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
+
+        foreach (var screenIndex in screenIndexs)
+        {
+            if (screenIndex < 0)
+                continue;
+            var manger = GetRunningManager((uint)screenIndex);
+            manger.Stop();
+        }
+    }
+
     //设置音量
     public static void SetVolume(int volume, int? screenIndex = null)
     {

@@ -7,6 +7,7 @@ interface API {
   GetPlayingPlaylist(): Promise<string>;
   PauseWallpaper(screenIndex?: number): Promise<void>;
   ResumeWallpaper(screenIndex?: number): Promise<void>;
+  StopWallpaper(screenIndex?: number): Promise<void>;
   SetVolume(volume: string, screenIndex?: string): Promise<void>;
   GetVersion(): Promise<string>;
   OpenUrl(url: string): Promise<void>;
