@@ -30,6 +30,7 @@ public static class DesktopManager
                                    );
         }
     }
+
     public static IntPtr GetWorkerW()
     {
         HWND workerw = HWND.Null;
@@ -69,6 +70,15 @@ public static class DesktopManager
 
          return true;
      }), new LPARAM());
+
+        if (workerw.IsNull)
+        {
+            //部分特殊机型
+            var progman = PInvoke.FindWindow("Progman", null);
+            if (progman != HWND.Null)
+                workerw = PInvoke.FindWindowEx(progman, HWND.Null, "WorkerW", null);
+        }
+
         return workerw.Value;
     }
 

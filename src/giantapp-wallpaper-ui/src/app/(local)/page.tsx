@@ -184,7 +184,21 @@ const Page = () => {
                                 </picture>
                                 }
                                 {/* 视频 */}
-                                {wallpaper?.meta.type === WallpaperType.Video && <video
+                                {wallpaper?.meta.type === WallpaperType.Video && <picture>
+                                    <img
+                                        alt={wallpaper?.meta.title}
+                                        className="w-full"
+                                        height="200"
+                                        src={wallpaper?.coverUrl || "/wp-placeholder.webp"}
+                                        style={{
+                                            aspectRatio: "300/200",
+                                            objectFit: "cover",
+                                        }}
+                                        width="300"
+                                    />
+                                </picture>
+                                }
+                                {/* {wallpaper?.meta.type === WallpaperType.Video && <video
                                     autoPlay={false}
                                     className="w-full"
                                     height="200"
@@ -200,7 +214,7 @@ const Page = () => {
                                     width="300"
                                 >
                                 </video>
-                                }
+                                } */}
                                 {/* 遮罩 */}
                                 <div className="flex flex-col justify-between">
                                     <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 hover:opacity-100 hover:scale-105 transition-opacity duration-500">
