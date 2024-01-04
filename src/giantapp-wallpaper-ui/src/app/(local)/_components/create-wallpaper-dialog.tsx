@@ -120,8 +120,8 @@ let abortController: AbortController | undefined = undefined;
 
 function getFileType(path: string): "img" | "video" {
     //根据后缀名返回 img/video
-    const imgExt = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
-    const videoExt = [".mp4", ".webm", ".ogg"];
+    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif"];
+    const videoExt = [".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv"];
     const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
     if (imgExt.includes(ext))
         return "img";
@@ -229,6 +229,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
             // 创建一个canvas元素
             const canvas = document.createElement('canvas');
+
             const ctx = canvas.getContext('2d');
             if (!ctx) {
                 reject(new Error('Could not create canvas context'));
@@ -236,8 +237,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             }
 
             // 当视频数据加载完成后，将视频的当前帧绘制到canvas上
-            video.addEventListener('loadedmetadata', () => {
+            video.addEventListener('loadeddata', () => {
                 debugger
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 video.currentTime = video.duration / 2; // 尝试从视频的中间部分获取一帧
             });
 
