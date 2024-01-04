@@ -114,7 +114,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const importingFile = form.watch("file");
     const [importedFile, setImportedFile] = useState<{
         name: string,
-        path: string
+        url: string
     }>();
     const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,7 +151,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             console.log(data);
             setImportedFile({
                 name: file.name,
-                path: data || ""
+                url: data || ""
             });
             const fileName = file.name.split(".")[0];
             if (!form.getValues("title"))
@@ -203,7 +203,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             return;
         }
         setUploading(true);
-        var res = await api.createWallpaper(data.title, importedFile?.path || "");
+        var res = await api.createWallpaper(data.title, importedFile?.url || "");
         if (!res.data)
             toast.warning("创建失败，不支持的格式");
         else {
@@ -313,6 +313,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                     <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
                                     <div className="flex justify-between items-center text-[#9CA3AF]">
                                         <p>{importedFile.name}</p>
+                                        {importedFile.url}
+                                        <video>
+                                            <source src={importedFile.url} />
+                                        </video>
                                         <Button type="button" variant="ghost" onClick={() => {
                                             setImportedFile(undefined);
                                             if (fileInputRef.current)

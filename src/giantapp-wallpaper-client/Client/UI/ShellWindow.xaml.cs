@@ -34,7 +34,7 @@ public partial class ShellWindow : Window
     public static bool DarkBackground { get; set; }
     public static bool AllowDragFile { get; set; } = false;
 
-    public static Dictionary<string, string> CustomFolderMapping { get; set; } = new();
+    public static Dictionary<string, string> CustomFolderMapping { get; private set; } = new();
     public static Dictionary<string, string> RewriteMapping { get; internal set; } = new();
     #endregion
 
@@ -179,18 +179,25 @@ public partial class ShellWindow : Window
         Instance.Show();
     }
 
-    public static void ApplyCustomFolderMapping(Microsoft.Web.WebView2.Wpf.WebView2? webview2 = null)
+    public static void ApplyCustomFolderMapping(Dictionary<string, string> mapping, Microsoft.Web.WebView2.Wpf.WebView2? webview2 = null)
     {
+        //清理老映射
+        foreach (var item in CustomFolderMapping)
+        {
+            webview2?.CoreWebView2?.ClearVirtualHostNameToFolderMapping(item.Key);
+        }
+
+        CustomFolderMapping = mapping;
+
         webview2 ??= Instance?.webview2;
         if (webview2 == null)
             return;
 
-        foreach (var item in CustomFolderMapping)
+        foreach (var item in mapping)
         {
             bool isAbsoluteFilePath = Path.IsPathRooted(item.Value);
             if (isAbsoluteFilePath && !Directory.Exists(item.Value))
                 Directory.CreateDirectory(item.Value);
-            webview2?.CoreWebView2?.ClearVirtualHostNameToFolderMapping(item.Key);
             webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.Allow);
         }
     }
@@ -321,7 +328,7 @@ public partial class ShellWindow : Window
 
         if (!AllowDragFile)
             DisableDragFile();
-        ApplyCustomFolderMapping(webview2);
+        ApplyCustomFolderMapping(CustomFolderMapping, webview2);
 
 #if !DEBUG
         //禁用F12
@@ -367,5 +374,4 @@ public partial class ShellWindow : Window
         }
     }
     #endregion
-
 }

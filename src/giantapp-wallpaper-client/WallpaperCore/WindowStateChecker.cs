@@ -87,7 +87,8 @@ public class WindowStateChecker
 
         if (WindowStateChanged != null)
         {
-            _checkHandles.AddRange(GetAllWindowHandle());
+            var tmp = GetAllWindowHandle();
+            _checkHandles.AddRange(tmp);
 
             //下次有限检查的句柄
             var nextCheckHandles = new List<IntPtr>();

@@ -32,6 +32,8 @@ internal class AppService
     //是否存关闭老进程
     private static bool _killOldProcess = false;
 
+    private static Dictionary<string, string> _globalFolderMapping = new();
+
     static AppService()
     {
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
@@ -48,6 +50,12 @@ internal class AppService
     #region public
     internal static async void Init()
     {
+        //全局文件夹映射
+        _globalFolderMapping = new()  {
+            { DomainStr, "Assets/UI" },
+            {TempDomainStr, TempFolder }
+        };
+
         //检查单实例
         bool ok = CheckMutex();
         if (!ok)
@@ -77,13 +85,6 @@ internal class AppService
         //托盘初始化
         _notifyIcon.Init();
 
-        //ShellWindow初始化
-        ShellWindow.CustomFolderMapping = new()
-        {
-            { DomainStr, "Assets/UI" },
-            {TempDomainStr, TempFolder }
-        };
-
 #if !(DEBUG_LOCAL && DEBUG)
         //除了需要刷新的页面和本地调试用，其他可以不设
         ShellWindow.RewriteMapping = new()
@@ -94,7 +95,7 @@ internal class AppService
         };
 #endif
 
-        ApplyCustomFolderMapping(wallpaperConfig.Directories);
+        ApplySaveFolderMapping(wallpaperConfig.Directories);
 
         //前端api
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
@@ -256,16 +257,12 @@ internal class AppService
     }
 
     //配置目录映射到网址
-    private static void ApplyCustomFolderMapping(string[]? directories)
+    private static void ApplySaveFolderMapping(string[]? directories)
     {
         if (directories == null || directories.Length == 0)
             directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
 
-        var dict = new Dictionary<string, string>();
-        //第一个是网址和UI映射
-        var first = ShellWindow.CustomFolderMapping.FirstOrDefault();
-        dict.Add(first.Key, first.Value);
-
+        var dict = new Dictionary<string, string>(_globalFolderMapping);
         int index = 0;
         foreach (var item in directories)
         {
@@ -273,8 +270,7 @@ internal class AppService
             dict.Add(url, item);
         }
 
-        ShellWindow.CustomFolderMapping = dict;
-        ShellWindow.ApplyCustomFolderMapping();
+        ShellWindow.ApplyCustomFolderMapping(dict);
     }
 
     #endregion
@@ -325,7 +321,7 @@ internal class AppService
                 var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
                 if (configWallpaper != null)
                 {
-                    ApplyCustomFolderMapping(configWallpaper.Directories);
+                    ApplySaveFolderMapping(configWallpaper.Directories);
                     _apiObject.TriggerRefreshPageEvent();
                 }
                 break;
