@@ -176,6 +176,11 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
     const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        // 检查鼠标是否真的离开了元素，还是只是移动到了子元素
+        if (e.currentTarget.contains(e.relatedTarget as Node)) {
+            // 鼠标指针移动到了子元素，不做任何处理
+            return;
+        }
         setIsOver(false);
     }, []);
 
@@ -300,7 +305,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                         <div>
                                             <span> 导入中...</span>
                                             <Progress className="mt-2" value={progress} />
-                                        </div>}
+                                        </div>
+                                    }
                                 </>
                                 :
                                 <>
