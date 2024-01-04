@@ -100,6 +100,16 @@ function processFile(file: File, onProgress: (progress: number) => void, control
 
 let abortController: AbortController | undefined = undefined;
 
+function getFileType(path: string): "img" | "video" {
+    //根据后缀名返回 img/video
+    const imgExt = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+    const videoExt = [".mp4", ".webm", ".ogg"];
+    const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
+    if (imgExt.includes(ext))
+        return "img";
+    return "video";
+}
+
 export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -114,7 +124,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const importingFile = form.watch("file");
     const [importedFile, setImportedFile] = useState<{
         name: string,
-        url: string
+        url: string,
+        fileType: string
     }>();
     const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,7 +162,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             console.log(data);
             setImportedFile({
                 name: file.name,
-                url: data || ""
+                url: data || "",
+                fileType: getFileType(data || "")
             });
             const fileName = file.name.split(".")[0];
             if (!form.getValues("title"))
@@ -312,18 +324,29 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                 <>
                                     <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
                                     <div className="flex justify-between items-center text-[#9CA3AF]">
-                                        <p>{importedFile.name}</p>
-                                        {importedFile.url}
-                                        <video>
-                                            <source src={importedFile.url} />
-                                        </video>
-                                        <Button type="button" variant="ghost" onClick={() => {
-                                            setImportedFile(undefined);
-                                            if (fileInputRef.current)
-                                                fileInputRef.current.value = '';
-                                        }}>
-                                            <DeleteIcon className="h-6 w-6" />
-                                        </Button>
+                                        <div>
+                                            <div className="flex justify-between items-center">
+                                                <p>{importedFile.name}</p>   <Button type="button" variant="ghost" onClick={() => {
+                                                    setImportedFile(undefined);
+                                                    if (fileInputRef.current)
+                                                        fileInputRef.current.value = '';
+                                                }}>
+                                                    <DeleteIcon className="h-6 w-6" />
+                                                </Button>
+                                            </div>
+                                            {
+                                                importedFile.fileType === "video" && <video autoPlay={true}>
+                                                    <source src={importedFile.url} />
+                                                </video>
+                                            }
+                                            {
+                                                importedFile.fileType === "img" &&
+                                                <picture>
+                                                    <img alt="预览" src={importedFile.url} />
+                                                </picture>
+                                            }
+                                        </div>
+
                                     </div>
                                 </>
                             }
