@@ -413,8 +413,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                             }
                                             {
                                                 importedFile.fileType === "img" &&
-                                                <picture ref={previewImgRef}>
-                                                    <img alt="预览" src={importedFile.url} />
+                                                <picture>
+                                                    <img alt="预览" src={importedFile.url} ref={previewImgRef} />
                                                 </picture>
                                             }
                                         </div>
