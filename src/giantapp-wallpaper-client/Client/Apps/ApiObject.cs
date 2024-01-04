@@ -231,11 +231,12 @@ public class ApiObject
         filename = Path.Combine(AppService.TempFolder, filename);
         File.WriteAllBytes(filename, fileContent);
         var url = AppService.ConvertTmpPathToUrl(filename);
-        return filename;
+        return url;
     }
 
-    public bool CreateWallpaper(string title, string path)
+    public bool CreateWallpaper(string title, string url)
     {
+        var path = AppService.ConvertUrlToTmpPath(url);
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
             return false;

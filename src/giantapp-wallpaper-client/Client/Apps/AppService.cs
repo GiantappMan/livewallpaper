@@ -196,6 +196,13 @@ internal class AppService
         return path;
     }
 
+    internal static string ConvertUrlToTmpPath(string url)
+    {
+        string path = url.Replace($"https://{TempDomainStr}", TempFolder);
+        path = path.Replace("/", "\\");
+        return path;
+    }
+
     #endregion
 
     #region private
