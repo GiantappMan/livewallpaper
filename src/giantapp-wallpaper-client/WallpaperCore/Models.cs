@@ -234,6 +234,9 @@ public class Wallpaper
 
     public static Wallpaper? From(string filePath, bool loadSetting = true)
     {
+        if (filePath.Contains(".cover"))
+            return null;
+
         var data = new Wallpaper(filePath);
 
         var oldData = LoadOldData(data, out bool existProjectFile);

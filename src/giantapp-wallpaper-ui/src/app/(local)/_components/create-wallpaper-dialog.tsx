@@ -107,7 +107,6 @@ function getBase64FromBlob(blob: Blob): Promise<string> {
                 return;
             }
             const arrayBuffer = e.target.result;
-            debugger
             const binaryString = Array.from(new Uint8Array(arrayBuffer as ArrayBuffer)).map(byte => String.fromCharCode(byte)).join('');
             const base64 = btoa(binaryString);
             resolve(base64);
@@ -148,6 +147,8 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const previewVideoRef = useRef<HTMLVideoElement>(null);
+    const previewImgRef = useRef<HTMLImageElement>(null);
 
     //每次打开重置状态
     useEffect(() => {
@@ -223,9 +224,24 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
     function generateCoverImage(fileUrl: string): Promise<Blob> {
         return new Promise((resolve, reject) => {
-            // 创建一个video元素
-            const video = document.createElement('video');
-            video.src = fileUrl;
+            if (!importedFile) {
+                reject(new Error('未导入文件'));
+                return;
+            }
+
+            //当前预览元素
+            let previewElement: HTMLVideoElement | HTMLImageElement | undefined;
+            let width = 0;
+            let height = 0;
+            if (importedFile.fileType === "img") {
+                previewElement = previewImgRef.current;
+                width = previewElement?.width || 0;
+                height = previewElement?.height || 0;
+            } else {
+                previewElement = previewVideoRef.current;
+                width = previewElement?.videoWidth || 0;
+                height = previewElement?.videoHeight || 0;
+            }
 
             // 创建一个canvas元素
             const canvas = document.createElement('canvas');
@@ -236,45 +252,25 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                 return;
             }
 
-            // 当视频数据加载完成后，将视频的当前帧绘制到canvas上
-            video.addEventListener('loadeddata', () => {
-                debugger
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                video.currentTime = video.duration / 2; // 尝试从视频的中间部分获取一帧
-            });
-
-            video.addEventListener('seeked', () => {
-                debugger
-                ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-                // 将canvas的内容转换为Blob对象
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error('Could not create blob from canvas'));
-                    }
-                }, 'image/jpeg');
-            });
-
-            // // 当视频数据加载完成后，将视频的当前帧绘制到canvas上
-            // video.addEventListener('loadeddata', () => {
-            //     debugger
-            //     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-            //     // 将canvas的内容转换为Blob对象
-            //     canvas.toBlob((blob) => {
-            //         if (blob) {
-            //             resolve(blob);
-            //         } else {
-            //             reject(new Error('Could not create blob from canvas'));
-            //         }
-            //     }, 'image/jpeg');
-            // });
+            //按previewElement元素比例缩放到500
+            const drawWidth = 500;
+            const drawHeight = drawWidth * (canvas.height / canvas.width);
+            canvas.width = drawWidth;
+            canvas.height = drawHeight;
+            ctx.drawImage(previewElement, 0, 0, drawWidth, drawHeight);
+            // 将canvas的内容转换为Blob对象
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Could not create blob from canvas'));
+                }
+            }, 'image/jpeg');
         });
     }
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
-        if (uploading)
+        if (uploading || !importedFile || !importedFile.url)
             return;
 
         if (!data.title)
@@ -286,15 +282,12 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         }
         setUploading(true);
 
-        if (importedFile?.url) {
-            const imgData = await generateCoverImage(importedFile.url);
-            //Blob转换成base64
-            const base64String = await getBase64FromBlob(imgData);
-            const fileName = importedFile.name.split(".")[0] + ".jpg";
-            var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
-            debugger
-        }
-        var res = await api.createWallpaper(data.title, importedFile?.url || "");
+        const imgData = await generateCoverImage(importedFile.url);
+        //Blob转换成base64
+        const base64String = await getBase64FromBlob(imgData);
+        const fileName = importedFile.name.split(".")[0] + ".jpg";
+        var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
+        var res = await api.createWallpaper(data.title, coverUrl, importedFile.url);
         if (!res.data)
             toast.warning("创建失败，不支持的格式");
         else {
@@ -414,18 +407,17 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                                 </Button>
                                             </div>
                                             {
-                                                importedFile.fileType === "video" && <video autoPlay={true}>
+                                                importedFile.fileType === "video" && <video autoPlay={true} ref={previewVideoRef}>
                                                     <source src={importedFile.url} />
                                                 </video>
                                             }
                                             {
                                                 importedFile.fileType === "img" &&
-                                                <picture>
+                                                <picture ref={previewImgRef}>
                                                     <img alt="预览" src={importedFile.url} />
                                                 </picture>
                                             }
                                         </div>
-
                                     </div>
                                 </>
                             }

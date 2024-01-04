@@ -200,12 +200,12 @@ class API {
     }
   }
 
-  async createWallpaper(title: string, path: string): Promise<ApiResult<boolean>> {
+  async createWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<ApiResult<boolean>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
 
-      var res = await api.CreateWallpaper(title, path);
+      var res = await api.CreateWallpaper(title, coverUrl, pathUrl);
       return { error: null, data: res };
     } catch (e) {
       console.log(e);

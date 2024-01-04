@@ -12,7 +12,7 @@ interface API {
   GetVersion(): Promise<string>;
   OpenUrl(url: string): Promise<void>;
   UploadToTmp(fileName: string, content: string): Promise<string>;
-  CreateWallpaper(title: string, path: string): Promise<boolean>;
+  CreateWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<boolean>;
   DeleteWallpaper(wallpaperJSON: string): Promise<boolean>;
   addEventListener(type: string, listener: (e: any) => void);
 }

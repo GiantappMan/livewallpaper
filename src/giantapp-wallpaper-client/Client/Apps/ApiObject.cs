@@ -234,14 +234,15 @@ public class ApiObject
         return url;
     }
 
-    public bool CreateWallpaper(string title, string url)
+    public bool CreateWallpaper(string title, string coverUrl, string pathUrl)
     {
-        var path = AppService.ConvertUrlToTmpPath(url);
+        var path = AppService.ConvertUrlToTmpPath(pathUrl);
+        var cover = AppService.ConvertUrlToTmpPath(coverUrl);
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
             return false;
 
-        return WallpaperApi.CreateWallpaper(title, path, config.Directories[0]);
+        return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
     }
 
     public bool DeleteWallpaper(string wallpaperJson)

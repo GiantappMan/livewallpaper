@@ -299,7 +299,7 @@ public static class WallpaperApi
     }
 
     //创建壁纸
-    public static bool CreateWallpaper(string title, string path, string saveFolder)
+    public static bool CreateWallpaper(string title, string cover, string path, string saveFolder)
     {
         var wallpaper = Wallpaper.From(path, false);
         if (wallpaper == null)
@@ -307,21 +307,29 @@ public static class WallpaperApi
 
         if (!Directory.Exists(saveFolder))
             Directory.CreateDirectory(saveFolder);
+
         //保存到目录
         string extension = Path.GetExtension(path);
         string saveFileName = Guid.NewGuid().ToString();
         string savePath = Path.Combine(saveFolder, saveFileName + extension);
         File.Copy(path, savePath);
 
+        //移动cover位置
+        string coverExtension = Path.GetExtension(cover);
+        string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
+        File.Copy(cover, coverSavePath);
+
         //保存meta
         wallpaper.Meta.Title = title;
         wallpaper.Meta.CreateTime = DateTime.Now;
+        wallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(wallpaper.Meta, JsonSettings));
 
         ////保存setting
         //string settingJsonFile = Path.Combine(saveFolder, $"{saveName}.setting.json");
         //File.WriteAllText(settingJsonFile, JsonConvert.SerializeObject(new PlaylistSetting(), JsonSettings));
+
         return true;
     }
 
