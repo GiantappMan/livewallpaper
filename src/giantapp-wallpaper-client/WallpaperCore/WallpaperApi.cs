@@ -187,7 +187,7 @@ public static class WallpaperApi
                     File.Delete(settingJsonFile);
 
                 //如果文件夹空了，删除文件夹
-                if (Directory.GetFiles(wallpaper.Dir).Length == 0)
+                if (Directory.GetFiles(wallpaper.Dir).Length == 0 && Directory.GetDirectories(wallpaper.Dir).Length == 0)
                     Directory.Delete(wallpaper.Dir);
             }
             catch (Exception ex)
