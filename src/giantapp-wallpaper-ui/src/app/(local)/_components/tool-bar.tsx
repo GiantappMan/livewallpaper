@@ -47,6 +47,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
     }, [playlists]);
 
+    //外部参数变化，更新内部playlist
     useEffect(() => {
         let tmpPlaylists: PlaylistWrapper[] = [];
         playingPlaylist?.forEach(item => {
@@ -64,6 +65,7 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         setPlaylists(tmpPlaylists);
     }, [playingPlaylist, screens]);
 
+    //内部playlist变化，更新状态
     useEffect(() => {
         //选中播放列表已移除
         var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
@@ -165,10 +167,13 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         });
     }, [playlists, selectedPlaylist]);
 
+    if (!isPlaying)
+        return <></>
+
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playlists.filter(x => x.current).map((item, index) => {
-                const isSelected = selectedPlaylist?.current === item.current;
+                const isSelected = selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
                 return <div key={index} className="flex items-center p-1">
                     {
                         isSelected && <Button className="self-start -ml-4" variant="link" size="icon" onClick={() => setSelectedPlaylist(null)} title="返回列表">
@@ -366,5 +371,5 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                 </>
             }
         </div>
-    </div >
+    </div>
 }

@@ -230,19 +230,23 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             }
 
             //当前预览元素
-            let previewElement: HTMLVideoElement | HTMLImageElement | undefined;
-            let width = 0;
-            let height = 0;
+            let previewElement: HTMLVideoElement | HTMLImageElement | undefined | null;
+            // let width = 0;
+            // let height = 0;
             if (importedFile.fileType === "img") {
                 previewElement = previewImgRef.current;
-                width = previewElement?.width || 0;
-                height = previewElement?.height || 0;
+                // width = previewElement?.width || 0;
+                // height = previewElement?.height || 0;
             } else {
                 previewElement = previewVideoRef.current;
-                width = previewElement?.videoWidth || 0;
-                height = previewElement?.videoHeight || 0;
+                // width = previewElement?.videoWidth || 0;
+                // height = previewElement?.videoHeight || 0;
             }
 
+            if (!previewElement) {
+                reject(new Error('预览元素未找到'));
+                return;
+            }
             // 创建一个canvas元素
             const canvas = document.createElement('canvas');
 
@@ -287,7 +291,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
         const base64String = await getBase64FromBlob(imgData);
         const fileName = importedFile.name.split(".")[0] + ".jpg";
         var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
-        var res = await api.createWallpaper(data.title, coverUrl, importedFile.url);
+        var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
         if (!res.data)
             toast.warning("创建失败，不支持的格式");
         else {
