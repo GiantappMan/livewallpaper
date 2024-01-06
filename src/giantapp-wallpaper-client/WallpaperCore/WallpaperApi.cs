@@ -173,6 +173,38 @@ public static class WallpaperApi
 
             try
             {
+                string projectJsonFile = Path.Combine(wallpaper.Dir, "project.json");
+                if (File.Exists(projectJsonFile))
+                {
+                    //旧壁纸
+                    //读取json
+                    var oldData = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
+
+                    //删除封面
+                    if (oldData?.Preview != null)
+                    {
+                        string oldCoverFile = Path.Combine(wallpaper.Dir, oldData.Preview);
+                        if (File.Exists(oldCoverFile))
+                            File.Delete(oldCoverFile);
+                    }
+
+                    //删除project.json
+                    File.Delete(projectJsonFile);
+
+                    //删除壁纸
+                    File.Delete(wallpaper.FilePath);
+
+                    //删除option.json
+                    string optionJsonFile = Path.Combine(wallpaper.Dir, "option.json");
+                    if (File.Exists(optionJsonFile))
+                        File.Delete(optionJsonFile);
+
+                    //如果当前目录空了，删除当前文件夹
+                    if (Directory.GetFiles(wallpaper.Dir).Length == 0 && Directory.GetDirectories(wallpaper.Dir).Length == 0)
+                        Directory.Delete(wallpaper.Dir);
+                    continue;
+                }
+
                 File.Delete(wallpaper.FilePath);
 
                 //存在meta删除meta
@@ -180,7 +212,7 @@ public static class WallpaperApi
                 string metaJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
                 if (File.Exists(metaJsonFile))
                     File.Delete(metaJsonFile);
-                
+
                 //存在cover删除cover
                 string coverFile = Path.Combine(wallpaper.Dir, $"{fileName}.cover{Path.GetExtension(wallpaper.Meta.Cover)}");
                 if (File.Exists(coverFile))
