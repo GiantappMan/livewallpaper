@@ -137,6 +137,16 @@ const Page = () => {
         refresh();
     }
 
+    const editWallpaper = async (wallpaper: Wallpaper) => {
+        setOpenCreateWallpaperDialog(true);
+        // const res = await api.editWallpaper(wallpaper);
+        // if (!res.data) {
+        //     toast.error("编辑壁纸失败，请重试");
+        //     return;
+        // }
+        // refresh();
+    }
+
     const explorerWallpaper = async (wallpaper: Wallpaper) => {
         if (!wallpaper.filePath)
             return;
@@ -326,7 +336,9 @@ const Page = () => {
                                                     </AlertDialogContent>
                                                 </AlertDialog>
 
-                                                {/* <Button aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
+                                                <Button
+                                                    onClick={(e) => { editWallpaper(wallpaper); e.stopPropagation(); }}
+                                                    aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
                                                     <svg
                                                         className="h-5 w-5"
                                                         fill="none"
@@ -342,7 +354,7 @@ const Page = () => {
                                                         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                                                         <path d="m15 5 4 4" />
                                                     </svg>
-                                                </Button> */}
+                                                </Button>
                                                 <Button
                                                     onClick={(e) => { explorerWallpaper(wallpaper); e.stopPropagation(); }}
                                                     aria-label="打开文件夹"
@@ -387,13 +399,26 @@ const Page = () => {
                 <div
                     className="w-full aspect-[3/2]"
                 >
-                    <CreateWallpaperDialog
-                        open={openCreateWallpaperDialog}
-                        onChange={(e) => setOpenCreateWallpaperDialog(e)}
-                        createSuccess={() => {
-                            setOpenCreateWallpaperDialog(false)
-                            refresh();
-                        }} />
+                    <Button
+                        aria-label="创建壁纸"
+                        className="flex w-full h-full hover:text-primary"
+                        title="创建壁纸"
+                        variant="ghost"
+                        onClick={() => setOpenCreateWallpaperDialog(true)}
+                    >
+                        <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                    </Button>
                 </div>
             </div>
             {
@@ -417,6 +442,15 @@ const Page = () => {
                 </div>
             </div>
         }
+        <div className="hidden">
+            <CreateWallpaperDialog
+                open={openCreateWallpaperDialog}
+                onChange={(e) => setOpenCreateWallpaperDialog(e)}
+                createSuccess={() => {
+                    setOpenCreateWallpaperDialog(false)
+                    refresh();
+                }} />
+        </div>
     </div>
 };
 
