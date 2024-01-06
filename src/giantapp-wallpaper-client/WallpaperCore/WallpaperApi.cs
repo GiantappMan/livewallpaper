@@ -180,6 +180,11 @@ public static class WallpaperApi
                 string metaJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
                 if (File.Exists(metaJsonFile))
                     File.Delete(metaJsonFile);
+                
+                //存在cover删除cover
+                string coverFile = Path.Combine(wallpaper.Dir, $"{fileName}.cover{Path.GetExtension(wallpaper.Meta.Cover)}");
+                if (File.Exists(coverFile))
+                    File.Delete(coverFile);
 
                 //存在setting删除setting
                 string settingJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.setting.json");

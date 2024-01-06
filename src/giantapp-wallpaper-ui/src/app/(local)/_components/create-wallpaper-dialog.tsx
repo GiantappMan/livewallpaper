@@ -119,7 +119,7 @@ let abortController: AbortController | undefined = undefined;
 
 function getFileType(path: string): "img" | "video" {
     //根据后缀名返回 img/video
-    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif"];
+    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".gif", ".webp"];
     const videoExt = [".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv"];
     const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
     if (imgExt.includes(ext))
@@ -231,16 +231,10 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
             //当前预览元素
             let previewElement: HTMLVideoElement | HTMLImageElement | undefined | null;
-            // let width = 0;
-            // let height = 0;
             if (importedFile.fileType === "img") {
                 previewElement = previewImgRef.current;
-                // width = previewElement?.width || 0;
-                // height = previewElement?.height || 0;
             } else {
                 previewElement = previewVideoRef.current;
-                // width = previewElement?.videoWidth || 0;
-                // height = previewElement?.videoHeight || 0;
             }
 
             if (!previewElement) {
@@ -411,7 +405,9 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
                                                 </Button>
                                             </div>
                                             {
-                                                importedFile.fileType === "video" && <video autoPlay={true} ref={previewVideoRef}>
+                                                importedFile.fileType === "video" && <video
+                                                    onError={(e) => console.error('Video loading error:', e)}
+                                                    autoPlay={true} ref={previewVideoRef} className="object-contain">
                                                     <source src={importedFile.url} />
                                                 </video>
                                             }
