@@ -11,7 +11,7 @@ import { ToolBar } from "./_components/tool-bar";
 import { toast } from "sonner"
 import { PlayMode, Playlist, PlaylistMeta, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
-import { CreateWallpaperDialog } from "./_components/create-wallpaper-dialog";
+import { WallpaperDialog } from "./_components/wallpaper-dialog";
 import { cn } from "@/lib/utils";
 import {
     AlertDialog,
@@ -30,6 +30,8 @@ const Page = () => {
     const [screens, setScreens] = useState<Screen[] | null>();
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
+    //当前编辑的壁纸对象
+    const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const mounted = useMounted()
     const refresh = async () => {
@@ -139,6 +141,7 @@ const Page = () => {
 
     const editWallpaper = async (wallpaper: Wallpaper) => {
         setOpenCreateWallpaperDialog(true);
+        setCurrentWallpaper(wallpaper);
         // const res = await api.editWallpaper(wallpaper);
         // if (!res.data) {
         //     toast.error("编辑壁纸失败，请重试");
@@ -443,8 +446,9 @@ const Page = () => {
             </div>
         }
         <div className="hidden">
-            <CreateWallpaperDialog
+            <WallpaperDialog
                 open={openCreateWallpaperDialog}
+                wallpaper={currentWallpaper}
                 onChange={(e) => setOpenCreateWallpaperDialog(e)}
                 createSuccess={() => {
                     setOpenCreateWallpaperDialog(false)

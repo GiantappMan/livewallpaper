@@ -20,6 +20,7 @@ import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Wallpaper } from "@/lib/client/types/wallpaper"
 
 const formSchema = z.object({
     title: z.string(),
@@ -31,6 +32,7 @@ const formSchema = z.object({
 })
 
 interface CreateWallpaperDialogProps {
+    wallpaper?: Wallpaper | null
     open: boolean
     onChange: (open: boolean) => void
     createSuccess?: () => void
@@ -127,7 +129,7 @@ function getFileType(path: string): "img" | "video" {
     return "video";
 }
 
-export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
+export function WallpaperDialog(props: CreateWallpaperDialogProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -149,6 +151,18 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const previewVideoRef = useRef<HTMLVideoElement>(null);
     const previewImgRef = useRef<HTMLImageElement>(null);
+
+    //设置wallpaper
+    useEffect(() => {
+        if (props.wallpaper) {
+            form.setValue("title", props.wallpaper?.meta.title || "");
+            setImportedFile({
+                name: props.wallpaper?.meta.title || "",
+                url: props.wallpaper?.fileUrl || "",
+                fileType: getFileType(props.wallpaper?.fileUrl || "")
+            });
+        }
+    }, [props.wallpaper, form]);
 
     //每次打开重置状态
     useEffect(() => {
@@ -297,7 +311,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
 
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && (importing || importedFile)) {
-            confirm("导入未完成，确定要关闭吗？") && props.onChange(e);
+            confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
             return;
         }
         props.onChange(e);
@@ -328,7 +342,7 @@ export function CreateWallpaperDialog(props: CreateWallpaperDialogProps) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle>创建壁纸</DialogTitle>
+                        <DialogTitle>{props.wallpaper ? "编辑壁纸" : "创建壁纸"}</DialogTitle>
                         <DialogDescription>
                             本地壁纸，仅保存在你本机
                         </DialogDescription>
