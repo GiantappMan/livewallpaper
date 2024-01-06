@@ -150,26 +150,22 @@ public class MpvPlayer
             //args.Append("--keep-open=yes ");
 
             Process.StartInfo.Arguments = args.ToString();
-            //_process.StartInfo.UseShellExecute = false;
-            //_process.StartInfo.CreateNoWindow = true;
-            //_process.StartInfo.RedirectStandardInput = true;
-            //_process.StartInfo.RedirectStandardOutput = true;
-            //_process.StartInfo.RedirectStandardError = true;
             var res = Process.Start();
             if (!res)
                 return res;
 
+            ProcessLaunched = true;
             //异步等待窗口句柄
             await Task.Run(() =>
             {
-                while (Process.MainWindowHandle == IntPtr.Zero)
+                while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
                 {
                     Thread.Sleep(100);
                 }
             });
 
-            MainHandle = Process.MainWindowHandle;
-            ProcessLaunched = true;
+            if (ProcessLaunched)
+                MainHandle = Process.MainWindowHandle;
             return res;
         }
         catch (Exception ex)
