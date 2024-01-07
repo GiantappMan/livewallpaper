@@ -245,6 +245,19 @@ public class ApiObject
         return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
     }
 
+    public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
+    {
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+        var path = AppService.ConvertUrlToTmpPath(pathUrl);
+        path = AppService.ConvertUrlToPath(config, path);//有可能没改，就是壁纸目录
+        var cover = AppService.ConvertUrlToTmpPath(coverUrl);
+
+        var oldWallpaper = JsonConvert.DeserializeObject<Wallpaper>(oldWallpaperJson, WallpaperApi.JsonSettings);
+        if (oldWallpaper == null)
+            return false;
+        return WallpaperApi.UpdateWallpaper(title, cover, path, oldWallpaper);
+    }
+
     public bool DeleteWallpaper(string wallpaperJson)
     {
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);

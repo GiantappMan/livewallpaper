@@ -184,6 +184,7 @@ internal class AppService
             if (path.StartsWith($"https://{i}.{DomainStr}"))
             {
                 path = $"{item}{path[$"https://{i}.{DomainStr}".Length..]}";
+                path = path.Replace("/", "\\");
                 break;
             }
         }
@@ -199,9 +200,13 @@ internal class AppService
 
     internal static string ConvertUrlToTmpPath(string url)
     {
-        string path = url.Replace($"https://{TempDomainStr}", TempFolder);
-        path = path.Replace("/", "\\");
-        return path;
+        if (url.Contains(TempDomainStr))
+        {
+            string path = url.Replace($"https://{TempDomainStr}", TempFolder);
+            path = path.Replace("/", "\\");
+            return path;
+        }
+        return url;
     }
 
     #endregion

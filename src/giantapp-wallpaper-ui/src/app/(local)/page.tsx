@@ -117,8 +117,8 @@ const Page = () => {
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         dragCounter++;
         console.log("drag enter");
+        createWallpaper()
         e.preventDefault();
-        setOpenCreateWallpaperDialog(true);
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
@@ -140,8 +140,8 @@ const Page = () => {
     }
 
     const editWallpaper = async (wallpaper: Wallpaper) => {
-        setOpenCreateWallpaperDialog(true);
         setCurrentWallpaper(wallpaper);
+        setOpenCreateWallpaperDialog(true);
         // const res = await api.editWallpaper(wallpaper);
         // if (!res.data) {
         //     toast.error("编辑壁纸失败，请重试");
@@ -159,6 +159,11 @@ const Page = () => {
             toast.error("打开壁纸文件夹失败");
             return;
         }
+    }
+
+    const createWallpaper = () => {
+        setCurrentWallpaper(null);
+        setOpenCreateWallpaperDialog(true);
     }
 
     return <div
@@ -407,7 +412,7 @@ const Page = () => {
                         className="flex w-full h-full hover:text-primary"
                         title="创建壁纸"
                         variant="ghost"
-                        onClick={() => setOpenCreateWallpaperDialog(true)}
+                        onClick={() => createWallpaper()}
                     >
                         <svg
                             className="h-5 w-5"
@@ -435,7 +440,7 @@ const Page = () => {
                     <h2 className="text-xl font-semibold mb-2">没有找到壁纸</h2>
                     <p className="text-gray-500 mb-4">你可以创建一个壁纸或者修改壁纸扫描目录。</p>
                     <div className="flex space-x-4">
-                        <Button variant="outline" onClick={() => setOpenCreateWallpaperDialog(true)} >创建壁纸</Button>
+                        <Button variant="outline" onClick={() => createWallpaper()} >创建壁纸</Button>
                         <Button variant="outline">
                             <Link href="/settings/wallpaper">
                                 修改目录

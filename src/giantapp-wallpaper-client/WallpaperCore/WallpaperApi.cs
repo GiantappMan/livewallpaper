@@ -370,6 +370,13 @@ public static class WallpaperApi
         return true;
     }
 
+    //编辑壁纸
+    public static bool UpdateWallpaper(string title, string? cover, string? path, Wallpaper oldWallpaper)
+    {
+        //todo
+        return true;
+    }
+
     //恢复快照
     public static async Task RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
     {

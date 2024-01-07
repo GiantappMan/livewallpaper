@@ -17,21 +17,12 @@ import { cn } from "@/lib/utils"
 import api from "@/lib/client/api"
 import { toast } from "sonner"
 import * as z from "zod"
-import { useForm } from "react-hook-form"
+import { useForm, useFormState } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Wallpaper } from "@/lib/client/types/wallpaper"
 
-const formSchema = z.object({
-    title: z.string(),
-    file: z.instanceof(File, {
-        message: "文件未上传",
-    }).refine((file) => file.size < 1024 * 1024 * 1024, {
-        message: "文件大小不能超过1G",
-    }),
-})
-
-interface CreateWallpaperDialogProps {
+interface WallpaperDialogProps {
     wallpaper?: Wallpaper | null
     open: boolean
     onChange: (open: boolean) => void
@@ -129,7 +120,17 @@ function getFileType(path: string): "img" | "video" {
     return "video";
 }
 
-export function WallpaperDialog(props: CreateWallpaperDialogProps) {
+export function WallpaperDialog(props: WallpaperDialogProps) {
+    const formSchema = z.object({
+        title: z.string().refine(value => value !== '', {
+            message: '标题不能为空',
+        }),
+        file: z.instanceof(File, {
+            message: "文件未上传",
+        }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
+            message: "文件大小不能超过1G",
+        }),
+    })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -137,6 +138,7 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
             file: undefined
         }
     })
+    const { isDirty } = useFormState({ control: form.control });
     const [isOver, setIsOver] = useState(false);
     const [progress, setProgress] = useState(0);
     const [importing, setImporting] = useState(false);
@@ -152,18 +154,6 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
     const previewVideoRef = useRef<HTMLVideoElement>(null);
     const previewImgRef = useRef<HTMLImageElement>(null);
 
-    //设置wallpaper
-    useEffect(() => {
-        if (props.wallpaper) {
-            form.setValue("title", props.wallpaper?.meta.title || "");
-            setImportedFile({
-                name: props.wallpaper?.meta.title || "",
-                url: props.wallpaper?.fileUrl || "",
-                fileType: getFileType(props.wallpaper?.fileUrl || "")
-            });
-        }
-    }, [props.wallpaper, form]);
-
     //每次打开重置状态
     useEffect(() => {
         if (!props.open) {
@@ -173,8 +163,18 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
             setImportedFile(undefined);
             abortController?.abort();
             form.reset();
+        } else {
+            if (props.wallpaper) {
+                form.setValue("title", props.wallpaper?.meta.title || "");
+                form.setValue("file", new File([], ""));
+                setImportedFile({
+                    name: props.wallpaper?.fileName || "",
+                    url: props.wallpaper?.fileUrl || "",
+                    fileType: getFileType(props.wallpaper?.fileUrl || "")
+                });
+            }
         }
-    }, [form, props.open]);
+    }, [form, props.open, props.wallpaper]);
 
     const uploadFile = useCallback(async (file: File) => {
         setProgress(0);
@@ -231,12 +231,12 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
 
     //form.file变化后自动上传
     useEffect(() => {
-        if (importingFile) {
+        if (importingFile && importingFile.size > 0) {
             uploadFile(importingFile);
         }
     }, [uploadFile, importingFile]);
 
-    function generateCoverImage(fileUrl: string): Promise<Blob> {
+    function generateCoverImage(): Promise<Blob> {
         return new Promise((resolve, reject) => {
             if (!importedFile) {
                 reject(new Error('未导入文件'));
@@ -294,23 +294,34 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
         }
         setUploading(true);
 
-        const imgData = await generateCoverImage(importedFile.url);
+        const imgData = await generateCoverImage();
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = importedFile.name.split(".")[0] + ".jpg";
         var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
-        var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
-        if (!res.data)
-            toast.warning("创建失败，不支持的格式");
+        if (props.wallpaper) {
+            var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
+            if (!res.data)
+                toast.warning("更新失败，不支持的格式");
+            else {
+                toast.success(`更新成功`);
+                props.createSuccess?.();
+            }
+        }
         else {
-            toast.success(`创建成功`);
-            props.createSuccess?.();
+            var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
+            if (!res.data)
+                toast.warning("创建失败，不支持的格式");
+            else {
+                toast.success(`创建成功`);
+                props.createSuccess?.();
+            }
         }
         setUploading(false);
     }
 
     return <Dialog open={props.open} onOpenChange={(e) => {
-        if (!e && (importing || importedFile)) {
+        if (!e && isDirty) {
             confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
             return;
         }
@@ -357,31 +368,11 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
                                         <FormControl>
                                             <Input autoFocus placeholder="输入标题" {...field} autoComplete="off" ref={inputRef} />
                                         </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="file"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Input {...field}
-                                                accept="image/*,video/*"
-                                                type="file"
-                                                value={undefined}
-                                                ref={fileInputRef}
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    field.onChange(file);
-                                                }
-                                                } />
-                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+
                             {!importedFile
                                 ?
                                 <>
@@ -435,6 +426,28 @@ export function WallpaperDialog(props: CreateWallpaperDialogProps) {
                                     </div>
                                 </>
                             }
+                            <FormField
+                                control={form.control}
+                                name="file"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input {...field}
+                                                accept="image/*,video/*"
+                                                type="file"
+                                                value={undefined}
+                                                ref={fileInputRef}
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files ? e.target.files[0] : null;
+                                                    field.onChange(file);
+                                                }
+                                                } />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
                     <DialogFooter >
