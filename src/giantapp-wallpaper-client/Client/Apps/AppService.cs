@@ -10,7 +10,6 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using WallpaperCore;
@@ -134,7 +133,7 @@ internal class AppService
         ShellWindow.ShowShell($"http://localhost:3000/{path}");
         return;
 #else
-        ShellWindow.ShowShell($"https://{_domainStr}/{path}");
+        ShellWindow.ShowShell($"https://{DomainStr}/{path}");
 #endif
     }
 

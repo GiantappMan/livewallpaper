@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:client": "next build && xcopy out\\* ..\\giantapp-wallpaper-client\\Client\\Assets\\UI /E /Y",
+    "clean:client": "rimraf ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && mkdir ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && echo '' > ..\\giantapp-wallpaper-client\\Client\\Assets\\UI\\.gitkeep",
+    "copy:client": "ncp out\\ ..\\giantapp-wallpaper-client\\Client\\Assets\\UI",
+    "build:client": "pnpm clean:client && next build && pnpm copy:client",
     "start": "next start",
     "lint": "next lint"
   },
@@ -49,7 +51,9 @@
     "autoprefixer": "^10",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
+    "ncp": "^2.0.0",
     "postcss": "^8",
+    "rimraf": "^5.0.5",
     "tailwindcss": "^3",
     "typescript": "^5"
   }

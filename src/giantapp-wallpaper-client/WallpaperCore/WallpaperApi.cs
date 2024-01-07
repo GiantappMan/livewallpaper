@@ -373,7 +373,35 @@ public static class WallpaperApi
     //编辑壁纸
     public static bool UpdateWallpaper(string title, string? cover, string? path, Wallpaper oldWallpaper)
     {
-        //todo
+        if (oldWallpaper.Dir == null || oldWallpaper.FileName == null)
+            return false;
+
+        string saveFolder = oldWallpaper.Dir;
+        string saveFileName = Path.GetFileNameWithoutExtension(oldWallpaper.FileName);
+
+        //保存到目录,文件变了
+        if (path != oldWallpaper.FilePath)
+        {
+            //删除旧壁纸
+            if (File.Exists(oldWallpaper.FilePath))
+                File.Delete(oldWallpaper.FilePath);
+
+            string extension = Path.GetExtension(path);
+            string savePath = Path.Combine(saveFolder, saveFileName + extension);
+            File.Copy(path, savePath, true);
+        }
+
+        //移动cover位置
+        string coverExtension = Path.GetExtension(cover);
+        string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
+        File.Copy(cover, coverSavePath, true);
+
+        //保存meta
+        oldWallpaper.Meta.Title = title;
+        oldWallpaper.Meta.UpdateTime = DateTime.Now;
+        oldWallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
+        string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
+        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(oldWallpaper.Meta, JsonSettings));
         return true;
     }
 
