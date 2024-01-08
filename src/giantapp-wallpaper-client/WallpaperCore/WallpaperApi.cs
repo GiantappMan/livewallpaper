@@ -43,20 +43,7 @@ public static class WallpaperApi
         Logger.Info($"{state},{targetScreen.DeviceName}");
         var screenIndex = GetScreens().ToList().FindIndex(x => x.DeviceName == targetScreen.DeviceName);
         var manger = GetRunningManager((uint)screenIndex);
-        if (state == WindowStateChecker.WindowState.Maximized)
-        {
-            //暂停壁纸
-            manger.Pause(false);
-        }
-        else
-        {
-            //用户已手动暂停壁纸
-            if (manger.Playlist == null || manger.Playlist.Setting == null || manger.Playlist.Setting.IsPaused)
-                return;
-
-            //恢复壁纸
-            manger.Resume(false);
-        }
+        manger.SetScreenMaximized(state == WindowStateChecker.WindowState.Maximized);
     }
 
     #region events
@@ -402,6 +389,27 @@ public static class WallpaperApi
         oldWallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(oldWallpaper.Meta, JsonSettings));
+        return true;
+    }
+
+    //设置壁纸配置
+    public static bool SetWallpaperSetting(WallpaperSetting setting, Wallpaper wallpaper)
+    {
+        if (wallpaper.Dir == null || wallpaper.FileName == null)
+            return false;
+
+        string saveFolder = wallpaper.Dir;
+        string saveFileName = Path.GetFileNameWithoutExtension(wallpaper.FileName);
+
+        //保存setting
+        string settingJsonFile = Path.Combine(saveFolder, $"{saveFileName}.setting.json");
+        File.WriteAllText(settingJsonFile, JsonConvert.SerializeObject(setting, JsonSettings));
+        return true;
+    }
+
+    //设置播放列表配置
+    public static bool SetPlaylistSetting(PlaylistSetting setting, Playlist playlist)
+    {
         return true;
     }
 

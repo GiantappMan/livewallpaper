@@ -122,6 +122,23 @@ public class WallpaperSetting
     public int Volume { get; set; }
 
     #endregion
+
+    public static WallpaperSetting From(Dictionary<string, object> dic)
+    {
+        //根据反射，自动把字典转换为对象
+        var setting = new WallpaperSetting();
+        var type = setting.GetType();
+        foreach (var item in dic)
+        {
+            var property = type.GetProperty(item.Key);
+            if (property != null)
+            {
+                var value = item.Value;
+                property.SetValue(setting, value);
+            }
+        }
+        return setting;
+    }
 }
 
 public enum WallpaperType

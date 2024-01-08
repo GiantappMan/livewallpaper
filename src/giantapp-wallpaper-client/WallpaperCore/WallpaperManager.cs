@@ -27,6 +27,7 @@ public class WallpaperManager
     }
 
     public Playlist? Playlist { get; set; }
+    public bool IsScreenMaximized { get; private set; }
 
     internal void Dispose()
     {
@@ -62,6 +63,11 @@ public class WallpaperManager
         _mpvPlayer.SetVolume(Playlist.Setting.Volume);
         _mpvPlayer.LoadList(playlistPath);
         _mpvPlayer.Resume();
+
+        if (IsScreenMaximized)
+        {
+            SetScreenMaximized(true);
+        }
     }
 
     internal WallpaperManagerSnapshot GetSnapshotData()
@@ -72,27 +78,26 @@ public class WallpaperManager
         };
     }
 
-    internal void Pause(bool updateStatus = true)
+    internal void Pause()
     {
         _mpvPlayer.Pause();
 
-        if (updateStatus)
-            if (Playlist != null)
-                Playlist.Setting.IsPaused = true;
+        if (Playlist != null)
+            Playlist.Setting.IsPaused = true;
     }
 
-    internal void Resume(bool updateStatus = true)
+    internal void Resume()
     {
         _mpvPlayer.Resume();
 
-        if (updateStatus)
-            if (Playlist != null)
-                Playlist.Setting.IsPaused = false;
+        if (Playlist != null)
+            Playlist.Setting.IsPaused = false;
     }
 
     internal void SetVolume(int volume)
     {
         _mpvPlayer.SetVolume(volume);
+
         if (Playlist != null)
             Playlist.Setting.Volume = volume;
     }
@@ -101,5 +106,23 @@ public class WallpaperManager
     {
         _mpvPlayer.Stop();
         Playlist = null;
+    }
+
+    internal void SetScreenMaximized(bool screenMaximized)
+    {
+        IsScreenMaximized = screenMaximized;
+        if (IsScreenMaximized)
+        {
+            _mpvPlayer.Pause();
+        }
+        else
+        {
+            //用户已手动暂停壁纸
+            if (Playlist == null || Playlist.Setting == null || Playlist.Setting.IsPaused)
+                return;
+
+            //恢复壁纸
+            _mpvPlayer.Resume();
+        }
     }
 }
