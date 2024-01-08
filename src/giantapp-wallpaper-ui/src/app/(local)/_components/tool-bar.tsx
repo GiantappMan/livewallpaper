@@ -174,26 +174,25 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playlists.filter(x => x.current).map((item, index) => {
                 const isSelected = selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
-                return <div key={index} className="flex items-center p-1">
+                const show = (singlePlaylistMode || (!selectedPlaylist || !!isSelected))
+                return show && <div key={index} className="flex items-center p-1 h-auto" title={JSON.stringify(item.current)}>
                     {
-                        isSelected && <Button className="self-start -ml-4" variant="link" size="icon" onClick={() => setSelectedPlaylist(null)} title="返回列表">
+                        isSelected && <Button className="self-start " variant="link" size="icon" onClick={() => setSelectedPlaylist(null)} title="返回列表">
                             <Reply className="h-4 w-4" />
                             <span className="sr-only">返回列表</span>
                         </Button>
                     }
-                    {
-                        (singlePlaylistMode || (!selectedPlaylist || isSelected)) && <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
-                            <img
-                                alt="Cover"
-                                title={item.current?.meta?.title}
-                                className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
-                                ])}
-                                height={50}
-                                src={item.current?.coverUrl || "/wp-placeholder.webp"}
-                                width={50}
-                            />
-                        </picture>
-                    }
+                    <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
+                        <img
+                            alt="Cover"
+                            title={item.current?.meta?.title}
+                            className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
+                            ])}
+                            height={50}
+                            src={item.current?.coverUrl || "/wp-placeholder.webp"}
+                            width={50}
+                        />
+                    </picture>
                     {
                         (singlePlaylistMode || isSelected) && <div className="flex flex-col text-sm truncate">
                             <div className="font-semibold">{item?.current?.meta?.title}</div>

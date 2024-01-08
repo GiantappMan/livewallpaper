@@ -128,7 +128,7 @@ public class WindowStateChecker
                 var state = item.Value;
                 if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
                 {
-                    WindowStateChanged.Invoke(state, screen);
+                    WindowStateChanged?.Invoke(state, screen);
                     _globalCacheScreenState[screenName] = state;
                 }
             }
