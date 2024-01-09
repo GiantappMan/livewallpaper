@@ -184,7 +184,7 @@ public class ApiObject
     public void StopWallpaper(string? screenIndexStr)
     {
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
-        if (ok && screenIndex > 0)
+        if (ok && screenIndex >= 0)
             WallpaperApi.StopWallpaper(screenIndex);
         else
             WallpaperApi.StopWallpaper();
