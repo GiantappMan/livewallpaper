@@ -175,12 +175,12 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
             {playlists.filter(x => x.current).map((item, index) => {
                 const isSelected = selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
                 const show = (singlePlaylistMode || (!selectedPlaylist || !!isSelected))
-                return show && <div key={index} className="flex items-center p-1 h-auto" title={JSON.stringify(item.current)}>
+                return show && <div key={index} className="flex items-center p-0 m-0" >
                     {
-                        isSelected && <Button className="self-start " variant="link" size="icon" onClick={() => setSelectedPlaylist(null)} title="返回列表">
+                        isSelected && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedPlaylist(null)} title="返回列表">
                             <Reply className="h-4 w-4" />
                             <span className="sr-only">返回列表</span>
-                        </Button>
+                        </div>
                     }
                     <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
                         <img
