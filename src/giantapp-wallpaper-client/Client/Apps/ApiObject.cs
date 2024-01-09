@@ -292,6 +292,24 @@ public class ApiObject
         }
     }
 
+    public bool SetWallpaperSetting(string settingJson, string wallpaperJson)
+    {
+        var setting = JsonConvert.DeserializeObject<WallpaperSetting>(settingJson, WallpaperApi.JsonSettings);
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        if (setting != null && wallpaper != null)
+            return WallpaperApi.SetWallpaperSetting(setting, wallpaper);
+        return false;
+    }
+
+    public bool SetPlaylistSetting(string playlistSettingJson, string playlistJson)
+    {
+        var playlistSetting = JsonConvert.DeserializeObject<PlaylistSetting>(playlistSettingJson, WallpaperApi.JsonSettings);
+        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
+        if (playlistSetting != null && playlist != null)
+            return WallpaperApi.SetPlaylistSetting(playlistSetting, playlist);
+        return false;
+    }
+
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);

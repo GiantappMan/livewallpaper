@@ -451,25 +451,24 @@ const Page = () => {
                 </div>
             </div>
         }
-        <div className="hidden">
-            <WallpaperDialog
-                open={openCreateWallpaperDialog}
-                wallpaper={currentWallpaper}
-                onChange={(e) => setOpenCreateWallpaperDialog(e)}
-                createSuccess={() => {
-                    setOpenCreateWallpaperDialog(false)
-                    refresh();
-                }} />
-          
-        </div>
-          <SettingDialog
-                open={openSettingDialog}
-                wallpaper={currentWallpaper}
-                onChange={(e) => setOpenSettingDialog(e)}
-                saveSuccess={() => {
-                    setOpenSettingDialog(false)
-                    refresh();
-                }} />
+
+        <WallpaperDialog
+            open={openCreateWallpaperDialog}
+            wallpaper={currentWallpaper}
+            onChange={(e) => setOpenCreateWallpaperDialog(e)}
+            createSuccess={() => {
+                setOpenCreateWallpaperDialog(false)
+                refresh();
+            }} />
+        {currentWallpaper && <SettingDialog
+            open={openSettingDialog}
+            wallpaper={currentWallpaper}
+            onChange={(e) => setOpenSettingDialog(e)}
+            saveSuccess={() => {
+                setOpenSettingDialog(false)
+                refresh();
+            }} />
+        }
     </div>
 };
 

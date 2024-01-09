@@ -110,16 +110,6 @@ function getBase64FromBlob(blob: Blob): Promise<string> {
 
 let abortController: AbortController | undefined = undefined;
 
-function getFileType(path: string): "img" | "video" {
-    //根据后缀名返回 img/video
-    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".gif", ".webp"];
-    const videoExt = [".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv"];
-    const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
-    if (imgExt.includes(ext))
-        return "img";
-    return "video";
-}
-
 export function WallpaperDialog(props: WallpaperDialogProps) {
     const formSchema = z.object({
         title: z.string().refine(value => value !== '', {
@@ -146,7 +136,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     const [importedFile, setImportedFile] = useState<{
         name: string,
         url: string,
-        fileType: string
+        fileType: string | null
     }>();
     const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -170,7 +160,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                 setImportedFile({
                     name: props.wallpaper?.fileName || "",
                     url: props.wallpaper?.fileUrl || "",
-                    fileType: getFileType(props.wallpaper?.fileUrl || "")
+                    fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
                 });
             }
         }
@@ -196,7 +186,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             setImportedFile({
                 name: file.name,
                 url: data || "",
-                fileType: getFileType(data || "")
+                fileType: Wallpaper.getFileType(data)
             });
             const fileName = file.name.split(".")[0];
             if (!form.getValues("title"))

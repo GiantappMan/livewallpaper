@@ -230,7 +230,7 @@ public class Wallpaper
         }
     }
 
-    public void LoadSetting()
+    public static WallpaperSetting LoadSetting(string? FileName, string? Dir)
     {
         try
         {
@@ -240,13 +240,15 @@ public class Wallpaper
             if (File.Exists(settingJsonFile))
             {
                 var setting = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
-                Setting = setting ?? new();
+                var Setting = setting ?? new();
+                return Setting;
             }
         }
         catch (Exception ex)
         {
-            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{FilePath} ${ex}");
+            WallpaperApi.Logger?.Warn($"加载壁纸设置失败：{Dir} {FileName} ${ex}");
         }
+        return new();
     }
 
     public static Wallpaper? From(string filePath, bool loadSetting = true)
@@ -256,14 +258,14 @@ public class Wallpaper
 
         var data = new Wallpaper(filePath);
 
-        var oldData = LoadOldData(data, out bool existProjectFile);
+        var oldData = LoadOldData(data, loadSetting, out bool existProjectFile);
         if (existProjectFile)
             data = oldData;
         else
         {
             data.LoadMeta();
             if (loadSetting)
-                data.LoadSetting();
+                data.Setting = LoadSetting(data.FileName, data.Dir);
         }
 
         if (data != null && data.Meta.CreateTime == null)
@@ -278,7 +280,7 @@ public class Wallpaper
         return data;
     }
 
-    public static Wallpaper? LoadOldData(Wallpaper data, out bool existProjectFile)
+    public static Wallpaper? LoadOldData(Wallpaper data, bool loadSetting, out bool existProjectFile)
     {
         string projectJsonFile = Path.Combine(data.Dir, "project.json");
         if (File.Exists(projectJsonFile))
@@ -305,6 +307,11 @@ public class Wallpaper
                 data.Meta = meta;
                 if (meta?.Cover != null)
                     data.CoverPath = Path.Combine(data.Dir, meta.Cover);
+
+                if (loadSetting)
+                {
+                    data.Setting = LoadSetting(data.FileName, data.Dir);
+                }
                 //不修改内容，同时支持旧版
                 return data;
             }

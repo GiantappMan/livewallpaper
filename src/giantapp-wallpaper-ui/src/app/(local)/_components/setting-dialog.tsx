@@ -11,9 +11,14 @@ import {
 import * as z from "zod"
 import { useForm, useFormState } from "react-hook-form"
 import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { Switch } from "@/components/ui/switch"
+import { useEffect, useState } from "react"
+import api from "@/lib/client/api"
+import { toast } from "sonner"
 
 interface SettingDialogProps {
-    wallpaper?: Wallpaper | null
+    wallpaper: Wallpaper
     open: boolean
     onChange: (open: boolean) => void
     saveSuccess?: () => void
@@ -37,6 +42,47 @@ export function SettingDialog(props: SettingDialogProps) {
         },
     })
     const { isDirty } = useFormState({ control: form.control });
+    const [saving, setSaving] = useState(false);
+
+    //每次打开重置状态
+    useEffect(() => {
+        if (props.open)
+            form.reset({
+                enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
+                hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
+                isPanScan: props.wallpaper.setting.isPanScan,
+                volume: props.wallpaper.setting.volume,
+            })
+    }, [form, props.open, props.wallpaper])
+
+    async function onSubmit(data: z.infer<typeof formSchema>) {
+        if (saving) return;
+        setSaving(true);
+
+        const setting = {
+            enableMouseEvent: data.enableMouseEvent,
+            hardwareDecoding: data.hardwareDecoding,
+            isPanScan: data.isPanScan,
+            volume: data.volume,
+        }
+
+        const res = await api.setWallpaperSetting(setting, props.wallpaper);
+        if (res.data) {
+            toast.success("设置成功");
+        }
+        else {
+            toast.error("设置失败");
+        }
+
+        props.onChange(false);
+        props.saveSuccess?.();
+
+        setSaving(false);
+    }
+
+    const fileType = Wallpaper.getFileType(props.wallpaper.fileName);
+    if (!fileType)
+        return null;
 
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && isDirty) {
@@ -50,55 +96,109 @@ export function SettingDialog(props: SettingDialogProps) {
                 <DialogTitle>设置</DialogTitle>
                 <DialogDescription>设置壁纸的相关参数</DialogDescription>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit((data) => {
-                props.onChange(false);
-                props.saveSuccess?.();
-            })}>
-                <div className="form-group">
-                    <label className="form-label">启用鼠标事件</label>
-                    <div className="form-switch">
-                        <input
-                            type="checkbox"
-                            className="form-switch-input"
-                            {...form.register("enableMouseEvent")}
+            <Form {...form}>
+                <form className="space-y-6"
+                    onSubmit={form.handleSubmit(onSubmit)}>
+                    {fileType === "app" && <>
+                        <FormField
+                            control={form.control}
+                            name="enableMouseEvent"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>鼠标事件</FormLabel>
+                                        <FormDescription>
+                                            开启鼠标事件，关闭则鼠标穿透
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
                         />
-                        <label className="form-switch-label">启用鼠标事件</label>
-                    </div>
-                </div>
-                <div className="form-group">
-                    <label className="form-label">启用硬件解码</label>
-                    <div className="form-switch">
-                        <input
-                            type="checkbox"
-                            className="form-switch-input"
-                            {...form.register("hardwareDecoding")}
+                    </>}
+                    {fileType === "video" && <>
+                        <FormField
+                            control={form.control}
+                            name="hardwareDecoding"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>硬解码</FormLabel>
+                                        <FormDescription>
+                                            开启消耗GPU，关闭消耗CPU
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
                         />
-                        <label className="form-switch-label">启用硬件解码</label>
-                    </div>
-                </div>
-                <div className="form-group">
-                    <label className="form-label">启用全景模式</label>
-                    <div className="form-switch">
-                        <input
-                            type="checkbox"
-                            className="form-switch-input"
-                            {...form.register("isPanScan")}
+                        <FormField
+                            control={form.control}
+                            name="isPanScan"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>全景模式</FormLabel>
+                                        <FormDescription>
+                                            开启全景模式，关闭则为平铺模式
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
                         />
-                        <label className="form-switch-label">启用全景模式</label>
-                    </div>
-                </div>
-                <div className="form-group">
-                    <label className="form-label">音量</label>
-                    <input
-                        type="range"
-                        className="form-range"
-                        {...form.register("volume")}
-                    />
-                </div>
-                <DialogFooter>
-                    <Button className="btn btn-primary" type="submit">保存</Button>
-                </DialogFooter>
-            </form>
+                        <FormField
+                            control={form.control}
+                            name="volume"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>音量</FormLabel>
+                                        <FormDescription>
+                                            设置音量大小
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <div className="flex items-center flex-row">
+                                            <span className="mr-2">
+                                                {field.value}
+                                            </span>
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={100}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        </div>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    </>}
+                    <DialogFooter>
+                        <Button className="btn btn-primary" type="submit" disabled={saving}>
+                            {saving && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
+                            {saving ? "保存中..." : "保存"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
         </DialogContent>
     </Dialog >
 }

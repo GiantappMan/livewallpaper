@@ -1,8 +1,8 @@
 import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
-import { Wallpaper } from "./types/wallpaper";
+import { Wallpaper, WallpaperSetting } from "./types/wallpaper";
 import { Screen } from "./types/screen";
-import { Playlist } from "./types/playlist";
+import { Playlist, PlaylistSetting } from "./types/playlist";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -249,6 +249,32 @@ class API {
     } catch (e) {
       console.log(e);
       return { error: e, data: null };
+    }
+  }
+
+  async setWallpaperSetting(setting: WallpaperSetting, wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.SetWallpaperSetting(JSON.stringify(setting), JSON.stringify(wallpaper));
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: false };
+    }
+  }
+
+  async setPlaylistSetting(setting: PlaylistSetting, playlist: Playlist): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.SetPlaylistSetting(JSON.stringify(setting), JSON.stringify(playlist));
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: false };
     }
   }
 }
