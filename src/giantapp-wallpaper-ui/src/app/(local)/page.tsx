@@ -24,12 +24,14 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { SettingDialog } from "./_components/setting-dialog";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
+    const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
     //当前编辑的壁纸对象
     const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -142,12 +144,11 @@ const Page = () => {
     const editWallpaper = async (wallpaper: Wallpaper) => {
         setCurrentWallpaper(wallpaper);
         setOpenCreateWallpaperDialog(true);
-        // const res = await api.editWallpaper(wallpaper);
-        // if (!res.data) {
-        //     toast.error("编辑壁纸失败，请重试");
-        //     return;
-        // }
-        // refresh();
+    }
+
+    const settingWallpaper = async (wallpaper: Wallpaper) => {
+        setCurrentWallpaper(wallpaper);
+        setOpenSettingDialog(true);
     }
 
     const explorerWallpaper = async (wallpaper: Wallpaper) => {
@@ -279,6 +280,7 @@ const Page = () => {
                                                 className="px-3 flex items-center justify-center hover:text-primary"
                                                 title="设置"
                                                 variant="ghost"
+                                                onClick={(e) => { settingWallpaper(wallpaper); e.stopPropagation(); }}
                                             >
                                                 <svg
                                                     className="h-5 w-5"
@@ -458,7 +460,16 @@ const Page = () => {
                     setOpenCreateWallpaperDialog(false)
                     refresh();
                 }} />
+          
         </div>
+          <SettingDialog
+                open={openSettingDialog}
+                wallpaper={currentWallpaper}
+                onChange={(e) => setOpenSettingDialog(e)}
+                saveSuccess={() => {
+                    setOpenSettingDialog(false)
+                    refresh();
+                }} />
     </div>
 };
 
