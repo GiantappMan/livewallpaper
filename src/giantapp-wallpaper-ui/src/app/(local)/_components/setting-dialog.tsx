@@ -148,9 +148,9 @@ export function SettingDialog(props: SettingDialogProps) {
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
-                                        <FormLabel>全景模式</FormLabel>
+                                        <FormLabel>画面拉伸</FormLabel>
                                         <FormDescription>
-                                            开启全景模式，关闭则为平铺模式
+                                            打开显示全部内容，关闭去除黑边
                                         </FormDescription>
                                     </div>
                                     <FormControl>
