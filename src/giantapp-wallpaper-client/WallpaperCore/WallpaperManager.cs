@@ -52,19 +52,23 @@ public class WallpaperManager
         var currentWallpaper = Playlist.Wallpapers[(int)Playlist.Setting.PlayIndex];
         _mpvPlayer.ApplySetting(currentWallpaper.Setting);
 
-        if (!_mpvPlayer.ProcessLaunched)
-        {
-            await _mpvPlayer.LaunchAsync();
-            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
-            DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
-        }
 
         //生成playlist.txt
         var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
-        _mpvPlayer.LoadList(playlistPath);
-        _mpvPlayer.Resume();
+
+        if (!_mpvPlayer.ProcessLaunched)
+        {
+            await _mpvPlayer.LaunchAsync(playlistPath);
+            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
+            DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
+        }
+        else
+        {
+            _mpvPlayer.LoadList(playlistPath);
+            _mpvPlayer.Resume();
+        }
 
         if (IsScreenMaximized)
         {

@@ -150,7 +150,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                     <div className="space-y-0.5">
                                         <FormLabel>画面拉伸</FormLabel>
                                         <FormDescription>
-                                            打开显示全部内容，关闭去除黑边
+                                            打开拉伸画面，关闭保持原比例
                                         </FormDescription>
                                     </div>
                                     <FormControl>
