@@ -131,4 +131,10 @@ public class WallpaperManager
             _mpvPlayer.Resume();
         }
     }
+
+    internal void ReApplySetting()
+    {
+        //mpv 重新play就行了
+        _ = Play();
+    }
 }

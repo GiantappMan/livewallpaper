@@ -404,6 +404,22 @@ public static class WallpaperApi
         //保存setting
         string settingJsonFile = Path.Combine(saveFolder, $"{saveFileName}.setting.json");
         File.WriteAllText(settingJsonFile, JsonConvert.SerializeObject(setting, JsonSettings));
+
+        //如果壁纸正在播放，重新调用ShowWallpaper以生效
+        foreach (var item in RunningWallpapers)
+        {
+            if (item.Value.Playlist == null)
+                continue;
+
+            bool isPlaying = item.Value.Playlist.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
+            if (isPlaying)
+            {
+                var playingWallpaper = item.Value.Playlist.Wallpapers.Find(m => m.FileUrl == wallpaper.FileUrl);
+                if (playingWallpaper != null)
+                    playingWallpaper.Setting = setting;
+                item.Value.ReApplySetting();
+            }
+        }
         return true;
     }
 
