@@ -97,7 +97,8 @@ public class WindowStateChecker
             foreach (var item in Screen.AllScreens)
                 currentScreenState.Add(item.DeviceName, WindowState.NotMaximized);
             //遍历检查列表
-            foreach (var item in _checkHandles.ToArray())
+            List<IntPtr> checkHandlesCopy = new(_checkHandles);
+            foreach (var item in checkHandlesCopy)
             {
                 var screen = Screen.FromHandle(item);
                 //已经有其他程序最大化

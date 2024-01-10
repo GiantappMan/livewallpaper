@@ -49,6 +49,9 @@ public class WallpaperManager
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
         uint screenIndex = Playlist.Setting.ScreenIndexes[0];
 
+        var currentWallpaper = Playlist.Wallpapers[(int)Playlist.Setting.PlayIndex];
+        _mpvPlayer.ApplySetting(currentWallpaper.Setting);
+
         if (!_mpvPlayer.ProcessLaunched)
         {
             await _mpvPlayer.LaunchAsync();
@@ -60,7 +63,6 @@ public class WallpaperManager
         var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
-        _mpvPlayer.SetVolume(Playlist.Setting.Volume);
         _mpvPlayer.LoadList(playlistPath);
         _mpvPlayer.Resume();
 
@@ -98,8 +100,8 @@ public class WallpaperManager
     {
         _mpvPlayer.SetVolume(volume);
 
-        if (Playlist != null)
-            Playlist.Setting.Volume = volume;
+        //if (Playlist != null)
+        //    Playlist.Setting.Volume = volume;
     }
 
     internal void Stop()

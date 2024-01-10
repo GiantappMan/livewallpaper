@@ -88,7 +88,7 @@ public class PlaylistSetting : ICloneable
     public uint PlayIndex { get; set; } = 0;
     public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
     public bool IsPaused { get; set; }
-    public int Volume { get; set; }
+    //public int Volume { get; set; }
 
     public object Clone()
     {
@@ -102,7 +102,7 @@ public class WallpaperSetting
     /// <summary>
     /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
     /// </summary>
-    public bool EnableMouseEvent { get; set; } = true;
+    public bool EnableMouseEvent { get; set; } = false;
 
     #region video
 
@@ -114,12 +114,12 @@ public class WallpaperSetting
     /// <summary>
     /// 是否铺满
     /// </summary>
-    public bool IsPanScan { get; set; } = true;
+    public bool IsPanScan { get; set; } = false;
 
     /// <summary>
     /// 音量0-100
     /// </summary>
-    public int Volume { get; set; }
+    public int Volume { get; set; } = 0;
 
     #endregion
 

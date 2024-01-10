@@ -1,6 +1,5 @@
 import { Wallpaper, WallpaperMeta } from './wallpaper';
 
-
 export enum PlayMode {
     //顺序播放
     Order,
@@ -15,7 +14,7 @@ export type PlaylistSetting = {
     playIndex: number;
     screenIndexes: number[];
     isPaused: boolean;
-    volume: number;
+    // volume: number;
 }
 
 export enum PlaylistType {

@@ -36,12 +36,7 @@ public class MpvPlayer
     public Process? Process { get; private set; }
     public bool ProcessLaunched { get; private set; }
     public static string PlayerPath { get; set; } = string.Empty;
-
-    #region Options
-    public bool AutoHwdec { get; set; } = true;//auto-safe 硬解,no 软解
-
-    public string PanAndScan { get; set; } = "1.0";//0.0-1.0  铺满,防止视频黑边
-    #endregion
+    public WallpaperSetting Setting { get; private set; } = new();
 
     #endregion
 
@@ -116,11 +111,15 @@ public class MpvPlayer
             args.Append("--stop-screensaver=no ");
 
             //设置解码模式为自动，如果条件允许，MPV会启动硬件解码
-            string hwdec = AutoHwdec ? "auto-safe" : "no";
+            string hwdec = Setting.HardwareDecoding ? "auto-safe" : "no";
             args.Append($"--hwdec={hwdec} ");
 
+            string panscan= Setting.IsPanScan ? "1.0" : "0.0";
             //处理黑边
-            args.Append($"--panscan={PanAndScan} ");
+            args.Append($"--panscan={panscan} ");
+
+            //保持比例
+            args.Append("--keepaspect=yes ");
 
             //ipc
             args.Append($"--input-ipc-server={IPCServerName} ");
@@ -145,6 +144,9 @@ public class MpvPlayer
 
             //消除边框
             args.Append("--no-border ");
+
+            //音量
+            args.Append($"--volume={Setting.Volume} ");
 
             ////保持打开
             //args.Append("--keep-open=yes ");
@@ -231,13 +233,34 @@ public class MpvPlayer
         SendMessage(IPCServerName, "set_property", "volume", volume);
     }
 
+    public void SetHwdec(bool enabled)
+    {
+        SendMessage(IPCServerName, "set_property", "hwdec", enabled ? "auto-safe" : "no");
+    }
+
+    public void SetPanAndScan(bool enabled)
+    {
+        SendMessage(IPCServerName, "set_property", "panscan", enabled ? "1.0" : "0.0");
+    }
+
+    internal void ApplySetting(WallpaperSetting setting)
+    {
+        Setting = setting;
+        if (!ProcessLaunched)
+            return;
+
+        SetVolume(setting.Volume);
+        SetHwdec(setting.HardwareDecoding);
+        SetPanAndScan(setting.IsPanScan);
+    }
+
     public MpvPlayerSnapshot GetSnapshot()
     {
         //缓存当前实力需要的数据
         return new()
         {
             IPCServerName = IPCServerName,
-            PId = Process?.Id,
+            PId = !ProcessLaunched ? null : Process?.Id,
             ProcessName = Process?.ProcessName
         };
     }
