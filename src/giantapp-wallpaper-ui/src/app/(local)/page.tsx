@@ -32,6 +32,7 @@ const Page = () => {
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
+
     //当前编辑的壁纸对象
     const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -61,6 +62,12 @@ const Page = () => {
                 return;
             }
 
+            //给coverUrl增加随即参数防止缓存
+            res.data?.forEach((wallpaper) => {
+                if (wallpaper.coverUrl) {
+                    wallpaper.coverUrl += `?t=${Date.now()}`;
+                }
+            })
             setWallpapers(res.data);
             setScreens(screens.data);
             setPlayingPlaylist(_playingPlaylist.data);
@@ -141,7 +148,7 @@ const Page = () => {
         refresh();
     }
 
-    const editWallpaper = async (wallpaper: Wallpaper) => {
+    const handleEditWallpaper = async (wallpaper: Wallpaper) => {
         setCurrentWallpaper(wallpaper);
         setOpenCreateWallpaperDialog(true);
     }
@@ -346,7 +353,7 @@ const Page = () => {
                                                 </AlertDialog>
 
                                                 <Button
-                                                    onClick={(e) => { editWallpaper(wallpaper); e.stopPropagation(); }}
+                                                    onClick={(e) => { handleEditWallpaper(wallpaper); e.stopPropagation(); }}
                                                     aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
                                                     <svg
                                                         className="h-5 w-5"
