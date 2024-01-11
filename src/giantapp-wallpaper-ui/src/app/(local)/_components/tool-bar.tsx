@@ -179,17 +179,19 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
 
             if (target === element) {
                 setVolume(value[0]);
-
-                debugger
                 await api.setVolume(value[0], index)
                 onChangeVolume?.();
-                // element.setting.volume = value[0];
                 // element.setting.volume = value[0];
             }
             // else
             //     element.setting.volume = 0;
         });
     }, [onChangeVolume, playingWallpapers, selectedWallpaper]);
+
+    const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
+        handleVolumeChange(value);
+    }, 1000
+    );
 
     if (!isPlaying)
         return <></>
@@ -351,10 +353,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent>
-                    <Slider value={[volume]} max={100} min={0} step={1} onValueChange={e => {
-                        setVolume(e[0]);
-                        handleVolumeChange(e);
-                    }} />
+                    <Slider defaultValue={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChangeDebounced} />
                 </PopoverContent>
             </Popover>
             {
