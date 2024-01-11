@@ -284,7 +284,15 @@ public static class WallpaperApi
         foreach (var item in screenIndexs)
         {
             var manger = GetRunningManager((uint)item);
-            manger.SetVolume(item == screenIndex ? volume : 0);
+            var currentWallpaper = manger.Playlist?.Wallpapers[(int)manger.Playlist.Setting.PlayIndex];
+            //播放列表的当前壁纸
+            if (currentWallpaper != null)
+            {
+                //一次只设置一个音量，其他的设为0
+                var setting = (WallpaperSetting)currentWallpaper.Setting.Clone();
+                setting.Volume = item == screenIndex ? volume : 0;
+                SetWallpaperSetting(setting, currentWallpaper);
+            }
         }
     }
 

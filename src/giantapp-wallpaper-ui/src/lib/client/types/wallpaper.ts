@@ -48,5 +48,5 @@ export class WallpaperSetting {
   enableMouseEvent?: boolean;
   hardwareDecoding?: boolean;
   isPanScan?: boolean;
-  volume?: number;
+  volume: number = 0;
 };

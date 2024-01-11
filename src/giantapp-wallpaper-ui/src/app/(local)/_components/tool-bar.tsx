@@ -22,10 +22,12 @@ import api from "@/lib/client/api";
 import {
     Reply,
 } from "lucide-react"
+import { useDebouncedCallback } from 'use-debounce';
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[]
     screens: Screen[]
+    onChangeVolume: () => void
 }
 
 type PlaylistWrapper = {
@@ -34,9 +36,11 @@ type PlaylistWrapper = {
     screen: Screen;
 }
 
-export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
+export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
+    const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
+    const [playingWallpapers, setPlayingWallpapers] = useState<Wallpaper[]>([]); //当前正在播放的壁纸，可能是多个屏幕的
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
@@ -84,16 +88,34 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
             isPlaying = !!selectedPlaylist.current;
         setIsPlaying(isPlaying);
 
-        var volume = Math.max(...playlists.map(item => item.playlist?.setting.volume || 0));
-        if (selectedPlaylist)
-            volume = selectedPlaylist.playlist?.setting.volume || 0;
-        setVolume(volume);
+        //设置playingWallpapers
+        var playingWallpapers: Wallpaper[] = [];
+        playlists.forEach(x => {
+            if (x.current)
+                playingWallpapers.push(x.current);
+        });
+        setPlayingWallpapers(playingWallpapers);
 
         var showPlaylistButton = playlists.some(x => x.playlist && x.playlist.wallpapers.length > 1);
         if (selectedPlaylist)
             showPlaylistButton = !!selectedPlaylist.playlist && selectedPlaylist.playlist.wallpapers.length > 1;
         setShowPlaylistButton(showPlaylistButton);
     }, [playlists, selectedPlaylist]);
+
+    //监控playingWallpapers变化
+    useEffect(() => {
+        var volume = Math.max(...playingWallpapers.map(item => item.setting.volume || 0));
+        if (selectedPlaylist) {
+            var selectedWallpaper = playingWallpapers.find(x => x.fileUrl === selectedPlaylist.current?.fileUrl);
+            volume = selectedWallpaper?.setting.volume || 0;
+        }
+        setVolume(volume);
+    }, [playingWallpapers, selectedPlaylist]);
+
+    //监控selectedPlaylist变化
+    useEffect(() => {
+        setSelectedWallpaper(selectedPlaylist?.current || null);
+    }, [selectedPlaylist]);
 
     const handlePlayClick = useCallback(() => {
         var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
@@ -142,30 +164,32 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
     }, [playlists, screens, selectedPlaylist]);
 
     const handleVolumeChange = useCallback((value: number[]) => {
-        var tmpPlaylists = [...playlists];
-        //从tmpPlaylists找目标列表，如果有选中的用选中的，如果没有选中的选有音量的，如果没有音量，选第一个视频壁纸
-        var target = tmpPlaylists.find(x => x.playlist && x.playlist.setting.volume > 0);
-        if (selectedPlaylist)
-            target = tmpPlaylists.find(x => x.screen.deviceName === selectedPlaylist.screen.deviceName);
-        if (!target)
-            target = tmpPlaylists.find(x => x.playlist && x.playlist.wallpapers.some(y => y.meta?.type === WallpaperType.Video));
+        var tmpLists = [...playingWallpapers];
+        //从playingWallpapers找，如果有选中的用选中的，如果没有选中的选有音量的，如果没有音量，选第一个视频壁纸
+        var target = selectedWallpaper
+            || tmpLists.find(x => x.setting && x.setting.volume > 0)
+            || tmpLists.find(x => x.meta.type === WallpaperType.Video);
+
         if (!target)
             return;
 
-        tmpPlaylists.forEach((element, index) => {
-            if (!element.playlist)
+        tmpLists.forEach(async (element, index) => {
+            if (!element)
                 return;
 
-            //选中的屏幕，或者没有选中就影响有声音的屏幕
             if (target === element) {
-                api.setVolume(value[0], index)
                 setVolume(value[0]);
-                element.playlist.setting.volume = value[0];
+
+                debugger
+                await api.setVolume(value[0], index)
+                onChangeVolume?.();
+                // element.setting.volume = value[0];
+                // element.setting.volume = value[0];
             }
-            else
-                element.playlist.setting.volume = 0;
+            // else
+            //     element.setting.volume = 0;
         });
-    }, [playlists, selectedPlaylist]);
+    }, [onChangeVolume, playingWallpapers, selectedWallpaper]);
 
     if (!isPlaying)
         return <></>
@@ -327,7 +351,10 @@ export function ToolBar({ playingPlaylist, screens }: ToolBarProps) {
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent>
-                    <Slider value={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChange} />
+                    <Slider value={[volume]} max={100} min={0} step={1} onValueChange={e => {
+                        setVolume(e[0]);
+                        handleVolumeChange(e);
+                    }} />
                 </PopoverContent>
             </Popover>
             {

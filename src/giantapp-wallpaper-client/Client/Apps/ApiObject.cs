@@ -195,7 +195,7 @@ public class ApiObject
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok)
         {
-            if (screenIndex < 1)
+            if (screenIndex < 0)
                 WallpaperApi.SetVolume(int.Parse(volume));
             else
                 WallpaperApi.SetVolume(int.Parse(volume), screenIndex);

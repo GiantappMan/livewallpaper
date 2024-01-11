@@ -100,13 +100,13 @@ public class WallpaperManager
             Playlist.Setting.IsPaused = false;
     }
 
-    internal void SetVolume(int volume)
-    {
-        _mpvPlayer.SetVolume(volume);
+    //internal void SetVolume(int volume)
+    //{
+    //    _mpvPlayer.SetVolume(volume);
 
-        //if (Playlist != null)
-        //    Playlist.Setting.Volume = volume;
-    }
+    //    //if (Playlist != null)
+    //    //    Playlist.Setting.Volume = volume;
+    //}
 
     internal void Stop()
     {

@@ -97,7 +97,7 @@ public class PlaylistSetting : ICloneable
 }
 
 //一个壁纸的设置
-public class WallpaperSetting
+public class WallpaperSetting : ICloneable
 {
     /// <summary>
     /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
@@ -138,6 +138,11 @@ public class WallpaperSetting
             }
         }
         return setting;
+    }
+
+    public object Clone()
+    {
+        return MemberwiseClone();
     }
 }
 

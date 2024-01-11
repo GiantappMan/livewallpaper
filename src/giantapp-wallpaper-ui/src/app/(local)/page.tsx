@@ -98,7 +98,7 @@ const Page = () => {
                 playIndex: 0,
                 mode: PlayMode.Order,
                 screenIndexes,
-                volume: 0,
+                // volume: 0,
                 isPaused: false
             },
             meta: {
@@ -438,7 +438,9 @@ const Page = () => {
                 </div>
             </div>
             {
-                wallpapers && wallpapers.length > 0 && playingPlaylist && screens && <ToolBar playingPlaylist={playingPlaylist} screens={screens} />
+                wallpapers && wallpapers.length > 0 && playingPlaylist && screens && <ToolBar playingPlaylist={playingPlaylist} screens={screens} onChangeVolume={
+                    () => refresh() //刷新音量配置
+                } />
             }
         </div >
         {
