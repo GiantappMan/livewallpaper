@@ -235,10 +235,16 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
             //当前预览元素
             let previewElement: HTMLVideoElement | HTMLImageElement | undefined | null;
+            let eWidth: number;
+            let eHeight: number;
             if (importedFile.fileType === "img") {
                 previewElement = previewImgRef.current;
+                eWidth = previewElement?.width || 0;
+                eHeight = previewElement?.height || 0;
             } else {
                 previewElement = previewVideoRef.current;
+                eWidth = previewElement?.videoWidth || 0;
+                eHeight = previewElement?.videoHeight || 0;
             }
 
             if (!previewElement) {
@@ -256,7 +262,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
             //按previewElement元素比例缩放到500
             const drawWidth = 500;
-            const drawHeight = drawWidth * (canvas.height / canvas.width);
+            const drawHeight = drawWidth * (eHeight / eWidth);
             canvas.width = drawWidth;
             canvas.height = drawHeight;
             ctx.drawImage(previewElement, 0, 0, drawWidth, drawHeight);
