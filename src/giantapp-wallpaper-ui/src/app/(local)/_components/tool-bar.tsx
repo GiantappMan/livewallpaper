@@ -173,24 +173,26 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
         if (!target)
             return;
 
-        tmpLists.forEach(async (element, index) => {
+        tmpLists.forEach(async (element) => {
             if (!element)
                 return;
 
             if (target === element) {
                 setVolume(value[0]);
-                await api.setVolume(value[0], index)
+                //壁纸所属playlist
+                var currentPlaylist = playlists.find(x => x.playlist?.wallpapers.some(y => y.fileUrl === element.fileUrl));
+                await api.setVolume(value[0], currentPlaylist?.playlist?.setting?.screenIndexes[0] || 0)
                 onChangeVolume?.();
                 // element.setting.volume = value[0];
             }
             // else
             //     element.setting.volume = 0;
         });
-    }, [onChangeVolume, playingWallpapers, selectedWallpaper]);
+    }, [onChangeVolume, playingWallpapers, playlists, selectedWallpaper]);
 
     const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
         handleVolumeChange(value);
-    }, 1000
+    }, 300
     );
 
     if (!isPlaying)

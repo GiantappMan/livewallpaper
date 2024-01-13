@@ -144,7 +144,7 @@ export default function RootLayout({
                 <main>
                   {children}
                 </main>
-                <Toaster />
+                <Toaster closeButton={true} />
               </div>
             </div>
           </ThemeWrapper>

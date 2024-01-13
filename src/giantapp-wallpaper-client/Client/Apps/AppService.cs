@@ -46,6 +46,7 @@ internal class AppService
     public static string TempFolder { get; private set; } = Path.Combine(Path.GetTempPath(), ProductName);
 
     #endregion
+
     #region public
     internal static async void Init()
     {
