@@ -296,8 +296,16 @@ public class ApiObject
     {
         var setting = JsonConvert.DeserializeObject<WallpaperSetting>(settingJson, WallpaperApi.JsonSettings);
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+
         if (setting != null && wallpaper != null)
+        {
+            if (setting.Volume > 0)
+            {
+                //修改了声音，先全部静音
+                WallpaperApi.SetVolume(0);
+            }
             return WallpaperApi.SetWallpaperSetting(setting, wallpaper);
+        }
         return false;
     }
 
