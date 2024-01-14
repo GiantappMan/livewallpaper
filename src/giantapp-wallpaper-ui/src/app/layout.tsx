@@ -3,11 +3,12 @@ import './styles/globals.css'
 import "./styles/themes.css"
 import { Inter as FontSans } from "next/font/google"
 import { cn } from '@/lib/utils'
-import { CogIcon, HomeIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { CogIcon, HomeIcon, Squares2X2Icon,QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import {
   CogIcon as solidCogIcon,
   HomeIcon as solidHomeIcon,
   Squares2X2Icon as solidSquares2X2Icon,
+  QuestionMarkCircleIcon as questionMarkCircleIcon
 } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -59,6 +60,13 @@ export default function RootLayout({
       href: "/settings/",
       icon: CogIcon,
       selectedIcon: solidCogIcon,
+      current: false,
+    },
+    {
+      name: "关于",
+      href: "/about",
+      icon: questionMarkCircleIcon,
+      selectedIcon: questionMarkCircleIcon,
       current: false,
     },
   ]);
@@ -124,7 +132,7 @@ export default function RootLayout({
                       />
                     ))}
                   </div>
-                  <div className="w-full px-1 mb-1">
+                  <div className="w-full px-1 mb-1 space-y-1">
                     {sidebarBottomNavigation.map((item) => (
                       <NavMenu
                         key={item.name}

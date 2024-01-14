@@ -62,6 +62,10 @@ public partial class ShellWindow : Window
         {
             webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
         }
+        else
+        {
+            webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.White);
+        }
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
         var config = Configer.Get<ShellConfig>();
