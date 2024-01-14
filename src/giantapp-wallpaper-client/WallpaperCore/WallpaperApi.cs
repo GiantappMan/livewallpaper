@@ -450,6 +450,20 @@ public static class WallpaperApi
         }
     }
 
+    //获取指定屏幕当前壁纸播放时长
+    public static double GetTimePos(uint screenIndex)
+    {
+        var manager = GetRunningManager(screenIndex);
+        return manager.GetTimePos();
+    }
+
+    //获取播放总时长
+    public static double GetDuration(uint screenIndex)
+    {
+        var manager = GetRunningManager(screenIndex);
+        return manager.GetDuration();
+    }
+
     #endregion
 
     #region private methods

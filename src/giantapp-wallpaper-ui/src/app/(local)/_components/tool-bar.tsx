@@ -36,6 +36,34 @@ type PlaylistWrapper = {
     screen: Screen;
 }
 
+
+const PlaybackProgress = ({ screenIndex: number }) => {
+    const [time, setTime] = useState('00:00');
+    const [totalTime, setTotalTime] = useState('00:00');
+
+    useEffect(() => {
+        const timer = setInterval(async () => {
+            try {
+                debugger
+                const res = await api.getWallpaperTime(screenIndex);
+                setTime(data.position);
+                setTotalTime(data.duration);
+            } catch (error) {
+                console.error('Failed to fetch time:', error);
+                clearInterval(timer);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer); // cleanup on component unmount
+    }, []);
+
+    return <div className="flex items-center justify-between text-xs w-full">
+        <div className="text-primary-600 dark:text-primary-400">{time}</div>
+        <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
+        <div className="text-primary-600 dark:text-primary-400">{totalTime}</div>
+    </div>
+}
+
 export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
@@ -327,11 +355,13 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                     </Button>
                 }
             </div>
-            {(selectedPlaylist || singlePlaylistMode) && <div className="flex items-center justify-between text-xs w-full">
-                {/* <div className="text-primary-600 dark:text-primary-400">00:00</div>
+            {/* {(selectedPlaylist || singlePlaylistMode) && <div className="flex items-center justify-between text-xs w-full">
+                <div className="text-primary-600 dark:text-primary-400">00:00</div>
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
-                <div className="text-primary-600 dark:text-primary-400">04:30</div> */}
-            </div>}
+                <div className="text-primary-600 dark:text-primary-400">04:30</div>
+            </div>} */}
+            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={0} />}
+
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">

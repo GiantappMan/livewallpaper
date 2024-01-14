@@ -40,7 +40,7 @@ public class MpvPlayer
 
     #endregion
 
-    #region public
+    #region constructs
     static MpvPlayer()
     {
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
@@ -82,7 +82,9 @@ public class MpvPlayer
             IPCServerName = $@"mpv{Guid.NewGuid()}";
         }
     }
+    #endregion
 
+    #region public
     public static MpvPlayer? From(string path)
     {
         if (!File.Exists(path))
@@ -207,6 +209,7 @@ public class MpvPlayer
             return 0;
         return Convert.ToInt32(res);
     }
+
     public void Pause()
     {
         SendMessage(IPCServerName, "set_property", "pause", true);
@@ -265,6 +268,33 @@ public class MpvPlayer
         };
     }
 
+    //获取播放进度
+    public double GetProgress()
+    {
+        var res = SendMessage(IPCServerName, "get_property", "percent-pos");
+        if (res == null)
+            return 0;
+        return Convert.ToDouble(res);
+    }
+
+    //获取播放了多少秒
+    public double GetTimePos()
+    {
+        var res = SendMessage(IPCServerName, "get_property", "time-pos");
+        if (res == null)
+            return 0;
+        return Convert.ToDouble(res);
+    }
+
+    //获取播放总时长
+    public double GetDuration()
+    {
+        var res = SendMessage(IPCServerName, "get_property", "duration");
+        if (res == null)
+            return 0;
+        return Convert.ToDouble(res);
+    }    
+    
     #endregion
 
     #region private

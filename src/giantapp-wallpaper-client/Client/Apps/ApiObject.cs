@@ -318,6 +318,24 @@ public class ApiObject
         return false;
     }
 
+    //获取指定屏幕的壁纸的当前播放时间和总时间
+    public string? GetWallpaperTime(string screenIndexStr)
+    {
+        bool ok = uint.TryParse(screenIndexStr, out uint screenIndex);
+        if (!ok)
+            return null;
+
+        var duration = WallpaperApi.GetDuration(screenIndex);
+        var position = WallpaperApi.GetTimePos(screenIndex);
+        var res = new
+        {
+            Duration = duration,
+            Position = position
+        };
+        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+    }
+
+
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);

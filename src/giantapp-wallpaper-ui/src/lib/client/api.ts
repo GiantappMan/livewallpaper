@@ -277,6 +277,22 @@ class API {
       return { error: e, data: false };
     }
   }
+
+  async getWallpaperTime(screenIndex: number): Promise<ApiResult<{
+    duration: number,
+    position: number
+  }>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.GetWallpaperTime(screenIndex);
+      return { error: null, data: JSON.parse(data) };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

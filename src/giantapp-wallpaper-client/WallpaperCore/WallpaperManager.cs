@@ -137,4 +137,14 @@ public class WallpaperManager
         //mpv 重新play就行了
         _ = Play();
     }
+
+    internal double GetTimePos()
+    {
+        return _mpvPlayer.GetTimePos();
+    }
+
+    internal double GetDuration()
+    {
+        return _mpvPlayer.GetDuration();
+    }
 }
