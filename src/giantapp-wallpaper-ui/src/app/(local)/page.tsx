@@ -25,6 +25,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { SettingDialog } from "./_components/setting-dialog";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
@@ -183,17 +184,14 @@ const Page = () => {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                     if (!mounted)
                         return <Skeleton key={index} className="h-[218px] w-full" />
-
                     return (
-                        <div
-                            // onMouseEnter={() => setHoverWallpaper(wallpaper)}
-                            key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105"
-                        >
+                        <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
                             <div className="relative cursor-pointer"
                                 onClick={() => {
                                     showWallpaper(wallpaper, null);
                                 }}
                                 title="点击使所有屏幕生效">
+
                                 {/* 图片 */}
                                 {(wallpaper?.meta.type === WallpaperType.Img || wallpaper?.meta.type === WallpaperType.AnimatedImg) && <picture>
                                     <img
@@ -224,180 +222,175 @@ const Page = () => {
                                     />
                                 </picture>
                                 }
-                                {/* {wallpaper?.meta.type === WallpaperType.Video && <video
-                                    autoPlay={false}
-                                    className="w-full"
-                                    height="200"
-                                    loop
-                                    muted
-                                    playsInline
-                                    poster={wallpaper?.coverUrl || undefined}
-                                    style={{
-                                        aspectRatio: "300/200",
-                                        objectFit: "cover",
-                                    }}
-                                    src={wallpaper?.fileUrl}
-                                    width="300"
-                                >
-                                </video>
-                                } */}
-                                {/* 遮罩 */}
-                                <div className="flex flex-col justify-between">
-                                    <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 hover:opacity-100 hover:scale-105 transition-opacity duration-500">
-                                        <div className="flex flex-wrap w-full justify-center">
-                                            {
-                                                screens && screens?.length > 1 && [...screens]?.map((screen, index) => {
-                                                    return (
-                                                        <div key={index} className="flex items-center justify-center">
-                                                            <Button
-                                                                onClick={(e) => {
-                                                                    showWallpaper(wallpaper, screen);
-                                                                    e.stopPropagation();
-                                                                }}
-                                                                aria-label={`点击使屏幕 ${screen.deviceName} 生效`}
-                                                                className="flex items-center justify-center hover:text-primary lg:px-3 px-1"
-                                                                title={`点击使屏幕 ${screen.deviceName} 生效`}
-                                                                variant="ghost"
-                                                            >
-                                                                <svg
-                                                                    className="h-5 w-5"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    strokeWidth="2"
-                                                                    viewBox="0 0 24 24"
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                >
-                                                                    <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
-                                                                    <path d="M8 21h8" />
-                                                                    <path d="M12 17v4" />
-                                                                    <path d="m17 8 5-5" />
-                                                                    <path d="M17 3h5v5" />
-                                                                </svg>
-                                                            </Button>
-                                                        </div>
-                                                    )
-                                                })
-                                            }
-                                        </div>
-                                        <div className="flex justify-between px-2">
-                                            <Button
-                                                aria-label="设置"
-                                                className="px-3 flex items-center justify-center hover:text-primary"
-                                                title="设置"
-                                                variant="ghost"
-                                                onClick={(e) => { settingWallpaper(wallpaper); e.stopPropagation(); }}
-                                            >
-                                                <svg
-                                                    className="h-5 w-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                                                    <circle cx="12" cy="12" r="3" />
-                                                </svg>
-                                            </Button>
-                                            <div className="flex">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            aria-label="删除"
-                                                            className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                            title="删除"
-                                                            variant="ghost"
+
+                                <ContextMenu modal={false}>
+                                    <ContextMenuTrigger>
+                                        {/* 遮罩 */}
+                                        <div className="flex flex-col justify-between">
+                                            <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 hover:opacity-100 hover:scale-105 transition-opacity duration-500">
+                                                <div className="flex flex-wrap w-full justify-center">
+                                                    {
+                                                        screens && screens?.length > 1 && [...screens]?.map((screen, index) => {
+                                                            return (
+                                                                <div key={index} className="flex items-center justify-center">
+                                                                    <Button
+                                                                        onClick={(e) => {
+                                                                            showWallpaper(wallpaper, screen);
+                                                                            e.stopPropagation();
+                                                                        }}
+                                                                        aria-label={`点击使屏幕 ${screen.deviceName} 生效`}
+                                                                        className="flex items-center justify-center hover:text-primary lg:px-3 px-1"
+                                                                        title={`点击使屏幕 ${screen.deviceName} 生效`}
+                                                                        variant="ghost"
+                                                                    >
+                                                                        <svg
+                                                                            className="h-5 w-5"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            strokeWidth="2"
+                                                                            viewBox="0 0 24 24"
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                        >
+                                                                            <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
+                                                                            <path d="M8 21h8" />
+                                                                            <path d="M12 17v4" />
+                                                                            <path d="m17 8 5-5" />
+                                                                            <path d="M17 3h5v5" />
+                                                                        </svg>
+                                                                    </Button>
+                                                                </div>
+                                                            )
+                                                        })
+                                                    }
+                                                </div>
+                                                <div className="flex justify-between px-2">
+                                                    <Button
+                                                        aria-label="设置"
+                                                        className="px-3 flex items-center justify-center hover:text-primary"
+                                                        title="设置"
+                                                        variant="ghost"
+                                                        onClick={(e) => { settingWallpaper(wallpaper); e.stopPropagation(); }}
+                                                    >
+                                                        <svg
+                                                            className="h-5 w-5"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth="2"
+                                                            viewBox="0 0 24 24"
+                                                            xmlns="http://www.w3.org/2000/svg"
                                                         >
+                                                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    </Button>
+                                                    <div className="flex">
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    aria-label="删除"
+                                                                    className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
+                                                                    title="删除"
+                                                                    variant="ghost"
+                                                                >
+                                                                    <svg
+                                                                        className="h-5 w-5"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth="2"
+                                                                        viewBox="0 0 24 24"
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                    >
+                                                                        <path d="M3 6h18" />
+                                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                    </svg>
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>删除确认</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        将彻底删除文件，并且无法恢复，确认删除？
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                    }}>
+                                                                        取消
+                                                                    </AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={(e) => {
+                                                                        deleteWallpaper(wallpaper);
+                                                                        e.stopPropagation();
+                                                                    }}>
+                                                                        删除
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+
+                                                        <Button
+                                                            onClick={(e) => { handleEditWallpaper(wallpaper); e.stopPropagation(); }}
+                                                            aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
                                                             <svg
                                                                 className="h-5 w-5"
                                                                 fill="none"
+                                                                height="24"
                                                                 stroke="currentColor"
                                                                 strokeLinecap="round"
                                                                 strokeLinejoin="round"
                                                                 strokeWidth="2"
                                                                 viewBox="0 0 24 24"
+                                                                width="24"
                                                                 xmlns="http://www.w3.org/2000/svg"
                                                             >
-                                                                <path d="M3 6h18" />
-                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                                                <path d="m15 5 4 4" />
                                                             </svg>
                                                         </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>删除确认</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                将彻底删除文件，并且无法恢复，确认删除？
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel onClick={(e) => {
-                                                                e.stopPropagation();
-                                                            }}>
-                                                                取消
-                                                            </AlertDialogCancel>
-                                                            <AlertDialogAction onClick={(e) => {
-                                                                deleteWallpaper(wallpaper);
-                                                                e.stopPropagation();
-                                                            }}>
-                                                                删除
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-
-                                                <Button
-                                                    onClick={(e) => { handleEditWallpaper(wallpaper); e.stopPropagation(); }}
-                                                    aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
-                                                    <svg
-                                                        className="h-5 w-5"
-                                                        fill="none"
-                                                        height="24"
-                                                        stroke="currentColor"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        viewBox="0 0 24 24"
-                                                        width="24"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                    >
-                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                                        <path d="m15 5 4 4" />
-                                                    </svg>
-                                                </Button>
-                                                <Button
-                                                    onClick={(e) => { explorerWallpaper(wallpaper); e.stopPropagation(); }}
-                                                    aria-label="打开文件夹"
-                                                    className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                    title="打开文件夹"
-                                                    variant="ghost"
-                                                >
-                                                    <svg
-                                                        className=" h-5 w-5"
-                                                        fill="none"
-                                                        height="24"
-                                                        stroke="currentColor"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        viewBox="0 0 24 24"
-                                                        width="24"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                    >
-                                                        <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
-                                                    </svg>
-                                                </Button>
+                                                        <Button
+                                                            onClick={(e) => { explorerWallpaper(wallpaper); e.stopPropagation(); }}
+                                                            aria-label="打开文件夹"
+                                                            className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
+                                                            title="打开文件夹"
+                                                            variant="ghost"
+                                                        >
+                                                            <svg
+                                                                className=" h-5 w-5"
+                                                                fill="none"
+                                                                height="24"
+                                                                stroke="currentColor"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="2"
+                                                                viewBox="0 0 24 24"
+                                                                width="24"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                            >
+                                                                <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
+                                                            </svg>
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    </ContextMenuTrigger>
+                                    <ContextMenuContent>
+                                        <ContextMenuItem onClick={(e) => {
+                                            createWallpaper()
+                                            e.stopPropagation();
+                                        }}>创建壁纸</ContextMenuItem>
+                                    </ContextMenuContent>
+                                </ContextMenu>
                             </div>
+
                             <div className="px-6 py-4">
                                 <div className="font-bold text-sm mb-2 lg:text-xl">{wallpaper?.meta?.title}</div>
                                 {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
@@ -407,7 +400,7 @@ const Page = () => {
                 })
             }
             {/* 创建按钮 */}
-            < div className={cn(["relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105",
+            <div className={cn(["relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105",
                 {
                     //隐藏
                     "hidden": !mounted || !wallpapers || wallpapers.length === 0,
