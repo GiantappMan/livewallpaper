@@ -43,13 +43,15 @@ function formatTime(seconds: number) {
     return `${min < 10 ? '0' + min : min}:${sec < 10 ? '0' + sec : sec}`;
 }
 
-const PlaybackProgress = ({ screenIndex }: { screenIndex: number }) => {
+const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
     const [time, setTime] = useState('00:00');
     const [totalTime, setTotalTime] = useState('00:00');
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         const fetch = async () => {
+            if ((document as any).shell_hidden)
+                return;
             try {
                 const res = await api.getWallpaperTime(screenIndex);
                 console.log("getWallpaperTime:", res);
@@ -224,7 +226,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                 setVolume(value[0]);
                 //壁纸所属playlist
                 var currentPlaylist = playlists.find(x => x.playlist?.wallpapers.some(y => y.fileUrl === element.fileUrl));
-                await api.setVolume(value[0], currentPlaylist?.playlist?.setting?.screenIndexes[0] || 0)
+                await api.setVolume(value[0], currentPlaylist?.playlist?.setting?.screenIndexes[0])
                 onChangeVolume?.();
                 // element.setting.volume = value[0];
             }
@@ -375,7 +377,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
             </div>} */}
-            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedPlaylist?.playlist?.setting.screenIndexes[0] || 0} />}
+            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedPlaylist?.playlist?.setting.screenIndexes[0]} />}
 
         </div>
 

@@ -89,6 +89,7 @@ public partial class ShellWindow : Window
             Width = defaultWidth;
             Height = defaultHeight;
         }
+        StateChanged += ShellWindow_StateChanged;
     }
 
     #region public
@@ -264,6 +265,13 @@ public partial class ShellWindow : Window
         }
     }
 
+    private void ShellWindow_StateChanged(object sender, EventArgs e)
+    {
+        //修改webview2，document.shell_hidden 属性
+        string value = WindowState == WindowState.Minimized ? "true" : "false";
+        webview2.CoreWebView2.ExecuteScriptAsync($"document.shell_hidden = {value}");
+    }
+
     #endregion
 
     #region callback
@@ -309,7 +317,9 @@ public partial class ShellWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         SizeChanged -= ShellWindow_SizeChanged;
+        StateChanged -= ShellWindow_StateChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
+
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
         //强制回收webview2
         Instance = null;

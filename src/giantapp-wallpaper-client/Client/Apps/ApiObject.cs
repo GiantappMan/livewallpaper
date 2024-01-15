@@ -321,12 +321,32 @@ public class ApiObject
     //获取指定屏幕的壁纸的当前播放时间和总时间
     public string? GetWallpaperTime(string screenIndexStr)
     {
-        bool ok = uint.TryParse(screenIndexStr, out uint screenIndex);
-        if (!ok)
+        int screenIndex = -1;
+        if (screenIndexStr == null)
+        {
+            //如果播放的壁纸都是相同路径
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Playlist?.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            if (!isSamePath) return null;
+            //找到第一个没被遮挡的播放器
+            var playingManager = WallpaperApi.RunningWallpapers.Values.FirstOrDefault(m => m.IsScreenMaximized == false);
+            if (playingManager == null) return null;
+            if (playingManager.Playlist?.Setting.ScreenIndexes[0] != null)
+            {
+                screenIndex = (int)playingManager.Playlist.Setting.ScreenIndexes[0];
+            }
+        }
+        else
+        {
+            bool ok = int.TryParse(screenIndexStr, out screenIndex);
+            if (!ok)
+                return null;
+        }
+
+        if (screenIndex < 0)
             return null;
 
-        var duration = WallpaperApi.GetDuration(screenIndex);
-        var position = WallpaperApi.GetTimePos(screenIndex);
+        var duration = WallpaperApi.GetDuration((uint)screenIndex);
+        var position = WallpaperApi.GetTimePos((uint)screenIndex);
         var res = new
         {
             Duration = duration,

@@ -278,7 +278,7 @@ class API {
     }
   }
 
-  async getWallpaperTime(screenIndex: number): Promise<ApiResult<{
+  async getWallpaperTime(screenIndex?: number): Promise<ApiResult<{
     duration: number,
     position: number
   }>> {
