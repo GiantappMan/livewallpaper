@@ -147,4 +147,10 @@ public class WallpaperManager
     {
         return _mpvPlayer.GetDuration();
     }
+
+    internal void SetProgress(double progress)
+    {
+        _mpvPlayer.SetProgress(progress);
+    }
+    
 }

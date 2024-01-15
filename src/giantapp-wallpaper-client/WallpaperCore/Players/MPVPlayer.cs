@@ -116,7 +116,7 @@ public class MpvPlayer
             string hwdec = Setting.HardwareDecoding ? "auto-safe" : "no";
             args.Append($"--hwdec={hwdec} ");
 
-            string panscan= Setting.IsPanScan ? "1.0" : "0.0";
+            string panscan = Setting.IsPanScan ? "1.0" : "0.0";
             //处理黑边
             args.Append($"--panscan={panscan} ");
 
@@ -293,8 +293,14 @@ public class MpvPlayer
         if (res == null)
             return 0;
         return Convert.ToDouble(res);
-    }    
-    
+    }
+
+    //设置播放进度
+    public void SetProgress(double progress)
+    {
+        SendMessage(IPCServerName, "set_property", "percent-pos", progress);
+    }
+
     #endregion
 
     #region private

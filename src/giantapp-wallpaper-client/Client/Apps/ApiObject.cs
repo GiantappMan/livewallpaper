@@ -355,6 +355,30 @@ public class ApiObject
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
+    //设置播放进度
+    public void SetProgress(string progressStr, string screenIndexStr)
+    {
+        if (screenIndexStr == null)
+        {
+            //如果播放的壁纸都是相同路径
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Playlist?.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            if (!isSamePath) return;
+
+            //设置所有屏幕
+            foreach (var item in WallpaperApi.RunningWallpapers.Values)
+            {
+                if (item.Playlist?.Setting.ScreenIndexes[0] == null)
+                    continue;
+                WallpaperApi.SetProgress(int.Parse(progressStr), item.Playlist.Setting.ScreenIndexes[0]);
+            }
+            return;
+        }
+        bool ok = uint.TryParse(screenIndexStr, out uint screenIndex);
+        if (ok)
+        {
+            WallpaperApi.SetProgress(int.Parse(progressStr), screenIndex);
+        }
+    }
 
     internal void TriggerRefreshPageEvent()
     {

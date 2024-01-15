@@ -293,6 +293,19 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async setProgress(progress: number, screenIndex?: number): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      await api.SetProgress(progress, screenIndex);
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 }
 
 const api = new API();

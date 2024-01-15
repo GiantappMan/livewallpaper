@@ -464,6 +464,13 @@ public static class WallpaperApi
         return manager.GetDuration();
     }
 
+    //设置播放进度
+    public static void SetProgress(int progress, uint screenIndex)
+    {
+        var manager = GetRunningManager(screenIndex);
+        manager.SetProgress(progress);
+    }
+
     #endregion
 
     #region private methods
