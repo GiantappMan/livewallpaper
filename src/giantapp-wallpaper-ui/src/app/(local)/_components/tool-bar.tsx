@@ -23,6 +23,7 @@ import {
     Reply,
 } from "lucide-react"
 import { useDebouncedCallback } from 'use-debounce';
+import { VideoSlider } from "./video-slider";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[]
@@ -35,31 +36,45 @@ type PlaylistWrapper = {
     playlist?: Playlist;
     screen: Screen;
 }
+//把秒转换成00:00格式
+function formatTime(seconds: number) {
+    var min = Math.floor(seconds / 60);
+    var sec = Math.floor(seconds % 60);
+    return `${min < 10 ? '0' + min : min}:${sec < 10 ? '0' + sec : sec}`;
+}
 
-
-const PlaybackProgress = ({ screenIndex: number }) => {
+const PlaybackProgress = ({ screenIndex }: { screenIndex: number }) => {
     const [time, setTime] = useState('00:00');
     const [totalTime, setTotalTime] = useState('00:00');
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        const timer = setInterval(async () => {
+        const fetch = async () => {
             try {
-                debugger
                 const res = await api.getWallpaperTime(screenIndex);
-                setTime(data.position);
-                setTotalTime(data.duration);
+                console.log("getWallpaperTime:", res);
+                if (res.data) {
+                    setTime(formatTime(res.data.position));
+                    setTotalTime(formatTime(res.data.duration));
+                    setProgress(res.data.position / res.data.duration * 100);
+                }
+                else {
+                    setTime('00:00');
+                    setTotalTime('00:00');
+                }
             } catch (error) {
                 console.error('Failed to fetch time:', error);
-                clearInterval(timer);
             }
-        }, 1000);
-
+        }
+        fetch();//先立即执行一次
+        const timer = setInterval(fetch, 1000);
         return () => clearInterval(timer); // cleanup on component unmount
-    }, []);
+    }, [screenIndex]);
 
-    return <div className="flex items-center justify-between text-xs w-full">
+    return <div className="flex items-center justify-between text-xs w-full select-none">
         <div className="text-primary-600 dark:text-primary-400">{time}</div>
-        <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
+        {/* <div className="w-full h-1 mx-4 bg-primary/60 rounded" /> */}
+        <VideoSlider value={[progress]} className="w-full h-1 mx-4 rounded" />
         <div className="text-primary-600 dark:text-primary-400">{totalTime}</div>
     </div>
 }
@@ -360,7 +375,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                 <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
                 <div className="text-primary-600 dark:text-primary-400">04:30</div>
             </div>} */}
-            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={0} />}
+            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedPlaylist?.playlist?.setting.screenIndexes[0] || 0} />}
 
         </div>
 
