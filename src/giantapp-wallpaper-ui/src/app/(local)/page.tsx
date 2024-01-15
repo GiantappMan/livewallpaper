@@ -184,6 +184,8 @@ const Page = () => {
                 (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                     if (!mounted)
                         return <Skeleton key={index} className="h-[218px] w-full" />
+                    if (!wallpaper?.fileUrl)
+                        return <></>
                     return (
                         <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
                             <div className="relative cursor-pointer"

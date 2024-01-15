@@ -3,7 +3,7 @@ import './styles/globals.css'
 import "./styles/themes.css"
 import { Inter as FontSans } from "next/font/google"
 import { cn } from '@/lib/utils'
-import { CogIcon, HomeIcon, Squares2X2Icon,QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { CogIcon, HomeIcon, Squares2X2Icon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import {
   CogIcon as solidCogIcon,
   HomeIcon as solidHomeIcon,
@@ -34,6 +34,7 @@ export default function RootLayout({
     {
       name: "本地",
       href: "/",
+      urls: ["/", "/index.html"],
       icon: HomeIcon,
       selectedIcon: solidHomeIcon,
       current: false,
@@ -48,6 +49,7 @@ export default function RootLayout({
     {
       name: "社区",
       href: "/community",
+      urls: ["/community", "/community.html"],
       icon: Squares2X2Icon,
       selectedIcon: solidSquares2X2Icon,
       current: false,
@@ -58,6 +60,7 @@ export default function RootLayout({
     {
       name: "设置",
       href: "/settings/",
+      urls: ["/settings", "/settings.html"],
       icon: CogIcon,
       selectedIcon: solidCogIcon,
       current: false,
@@ -65,6 +68,7 @@ export default function RootLayout({
     {
       name: "关于",
       href: "/about",
+      urls: ["/about", "/about.html"],
       icon: questionMarkCircleIcon,
       selectedIcon: questionMarkCircleIcon,
       current: false,
@@ -73,13 +77,13 @@ export default function RootLayout({
   const pathname = usePathname();
   //更新current
   sidebarTopNavigation.forEach((item) => {
-    item.current = pathname === item.href
+    item.current = item.urls.includes(pathname)
   });
 
   sidebarBottomNavigation.forEach((item) => {
     item.current = pathname === item.href
     if (item.href === "/settings/") {
-      item.current = pathname.startsWith("/settings")
+      item.current = pathname.startsWith("/settings") || item.urls.includes(pathname)
     }
   });
 

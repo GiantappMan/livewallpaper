@@ -38,6 +38,7 @@ internal class AppService
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
         _autoStart = new(ProductName, exePath);
     }
+
     #region properties
 
     public static readonly string DomainStr = "client.giantapp.cn";
