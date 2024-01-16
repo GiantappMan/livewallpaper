@@ -306,6 +306,19 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async addToPlaylist(playlist: Playlist, wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.AddToPlaylist(JSON.stringify(playlist), JSON.stringify(wallpaper));
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: false };
+    }
+  }
 }
 
 const api = new API();

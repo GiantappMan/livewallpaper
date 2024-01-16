@@ -366,6 +366,11 @@ public class Wallpaper
 /// </summary>
 public class Playlist : ICloneable
 {
+    public Playlist()
+    {
+
+    }
+    public string? Id { get; set; } = Guid.NewGuid().ToString();
     //描述数据
     public PlaylistMeta Meta { get; set; } = new();
 
@@ -379,6 +384,7 @@ public class Playlist : ICloneable
     {
         var res = new Playlist
         {
+            Id = Id,
             Meta = Meta,
             Setting = (PlaylistSetting)Setting.Clone(),
             Wallpapers = new List<Wallpaper>()

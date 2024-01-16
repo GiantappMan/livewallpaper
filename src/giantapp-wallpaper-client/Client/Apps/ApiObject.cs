@@ -380,6 +380,17 @@ public class ApiObject
         }
     }
 
+    //添加到播放列表
+    public void AddToPlaylist(string playlistJson, string wallpaperJson)
+    {
+        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        if (playlist != null && wallpaper != null)
+        {
+            WallpaperApi.AddToPlaylist(playlist, wallpaper);
+        }
+    }
+
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);

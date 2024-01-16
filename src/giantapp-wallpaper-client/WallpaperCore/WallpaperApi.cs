@@ -471,6 +471,21 @@ public static class WallpaperApi
         manager.SetProgress(progress);
     }
 
+    //添加到播放列表
+    public static void AddToPlaylist(Playlist playlist, Wallpaper wallpaper)
+    {
+        playlist.Wallpapers.Add(wallpaper);
+        //如果是当前播放的playlist，更新数据
+        foreach (var item in RunningWallpapers)
+        {
+            if (item.Value.Playlist != null && item.Value.Playlist.Id == playlist.Id)
+            {
+                item.Value.Playlist = playlist;
+                item.Value.ReApplySetting();
+            }
+        }
+    }
+
     #endregion
 
     #region private methods

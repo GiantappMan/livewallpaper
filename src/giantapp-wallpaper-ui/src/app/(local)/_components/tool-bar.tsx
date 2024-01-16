@@ -29,6 +29,7 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingPlaylist: Playlist[]
     screens: Screen[]
     onChangeVolume: () => void
+    onChangePlaylist?: (playlist?: Playlist) => void
 }
 
 type PlaylistWrapper = {
@@ -45,6 +46,7 @@ function formatTime(seconds: number) {
 }
 
 const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
+    console.log("PlaybackProgress:", screenIndex)
     const [time, setTime] = useState('00:00');
     const [totalTime, setTotalTime] = useState('00:00');
     const [progress, setProgress] = useState(0);
@@ -75,7 +77,7 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
                 }
 
                 const res = await api.getWallpaperTime(screenIndex);
-                console.log("getWallpaperTime:", res);
+                // console.log("getWallpaperTime:", res);
 
                 if (res.data) {
                     setTime(formatTime(res.data.position));
@@ -102,7 +104,7 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
     </div>
 }
 
-export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarProps) {
+export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlaylist }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
@@ -141,6 +143,9 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
         var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
         if (!exist)
             setSelectedPlaylist(null);
+        //如果只有一个默认选中
+        if (playlists.length === 1)
+            setSelectedPlaylist(playlists[0]);
 
         //设置isPaused
         var isPaused = playlists.some(x => x.playlist?.setting.isPaused);
@@ -167,6 +172,11 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
             showPlaylistButton = !!selectedPlaylist.playlist && selectedPlaylist.playlist.wallpapers.length > 1;
         setShowPlaylistButton(showPlaylistButton);
     }, [playlists, selectedPlaylist]);
+
+    //selectedPlaylist变化时，触发事件
+    useEffect(() => {
+        onChangePlaylist?.(selectedPlaylist?.playlist);
+    }, [onChangePlaylist, selectedPlaylist]);
 
     //监控playingWallpapers变化
     useEffect(() => {
@@ -264,7 +274,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playlists.filter(x => x.current).map((item, index) => {
-                const isSelected = selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
+                const isSelected = !singlePlaylistMode && selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
                 const show = (singlePlaylistMode || (!selectedPlaylist || !!isSelected))
                 return show && <div key={index} className="flex items-center p-0 m-0" >
                     {
@@ -419,9 +429,9 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                 </PopoverContent>
             </Popover>
             {
-                (selectedPlaylist || singlePlaylistMode) && showPlaylistButton
+                (selectedPlaylist || singlePlaylistMode)
                 && <>
-                    <Sheet>
+                    <Sheet modal={true}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
                                 <svg

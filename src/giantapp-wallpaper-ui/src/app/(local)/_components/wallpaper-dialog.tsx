@@ -424,7 +424,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             />
                         </div>
                     </div>
-                    <DialogFooter >
+                    <DialogFooter>
                         <Button type="submit" disabled={uploading}>
                             {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
                             {uploading ? "创建中..." : "保存"}
@@ -433,5 +433,5 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                 </form>
             </Form>
         </DialogContent>
-    </Dialog >
+    </Dialog>
 }
