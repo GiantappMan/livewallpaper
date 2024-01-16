@@ -3,7 +3,6 @@
 using System.Runtime.InteropServices;
 #endif
 using Microsoft.Win32;
-using System.Diagnostics;
 using System.Timers;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -145,6 +144,12 @@ public class WindowStateChecker
             return true;
 
         HWND handle = new(hWnd);
+        //判断是否最小化了
+        if (PInvoke.IsIconic(handle))
+        {
+            return false;
+        }
+
         //判断窗口是否可见
         if (!PInvoke.IsWindowVisible(handle))
         {
