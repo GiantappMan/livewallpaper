@@ -107,6 +107,7 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
 export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlaylist }: ToolBarProps) {
     const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
+    const [selectedScreenIndex, setSelectedScreenIndex] = useState<number | undefined>(); //当前选中的屏幕index
     const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
     const [playingWallpapers, setPlayingWallpapers] = useState<Wallpaper[]>([]); //当前正在播放的壁纸，可能是多个屏幕的
     const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -115,9 +116,13 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
     const [singlePlaylistMode, setSinglePlaylistMode] = useState<boolean>(true);
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
 
+    //更新selectedScreenIndex
     useEffect(() => {
-        setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
-    }, [playlists]);
+        if (selectedPlaylist && playlists.length > 1)
+            setSelectedScreenIndex(selectedPlaylist.playlist?.setting.screenIndexes[0]);
+        else
+            setSelectedScreenIndex(undefined);
+    }, [playlists.length, selectedPlaylist]);
 
     //外部参数变化，更新内部playlist
     useEffect(() => {
@@ -139,6 +144,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
 
     //内部playlist变化，更新状态
     useEffect(() => {
+        setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
         //选中播放列表已移除
         var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
         if (!exist)
@@ -400,7 +406,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
                     </Button>
                 }
             </div>
-            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedPlaylist?.playlist?.setting.screenIndexes[0]} />}
+            {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedScreenIndex} />}
 
         </div>
 

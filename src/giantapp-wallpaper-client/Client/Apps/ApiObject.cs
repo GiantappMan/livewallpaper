@@ -325,7 +325,7 @@ public class ApiObject
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
-            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Playlist?.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.Where(m => m.Playlist != null).All(m => m.Playlist!.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
             if (!isSamePath) return null;
             //找到第一个没被遮挡的播放器
             var playingManager = WallpaperApi.RunningWallpapers.Values.FirstOrDefault(m => m.IsScreenMaximized == false);
