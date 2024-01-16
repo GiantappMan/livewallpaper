@@ -97,7 +97,6 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
 
     return <div className="flex items-center justify-between text-xs w-full select-none">
         <div className="text-primary-600 dark:text-primary-400">{time}</div>
-        {/* <div className="w-full h-1 mx-4 bg-primary/60 rounded" /> */}
         <VideoSlider max={100} min={0} step={1} value={[progress]} className="w-full h-1 mx-4 rounded" onValueChange={handleDrag} />
         <div className="text-primary-600 dark:text-primary-400">{totalTime}</div>
     </div>
@@ -250,10 +249,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                 var currentPlaylist = playlists.find(x => x.playlist?.wallpapers.some(y => y.fileUrl === element.fileUrl));
                 await api.setVolume(value[0], currentPlaylist?.playlist?.setting?.screenIndexes[0])
                 onChangeVolume?.();
-                // element.setting.volume = value[0];
             }
-            // else
-            //     element.setting.volume = 0;
         });
     }, [onChangeVolume, playingWallpapers, playlists, selectedWallpaper]);
 
@@ -394,11 +390,6 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume }: ToolBarPro
                     </Button>
                 }
             </div>
-            {/* {(selectedPlaylist || singlePlaylistMode) && <div className="flex items-center justify-between text-xs w-full">
-                <div className="text-primary-600 dark:text-primary-400">00:00</div>
-                <div className="w-full h-1 mx-4 bg-primary/60 rounded" />
-                <div className="text-primary-600 dark:text-primary-400">04:30</div>
-            </div>} */}
             {(selectedPlaylist || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedPlaylist?.playlist?.setting.screenIndexes[0]} />}
 
         </div>

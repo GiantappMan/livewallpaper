@@ -323,28 +323,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
         props.onChange(e);
     }} >
-        {/* <DialogTrigger asChild>
-            <Button
-                aria-label="创建壁纸"
-                className="flex w-full h-full hover:text-primary"
-                title="创建壁纸"
-                variant="ghost"
-                onClick={() => props.onChange(!props.open)}
-            >
-                <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <path d="M12 4v16m8-8H4" />
-                </svg>
-            </Button>
-        </DialogTrigger> */}
         <DialogContent className="sm:max-w-[425px]">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
