@@ -142,20 +142,20 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
         setPlaylists(tmpPlaylists);
     }, [playingPlaylist, screens]);
 
-    //仅playlist变化，更新状态
-    useEffect(() => {
-        //只要变化了，就不选中任何播放列表
-        setSelectedPlaylist(null);
-    }, [playlists]);
+    // //仅playlist变化，更新状态
+    // useEffect(() => {
+    //     //只要变化了，就不选中任何播放列表
+    //     setSelectedPlaylist(null);
+    // }, [playlists]);
 
 
     //内部playlist变化，更新状态
     useEffect(() => {
         setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
-        // //选中播放列表已移除
-        // var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
-        // if (!exist)
-        //     setSelectedPlaylist(null);
+        //选中播放列表已移除
+        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
+        if (!exist)
+            setSelectedPlaylist(null);
         // //如果只有一个默认选中
         // if (playlists.length === 1)
         //     setSelectedPlaylist(playlists[0]);

@@ -446,6 +446,7 @@ public static class WallpaperApi
         foreach (var item in snapshot.Data)
         {
             var manager = new WallpaperManager(item.SnapshotData);
+            item.Playlist.EnsureId();            
             await ShowWallpaper(item.Playlist, manager);
         }
     }

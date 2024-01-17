@@ -370,7 +370,7 @@ public class Playlist : ICloneable
     {
 
     }
-    public string? Id { get; set; } = Guid.NewGuid().ToString();
+    public string? Id { get; set; }
     //描述数据
     public PlaylistMeta Meta { get; set; } = new();
 
@@ -394,6 +394,12 @@ public class Playlist : ICloneable
             res.Wallpapers.Add(item);
         }
         return res;
+    }
+
+    public void EnsureId()
+    {
+        if (string.IsNullOrEmpty(Id))
+            Id = Guid.NewGuid().ToString();
     }
 }
 
