@@ -1,6 +1,11 @@
-# [巨应壁纸 3-Alpha1](https://github.com/DaZiYuan/livewallpaper/releases) 发布 
+# 巨应壁纸 3-Alpha发布 
 
-如需访问线上版本代码，请查看分支 2.x。
+体验地址：https://github.com/DaZiYuan/livewallpaper/releases  
+应用商店：https://www.microsoft.com/store/apps/9MWTG433JV6B
+
+---
+
+如需访问巨应2，请查看分支 2.x。
 
 ---
 

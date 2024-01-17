@@ -34,7 +34,7 @@
     "clsx": "^2.1.0",
     "cmdk": "^0.2.0",
     "jotai": "^2.6.2",
-    "lucide-react": "^0.311.0",
+    "lucide-react": "^0.312.0",
     "next": "14.0.4",
     "next-themes": "^0.2.1",
     "react": "^18",
