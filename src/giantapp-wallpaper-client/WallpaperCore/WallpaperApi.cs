@@ -114,18 +114,18 @@ public static class WallpaperApi
     }
 
     //显示壁纸
-    public static async Task<bool> ShowWallpaper(Playlist playlist, WallpaperManager? customManager = null)
+    public static async Task<bool> ShowWallpaper(Wallpaper wallpaper, WallpaperManager? customManager = null)
     {
-        if (playlist.Setting == null || playlist.Setting.ScreenIndexes.Length == 0)
+        if (wallpaper.Setting.ScreenIndexes.Length == 0)
             return false;
 
-        foreach (var screenIndex in playlist.Setting.ScreenIndexes)
+        foreach (var screenIndex in wallpaper.Setting.ScreenIndexes)
         {
             var manager = GetRunningManager(screenIndex, customManager);
-            var tmplist = (Playlist)playlist.Clone();
-            if (tmplist.Setting != null)
-                tmplist.Setting.ScreenIndexes = new uint[] { screenIndex };
-            manager.Playlist = tmplist;
+            var tmp = (Wallpaper)wallpaper.Clone();
+            if (tmp.Setting != null)
+                tmp.Setting.ScreenIndexes = new uint[] { screenIndex };
+            manager.Wallpaper = tmp;
             await manager.Play();
         }
 
@@ -150,7 +150,7 @@ public static class WallpaperApi
         {
             foreach (var item in RunningWallpapers)
             {
-                bool isPlaying = item.Value.Playlist?.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl) ?? false;
+                bool isPlaying = item.Value.CheckIsPlaying(wallpaper);
                 if (isPlaying)
                 {
                     CloseWallpaper(item.Key);//正在播放关闭壁纸
@@ -284,7 +284,7 @@ public static class WallpaperApi
         foreach (var item in screenIndexs)
         {
             var manger = GetRunningManager((uint)item);
-            var currentWallpaper = manger.Playlist?.Wallpapers[(int)manger.Playlist.Setting.PlayIndex];
+            var currentWallpaper = manger.GetRunningWallpaper();
             //播放列表的当前壁纸
             if (currentWallpaper != null)
             {
@@ -313,17 +313,16 @@ public static class WallpaperApi
     {
         var res = new WallpaperApiSnapshot
         {
-            Data = new List<(Playlist Playlist, WallpaperManagerSnapshot PlayerData)>()
+            Data = new List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>()
         };
 
         foreach (var item in RunningWallpapers)
         {
             var snapshotData = item.Value.GetSnapshotData();
-            if (item.Value.Playlist != null)
+            if (item.Value.Wallpaper != null)
             {
-                if (item.Value.Playlist.Setting != null)
-                    item.Value.Playlist.Setting.ScreenIndexes = new uint[] { item.Key };
-                res.Data.Add((item.Value.Playlist, snapshotData));
+                item.Value.Wallpaper.Setting.ScreenIndexes = new uint[] { item.Key };
+                res.Data.Add((item.Value.Wallpaper, snapshotData));
             }
         }
 
@@ -416,13 +415,13 @@ public static class WallpaperApi
         //如果壁纸正在播放，重新调用ShowWallpaper以生效
         foreach (var item in RunningWallpapers)
         {
-            if (item.Value.Playlist == null)
+            if (item.Value.Wallpaper == null)
                 continue;
 
-            bool isPlaying = item.Value.Playlist.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
+            bool isPlaying = item.Value.CheckIsPlaying(item.Value.Wallpaper);
             if (isPlaying)
             {
-                var playingWallpaper = item.Value.Playlist.Wallpapers.Find(m => m.FileUrl == wallpaper.FileUrl);
+                var playingWallpaper = item.Value.GetRunningWallpaper();
                 if (playingWallpaper != null)
                     playingWallpaper.Setting = setting;
                 item.Value.ReApplySetting();
@@ -431,11 +430,11 @@ public static class WallpaperApi
         return true;
     }
 
-    //设置播放列表配置
-    public static bool SetPlaylistSetting(PlaylistSetting setting, Playlist playlist)
-    {
-        return true;
-    }
+    ////设置播放列表配置
+    //public static bool SetPlaylistSetting(PlaylistSetting setting, Playlist playlist)
+    //{
+    //    return true;
+    //}
 
     //恢复快照
     public static async Task RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
@@ -446,8 +445,8 @@ public static class WallpaperApi
         foreach (var item in snapshot.Data)
         {
             var manager = new WallpaperManager(item.SnapshotData);
-            item.Playlist.EnsureId();            
-            await ShowWallpaper(item.Playlist, manager);
+            item.Wallpaper.Meta.EnsureId();
+            await ShowWallpaper(item.Wallpaper, manager);
         }
     }
 
@@ -472,20 +471,20 @@ public static class WallpaperApi
         manager.SetProgress(progress);
     }
 
-    //添加到播放列表
-    public static void AddToPlaylist(Playlist playlist, Wallpaper wallpaper)
-    {
-        playlist.Wallpapers.Add(wallpaper);
-        //如果是当前播放的playlist，更新数据
-        foreach (var item in RunningWallpapers)
-        {
-            if (item.Value.Playlist != null && item.Value.Playlist.Id == playlist.Id)
-            {
-                item.Value.Playlist = playlist;
-                item.Value.ReApplySetting();
-            }
-        }
-    }
+    ////添加到播放列表
+    //public static void AddToPlaylist(Playlist playlist, Wallpaper wallpaper)
+    //{
+    //    playlist.Wallpapers.Add(wallpaper);
+    //    //如果是当前播放的playlist，更新数据
+    //    foreach (var item in RunningWallpapers)
+    //    {
+    //        if (item.Value.Playlist != null && item.Value.Playlist.Id == playlist.Id)
+    //        {
+    //            item.Value.Playlist = playlist;
+    //            item.Value.ReApplySetting();
+    //        }
+    //    }
+    //}
 
     #endregion
 

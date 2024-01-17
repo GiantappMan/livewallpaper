@@ -45,7 +45,7 @@ public class V2ProjectInfo
 /// <summary>
 /// 壁纸的描述数据
 /// </summary>
-public class WallpaperMeta
+public class WallpaperMeta : ICloneable
 {
     public string? Id { get; set; }
     public string? Title { get; set; }
@@ -56,6 +56,18 @@ public class WallpaperMeta
     public DateTime? CreateTime { get; set; }
     public DateTime? UpdateTime { get; set; }
     public WallpaperType Type { get; set; }
+
+    //确保有Id
+    public void EnsureId()
+    {
+        if (string.IsNullOrEmpty(Id))
+            Id = Guid.NewGuid().ToString();
+    }
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
 
 public enum PlaylistType
@@ -105,6 +117,7 @@ public class WallpaperSetting : ICloneable
 {
     public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
     public bool IsPlaylist { get; set; }
+    public bool IsPaused { get; set; }
 
     #region exe
     /// <summary>
@@ -166,7 +179,25 @@ public class WallpaperSetting : ICloneable
 
     public object Clone()
     {
-        return MemberwiseClone();
+        //deep clone
+        var res = new WallpaperSetting
+        {
+            ScreenIndexes = ScreenIndexes,
+            IsPlaylist = IsPlaylist,
+            IsPaused = IsPaused,
+            EnableMouseEvent = EnableMouseEvent,
+            HardwareDecoding = HardwareDecoding,
+            IsPanScan = IsPanScan,
+            Volume = Volume,
+            Mode = Mode,
+            PlayIndex = PlayIndex,
+            Wallpapers = new List<Wallpaper>()
+        };
+        foreach (var item in Wallpapers)
+        {
+            res.Wallpapers.Add((Wallpaper)item.Clone());
+        }
+        return res;
     }
 }
 
@@ -183,7 +214,7 @@ public enum WallpaperType
 /// <summary>
 /// 表示一个壁纸
 /// </summary>
-public class Wallpaper
+public class Wallpaper : ICloneable
 {
     public static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
     public static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv" };
@@ -191,7 +222,7 @@ public class Wallpaper
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
 
-    public Wallpaper(string filePath)
+    public Wallpaper(string? filePath)
     {
         FilePath = filePath;
         Dir = Path.GetDirectoryName(filePath) ?? string.Empty;
@@ -382,6 +413,21 @@ public class Wallpaper
                WebExtension.Contains(lowerCaseExtension) ||
                AnimatedImgExtension.Contains(lowerCaseExtension);
     }
+
+    public object Clone()
+    {
+        //deep clone
+        var res = new Wallpaper(FilePath)
+        {
+            Meta = (WallpaperMeta)Meta.Clone(),
+            Setting = (WallpaperSetting)Setting.Clone(),
+            CoverPath = CoverPath,
+            FileUrl = FileUrl,
+            CoverUrl = CoverUrl
+        };
+        return res;
+
+    }
 }
 
 /// <summary>
@@ -432,5 +478,5 @@ public class Playlist : ICloneable
 /// </summary>
 public class WallpaperApiSnapshot
 {
-    public List<(Playlist Playlist, WallpaperManagerSnapshot SnapshotData)>? Data { get; set; }
+    public List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>? Data { get; set; }
 }

@@ -26,7 +26,7 @@ public class WallpaperManager
         }
     }
 
-    public Playlist? Playlist { get; set; }
+    public Wallpaper? Wallpaper { get; set; }
     public bool IsScreenMaximized { get; private set; }
 
     internal void Dispose()
@@ -43,18 +43,23 @@ public class WallpaperManager
 
     internal async Task Play()
     {
-        if (Playlist == null || Playlist.Wallpapers.Count == 0)
+        if (Wallpaper == null)
             return;
 
+        //当前播放设置
+        var playSetting = Wallpaper.Setting;
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
-        uint screenIndex = Playlist.Setting.ScreenIndexes[0];
+        uint screenIndex = playSetting.ScreenIndexes[0];
 
-        var currentWallpaper = Playlist.Wallpapers[(int)Playlist.Setting.PlayIndex];
-        _mpvPlayer.ApplySetting(currentWallpaper.Setting);
-
+        //是播放列表就更新当前播放的设置
+        if (playSetting.IsPlaylist && playSetting.PlayIndex < playSetting.Wallpapers.Count())
+        {
+            playSetting = playSetting.Wallpapers[(int)playSetting.PlayIndex].Setting;
+        }
+        _mpvPlayer.ApplySetting(playSetting);
 
         //生成playlist.txt
-        var playlist = Playlist.Wallpapers.Select(w => w.FilePath).ToArray();
+        var playlist = playSetting.Wallpapers.Select(w => w.FilePath).ToArray();
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
 
@@ -88,16 +93,16 @@ public class WallpaperManager
     {
         _mpvPlayer.Pause();
 
-        if (Playlist != null)
-            Playlist.Setting.IsPaused = true;
+        if (Wallpaper != null)
+            Wallpaper.Setting.IsPaused = true;
     }
 
     internal void Resume()
     {
         _mpvPlayer.Resume();
 
-        if (Playlist != null)
-            Playlist.Setting.IsPaused = false;
+        if (Wallpaper != null)
+            Wallpaper.Setting.IsPaused = false;
     }
 
     //internal void SetVolume(int volume)
@@ -111,7 +116,7 @@ public class WallpaperManager
     internal void Stop()
     {
         _mpvPlayer.Stop();
-        Playlist = null;
+        Wallpaper = null;
     }
 
     internal void SetScreenMaximized(bool screenMaximized)
@@ -124,7 +129,7 @@ public class WallpaperManager
         else
         {
             //用户已手动暂停壁纸
-            if (Playlist == null || Playlist.Setting == null || Playlist.Setting.IsPaused)
+            if (Wallpaper == null || Wallpaper.Setting.IsPaused)
                 return;
 
             //恢复壁纸
@@ -152,5 +157,26 @@ public class WallpaperManager
     {
         _mpvPlayer.SetProgress(progress);
     }
-    
+
+    internal bool CheckIsPlaying(Wallpaper wallpaper)
+    {
+        if (Wallpaper == null)
+            return false;
+
+        if (Wallpaper.Setting.IsPlaylist)
+            return Wallpaper.Setting.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
+        else
+            return Wallpaper.FilePath == wallpaper.FilePath;
+    }
+
+    internal Wallpaper? GetRunningWallpaper()
+    {
+        if (Wallpaper == null)
+            return null;
+
+        if (Wallpaper.Setting.IsPlaylist && Wallpaper.Setting.PlayIndex < Wallpaper.Setting.Wallpapers.Count())
+            return Wallpaper.Setting.Wallpapers[(int)Wallpaper.Setting.PlayIndex];
+
+        return Wallpaper;
+    }
 }

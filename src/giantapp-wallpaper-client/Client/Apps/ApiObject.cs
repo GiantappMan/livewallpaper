@@ -121,21 +121,26 @@ public class ApiObject
         return JsonConvert.SerializeObject(screens, WallpaperApi.JsonSettings);
     }
 
-    public async Task<bool> ShowWallpaper(string playlistJson)
+    public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
-        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
-        if (playlist == null || playlist.Wallpapers.Count == 0)
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        if (wallpaper == null || wallpaper.Setting.Wallpapers.Count == 0)
             return false;
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
-        //把playlist里面的url转换成本地路径
-        foreach (var item in playlist.Wallpapers)
-        {
-            item.CoverUrl = AppService.ConvertUrlToPath(config, item.CoverPath);
-            item.FileUrl = AppService.ConvertUrlToPath(config, item.FilePath);
-        }
 
-        var res = await WallpaperApi.ShowWallpaper(playlist);
+        //把playlist里面的url转换成本地路径
+        wallpaper.CoverUrl = AppService.ConvertUrlToPath(config, wallpaper.CoverPath);
+        wallpaper.FileUrl = AppService.ConvertUrlToPath(config, wallpaper.FilePath);
+
+        if (wallpaper.Setting.IsPlaylist)
+            foreach (var item in wallpaper.Setting.Wallpapers)
+            {
+                item.CoverUrl = AppService.ConvertUrlToPath(config, item.CoverPath);
+                item.FileUrl = AppService.ConvertUrlToPath(config, item.FilePath);
+            }
+
+        var res = await WallpaperApi.ShowWallpaper(wallpaper);
 
         var status = WallpaperApi.GetSnapshot();
         //保存数据快照
@@ -146,10 +151,10 @@ public class ApiObject
 
     public string GetPlayingPlaylist()
     {
-        var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Playlist != null).Select(m =>
+        var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
         {
-            m.Playlist?.EnsureId();
-            return m.Playlist;
+            m.Wallpaper?.Meta.EnsureId();
+            return m.Wallpaper;
         });
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
@@ -158,11 +163,16 @@ public class ApiObject
         {
             if (item == null)
                 continue;
-            foreach (var wallpaper in item.Wallpapers)
-            {
-                wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
-                wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
-            }
+
+            item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
+            item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
+
+            if (item.Setting.IsPlaylist)
+                foreach (var wallpaper in item.Setting.Wallpapers)
+                {
+                    wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+                    wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+                }
         }
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
@@ -313,14 +323,14 @@ public class ApiObject
         return false;
     }
 
-    public bool SetPlaylistSetting(string playlistSettingJson, string playlistJson)
-    {
-        var playlistSetting = JsonConvert.DeserializeObject<PlaylistSetting>(playlistSettingJson, WallpaperApi.JsonSettings);
-        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
-        if (playlistSetting != null && playlist != null)
-            return WallpaperApi.SetPlaylistSetting(playlistSetting, playlist);
-        return false;
-    }
+    //public bool SetPlaylistSetting(string playlistSettingJson, string playlistJson)
+    //{
+    //    var playlistSetting = JsonConvert.DeserializeObject<PlaylistSetting>(playlistSettingJson, WallpaperApi.JsonSettings);
+    //    var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
+    //    if (playlistSetting != null && playlist != null)
+    //        return WallpaperApi.SetPlaylistSetting(playlistSetting, playlist);
+    //    return false;
+    //}
 
     //获取指定屏幕的壁纸的当前播放时间和总时间
     public string? GetWallpaperTime(string screenIndexStr)
@@ -329,14 +339,14 @@ public class ApiObject
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
-            var isSamePath = WallpaperApi.RunningWallpapers.Values.Where(m => m.Playlist != null).All(m => m.Playlist!.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).All(m => m.Wallpaper?.Setting.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
             if (!isSamePath) return null;
             //找到第一个没被遮挡的播放器
             var playingManager = WallpaperApi.RunningWallpapers.Values.FirstOrDefault(m => m.IsScreenMaximized == false);
             if (playingManager == null) return null;
-            if (playingManager.Playlist?.Setting.ScreenIndexes[0] != null)
+            if (playingManager.Wallpaper?.Setting.ScreenIndexes[0] != null)
             {
-                screenIndex = (int)playingManager.Playlist.Setting.ScreenIndexes[0];
+                screenIndex = (int)playingManager.Wallpaper.Setting.ScreenIndexes[0];
             }
         }
         else
@@ -365,15 +375,15 @@ public class ApiObject
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
-            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Playlist?.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Wallpaper?.Setting.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
             if (!isSamePath) return;
 
             //设置所有屏幕
             foreach (var item in WallpaperApi.RunningWallpapers.Values)
             {
-                if (item.Playlist?.Setting.ScreenIndexes[0] == null)
+                if (item.Wallpaper?.Setting.ScreenIndexes[0] == null)
                     continue;
-                WallpaperApi.SetProgress(int.Parse(progressStr), item.Playlist.Setting.ScreenIndexes[0]);
+                WallpaperApi.SetProgress(int.Parse(progressStr), item.Wallpaper.Setting.ScreenIndexes[0]);
             }
             return;
         }
@@ -384,16 +394,16 @@ public class ApiObject
         }
     }
 
-    //添加到播放列表
-    public void AddToPlaylist(string playlistJson, string wallpaperJson)
-    {
-        var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
-        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
-        if (playlist != null && wallpaper != null)
-        {
-            WallpaperApi.AddToPlaylist(playlist, wallpaper);
-        }
-    }
+    ////添加到播放列表
+    //public void AddToPlaylist(string playlistJson, string wallpaperJson)
+    //{
+    //    var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
+    //    var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+    //    if (playlist != null && wallpaper != null)
+    //    {
+    //        WallpaperApi.AddToPlaylist(playlist, wallpaper);
+    //    }
+    //}
 
     internal void TriggerRefreshPageEvent()
     {
