@@ -26,12 +26,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { SettingDialog } from "./_components/setting-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import CreateWallpaperButton from "./_components/create-wallpaper-button";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
     const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
-    const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | undefined>();
+    // const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | undefined>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
 
@@ -176,18 +177,18 @@ const Page = () => {
         setOpenCreateWallpaperDialog(true);
     }
 
-    const addToPlaylist = useCallback(async (wallpaper: Wallpaper) => {
-        debugger
-        if (!selectedPlaylist)
-            return;
+    // const addToPlaylist = useCallback(async (wallpaper: Wallpaper) => {
+    //     debugger
+    //     if (!selectedPlaylist)
+    //         return;
 
-        const res = await api.addToPlaylist(selectedPlaylist, wallpaper);
-        if (res.error) {
-            toast.error("添加到播放列表失败");
-            return;
-        }
-        refresh();
-    }, [selectedPlaylist]);
+    //     const res = await api.addToPlaylist(selectedPlaylist, wallpaper);
+    //     if (res.error) {
+    //         toast.error("添加到播放列表失败");
+    //         return;
+    //     }
+    //     refresh();
+    // }, [selectedPlaylist]);
 
     return <div
         onDragEnter={handleDragEnter}
@@ -406,11 +407,17 @@ const Page = () => {
                                             创建壁纸
                                         </ContextMenuItem>
                                         <ContextMenuItem onClick={(e) => {
+                                            createWallpaper()
+                                            e.stopPropagation();
+                                        }}>
+                                            创建列表
+                                        </ContextMenuItem>
+                                        {/* <ContextMenuItem onClick={(e) => {
                                             addToPlaylist(wallpaper);
                                             e.stopPropagation();
                                         }}>
                                             添加到列表
-                                        </ContextMenuItem>
+                                        </ContextMenuItem> */}
                                     </ContextMenuContent>
                                 </ContextMenu>
                             </div>
@@ -432,7 +439,7 @@ const Page = () => {
                 <div
                     className="w-full aspect-[3/2]"
                 >
-                    <Button
+                    {/* <Button
                         aria-label="创建壁纸"
                         className="flex w-full h-full hover:text-primary"
                         title="创建壁纸"
@@ -451,7 +458,9 @@ const Page = () => {
                         >
                             <path d="M12 4v16m8-8H4" />
                         </svg>
-                    </Button>
+                    </Button> */}
+                    <CreateWallpaperButton
+                        createWallpaper={createWallpaper} createList={createWallpaper} />
                 </div>
             </div>
             {
@@ -461,7 +470,7 @@ const Page = () => {
                 screens &&
                 <ToolBar playingPlaylist={playingPlaylist} screens={screens}
                     onChangeVolume={refresh}
-                    onChangePlaylist={setSelectedPlaylist}
+                // onChangePlaylist={setSelectedPlaylist}
                 />
             }
         </div >
