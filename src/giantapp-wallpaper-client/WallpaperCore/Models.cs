@@ -47,6 +47,7 @@ public class V2ProjectInfo
 /// </summary>
 public class WallpaperMeta
 {
+    public string? Id { get; set; }
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Cover { get; set; }
@@ -65,6 +66,8 @@ public enum PlaylistType
     Group
 }
 
+[Obsolete]
+
 public class PlaylistMeta : WallpaperMeta
 {
     public new PlaylistType Type { get; set; }
@@ -82,6 +85,7 @@ public enum PlayMode
 /// <summary>
 /// playlist的设置
 /// </summary>
+[Obsolete]
 public class PlaylistSetting : ICloneable
 {
     public PlayMode Mode { get; set; } = PlayMode.Order;
@@ -99,10 +103,15 @@ public class PlaylistSetting : ICloneable
 //一个壁纸的设置
 public class WallpaperSetting : ICloneable
 {
+    public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
+    public bool IsPlaylist { get; set; }
+
+    #region exe
     /// <summary>
     /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
     /// </summary>
     public bool EnableMouseEvent { get; set; } = false;
+    #endregion
 
     #region video
 
@@ -121,6 +130,21 @@ public class WallpaperSetting : ICloneable
     /// </summary>
     public int Volume { get; set; } = 0;
 
+    #endregion
+
+    #region web
+
+    #endregion
+
+    #region img
+
+    #endregion
+
+    #region playlist
+    public PlayMode Mode { get; set; } = PlayMode.Order;
+    public uint PlayIndex { get; set; } = 0;
+    //播放列表内的壁纸
+    public List<Wallpaper> Wallpapers { get; set; } = new();
     #endregion
 
     public static WallpaperSetting From(Dictionary<string, object> dic)
@@ -173,7 +197,6 @@ public class Wallpaper
         Dir = Path.GetDirectoryName(filePath) ?? string.Empty;
         FileName = Path.GetFileName(filePath);
     }
-
     //描述数据
     public WallpaperMeta Meta { get; set; } = new();
 
@@ -364,6 +387,7 @@ public class Wallpaper
 /// <summary>
 /// 播放列表
 /// </summary>
+[Obsolete]
 public class Playlist : ICloneable
 {
     public Playlist()
