@@ -1,3 +1,5 @@
+import { PlayMode } from "./playlist";
+
 export class Wallpaper {
   dir?: string;
   fileName?: string;
@@ -22,6 +24,28 @@ export class Wallpaper {
       return "app";
     return null;
   }
+
+  //是否包含传入的fileUrl
+  static isSame(wallpaper: Wallpaper, targetWallpaper?: Wallpaper | null): boolean {
+    if (!wallpaper || !wallpaper.fileUrl || !targetWallpaper)
+      return false;
+    const fileUrl = targetWallpaper.fileUrl;
+    if (wallpaper.setting.isPlaylist) {
+      return wallpaper.setting.wallpapers?.some(w => w.fileUrl === fileUrl) || false;
+    }
+    return wallpaper.fileUrl === fileUrl;
+  }
+
+  //查找真正播放的wallpaper
+  static findPlayingWallpaper(wallpaper: Wallpaper): Wallpaper {
+    if (!wallpaper.setting.isPlaylist)
+      return wallpaper;
+    const wallpapers = wallpaper.setting.wallpapers;
+    if (!wallpapers || wallpapers.length === 0)
+      return wallpaper;
+    const index = wallpaper.setting.playIndex || 0;
+    return wallpapers[index];
+  }
 };
 
 export enum WallpaperType {
@@ -45,8 +69,17 @@ export class WallpaperMeta {
 };
 
 export class WallpaperSetting {
-  enableMouseEvent?: boolean;
-  hardwareDecoding?: boolean;
-  isPanScan?: boolean;
-  volume: number = 0;
+  screenIndexes: number[] = [];
+  isPlaylist?: boolean = false;
+  isPaused?: boolean = false;
+  // exe
+  enableMouseEvent?: boolean = false;
+  // vide
+  hardwareDecoding?: boolean = true;
+  isPanScan?: boolean = false;
+  volume?: number = 0;
+  // playlist
+  mode?: PlayMode = PlayMode.Order;
+  playIndex?: number = 0;
+  wallpapers?: Wallpaper[] = [];
 };

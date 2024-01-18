@@ -2,7 +2,6 @@ import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper, WallpaperSetting } from "./types/wallpaper";
 import { Screen } from "./types/screen";
-import { Playlist, PlaylistSetting } from "./types/playlist";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -90,11 +89,11 @@ class API {
     }
   }
 
-  async showWallpaper(playlist: Playlist): Promise<ApiResult<null>> {
+  async showWallpaper(wallpaper: Wallpaper): Promise<ApiResult<null>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      await api.ShowWallpaper(JSON.stringify(playlist));
+      await api.ShowWallpaper(JSON.stringify(wallpaper));
       return { error: null, data: null };
     } catch (e) {
       console.log(e);
@@ -102,11 +101,11 @@ class API {
     }
   }
 
-  async getPlayingPlaylist(): Promise<ApiResult<Playlist[]>> {
+  async getPlayingWallpaper(): Promise<ApiResult<Wallpaper[]>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
-      var json = await api.GetPlayingPlaylist();
+      var json = await api.GetPlayingWallpaper();
       let res = JSON.parse(json);
       return { error: null, data: res };
     } catch (e) {
@@ -265,19 +264,6 @@ class API {
     }
   }
 
-  async setPlaylistSetting(setting: PlaylistSetting, playlist: Playlist): Promise<ApiResult<boolean>> {
-    try {
-      if (!window.chrome.webview) return { error: "no webview", data: null };
-      const { api } = (window as any).chrome.webview.hostObjects;
-
-      var data = await api.SetPlaylistSetting(JSON.stringify(setting), JSON.stringify(playlist));
-      return { error: null, data };
-    } catch (e) {
-      console.log(e);
-      return { error: e, data: false };
-    }
-  }
-
   async getWallpaperTime(screenIndex?: number): Promise<ApiResult<{
     duration: number,
     position: number
@@ -304,19 +290,6 @@ class API {
     } catch (e) {
       console.log(e);
       return { error: e, data: null };
-    }
-  }
-
-  async addToPlaylist(playlist: Playlist, wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
-    try {
-      if (!window.chrome.webview) return { error: "no webview", data: null };
-      const { api } = (window as any).chrome.webview.hostObjects;
-
-      var data = await api.AddToPlaylist(JSON.stringify(playlist), JSON.stringify(wallpaper));
-      return { error: null, data };
-    } catch (e) {
-      console.log(e);
-      return { error: e, data: false };
     }
   }
 }

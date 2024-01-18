@@ -4,7 +4,7 @@ interface API {
   GetWallpapers(): Promise<string>;
   GetScreens(): Promise<string>;
   ShowWallpaper(wallpaper: string);
-  GetPlayingPlaylist(): Promise<string>;
+  GetPlayingWallpaper(): Promise<string>;
   PauseWallpaper(screenIndex?: number): Promise<void>;
   ResumeWallpaper(screenIndex?: number): Promise<void>;
   StopWallpaper(screenIndex?: number): Promise<void>;

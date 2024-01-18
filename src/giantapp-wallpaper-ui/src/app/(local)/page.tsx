@@ -9,7 +9,6 @@ import { Screen } from "@/lib/client/types/screen";
 import { useCallback, useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar";
 import { toast } from "sonner"
-import { PlayMode, Playlist, PlaylistMeta, PlaylistType } from "@/lib/client/types/playlist";
 import Link from "next/link";
 import { WallpaperDialog } from "./_components/wallpaper-dialog";
 import { cn } from "@/lib/utils";
@@ -31,8 +30,7 @@ import CreateWallpaperButton from "./_components/create-wallpaper-button";
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
-    const [playingPlaylist, setPlayingPlaylist] = useState<Playlist[] | null>();
-    // const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | undefined>();
+    const [playingWallpaper, setPlayingWallpaper] = useState<Wallpaper[] | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
 
@@ -58,7 +56,7 @@ const Page = () => {
             if (!screens.data)
                 return
 
-            const _playingPlaylist = await api.getPlayingPlaylist();
+            const _playingPlaylist = await api.getPlayingWallpaper();
             if (_playingPlaylist.error) {
                 toast.error("获取正在播放的壁纸失败")
                 console.log(_playingPlaylist.error)
@@ -73,7 +71,7 @@ const Page = () => {
             })
             setWallpapers(res.data);
             setScreens(screens.data);
-            setPlayingPlaylist(_playingPlaylist.data);
+            setPlayingWallpaper(_playingPlaylist.data);
         } catch (e) {
             console.log(e)
             toast.error("获取壁纸列表失败")
@@ -95,20 +93,8 @@ const Page = () => {
         else
             screenIndexes = [screenIndex];
 
-        const playlist: Playlist = {
-            wallpapers: [wallpaper],
-            setting: {
-                playIndex: 0,
-                mode: PlayMode.Order,
-                screenIndexes,
-                // volume: 0,
-                isPaused: false
-            },
-            meta: {
-                type: PlaylistType.Playlist,
-            } as PlaylistMeta
-        }
-        const res = await api.showWallpaper(playlist);
+        wallpaper.setting.screenIndexes = screenIndexes;
+        const res = await api.showWallpaper(wallpaper);
         if (res.error) {
             alert(res.error);
             return;
@@ -176,19 +162,6 @@ const Page = () => {
         setCurrentWallpaper(null);
         setOpenCreateWallpaperDialog(true);
     }
-
-    // const addToPlaylist = useCallback(async (wallpaper: Wallpaper) => {
-    //     debugger
-    //     if (!selectedPlaylist)
-    //         return;
-
-    //     const res = await api.addToPlaylist(selectedPlaylist, wallpaper);
-    //     if (res.error) {
-    //         toast.error("添加到播放列表失败");
-    //         return;
-    //     }
-    //     refresh();
-    // }, [selectedPlaylist]);
 
     return <div
         onDragEnter={handleDragEnter}
@@ -412,12 +385,6 @@ const Page = () => {
                                         }}>
                                             创建列表
                                         </ContextMenuItem>
-                                        {/* <ContextMenuItem onClick={(e) => {
-                                            addToPlaylist(wallpaper);
-                                            e.stopPropagation();
-                                        }}>
-                                            添加到列表
-                                        </ContextMenuItem> */}
                                     </ContextMenuContent>
                                 </ContextMenu>
                             </div>
@@ -466,10 +433,11 @@ const Page = () => {
             {
                 wallpapers &&
                 wallpapers.length > 0 &&
-                playingPlaylist &&
+                playingWallpaper &&
                 screens &&
-                <ToolBar playingPlaylist={playingPlaylist} screens={screens}
+                <ToolBar wallpapers={playingWallpaper} screens={screens}
                     onChangeVolume={refresh}
+                    onChangeWallpapers={setPlayingWallpaper}
                 // onChangePlaylist={setSelectedPlaylist}
                 />
             }

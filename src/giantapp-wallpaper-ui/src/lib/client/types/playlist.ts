@@ -9,6 +9,9 @@ export enum PlayMode {
     Timer
 }
 
+/**
+ * @deprecated
+ */
 export type PlaylistSetting = {
     mode: PlayMode;
     playIndex: number;
@@ -22,10 +25,16 @@ export enum PlaylistType {
     Group
 }
 
+/**
+ * @deprecated
+ */
 export type PlaylistMeta = WallpaperMeta & {
     type: PlaylistType;
 };
 
+/**
+ * @deprecated
+ */
 export type Playlist = {
     meta: PlaylistMeta;
     setting: PlaylistSetting;

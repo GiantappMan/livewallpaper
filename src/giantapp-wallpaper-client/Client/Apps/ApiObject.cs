@@ -149,7 +149,7 @@ public class ApiObject
         return res;
     }
 
-    public string GetPlayingPlaylist()
+    public string GetPlayingWallpaper()
     {
         var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
         {

@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet } from "@/components/ui/sheet";
-import { Playlist } from "@/lib/client/types/playlist";
+import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Label } from "@radix-ui/react-label";
 
 //定义组件
-const PlaylistSheet = ({ selectedPlaylist }: { selectedPlaylist?: Playlist }) => {
+const PlaylistSheet = ({ selectedWallpaper }: { selectedWallpaper?: Wallpaper }) => {
     return <Sheet modal={true}>
         <SheetTrigger asChild>
             <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
@@ -69,7 +69,7 @@ const PlaylistSheet = ({ selectedPlaylist }: { selectedPlaylist?: Playlist }) =>
             </SheetHeader>
             {/* 选中播放列表的壁纸列表 */}
             <div className="flex flex-col space-y-2">
-                {selectedPlaylist?.wallpapers.map((item, index) => {
+                {selectedWallpaper?.setting.wallpapers?.map((item, index) => {
                     return <div key={index} className="flex items-center p-0 m-0" >
                         <picture className="mr-2">
                             <img

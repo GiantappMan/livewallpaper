@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Playlist } from "@/lib/client/types/playlist";
 import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
 import { useCallback, useEffect, useState } from "react";
 import { Screen } from "@/lib/client/types/screen";
@@ -19,24 +18,15 @@ import PlaybackProgress from "./playback-progress";
 import PlaylistSheet from "./playlist-sheet";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
-    playingPlaylist: Playlist[]
+    wallpapers: Wallpaper[]
     screens: Screen[]
     onChangeVolume: () => void
-    onChangePlaylist?: (playlist?: Playlist) => void
+    onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
 }
 
-type PlaylistWrapper = {
-    current: Wallpaper | null;
-    playlist?: Playlist;
-    screen: Screen;
-}
-
-export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlaylist }: ToolBarProps) {
-    const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistWrapper | null>(null);
+export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [selectedScreenIndex, setSelectedScreenIndex] = useState<number | undefined>(); //当前选中的屏幕index
-    const [playlists, setPlaylists] = useState<PlaylistWrapper[]>([]);
-    const [playingWallpapers, setPlayingWallpapers] = useState<Wallpaper[]>([]); //当前正在播放的壁纸，可能是多个屏幕的
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
@@ -45,84 +35,44 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
 
     //更新selectedScreenIndex
     useEffect(() => {
-        if (selectedPlaylist && playlists.length > 1)
-            setSelectedScreenIndex(selectedPlaylist.playlist?.setting.screenIndexes[0]);
+        if (selectedWallpaper && wallpapers.length > 1)
+            setSelectedScreenIndex(selectedWallpaper.setting.screenIndexes[0]);
         else
             setSelectedScreenIndex(undefined);
-    }, [playlists.length, selectedPlaylist]);
-
-    //外部参数变化，更新内部playlist
-    useEffect(() => {
-        let tmpPlaylists: PlaylistWrapper[] = [];
-        playingPlaylist?.forEach(item => {
-            if (item.setting?.playIndex !== undefined) {
-                var currentWallpaper = item.wallpapers[item.setting?.playIndex];
-                var exist = tmpPlaylists.some(x => x.current?.fileUrl === currentWallpaper.fileUrl);
-                if (!exist)
-                    tmpPlaylists.push({
-                        current: currentWallpaper,
-                        playlist: item,
-                        screen: screens[item.setting.screenIndexes[0]],
-                    });
-            }
-        });
-        setPlaylists(tmpPlaylists);
-    }, [playingPlaylist, screens]);
-
-    // //仅playlist变化，更新状态
-    // useEffect(() => {
-    //     //只要变化了，就不选中任何播放列表
-    //     setSelectedPlaylist(null);
-    // }, [playlists]);
-
+    }, [selectedWallpaper, wallpapers.length]);
 
     //内部playlist变化，更新状态
     useEffect(() => {
-        setSinglePlaylistMode(playlists.filter(x => !!x.current).length === 1);
+        setSinglePlaylistMode(wallpapers.length === 1);
         //选中播放列表已移除
-        var exist = playlists?.some(x => x.playlist?.wallpapers.some(y => y.fileUrl === selectedPlaylist?.current?.fileUrl));
+        var exist = wallpapers?.some(x => Wallpaper.isSame(x, selectedWallpaper));
         if (!exist)
-            setSelectedPlaylist(null);
+            setSelectedWallpaper(null);
         // //如果只有一个默认选中
         // if (playlists.length === 1)
         //     setSelectedPlaylist(playlists[0]);
 
         //设置isPaused
-        var isPaused = playlists.some(x => x.playlist?.setting.isPaused);
-        if (selectedPlaylist)
-            isPaused = selectedPlaylist.playlist?.setting.isPaused || false;
+        var isPaused = wallpapers.some(x => x.setting.isPaused);
+        if (selectedWallpaper)
+            isPaused = selectedWallpaper.setting.isPaused || false;
         setIsPaused(isPaused);
 
         //设置isPlaying
-        var isPlaying = playlists.some(x => !!x.current);
-        if (selectedPlaylist)
-            isPlaying = !!selectedPlaylist.current;
+        var isPlaying = wallpapers.length > 0;
         setIsPlaying(isPlaying);
 
-        //设置playingWallpapers
-        var playingWallpapers: Wallpaper[] = [];
-        playlists.forEach(x => {
-            if (x.current)
-                playingWallpapers.push(x.current);
-        });
-        setPlayingWallpapers(playingWallpapers);
-
-        var showPlaylistButton = playlists.some(x => x.playlist && x.playlist.wallpapers.length > 1);
-        if (selectedPlaylist)
-            showPlaylistButton = !!selectedPlaylist.playlist && selectedPlaylist.playlist.wallpapers.length > 1;
+        var showPlaylistButton = wallpapers.some(x => x.setting.isPlaylist);
+        if (selectedWallpaper)
+            showPlaylistButton = !!selectedWallpaper.setting.isPlaylist;
         setShowPlaylistButton(showPlaylistButton);
-    }, [playlists, selectedPlaylist]);
-
-    //selectedPlaylist变化时，触发事件
-    useEffect(() => {
-        onChangePlaylist?.(selectedPlaylist?.playlist);
-    }, [onChangePlaylist, selectedPlaylist]);
+    }, [wallpapers, selectedWallpaper]);
 
     //监控playingWallpapers变化
     useEffect(() => {
-        var volume = Math.max(...playingWallpapers.map(item => item.setting.volume || 0));
-        if (selectedPlaylist) {
-            var selectedWallpaper = playingWallpapers.find(x => x.fileUrl === selectedPlaylist.current?.fileUrl);
+        var volume = Math.max(...wallpapers.map(item => item.setting.volume || 0));
+        if (selectedWallpaper) {
+            var selectedWallpaper = wallpapers.find(x => x.fileUrl === selectedScreenIndex.wallpaper?.fileUrl);
             volume = selectedWallpaper?.setting.volume || 0;
         }
         setVolume(volume);
@@ -130,14 +80,14 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
 
     //监控selectedPlaylist变化
     useEffect(() => {
-        setSelectedWallpaper(selectedPlaylist?.current || null);
+        setSelectedWallpaper(selectedPlaylist?.wallpaper || null);
     }, [selectedPlaylist]);
 
     const handlePlayClick = useCallback(() => {
         var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
         api.resumeWallpaper(index);
         //更新playlist对应屏幕的ispaused
-        var tmpPlaylists = [...playlists];
+        var tmpPlaylists = [...wallpaperWrappers];
         //没有选中，就影响所有playlist
         tmpPlaylists.forEach(element => {
             if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
@@ -146,14 +96,14 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
                 element.playlist.setting.isPaused = false;
             }
         });
-        setPlaylists(tmpPlaylists);
-    }, [playlists, screens, selectedPlaylist]);
+        setWallpaperWrappers(tmpPlaylists);
+    }, [wallpaperWrappers, screens, selectedPlaylist]);
 
     const handlePauseClick = useCallback(() => {
         var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
         api.pauseWallpaper(index);
         //更新playlist对应屏幕的ispaused
-        var tmpPlaylists = [...playlists];
+        var tmpPlaylists = [...wallpaperWrappers];
         //没有选中，就影响所有playlist
         tmpPlaylists.forEach(element => {
             if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
@@ -162,22 +112,22 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
                 element.playlist.setting.isPaused = true;
             }
         });
-        setPlaylists(tmpPlaylists);
-    }, [playlists, screens, selectedPlaylist]);
+        setWallpaperWrappers(tmpPlaylists);
+    }, [wallpaperWrappers, screens, selectedPlaylist]);
 
     const handleStopClick = useCallback(() => {
         var index = screens.findIndex(x => x.deviceName === selectedPlaylist?.screen.deviceName);
         api.stopWallpaper(index);
         //更新playlist对应屏幕的ispaused
-        var tmpPlaylists = [...playlists];
+        var tmpPlaylists = [...wallpaperWrappers];
         //没有选中，就影响所有playlist
         tmpPlaylists.forEach(element => {
             if (selectedPlaylist && element.screen.deviceName !== selectedPlaylist.screen.deviceName)
                 return;
-            element.current = null;
+            element.wallpaper = null;
         });
-        setPlaylists(tmpPlaylists);
-    }, [playlists, screens, selectedPlaylist]);
+        setWallpaperWrappers(tmpPlaylists);
+    }, [wallpaperWrappers, screens, selectedPlaylist]);
 
     const handleVolumeChange = useCallback((value: number[]) => {
         var tmpLists = [...playingWallpapers];
@@ -196,12 +146,12 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
             if (target === element) {
                 setVolume(value[0]);
                 //壁纸所属playlist
-                var currentPlaylist = playlists.find(x => x.playlist?.wallpapers.some(y => y.fileUrl === element.fileUrl));
+                var currentPlaylist = wallpaperWrappers.find(x => x.playlist?.wallpapers.some(y => y.fileUrl === element.fileUrl));
                 await api.setVolume(value[0], currentPlaylist?.playlist?.setting?.screenIndexes[0])
                 onChangeVolume?.();
             }
         });
-    }, [onChangeVolume, playingWallpapers, playlists, selectedWallpaper]);
+    }, [onChangeVolume, playingWallpapers, wallpaperWrappers, selectedWallpaper]);
 
     const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
         handleVolumeChange(value);
@@ -213,8 +163,8 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
-            {playlists.filter(x => x.current).map((item, index) => {
-                const isSelected = !singlePlaylistMode && selectedPlaylist?.current?.fileUrl === item.current?.fileUrl;
+            {wallpaperWrappers.filter(x => x.wallpaper).map((item, index) => {
+                const isSelected = !singlePlaylistMode && selectedPlaylist?.wallpaper?.fileUrl === item.wallpaper?.fileUrl;
                 const show = (singlePlaylistMode || (!selectedPlaylist || !!isSelected))
                 return show && <div key={index} className="flex items-center p-0 m-0" >
                     {
@@ -226,18 +176,18 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
                     <picture onClick={() => isSelected ? setSelectedPlaylist(null) : setSelectedPlaylist(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
                         <img
                             alt="Cover"
-                            title={item.current?.meta?.title}
+                            title={item.wallpaper?.meta?.title}
                             className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
                             ])}
                             height={50}
-                            src={item.current?.coverUrl || "/wp-placeholder.webp"}
+                            src={item.wallpaper?.coverUrl || "/wp-placeholder.webp"}
                             width={50}
                         />
                     </picture>
                     {
                         (singlePlaylistMode || isSelected) && <div className="flex flex-col text-sm truncate">
-                            <div className="font-semibold">{item?.current?.meta?.title}</div>
-                            <div >{item?.current?.meta?.description}</div>
+                            <div className="font-semibold">{item?.wallpaper?.meta?.title}</div>
+                            <div >{item?.wallpaper?.meta?.description}</div>
                         </div>
                     }
                 </div>
@@ -370,7 +320,7 @@ export function ToolBar({ playingPlaylist, screens, onChangeVolume, onChangePlay
             </Popover>
             {
                 (selectedPlaylist?.playlist || singlePlaylistMode)
-                && <PlaylistSheet selectedPlaylist={selectedPlaylist?.playlist} />
+                && <PlaylistSheet selectedWallpaper={selectedPlaylist?.playlist} />
             }
         </div>
     </div>
