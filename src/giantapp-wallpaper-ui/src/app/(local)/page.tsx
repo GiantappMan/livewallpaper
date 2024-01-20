@@ -7,7 +7,7 @@ import api from "@/lib/client/api";
 import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useCallback, useEffect, useState } from "react";
-import { ToolBar } from "./_components/tool-bar";
+import { ToolBar } from "./_components/tool-bar/index";
 import { toast } from "sonner"
 import Link from "next/link";
 import { WallpaperDialog } from "./_components/wallpaper-dialog";
@@ -435,7 +435,8 @@ const Page = () => {
                 wallpapers.length > 0 &&
                 playingWallpaper &&
                 screens &&
-                <ToolBar wallpapers={playingWallpaper} screens={screens}
+                <ToolBar wallpapers={playingWallpaper}
+                    screens={screens}
                     onChangeVolume={refresh}
                     onChangeWallpapers={setPlayingWallpaper}
                 // onChangePlaylist={setSelectedPlaylist}

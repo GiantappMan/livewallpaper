@@ -259,13 +259,20 @@ public class MpvPlayer
 
     public MpvPlayerSnapshot GetSnapshot()
     {
-        //缓存当前实力需要的数据
-        return new()
+        try
         {
-            IPCServerName = IPCServerName,
-            PId = !ProcessLaunched ? null : Process?.Id,
-            ProcessName = Process?.ProcessName
-        };
+            //缓存当前实力需要的数据
+            return new()
+            {
+                IPCServerName = IPCServerName,
+                PId = !ProcessLaunched ? null : Process?.Id,
+                ProcessName = Process?.ProcessName
+            };
+        }
+        catch (Exception ex)
+        {
+            return new();
+        }
     }
 
     //获取播放进度

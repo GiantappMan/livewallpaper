@@ -124,7 +124,7 @@ public class ApiObject
     public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
-        if (wallpaper == null || wallpaper.Setting.Wallpapers.Count == 0)
+        if (wallpaper == null)
             return false;
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();

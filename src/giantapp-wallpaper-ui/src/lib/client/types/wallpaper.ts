@@ -46,6 +46,18 @@ export class Wallpaper {
     const index = wallpaper.setting.playIndex || 0;
     return wallpapers[index];
   }
+
+  //查找fileUrl匹配的wallpaper
+  static findWallpaperByFileUrl(wallpapers: Wallpaper, fileUrl: string): Wallpaper | null {
+    if (!wallpapers || !fileUrl)
+      return null;
+    if (wallpapers.fileUrl === fileUrl)
+      return wallpapers;
+    if (wallpapers.setting.isPlaylist) {
+      return wallpapers.setting.wallpapers?.find(w => w.fileUrl === fileUrl) || null;
+    }
+    return null;
+  }
 };
 
 export enum WallpaperType {
@@ -69,6 +81,9 @@ export class WallpaperMeta {
 };
 
 export class WallpaperSetting {
+  constructor(init?: Partial<WallpaperSetting>) {
+    Object.assign(this, init);
+  }
   screenIndexes: number[] = [];
   isPlaylist?: boolean = false;
   isPaused?: boolean = false;
@@ -77,7 +92,7 @@ export class WallpaperSetting {
   // vide
   hardwareDecoding?: boolean = true;
   isPanScan?: boolean = false;
-  volume?: number = 0;
+  volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;
   playIndex?: number = 0;

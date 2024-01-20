@@ -20,7 +20,7 @@ const Page = () => {
         });
     }, [version]);
 
-    return <div className="h-screen flex flex-col items-start space-y-6 m-6 text-primary-foreground">
+    return <div className="h-screen flex flex-col items-start space-y-6 m-6 text-primary">
         <h1 className="text-2xl">巨应壁纸{version}</h1>
         <div className="flex flex-col space-y-2">
             <h1 className="text-2xl font-semibold mt-4">反馈&源码</h1>

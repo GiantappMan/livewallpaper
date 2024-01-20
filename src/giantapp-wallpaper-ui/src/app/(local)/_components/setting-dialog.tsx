@@ -1,4 +1,4 @@
-import { Wallpaper } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperSetting } from "@/lib/client/types/wallpaper"
 import {
     Dialog,
     DialogContent,
@@ -59,12 +59,12 @@ export function SettingDialog(props: SettingDialogProps) {
         if (saving) return;
         setSaving(true);
 
-        const setting = {
+        const setting = new WallpaperSetting({
             enableMouseEvent: data.enableMouseEvent,
             hardwareDecoding: data.hardwareDecoding,
             isPanScan: data.isPanScan,
             volume: data.volume,
-        }
+        });
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);
         if (res.data) {

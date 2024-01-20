@@ -43,11 +43,19 @@ public class WallpaperManager
 
     internal async Task Play()
     {
-        if (Wallpaper == null)
+        //当前播放设置
+        var playSetting = Wallpaper?.Setting;
+        var playWallpaper = Wallpaper;
+
+        if (playWallpaper == null || playSetting == null)
             return;
 
-        //当前播放设置
-        var playSetting = Wallpaper.Setting;
+        if (playSetting.IsPlaylist && playSetting.Wallpapers.Count == 0)
+            return;
+
+        if (!playSetting.IsPlaylist && playWallpaper.FilePath == null)
+            return;
+
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
         uint screenIndex = playSetting.ScreenIndexes[0];
 
@@ -59,7 +67,12 @@ public class WallpaperManager
         _mpvPlayer.ApplySetting(playSetting);
 
         //生成playlist.txt
-        var playlist = playSetting.Wallpapers.Select(w => w.FilePath).ToArray();
+        var playlist = new string[] { playWallpaper.FilePath! };
+        if (playSetting.IsPlaylist)
+        {
+            playlist = playSetting.Wallpapers.Where(m => m.FilePath != null).Select(w => w.FilePath!).ToArray();
+        }
+
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
 
