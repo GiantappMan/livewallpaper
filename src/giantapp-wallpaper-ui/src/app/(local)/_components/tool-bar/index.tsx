@@ -12,6 +12,8 @@ import {
 import PlaybackProgress from "./playback-progress";
 import { Slider } from "@/components/ui/slider"
 import PlaylistSheet from "./playlist-sheet";
+import { useDebouncedCallback } from 'use-debounce';
+import api from "@/lib/client/api";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     wallpapers: Wallpaper[]
@@ -20,6 +22,7 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
 }
 export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
+    debugger
     const singlePlaylistMode = wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
@@ -27,6 +30,11 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
     const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(0); //当前选中的屏幕索引
+
+    //监控wallpapers，如果只有一个，默认选中
+    if (wallpapers.length == 1 && !selectedWallpaper) {
+        setSelectedWallpaper(wallpapers[0]);
+    }
 
     const handleStopClick = useCallback(() => {
     }, []);
@@ -37,15 +45,30 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
     const handlePauseClick = useCallback(() => {
     }, []);
 
-    const handleVolumeChangeDebounced = useCallback((value: number[]) => {
-    }, []);
+    const handleVolumeChange = useCallback(async (value: number[]) => {
+        debugger
+        const volume = value[0];
+        //选中的，或者第一个有音量的壁纸
+        var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
+        if (!target)
+            return;
+
+        setVolume(volume);
+        await api.setVolume(volume, target.setting.screenIndexes[0]);
+        onChangeVolume?.();
+    }, [onChangeVolume, selectedWallpaper, wallpapers]);
+
+    const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
+        handleVolumeChange(value);
+    }, 300
+    );
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {wallpapers.map((item, index) => {
                 const isSelected = selectedWallpaper == item;
                 const showBackBtn = isSelected && wallpapers.length > 1;
-                return showBackBtn && <div key={index} className="flex items-center p-0 m-0" >
+                return <div key={index} className="flex items-center p-0 m-0" >
                     {
                         isSelected && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedWallpaper(null)} title="返回列表">
                             <Reply className="h-4 w-4" />
@@ -64,7 +87,8 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
                         />
                     </picture>
                     {
-                        (singlePlaylistMode || isSelected) && <div className="flex flex-col text-sm truncate">
+                        // (singlePlaylistMode || isSelected) &&
+                        <div className="flex flex-col text-sm truncate">
                             <div className="font-semibold">{item.meta.title}</div>
                             <div >{item.meta.description}</div>
                         </div>

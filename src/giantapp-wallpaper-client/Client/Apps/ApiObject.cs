@@ -155,7 +155,7 @@ public class ApiObject
         {
             m.Wallpaper?.Meta.EnsureId();
             return m.Wallpaper;
-        });
+        }).ToList();
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         //转换路径
