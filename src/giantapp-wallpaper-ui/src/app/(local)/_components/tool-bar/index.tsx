@@ -1,6 +1,6 @@
-import { Wallpaper } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
 import { Screen } from "@/lib/client/types/screen";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Reply } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,22 +22,55 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
 }
 export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
-    debugger
     const singlePlaylistMode = wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
-    const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(0); //当前选中的屏幕索引
+    const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(-1); //当前选中的屏幕索引
 
     //监控wallpapers，如果只有一个，默认选中
-    if (wallpapers.length == 1 && !selectedWallpaper) {
-        setSelectedWallpaper(wallpapers[0]);
-    }
+    useEffect(() => {
+        if (wallpapers.length == 1)
+            setSelectedWallpaper(wallpapers[0]);
+        else
+            setSelectedWallpaper(null);
+
+        setIsPlaying(wallpapers.length > 0);
+    }, [wallpapers]);
+
+    //监控selectedWallpaper变化
+    useEffect(() => {
+        //更新选中屏幕
+        if (selectedWallpaper)
+            setSelectedScreenIndex(Wallpaper.findPlayingWallpaper(selectedWallpaper)?.setting.screenIndexes[0] || 0);
+        else
+            setSelectedScreenIndex(-1);
+    }, [selectedWallpaper]);
 
     const handleStopClick = useCallback(() => {
-    }, []);
+        //获取要关闭的屏幕
+        var screenIndex = -1;
+        if (selectedWallpaper) {
+            screenIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.setting.screenIndexes[0] || -1;
+        }
+
+        api.stopWallpaper(screenIndex);
+
+        //更新playlist
+        if (selectedWallpaper) {
+            var index = wallpapers.indexOf(selectedWallpaper);
+            if (index > -1) {
+                var newWallpapers = [...wallpapers];
+                newWallpapers.splice(index, 1);
+                onChangeWallpapers?.(newWallpapers);
+            }
+        }
+        else {
+            onChangeWallpapers?.([]);
+        }
+    }, [onChangeWallpapers, selectedWallpaper, wallpapers]);
 
     const handlePlayClick = useCallback(() => {
     }, []);
@@ -50,6 +83,15 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
         const volume = value[0];
         //选中的，或者第一个有音量的壁纸
         var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
+        if (!target) {
+            if (wallpapers.length == 0)
+                return;
+            //查找第一个没有暂停的视频壁纸
+            target = wallpapers.find(x => {
+                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+                return !playingWallpaper.setting.isPaused && playingWallpaper.meta.type === WallpaperType.Video;
+            });
+        }
         if (!target)
             return;
 
@@ -68,9 +110,10 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
             {wallpapers.map((item, index) => {
                 const isSelected = selectedWallpaper == item;
                 const showBackBtn = isSelected && wallpapers.length > 1;
-                return <div key={index} className="flex items-center p-0 m-0" >
+                const showWallpaperItem = isSelected || !selectedWallpaper//只显示选中的，如果没选中就都显示
+                return showWallpaperItem && <div key={index} className="flex items-center p-0 m-0" >
                     {
-                        isSelected && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedWallpaper(null)} title="返回列表">
+                        showBackBtn && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedWallpaper(null)} title="返回列表">
                             <Reply className="h-4 w-4" />
                             <span className="sr-only">返回列表</span>
                         </div>
@@ -87,8 +130,7 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
                         />
                     </picture>
                     {
-                        // (singlePlaylistMode || isSelected) &&
-                        <div className="flex flex-col text-sm truncate">
+                        isSelected && <div className="flex flex-col text-sm truncate">
                             <div className="font-semibold">{item.meta.title}</div>
                             <div >{item.meta.description}</div>
                         </div>

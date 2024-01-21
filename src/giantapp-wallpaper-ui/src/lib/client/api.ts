@@ -107,7 +107,6 @@ class API {
       const { api } = window.chrome.webview.hostObjects;
       var json = await api.GetPlayingWallpaper();
       let res = JSON.parse(json);
-      debugger
       return { error: null, data: res };
     } catch (e) {
       console.log(e);
