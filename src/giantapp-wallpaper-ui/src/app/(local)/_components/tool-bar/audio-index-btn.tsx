@@ -1,16 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
-import { useCallback, useEffect, useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
-import { Screen } from "@/lib/client/types/screen";
-import { CheckIcon, SpeakerOffIcon, SpeakerLoudIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
+import { useCallback, useState } from "react";
+import { CheckIcon, SpeakerOffIcon, SpeakerLoudIcon } from "@radix-ui/react-icons"
 import { cn } from "@/lib/utils";
 import api from "@/lib/client/api";
 import PlayingStatus from "@/lib/client/types/playing-status";
 
-export default function AudioBtn(props: { audioScreenIndex: number, playingStatus: PlayingStatus }) {
+//音量按钮，修改音源
+export default function AudioIndexBtn(props: { playingStatus: PlayingStatus }) {
     const [open, setOpen] = useState(false)
     const [selectedScreenIndex, setSelectedScreenIndex] = useState(props.playingStatus.audioScreenIndex)
 
@@ -20,14 +18,6 @@ export default function AudioBtn(props: { audioScreenIndex: number, playingStatu
         api.setVolume(index < 0 ? 0 : 100, index);
         setOpen(false)
     }, []);
-
-    // const handleVolumeChange = useCallback(async (value: number[]) => {
-    //     api.setVolume(value[0], Number(selectedScreenIndex));
-    // }, [selectedScreenIndex]);
-
-    // const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
-    //     handleVolumeChange(value);
-    // }, 300);
 
     return (
         <>

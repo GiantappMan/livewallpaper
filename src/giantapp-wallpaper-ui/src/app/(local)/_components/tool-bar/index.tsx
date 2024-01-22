@@ -1,30 +1,21 @@
 import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
-import { Screen } from "@/lib/client/types/screen";
 import { useCallback, useEffect, useState } from "react";
 import { Reply } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
 import PlaybackProgress from "./playback-progress";
-import { Slider } from "@/components/ui/slider"
 import PlaylistSheet from "./playlist-sheet";
-import { useDebouncedCallback } from 'use-debounce';
 import api from "@/lib/client/api";
-import AudioBtn from "./audio-btn";
+import AudioIndexBtn from "./audio-index-btn";
 import PlayingStatus from "@/lib/client/types/playing-status";
+import AudioVolumeBtn from "./audio-volume-btn";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
-    wallpapers: Wallpaper[]
     playingStatus: PlayingStatus
-    onChangeVolume: (wallpaper?: Wallpaper) => void
-    onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
+    onChangePlayingStatus: (e: PlayingStatus) => void
 }
-export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
-    const singlePlaylistMode = wallpapers.length == 1;
+export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) {
+    const singlePlaylistMode = playingStatus.wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -34,13 +25,13 @@ export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWal
 
     //监控wallpapers，如果只有一个，默认选中
     useEffect(() => {
-        if (wallpapers.length == 1)
-            setSelectedWallpaper(wallpapers[0]);
+        if (playingStatus.wallpapers.length == 1)
+            setSelectedWallpaper(playingStatus.wallpapers[0]);
         else
             setSelectedWallpaper(null);
 
-        setIsPlaying(wallpapers.length > 0);
-    }, [wallpapers]);
+        setIsPlaying(playingStatus.wallpapers.length > 0);
+    }, [playingStatus.wallpapers]);
 
     //监控selectedWallpaper变化
     useEffect(() => {
@@ -62,17 +53,25 @@ export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWal
 
         //更新playlist
         if (selectedWallpaper) {
-            var index = wallpapers.indexOf(selectedWallpaper);
+            var index = playingStatus.wallpapers.indexOf(selectedWallpaper);
             if (index > -1) {
-                var newWallpapers = [...wallpapers];
+                var newWallpapers = [...playingStatus.wallpapers];
                 newWallpapers.splice(index, 1);
-                onChangeWallpapers?.(newWallpapers);
+                onChangePlayingStatus?.({
+                    ...playingStatus,
+                    wallpapers: newWallpapers,
+                });
             }
         }
         else {
-            onChangeWallpapers?.([]);
+            onChangePlayingStatus?.(
+                {
+                    ...playingStatus,
+                    wallpapers: [],
+                }
+            );
         }
-    }, [onChangeWallpapers, selectedWallpaper, wallpapers]);
+    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
 
     const handlePlayClick = useCallback(() => {
     }, []);
@@ -109,9 +108,9 @@ export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWal
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
-            {wallpapers.map((item, index) => {
+            {playingStatus.wallpapers.map((item, index) => {
                 const isSelected = selectedWallpaper == item;
-                const showBackBtn = isSelected && wallpapers.length > 1;
+                const showBackBtn = isSelected && playingStatus.wallpapers.length > 1;
                 const showWallpaperItem = isSelected || !selectedWallpaper//只显示选中的，如果没选中就都显示
                 return showWallpaperItem && <div key={index} className="flex items-center p-0 m-0" >
                     {
@@ -241,7 +240,11 @@ export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWal
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
-            <AudioBtn audioScreenIndex={0} playingStatus={playingStatus} />
+            {selectedScreenIndex >= 0 ?
+                <AudioVolumeBtn screenIndex={selectedScreenIndex} playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
+                :
+                <AudioIndexBtn playingStatus={playingStatus} />
+            }
             {/* <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" className="hover:text-primary px-3" title="音量">

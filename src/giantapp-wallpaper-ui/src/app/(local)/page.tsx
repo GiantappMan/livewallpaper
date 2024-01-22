@@ -30,7 +30,7 @@ import PlayingStatus from "@/lib/client/types/playing-status";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
-    const [screens, setScreens] = useState<Screen[] | null>();
+    // const [screens, setScreens] = useState<Screen[] | null>();
     // const [playingWallpaper, setPlayingWallpaper] = useState<Wallpaper[] | null>();
     const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
@@ -49,14 +49,15 @@ const Page = () => {
                 return;
             }
 
-            const screens = await api.getScreens();
-            if (screens.error) {
-                toast.error("获取屏幕列表失败");
-                return;
-            }
+            // const screens = await api.getScreens();
+            // if (screens.error) {
+            //     toast.error("获取屏幕列表失败");
+            //     return;
+            // // }
 
-            if (!screens.data)
-                return
+            // if (!screens.data)
+            //     return
+
 
             const _playingStatus = await api.getPlayingStatus();
             if (_playingStatus.error) {
@@ -64,7 +65,6 @@ const Page = () => {
                 console.log(_playingStatus.error)
                 return;
             }
-
             //给coverUrl增加随即参数防止缓存
             res.data?.forEach((wallpaper) => {
                 if (wallpaper.coverUrl) {
@@ -72,7 +72,7 @@ const Page = () => {
                 }
             })
             setWallpapers(res.data);
-            setScreens(screens.data);
+            // setScreens(screens.data);
             setPlayingStatus(_playingStatus.data);
         } catch (e) {
             console.log(e)
@@ -84,8 +84,8 @@ const Page = () => {
     }
 
     const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
-        let screenIndex = screens?.findIndex((s) => s.deviceName === screen?.deviceName);
-        const allScreenIndexes = screens?.map((_, index) => index);
+        let screenIndex = playingStatus?.screens?.findIndex((s) => s.deviceName === screen?.deviceName);
+        const allScreenIndexes = playingStatus?.screens?.map((_, index) => index);
         if (!allScreenIndexes)
             return;
 
@@ -222,7 +222,7 @@ const Page = () => {
                                             <div className="absolute inset-0 bg-background/80 flex flex-col justify-between opacity-0 hover:opacity-100 hover:scale-105 transition-opacity duration-500">
                                                 <div className="flex flex-wrap w-full justify-center">
                                                     {
-                                                        screens && screens?.length > 1 && [...screens]?.map((screen, index) => {
+                                                        playingStatus?.screens && playingStatus?.screens?.length > 1 && [...playingStatus?.screens]?.map((screen, index) => {
                                                             return (
                                                                 <div key={index} className="flex items-center justify-center">
                                                                     <Button
@@ -436,19 +436,11 @@ const Page = () => {
                 wallpapers &&
                 wallpapers.length > 0 &&
                 playingStatus &&
-                screens &&
-                <ToolBar wallpapers={playingStatus.wallpapers}
+                <ToolBar
                     playingStatus={playingStatus}
-                    onChangeVolume={(e) => {
-                        // debugger
-                        // var target = wallpapers.find((w) => w.fileUrl === e?.fileUrl);
-                        // if (target && e)
-                        //     target.setting.volume = e.setting.volume;
-                    }}
-                    onChangeWallpapers={() => {
+                    onChangePlayingStatus={(e) => {
 
                     }}
-                // onChangePlaylist={setSelectedPlaylist}
                 />
             }
         </div >
