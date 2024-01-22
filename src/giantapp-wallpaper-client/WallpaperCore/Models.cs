@@ -138,10 +138,10 @@ public class WallpaperSetting : ICloneable
     /// </summary>
     public bool IsPanScan { get; set; } = false;
 
-    /// <summary>
-    /// 音量0-100
-    /// </summary>
-    public int Volume { get; set; } = 0;
+    ///// <summary>
+    ///// 音量0-100
+    ///// </summary>
+    //public int Volume { get; set; } = 0;
 
     #endregion
 
@@ -188,7 +188,7 @@ public class WallpaperSetting : ICloneable
             EnableMouseEvent = EnableMouseEvent,
             HardwareDecoding = HardwareDecoding,
             IsPanScan = IsPanScan,
-            Volume = Volume,
+            //Volume = Volume,
             Mode = Mode,
             PlayIndex = PlayIndex,
             Wallpapers = new List<Wallpaper>()

@@ -162,7 +162,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                 </FormItem>
                             )}
                         />
-                        <FormField
+                        {/* <FormField
                             control={form.control}
                             name="volume"
                             render={({ field }) => (
@@ -170,7 +170,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                     <div className="space-y-0.5">
                                         <FormLabel>音量</FormLabel>
                                         <FormDescription>
-                                            设置音量大小
+                                            特殊知道此壁纸音量
                                         </FormDescription>
                                     </div>
                                     <FormControl>
@@ -189,7 +189,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                     </FormControl>
                                 </FormItem>
                             )}
-                        />
+                        /> */}
                     </>}
                     <DialogFooter>
                         <Button className="btn btn-primary" type="submit" disabled={saving}>
