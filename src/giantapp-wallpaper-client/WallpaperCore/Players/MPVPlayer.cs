@@ -37,6 +37,7 @@ public class MpvPlayer
     public bool ProcessLaunched { get; private set; }
     public static string PlayerPath { get; set; } = string.Empty;
     public WallpaperSetting Setting { get; private set; } = new();
+    public uint Volume { get; set; } = 0;
 
     #endregion
 
@@ -148,7 +149,7 @@ public class MpvPlayer
             args.Append("--no-border ");
 
             //音量
-            args.Append($"--volume={Setting.Volume} ");
+            args.Append($"--volume={Volume} ");
 
             ////保持打开
             //args.Append("--keep-open=yes ");
@@ -231,7 +232,7 @@ public class MpvPlayer
         //SendMessage(IPCServerName, "loadfile", "");
     }
 
-    public void SetVolume(int volume)
+    public void SetVolume(uint volume)
     {
         SendMessage(IPCServerName, "set_property", "volume", volume);
     }
@@ -252,7 +253,7 @@ public class MpvPlayer
         if (!ProcessLaunched)
             return;
 
-        SetVolume(setting.Volume);
+        SetVolume(Volume);
         SetHwdec(setting.HardwareDecoding);
         SetPanAndScan(setting.IsPanScan);
     }

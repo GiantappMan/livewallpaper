@@ -14,9 +14,12 @@ public static class WallpaperApi
     #region properties
 
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
-
     //运行中的屏幕和对应的播放列表，线程安全
-    public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; } = new();
+    public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; private set; } = new();
+    //小于0就是禁用
+    public static int AudioSourceIndex { get; set; }
+    public static uint Volume { get; set; }
+
     public static JsonSerializerSettings JsonSettings { get; private set; } = new()
     {
         Formatting = Formatting.Indented,
@@ -276,23 +279,25 @@ public static class WallpaperApi
     }
 
     //设置音量
-    public static void SetVolume(int volume, int? screenIndex = null)
+    public static void SetVolume(uint volume, int? audioSourceScreenIndex = null)
     {
-        screenIndex ??= 0;
+        AudioSourceIndex = audioSourceScreenIndex ?? 0;
+        Volume = volume;
 
         var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
         foreach (var item in screenIndexs)
         {
             var manger = GetRunningManager((uint)item);
-            var currentWallpaper = manger.GetRunningWallpaper();
-            //播放列表的当前壁纸
-            if (currentWallpaper != null)
-            {
-                //一次只设置一个音量，其他的设为0
-                var setting = (WallpaperSetting)currentWallpaper.Setting.Clone();
-                setting.Volume = item == screenIndex ? volume : 0;
-                SetWallpaperSetting(setting, currentWallpaper);
-            }
+            manger.SetVolume(item == audioSourceScreenIndex ? volume : 0);
+            //var currentWallpaper = manger.GetRunningWallpaper();
+            ////播放列表的当前壁纸
+            //if (currentWallpaper != null)
+            //{
+            //    //一次只设置一个音量，其他的设为0
+            //    var setting = (WallpaperSetting)currentWallpaper.Setting.Clone();
+            //    setting.Volume = item == screenIndex ? volume : 0;
+            //    SetWallpaperSetting(setting, currentWallpaper);
+            //}
         }
     }
 
@@ -313,7 +318,9 @@ public static class WallpaperApi
     {
         var res = new WallpaperApiSnapshot
         {
-            Data = new List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>()
+            Data = new List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>(),
+            AudioScreenIndex = AudioSourceIndex,
+            Volume = Volume
         };
 
         foreach (var item in RunningWallpapers)

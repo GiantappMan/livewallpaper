@@ -192,4 +192,9 @@ public class WallpaperManager
 
         return Wallpaper;
     }
+
+    internal void SetVolume(uint volume)
+    {
+        _mpvPlayer.SetVolume(volume);
+    }
 }

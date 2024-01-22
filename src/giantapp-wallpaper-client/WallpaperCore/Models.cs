@@ -479,4 +479,6 @@ public class Playlist : ICloneable
 public class WallpaperApiSnapshot
 {
     public List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>? Data { get; set; }
+    public int AudioScreenIndex { get; set; }
+    public uint Volume { get; set; }
 }

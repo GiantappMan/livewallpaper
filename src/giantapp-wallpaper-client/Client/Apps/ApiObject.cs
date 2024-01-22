@@ -1,6 +1,7 @@
 ﻿using Client.Libs;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,6 +30,13 @@ public class ProgressEventArgs : EventArgs
     public string Message { get; set; } = string.Empty;
     public bool IsCompleted { get; set; }
     public bool IsError { get; set; }
+}
+
+public class PlayingStatus
+{
+    public int AudioSourceIndex { get; set; }
+    public uint Volume { get; set; }
+    public List<Wallpaper> Wallpapers { get; set; } = new();
 }
 
 /// <summary>
@@ -151,6 +159,7 @@ public class ApiObject
         return res;
     }
 
+    [Obsolete("Use GetWallpaperApiStatus instead")]
     public string GetPlayingWallpaper()
     {
         var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
@@ -176,6 +185,43 @@ public class ApiObject
                     wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
                 }
         }
+        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+    }
+
+    //获取播放状态
+    public string GetPlayingStatus()
+    {
+        var res = new PlayingStatus();
+
+        //检查数据
+        var tmpWallpapers = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
+         {
+             m.Wallpaper!.Meta.EnsureId();
+             return m.Wallpaper!;
+         }).ToList();
+
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+        //转换路径
+        foreach (var item in tmpWallpapers)
+        {
+            if (item == null)
+                continue;
+
+            item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
+            item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
+
+            if (item.Setting.IsPlaylist)
+                foreach (var wallpaper in item.Setting.Wallpapers)
+                {
+                    wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+                    wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+                }
+        }
+
+        res.Wallpapers = tmpWallpapers;
+        res.Volume = WallpaperApi.Volume;
+        res.AudioSourceIndex = WallpaperApi.AudioSourceIndex;
+
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
@@ -212,9 +258,9 @@ public class ApiObject
         if (ok)
         {
             if (screenIndex < 0)
-                WallpaperApi.SetVolume(int.Parse(volume));
+                WallpaperApi.SetVolume(uint.Parse(volume));
             else
-                WallpaperApi.SetVolume(int.Parse(volume), screenIndex);
+                WallpaperApi.SetVolume(uint.Parse(volume), screenIndex);
         }
     }
 
@@ -315,11 +361,11 @@ public class ApiObject
 
         if (setting != null && wallpaper != null)
         {
-            if (setting.Volume > 0)
-            {
-                //修改了声音，先全部静音
-                WallpaperApi.SetVolume(0);
-            }
+            //if (setting.Volume > 0)
+            //{
+            //    //修改了声音，先全部静音
+            //    WallpaperApi.SetVolume(0);
+            //}
             return WallpaperApi.SetWallpaperSetting(setting, wallpaper);
         }
         return false;

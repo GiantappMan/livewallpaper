@@ -89,10 +89,10 @@ export class WallpaperSetting {
   isPaused?: boolean = false;
   // exe
   enableMouseEvent?: boolean = false;
-  // vide
+  // video
   hardwareDecoding?: boolean = true;
   isPanScan?: boolean = false;
-  volume: number = 0;
+  // volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;
   playIndex?: number = 0;

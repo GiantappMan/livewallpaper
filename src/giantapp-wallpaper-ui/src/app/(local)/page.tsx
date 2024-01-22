@@ -26,11 +26,13 @@ import {
 import { SettingDialog } from "./_components/setting-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
+import PlayingStatus from "@/lib/client/types/playing-status";
 
 const Page = () => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [screens, setScreens] = useState<Screen[] | null>();
-    const [playingWallpaper, setPlayingWallpaper] = useState<Wallpaper[] | null>();
+    // const [playingWallpaper, setPlayingWallpaper] = useState<Wallpaper[] | null>();
+    const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
 
@@ -56,10 +58,10 @@ const Page = () => {
             if (!screens.data)
                 return
 
-            const _playingPlaylist = await api.getPlayingWallpaper();
-            if (_playingPlaylist.error) {
+            const _playingStatus = await api.getPlayingStatus();
+            if (_playingStatus.error) {
                 toast.error("获取正在播放的壁纸失败")
-                console.log(_playingPlaylist.error)
+                console.log(_playingStatus.error)
                 return;
             }
 
@@ -71,7 +73,7 @@ const Page = () => {
             })
             setWallpapers(res.data);
             setScreens(screens.data);
-            setPlayingWallpaper(_playingPlaylist.data);
+            setPlayingStatus(_playingStatus.data);
         } catch (e) {
             console.log(e)
             toast.error("获取壁纸列表失败")
@@ -433,17 +435,19 @@ const Page = () => {
             {
                 wallpapers &&
                 wallpapers.length > 0 &&
-                playingWallpaper &&
+                playingStatus &&
                 screens &&
-                <ToolBar wallpapers={playingWallpaper}
+                <ToolBar wallpapers={playingStatus.wallpapers}
                     screens={screens}
                     onChangeVolume={(e) => {
-                        debugger
-                        var target = wallpapers.find((w) => w.fileUrl === e?.fileUrl);
-                        if (target && e)
-                            target.setting.volume = e.setting.volume;
+                        // debugger
+                        // var target = wallpapers.find((w) => w.fileUrl === e?.fileUrl);
+                        // if (target && e)
+                        //     target.setting.volume = e.setting.volume;
                     }}
-                    onChangeWallpapers={setPlayingWallpaper}
+                    onChangeWallpapers={() => {
+
+                    }}
                 // onChangePlaylist={setSelectedPlaylist}
                 />
             }

@@ -2,6 +2,7 @@ import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper, WallpaperSetting } from "./types/wallpaper";
 import { Screen } from "./types/screen";
+import PlayingStatus from "./types/playing-status";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
@@ -101,11 +102,28 @@ class API {
     }
   }
 
+
+  /**
+   * @deprecated
+   */
   async getPlayingWallpaper(): Promise<ApiResult<Wallpaper[]>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
       var json = await api.GetPlayingWallpaper();
+      let res = JSON.parse(json);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getPlayingStatus(): Promise<ApiResult<PlayingStatus>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      var json = await api.GetPlayingStatus();
       let res = JSON.parse(json);
       return { error: null, data: res };
     } catch (e) {
