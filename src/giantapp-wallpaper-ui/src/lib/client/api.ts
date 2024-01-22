@@ -77,6 +77,9 @@ class API {
     }
   }
 
+  /*
+  * deprecated
+  */
   async getScreens(): Promise<ApiResult<Screen[]>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };

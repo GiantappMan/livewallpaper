@@ -234,6 +234,7 @@ public class MpvPlayer
 
     public void SetVolume(uint volume)
     {
+        Volume = volume;
         SendMessage(IPCServerName, "set_property", "volume", volume);
     }
 

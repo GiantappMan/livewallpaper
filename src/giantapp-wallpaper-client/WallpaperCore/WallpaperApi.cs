@@ -449,9 +449,17 @@ public static class WallpaperApi
         if (snapshot == null || snapshot.Data == null)
             return;
 
+        AudioSourceIndex = snapshot.AudioScreenIndex;
+        Volume = snapshot.Volume;
         foreach (var item in snapshot.Data)
-        {
+        {            
             var manager = new WallpaperManager(item.SnapshotData);
+            var screenIndex = item.Wallpaper.Setting.ScreenIndexes[0];
+            if (screenIndex == AudioSourceIndex)
+            {
+                manager.SetVolume(Volume);
+            }
+
             item.Wallpaper.Meta.EnsureId();
             await ShowWallpaper(item.Wallpaper, manager);
         }

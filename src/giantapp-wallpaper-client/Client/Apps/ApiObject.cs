@@ -34,7 +34,8 @@ public class ProgressEventArgs : EventArgs
 
 public class PlayingStatus
 {
-    public int AudioSourceIndex { get; set; }
+    public Screen[] Screens { get; set; } = new Screen[0];
+    public int AudioScreenIndex { get; set; }
     public uint Volume { get; set; }
     public List<Wallpaper> Wallpapers { get; set; } = new();
 }
@@ -123,6 +124,7 @@ public class ApiObject
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
+    [Obsolete]
     public string GetScreens()
     {
         var screens = WallpaperApi.GetScreens();
@@ -151,10 +153,7 @@ public class ApiObject
             }
 
         var res = await WallpaperApi.ShowWallpaper(wallpaper);
-
-        var status = WallpaperApi.GetSnapshot();
-        //保存数据快照
-        Configer.Set(status, true);
+        SaveSnapshot();
 
         return res;
     }
@@ -218,9 +217,10 @@ public class ApiObject
                 }
         }
 
+        res.Screens = WallpaperApi.GetScreens();
         res.Wallpapers = tmpWallpapers;
         res.Volume = WallpaperApi.Volume;
-        res.AudioSourceIndex = WallpaperApi.AudioSourceIndex;
+        res.AudioScreenIndex = WallpaperApi.AudioSourceIndex;
 
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
@@ -257,10 +257,8 @@ public class ApiObject
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok)
         {
-            if (screenIndex < 0)
-                WallpaperApi.SetVolume(uint.Parse(volume));
-            else
-                WallpaperApi.SetVolume(uint.Parse(volume), screenIndex);
+            WallpaperApi.SetVolume(uint.Parse(volume), screenIndex);
+            SaveSnapshot();
         }
     }
 
@@ -456,5 +454,13 @@ public class ApiObject
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);
+    }
+
+    //保存快照，下次启动可恢复
+    public void SaveSnapshot()
+    {
+        var status = WallpaperApi.GetSnapshot();
+        //保存到配置文件
+        Configer.Set(status, true);
     }
 }

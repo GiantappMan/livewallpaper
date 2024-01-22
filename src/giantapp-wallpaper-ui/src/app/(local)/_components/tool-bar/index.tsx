@@ -14,14 +14,16 @@ import { Slider } from "@/components/ui/slider"
 import PlaylistSheet from "./playlist-sheet";
 import { useDebouncedCallback } from 'use-debounce';
 import api from "@/lib/client/api";
+import AudioBtn from "./audio-btn";
+import PlayingStatus from "@/lib/client/types/playing-status";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     wallpapers: Wallpaper[]
-    screens: Screen[]
+    playingStatus: PlayingStatus
     onChangeVolume: (wallpaper?: Wallpaper) => void
     onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
 }
-export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
+export function ToolBar({ wallpapers, playingStatus, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
     const singlePlaylistMode = wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
@@ -78,32 +80,32 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
     const handlePauseClick = useCallback(() => {
     }, []);
 
-    const handleVolumeChange = useCallback(async (value: number[]) => {
-        const volume = value[0];
-        //选中的，或者第一个有音量的壁纸
-        var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
-        if (!target) {
-            if (wallpapers.length == 0)
-                return;
-            //查找第一个没有暂停的视频壁纸
-            target = wallpapers.find(x => {
-                debugger
-                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-                return !playingWallpaper.setting.isPaused && playingWallpaper.meta.type === WallpaperType.Video;
-            });
-        }
-        if (!target)
-            return;
+    // const handleVolumeChange = useCallback(async (value: number[]) => {
+    //     const volume = value[0];
+    //     //选中的，或者第一个有音量的壁纸
+    //     var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
+    //     if (!target) {
+    //         if (wallpapers.length == 0)
+    //             return;
+    //         //查找第一个没有暂停的视频壁纸
+    //         target = wallpapers.find(x => {
+    //             debugger
+    //             var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+    //             return !playingWallpaper.setting.isPaused && playingWallpaper.meta.type === WallpaperType.Video;
+    //         });
+    //     }
+    //     if (!target)
+    //         return;
 
-        setVolume(volume);
-        await api.setVolume(volume, target.setting.screenIndexes[0]);
-        onChangeVolume?.(target);
-    }, [onChangeVolume, selectedWallpaper, wallpapers]);
+    //     setVolume(volume);
+    //     await api.setVolume(volume, target.setting.screenIndexes[0]);
+    //     onChangeVolume?.(target);
+    // }, [onChangeVolume, selectedWallpaper, wallpapers]);
 
-    const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
-        handleVolumeChange(value);
-    }, 300
-    );
+    // const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
+    //     handleVolumeChange(value);
+    // }, 300
+    // );
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
@@ -236,11 +238,11 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
                 }
             </div>
             {(selectedWallpaper || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedScreenIndex} />}
-
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
-            <Popover>
+            <AudioBtn audioScreenIndex={0} playingStatus={playingStatus} />
+            {/* <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" className="hover:text-primary px-3" title="音量">
                         <svg
@@ -262,7 +264,7 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
                 <PopoverContent>
                     <Slider defaultValue={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChangeDebounced} />
                 </PopoverContent>
-            </Popover>
+            </Popover> */}
             {
                 (selectedWallpaper?.setting.isPlaylist)
                 && <PlaylistSheet selectedWallpaper={selectedWallpaper} />

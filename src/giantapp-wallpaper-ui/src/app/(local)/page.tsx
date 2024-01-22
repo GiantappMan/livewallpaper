@@ -438,7 +438,7 @@ const Page = () => {
                 playingStatus &&
                 screens &&
                 <ToolBar wallpapers={playingStatus.wallpapers}
-                    screens={screens}
+                    playingStatus={playingStatus}
                     onChangeVolume={(e) => {
                         // debugger
                         // var target = wallpapers.find((w) => w.fileUrl === e?.fileUrl);
