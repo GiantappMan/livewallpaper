@@ -18,7 +18,7 @@ import api from "@/lib/client/api";
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     wallpapers: Wallpaper[]
     screens: Screen[]
-    onChangeVolume: () => void
+    onChangeVolume: (wallpaper?: Wallpaper) => void
     onChangeWallpapers?: (wallpaper?: Wallpaper[]) => void
 }
 export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpapers }: ToolBarProps) {
@@ -79,7 +79,6 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
     }, []);
 
     const handleVolumeChange = useCallback(async (value: number[]) => {
-        debugger
         const volume = value[0];
         //选中的，或者第一个有音量的壁纸
         var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
@@ -88,6 +87,7 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
                 return;
             //查找第一个没有暂停的视频壁纸
             target = wallpapers.find(x => {
+                debugger
                 var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
                 return !playingWallpaper.setting.isPaused && playingWallpaper.meta.type === WallpaperType.Video;
             });
@@ -97,7 +97,7 @@ export function ToolBar({ wallpapers, screens, onChangeVolume, onChangeWallpaper
 
         setVolume(volume);
         await api.setVolume(volume, target.setting.screenIndexes[0]);
-        onChangeVolume?.();
+        onChangeVolume?.(target);
     }, [onChangeVolume, selectedWallpaper, wallpapers]);
 
     const handleVolumeChangeDebounced = useDebouncedCallback((value) => {

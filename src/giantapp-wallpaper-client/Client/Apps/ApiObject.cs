@@ -127,6 +127,8 @@ public class ApiObject
         if (wallpaper == null)
             return false;
 
+        wallpaper.Setting.IsPaused = false;
+
         var config = Configer.Get<ConfigWallpaper>() ?? new();
 
         //把playlist里面的url转换成本地路径

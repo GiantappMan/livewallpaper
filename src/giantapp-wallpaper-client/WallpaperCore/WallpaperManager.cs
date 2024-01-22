@@ -137,7 +137,7 @@ public class WallpaperManager
         IsScreenMaximized = screenMaximized;
         if (IsScreenMaximized)
         {
-            Pause();
+            _mpvPlayer.Pause();
         }
         else
         {
@@ -146,7 +146,7 @@ public class WallpaperManager
                 return;
 
             //恢复壁纸
-            Resume();
+            _mpvPlayer.Resume();
         }
     }
 
