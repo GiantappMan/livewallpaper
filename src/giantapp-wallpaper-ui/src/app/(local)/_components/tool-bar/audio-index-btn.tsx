@@ -8,7 +8,7 @@ import api from "@/lib/client/api";
 import PlayingStatus from "@/lib/client/types/playing-status";
 
 //音量按钮，修改音源
-export default function AudioIndexBtn(props: { playingStatus: PlayingStatus }) {
+export default function AudioIndexBtn(props: { playingStatus: PlayingStatus, playingStatusChange: (e: PlayingStatus) => void }) {
     const [open, setOpen] = useState(false)
     const [selectedScreenIndex, setSelectedScreenIndex] = useState(props.playingStatus.audioScreenIndex)
 
@@ -17,7 +17,11 @@ export default function AudioIndexBtn(props: { playingStatus: PlayingStatus }) {
         setSelectedScreenIndex(index)
         api.setVolume(index < 0 ? 0 : 100, index);
         setOpen(false)
-    }, []);
+        props.playingStatusChange({
+            ...props.playingStatus,
+            audioScreenIndex: index
+        });
+    }, [props]);
 
     return (
         <>

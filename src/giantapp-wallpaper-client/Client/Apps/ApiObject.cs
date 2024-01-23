@@ -390,9 +390,9 @@ public class ApiObject
             //找到第一个没被遮挡的播放器
             var playingManager = WallpaperApi.RunningWallpapers.Values.FirstOrDefault(m => m.IsScreenMaximized == false);
             if (playingManager == null) return null;
-            if (playingManager.Wallpaper?.Setting.ScreenIndexes[0] != null)
+            if (playingManager.Wallpaper?.RunningInfo.ScreenIndexes[0] != null)
             {
-                screenIndex = (int)playingManager.Wallpaper.Setting.ScreenIndexes[0];
+                screenIndex = (int)playingManager.Wallpaper.RunningInfo.ScreenIndexes[0];
             }
         }
         else
@@ -427,9 +427,9 @@ public class ApiObject
             //设置所有屏幕
             foreach (var item in WallpaperApi.RunningWallpapers.Values)
             {
-                if (item.Wallpaper?.Setting.ScreenIndexes[0] == null)
+                if (item.Wallpaper?.RunningInfo.ScreenIndexes[0] == null)
                     continue;
-                WallpaperApi.SetProgress(int.Parse(progressStr), item.Wallpaper.Setting.ScreenIndexes[0]);
+                WallpaperApi.SetProgress(int.Parse(progressStr), item.Wallpaper.RunningInfo.ScreenIndexes[0]);
             }
             return;
         }

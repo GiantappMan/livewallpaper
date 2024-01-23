@@ -38,7 +38,7 @@ export function SettingDialog(props: SettingDialogProps) {
             enableMouseEvent: props.wallpaper?.setting.enableMouseEvent ?? true,
             hardwareDecoding: props.wallpaper?.setting.hardwareDecoding ?? true,
             isPanScan: props.wallpaper?.setting.isPanScan ?? true,
-            volume: props.wallpaper?.setting.volume ?? 100,
+            // volume: props.wallpaper?.setting.volume ?? 100,
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -51,7 +51,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
                 hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
                 isPanScan: props.wallpaper.setting.isPanScan,
-                volume: props.wallpaper.setting.volume,
+                // volume: props.wallpaper.setting.volume,
             })
     }, [form, props.open, props.wallpaper])
 
@@ -63,7 +63,7 @@ export function SettingDialog(props: SettingDialogProps) {
             enableMouseEvent: data.enableMouseEvent,
             hardwareDecoding: data.hardwareDecoding,
             isPanScan: data.isPanScan,
-            volume: data.volume,
+            // volume: data.volume,
         });
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);

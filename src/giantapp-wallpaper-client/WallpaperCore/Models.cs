@@ -112,10 +112,19 @@ public class PlaylistSetting : ICloneable
     }
 }
 
+public class WallpaperRunningInfo : ICloneable
+{
+    public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
+}
+
 //一个壁纸的设置
 public class WallpaperSetting : ICloneable
 {
-    public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
     public bool IsPlaylist { get; set; }
     public bool IsPaused { get; set; }
 
@@ -182,7 +191,7 @@ public class WallpaperSetting : ICloneable
         //deep clone
         var res = new WallpaperSetting
         {
-            ScreenIndexes = ScreenIndexes,
+            //ScreenIndexes = ScreenIndexes,
             IsPlaylist = IsPlaylist,
             IsPaused = IsPaused,
             EnableMouseEvent = EnableMouseEvent,
@@ -233,6 +242,9 @@ public class Wallpaper : ICloneable
 
     //设置
     public WallpaperSetting Setting { get; set; } = new();
+
+    //运行数据
+    public WallpaperRunningInfo RunningInfo { get; set; } = new();
 
     //壁纸所在目录
     public string? Dir { get; private set; }
@@ -421,6 +433,7 @@ public class Wallpaper : ICloneable
         {
             Meta = (WallpaperMeta)Meta.Clone(),
             Setting = (WallpaperSetting)Setting.Clone(),
+            RunningInfo = (WallpaperRunningInfo)RunningInfo.Clone(),
             CoverPath = CoverPath,
             FileUrl = FileUrl,
             CoverUrl = CoverUrl

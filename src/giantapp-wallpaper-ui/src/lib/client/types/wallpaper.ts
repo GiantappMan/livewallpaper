@@ -8,6 +8,7 @@ export class Wallpaper {
   coverUrl?: string;
   meta: WallpaperMeta = new WallpaperMeta();
   setting: WallpaperSetting = new WallpaperSetting();
+  runningInfo: WallpaperRunningInfo = new WallpaperRunningInfo();
   static getFileType(path?: string | null): "img" | "video" | "app" | null {
     if (!path)
       return null;
@@ -84,7 +85,6 @@ export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
   }
-  screenIndexes: number[] = [];
   isPlaylist?: boolean = false;
   isPaused?: boolean = false;
   // exe
@@ -98,3 +98,7 @@ export class WallpaperSetting {
   playIndex?: number = 0;
   wallpapers?: Wallpaper[] = [];
 };
+
+export class WallpaperRunningInfo {
+  screenIndexes: number[] = [];
+}

@@ -21,7 +21,8 @@ export default function AudioVolumeBtn(props: { playingStatus: PlayingStatus, sc
         api.setVolume(value[0], props.screenIndex);
         props.playingStatusChange({
             ...props.playingStatus,
-            volume: value[0]
+            volume: value[0],
+            audioScreenIndex: props.screenIndex
         })
     }, [props]);
 

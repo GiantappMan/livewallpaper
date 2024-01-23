@@ -57,7 +57,7 @@ public class WallpaperManager
             return;
 
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
-        uint screenIndex = playSetting.ScreenIndexes[0];
+        uint screenIndex = playWallpaper.RunningInfo.ScreenIndexes[0];
 
         //是播放列表就更新当前播放的设置
         if (playSetting.IsPlaylist && playSetting.PlayIndex < playSetting.Wallpapers.Count())

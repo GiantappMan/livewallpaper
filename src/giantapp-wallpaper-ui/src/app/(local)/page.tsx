@@ -95,7 +95,7 @@ const Page = () => {
         else
             screenIndexes = [screenIndex];
 
-        wallpaper.setting.screenIndexes = screenIndexes;
+        wallpaper.runningInfo.screenIndexes = screenIndexes;
         const res = await api.showWallpaper(wallpaper);
         if (res.error) {
             alert(res.error);
@@ -439,7 +439,8 @@ const Page = () => {
                 <ToolBar
                     playingStatus={playingStatus}
                     onChangePlayingStatus={(e) => {
-
+                        console.log("playing status change", e)
+                        setPlayingStatus(e);
                     }}
                 />
             }

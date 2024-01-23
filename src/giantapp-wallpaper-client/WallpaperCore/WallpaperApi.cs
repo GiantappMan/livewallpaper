@@ -119,15 +119,14 @@ public static class WallpaperApi
     //显示壁纸
     public static async Task<bool> ShowWallpaper(Wallpaper wallpaper, WallpaperManager? customManager = null)
     {
-        if (wallpaper.Setting.ScreenIndexes.Length == 0)
+        if (wallpaper.RunningInfo.ScreenIndexes.Length == 0)
             return false;
 
-        foreach (var screenIndex in wallpaper.Setting.ScreenIndexes)
+        foreach (var screenIndex in wallpaper.RunningInfo.ScreenIndexes)
         {
             var manager = GetRunningManager(screenIndex, customManager);
             var tmp = (Wallpaper)wallpaper.Clone();
-            if (tmp.Setting != null)
-                tmp.Setting.ScreenIndexes = new uint[] { screenIndex };
+            tmp.RunningInfo.ScreenIndexes = new uint[] { screenIndex };
             manager.Wallpaper = tmp;
             await manager.Play();
         }
@@ -328,7 +327,7 @@ public static class WallpaperApi
             var snapshotData = item.Value.GetSnapshotData();
             if (item.Value.Wallpaper != null)
             {
-                item.Value.Wallpaper.Setting.ScreenIndexes = new uint[] { item.Key };
+                item.Value.Wallpaper.RunningInfo.ScreenIndexes = new uint[] { item.Key };
                 res.Data.Add((item.Value.Wallpaper, snapshotData));
             }
         }
@@ -449,19 +448,26 @@ public static class WallpaperApi
         if (snapshot == null || snapshot.Data == null)
             return;
 
-        AudioSourceIndex = snapshot.AudioScreenIndex;
-        Volume = snapshot.Volume;
-        foreach (var item in snapshot.Data)
-        {            
-            var manager = new WallpaperManager(item.SnapshotData);
-            var screenIndex = item.Wallpaper.Setting.ScreenIndexes[0];
-            if (screenIndex == AudioSourceIndex)
+        try
+        {
+            AudioSourceIndex = snapshot.AudioScreenIndex;
+            Volume = snapshot.Volume;
+            foreach (var item in snapshot.Data)
             {
-                manager.SetVolume(Volume);
-            }
+                var manager = new WallpaperManager(item.SnapshotData);
+                var screenIndex = item.Wallpaper.RunningInfo.ScreenIndexes[0];
+                if (screenIndex == AudioSourceIndex)
+                {
+                    manager.SetVolume(Volume);
+                }
 
-            item.Wallpaper.Meta.EnsureId();
-            await ShowWallpaper(item.Wallpaper, manager);
+                item.Wallpaper.Meta.EnsureId();
+                await ShowWallpaper(item.Wallpaper, manager);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex);
         }
     }
 

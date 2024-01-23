@@ -37,7 +37,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     useEffect(() => {
         //更新选中屏幕
         if (selectedWallpaper)
-            setSelectedScreenIndex(Wallpaper.findPlayingWallpaper(selectedWallpaper)?.setting.screenIndexes[0] || 0);
+            setSelectedScreenIndex(Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || 0);
         else
             setSelectedScreenIndex(-1);
     }, [selectedWallpaper]);
@@ -46,7 +46,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         //获取要关闭的屏幕
         var screenIndex = -1;
         if (selectedWallpaper) {
-            screenIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.setting.screenIndexes[0] || -1;
+            screenIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
         }
 
         api.stopWallpaper(screenIndex);
@@ -97,7 +97,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     //         return;
 
     //     setVolume(volume);
-    //     await api.setVolume(volume, target.setting.screenIndexes[0]);
+    //     await api.setVolume(volume, target.runningInfo.screenIndexes[0]);
     //     onChangeVolume?.(target);
     // }, [onChangeVolume, selectedWallpaper, wallpapers]);
 
@@ -243,7 +243,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             {selectedScreenIndex >= 0 ?
                 <AudioVolumeBtn screenIndex={selectedScreenIndex} playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
                 :
-                <AudioIndexBtn playingStatus={playingStatus} />
+                <AudioIndexBtn playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
             }
             {/* <Popover>
                 <PopoverTrigger asChild>
