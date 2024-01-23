@@ -25,30 +25,35 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     useEffect(() => {
         if (playingStatus.wallpapers.length == 1)
             setSelectedWallpaper(playingStatus.wallpapers[0]);
-        else
-            setSelectedWallpaper(null);
+        else {
+            //如果被选中的不存在了则清空
+            if (selectedWallpaper && !playingStatus.wallpapers.includes(selectedWallpaper))
+                setSelectedWallpaper(null);
+        }
 
         var isPaused = playingStatus.wallpapers.every(x => Wallpaper.findPlayingWallpaper(x).setting.isPaused);
+        if (selectedWallpaper) {
+            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper).setting.isPaused || false;
+        }
         setIsPaused(isPaused);
-    }, [playingStatus.wallpapers]);
+    }, [playingStatus.wallpapers, selectedWallpaper]);
 
     //监控selectedWallpaper变化
     useEffect(() => {
         //更新选中屏幕
-        if (selectedWallpaper)
-            setSelectedScreenIndex(Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || 0);
+        if (selectedWallpaper) {
+            var index = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0];
+            if (index === undefined)
+                index = -1;
+            setSelectedScreenIndex(index);
+        }
         else
             setSelectedScreenIndex(-1);
     }, [selectedWallpaper]);
 
     const handleStopClick = useCallback(() => {
         //获取要关闭的屏幕
-        var screenIndex = -1;
-        if (selectedWallpaper) {
-            screenIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
-        }
-
-        api.stopWallpaper(screenIndex);
+        api.stopWallpaper(selectedScreenIndex);
 
         //更新playlist
         if (selectedWallpaper) {
@@ -70,45 +75,35 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 }
             );
         }
-    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
+    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex, selectedWallpaper]);
 
     const handlePlayClick = useCallback(() => {
-        debugger
-        var playIndex = -1;
-        if (selectedWallpaper) {
-            playIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
-        }
-        api.resumeWallpaper(playIndex);
+        api.resumeWallpaper(selectedScreenIndex);
         onChangePlayingStatus?.({
             ...playingStatus,
             wallpapers: playingStatus.wallpapers.map(x => {
                 var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-                if (playingWallpaper.runningInfo.screenIndexes[0] === playIndex) {
+                if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
                     playingWallpaper.setting.isPaused = false;
                 }
                 return x;
             })
         });
-    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
+    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
 
     const handlePauseClick = useCallback(() => {
-        debugger
-        var pauseIndex = -1;
-        if (selectedWallpaper) {
-            pauseIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
-        }
-        api.pauseWallpaper(pauseIndex);
+        api.pauseWallpaper(selectedScreenIndex);
         onChangePlayingStatus?.({
             ...playingStatus,
             wallpapers: playingStatus.wallpapers.map(x => {
                 var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-                if (playingWallpaper.runningInfo.screenIndexes[0] === pauseIndex) {
+                if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
                     playingWallpaper.setting.isPaused = true;
                 }
                 return x;
             })
         });
-    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
+    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
 
     // const handleVolumeChange = useCallback(async (value: number[]) => {
     //     const volume = value[0];
