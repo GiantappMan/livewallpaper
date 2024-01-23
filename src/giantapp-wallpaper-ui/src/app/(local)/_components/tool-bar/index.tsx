@@ -1,4 +1,4 @@
-import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Wallpaper } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react";
 import { Reply } from "lucide-react"
 import { cn } from "@/lib/utils";
@@ -18,9 +18,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     const singlePlaylistMode = playingStatus.wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
-    const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
-    const [volume, setVolume] = useState<number>(0);
     const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(-1); //当前选中的屏幕索引
 
     //监控wallpapers，如果只有一个，默认选中
@@ -30,7 +28,8 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         else
             setSelectedWallpaper(null);
 
-        setIsPlaying(playingStatus.wallpapers.length > 0);
+        var isPaused = playingStatus.wallpapers.every(x => Wallpaper.findPlayingWallpaper(x).setting.isPaused);
+        setIsPaused(isPaused);
     }, [playingStatus.wallpapers]);
 
     //监控selectedWallpaper变化
@@ -74,10 +73,42 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
 
     const handlePlayClick = useCallback(() => {
-    }, []);
+        debugger
+        var playIndex = -1;
+        if (selectedWallpaper) {
+            playIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
+        }
+        api.resumeWallpaper(playIndex);
+        onChangePlayingStatus?.({
+            ...playingStatus,
+            wallpapers: playingStatus.wallpapers.map(x => {
+                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+                if (playingWallpaper.runningInfo.screenIndexes[0] === playIndex) {
+                    playingWallpaper.setting.isPaused = false;
+                }
+                return x;
+            })
+        });
+    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
 
     const handlePauseClick = useCallback(() => {
-    }, []);
+        debugger
+        var pauseIndex = -1;
+        if (selectedWallpaper) {
+            pauseIndex = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0] || -1;
+        }
+        api.pauseWallpaper(pauseIndex);
+        onChangePlayingStatus?.({
+            ...playingStatus,
+            wallpapers: playingStatus.wallpapers.map(x => {
+                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+                if (playingWallpaper.runningInfo.screenIndexes[0] === pauseIndex) {
+                    playingWallpaper.setting.isPaused = true;
+                }
+                return x;
+            })
+        });
+    }, [onChangePlayingStatus, playingStatus, selectedWallpaper]);
 
     // const handleVolumeChange = useCallback(async (value: number[]) => {
     //     const volume = value[0];
@@ -162,7 +193,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
                 {/* 停止按钮 */}
-                {isPlaying && <Button variant="ghost" className="hover:text-primary" title="停止" onClick={handleStopClick}>
+                {<Button variant="ghost" className="hover:text-primary" title="停止" onClick={handleStopClick}>
                     <svg
                         className="h-5 w-5 "
                         fill="none"
@@ -180,7 +211,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 </Button>
                 }
                 {
-                    isPlaying && isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
+                    isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -198,7 +229,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
                 {
-                    isPlaying && !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
+                    !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"

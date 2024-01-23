@@ -19,7 +19,8 @@ export default function AudioIndexBtn(props: { playingStatus: PlayingStatus, pla
         setOpen(false)
         props.playingStatusChange({
             ...props.playingStatus,
-            audioScreenIndex: index
+            audioScreenIndex: index,
+            volume: index < 0 ? 0 : 100
         });
     }, [props]);
 

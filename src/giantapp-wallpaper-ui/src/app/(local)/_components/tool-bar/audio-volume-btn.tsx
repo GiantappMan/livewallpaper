@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Slider } from "@/components/ui/slider";
 import { useCallback, useEffect, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { SpeakerLoudIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
+import { SpeakerLoudIcon, SpeakerOffIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
 import PlayingStatus from "@/lib/client/types/playing-status";
 
@@ -36,9 +36,10 @@ export default function AudioVolumeBtn(props: { playingStatus: PlayingStatus, sc
                 <PopoverTrigger asChild>
                     <Button variant="ghost" className="hover:text-primary px-3" title="音源设置">
                         {
-                            volume > 50 ?
-                                <SpeakerLoudIcon /> :
-                                <SpeakerQuietIcon />
+                            volume == 0 ?
+                                <SpeakerOffIcon /> : (
+                                    volume > 50 ? <SpeakerLoudIcon /> : <SpeakerQuietIcon />
+                                )
                         }
                     </Button>
                 </PopoverTrigger>

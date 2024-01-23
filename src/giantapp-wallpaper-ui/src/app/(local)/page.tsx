@@ -435,7 +435,8 @@ const Page = () => {
             {
                 wallpapers &&
                 wallpapers.length > 0 &&
-                playingStatus &&
+                playingStatus?.wallpapers &&
+                playingStatus?.wallpapers.length > 0 &&
                 <ToolBar
                     playingStatus={playingStatus}
                     onChangePlayingStatus={(e) => {
