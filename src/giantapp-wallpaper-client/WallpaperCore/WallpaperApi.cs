@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using NLog;
 using System.Collections.Concurrent;
+using System.IO;
 using Windows.Win32;
 
 namespace WallpaperCore;
@@ -227,10 +228,10 @@ public static class WallpaperApi
         return res;
     }
 
-    //下载壁纸
-    public static void DownloadWallpaper(string saveDirectory, Wallpaper wallpapers, Playlist? toPlaylist)
-    {
-    }
+    ////下载壁纸
+    //public static void DownloadWallpaper(string saveDirectory, Wallpaper wallpapers, Playlist? toPlaylist)
+    //{
+    //}
 
     //暂停壁纸
     public static void PauseWallpaper(params int[] screenIndexs)
@@ -335,15 +336,29 @@ public static class WallpaperApi
         return res;
     }
 
+    [Obsolete]
     //创建壁纸
     public static bool CreateWallpaper(string title, string cover, string path, string saveFolder)
     {
-        var wallpaper = Wallpaper.From(path, false);
+        var wallpaper = Wallpaper.From(path);
         if (wallpaper == null)
+            return false;
+
+        wallpaper.CoverPath = cover;
+        wallpaper.Meta.Title = title;
+        return CreateWallpaper(wallpaper, saveFolder);
+    }
+
+    public static bool CreateWallpaper(Wallpaper wallpaper, string saveFolder)
+    {
+        if (wallpaper == null || wallpaper.FilePath == null || wallpaper.CoverPath == null)
             return false;
 
         if (!Directory.Exists(saveFolder))
             Directory.CreateDirectory(saveFolder);
+
+        string path = wallpaper.FilePath;
+        string cover = wallpaper.CoverPath;
 
         //保存到目录
         string extension = Path.GetExtension(path);
@@ -357,7 +372,6 @@ public static class WallpaperApi
         File.Copy(cover, coverSavePath);
 
         //保存meta
-        wallpaper.Meta.Title = title;
         wallpaper.Meta.CreateTime = DateTime.Now;
         wallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
@@ -369,7 +383,6 @@ public static class WallpaperApi
 
         return true;
     }
-
     //编辑壁纸
     public static bool UpdateWallpaper(string title, string? cover, string? path, Wallpaper oldWallpaper)
     {

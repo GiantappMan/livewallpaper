@@ -294,6 +294,32 @@ public class ApiObject
         return url;
     }
 
+    public bool CreateWallpaperNew(string wallpaperJson)
+    {
+        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        if (wallpaper == null)
+            return false;
+
+        var config = Configer.Get<ConfigWallpaper>() ?? new();
+
+        //把playlist里面的url转换成本地路径
+        wallpaper.CoverPath = AppService.ConvertUrlToPath(config, wallpaper.CoverUrl);
+        wallpaper.FilePath = AppService.ConvertUrlToPath(config, wallpaper.FileUrl);
+
+        if (wallpaper.Setting.IsPlaylist)
+            foreach (var item in wallpaper.Setting.Wallpapers)
+            {
+                item.CoverPath = AppService.ConvertUrlToPath(config, item.CoverUrl);
+                item.FilePath = AppService.ConvertUrlToPath(config, item.FileUrl);
+            }
+
+        var res = WallpaperApi.CreateWallpaper(wallpaper, config.Directories[0]);
+        SaveSnapshot();
+
+        return res;
+    }
+
+    [Obsolete]
     public bool CreateWallpaper(string title, string coverUrl, string pathUrl)
     {
         var path = AppService.ConvertUrlToTmpPath(pathUrl);
@@ -305,6 +331,7 @@ public class ApiObject
         return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
     }
 
+    [Obsolete]
     public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();

@@ -273,6 +273,7 @@ public class MpvPlayer
         }
         catch (Exception ex)
         {
+            _logger.Warn(ex, "Failed to get mpv snapshot.");
             return new();
         }
     }
