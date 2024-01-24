@@ -165,6 +165,13 @@ const Page = () => {
         setOpenCreateWallpaperDialog(true);
     }
 
+    const createPlaylist = () => {
+        var wallpaper = new Wallpaper();
+        wallpaper.setting.isPlaylist = true;
+        setCurrentWallpaper(wallpaper);
+        setOpenCreateWallpaperDialog(true);
+    }
+
     return <div
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -382,7 +389,7 @@ const Page = () => {
                                             创建壁纸
                                         </ContextMenuItem>
                                         <ContextMenuItem onClick={(e) => {
-                                            createWallpaper()
+                                            createPlaylist()
                                             e.stopPropagation();
                                         }}>
                                             创建列表
@@ -406,8 +413,7 @@ const Page = () => {
                     "hidden": !mounted || !wallpapers || wallpapers.length === 0,
                 }])}>
                 <div
-                    className="w-full aspect-[3/2]"
-                >
+                    className="w-full aspect-[3/2]">
                     {/* <Button
                         aria-label="创建壁纸"
                         className="flex w-full h-full hover:text-primary"
@@ -429,7 +435,7 @@ const Page = () => {
                         </svg>
                     </Button> */}
                     <CreateWallpaperButton
-                        createWallpaper={createWallpaper} createList={createWallpaper} />
+                        createWallpaper={createWallpaper} createList={createPlaylist} />
                 </div>
             </div>
             {

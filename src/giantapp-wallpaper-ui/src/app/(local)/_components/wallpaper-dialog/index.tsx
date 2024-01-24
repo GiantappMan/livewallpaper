@@ -61,13 +61,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
             message: "文件大小不能超过1G",
         }),
+        wallpapers: z.array(z.string()).optional(),
     })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
             isPlaylist: false,
-            file: undefined
+            file: undefined,
+            wallpapers: [],
         }
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -100,6 +102,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             if (props.wallpaper) {
                 form.setValue("title", props.wallpaper?.meta.title || "");
                 form.setValue("file", new File([], ""));
+                form.setValue("isPlaylist", props.wallpaper?.setting.isPlaylist || false)
                 setImportedFile({
                     name: props.wallpaper?.fileName || "",
                     url: props.wallpaper?.fileUrl || "",
@@ -220,7 +223,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         });
     }
 
-    async function onSubmit(data: z.infer<typeof formSchema>) {
+    async function submitWallpaper(data: z.infer<typeof formSchema>) {
         if (uploading || !importedFile || !importedFile.url)
             return;
 
@@ -259,7 +262,22 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         setUploading(false);
     }
 
+    async function submitPlaylist(data: z.infer<typeof formSchema>) {
+        if (!data.wallpapers?.length) {
+            toast.warning("列表模式，壁纸不能为空");
+            return;
+        }
+    }
 
+    function onSubmit(data: z.infer<typeof formSchema>) {
+        if (data.isPlaylist) {
+            return submitPlaylist(data);
+        }
+        else {
+            return submitWallpaper(data);
+        }
+
+    }
 
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && isDirty) {

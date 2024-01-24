@@ -1,6 +1,9 @@
 import { PlayMode } from "./playlist";
 
 export class Wallpaper {
+  constructor(init?: Partial<Wallpaper>) {
+    Object.assign(this, init);
+  }
   dir?: string;
   fileName?: string;
   fileUrl?: string;
