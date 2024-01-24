@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Wallpaper } from "@/lib/client/types/wallpaper"
 import processFile from "./process-file"
+import { Switch } from "@/components/ui/switch"
 
 interface WallpaperDialogProps {
     wallpaper?: Wallpaper | null
@@ -54,6 +55,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         title: z.string().refine(value => value !== '', {
             message: '标题不能为空',
         }),
+        isPlaylist: z.boolean().optional(),
         file: z.instanceof(File, {
             message: "文件未上传",
         }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
@@ -64,6 +66,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
+            isPlaylist: false,
             file: undefined
         }
     })
@@ -72,6 +75,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     const [progress, setProgress] = useState(0);
     const [importing, setImporting] = useState(false);
     const importingFile = form.watch("file");
+    const isPlaylist = form.watch("isPlaylist");
     const [importedFile, setImportedFile] = useState<{
         name: string,
         url: string,
@@ -255,6 +259,8 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         setUploading(false);
     }
 
+
+
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && isDirty) {
             confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
@@ -266,9 +272,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle>{props.wallpaper ? "编辑壁纸" : "创建壁纸"}</DialogTitle>
+                        <DialogTitle>{props.wallpaper ? `编辑${isPlaylist ? "列表" : "壁纸"}` : `创建${isPlaylist ? "列表" : "壁纸"}`}</DialogTitle>
                         <DialogDescription>
-                            本地壁纸，仅保存在你本机
+                            {`本地${isPlaylist ? "列表" : "壁纸"}，仅保存在你本机`}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="mt-2 mb-3">
@@ -285,82 +291,102 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                     </FormItem>
                                 )}
                             />
-
-                            {!importedFile
-                                ?
-                                <>
-                                    {!importing ?
-                                        <div
-                                            onClick={() => { fileInputRef.current?.click() }}
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={handleDragLeave}
-                                            onDrop={handleDrop}
-                                            className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
-                                                "border-primary bg-muted": isOver,
-                                            }])}>
-                                            <UploadCloudIcon className="text-foreground w-10 h-10" />
-                                            <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击导入或拖入文件到这里"}</p>
-                                        </div>
-                                        :
-                                        <div>
-                                            <span> 导入中...</span>
-                                            <Progress className="mt-2" value={progress} />
-                                        </div>
-                                    }
-                                </>
-                                :
-                                <>
-                                    <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
-                                    <div className="flex justify-between items-center text-[#9CA3AF]">
-                                        <div>
-                                            <div className="flex justify-between items-center">
-                                                <p>{importedFile.name}</p>   <Button type="button" variant="ghost" onClick={() => {
-                                                    setImportedFile(undefined);
-                                                    if (fileInputRef.current)
-                                                        fileInputRef.current.value = '';
-                                                }}>
-                                                    <DeleteIcon className="h-6 w-6" />
-                                                </Button>
-                                            </div>
-                                            {
-                                                importedFile.fileType === "video" && <video
-                                                    onError={(e) => console.error('Video loading error:', e)}
-                                                    autoPlay={true} ref={previewVideoRef} className="object-contain">
-                                                    <source src={importedFile.url} />
-                                                </video>
-                                            }
-                                            {
-                                                importedFile.fileType === "img" &&
-                                                <picture>
-                                                    <img alt="预览" src={importedFile.url} ref={previewImgRef} />
-                                                </picture>
-                                            }
-                                        </div>
-                                    </div>
-                                </>
-                            }
+                            {/* 是否是播放列表 */}
                             <FormField
                                 control={form.control}
-                                name="file"
+                                name="isPlaylist"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormControl>
-                                            <Input {...field}
-                                                accept="image/*,video/*"
-                                                type="file"
-                                                value={undefined}
-                                                ref={fileInputRef}
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    field.onChange(file);
-                                                }
-                                                } />
+                                            <label className="flex items-center space-x-2">
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                                <span>播放列表</span>
+                                            </label>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+                            {isPlaylist === false && <>
+                                {!importedFile
+                                    ?
+                                    <>
+                                        {!importing ?
+                                            <div
+                                                onClick={() => { fileInputRef.current?.click() }}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
+                                                    "border-primary bg-muted": isOver,
+                                                }])}>
+                                                <UploadCloudIcon className="text-foreground w-10 h-10" />
+                                                <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击导入或拖入文件到这里"}</p>
+                                            </div>
+                                            :
+                                            <div>
+                                                <span> 导入中...</span>
+                                                <Progress className="mt-2" value={progress} />
+                                            </div>
+                                        }
+                                    </>
+                                    :
+                                    <>
+                                        <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
+                                        <div className="flex justify-between items-center text-[#9CA3AF]">
+                                            <div>
+                                                <div className="flex justify-between items-center">
+                                                    <p>{importedFile.name}</p>   <Button type="button" variant="ghost" onClick={() => {
+                                                        setImportedFile(undefined);
+                                                        if (fileInputRef.current)
+                                                            fileInputRef.current.value = '';
+                                                    }}>
+                                                        <DeleteIcon className="h-6 w-6" />
+                                                    </Button>
+                                                </div>
+                                                {
+                                                    importedFile.fileType === "video" && <video
+                                                        onError={(e) => console.error('Video loading error:', e)}
+                                                        autoPlay={true} ref={previewVideoRef} className="object-contain">
+                                                        <source src={importedFile.url} />
+                                                    </video>
+                                                }
+                                                {
+                                                    importedFile.fileType === "img" &&
+                                                    <picture>
+                                                        <img alt="预览" src={importedFile.url} ref={previewImgRef} />
+                                                    </picture>
+                                                }
+                                            </div>
+                                        </div>
+                                    </>
+                                }
+                                <FormField
+                                    control={form.control}
+                                    name="file"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <Input {...field}
+                                                    accept="image/*,video/*"
+                                                    type="file"
+                                                    value={undefined}
+                                                    ref={fileInputRef}
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files ? e.target.files[0] : null;
+                                                        field.onChange(file);
+                                                    }
+                                                    } />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>}
                         </div>
                     </div>
                     <DialogFooter>
