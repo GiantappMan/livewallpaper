@@ -220,12 +220,28 @@ class API {
     }
   }
 
+  /*
+  *deprecated
+  */
   async createWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<ApiResult<boolean>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = window.chrome.webview.hostObjects;
 
       var res = await api.CreateWallpaper(title, coverUrl, pathUrl);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async createWallpaperNew(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var res = await api.CreateWallpaperNew(JSON.stringify(wallpaper));
       return { error: null, data: res };
     } catch (e) {
       console.log(e);

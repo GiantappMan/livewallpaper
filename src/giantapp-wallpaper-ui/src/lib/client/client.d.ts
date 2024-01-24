@@ -18,6 +18,7 @@ interface API {
   OpenUrl(url: string): Promise<void>;
   UploadToTmp(fileName: string, content: string): Promise<string>;
   CreateWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<boolean>;
+  CreateWallpaperNew(wallpaperJson: string): Promise<boolean>;
   DeleteWallpaper(wallpaperJSON: string): Promise<boolean>;
   Explore(path: string): Promise<void>;
   SetWallpaperSetting(wallpaperJSON: string, settingJSON: string): Promise<boolean>;
