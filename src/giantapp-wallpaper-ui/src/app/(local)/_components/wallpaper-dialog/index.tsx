@@ -10,7 +10,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { DeleteIcon, UploadCloudIcon } from "lucide-react"
+import { DeleteIcon, UploadCloudIcon, ListPlus } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Wallpaper } from "@/lib/client/types/wallpaper"
 import processFile from "./process-file"
 import { Switch } from "@/components/ui/switch"
+import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
 
 interface WallpaperDialogProps {
     wallpaper?: Wallpaper | null
@@ -61,7 +62,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
             message: "文件大小不能超过1G",
         }),
-        wallpapers: z.array(z.string()).optional(),
+        wallpapers: z.array(z.any()).optional(),
     })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -88,6 +89,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const previewVideoRef = useRef<HTMLVideoElement>(null);
     const previewImgRef = useRef<HTMLImageElement>(null);
+    const [openSelectWallpaperDialog, setOpenSelectWallpaperDialog] = useState(false);
 
     //每次打开重置状态
     useEffect(() => {
@@ -100,14 +102,20 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             form.reset();
         } else {
             if (props.wallpaper) {
+                const isPlaylist = props.wallpaper?.setting.isPlaylist || false;
                 form.setValue("title", props.wallpaper?.meta.title || "");
                 form.setValue("file", new File([], ""));
-                form.setValue("isPlaylist", props.wallpaper?.setting.isPlaylist || false)
-                setImportedFile({
-                    name: props.wallpaper?.fileName || "",
-                    url: props.wallpaper?.fileUrl || "",
-                    fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
-                });
+                if (isPlaylist) {
+                    form.setValue("isPlaylist", isPlaylist)
+                    form.setValue("wallpapers", props.wallpaper?.setting.wallpapers || []);
+                }
+                else {
+                    setImportedFile({
+                        name: props.wallpaper?.fileName || "",
+                        url: props.wallpaper?.fileUrl || "",
+                        fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
+                    });
+                }
             }
         }
     }, [form, props.open, props.wallpaper]);
@@ -328,6 +336,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                     </FormItem>
                                 )}
                             />
+                            {/* 壁纸界面 */}
                             {isPlaylist === false && <>
                                 {!importedFile
                                     ?
@@ -341,7 +350,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                 className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
                                                     "border-primary bg-muted": isOver,
                                                 }])}>
-                                                <UploadCloudIcon className="text-foreground w-10 h-10" />
+                                                <UploadCloudIcon className="text-foreground  w-5 h-5 mb-2" />
                                                 <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击导入或拖入文件到这里"}</p>
                                             </div>
                                             :
@@ -382,29 +391,40 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         </div>
                                     </>
                                 }
-                                <FormField
-                                    control={form.control}
-                                    name="file"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <Input {...field}
-                                                    accept="image/*,video/*"
-                                                    type="file"
-                                                    value={undefined}
-                                                    ref={fileInputRef}
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        const file = e.target.files ? e.target.files[0] : null;
-                                                        field.onChange(file);
-                                                    }
-                                                    } />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
                             </>}
+                            {/* 列表界面 */}
+                            {isPlaylist && <>
+                                <div
+                                    onClick={() => { setOpenSelectWallpaperDialog(true) }}
+                                    className={cn(["flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted", {
+                                        "border-primary bg-muted": isOver,
+                                    }])}>
+                                    <ListPlus className="text-foreground w-5 h-5 mb-2" />
+                                    <p className="text-gray-500">{"设置壁纸列表"}</p>
+                                </div>
+                            </>}
+                            <FormField
+                                control={form.control}
+                                name="file"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input {...field}
+                                                accept="image/*,video/*"
+                                                type="file"
+                                                value={undefined}
+                                                ref={fileInputRef}
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files ? e.target.files[0] : null;
+                                                    field.onChange(file);
+                                                }
+                                                } />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
                     <DialogFooter>
@@ -413,6 +433,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             {uploading ? "创建中..." : "保存"}
                         </Button>
                     </DialogFooter>
+                    <SelectWallpaperDialog selectedWallpapers={props.wallpaper?.setting.wallpapers || []} open={openSelectWallpaperDialog} onChangeOpen={setOpenSelectWallpaperDialog} />
                 </form>
             </Form>
         </DialogContent>
