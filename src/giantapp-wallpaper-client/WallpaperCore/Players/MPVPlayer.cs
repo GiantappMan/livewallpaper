@@ -357,9 +357,11 @@ public class MpvPlayer
 
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                _logger.Info(sendContent + "mpv response: " + response);
-                Debug.WriteLine(sendContent + "mpv response: " + response);
-
+                if (!sendContent.Contains("duration") && !sendContent.Contains("time-pos"))
+                {
+                    _logger.Info(sendContent + "mpv response: " + response);
+                    Debug.WriteLine(sendContent + "mpv response: " + response);
+                }
                 //查找id匹配的结果
                 var jobj = JsonConvert.DeserializeObject<dynamic>(response);
                 if (jobj?.request_id == id)
