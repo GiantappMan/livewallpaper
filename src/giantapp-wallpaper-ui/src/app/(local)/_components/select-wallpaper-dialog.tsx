@@ -43,12 +43,12 @@ export function SelectWallpaperDialog(props: Props) {
     return <Dialog open={props.open} onOpenChange={(e) => {
         props.onChangeOpen(e);
     }} >
-        <DialogContent>
+        <DialogContent className={"lg:max-w-screen-lg overflow-y-scroll max-h-screen"}>
             <DialogHeader>
                 <DialogTitle>选择壁纸</DialogTitle>
                 <DialogDescription></DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[500px] pb-20 h-ful">
+            <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 h-ful">
                 {
                     (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
                         if (refreshing)
@@ -93,7 +93,7 @@ export function SelectWallpaperDialog(props: Props) {
                                 </div>
 
                                 <div className="px-6 py-4">
-                                    <div className="font-bold text-sm mb-2 lg:text-xl">{wallpaper?.meta?.title}</div>
+                                    <div className="text-sm">{wallpaper?.meta?.title}</div>
                                     {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
                                 </div>
                             </div>
