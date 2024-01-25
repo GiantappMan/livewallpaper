@@ -1,21 +1,29 @@
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/lib/client/api"
 import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 interface Props {
     selectedWallpapers: Wallpaper[]
     open: boolean
     onChangeOpen: (open: boolean) => void
-    saveSuccess?: () => void
+    onSaveSuccess?: (wallpapers: Wallpaper[]) => void
 }
 
 export function SelectWallpaperDialog(props: Props) {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
+    const [selectedWallpapers, setSelectedWallpapers] = useState<Wallpaper[]>([]);
     const [refreshing, setRefreshing] = useState<boolean>(false);
+    const [allChecked, setAllChecked] = useState<boolean>(false);
+
+    //监控并更新allChecked
+    useEffect(() => {
+        setAllChecked(selectedWallpapers.length === wallpapers?.length);
+    }, [selectedWallpapers, wallpapers])
 
     const refresh = async () => {
         setRefreshing(true);
@@ -39,6 +47,34 @@ export function SelectWallpaperDialog(props: Props) {
             setRefreshing(false);
         }
     }
+    // Add a new function to handle wallpaper selection and deselection
+    const toggleWallpaperSelection = useCallback((wallpaper: Wallpaper) => {
+        const isSelected = selectedWallpapers.some(selected => selected.meta.id === wallpaper.meta.id);
+        if (isSelected) {
+            setSelectedWallpapers(selectedWallpapers.filter(selected => selected.meta.id !== wallpaper.meta.id));
+        } else {
+            setSelectedWallpapers([...selectedWallpapers, wallpaper]);
+        }
+    }, [selectedWallpapers])
+
+    // Add a function to save selected wallpapers
+    const saveSelectedWallpapers = useCallback(() => {
+        if (props.onSaveSuccess) {
+            props.onSaveSuccess(selectedWallpapers);
+        }
+        props.onChangeOpen(false); // Close the dialog after saving
+        setSelectedWallpapers([]); // Clear selected wallpapers
+    }, [props, selectedWallpapers])
+
+    //Add a function to toggle check all
+    const toggleCheckAll = useCallback(() => {
+        if (selectedWallpapers.length === wallpapers?.length) {
+            setSelectedWallpapers([]);
+        } else {
+            setSelectedWallpapers(wallpapers || []);
+        }
+    }, [selectedWallpapers, wallpapers])
+
     useEffect(() => {
         refresh();
     }, []);
@@ -48,20 +84,24 @@ export function SelectWallpaperDialog(props: Props) {
         <DialogContent className={"lg:max-w-screen-lg"}>
             <DialogHeader>
                 <DialogTitle>选择壁纸</DialogTitle>
-                <DialogDescription></DialogDescription>
+                <DialogDescription>点击选中壁纸</DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
                 <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
                     {
                         (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
+                            const isSelected = wallpaper && selectedWallpapers.some(selected => selected.meta.id === wallpaper.meta.id);
+
                             if (refreshing)
                                 return <Skeleton key={index} className="h-[218px] w-full" />
                             if (!wallpaper?.fileUrl)
                                 return <div key={index}></div>
                             return (
-                                <div key={index} className="relative group rounded overflow-hidden shadow-lg transform transition duration-500 hover:scale-105">
-                                    <div className="relative cursor-pointer"
-                                        title="点击选择">
+                                <div key={index}
+                                    title={wallpaper?.meta.title}
+                                    className={`relative group rounded overflow-hidden shadow-lg transform transition duration-300 hover:scale-105 ${isSelected ? 'ring  ring-primary' : ''}`}
+                                    onClick={() => toggleWallpaperSelection(wallpaper)}>
+                                    <div className="relative cursor-pointer">
 
                                         {/* 图片 */}
                                         {(wallpaper?.meta.type === WallpaperType.Img || wallpaper?.meta.type === WallpaperType.AnimatedImg) && <picture>
@@ -95,8 +135,8 @@ export function SelectWallpaperDialog(props: Props) {
                                         }
                                     </div>
 
-                                    <div className="px-6 py-4">
-                                        <div className="text-sm">{wallpaper?.meta?.title}</div>
+                                    <div className="px-2 py-1">
+                                        <div className="text-sm overflow-hidden overflow-ellipsis whitespace-nowrap">{wallpaper?.meta?.title}</div>
                                         {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
                                     </div>
                                 </div>
@@ -106,7 +146,18 @@ export function SelectWallpaperDialog(props: Props) {
                 </div>
             </ScrollArea>
             <DialogFooter>
-                <Button type="submit">确定</Button>
+                <div className="flex w-full justify-between">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="chk_All" checked={allChecked} onCheckedChange={toggleCheckAll} />
+                        <label
+                            htmlFor="chk_All"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            全选
+                        </label>
+                    </div>
+                    <Button type="submit" onClick={saveSelectedWallpapers}>确定</Button>
+                </div>
             </DialogFooter>
         </DialogContent>
     </Dialog>

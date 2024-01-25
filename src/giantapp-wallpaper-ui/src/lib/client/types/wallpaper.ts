@@ -74,6 +74,7 @@ export enum WallpaperType {
 };
 
 export class WallpaperMeta {
+  id?: string;
   title?: string;
   description?: string;
   cover?: string;

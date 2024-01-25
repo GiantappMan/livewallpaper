@@ -58,10 +58,29 @@ public class WallpaperMeta : ICloneable
     public WallpaperType Type { get; set; }
 
     //确保有Id
-    public void EnsureId()
+    public void EnsureId(string? filePath = null)
     {
+        if (filePath != null)
+        {
+            string dir = Path.GetDirectoryName(filePath) ?? string.Empty;
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string id = dir.Split(Path.DirectorySeparatorChar).Last();
+            //dir is not guid
+            if (!Guid.TryParse(id, out _))
+            {
+                //fileName is guid
+                if (Guid.TryParse(fileName, out _))
+                {
+                    id = fileName;
+                }
+            }
+            Id = id;
+        }
+
         if (string.IsNullOrEmpty(Id))
+        {
             Id = Guid.NewGuid().ToString();
+        }
     }
 
     public object Clone()
@@ -345,6 +364,8 @@ public class Wallpaper : ICloneable
             data.Meta.CreateTime = fileInfo.CreationTime;
         }
 
+        data?.Meta.EnsureId(data?.FilePath);
+
         if (data?.Meta.Type == WallpaperType.NotSupported)
             return null;
 
@@ -367,17 +388,21 @@ public class Wallpaper : ICloneable
                     //不是壁纸文件，可能是封面之类的
                     return null;
                 }
+
                 var meta = new WallpaperMeta
                 {
                     Title = projectJson.Title,
                     Description = projectJson.Description,
                     Cover = projectJson.Preview,
-                    Type = ResolveType(Path.GetExtension(projectJson.File))
+                    Type = ResolveType(Path.GetExtension(projectJson.File)),
                 };
 
                 data.Meta = meta;
+
                 if (meta?.Cover != null)
+                {
                     data.CoverPath = Path.Combine(data.Dir, meta.Cover);
+                }
 
                 if (loadSetting)
                 {
