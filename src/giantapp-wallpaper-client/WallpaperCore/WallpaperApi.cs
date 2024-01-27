@@ -417,7 +417,41 @@ public static class WallpaperApi
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(oldWallpaper.Meta, JsonSettings));
         return true;
     }
+    public static bool UpdateWallpaper(Wallpaper newWallpaper, Wallpaper oldWallpaper)
+    {
+        if (oldWallpaper.Dir == null || oldWallpaper.FileName == null)
+            return false;
 
+        string saveFolder = oldWallpaper.Dir;
+        string saveFileName = Path.GetFileNameWithoutExtension(oldWallpaper.FileName);
+
+        //保存到目录,文件变了
+        if (newWallpaper.FilePath != oldWallpaper.FilePath)
+        {
+            //删除旧壁纸
+            if (File.Exists(oldWallpaper.FilePath))
+                File.Delete(oldWallpaper.FilePath);
+
+            string extension = Path.GetExtension(newWallpaper.FilePath);
+            string savePath = Path.Combine(saveFolder, saveFileName + extension);
+            File.Copy(newWallpaper.FilePath, savePath, true);
+        }
+
+        //移动cover位置
+        if (newWallpaper.CoverPath != oldWallpaper.CoverPath)
+        {
+            string coverExtension = Path.GetExtension(newWallpaper.CoverPath);
+            string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
+            File.Copy(newWallpaper.CoverPath, coverSavePath, true);
+        }
+
+        //保存meta
+        newWallpaper.Meta.UpdateTime = DateTime.Now;
+        newWallpaper.Meta.Cover = $"{saveFileName}.cover{Path.GetExtension(newWallpaper.CoverPath)}";
+        string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
+        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(newWallpaper.Meta, JsonSettings));
+        return true;
+    }
     //设置壁纸配置
     public static bool SetWallpaperSetting(WallpaperSetting setting, Wallpaper wallpaper)
     {

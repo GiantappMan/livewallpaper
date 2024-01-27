@@ -1,4 +1,5 @@
 ﻿
+using NLog;
 using WallpaperCore.Players;
 
 namespace WallpaperCore;
@@ -12,6 +13,7 @@ public class WallpaperManagerSnapshot
 public class WallpaperManager
 {
     readonly MpvPlayer _mpvPlayer = new();
+    readonly Logger _logger = LogManager.GetCurrentClassLogger();
     readonly bool _isRestore;
 
     public WallpaperManager(WallpaperManagerSnapshot? snapshot = null)
@@ -31,9 +33,17 @@ public class WallpaperManager
 
     internal void Dispose()
     {
-        _mpvPlayer.Process?.CloseMainWindow();
-        if (_isRestore && _mpvPlayer.Process?.HasExited == false)
-            _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
+        try
+        {
+            _mpvPlayer.Process?.CloseMainWindow();
+            if (_isRestore && _mpvPlayer.Process?.HasExited == false)
+                _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Dispose WallpaperManager");
+            Console.WriteLine(ex.Message);
+        }
     }
 
     internal int GetPlayIndex()

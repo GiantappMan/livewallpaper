@@ -252,7 +252,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         const fileName = importedFile.name.split(".")[0] + ".jpg";
         var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
         if (props.wallpaper) {
-            var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
+            // var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
+            var wallpaper = new Wallpaper({
+                ...props.wallpaper,
+            });
+            // var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
+            wallpaper.meta.title = data.title;
+            wallpaper.coverUrl = coverUrl || "";
+            wallpaper.fileUrl = importedFile.url;
+            var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
                 toast.warning("更新失败，不支持的格式");
             else {
@@ -487,12 +495,14 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             添加壁纸
                         </Button> : <div></div>
                     }
-                    <Button type="submit" disabled={uploading}>
+                    <Button type="submit" disabled={uploading} onClick={() => {
+                        form.handleSubmit(onSubmit)();
+                    }}>
                         {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
                         {uploading ? "创建中..." : "保存"}
                     </Button>
                 </div>
             </DialogFooter>
         </DialogContent>
-    </Dialog>
+    </Dialog >
 }

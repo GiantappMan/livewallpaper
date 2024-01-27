@@ -102,6 +102,10 @@ public class MpvPlayer
             Process?.Dispose();
 
             Process = new Process();
+            Process.Exited += (s, e) =>
+            {
+                ProcessLaunched = false;
+            };
             _logger.Error($"LaunchAsync {PlayerPath}");
             Process.StartInfo.FileName = PlayerPath;
 
@@ -133,8 +137,9 @@ public class MpvPlayer
             //列表循环播放
             args.Append("--loop-playlist=inf ");
 
+            //偶尔起不来
             //最小化
-            args.Append("--window-minimized=yes ");
+            //args.Append("--window-minimized=yes ");
 
             //允许屏保
             args.Append("--stop-screensaver=no ");
@@ -161,11 +166,12 @@ public class MpvPlayer
 
             ProcessLaunched = true;
             //异步等待窗口句柄
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
                 {
-                    Thread.Sleep(100);
+                    //Thread.Sleep(100);
+                    await Task.Delay(100);
                 }
             });
 

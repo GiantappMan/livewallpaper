@@ -347,6 +347,39 @@ public class ApiObject
         return WallpaperApi.UpdateWallpaper(title, cover, path, oldWallpaper);
     }
 
+    public bool UpdateWallpaperNew(string newWallpaperJson, string oldWallpaperPath)
+    {
+        var newWallpaper = JsonConvert.DeserializeObject<Wallpaper>(newWallpaperJson, WallpaperApi.JsonSettings);
+        ConfigWallpaper config = Configer.Get<ConfigWallpaper>() ?? new();
+
+        if (newWallpaper == null || string.IsNullOrEmpty(oldWallpaperPath))
+            return false;
+
+        oldWallpaperPath = AppService.ConvertUrlToPath(config, oldWallpaperPath) ?? "";
+        var oldWallpaper = Wallpaper.From(oldWallpaperPath);
+
+        if (oldWallpaper == null)
+            return false;
+
+        //把playlist里面的url转换成本地路径
+        if (newWallpaper.CoverUrl != null)
+            newWallpaper.CoverPath = AppService.ConvertUrlToTmpPath(newWallpaper.CoverUrl);
+        if (newWallpaper.FileUrl != null)
+        {
+            newWallpaper.FilePath = AppService.ConvertUrlToTmpPath(newWallpaper.FileUrl);
+            newWallpaper.FilePath = AppService.ConvertUrlToPath(config, newWallpaper.FilePath);//有可能没改，就是壁纸目录
+        }
+
+        if (newWallpaper.Setting.IsPlaylist)
+            foreach (var item in newWallpaper.Setting.Wallpapers)
+            {
+                item.CoverPath = AppService.ConvertUrlToPath(config, item.CoverUrl);
+                item.FilePath = AppService.ConvertUrlToPath(config, item.FileUrl);
+            }
+
+        return WallpaperApi.UpdateWallpaper(newWallpaper, oldWallpaper);
+    }
+
     public bool DeleteWallpaper(string wallpaperJson)
     {
         var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);

@@ -262,6 +262,19 @@ class API {
     }
   }
 
+  async updateWallpaperNew(wallpaper: Wallpaper, oldPath: string): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var res = await api.UpdateWallpaperNew(JSON.stringify(wallpaper), oldPath);
+      return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   async deleteWallpaper(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
