@@ -10,7 +10,7 @@ import {
     // DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { DeleteIcon, UploadCloudIcon, ListPlus } from "lucide-react"
+import { DeleteIcon, UploadCloudIcon, ListPlus, PlusIcon } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -277,6 +277,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             toast.warning("列表模式，壁纸不能为空");
             return;
         }
+        console.log("submitPlaylist", data);
     }
 
     function onSubmit(data: z.infer<typeof formSchema>) {
@@ -297,15 +298,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         props.onChange(e);
     }} >
         <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>{props.wallpaper ? `编辑${isPlaylist ? "列表" : "壁纸"}` : `创建${isPlaylist ? "列表" : "壁纸"}`}</DialogTitle>
+                <DialogDescription>
+                    {`本地${isPlaylist ? "列表" : "壁纸"}，仅保存在你本机`}
+                </DialogDescription>
+            </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <DialogHeader>
-                            <DialogTitle>{props.wallpaper ? `编辑${isPlaylist ? "列表" : "壁纸"}` : `创建${isPlaylist ? "列表" : "壁纸"}`}</DialogTitle>
-                            <DialogDescription>
-                                {`本地${isPlaylist ? "列表" : "壁纸"}，仅保存在你本机`}
-                            </DialogDescription>
-                        </DialogHeader>
                         <div className="mt-2 mb-3">
                             <div className="flex flex-col space-y-4">
                                 <FormField
@@ -408,7 +409,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         </div>
                                     </>}
                                     {wallpapers && wallpapers.length > 0 && <div className="flex flex-col space-y-2">
-                                        {wallpapers.map((wallpaper, index) => {
+                                        {/* {wallpapers.map((wallpaper, index) => {
                                             return <div key={index} className="flex justify-between items-center text-[#9CA3AF]">
                                                 <div>
                                                     <div className="flex justify-between items-center">
@@ -422,15 +423,36 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                     {
                                                         wallpaper &&
                                                         <picture>
-                                                            <img alt="预览" src={wallpaper.coverUrl} />
+                                                            <img className="w-full h-[100px]" alt="预览" src={wallpaper.coverUrl} />
                                                         </picture>
                                                     }
                                                 </div>
                                             </div>
-                                        })}
-                                        <Button onClick={() => { setOpenSelectWallpaperDialog(true) }}>
-                                            继续添加
-                                        </Button>
+                                        })} */}
+                                        <ul role="list" className="grid grid-cols-2 gap-x-4 gap-y-8 p-2">
+                                            {wallpapers.map((wallpaper, index) => (
+                                                <li key={index} className="relative">
+                                                    <div className="group aspect-h-7 aspect-w-10 block w-full overflow-hidden rounded-lg" title={wallpaper.meta.title}>
+                                                        <picture>
+                                                            <img src={wallpaper.coverUrl}
+                                                                height="200"
+                                                                width="300"
+                                                                style={{
+                                                                    aspectRatio: "300/200",
+                                                                    objectFit: "cover",
+                                                                }}
+                                                                alt={wallpaper.title} className="pointer-events-none object-cover group-hover:opacity-75" />
+                                                        </picture>
+                                                    </div>
+                                                    <p className="pointer-events-none mt-2 block truncate text-sm font-medium">{wallpaper.meta.title}</p>
+                                                    <Button className="absolute top-0 right-0" type="button" variant="ghost" onClick={() => {
+                                                        form.setValue("wallpapers", wallpapers.filter((_, i) => i !== index));
+                                                    }}>
+                                                        <DeleteIcon className="h-6 w-6" />
+                                                    </Button>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>}
                                 </>}
                                 <FormField
@@ -457,12 +479,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                 />
                             </div>
                         </div>
-                        <DialogFooter>
-                            <Button type="submit" disabled={uploading}>
-                                {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
-                                {uploading ? "创建中..." : "保存"}
-                            </Button>
-                        </DialogFooter>
+
                         <SelectWallpaperDialog selectedWallpapers={props.wallpaper?.setting.wallpapers || []}
                             open={openSelectWallpaperDialog}
                             onChangeOpen={setOpenSelectWallpaperDialog}
@@ -474,6 +491,19 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                     </form>
                 </Form>
             </ScrollArea>
+            <DialogFooter>
+                <div className="flex w-full justify-between">
+                    {
+                        isPlaylist ? <Button type="button" variant="secondary" onClick={() => { setOpenSelectWallpaperDialog(true) }}>
+                            添加壁纸
+                        </Button> : <div></div>
+                    }
+                    <Button type="submit" disabled={uploading}>
+                        {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
+                        {uploading ? "创建中..." : "保存"}
+                    </Button>
+                </div>
+            </DialogFooter>
         </DialogContent>
     </Dialog>
 }

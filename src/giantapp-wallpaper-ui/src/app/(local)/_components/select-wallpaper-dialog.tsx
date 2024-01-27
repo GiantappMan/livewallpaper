@@ -39,6 +39,13 @@ export function SelectWallpaperDialog(props: Props) {
                     wallpaper.coverUrl += `?t=${Date.now()}`;
                 }
             })
+
+            // //delay 5s
+            // await new Promise((resolve) => {
+            //     setTimeout(() => {
+            //         resolve(null);
+            //     }, 5000)
+            // });
             setWallpapers(res.data);
         } catch (e) {
             console.log(e)
@@ -63,7 +70,6 @@ export function SelectWallpaperDialog(props: Props) {
             props.onSaveSuccess(selectedWallpapers);
         }
         props.onChangeOpen(false); // Close the dialog after saving
-        setSelectedWallpapers([]); // Clear selected wallpapers
     }, [props, selectedWallpapers])
 
     //Add a function to toggle check all
@@ -76,11 +82,14 @@ export function SelectWallpaperDialog(props: Props) {
     }, [selectedWallpapers, wallpapers])
 
     useEffect(() => {
-        refresh();
-    }, []);
+        if (props.open) {
+            setSelectedWallpapers([]); // Clear selected wallpapers
+            refresh();
+        }
+    }, [props.open]);
     return <Dialog open={props.open} onOpenChange={(e) => {
         props.onChangeOpen(e);
-    }} >
+    }}>
         <DialogContent className={"lg:max-w-screen-lg"}>
             <DialogHeader>
                 <DialogTitle>选择壁纸</DialogTitle>
@@ -147,11 +156,16 @@ export function SelectWallpaperDialog(props: Props) {
             </ScrollArea>
             <DialogFooter>
                 <div className="flex w-full justify-between">
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="chk_All" checked={allChecked} onCheckedChange={toggleCheckAll} />
+                    <div className="flex items-center">
+                        <Checkbox id="chk_All" checked={allChecked} onCheckedChange={toggleCheckAll} onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                saveSelectedWallpapers();
+                            }
+                        }}
+                        />
                         <label
                             htmlFor="chk_All"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="pl-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none"
                         >
                             全选
                         </label>

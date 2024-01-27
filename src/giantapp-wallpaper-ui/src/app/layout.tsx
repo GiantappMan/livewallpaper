@@ -156,7 +156,7 @@ export default function RootLayout({
                 <main>
                   {children}
                 </main>
-                <Toaster closeButton={true} />
+                <Toaster closeButton={true} position="top-center" />
               </div>
             </div>
           </ThemeWrapper>
