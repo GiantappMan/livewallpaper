@@ -51,28 +51,28 @@ function getBase64FromBlob(blob: Blob): Promise<string> {
 }
 
 let abortController: AbortController | undefined = undefined;
-
+const formSchema = z.object({
+    title: z.string().refine(value => value !== '', {
+        message: '标题不能为空',
+    }),
+    isPlaylist: z.boolean().optional(),
+    file: z.instanceof(File, {
+        message: "文件未上传",
+    }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
+        message: "文件大小不能超过1G",
+    }),
+    wallpapers: z.array(z.any()).optional(),
+})
+const defaultValues = {
+    title: "",
+    isPlaylist: false,
+    file: undefined,
+    wallpapers: [],
+}
 export function WallpaperDialog(props: WallpaperDialogProps) {
-    const formSchema = z.object({
-        title: z.string().refine(value => value !== '', {
-            message: '标题不能为空',
-        }),
-        isPlaylist: z.boolean().optional(),
-        file: z.instanceof(File, {
-            message: "文件未上传",
-        }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
-            message: "文件大小不能超过1G",
-        }),
-        wallpapers: z.array(z.any()).optional(),
-    })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            title: "",
-            isPlaylist: false,
-            file: undefined,
-            wallpapers: [],
-        }
+        defaultValues
     })
     const { isDirty } = useFormState({ control: form.control });
     const [isOver, setIsOver] = useState(false);
@@ -233,6 +233,59 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         });
     }
 
+    function generatePlaylistCoverImage(): Promise<Blob> {
+        //把wallpapers前面4张图片拼接成一张图片
+        return new Promise((resolve, reject) => {
+            if (!wallpapers || wallpapers.length === 0) {
+                reject(new Error('未导入文件'));
+                return;
+            }
+
+            // 创建一个canvas元素
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Could not create canvas context'));
+                return;
+            }
+
+            //按previewElement元素比例缩放到500
+            const drawWidth = 500;
+            const drawHeight = drawWidth * (3 / 4);
+            canvas.width = drawWidth;
+            canvas.height = drawHeight;
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, drawWidth, drawHeight);
+            let x = 0;
+            let y = 0;
+            for (let i = 0; i < wallpapers.length; i++) {
+                const wallpaper = wallpapers[i];
+                if (i > 3)
+                    break;
+                const img = new Image();
+                img.src = wallpaper.coverUrl;
+                img.onload = function () {
+                    ctx.drawImage(img, x, y, drawWidth / 2, drawHeight / 2);
+                }
+                if (i === 1) {
+                    x = 0;
+                    y = drawHeight / 2;
+                }
+                else {
+                    x = drawWidth / 2;
+                }
+            }
+            // 将canvas的内容转换为Blob对象
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Could not create blob from canvas'));
+                }
+            }, 'image/jpeg');
+        });
+    }
+
     async function submitWallpaper(data: z.infer<typeof formSchema>) {
         if (uploading || !importedFile || !importedFile.url)
             return;
@@ -294,17 +347,58 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             return;
         }
         console.log("submitPlaylist", data);
+        setUploading(true);
+        const imgData = await generatePlaylistCoverImage();
+        //Blob转换成base64
+        const base64String = await getBase64FromBlob(imgData);
+        const fileName = "cover.jpg";
+        var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
+        if (props.wallpaper) {
+            var wallpaper = new Wallpaper({
+                ...props.wallpaper,
+                setting: {
+                    wallpapers: data.wallpapers,
+                }
+            });
+            wallpaper.meta.title = data.title;
+            wallpaper.coverUrl = coverUrl || "";
+            var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
+            if (!res.data)
+                toast.warning("更新失败，不支持的格式");
+            else {
+                toast.success(`更新成功`);
+                props.createSuccess?.();
+            }
+        }
+        else {
+            // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
+            var wallpaper = new Wallpaper({
+                meta: {
+                    title: data.title,
+                },
+                coverUrl: coverUrl || "",
+                setting: {
+                    wallpapers: data.wallpapers,
+                }
+            });
+            var res = await api.createWallpaperNew(wallpaper);
+            if (!res.data)
+                toast.warning("创建失败，不支持的格式");
+            else {
+                toast.success(`创建成功`);
+                props.createSuccess?.();
+            }
+        }
+        setUploading(false);
     }
 
     function onSubmit(data: z.infer<typeof formSchema>) {
-        debugger
         if (data.isPlaylist) {
             return submitPlaylist(data);
         }
         else {
             return submitWallpaper(data);
         }
-
     }
 
     return <Dialog open={props.open} onOpenChange={(e) => {
@@ -482,7 +576,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             onChangeOpen={setOpenSelectWallpaperDialog}
                             onSaveSuccess={(wallpapers) => {
                                 //append
-                                form.setValue("wallpapers", [...wallpapers, ...(form.getValues("wallpapers") || [])]);
+                                form.setValue("wallpapers", [...(form.getValues("wallpapers") || []), ...wallpapers]);
                             }}
                         />
                     </form>
