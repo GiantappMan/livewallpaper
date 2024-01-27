@@ -10,14 +10,14 @@ import {
     // DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { DeleteIcon, UploadCloudIcon, ListPlus, PlusIcon } from "lucide-react"
+import { DeleteIcon, UploadCloudIcon, ListPlus } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import api from "@/lib/client/api"
 import { toast } from "sonner"
 import * as z from "zod"
-import { useForm, useFormState } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Wallpaper } from "@/lib/client/types/wallpaper"
@@ -25,13 +25,6 @@ import processFile from "./process-file"
 import { Switch } from "@/components/ui/switch"
 import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-interface WallpaperDialogProps {
-    wallpaper?: Wallpaper | null
-    open: boolean
-    onChange: (open: boolean) => void
-    createSuccess?: () => void
-}
 
 function getBase64FromBlob(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -50,6 +43,38 @@ function getBase64FromBlob(blob: Blob): Promise<string> {
     });
 }
 
+function generateCoverImage(previewElement: HTMLVideoElement | HTMLImageElement | undefined | null, eWidth: number, eHeight: number): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        if (!previewElement) {
+            reject(new Error('预览元素未找到'));
+            return;
+        }
+        // 创建一个canvas元素
+        const canvas = document.createElement('canvas');
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            reject(new Error('Could not create canvas context'));
+            return;
+        }
+
+        //按previewElement元素比例缩放到500
+        const drawWidth = 500;
+        const drawHeight = drawWidth * (eHeight / eWidth);
+        canvas.width = drawWidth;
+        canvas.height = drawHeight;
+        ctx.drawImage(previewElement, 0, 0, drawWidth, drawHeight);
+        // 将canvas的内容转换为Blob对象
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(blob);
+            } else {
+                reject(new Error('Could not create blob from canvas'));
+            }
+        }, 'image/jpeg');
+    });
+}
+
 let abortController: AbortController | undefined = undefined;
 const formSchema = z.object({
     title: z.string().refine(value => value !== '', {
@@ -63,18 +88,25 @@ const formSchema = z.object({
     }),
     wallpapers: z.array(z.any()).optional(),
 })
-const defaultValues = {
+let defaultValues = {
     title: "",
     isPlaylist: false,
     file: undefined,
     wallpapers: [],
 }
+
+interface WallpaperDialogProps {
+    wallpaper?: Wallpaper | null
+    open: boolean
+    onChange: (open: boolean) => void
+    createSuccess?: () => void
+}
+
 export function WallpaperDialog(props: WallpaperDialogProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues
     })
-    const { isDirty } = useFormState({ control: form.control });
     const [isOver, setIsOver] = useState(false);
     const [progress, setProgress] = useState(0);
     const [importing, setImporting] = useState(false);
@@ -101,24 +133,24 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             setImporting(false);
             setImportedFile(undefined);
             abortController?.abort();
-            form.reset();
         } else {
-            if (props.wallpaper) {
-                const isPlaylist = props.wallpaper?.setting.isPlaylist || false;
-                form.setValue("title", props.wallpaper?.meta.title || "");
-                form.setValue("file", new File([], ""));
-                if (isPlaylist) {
-                    form.setValue("isPlaylist", isPlaylist)
-                    form.setValue("wallpapers", props.wallpaper?.setting.wallpapers || []);
-                }
-                else {
-                    setImportedFile({
-                        name: props.wallpaper?.fileName || "",
-                        url: props.wallpaper?.fileUrl || "",
-                        fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
-                    });
-                }
-            }
+            const isPlaylist = props.wallpaper?.setting.isPlaylist || false;
+            // if (props.wallpaper) {
+            //     if (!isPlaylist) {
+            //         setImportedFile({
+            //             name: props.wallpaper?.fileName || "",
+            //             url: props.wallpaper?.fileUrl || "",
+            //             fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
+            //         });
+            //     }
+            // }
+            // debugger
+            // form.setValue("wallpapers", props.wallpaper?.setting.wallpapers || []);
+            // form.setValue("title", props.wallpaper?.meta.title || "");
+            // form.setValue("file", new File([], ""));
+            // form.setValue("isPlaylist", isPlaylist)
+            defaultValues.isPlaylist = isPlaylist;
+            form.reset(defaultValues);
         }
     }, [form, props.open, props.wallpaper]);
 
@@ -182,111 +214,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
     }, [uploadFile, importingFile]);
 
-    function generateCoverImage(): Promise<Blob> {
-        return new Promise((resolve, reject) => {
-            if (!importedFile) {
-                reject(new Error('未导入文件'));
-                return;
-            }
-
-            //当前预览元素
-            let previewElement: HTMLVideoElement | HTMLImageElement | undefined | null;
-            let eWidth: number;
-            let eHeight: number;
-            if (importedFile.fileType === "img") {
-                previewElement = previewImgRef.current;
-                eWidth = previewElement?.width || 0;
-                eHeight = previewElement?.height || 0;
-            } else {
-                previewElement = previewVideoRef.current;
-                eWidth = previewElement?.videoWidth || 0;
-                eHeight = previewElement?.videoHeight || 0;
-            }
-
-            if (!previewElement) {
-                reject(new Error('预览元素未找到'));
-                return;
-            }
-            // 创建一个canvas元素
-            const canvas = document.createElement('canvas');
-
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                reject(new Error('Could not create canvas context'));
-                return;
-            }
-
-            //按previewElement元素比例缩放到500
-            const drawWidth = 500;
-            const drawHeight = drawWidth * (eHeight / eWidth);
-            canvas.width = drawWidth;
-            canvas.height = drawHeight;
-            ctx.drawImage(previewElement, 0, 0, drawWidth, drawHeight);
-            // 将canvas的内容转换为Blob对象
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error('Could not create blob from canvas'));
-                }
-            }, 'image/jpeg');
-        });
-    }
-
-    function generatePlaylistCoverImage(): Promise<Blob> {
-        //把wallpapers前面4张图片拼接成一张图片
-        return new Promise((resolve, reject) => {
-            if (!wallpapers || wallpapers.length === 0) {
-                reject(new Error('未导入文件'));
-                return;
-            }
-
-            // 创建一个canvas元素
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                reject(new Error('Could not create canvas context'));
-                return;
-            }
-
-            //按previewElement元素比例缩放到500
-            const drawWidth = 500;
-            const drawHeight = drawWidth * (3 / 4);
-            canvas.width = drawWidth;
-            canvas.height = drawHeight;
-            ctx.fillStyle = "#000";
-            ctx.fillRect(0, 0, drawWidth, drawHeight);
-            let x = 0;
-            let y = 0;
-            for (let i = 0; i < wallpapers.length; i++) {
-                const wallpaper = wallpapers[i];
-                if (i > 3)
-                    break;
-                const img = new Image();
-                img.src = wallpaper.coverUrl;
-                img.onload = function () {
-                    ctx.drawImage(img, x, y, drawWidth / 2, drawHeight / 2);
-                }
-                if (i === 1) {
-                    x = 0;
-                    y = drawHeight / 2;
-                }
-                else {
-                    x = drawWidth / 2;
-                }
-            }
-            // 将canvas的内容转换为Blob对象
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error('Could not create blob from canvas'));
-                }
-            }, 'image/jpeg');
-        });
-    }
-
-    async function submitWallpaper(data: z.infer<typeof formSchema>) {
+    const submitWallpaper = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (uploading || !importedFile || !importedFile.url)
             return;
 
@@ -299,7 +227,20 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
         setUploading(true);
 
-        const imgData = await generateCoverImage();
+        let previewElement;
+        let eWidth;
+        let eHeight;
+        if (importedFile.fileType === "img") {
+            previewElement = previewImgRef.current;
+            eWidth = previewElement?.width || 0;
+            eHeight = previewElement?.height || 0;
+        } else {
+            previewElement = previewVideoRef.current;
+            eWidth = previewElement?.videoWidth || 0;
+            eHeight = previewElement?.videoHeight || 0;
+        }
+
+        const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = importedFile.name.split(".")[0] + ".jpg";
@@ -339,16 +280,21 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         setUploading(false);
-    }
+    }, [importedFile, importing, props, uploading]);
 
-    async function submitPlaylist(data: z.infer<typeof formSchema>) {
+    const submitPlaylist = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (!data.wallpapers?.length) {
             toast.warning("列表模式，壁纸不能为空");
             return;
         }
         console.log("submitPlaylist", data);
         setUploading(true);
-        const imgData = await generatePlaylistCoverImage();
+
+        let previewElement = <Button>test</Button>;
+        let eWidth = 500;
+        let eHeight = 300;
+
+        const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = "cover.jpg";
@@ -390,24 +336,30 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         setUploading(false);
-    }
+    }, [props]);
 
-    function onSubmit(data: z.infer<typeof formSchema>) {
+    const onSubmit = useCallback((data: z.infer<typeof formSchema>) => {
         if (data.isPlaylist) {
             return submitPlaylist(data);
         }
         else {
             return submitWallpaper(data);
         }
-    }
+    }, [submitPlaylist, submitWallpaper]);
 
-    return <Dialog open={props.open} onOpenChange={(e) => {
+    const onClose = useCallback((e: boolean) => {
+        var value = form.getValues();
+        //自己实现，因为formState.isDirty不准确
+        var isDirty = JSON.stringify(value) != JSON.stringify(defaultValues)
+        console.log(JSON.stringify(value), JSON.stringify(defaultValues), isDirty);
         if (!e && isDirty) {
             confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
             return;
         }
         props.onChange(e);
-    }} >
+    }, [form, props]);
+
+    return <Dialog open={props.open} onOpenChange={onClose} >
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>{props.wallpaper ? `编辑${isPlaylist ? "列表" : "壁纸"}` : `创建${isPlaylist ? "列表" : "壁纸"}`}</DialogTitle>
