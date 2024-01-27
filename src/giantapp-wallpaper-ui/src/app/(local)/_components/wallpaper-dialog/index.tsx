@@ -261,7 +261,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         else {
-            var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
+            // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
+            var wallpaper = new Wallpaper({
+                meta: {
+                    title: data.title,
+                },
+                coverUrl: coverUrl || "",
+                fileUrl: importedFile.url,
+            });
+            var res = await api.createWallpaperNew(wallpaper);
             if (!res.data)
                 toast.warning("创建失败，不支持的格式");
             else {
@@ -281,6 +289,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     }
 
     function onSubmit(data: z.infer<typeof formSchema>) {
+        debugger
         if (data.isPlaylist) {
             return submitPlaylist(data);
         }
@@ -409,26 +418,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         </div>
                                     </>}
                                     {wallpapers && wallpapers.length > 0 && <div className="flex flex-col space-y-2">
-                                        {/* {wallpapers.map((wallpaper, index) => {
-                                            return <div key={index} className="flex justify-between items-center text-[#9CA3AF]">
-                                                <div>
-                                                    <div className="flex justify-between items-center">
-                                                        <p>{wallpaper.title}</p>
-                                                        <Button type="button" variant="ghost" onClick={() => {
-                                                            form.setValue("wallpapers", wallpapers.filter((_, i) => i !== index));
-                                                        }}>
-                                                            <DeleteIcon className="h-6 w-6" />
-                                                        </Button>
-                                                    </div>
-                                                    {
-                                                        wallpaper &&
-                                                        <picture>
-                                                            <img className="w-full h-[100px]" alt="预览" src={wallpaper.coverUrl} />
-                                                        </picture>
-                                                    }
-                                                </div>
-                                            </div>
-                                        })} */}
                                         <ul role="list" className="grid grid-cols-2 gap-x-4 gap-y-8 p-2">
                                             {wallpapers.map((wallpaper, index) => (
                                                 <li key={index} className="relative">

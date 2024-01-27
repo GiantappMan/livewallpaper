@@ -303,8 +303,10 @@ public class ApiObject
         var config = Configer.Get<ConfigWallpaper>() ?? new();
 
         //把playlist里面的url转换成本地路径
-        wallpaper.CoverPath = AppService.ConvertUrlToPath(config, wallpaper.CoverUrl);
-        wallpaper.FilePath = AppService.ConvertUrlToPath(config, wallpaper.FileUrl);
+        if (wallpaper.CoverUrl != null)
+            wallpaper.CoverPath = AppService.ConvertUrlToTmpPath(wallpaper.CoverUrl);
+        if (wallpaper.FileUrl != null)
+            wallpaper.FilePath = AppService.ConvertUrlToTmpPath(wallpaper.FileUrl);
 
         if (wallpaper.Setting.IsPlaylist)
             foreach (var item in wallpaper.Setting.Wallpapers)
