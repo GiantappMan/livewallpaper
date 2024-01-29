@@ -75,6 +75,54 @@ function generateCoverImage(previewElement: HTMLVideoElement | HTMLImageElement 
     });
 }
 
+const createImageCollage = (imageUrls: string[]): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 定义 canvas 的大小
+        const width = 800;
+        const height = 800;
+        canvas.width = width;
+        canvas.height = height;
+
+        // 加载所有图片
+        const images = imageUrls.map(url => {
+            const img = new Image();
+            img.src = url;
+            img.crossOrigin = 'Anonymous'; // 处理跨域问题
+            return img;
+        });
+
+        // 确保所有图片加载完成
+        const loadPromises = images.map(img => new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = () => reject(new Error(`Failed to load image at ${img.src}`));
+        }));
+
+        Promise.all(loadPromises).then(() => {
+            // 定义每张图片的绘制位置和大小
+            const numPerRow = Math.ceil(Math.sqrt(images.length));
+            const size = width / numPerRow;
+
+            images.forEach((img, index) => {
+                const x = (index % numPerRow) * size;
+                const y = Math.floor(index / numPerRow) * size;
+                ctx?.drawImage(img, x, y, size, size);
+            });
+
+            // 导出结果并解析 Promise
+            canvas.toBlob(blob => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Could not create blob from canvas'));
+                }
+            }, 'image/png');
+        }).catch(reject);
+    });
+};
+
 let abortController: AbortController | undefined = undefined;
 const formSchema = z.object({
     title: z.string().refine(value => value !== '', {
@@ -83,10 +131,21 @@ const formSchema = z.object({
     isPlaylist: z.boolean().optional(),
     file: z.instanceof(File, {
         message: "文件未上传",
-    }).optional().refine((file) => file && file.size < 1024 * 1024 * 1024, {
-        message: "文件大小不能超过1G",
-    }),
+    }).optional()
+    // .refine((file) => file && file.size < 1024 * 1024 * 1024, {
+    //     message: "文件大小不能超过1G",
+    // })
+    ,
     wallpapers: z.array(z.any()).optional(),
+}).refine(data => {
+    if (data.isPlaylist) {
+        return data.wallpapers && data.wallpapers.length > 0;
+    }
+    else {
+        return data.file && data.file.size > 1024 * 1024 * 1024;
+    }
+}, {
+    message: "数据不完整",
 })
 let defaultValues = {
     title: "",
@@ -290,11 +349,21 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         console.log("submitPlaylist", data);
         setUploading(true);
 
-        let previewElement = <Button>test</Button>;
+        let previewElement;
+        //生成previewElement,把前4张wallpaper拼成一张雪碧图
+
         let eWidth = 500;
         let eHeight = 300;
 
-        const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
+        // const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
+        let previewWallpapers = data.wallpapers
+            .map((wallpaper: Wallpaper) => wallpaper.coverUrl)
+            .filter((coverUrl): coverUrl is string => coverUrl !== undefined);
+
+        //只要前4张
+        previewWallpapers = previewWallpapers.slice(0, 4);
+        const imgData = await createImageCollage(previewWallpapers);
+        debugger
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = "cover.jpg";
