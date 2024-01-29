@@ -435,8 +435,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                     <div className="flex justify-between items-center">
                                                         <p>{importedFile.name}</p>   <Button type="button" variant="ghost" onClick={() => {
                                                             setImportedFile(undefined);
-                                                            if (fileInputRef.current)
-                                                                fileInputRef.current.value = '';
+                                                            // if (fileInputRef.current)
+                                                            //     fileInputRef.current.value = '';
+                                                            form.setValue("file", undefined);
                                                         }}>
                                                             <DeleteIcon className="h-6 w-6" />
                                                         </Button>
