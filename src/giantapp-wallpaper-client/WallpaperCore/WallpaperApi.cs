@@ -351,20 +351,34 @@ public static class WallpaperApi
 
     public static bool CreateWallpaper(Wallpaper wallpaper, string saveFolder)
     {
-        if (wallpaper == null || wallpaper.FilePath == null || wallpaper.CoverPath == null)
+        if (wallpaper == null || wallpaper.CoverPath == null)
             return false;
+
+        if (wallpaper.Setting.IsPlaylist)
+        {
+            if (wallpaper.Setting.Wallpapers.Count == 0)
+                return false;
+        }
+        else
+        {
+            if (wallpaper.FilePath == null)
+                return false;
+        }
 
         if (!Directory.Exists(saveFolder))
             Directory.CreateDirectory(saveFolder);
 
-        string path = wallpaper.FilePath;
+        string? path = wallpaper.FilePath;
         string cover = wallpaper.CoverPath;
 
-        //保存到目录
-        string extension = Path.GetExtension(path);
         string saveFileName = Guid.NewGuid().ToString();
-        string savePath = Path.Combine(saveFolder, saveFileName + extension);
-        File.Copy(path, savePath);
+        if (path != null)
+        {
+            //保存到目录
+            string extension = Path.GetExtension(path);
+            string savePath = Path.Combine(saveFolder, saveFileName + extension);
+            File.Copy(path, savePath);
+        }
 
         //移动cover位置
         string coverExtension = Path.GetExtension(cover);

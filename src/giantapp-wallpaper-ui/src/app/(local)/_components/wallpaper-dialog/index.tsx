@@ -363,20 +363,20 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         //只要前4张
         previewWallpapers = previewWallpapers.slice(0, 4);
         const imgData = await createImageCollage(previewWallpapers);
-        debugger
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = "cover.jpg";
         var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
-        if (props.wallpaper) {
-            var wallpaper = new Wallpaper({
-                ...props.wallpaper,
-                setting: {
-                    wallpapers: data.wallpapers,
-                }
-            });
-            wallpaper.meta.title = data.title;
-            wallpaper.coverUrl = coverUrl || "";
+        var wallpaper = new Wallpaper({
+            ...props.wallpaper,
+        });
+
+        wallpaper.meta.title = data.title;
+        wallpaper.coverUrl = coverUrl || "";
+        wallpaper.setting.isPlaylist = true;
+        wallpaper.setting.wallpapers = data.wallpapers;
+        
+        if (props.wallpaper?.meta.id) {
             var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
                 toast.warning("更新失败，不支持的格式");
@@ -387,15 +387,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
         else {
             // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
-            var wallpaper = new Wallpaper({
-                meta: {
-                    title: data.title,
-                },
-                coverUrl: coverUrl || "",
-                setting: {
-                    wallpapers: data.wallpapers,
-                }
-            });
             var res = await api.createWallpaperNew(wallpaper);
             if (!res.data)
                 toast.warning("创建失败，不支持的格式");
@@ -597,6 +588,8 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             open={openSelectWallpaperDialog}
                             onChangeOpen={setOpenSelectWallpaperDialog}
                             onSaveSuccess={(wallpapers) => {
+                                if (!form.getValues("title"))
+                                    form.setValue("title", "未命名列表");
                                 //append
                                 form.setValue("wallpapers", [...(form.getValues("wallpapers") || []), ...wallpapers]);
                             }}
