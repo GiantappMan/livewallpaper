@@ -20,7 +20,7 @@ import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperMeta, WallpaperType } from "@/lib/client/types/wallpaper"
 import processFile from "./process-file"
 import { Switch } from "@/components/ui/switch"
 import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
@@ -75,7 +75,7 @@ function generateCoverImage(previewElement: HTMLVideoElement | HTMLImageElement 
     });
 }
 
-const createImageCollage = (imageUrls: string[]): Promise<Blob> => {
+const generatePlaylistCover = (imageUrls: string[]): Promise<Blob> => {
     return new Promise((resolve, reject) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -92,7 +92,7 @@ const createImageCollage = (imageUrls: string[]): Promise<Blob> => {
             img.src = url;
             img.crossOrigin = 'Anonymous'; // 处理跨域问题
             //object-fit:cover
-            img.style.objectFit = "cover";
+            // img.style.objectFit = "cover";
 
             return img;
         });
@@ -150,7 +150,12 @@ const formSchema = z.object({
 }, {
     message: "数据不完整",
 })
-let defaultValues = {
+let defaultValues: {
+    title: string,
+    isPlaylist: boolean,
+    file: File | undefined,
+    wallpapers: Wallpaper[]
+} = {
     title: "",
     isPlaylist: false,
     file: undefined,
@@ -196,7 +201,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             setImportedFile(undefined);
             abortController?.abort();
         } else {
-            const isPlaylist = props.wallpaper?.meta.isPlaylist() || false;
+            const isPlaylist = WallpaperMeta.isPlaylist(props.wallpaper?.meta);
             // if (props.wallpaper) {
             //     if (!isPlaylist) {
             //         setImportedFile({
@@ -211,7 +216,17 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             // form.setValue("title", props.wallpaper?.meta.title || "");
             // form.setValue("file", new File([], ""));
             // form.setValue("isPlaylist", isPlaylist)
+
+            defaultValues.wallpapers = props.wallpaper?.meta.wallpapers || [];
+            defaultValues.title = props.wallpaper?.meta.title || "";
             defaultValues.isPlaylist = isPlaylist;
+            if (!isPlaylist) {
+                setImportedFile({
+                    name: props.wallpaper?.fileName || "",
+                    url: props.wallpaper?.fileUrl || "",
+                    fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
+                });
+            }
             form.reset(defaultValues);
         }
     }, [form, props.open, props.wallpaper]);
@@ -350,7 +365,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
         //只要前4张
         previewWallpapers = previewWallpapers.slice(0, 4);
-        const imgData = await createImageCollage(previewWallpapers);
+        const imgData = await generatePlaylistCover(previewWallpapers);
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
         const fileName = "cover.jpg";

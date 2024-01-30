@@ -34,7 +34,7 @@ export class Wallpaper {
     if (!wallpaper || !wallpaper.fileUrl || !targetWallpaper)
       return false;
     const fileUrl = targetWallpaper.fileUrl;
-    if (wallpaper.meta.isPlaylist()) {
+    if (WallpaperMeta.isPlaylist(wallpaper.meta)) {
       return wallpaper.meta.wallpapers?.some(w => w.fileUrl === fileUrl) || false;
     }
     return wallpaper.fileUrl === fileUrl;
@@ -42,7 +42,7 @@ export class Wallpaper {
 
   //查找真正播放的wallpaper
   static findPlayingWallpaper(wallpaper: Wallpaper): Wallpaper {
-    if (!wallpaper.meta.isPlaylist())
+    if (!WallpaperMeta.isPlaylist(wallpaper.meta))
       return wallpaper;
     const wallpapers = wallpaper.meta.wallpapers;
     if (!wallpapers || wallpapers.length === 0)
@@ -57,7 +57,7 @@ export class Wallpaper {
       return null;
     if (wallpapers.fileUrl === fileUrl)
       return wallpapers;
-    if (wallpapers.meta.isPlaylist()) {
+    if (WallpaperMeta.isPlaylist(wallpapers.meta)) {
       return wallpapers.meta.wallpapers?.find(w => w.fileUrl === fileUrl) || null;
     }
     return null;
@@ -86,8 +86,8 @@ export class WallpaperMeta {
   type?: WallpaperType;
   playIndex?: number = 0;
   wallpapers?: Wallpaper[] = [];
-  isPlaylist(): boolean {
-    return this.type === WallpaperType.Playlist;
+  static isPlaylist(meta: WallpaperMeta | undefined): boolean {
+    return meta?.type === WallpaperType.Playlist;
   }
 };
 

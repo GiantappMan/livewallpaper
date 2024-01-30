@@ -1,4 +1,4 @@
-import { Wallpaper } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperMeta } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react";
 import { Reply } from "lucide-react"
 import { cn } from "@/lib/utils";
@@ -31,9 +31,9 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 setSelectedWallpaper(null);
         }
 
-        var isPaused = playingStatus.wallpapers.every(x => Wallpaper.findPlayingWallpaper(x).setting.isPaused);
+        var isPaused = playingStatus.wallpapers.every(x => Wallpaper.findPlayingWallpaper(x).runningInfo.isPaused);
         if (selectedWallpaper) {
-            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper).setting.isPaused || false;
+            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper).runningInfo.isPaused || false;
         }
         setIsPaused(isPaused);
     }, [playingStatus.wallpapers, selectedWallpaper]);
@@ -84,7 +84,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             wallpapers: playingStatus.wallpapers.map(x => {
                 var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
                 if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
-                    playingWallpaper.setting.isPaused = false;
+                    playingWallpaper.runningInfo.isPaused = false;
                 }
                 return x;
             })
@@ -98,7 +98,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             wallpapers: playingStatus.wallpapers.map(x => {
                 var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
                 if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
-                    playingWallpaper.setting.isPaused = true;
+                    playingWallpaper.runningInfo.isPaused = true;
                 }
                 return x;
             })
@@ -295,7 +295,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 </PopoverContent>
             </Popover> */}
             {
-                (selectedWallpaper?.setting.isPlaylist)
+                (WallpaperMeta.isPlaylist(selectedWallpaper?.meta))
                 && <PlaylistSheet selectedWallpaper={selectedWallpaper} />
             }
         </div>

@@ -6,7 +6,9 @@ import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Label } from "@radix-ui/react-label";
 
 //定义组件
-const PlaylistSheet = ({ selectedWallpaper }: { selectedWallpaper?: Wallpaper }) => {
+const PlaylistSheet = ({ selectedWallpaper }: {
+    selectedWallpaper?: Wallpaper | null
+}) => {
     return <Sheet modal={true}>
         <SheetTrigger asChild>
             <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
@@ -69,7 +71,7 @@ const PlaylistSheet = ({ selectedWallpaper }: { selectedWallpaper?: Wallpaper })
             </SheetHeader>
             {/* 选中播放列表的壁纸列表 */}
             <div className="flex flex-col space-y-2">
-                {selectedWallpaper?.setting.wallpapers?.map((item, index) => {
+                {selectedWallpaper?.meta.wallpapers?.map((item, index) => {
                     return <div key={index} className="flex items-center p-0 m-0" >
                         <picture className="mr-2">
                             <img

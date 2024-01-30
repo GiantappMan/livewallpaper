@@ -191,8 +191,7 @@ const Page = () => {
                                 }}
                                 title="点击使所有屏幕生效">
 
-                                {/* 图片 */}
-                                {(wallpaper?.meta.type === WallpaperType.Img || wallpaper?.meta.type === WallpaperType.AnimatedImg) && <picture>
+                                <picture>
                                     <img
                                         alt={wallpaper?.meta.title}
                                         className="w-full"
@@ -205,9 +204,9 @@ const Page = () => {
                                         width="300"
                                     />
                                 </picture>
-                                }
+
                                 {/* 视频 */}
-                                {wallpaper?.meta.type === WallpaperType.Video && <picture>
+                                {/* {wallpaper?.meta.type === WallpaperType.Video && <picture>
                                     <img
                                         alt={wallpaper?.meta.title}
                                         className="w-full"
@@ -220,7 +219,7 @@ const Page = () => {
                                         width="300"
                                     />
                                 </picture>
-                                }
+                                } */}
 
                                 <ContextMenu modal={false}>
                                     <ContextMenuTrigger>

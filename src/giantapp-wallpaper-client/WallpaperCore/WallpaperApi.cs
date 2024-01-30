@@ -75,7 +75,6 @@ public static class WallpaperApi
             return b.Meta.CreateTime.Value.CompareTo(a.Meta.CreateTime.Value);
         });
 
-
         return wallpapers.ToArray();
     }
 
@@ -354,7 +353,8 @@ public static class WallpaperApi
         if (wallpaper == null || wallpaper.CoverPath == null)
             return false;
 
-        if (wallpaper.Meta.Type == WallpaperType.Playlist)
+        bool isPlaylist = wallpaper.Meta.IsPlaylist();
+        if (isPlaylist)
         {
             if (wallpaper.Meta.Wallpapers.Count == 0)
                 return false;
@@ -372,14 +372,19 @@ public static class WallpaperApi
         string cover = wallpaper.CoverPath;
 
         string saveFileName = Guid.NewGuid().ToString();
-        if (path != null)
+        string extension = Path.GetExtension(path);
+        string savePath = Path.Combine(saveFolder, saveFileName + extension);
+        if (isPlaylist)
+        {
+            extension = ".playlist";
+            savePath = Path.Combine(saveFolder, saveFileName + extension);
+            File.WriteAllText(savePath, "占位符，表示当前是一个播放列表");
+        }
+        else
         {
             //保存到目录
-            string extension = Path.GetExtension(path);
-            string savePath = Path.Combine(saveFolder, saveFileName + extension);
             File.Copy(path, savePath);
         }
-
         //移动cover位置
         string coverExtension = Path.GetExtension(cover);
         string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");

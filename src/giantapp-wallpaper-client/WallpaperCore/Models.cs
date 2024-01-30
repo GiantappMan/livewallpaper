@@ -259,6 +259,7 @@ public class Wallpaper : ICloneable
     public static readonly string[] WebExtension = new[] { ".html", ".htm" };
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
+    public static readonly string[] PlaylistExtension = new[] { ".playlist" };
 
     public Wallpaper(string? filePath)
     {
@@ -448,6 +449,10 @@ public class Wallpaper : ICloneable
         {
             return WallpaperType.AnimatedImg;
         }
+        else if (PlaylistExtension.Contains(extension))
+        {
+            return WallpaperType.Playlist;
+        }
         return WallpaperType.NotSupported;
     }
 
@@ -458,7 +463,9 @@ public class Wallpaper : ICloneable
                VideoExtension.Contains(lowerCaseExtension) ||
                ExeExtension.Contains(lowerCaseExtension) ||
                WebExtension.Contains(lowerCaseExtension) ||
-               AnimatedImgExtension.Contains(lowerCaseExtension);
+               AnimatedImgExtension.Contains(lowerCaseExtension) ||
+               PlaylistExtension.Contains(lowerCaseExtension)
+               ;
     }
 
     public object Clone()
