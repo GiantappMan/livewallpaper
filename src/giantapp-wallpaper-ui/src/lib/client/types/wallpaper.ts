@@ -34,20 +34,20 @@ export class Wallpaper {
     if (!wallpaper || !wallpaper.fileUrl || !targetWallpaper)
       return false;
     const fileUrl = targetWallpaper.fileUrl;
-    if (wallpaper.setting.isPlaylist) {
-      return wallpaper.setting.wallpapers?.some(w => w.fileUrl === fileUrl) || false;
+    if (wallpaper.meta.isPlaylist()) {
+      return wallpaper.meta.wallpapers?.some(w => w.fileUrl === fileUrl) || false;
     }
     return wallpaper.fileUrl === fileUrl;
   }
 
   //查找真正播放的wallpaper
   static findPlayingWallpaper(wallpaper: Wallpaper): Wallpaper {
-    if (!wallpaper.setting.isPlaylist)
+    if (!wallpaper.meta.isPlaylist())
       return wallpaper;
-    const wallpapers = wallpaper.setting.wallpapers;
+    const wallpapers = wallpaper.meta.wallpapers;
     if (!wallpapers || wallpapers.length === 0)
       return wallpaper;
-    const index = wallpaper.setting.playIndex || 0;
+    const index = wallpaper.meta.playIndex || 0;
     return wallpapers[index];
   }
 
@@ -57,8 +57,8 @@ export class Wallpaper {
       return null;
     if (wallpapers.fileUrl === fileUrl)
       return wallpapers;
-    if (wallpapers.setting.isPlaylist) {
-      return wallpapers.setting.wallpapers?.find(w => w.fileUrl === fileUrl) || null;
+    if (wallpapers.meta.isPlaylist()) {
+      return wallpapers.meta.wallpapers?.find(w => w.fileUrl === fileUrl) || null;
     }
     return null;
   }
@@ -70,7 +70,8 @@ export enum WallpaperType {
   AnimatedImg,
   Video,
   Web,
-  Exe
+  Exe,
+  Playlist
 };
 
 export class WallpaperMeta {
@@ -83,14 +84,17 @@ export class WallpaperMeta {
   createTime?: Date;
   updateTime?: Date;
   type?: WallpaperType;
+  playIndex?: number = 0;
+  wallpapers?: Wallpaper[] = [];
+  isPlaylist(): boolean {
+    return this.type === WallpaperType.Playlist;
+  }
 };
 
 export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
   }
-  isPlaylist?: boolean = false;
-  isPaused?: boolean = false;
   // exe
   enableMouseEvent?: boolean = false;
   // video
@@ -99,10 +103,9 @@ export class WallpaperSetting {
   // volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;
-  playIndex?: number = 0;
-  wallpapers?: Wallpaper[] = [];
 };
 
 export class WallpaperRunningInfo {
   screenIndexes: number[] = [];
+  isPaused?: boolean = false;
 }

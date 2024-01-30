@@ -167,7 +167,7 @@ const Page = () => {
 
     const createPlaylist = () => {
         var wallpaper = new Wallpaper();
-        wallpaper.setting.isPlaylist = true;
+        wallpaper.meta.type = WallpaperType.Playlist;
         setCurrentWallpaper(wallpaper);
         setOpenCreateWallpaperDialog(true);
     }

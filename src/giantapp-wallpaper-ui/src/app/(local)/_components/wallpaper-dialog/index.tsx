@@ -20,7 +20,7 @@ import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Wallpaper } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
 import processFile from "./process-file"
 import { Switch } from "@/components/ui/switch"
 import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
@@ -81,8 +81,8 @@ const createImageCollage = (imageUrls: string[]): Promise<Blob> => {
         const ctx = canvas.getContext('2d');
 
         // 定义 canvas 的大小
-        const width = 800;
-        const height = 800;
+        const width = 500;
+        const height = 300;
         canvas.width = width;
         canvas.height = height;
 
@@ -91,6 +91,9 @@ const createImageCollage = (imageUrls: string[]): Promise<Blob> => {
             const img = new Image();
             img.src = url;
             img.crossOrigin = 'Anonymous'; // 处理跨域问题
+            //object-fit:cover
+            img.style.objectFit = "cover";
+
             return img;
         });
 
@@ -193,7 +196,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             setImportedFile(undefined);
             abortController?.abort();
         } else {
-            const isPlaylist = props.wallpaper?.setting.isPlaylist || false;
+            const isPlaylist = props.wallpaper?.meta.isPlaylist() || false;
             // if (props.wallpaper) {
             //     if (!isPlaylist) {
             //         setImportedFile({
@@ -304,15 +307,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         const base64String = await getBase64FromBlob(imgData);
         const fileName = importedFile.name.split(".")[0] + ".jpg";
         var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
+        var wallpaper = new Wallpaper({
+            ...props.wallpaper,
+        });
+        wallpaper.meta.title = data.title;
+        wallpaper.meta.type = WallpaperType.Video;//todo 更细节的判断
+        wallpaper.coverUrl = coverUrl || "";
+        wallpaper.fileUrl = importedFile.url;
+
         if (props.wallpaper) {
-            // var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
-            var wallpaper = new Wallpaper({
-                ...props.wallpaper,
-            });
-            // var res = await api.updateWallpaper(data.title, coverUrl || "", importedFile.url, props.wallpaper);
-            wallpaper.meta.title = data.title;
-            wallpaper.coverUrl = coverUrl || "";
-            wallpaper.fileUrl = importedFile.url;
             var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
                 toast.warning("更新失败，不支持的格式");
@@ -322,14 +325,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         else {
-            // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
-            var wallpaper = new Wallpaper({
-                meta: {
-                    title: data.title,
-                },
-                coverUrl: coverUrl || "",
-                fileUrl: importedFile.url,
-            });
             var res = await api.createWallpaperNew(wallpaper);
             if (!res.data)
                 toast.warning("创建失败，不支持的格式");
@@ -349,13 +344,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         console.log("submitPlaylist", data);
         setUploading(true);
 
-        let previewElement;
-        //生成previewElement,把前4张wallpaper拼成一张雪碧图
-
-        let eWidth = 500;
-        let eHeight = 300;
-
-        // const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
         let previewWallpapers = data.wallpapers
             .map((wallpaper: Wallpaper) => wallpaper.coverUrl)
             .filter((coverUrl): coverUrl is string => coverUrl !== undefined);
@@ -372,10 +360,10 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         });
 
         wallpaper.meta.title = data.title;
+        wallpaper.meta.wallpapers = data.wallpapers;
+        wallpaper.meta.type = WallpaperType.Playlist;
         wallpaper.coverUrl = coverUrl || "";
-        wallpaper.setting.isPlaylist = true;
-        wallpaper.setting.wallpapers = data.wallpapers;
-        
+
         if (props.wallpaper?.meta.id) {
             var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
@@ -584,7 +572,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             </div>
                         </div>
 
-                        <SelectWallpaperDialog selectedWallpapers={props.wallpaper?.setting.wallpapers || []}
+                        <SelectWallpaperDialog selectedWallpapers={props.wallpaper?.meta.wallpapers || []}
                             open={openSelectWallpaperDialog}
                             onChangeOpen={setOpenSelectWallpaperDialog}
                             onSaveSuccess={(wallpapers) => {

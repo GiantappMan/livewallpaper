@@ -354,9 +354,9 @@ public static class WallpaperApi
         if (wallpaper == null || wallpaper.CoverPath == null)
             return false;
 
-        if (wallpaper.Setting.IsPlaylist)
+        if (wallpaper.Meta.Type == WallpaperType.Playlist)
         {
-            if (wallpaper.Setting.Wallpapers.Count == 0)
+            if (wallpaper.Meta.Wallpapers.Count == 0)
                 return false;
         }
         else

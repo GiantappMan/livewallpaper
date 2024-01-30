@@ -137,7 +137,7 @@ public class ApiObject
         if (wallpaper == null)
             return false;
 
-        wallpaper.Setting.IsPaused = false;
+        wallpaper.RunningInfo.IsPaused = false;
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
 
@@ -145,8 +145,8 @@ public class ApiObject
         wallpaper.CoverUrl = AppService.ConvertUrlToPath(config, wallpaper.CoverPath);
         wallpaper.FileUrl = AppService.ConvertUrlToPath(config, wallpaper.FilePath);
 
-        if (wallpaper.Setting.IsPlaylist)
-            foreach (var item in wallpaper.Setting.Wallpapers)
+        if (wallpaper.Meta.IsPlaylist())
+            foreach (var item in wallpaper.Meta.Wallpapers)
             {
                 item.CoverUrl = AppService.ConvertUrlToPath(config, item.CoverPath);
                 item.FileUrl = AppService.ConvertUrlToPath(config, item.FilePath);
@@ -177,8 +177,8 @@ public class ApiObject
             item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
             item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
 
-            if (item.Setting.IsPlaylist)
-                foreach (var wallpaper in item.Setting.Wallpapers)
+            if (item.Meta.IsPlaylist())
+                foreach (var wallpaper in item.Meta.Wallpapers)
                 {
                     wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
                     wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
@@ -209,8 +209,8 @@ public class ApiObject
             item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
             item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
 
-            if (item.Setting.IsPlaylist)
-                foreach (var wallpaper in item.Setting.Wallpapers)
+            if (item.Meta.IsPlaylist())
+                foreach (var wallpaper in item.Meta.Wallpapers)
                 {
                     wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
                     wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
@@ -308,8 +308,8 @@ public class ApiObject
         if (wallpaper.FileUrl != null)
             wallpaper.FilePath = AppService.ConvertUrlToTmpPath(wallpaper.FileUrl);
 
-        if (wallpaper.Setting.IsPlaylist)
-            foreach (var item in wallpaper.Setting.Wallpapers)
+        if (wallpaper.Meta.IsPlaylist())
+            foreach (var item in wallpaper.Meta.Wallpapers)
             {
                 item.CoverPath = AppService.ConvertUrlToPath(config, item.CoverUrl);
                 item.FilePath = AppService.ConvertUrlToPath(config, item.FileUrl);
@@ -370,8 +370,8 @@ public class ApiObject
             newWallpaper.FilePath = AppService.ConvertUrlToPath(config, newWallpaper.FilePath);//有可能没改，就是壁纸目录
         }
 
-        if (newWallpaper.Setting.IsPlaylist)
-            foreach (var item in newWallpaper.Setting.Wallpapers)
+        if (newWallpaper.Meta.IsPlaylist())
+            foreach (var item in newWallpaper.Meta.Wallpapers)
             {
                 item.CoverPath = AppService.ConvertUrlToPath(config, item.CoverUrl);
                 item.FilePath = AppService.ConvertUrlToPath(config, item.FileUrl);
@@ -447,7 +447,7 @@ public class ApiObject
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
-            var isSamePath = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).All(m => m.Wallpaper?.Setting.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).All(m => m.Wallpaper?.Meta.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
             if (!isSamePath) return null;
             //找到第一个没被遮挡的播放器
             var playingManager = WallpaperApi.RunningWallpapers.Values.FirstOrDefault(m => m.IsScreenMaximized == false);
@@ -483,7 +483,7 @@ public class ApiObject
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
-            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Wallpaper?.Setting.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
+            var isSamePath = WallpaperApi.RunningWallpapers.Values.All(m => m.Wallpaper?.Meta.Wallpapers.All(m => m.FilePath == m.FilePath) == true);
             if (!isSamePath) return;
 
             //设置所有屏幕

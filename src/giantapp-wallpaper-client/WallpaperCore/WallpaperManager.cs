@@ -55,32 +55,35 @@ public class WallpaperManager
     {
         //当前播放设置
         var playSetting = Wallpaper?.Setting;
+        var playMeta = Wallpaper?.Meta;
         var playWallpaper = Wallpaper;
 
-        if (playWallpaper == null || playSetting == null)
+        if (playWallpaper == null || playSetting == null || playMeta == null)
             return;
 
-        if (playSetting.IsPlaylist && playSetting.Wallpapers.Count == 0)
+        bool isPlaylist = playMeta.Type == WallpaperType.Playlist;
+
+        if (isPlaylist && playMeta.Wallpapers.Count == 0)
             return;
 
-        if (!playSetting.IsPlaylist && playWallpaper.FilePath == null)
+        if (!isPlaylist && playWallpaper.FilePath == null)
             return;
 
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
         uint screenIndex = playWallpaper.RunningInfo.ScreenIndexes[0];
 
         //是播放列表就更新当前播放的设置
-        if (playSetting.IsPlaylist && playSetting.PlayIndex < playSetting.Wallpapers.Count())
+        if (isPlaylist && playMeta.PlayIndex < playMeta.Wallpapers.Count())
         {
-            playSetting = playSetting.Wallpapers[(int)playSetting.PlayIndex].Setting;
+            playSetting = playMeta.Wallpapers[(int)playMeta.PlayIndex].Setting;
         }
         _mpvPlayer.ApplySetting(playSetting);
 
         //生成playlist.txt
         var playlist = new string[] { playWallpaper.FilePath! };
-        if (playSetting.IsPlaylist)
+        if (isPlaylist)
         {
-            playlist = playSetting.Wallpapers.Where(m => m.FilePath != null).Select(w => w.FilePath!).ToArray();
+            playlist = playMeta.Wallpapers.Where(m => m.FilePath != null).Select(w => w.FilePath!).ToArray();
         }
 
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
@@ -117,7 +120,7 @@ public class WallpaperManager
         _mpvPlayer.Pause();
 
         if (Wallpaper != null)
-            Wallpaper.Setting.IsPaused = true;
+            Wallpaper.RunningInfo.IsPaused = true;
     }
 
     internal void Resume()
@@ -125,7 +128,7 @@ public class WallpaperManager
         _mpvPlayer.Resume();
 
         if (Wallpaper != null)
-            Wallpaper.Setting.IsPaused = false;
+            Wallpaper.RunningInfo.IsPaused = false;
     }
 
     //internal void SetVolume(int volume)
@@ -152,7 +155,7 @@ public class WallpaperManager
         else
         {
             //用户已手动暂停壁纸
-            if (Wallpaper == null || Wallpaper.Setting.IsPaused)
+            if (Wallpaper == null || Wallpaper.RunningInfo.IsPaused)
                 return;
 
             //恢复壁纸
@@ -186,8 +189,8 @@ public class WallpaperManager
         if (Wallpaper == null)
             return false;
 
-        if (Wallpaper.Setting.IsPlaylist)
-            return Wallpaper.Setting.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
+        if (Wallpaper.Meta.IsPlaylist())
+            return Wallpaper.Meta.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
         else
             return Wallpaper.FilePath == wallpaper.FilePath;
     }
@@ -197,8 +200,8 @@ public class WallpaperManager
         if (Wallpaper == null)
             return null;
 
-        if (Wallpaper.Setting.IsPlaylist && Wallpaper.Setting.PlayIndex < Wallpaper.Setting.Wallpapers.Count())
-            return Wallpaper.Setting.Wallpapers[(int)Wallpaper.Setting.PlayIndex];
+        if (Wallpaper.Meta.IsPlaylist() && Wallpaper.Meta.PlayIndex < Wallpaper.Meta.Wallpapers.Count())
+            return Wallpaper.Meta.Wallpapers[(int)Wallpaper.Meta.PlayIndex];
 
         return Wallpaper;
     }

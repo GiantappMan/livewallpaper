@@ -57,6 +57,11 @@ public class WallpaperMeta : ICloneable
     public DateTime? UpdateTime { get; set; }
     public WallpaperType Type { get; set; }
 
+    //当前播放索引
+    public uint PlayIndex { get; set; } = 0;
+    //播放列表内的壁纸
+    public List<Wallpaper> Wallpapers { get; set; } = new();
+
     //确保有Id
     public void EnsureId(string? filePath = null)
     {
@@ -85,7 +90,17 @@ public class WallpaperMeta : ICloneable
 
     public object Clone()
     {
-        return MemberwiseClone();
+        var res = MemberwiseClone() as WallpaperMeta;
+        foreach (var item in Wallpapers)
+        {
+            res!.Wallpapers.Add((Wallpaper)item.Clone());
+        }
+        return res!;
+    }
+
+    public bool IsPlaylist()
+    {
+        return Type == WallpaperType.Playlist;
     }
 }
 
@@ -134,6 +149,7 @@ public class PlaylistSetting : ICloneable
 public class WallpaperRunningInfo : ICloneable
 {
     public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
+    public bool IsPaused { get; set; }
 
     public object Clone()
     {
@@ -144,9 +160,6 @@ public class WallpaperRunningInfo : ICloneable
 //一个壁纸的设置
 public class WallpaperSetting : ICloneable
 {
-    public bool IsPlaylist { get; set; }
-    public bool IsPaused { get; set; }
-
     #region exe
     /// <summary>
     /// 是否支持鼠标事件，exe和web才行。其他类型设置无效
@@ -183,9 +196,6 @@ public class WallpaperSetting : ICloneable
 
     #region playlist
     public PlayMode Mode { get; set; } = PlayMode.Order;
-    public uint PlayIndex { get; set; } = 0;
-    //播放列表内的壁纸
-    public List<Wallpaper> Wallpapers { get; set; } = new();
     #endregion
 
     public static WallpaperSetting From(Dictionary<string, object> dic)
@@ -211,20 +221,19 @@ public class WallpaperSetting : ICloneable
         var res = new WallpaperSetting
         {
             //ScreenIndexes = ScreenIndexes,
-            IsPlaylist = IsPlaylist,
-            IsPaused = IsPaused,
+            //IsPlaylist = IsPlaylist,
             EnableMouseEvent = EnableMouseEvent,
             HardwareDecoding = HardwareDecoding,
             IsPanScan = IsPanScan,
             //Volume = Volume,
             Mode = Mode,
-            PlayIndex = PlayIndex,
-            Wallpapers = new List<Wallpaper>()
+            //PlayIndex = PlayIndex,
+            //Wallpapers = new List<Wallpaper>()
         };
-        foreach (var item in Wallpapers)
-        {
-            res.Wallpapers.Add((Wallpaper)item.Clone());
-        }
+        //foreach (var item in Wallpapers)
+        //{
+        //    res.Wallpapers.Add((Wallpaper)item.Clone());
+        //}
         return res;
     }
 }
@@ -237,6 +246,7 @@ public enum WallpaperType
     Video,
     Web,
     Exe,
+    Playlist,
 }
 
 /// <summary>
@@ -256,7 +266,7 @@ public class Wallpaper : ICloneable
         Dir = Path.GetDirectoryName(filePath) ?? string.Empty;
         FileName = Path.GetFileName(filePath);
     }
-    //描述数据
+    //描述壁纸是干嘛的
     public WallpaperMeta Meta { get; set; } = new();
 
     //设置
