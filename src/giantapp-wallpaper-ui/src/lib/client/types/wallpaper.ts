@@ -12,12 +12,13 @@ export class Wallpaper {
   meta: WallpaperMeta = new WallpaperMeta();
   setting: WallpaperSetting = new WallpaperSetting();
   runningInfo: WallpaperRunningInfo = new WallpaperRunningInfo();
-  static getFileType(path?: string | null): "img" | "video" | "app" | null {
+  static getFileType(path?: string | null): "img" | "video" | "app" | "playlist" | null {
     if (!path)
       return null;
     //根据后缀名返回 img/video
     const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".gif", ".webp"];
     const videoExt = [".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv"];
+    const playlistExt = [".playlist"];
     const appExt = [".exe"];
     const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
     if (imgExt.includes(ext))
@@ -26,6 +27,9 @@ export class Wallpaper {
       return "video";
     if (appExt.includes(ext))
       return "app";
+    if (playlistExt.includes(ext))
+      return "playlist";
+
     return null;
   }
 

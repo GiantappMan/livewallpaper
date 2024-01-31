@@ -24,6 +24,7 @@ const Page = () => {
         <h1 className="text-2xl">巨应壁纸{version}</h1>
         <div className="flex flex-col space-y-2">
             <h1 className="text-2xl font-semibold mt-4">反馈&源码</h1>
+            （提醒：当前为测试版：bug较多，反馈时，请尽量写下复现操作步骤，不要单一的发泄情绪）
             <LinkClient
                 className="underline-offset-4 hover:underline" href="https://support.qq.com/products/315103" target="_blank">
                 问题和建议

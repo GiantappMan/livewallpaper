@@ -132,7 +132,7 @@ public class MpvPlayer
             args.Append($"--input-ipc-server={IPCServerName} ");
 
             //循环播放
-            args.Append("--loop-file=inf ");
+            //args.Append("--loop-file=inf ");
 
             //列表循环播放
             args.Append("--loop-playlist=inf ");
@@ -248,6 +248,11 @@ public class MpvPlayer
     {
         SendMessage(IPCServerName, "set_property", "hwdec", enabled ? "auto-safe" : "no");
     }
+
+    //public void SetLoopPlaylist(bool enabled)
+    //{
+    //    SendMessage(IPCServerName, "set_property", "loop-playlist", enabled ? "inf" : "no");
+    //}
 
     public void SetPanAndScan(bool enabled)
     {

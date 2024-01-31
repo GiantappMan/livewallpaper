@@ -91,10 +91,11 @@ public class WallpaperMeta : ICloneable
     public object Clone()
     {
         var res = MemberwiseClone() as WallpaperMeta;
-        foreach (var item in Wallpapers)
-        {
-            res!.Wallpapers.Add((Wallpaper)item.Clone());
-        }
+        //res!.Wallpapers = new();
+        //foreach (var item in new List<Wallpaper>(Wallpapers))
+        //{
+        //    res!.Wallpapers.Add((Wallpaper)item.Clone());
+        //}
         return res!;
     }
 

@@ -1,4 +1,4 @@
-import { Wallpaper, WallpaperSetting } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
 import {
     Dialog,
     DialogContent,
@@ -43,6 +43,7 @@ export function SettingDialog(props: SettingDialogProps) {
     })
     const { isDirty } = useFormState({ control: form.control });
     const [saving, setSaving] = useState(false);
+    const [wallpaperType, setWallpaperType] = useState<WallpaperType>(WallpaperType.NotSupported)
 
     //每次打开重置状态
     useEffect(() => {
@@ -53,6 +54,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 isPanScan: props.wallpaper.setting.isPanScan,
                 // volume: props.wallpaper.setting.volume,
             })
+        setWallpaperType(props.wallpaper.meta.type || WallpaperType.NotSupported)
     }, [form, props.open, props.wallpaper])
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
@@ -80,10 +82,6 @@ export function SettingDialog(props: SettingDialogProps) {
         setSaving(false);
     }
 
-    const fileType = Wallpaper.getFileType(props.wallpaper.fileName);
-    if (!fileType)
-        return null;
-
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && isDirty) {
             confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
@@ -99,7 +97,7 @@ export function SettingDialog(props: SettingDialogProps) {
             <Form {...form}>
                 <form className="space-y-6"
                     onSubmit={form.handleSubmit(onSubmit)}>
-                    {fileType === "app" && <>
+                    {wallpaperType === WallpaperType.Exe && <>
                         <FormField
                             control={form.control}
                             name="enableMouseEvent"
@@ -121,7 +119,7 @@ export function SettingDialog(props: SettingDialogProps) {
                             )}
                         />
                     </>}
-                    {fileType === "video" && <>
+                    {wallpaperType === WallpaperType.Video && <>
                         <FormField
                             control={form.control}
                             name="hardwareDecoding"

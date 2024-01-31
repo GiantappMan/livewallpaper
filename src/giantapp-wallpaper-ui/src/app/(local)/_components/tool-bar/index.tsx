@@ -42,7 +42,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     useEffect(() => {
         //更新选中屏幕
         if (selectedWallpaper) {
-            var index = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.screenIndexes[0];
+            var index = selectedWallpaper.runningInfo.screenIndexes[0];
             if (index === undefined)
                 index = -1;
             setSelectedScreenIndex(index);
@@ -152,7 +152,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                             className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
                             ])}
                             height={50}
-                            src={item.coverUrl || "/wp-placeholder.webp"}
+                            src={`${item.coverUrl}?t=${Date.now()}` || "/wp-placeholder.webp"}
                             width={50}
                         />
                     </picture>
