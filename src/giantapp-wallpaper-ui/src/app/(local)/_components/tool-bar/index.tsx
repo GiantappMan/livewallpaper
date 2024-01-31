@@ -295,8 +295,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 </PopoverContent>
             </Popover> */}
             {
-                (WallpaperMeta.isPlaylist(selectedWallpaper?.meta))
-                && <PlaylistSheet selectedWallpaper={selectedWallpaper} />
+                showPlaylistButton && <PlaylistSheet selectedWallpaper={selectedWallpaper} />
             }
         </div>
     </div>
