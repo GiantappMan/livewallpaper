@@ -72,11 +72,11 @@ dependencies:
     specifier: ^0.2.1
     version: 0.2.1(@types/react@18.2.34)(react-dom@18.2.0)(react@18.2.0)
   jotai:
-    specifier: ^2.6.3
-    version: 2.6.3(@types/react@18.2.34)(react@18.2.0)
+    specifier: ^2.6.4
+    version: 2.6.4(@types/react@18.2.34)(react@18.2.0)
   lucide-react:
-    specifier: ^0.319.0
-    version: 0.319.0(react@18.2.0)
+    specifier: ^0.320.0
+    version: 0.320.0(react@18.2.0)
   next:
     specifier: 14.1.0
     version: 14.1.0(react-dom@18.2.0)(react@18.2.0)
@@ -2251,8 +2251,8 @@ packages:
       '@pkgjs/parseargs': 0.11.0
     dev: true
 
-  /jotai@2.6.3(@types/react@18.2.34)(react@18.2.0):
-    resolution: {integrity: sha512-0htSJ2d6426ZdSEYHncJHXY6Lkgde1Hc2HE/ADIRi9d2L3hQL+jLKY1LkWBMeCNyOSlKH8+1u/Gc33Ox0uq21Q==}
+  /jotai@2.6.4(@types/react@18.2.34)(react@18.2.0):
+    resolution: {integrity: sha512-RniwQPX4893YlNR1muOtyUGHYaTD1fhEN4qnOuZJSrDHj6xdEMrqlRSN/hCm2fshwk78ruecB/P2l+NCVWe6TQ==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=17.0.0'
@@ -2316,8 +2316,8 @@ packages:
       yallist: 4.0.0
     dev: true
 
-  /lucide-react@0.319.0(react@18.2.0):
-    resolution: {integrity: sha512-IIbu4TfVI3yPI3ba/Li53mKeOd+WwcWI6+WcyoVdFLtrBfH88m2uQ/uTmtzBWt523HyxCFjWy3RFs0OxDFYm8w==}
+  /lucide-react@0.320.0(react@18.2.0):
+    resolution: {integrity: sha512-HuMmfmFiWwctDkN27wklKVZr8UpwP2TTekLZ3xiLCEjx/STG1k0KLWMbBfIJ/lnNJQDfSjztDZSVU316xA+AQg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
     dependencies:

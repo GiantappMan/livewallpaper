@@ -46,7 +46,13 @@ export function SelectWallpaperDialog(props: Props) {
             //         resolve(null);
             //     }, 5000)
             // });
-            setWallpapers(res.data);
+
+            //过滤playlist
+            const tmp = res.data?.filter((wallpaper) => {
+                return wallpaper.meta.type !== WallpaperType.Playlist;
+            })
+
+            setWallpapers(tmp);
         } catch (e) {
             console.log(e)
         }

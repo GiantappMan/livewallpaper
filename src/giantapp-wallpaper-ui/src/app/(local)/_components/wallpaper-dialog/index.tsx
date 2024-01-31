@@ -75,43 +75,47 @@ function generateCoverImage(previewElement: HTMLVideoElement | HTMLImageElement 
     });
 }
 
-const generatePlaylistCover = (imageUrls: string[]): Promise<Blob> => {
+function generatePlaylistCover(imageUrls: string[]): Promise<Blob> {
     return new Promise((resolve, reject) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            return reject(new Error('Could not get canvas context'));
+        }
 
-        // 定义 canvas 的大小
-        const width = 500;
-        const height = 300;
-        canvas.width = width;
-        canvas.height = height;
+        // 定义单张图片的宽度和canvas的总宽度
+        const singleWidth = 500;
+        const canvasWidth = singleWidth * 3;  // 3x3网格
+        canvas.width = canvasWidth;
 
+        // 限制最多9张图片
+        const processedImageUrls = imageUrls.slice(0, 9);
         // 加载所有图片
-        const images = imageUrls.map(url => {
+        const images = processedImageUrls.map(url => {
             const img = new Image();
             img.src = url;
-            img.crossOrigin = 'Anonymous'; // 处理跨域问题
-            //object-fit:cover
-            // img.style.objectFit = "cover";
-
+            img.crossOrigin = 'Anonymous';
             return img;
         });
 
         // 确保所有图片加载完成
-        const loadPromises = images.map(img => new Promise(resolve => {
-            img.onload = resolve;
+        const loadPromises = images.map(img => new Promise<HTMLImageElement>((resolve, reject) => {
+            img.onload = () => resolve(img);
             img.onerror = () => reject(new Error(`Failed to load image at ${img.src}`));
         }));
 
-        Promise.all(loadPromises).then(() => {
-            // 定义每张图片的绘制位置和大小
-            const numPerRow = Math.ceil(Math.sqrt(images.length));
-            const size = width / numPerRow;
+        Promise.all(loadPromises).then(loadedImages => {
+            // 计算每张图片的缩放后高度，选择最大高度作为行高
+            const heights = loadedImages.map(img => singleWidth * (img.height / img.width));
+            const rowHeight = Math.max(...heights);
+            // 设置canvas的总高度
+            canvas.height = rowHeight * 3; // 3行
 
-            images.forEach((img, index) => {
-                const x = (index % numPerRow) * size;
-                const y = Math.floor(index / numPerRow) * size;
-                ctx?.drawImage(img, x, y, size, size);
+            loadedImages.forEach((img, index) => {
+                const x = (index % 3) * singleWidth; // 每3张图片换行
+                const y = Math.floor(index / 3) * rowHeight; // 计算当前行
+                const height = singleWidth * (img.height / img.width); // 缩放后的高度
+                ctx.drawImage(img, x, y, singleWidth, height);
             });
 
             // 导出结果并解析 Promise
@@ -363,8 +367,6 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             .map((wallpaper: Wallpaper) => wallpaper.coverUrl)
             .filter((coverUrl): coverUrl is string => coverUrl !== undefined);
 
-        //只要前4张
-        previewWallpapers = previewWallpapers.slice(0, 4);
         const imgData = await generatePlaylistCover(previewWallpapers);
         //Blob转换成base64
         const base64String = await getBase64FromBlob(imgData);
