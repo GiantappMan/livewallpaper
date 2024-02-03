@@ -102,6 +102,7 @@ public class MpvPlayer
             Process?.Dispose();
 
             Process = new Process();
+            Process.EnableRaisingEvents = true;
             Process.Exited += (s, e) =>
             {
                 ProcessLaunched = false;
@@ -137,9 +138,8 @@ public class MpvPlayer
             //列表循环播放
             args.Append("--loop-playlist=inf ");
 
-            //偶尔起不来
             //最小化
-            //args.Append("--window-minimized=yes ");
+            args.Append("--window-minimized=yes ");
 
             //允许屏保
             args.Append("--stop-screensaver=no ");
@@ -155,6 +155,9 @@ public class MpvPlayer
 
             //音量
             args.Append($"--volume={Volume} ");
+
+            ////日志写到配置目录
+            //args.Append("--log-file=D:\\mpv.log ");
 
             ////保持打开
             //args.Append("--keep-open=yes ");
