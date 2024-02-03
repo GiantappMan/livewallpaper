@@ -144,16 +144,17 @@ const formSchema = z.object({
     // })
     ,
     wallpapers: z.array(z.any()).optional(),
-}).refine(data => {
-    if (data.isPlaylist) {
-        return data.wallpapers && data.wallpapers.length > 0;
-    }
-    else {
-        return data.file && data.file.size > 1024 * 1024 * 1024;
-    }
-}, {
-    message: "数据不完整",
-})
+});
+// .refine(data => {
+//     if (data.isPlaylist) {
+//         return data.wallpapers && data.wallpapers.length > 0;
+//     }
+//     else {
+//         return data.file && data.file.size < 1024 * 1024 * 1024;
+//     }
+// }, {
+//     message: "数据不完整",
+// })
 let defaultValues: {
     title: string,
     isPlaylist: boolean,
@@ -206,15 +207,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             abortController?.abort();
         } else {
             const isPlaylist = WallpaperMeta.isPlaylist(props.wallpaper?.meta);
-            // if (props.wallpaper) {
-            //     if (!isPlaylist) {
-            //         setImportedFile({
-            //             name: props.wallpaper?.fileName || "",
-            //             url: props.wallpaper?.fileUrl || "",
-            //             fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
-            //         });
-            //     }
-            // }
+            if (props.wallpaper) {
+                if (!isPlaylist) {
+                    setImportedFile({
+                        name: props.wallpaper?.fileName || "",
+                        url: props.wallpaper?.fileUrl || "",
+                        fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
+                    });
+                }
+            }
             // debugger
             // form.setValue("wallpapers", props.wallpaper?.setting.wallpapers || []);
             // form.setValue("title", props.wallpaper?.meta.title || "");
@@ -224,13 +225,13 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             defaultValues.wallpapers = props.wallpaper?.meta.wallpapers || [];
             defaultValues.title = props.wallpaper?.meta.title || "";
             defaultValues.isPlaylist = isPlaylist;
-            if (!isPlaylist) {
-                setImportedFile({
-                    name: props.wallpaper?.fileName || "",
-                    url: props.wallpaper?.fileUrl || "",
-                    fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
-                });
-            }
+            // if (!isPlaylist) {
+            //     setImportedFile({
+            //         name: props.wallpaper?.fileName || "",
+            //         url: props.wallpaper?.fileUrl || "",
+            //         fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
+            //     });
+            // }
             form.reset(defaultValues);
         }
     }, [form, props.open, props.wallpaper]);
@@ -296,8 +297,19 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     }, [uploadFile, importingFile]);
 
     const submitWallpaper = useCallback(async (data: z.infer<typeof formSchema>) => {
-        if (uploading || !importedFile || !importedFile.url)
+        if (uploading)
             return;
+
+        if (!importedFile) {
+            toast.warning("未选择文件");
+            return;
+        }
+
+        //判断文件大小
+        if (data.file && data.file.size > 1024 * 1024 * 1024) {
+            toast.warning("文件大小不能超过1G");
+            return;
+        }
 
         if (!data.title)
             data.title = "未命名";
