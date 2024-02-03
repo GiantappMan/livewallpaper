@@ -428,7 +428,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         var value = form.getValues();
         //自己实现，因为formState.isDirty不准确
         var isDirty = JSON.stringify(value) != JSON.stringify(defaultValues)
-        console.log(JSON.stringify(value), JSON.stringify(defaultValues), isDirty);
+        // console.log(JSON.stringify(value), JSON.stringify(defaultValues), isDirty);
         if (!e && isDirty) {
             confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
             return;
@@ -446,7 +446,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="mx-1">
                         <div className="mt-2 mb-3">
                             <div className="flex flex-col space-y-4">
                                 <FormField

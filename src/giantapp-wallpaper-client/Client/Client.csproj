@@ -10,7 +10,7 @@
     <Platforms>x64</Platforms>
     <AssemblyName>LiveWallpaper3</AssemblyName>
     <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
-    <Version>3.0.5-alpha4</Version>
+    <Version>3.0.6-alpha6</Version>
     <PackageProjectUrl>https://giantapp.cn</PackageProjectUrl>
     <Authors>巨应君 | Giantapp Studio</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
