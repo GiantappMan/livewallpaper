@@ -32,7 +32,6 @@ public static class WallpaperApi
     };
 
     #endregion
-
     static WallpaperApi()
     {
         WindowStateChecker.Instance.WindowStateChanged += Instance_WindowStateChanged;
