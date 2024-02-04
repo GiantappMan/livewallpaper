@@ -7,6 +7,7 @@ import LinkClient from "@/components/link-client"
 import {
     LayoutGrid,
     Github,
+    DollarSign
 } from "lucide-react"
 
 const Page = () => {
@@ -57,7 +58,7 @@ const Page = () => {
             <Button variant="outline" asChild>
                 <LinkClient
                     className="underline-offset-4 flex items-center" href="https://afdian.net/a/giantapp" target="_blank">
-                    <Github className="h-4 w-4 mr-1" />
+                    <DollarSign className="h-4 w-4 mr-1" />
                     捐赠/会员
                 </LinkClient>
             </Button>
