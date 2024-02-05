@@ -200,8 +200,7 @@ public partial class ShellWindow : Window
 
         foreach (var item in mapping)
         {
-            bool isAbsoluteFilePath = Path.IsPathRooted(item.Value);
-            if (isAbsoluteFilePath && !Directory.Exists(item.Value))
+            if (!Directory.Exists(item.Value))
                 Directory.CreateDirectory(item.Value);
             webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.Allow);
         }
