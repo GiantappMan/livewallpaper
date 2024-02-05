@@ -96,7 +96,7 @@ internal class AppService
         };
 #endif
 
-        ApplySaveFolderMapping(wallpaperConfig.Directories);
+        ApplySaveFolderMapping(wallpaperConfig.EnsureDirectories());
 
         //前端api
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
@@ -157,7 +157,7 @@ internal class AppService
         if (wallpaperConfig == null || path == null)
             return null;
 
-        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
+        var directories = wallpaperConfig.EnsureDirectories();
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
@@ -178,7 +178,7 @@ internal class AppService
         if (wallpaperConfig == null || path == null)
             return null;
 
-        var directories = wallpaperConfig.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder;
+        var directories = wallpaperConfig.EnsureDirectories();
         for (int i = 0; i < directories.Length; i++)
         {
             var item = directories[i];
@@ -266,7 +266,7 @@ internal class AppService
     private static void ApplySaveFolderMapping(string[]? directories)
     {
         if (directories == null || directories.Length == 0)
-            directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
+            return;
 
         var dict = new Dictionary<string, string>(_globalFolderMapping);
         int index = 0;
@@ -297,7 +297,7 @@ internal class AppService
                 if (configWallpaper == null || configWallpaper.Directories.Length == 0)
                 {
                     configWallpaper ??= new();
-                    configWallpaper.Directories = ConfigWallpaper.DefaultWallpaperSaveFolder;
+                    configWallpaper.Directories = configWallpaper.EnsureDirectories();
                     e.Corrected = configWallpaper;
                 }
                 break;
@@ -327,7 +327,7 @@ internal class AppService
                 var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
                 if (configWallpaper != null)
                 {
-                    ApplySaveFolderMapping(configWallpaper.Directories);
+                    ApplySaveFolderMapping(configWallpaper.EnsureDirectories());
                     _apiObject.TriggerRefreshPageEvent();
                 }
                 break;

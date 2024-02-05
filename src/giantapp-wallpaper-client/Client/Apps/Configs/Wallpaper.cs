@@ -18,6 +18,13 @@ public class Wallpaper
     public string[] Directories { get; set; } = new string[0];
     public bool KeepWallpaper { get; set; } = false;
 
+    public string[] EnsureDirectories()
+    {
+        if (Directories.Length == 0)
+            return DefaultWallpaperSaveFolder;
+        return Directories;
+    }
+
     internal static void UpdateDefaultWallpaperSaveFolder()
     {
         if (Directory.Exists(@"D:\"))

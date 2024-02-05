@@ -114,7 +114,7 @@ public class ApiObject
     public string GetWallpapers()
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
-        var res = WallpaperApi.GetWallpapers(config.Directories ?? ConfigWallpaper.DefaultWallpaperSaveFolder);
+        var res = WallpaperApi.GetWallpapers(config.EnsureDirectories());
         foreach (var item in res)
         {
             //把本地路径转换为网址
@@ -315,23 +315,23 @@ public class ApiObject
                 item.FilePath = AppService.ConvertUrlToPath(config, item.FileUrl);
             }
 
-        var res = WallpaperApi.CreateWallpaper(wallpaper, config.Directories[0]);
+        var res = WallpaperApi.CreateWallpaper(wallpaper, config.EnsureDirectories()[0]);
         SaveSnapshot();
 
         return res;
     }
 
-    [Obsolete]
-    public bool CreateWallpaper(string title, string coverUrl, string pathUrl)
-    {
-        var path = AppService.ConvertUrlToTmpPath(pathUrl);
-        var cover = AppService.ConvertUrlToTmpPath(coverUrl);
-        var config = Configer.Get<ConfigWallpaper>() ?? new();
-        if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
-            return false;
+    //[Obsolete]
+    //public bool CreateWallpaper(string title, string coverUrl, string pathUrl)
+    //{
+    //    var path = AppService.ConvertUrlToTmpPath(pathUrl);
+    //    var cover = AppService.ConvertUrlToTmpPath(coverUrl);
+    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
+    //    if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
+    //        return false;
 
-        return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
-    }
+    //    return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
+    //}
 
     [Obsolete]
     public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
