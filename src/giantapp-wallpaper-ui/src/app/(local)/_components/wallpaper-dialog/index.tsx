@@ -207,6 +207,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             setImportedFile(undefined);
             abortController?.abort();
         } else {
+            setLoadVideoError(false);
             const isPlaylist = WallpaperMeta.isPlaylist(props.wallpaper?.meta);
             if (props.wallpaper) {
                 if (!isPlaylist) {
@@ -541,16 +542,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         </video>
                                                     }
                                                     {
-                                                        loadVideoError &&
-                                                        <button onClick={() => {
-                                                            // setLoadVideoError(false);
-                                                            // setImportedFile({
-                                                            //     ...importedFile,
-                                                            //     url: importedFile.url + "?t=" + Date.now()
-                                                            // })
-                                                        }}>
-                                                            加载视频失败，请重试
-                                                        </button>
+                                                        loadVideoError && <>加载视频失败，请重试</>
                                                     }
                                                     {
                                                         importedFile.fileType === "img" &&
