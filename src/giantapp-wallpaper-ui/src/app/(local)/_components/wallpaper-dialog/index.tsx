@@ -542,7 +542,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         </video>
                                                     }
                                                     {
-                                                        loadVideoError && <>加载视频失败，请重试</>
+                                                        loadVideoError && <>加载视频失败，偶尔会出现这种情况，暂时无解，关闭窗口重新打开再试，也可以忽略直接保存 </>
                                                     }
                                                     {
                                                         importedFile.fileType === "img" &&

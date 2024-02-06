@@ -460,16 +460,16 @@ public static class WallpaperApi
         }
 
         //移动cover位置
-        if (newWallpaper.CoverPath != oldWallpaper.CoverPath)
+        if (!string.IsNullOrEmpty(newWallpaper.CoverPath) && newWallpaper.CoverPath != oldWallpaper.CoverPath)
         {
             string coverExtension = Path.GetExtension(newWallpaper.CoverPath);
             string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
             File.Copy(newWallpaper.CoverPath, coverSavePath, true);
+            newWallpaper.Meta.Cover = $"{saveFileName}.cover{Path.GetExtension(newWallpaper.CoverPath)}";
         }
 
         //保存meta
         newWallpaper.Meta.UpdateTime = DateTime.Now;
-        newWallpaper.Meta.Cover = $"{saveFileName}.cover{Path.GetExtension(newWallpaper.CoverPath)}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(newWallpaper.Meta, JsonSettings));
         return true;
