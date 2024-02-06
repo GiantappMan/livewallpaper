@@ -156,31 +156,36 @@ public partial class ShellWindow : Window
 
     public static async void ShowShell(string? url)
     {
-        _logger.Info($"ShowShell {url}");
         Instance ??= new ShellWindow();
+        await Instance.ShowUrl(url);
+    }
+
+    public async Task ShowUrl(string? url)
+    {
+        _logger.Info($"ShowShell {url}");
 
         bool ok = await Task.Run(CheckWebView2);
         if (!ok)
         {
             //没装webview2
-            Instance.loading.Visibility = Visibility.Collapsed;
-            Instance.tips.Visibility = Visibility.Visible;
+            loading.Visibility = Visibility.Collapsed;
+            tips.Visibility = Visibility.Visible;
 
             LoopCheckWebView2(url);
         }
         else
         {
-            Instance.loading.Visibility = Visibility.Visible;
+            loading.Visibility = Visibility.Visible;
         }
 
-        if (Instance.WindowState == WindowState.Minimized)
-            Instance.WindowState = WindowState.Normal;
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
 
-        Instance.Activate();
+        Activate();
 
-        Instance.webview2.Source = new Uri(url);
-        Instance.webview2.NavigationCompleted += NavigationCompleted;
-        Instance.Show();
+        webview2.Source = new Uri(url);
+        webview2.NavigationCompleted += NavigationCompleted;
+        Show();
     }
 
     public static void ApplyCustomFolderMapping(Dictionary<string, string> mapping, Microsoft.Web.WebView2.Wpf.WebView2? webview2 = null)
@@ -317,6 +322,8 @@ public partial class ShellWindow : Window
         SizeChanged -= ShellWindow_SizeChanged;
         StateChanged -= ShellWindow_StateChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
+        webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
+        webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
 
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
         //强制回收webview2
@@ -337,6 +344,7 @@ public partial class ShellWindow : Window
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+        webview2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
 
         if (!AllowDragFile)
             DisableDragFile();
@@ -350,6 +358,14 @@ public partial class ShellWindow : Window
         //左下角提示
         webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 #endif
+    }
+
+    private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
+    {
+        e.Handled = true;
+
+        var window = new ShellWindow();
+        _ = window.ShowUrl(e.Uri);
     }
 
     private void CoreWebView2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
