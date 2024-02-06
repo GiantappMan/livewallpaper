@@ -384,14 +384,18 @@ public static class WallpaperApi
             //保存到目录
             File.Copy(path, savePath);
         }
-        //移动cover位置
-        string coverExtension = Path.GetExtension(cover);
-        string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
-        File.Copy(cover, coverSavePath);
+
+        if (!string.IsNullOrEmpty(cover))
+        {
+            //移动cover位置
+            string coverExtension = Path.GetExtension(cover);
+            string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
+            File.Copy(cover, coverSavePath);
+            wallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
+        }
 
         //保存meta
         wallpaper.Meta.CreateTime = DateTime.Now;
-        wallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(wallpaper.Meta, JsonSettings));
 

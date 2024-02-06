@@ -193,6 +193,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     const [uploading, setUploading] = useState(false); //是否正在上传
     const fileInputRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [loadVideoError, setLoadVideoError] = useState(false);
     const previewVideoRef = useRef<HTMLVideoElement>(null);
     const previewImgRef = useRef<HTMLImageElement>(null);
     const [openSelectWallpaperDialog, setOpenSelectWallpaperDialog] = useState(false);
@@ -237,6 +238,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     }, [form, props.open, props.wallpaper]);
 
     const uploadFile = useCallback(async (file: File) => {
+        setLoadVideoError(false);
         setProgress(0);
         setImporting(true);
         setImportedFile(undefined);
@@ -333,14 +335,22 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             eHeight = previewElement?.videoHeight || 0;
         }
 
-        const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
-        //Blob转换成base64
-        const base64String = await getBase64FromBlob(imgData);
-        const fileName = importedFile.name.split(".")[0] + ".jpg";
-        var { data: coverUrl } = await api.uploadToTmp(fileName, base64String);
+        let coverUrl = null;
+        try {
+            const imgData = await generateCoverImage(previewElement, eWidth, eHeight);
+            //Blob转换成base64
+            const base64String = await getBase64FromBlob(imgData);
+            const fileName = importedFile.name.split(".")[0] + ".jpg";
+            var { data: tmpCoverUrl } = await api.uploadToTmp(fileName, base64String);
+            coverUrl = tmpCoverUrl;
+        } catch (e) {
+            console.error(e);
+            toast.error("生成封面失败");
+        }
         var wallpaper = new Wallpaper({
             ...props.wallpaper,
         });
+
         wallpaper.meta.title = data.title;
         wallpaper.meta.type = WallpaperType.Video;//todo 更细节的判断
         wallpaper.coverUrl = coverUrl || "";
@@ -510,10 +520,11 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                             <div className="flex justify-between items-center text-[#9CA3AF]">
                                                 <div>
                                                     <div className="flex justify-between items-center">
-                                                        <p>{importedFile.name}</p>   <Button type="button" variant="ghost" onClick={() => {
+                                                        <p>{importedFile.name}</p>
+                                                        <Button type="button" variant="ghost" onClick={() => {
                                                             setImportedFile(undefined);
-                                                            // if (fileInputRef.current)
-                                                            //     fileInputRef.current.value = '';
+                                                            if (fileInputRef.current)
+                                                                fileInputRef.current.value = '';
                                                             form.setValue("file", undefined);
                                                         }}>
                                                             <DeleteIcon className="h-6 w-6" />
@@ -521,10 +532,25 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                     </div>
                                                     {
                                                         importedFile.fileType === "video" && <video
-                                                            onError={(e) => console.error('Video loading error:', e)}
+                                                            onError={(e) => {
+                                                                console.error('Video loading error:', e);
+                                                                setLoadVideoError(true);
+                                                            }}
                                                             autoPlay={true} ref={previewVideoRef} className="object-contain">
                                                             <source src={importedFile.url} />
                                                         </video>
+                                                    }
+                                                    {
+                                                        loadVideoError &&
+                                                        <button onClick={() => {
+                                                            // setLoadVideoError(false);
+                                                            // setImportedFile({
+                                                            //     ...importedFile,
+                                                            //     url: importedFile.url + "?t=" + Date.now()
+                                                            // })
+                                                        }}>
+                                                            加载视频失败，请重试
+                                                        </button>
                                                     }
                                                     {
                                                         importedFile.fileType === "img" &&

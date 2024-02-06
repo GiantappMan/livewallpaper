@@ -13,7 +13,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
-using Windows.UI.Xaml.Controls;
 
 namespace GiantappWallpaper;
 
@@ -238,7 +237,7 @@ public partial class ShellWindow : Window
     {
         try
         {
-            var version = CoreWebView2Environment.GetAvailableBrowserVersionString();
+            string version = CoreWebView2Environment.GetAvailableBrowserVersionString(null, new CoreWebView2EnvironmentOptions());
             return true;
         }
         catch (WebView2RuntimeNotFoundException e)
