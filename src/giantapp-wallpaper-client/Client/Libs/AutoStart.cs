@@ -29,7 +29,7 @@ namespace Client.Libs
 
         public async Task<bool> Set(bool enabled)
         {
-            if (IsRunningAsUwp())
+            if (UWPHelper.IsRunningAsUwp())
                 return await UWPSet(enabled);
             else
                 return DeskTopSet(enabled);
@@ -37,7 +37,7 @@ namespace Client.Libs
 
         public async Task<bool> Check()
         {
-            if (IsRunningAsUwp())
+            if (UWPHelper.IsRunningAsUwp())
                 return await UWPCheck();
             else
                 return DeskTopCheck();
@@ -208,40 +208,6 @@ namespace Client.Libs
             {
                 System.Diagnostics.Debug.WriteLine(e);
                 return null;
-            }
-        }
-        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
-
-        public bool IsRunningAsUwp()
-        {
-            if (IsWindows7OrLower)
-            {
-                return false;
-            }
-            else
-            {
-                int length = 0;
-                StringBuilder sb = new(0);
-                GetCurrentPackageFullName(ref length, sb);
-
-                sb = new StringBuilder(length);
-                int result = GetCurrentPackageFullName(ref length, sb);
-
-                return result != APPMODEL_ERROR_NO_PACKAGE;
-            }
-        }
-
-        private bool IsWindows7OrLower
-        {
-            get
-            {
-                int versionMajor = Environment.OSVersion.Version.Major;
-                int versionMinor = Environment.OSVersion.Version.Minor;
-                double version = versionMajor + (double)versionMinor / 10;
-                return version <= 6.1;
             }
         }
         #endregion

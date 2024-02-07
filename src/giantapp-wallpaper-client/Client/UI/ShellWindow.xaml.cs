@@ -204,7 +204,10 @@ public partial class ShellWindow : Window
 
         foreach (var item in mapping)
         {
-            if (!Directory.Exists(item.Value))
+            bool isAbsoluteFilePath = Path.IsPathRooted(item.Value);
+            bool isUWP = UWPHelper.IsRunningAsUwp();
+            //必须判断，商店版无法创建相对路径
+            if ((!isUWP || isAbsoluteFilePath) && !Directory.Exists(item.Value))
                 Directory.CreateDirectory(item.Value);
             webview2?.CoreWebView2?.SetVirtualHostNameToFolderMapping(item.Key, item.Value, CoreWebView2HostResourceAccessKind.Allow);
         }
