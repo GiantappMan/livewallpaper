@@ -9,7 +9,7 @@ interface Props {
   current?: boolean;
 }
 
-export default function NavMenu(props: Props) {
+export default function NavMenuItem(props: Props) {
   return (
     <Link
       prefetch={false}
