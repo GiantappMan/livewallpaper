@@ -275,7 +275,7 @@ public partial class ShellWindow : Window
     {
         //修改webview2，document.shell_hidden 属性
         string value = WindowState == WindowState.Minimized ? "true" : "false";
-        webview2.CoreWebView2.ExecuteScriptAsync($"document.shell_hidden = {value}");
+        webview2.CoreWebView2?.ExecuteScriptAsync($"document.shell_hidden = {value}");
     }
 
     #endregion
@@ -325,8 +325,11 @@ public partial class ShellWindow : Window
         SizeChanged -= ShellWindow_SizeChanged;
         StateChanged -= ShellWindow_StateChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
-        webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
-        webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
+        if (webview2.CoreWebView2 != null)
+        {
+            webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
+            webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
+        }
 
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
         //强制回收webview2

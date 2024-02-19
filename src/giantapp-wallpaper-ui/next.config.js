@@ -1,7 +1,4 @@
 /** @type {import('next').NextConfig} */
-
-const createNextIntlPlugin = require('next-intl/plugin');
-const withNextIntl = createNextIntlPlugin();
 const nextConfig = {
     output: 'export',
     reactStrictMode: false,
@@ -17,4 +14,4 @@ const nextConfig = {
     // },
 }
 
-module.exports = withNextIntl(nextConfig);
+module.exports = nextConfig

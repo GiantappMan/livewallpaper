@@ -16,4 +16,4 @@ pnpm build:client
 ## 相关文档
 
 - 多语言
-    <https://next-intl-docs.vercel.app/>  
+    <https://nextjs.org/docs/app/building-your-application/routing/internationalization#static-generation>  
