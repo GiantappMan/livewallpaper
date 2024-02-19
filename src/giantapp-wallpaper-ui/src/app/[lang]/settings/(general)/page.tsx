@@ -13,8 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
+import { useRouter } from 'next/navigation'
 
 const Page = () => {
+    const router = useRouter()
     const languages = [
         { label: "简体中文", value: "zh" },
         { label: "English", value: "en" },
@@ -104,8 +106,11 @@ const Page = () => {
                                                     saveConfig({
                                                         ...config,
                                                         currentLan: language.value
-                                                    })
-                                                    setOpen(false)
+                                                    }).then(() => {                                                        
+                                                        setOpen(false)
+                                                        //重定向
+                                                        router.push(`/${language.value}/settings/`)
+                                                    });
                                                 }}
                                             >
                                                 {language.label}

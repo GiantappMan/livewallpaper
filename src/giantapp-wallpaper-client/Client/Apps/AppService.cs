@@ -81,6 +81,7 @@ internal class AppService
 
         //多语言初始化
         string path = "Client.Assets.Languages";
+        generalConfig.CheckLan();
         LanService.Init(new EmbeddedJsonDB(path), true, generalConfig.CurrentLan, "en");
 
         //托盘初始化
@@ -128,14 +129,17 @@ internal class AppService
 
     internal static void ShowShell(string? path = "index")
     {
+        var config = Configer.Get<General>() ?? new();
+        config.CheckLan();
+
 #if DEBUG_LOCAL && DEBUG
         if (path == "index")
             path = null;
         //本地开发
-        ShellWindow.ShowShell($"http://localhost:3000/{path}");
+        ShellWindow.ShowShell($"http://localhost:3000/{config.CurrentLan}/{path}");
         return;
 #else
-        ShellWindow.ShowShell($"https://{DomainStr}/{path}");
+        ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
 #endif
     }
 

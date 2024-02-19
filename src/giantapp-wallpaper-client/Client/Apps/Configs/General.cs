@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 
 namespace Client.Apps.Configs;
@@ -14,7 +15,20 @@ public class General : ICloneable
     public bool HideWindow { get; set; }
 
     //当前选中语言
-    public string CurrentLan { get; set; } = Thread.CurrentThread.CurrentCulture.Name;
+    public string CurrentLan { get; set; } = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
+
+    //检查纠正CurrentLan
+    public void CheckLan()
+    {
+        //可用语言
+        var lans = new[] { "zh", "en" };
+        //如果不包含，默认英文
+        if (!lans.Contains(CurrentLan))
+        {
+            CurrentLan = "en";
+        }
+    }
+
 
     public object Clone()
     {
