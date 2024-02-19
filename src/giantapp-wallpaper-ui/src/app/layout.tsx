@@ -4,8 +4,8 @@ export default function Root({
     children: React.ReactNode;
 }) {
     return (
-        <html>
-            <body>{children}</body>
-        </html>
+        <>
+            {children}
+        </>
     );
 }
