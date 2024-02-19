@@ -42,7 +42,7 @@ export default function Root({
         >
           <ThemeWrapper>
             <div className="flex h-screen bg-background">
-              <SideMenu />
+              <SideMenu lang={params.lang} />
 
               {/* Content area */}
               <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">

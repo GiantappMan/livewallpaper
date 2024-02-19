@@ -11,11 +11,11 @@ import {
 } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
 
-export default function SideMenu() {
+export default function SideMenu({ lang }: { lang: string }) {
     const [sidebarTopNavigation] = useState([
         {
             name: "本地",
-            href: "/",
+            href: `/${lang}/`,
             urls: ["/", "/index.html"],
             icon: HomeIcon,
             selectedIcon: solidHomeIcon,
@@ -30,7 +30,7 @@ export default function SideMenu() {
         // },
         {
             name: "社区",
-            href: "/community",
+            href: `/${lang}/community`,
             urls: ["/community", "/community.html"],
             icon: Squares2X2Icon,
             selectedIcon: solidSquares2X2Icon,
@@ -41,7 +41,7 @@ export default function SideMenu() {
     const [sidebarBottomNavigation] = useState([
         {
             name: "设置",
-            href: "/settings/",
+            href: `/${lang}/settings/`,
             urls: ["/settings", "/settings.html"],
             icon: CogIcon,
             selectedIcon: solidCogIcon,
@@ -49,7 +49,7 @@ export default function SideMenu() {
         },
         {
             name: "关于",
-            href: "/about",
+            href: `/${lang}/about`,
             urls: ["/about", "/about.html"],
             icon: questionMarkCircleIcon,
             selectedIcon: questionMarkCircleIcon,
@@ -64,7 +64,7 @@ export default function SideMenu() {
 
     sidebarBottomNavigation.forEach((item) => {
         item.current = pathname === item.href
-        if (item.href === "/settings/") {
+        if (item.href === `${lang}/settings/`) {
             item.current = pathname.startsWith("/settings") || item.urls.includes(pathname)
         }
     });
