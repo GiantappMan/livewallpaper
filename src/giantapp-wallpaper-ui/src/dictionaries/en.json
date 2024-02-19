@@ -1,10 +1,8 @@
 {
-    "server-component": {
-      "welcome": "Vítejte"
-    },
-    "counter": {
-      "increment": "Přidat",
-      "decrement": "Ubrat"
-    }
-  }
-  
+  "local": {
+    "test": "test"
+  },
+  "about": {},
+  "community": {},
+  "settings": {}
+}

@@ -1,10 +1,8 @@
 {
-    "server-component": {
-      "welcome": "Welcome"
-    },
-    "counter": {
-      "increment": "Increment",
-      "decrement": "Decrement"
-    }
-  }
-  
+  "local": {
+    "test": "测试"
+  },
+  "about": {},
+  "community": {},
+  "settings": {}
+}
