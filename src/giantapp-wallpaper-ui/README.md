@@ -12,3 +12,8 @@ pnpm dev
 ```shell
 pnpm build:client
 ```
+
+## 相关文档
+
+- 多语言
+    <https://next-intl-docs.vercel.app/>  
