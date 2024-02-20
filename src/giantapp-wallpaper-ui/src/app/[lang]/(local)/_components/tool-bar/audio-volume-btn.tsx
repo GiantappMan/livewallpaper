@@ -6,9 +6,11 @@ import { useDebouncedCallback } from "use-debounce";
 import { SpeakerLoudIcon, SpeakerOffIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
 import PlayingStatus from "@/lib/client/types/playing-status";
+import { getGlobal } from '@/i18n-config';
 
 //音量按钮，修改音量
 export default function AudioVolumeBtn(props: { playingStatus: PlayingStatus, screenIndex: number, playingStatusChange: (e: PlayingStatus) => void }) {
+    const dictionary = getGlobal();
     const [volume, setVolume] = useState(props.playingStatus.volume)
 
     //监控screenIndex变化
@@ -34,7 +36,7 @@ export default function AudioVolumeBtn(props: { playingStatus: PlayingStatus, sc
         <>
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" className="hover:text-primary px-3" title="音源设置">
+                    <Button variant="ghost" className="hover:text-primary px-3" title={dictionary['local'].volume}>
                         {
                             volume == 0 ?
                                 <SpeakerOffIcon /> : (

@@ -9,12 +9,14 @@ import api from "@/lib/client/api";
 import AudioIndexBtn from "./audio-index-btn";
 import PlayingStatus from "@/lib/client/types/playing-status";
 import AudioVolumeBtn from "./audio-volume-btn";
+import { getGlobal } from '@/i18n-config';
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingStatus: PlayingStatus
     onChangePlayingStatus: (e: PlayingStatus) => void
 }
 export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) {
+    const dictionary = getGlobal();
     const singlePlaylistMode = playingStatus.wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
@@ -105,33 +107,6 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         });
     }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
 
-    // const handleVolumeChange = useCallback(async (value: number[]) => {
-    //     const volume = value[0];
-    //     //选中的，或者第一个有音量的壁纸
-    //     var target = selectedWallpaper || wallpapers.find(x => Wallpaper.findPlayingWallpaper(x).setting.volume > 0);
-    //     if (!target) {
-    //         if (wallpapers.length == 0)
-    //             return;
-    //         //查找第一个没有暂停的视频壁纸
-    //         target = wallpapers.find(x => {
-    //             debugger
-    //             var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-    //             return !playingWallpaper.setting.isPaused && playingWallpaper.meta.type === WallpaperType.Video;
-    //         });
-    //     }
-    //     if (!target)
-    //         return;
-
-    //     setVolume(volume);
-    //     await api.setVolume(volume, target.runningInfo.screenIndexes[0]);
-    //     onChangeVolume?.(target);
-    // }, [onChangeVolume, selectedWallpaper, wallpapers]);
-
-    // const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
-    //     handleVolumeChange(value);
-    // }, 300
-    // );
-
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playingStatus.wallpapers.map((item, index) => {
@@ -140,9 +115,9 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 const showWallpaperItem = isSelected || !selectedWallpaper//只显示选中的，如果没选中就都显示
                 return showWallpaperItem && <div key={index} className="flex items-center p-0 m-0" >
                     {
-                        showBackBtn && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedWallpaper(null)} title="返回列表">
+                        showBackBtn && <div className="self-start mt-3 mr-1 cursor-pointer" onClick={() => setSelectedWallpaper(null)} title={dictionary['local'].return_to_list}>
                             <Reply className="h-4 w-4" />
-                            <span className="sr-only">返回列表</span>
+                            <span className="sr-only">{dictionary['local'].return_to_list}</span>
                         </div>
                     }
                     <picture onClick={() => isSelected ? setSelectedWallpaper(null) : setSelectedWallpaper(singlePlaylistMode ? null : item)} className={cn([{ "cursor-pointer": !singlePlaylistMode }, "mr-2"])}>
@@ -169,7 +144,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         <div className="flex flex-col flex-1 w-1/2 items-center justify-between">
             <div className="space-x-4">
                 {
-                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title="上一个壁纸">
+                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].previous_wallpaper}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -188,7 +163,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
                 {/* 停止按钮 */}
-                {<Button variant="ghost" className="hover:text-primary" title="停止" onClick={handleStopClick}>
+                {<Button variant="ghost" className="hover:text-primary" title={dictionary['local'].stop} onClick={handleStopClick}>
                     <svg
                         className="h-5 w-5 "
                         fill="none"
@@ -206,7 +181,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 </Button>
                 }
                 {
-                    isPaused && <Button variant="ghost" className="hover:text-primary" title="播放" onClick={handlePlayClick}>
+                    isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].play} onClick={handlePlayClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -224,7 +199,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
                 {
-                    !isPaused && <Button variant="ghost" className="hover:text-primary" title="暂停" onClick={handlePauseClick}>
+                    !isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].pause} onClick={handlePauseClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -243,7 +218,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
                 {
-                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title="下一个壁纸">
+                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].next_wallpaper}>
                         <svg
                             className=" h-5 w-5 "
                             fill="none"
@@ -271,29 +246,6 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 :
                 <AudioIndexBtn playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
             }
-            {/* <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" className="hover:text-primary px-3" title="音量">
-                        <svg
-                            className=" h-6 w-6 "
-                            fill="none"
-                            height="24"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            width="24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                        </svg>
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent>
-                    <Slider defaultValue={[volume]} max={100} min={0} step={1} onValueChange={handleVolumeChangeDebounced} />
-                </PopoverContent>
-            </Popover> */}
             {
                 showPlaylistButton && <PlaylistSheet selectedWallpaper={selectedWallpaper} />
             }

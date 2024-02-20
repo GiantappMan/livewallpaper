@@ -27,7 +27,7 @@ import { SettingDialog } from "./_components/setting-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import PlayingStatus from "@/lib/client/types/playing-status";
-
+import { setGlobal } from "@/i18n-config";
 const Page = ({
     lang,
     dictionary,
@@ -40,6 +40,8 @@ const Page = ({
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
     const [isAlertDialogOpen, setIsAlertDialogOpen] = useState<boolean>(false);
+
+    setGlobal(dictionary);
 
     //当前编辑的壁纸对象
     const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);

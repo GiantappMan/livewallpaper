@@ -7,7 +7,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    // DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { DeleteIcon, UploadCloudIcon, ListPlus } from "lucide-react"
@@ -25,6 +24,8 @@ import processFile from "./process-file"
 import { Switch } from "@/components/ui/switch"
 import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { getGlobal } from '@/i18n-config';
+
 
 function getBase64FromBlob(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -131,30 +132,14 @@ function generatePlaylistCover(imageUrls: string[]): Promise<Blob> {
 };
 
 let abortController: AbortController | undefined = undefined;
-const formSchema = z.object({
-    title: z.string().refine(value => value !== '', {
-        message: '标题不能为空',
-    }),
-    isPlaylist: z.boolean().optional(),
-    file: z.instanceof(File, {
-        message: "文件未上传",
-    }).optional()
-    // .refine((file) => file && file.size < 1024 * 1024 * 1024, {
-    //     message: "文件大小不能超过1G",
-    // })
-    ,
-    wallpapers: z.array(z.any()).optional(),
-});
-// .refine(data => {
-//     if (data.isPlaylist) {
-//         return data.wallpapers && data.wallpapers.length > 0;
-//     }
-//     else {
-//         return data.file && data.file.size < 1024 * 1024 * 1024;
-//     }
-// }, {
-//     message: "数据不完整",
-// })
+
+interface WallpaperDialogProps {
+    wallpaper?: Wallpaper | null
+    open: boolean
+    onChange: (open: boolean) => void
+    createSuccess?: () => void
+}
+
 let defaultValues: {
     title: string,
     isPlaylist: boolean,
@@ -167,14 +152,20 @@ let defaultValues: {
     wallpapers: [],
 }
 
-interface WallpaperDialogProps {
-    wallpaper?: Wallpaper | null
-    open: boolean
-    onChange: (open: boolean) => void
-    createSuccess?: () => void
-}
-
 export function WallpaperDialog(props: WallpaperDialogProps) {
+    const dictionary = getGlobal();
+    const formSchema = z.object({
+        title: z.string().refine(value => value !== '', {
+            message: dictionary['local'].title_cannot_be_empty,
+        }),
+        isPlaylist: z.boolean().optional(),
+        file: z.instanceof(File, {
+            message: dictionary['local'].upload_failed,
+        }).optional(),
+        wallpapers: z.array(z.any()).optional(),
+    });
+
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues
@@ -218,22 +209,11 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                     });
                 }
             }
-            // debugger
-            // form.setValue("wallpapers", props.wallpaper?.setting.wallpapers || []);
-            // form.setValue("title", props.wallpaper?.meta.title || "");
-            // form.setValue("file", new File([], ""));
-            // form.setValue("isPlaylist", isPlaylist)
 
             defaultValues.wallpapers = props.wallpaper?.meta.wallpapers || [];
             defaultValues.title = props.wallpaper?.meta.title || "";
             defaultValues.isPlaylist = isPlaylist;
-            // if (!isPlaylist) {
-            //     setImportedFile({
-            //         name: props.wallpaper?.fileName || "",
-            //         url: props.wallpaper?.fileUrl || "",
-            //         fileType: Wallpaper.getFileType(props.wallpaper?.fileUrl)
-            //     });
-            // }
+
             form.reset(defaultValues);
         }
     }, [form, props.open, props.wallpaper]);
@@ -304,21 +284,21 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             return;
 
         if (!importedFile) {
-            toast.warning("未选择文件");
+            toast.warning(dictionary['local'].file_not_selected);
             return;
         }
 
         //判断文件大小
         if (data.file && data.file.size > 1024 * 1024 * 1024) {
-            toast.warning("文件大小不能超过1G");
+            toast.warning(dictionary['local'].upload_size_limit_exceeded);
             return;
         }
 
         if (!data.title)
-            data.title = "未命名";
+            data.title =dictionary['local'].default_title;
         console.log(data);
         if (importing) {
-            toast.info("导入中，请稍等");
+            toast.info(dictionary['local'].updating);
             return;
         }
         setUploading(true);
@@ -346,7 +326,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             coverUrl = tmpCoverUrl;
         } catch (e) {
             console.error(e);
-            toast.error("生成封面失败");
+            toast.error(dictionary['local'].generate_cover_failed);
         }
         var wallpaper = new Wallpaper({
             ...props.wallpaper,
@@ -360,9 +340,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         if (props.wallpaper) {
             var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
-                toast.warning("更新失败，不支持的格式");
+                toast.warning(dictionary['local'].update_failed_format_not_supported);
             else {
-                toast.success(`更新成功`);
+                toast.success(dictionary['local'].update_successful);
                 props.createSuccess?.();
             }
         }
@@ -376,7 +356,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         setUploading(false);
-    }, [importedFile, importing, props, uploading]);
+    }, [dictionary, importedFile, importing, props, uploading]);
 
     const submitPlaylist = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (!data.wallpapers?.length) {

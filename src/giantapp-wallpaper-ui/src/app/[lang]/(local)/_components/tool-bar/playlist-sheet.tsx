@@ -4,14 +4,16 @@ import { Input } from "@/components/ui/input";
 import { SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet } from "@/components/ui/sheet";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Label } from "@radix-ui/react-label";
+import { getGlobal } from '@/i18n-config';
 
 //定义组件
 const PlaylistSheet = ({ selectedWallpaper }: {
     selectedWallpaper?: Wallpaper | null
 }) => {
+    const dictionary = getGlobal();
     return <Sheet modal={true}>
         <SheetTrigger asChild>
-            <Button variant="ghost" className="hover:text-primary px-3" title="播放列表">
+            <Button variant="ghost" className="hover:text-primary px-3" title={dictionary['local'].play_list}>
                 <svg
                     className=" h-6 w-6"
                     fill="none"
@@ -35,11 +37,11 @@ const PlaylistSheet = ({ selectedWallpaper }: {
         </SheetTrigger>
         <SheetContent>
             <SheetHeader>
-                <SheetTitle>播放列表</SheetTitle>
+                <SheetTitle>{dictionary['local'].play_list}</SheetTitle>
                 <SheetDescription>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline">添加壁纸</Button>
+                            <Button variant="outline">{dictionary['local'].add_wallpaper}</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
