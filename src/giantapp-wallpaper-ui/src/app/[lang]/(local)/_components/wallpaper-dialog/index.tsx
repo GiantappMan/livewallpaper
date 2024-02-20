@@ -450,9 +450,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     return <Dialog open={props.open} onOpenChange={onClose} >
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>{props.wallpaper ? `编辑${isPlaylist ? "列表" : "壁纸"}` : `创建${isPlaylist ? "列表" : "壁纸"}`}</DialogTitle>
+                <DialogTitle>{props.wallpaper ? `${isPlaylist ? "编辑列表" : "编辑壁纸"}` : `${isPlaylist ? "创建列表" : "创建壁纸"}`}</DialogTitle>
                 <DialogDescription>
-                    {`本地${isPlaylist ? "列表" : "壁纸"}，仅保存在你本机`}
+                    {`${isPlaylist ? "本地列表，仅保存在你本机" : "本地壁纸，仅保存在你本机"}`}
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
@@ -547,7 +547,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                     {
                                                         importedFile.fileType === "img" &&
                                                         <picture>
-                                                            <img alt="预览" src={importedFile.url} ref={previewImgRef} />
+                                                            <img alt="预览图" src={importedFile.url} ref={previewImgRef} />
                                                         </picture>
                                                     }
                                                 </div>
