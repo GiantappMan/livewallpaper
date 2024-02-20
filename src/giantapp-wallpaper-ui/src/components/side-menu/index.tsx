@@ -15,8 +15,8 @@ export default function SideMenu({ lang }: { lang: string }) {
     const [sidebarTopNavigation] = useState([
         {
             name: "本地",
-            href: `/${lang}/`,
-            urls: ["/", "/index.html"],
+            href: `/${lang}`,
+            urls: [`/${lang}`, `/${lang}/index.html`],
             icon: HomeIcon,
             selectedIcon: solidHomeIcon,
             current: false,
@@ -31,7 +31,7 @@ export default function SideMenu({ lang }: { lang: string }) {
         {
             name: "社区",
             href: `/${lang}/community`,
-            urls: ["/community", "/community.html"],
+            urls: [`/${lang}/community`, `/${lang}/community.html`],
             icon: Squares2X2Icon,
             selectedIcon: solidSquares2X2Icon,
             current: false,
@@ -41,8 +41,8 @@ export default function SideMenu({ lang }: { lang: string }) {
     const [sidebarBottomNavigation] = useState([
         {
             name: "设置",
-            href: `/${lang}/settings/`,
-            urls: ["/settings", "/settings.html"],
+            href: `/${lang}/settings`,
+            urls: [`/${lang}/settings`, `/${lang}/settings.html`],
             icon: CogIcon,
             selectedIcon: solidCogIcon,
             current: false,
@@ -50,7 +50,7 @@ export default function SideMenu({ lang }: { lang: string }) {
         {
             name: "关于",
             href: `/${lang}/about`,
-            urls: ["/about", "/about.html"],
+            urls: [`/${lang}/about`, `/${lang}/about.html`],
             icon: questionMarkCircleIcon,
             selectedIcon: questionMarkCircleIcon,
             current: false,
@@ -64,8 +64,8 @@ export default function SideMenu({ lang }: { lang: string }) {
 
     sidebarBottomNavigation.forEach((item) => {
         item.current = pathname === item.href
-        if (item.href === `${lang}/settings/`) {
-            item.current = pathname.startsWith("/settings") || item.urls.includes(pathname)
+        if (item.href === `/${lang}/settings`) {
+            item.current = pathname.startsWith(`/${lang}/settings`) || item.urls.includes(pathname)
         }
     });
 
