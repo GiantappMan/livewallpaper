@@ -91,7 +91,8 @@ internal class AppService
         //除了需要刷新的页面和本地调试用，其他可以不设
         ShellWindow.RewriteMapping = new()
         {
-            {"/index","/index.html" },
+            {"/zh","/zh.html" },
+            {"/en","/en.html" },
             {"/community","/community.html" },
             { "/settings(.*)", "/settings(.*).html" },
         };
@@ -127,20 +128,26 @@ internal class AppService
         ShellWindow.SetTheme(config.Theme, config.Mode);
     }
 
-    internal static void ShowShell(string? path = "index")
+    internal static void ShowShell(string? path = null)
     {
         var config = Configer.Get<General>() ?? new();
         config.CheckLan();
 
+        string url = $"https://{DomainStr}/{config.CurrentLan}";
 #if DEBUG_LOCAL && DEBUG
-        if (path == "index")
-            path = null;
+        //if (path == "index")
+        //    path = null;
         //本地开发
-        ShellWindow.ShowShell($"http://localhost:3000/{config.CurrentLan}/{path}");
-        return;
+        url= $"http://localhost:3000/{config.CurrentLan}";
+        //ShellWindow.ShowShell($"http://localhost:3000/{config.CurrentLan}/{path}");
+        //return;
 #else
-        ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
+        //ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
 #endif
+        if (path != null)
+            url += $"/{path}";
+        ShellWindow.ShowShell(url);
+
     }
 
     internal static void Exit()

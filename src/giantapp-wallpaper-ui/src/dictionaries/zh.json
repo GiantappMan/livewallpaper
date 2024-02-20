@@ -1,5 +1,6 @@
 {
   "local": {
+    "apply_to_all_screens": "点击使所有屏幕生效",
     "test": "测试"
   },
   "about": {},
