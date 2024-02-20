@@ -39,6 +39,7 @@ const Page = ({
     const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
+    const [isAlertDialogOpen, setIsAlertDialogOpen] = useState<boolean>(false);
 
     //当前编辑的壁纸对象
     const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
@@ -79,6 +80,10 @@ const Page = ({
 
 
     const showWallpaper = useCallback(async (wallpaper: Wallpaper, screen: Screen | null) => {
+        if (isAlertDialogOpen) {
+            return;
+        }
+
         let screenIndex = playingStatus?.screens?.findIndex((s) => s.deviceName === screen?.deviceName);
         const allScreenIndexes = playingStatus?.screens?.map((_, index) => index);
         if (!allScreenIndexes)
@@ -97,7 +102,7 @@ const Page = ({
             return;
         }
         refresh();
-    }, [playingStatus, refresh]);
+    }, [isAlertDialogOpen, playingStatus?.screens, refresh]);
 
     useEffect(() => {
         refresh();
@@ -263,7 +268,7 @@ const Page = ({
                                                         </svg>
                                                     </Button>
                                                     <div className="flex">
-                                                        <AlertDialog>
+                                                        <AlertDialog onOpenChange={setIsAlertDialogOpen}>
                                                             <AlertDialogTrigger asChild>
                                                                 <Button
                                                                     onClick={(e) => e.stopPropagation()}
