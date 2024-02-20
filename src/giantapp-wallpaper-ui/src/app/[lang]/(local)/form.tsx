@@ -36,8 +36,6 @@ const Page = ({
     dictionary: any;
 }) => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
-    // const [screens, setScreens] = useState<Screen[] | null>();
-    // const [playingWallpaper, setPlayingWallpaper] = useState<Wallpaper[] | null>();
     const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
     const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
@@ -46,28 +44,18 @@ const Page = ({
     const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const mounted = useMounted()
-    const refresh = async () => {
+    const refresh = useCallback(async () => {
         setRefreshing(true);
         try {
             const res = await api.getWallpapers();
             if (res.error) {
-                toast.error("获取壁纸列表失败")
+                toast.error(dictionary["local"].failed_to_get_wallpaper_list)
                 return;
             }
 
-            // const screens = await api.getScreens();
-            // if (screens.error) {
-            //     toast.error("获取屏幕列表失败");
-            //     return;
-            // // }
-
-            // if (!screens.data)
-            //     return
-
-
             const _playingStatus = await api.getPlayingStatus();
             if (_playingStatus.error) {
-                toast.error("获取正在播放的壁纸失败")
+                toast.error(dictionary["local"].failed_to_get_current_wallpaper)
                 console.log(_playingStatus.error)
                 return;
             }
@@ -82,14 +70,15 @@ const Page = ({
             setPlayingStatus(_playingStatus.data);
         } catch (e) {
             console.log(e)
-            toast.error("获取壁纸列表失败")
+            toast.error(dictionary["local"].failed_to_get_wallpaper_list)
         }
         finally {
             setRefreshing(false);
         }
-    }
+    }, [dictionary]);
 
-    const showWallpaper = async (wallpaper: Wallpaper, screen: Screen | null) => {
+
+    const showWallpaper = useCallback(async (wallpaper: Wallpaper, screen: Screen | null) => {
         let screenIndex = playingStatus?.screens?.findIndex((s) => s.deviceName === screen?.deviceName);
         const allScreenIndexes = playingStatus?.screens?.map((_, index) => index);
         if (!allScreenIndexes)
@@ -108,10 +97,11 @@ const Page = ({
             return;
         }
         refresh();
-    }
+    }, [playingStatus, refresh]);
 
     useEffect(() => {
         refresh();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     let dragCounter = 0;
@@ -139,7 +129,7 @@ const Page = ({
     const deleteWallpaper = async (wallpaper: Wallpaper) => {
         const res = await api.deleteWallpaper(wallpaper);
         if (!res.data) {
-            toast.error("删除壁纸失败，请重试");
+            toast.error(dictionary["local"].delete_failed);
             return;
         }
         refresh();
@@ -161,7 +151,7 @@ const Page = ({
 
         const res = await api.explore(wallpaper.filePath);
         if (res.error) {
-            toast.error("打开壁纸文件夹失败");
+            toast.error(dictionary["local"].failed_to_open_wallpaper_folder);
             return;
         }
     }
@@ -196,7 +186,6 @@ const Page = ({
                                     showWallpaper(wallpaper, null);
                                 }}
                                 title={dictionary["local"].apply_to_all_screens}>
-
                                 <picture>
                                     <img
                                         alt={wallpaper?.meta.title}
@@ -210,22 +199,6 @@ const Page = ({
                                         width="300"
                                     />
                                 </picture>
-
-                                {/* 视频 */}
-                                {/* {wallpaper?.meta.type === WallpaperType.Video && <picture>
-                                    <img
-                                        alt={wallpaper?.meta.title}
-                                        className="w-full"
-                                        height="200"
-                                        src={wallpaper?.coverUrl || "/wp-placeholder.webp"}
-                                        style={{
-                                            aspectRatio: "300/200",
-                                            objectFit: "cover",
-                                        }}
-                                        width="300"
-                                    />
-                                </picture>
-                                } */}
 
                                 <ContextMenu modal={false}>
                                     <ContextMenuTrigger>
@@ -242,9 +215,8 @@ const Page = ({
                                                                             showWallpaper(wallpaper, screen);
                                                                             e.stopPropagation();
                                                                         }}
-                                                                        aria-label={`点击使屏幕 ${screen.deviceName} 生效`}
                                                                         className="flex items-center justify-center hover:text-primary lg:px-3 px-1"
-                                                                        title={`点击使屏幕 ${screen.deviceName} 生效`}
+                                                                        title={dictionary["local"].set_screen_effect.replace('{0}', `${screen.deviceName}`)}
                                                                         variant="ghost"
                                                                     >
                                                                         <svg
@@ -271,9 +243,8 @@ const Page = ({
                                                 </div>
                                                 <div className="flex justify-between px-2">
                                                     <Button
-                                                        aria-label="设置"
                                                         className="px-3 flex items-center justify-center hover:text-primary"
-                                                        title="设置"
+                                                        title={dictionary["local"].setting}
                                                         variant="ghost"
                                                         onClick={(e) => { settingWallpaper(wallpaper); e.stopPropagation(); }}
                                                     >
@@ -296,9 +267,8 @@ const Page = ({
                                                             <AlertDialogTrigger asChild>
                                                                 <Button
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    aria-label="删除"
                                                                     className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                                    title="删除"
+                                                                    title={dictionary["local"].delete}
                                                                     variant="ghost"
                                                                 >
                                                                     <svg
@@ -319,22 +289,22 @@ const Page = ({
                                                             </AlertDialogTrigger>
                                                             <AlertDialogContent>
                                                                 <AlertDialogHeader>
-                                                                    <AlertDialogTitle>删除确认</AlertDialogTitle>
+                                                                    <AlertDialogTitle>{dictionary["local"].delete_confirm}</AlertDialogTitle>
                                                                     <AlertDialogDescription>
-                                                                        将彻底删除文件，并且无法恢复，确认删除？
+                                                                        {dictionary["local"].confirm_delete}
                                                                     </AlertDialogDescription>
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
                                                                     <AlertDialogCancel onClick={(e) => {
                                                                         e.stopPropagation();
                                                                     }}>
-                                                                        取消
+                                                                        {dictionary["local"].cancel}
                                                                     </AlertDialogCancel>
                                                                     <AlertDialogAction onClick={(e) => {
                                                                         deleteWallpaper(wallpaper);
                                                                         e.stopPropagation();
                                                                     }}>
-                                                                        删除
+                                                                        {dictionary["local"].delete}
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
                                                             </AlertDialogContent>
@@ -342,7 +312,9 @@ const Page = ({
 
                                                         <Button
                                                             onClick={(e) => { handleEditWallpaper(wallpaper); e.stopPropagation(); }}
-                                                            aria-label="编辑" className="lg:px-3 px-1 flex items-center justify-center hover:text-primary" title="编辑" variant="ghost">
+                                                            className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
+                                                            title={dictionary["local"].edit}
+                                                            variant="ghost">
                                                             <svg
                                                                 className="h-5 w-5"
                                                                 fill="none"
@@ -361,9 +333,8 @@ const Page = ({
                                                         </Button>
                                                         <Button
                                                             onClick={(e) => { explorerWallpaper(wallpaper); e.stopPropagation(); }}
-                                                            aria-label="打开文件夹"
                                                             className="lg:px-3 px-1 flex items-center justify-center hover:text-primary"
-                                                            title="打开文件夹"
+                                                            title={dictionary["local"].open_folder}
                                                             variant="ghost"
                                                         >
                                                             <svg
@@ -391,13 +362,13 @@ const Page = ({
                                             createWallpaper()
                                             e.stopPropagation();
                                         }}>
-                                            创建壁纸
+                                            {dictionary["local"].create_wallpaper}
                                         </ContextMenuItem>
                                         <ContextMenuItem onClick={(e) => {
                                             createPlaylist()
                                             e.stopPropagation();
                                         }}>
-                                            创建列表
+                                            {dictionary["local"].create_playlist}
                                         </ContextMenuItem>
                                     </ContextMenuContent>
                                 </ContextMenu>
@@ -461,13 +432,15 @@ const Page = ({
             mounted && !refreshing && (!wallpapers || wallpapers.length === 0) &&
             <div className="flex items-center justify-center min-h-screen -mt-20">
                 <div className="flex flex-col items-center justify-center">
-                    <h2 className="text-xl font-semibold mb-2">没有找到壁纸</h2>
-                    <p className="text-gray-500 mb-4">你可以创建一个壁纸或者修改壁纸扫描目录。</p>
+                    <h2 className="text-xl font-semibold mb-2">{dictionary["local"].no_wallpaper_found}</h2>
+                    <p className="text-gray-500 mb-4">{dictionary["local"].you_can_create_wallpaper}</p>
                     <div className="flex space-x-4">
-                        <Button variant="outline" onClick={() => createWallpaper()} >创建壁纸</Button>
+                        <Button variant="outline" onClick={() => createWallpaper()} >
+                            {dictionary["local"].create_wallpaper}
+                        </Button>
                         <Button variant="outline">
                             <Link href="/settings/wallpaper">
-                                修改目录
+                                {dictionary["local"].modify_folder}
                             </Link>
                         </Button>
                     </div>

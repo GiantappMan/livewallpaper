@@ -1,9 +1,25 @@
 {
-  "local": {
-    "apply_to_all_screens": "点击使所有屏幕生效",
-    "test": "测试"
-  },
   "about": {},
   "community": {},
+  "local": {
+    "apply_to_all_screens": "点击使所有屏幕生效",
+    "cancel": "取消",
+    "confirm_delete": "将彻底删除文件，并且无法恢复，确认删除？",
+    "create_wallpaper": "创建壁纸",
+    "create_playlist": "创建列表",
+    "delete": "删除",
+    "delete_confirm": "删除确认",
+    "delete_failed": "删除壁纸失败，请重试",
+    "edit": "编辑",
+    "failed_to_get_current_wallpaper": "获取正在播放的壁纸失败",
+    "failed_to_get_wallpaper_list": "获取壁纸列表失败",
+    "failed_to_open_wallpaper_folder": "打开壁纸文件夹失败",
+    "modify_folder": "修改目录",
+    "no_wallpaper_found": "没有找到壁纸",
+    "open_folder": "打开文件夹",
+    "setting": "设置",
+    "set_screen_effect": "点击使屏幕 {0} 生效",
+    "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。"
+  },
   "settings": {}
 }

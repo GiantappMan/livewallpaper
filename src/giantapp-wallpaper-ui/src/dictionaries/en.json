@@ -1,8 +1,25 @@
 {
-  "local": {
-    "apply_to_all_screens": "Click to apply the wallpaper to all screens"
-  },
   "about": {},
   "community": {},
+  "local": {
+    "apply_to_all_screens": "Click to apply to all screens",
+    "cancel": "Cancel",
+    "confirm_delete": "This will permanently delete the file and it cannot be recovered. Confirm deletion?",
+    "create_wallpaper": "Create wallpaper",
+    "create_playlist": "Create playlist",
+    "delete": "Delete",
+    "delete_confirm": "Delete confirmation",
+    "delete_failed": "Failed to delete wallpaper, please try again",
+    "edit": "Edit",
+    "failed_to_get_current_wallpaper": "Failed to get the currently playing wallpaper",
+    "failed_to_get_wallpaper_list": "Failed to get the wallpaper list",
+    "failed_to_open_wallpaper_folder": "Failed to open the wallpaper folder",
+    "modify_folder": "Modify directory",
+    "no_wallpaper_found": "No wallpaper found",
+    "open_folder": "Open folder",
+    "setting": "Setting",
+    "set_screen_effect": "Click to set the screen effect to {0}",
+    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scanning directory."
+  },
   "settings": {}
 }
