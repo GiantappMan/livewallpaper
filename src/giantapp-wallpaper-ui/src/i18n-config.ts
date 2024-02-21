@@ -5,6 +5,10 @@ export const i18n = {
 
 export type Locale = (typeof i18n)["locales"][number];
 
+declare global {
+    var __DICTIONARY__: any; // Replace 'any' with the type of your dictionary
+}
+
 //设置全局dictionary
 export const setGlobal = (dictionary: any) => {
     globalThis.__DICTIONARY__ = dictionary;

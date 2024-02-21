@@ -295,7 +295,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
 
         if (!data.title)
-            data.title =dictionary['local'].default_title;
+            data.title = dictionary['local'].default_title;
         console.log(data);
         if (importing) {
             toast.info(dictionary['local'].updating);
@@ -387,9 +387,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         if (props.wallpaper?.meta.id) {
             var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
             if (!res.data)
-                toast.warning("更新失败，不支持的格式");
+                toast.warning(dictionary['local'].update_failed_format_not_supported);
             else {
-                toast.success(`更新成功`);
+                toast.success(dictionary['local'].update_successful);
                 props.createSuccess?.();
             }
         }
@@ -404,7 +404,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             }
         }
         setUploading(false);
-    }, [props]);
+    }, [dictionary, props]);
 
     const onSubmit = useCallback((data: z.infer<typeof formSchema>) => {
         if (data.isPlaylist) {
@@ -421,18 +421,21 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         var isDirty = JSON.stringify(value) != JSON.stringify(defaultValues)
         // console.log(JSON.stringify(value), JSON.stringify(defaultValues), isDirty);
         if (!e && isDirty) {
-            confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
+            confirm(dictionary['local'].not_saved_confirm_close) && props.onChange(e);
             return;
         }
         props.onChange(e);
-    }, [form, props]);
+    }, [dictionary, form, props]);
 
     return <Dialog open={props.open} onOpenChange={onClose} >
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>{props.wallpaper ? `${isPlaylist ? "编辑列表" : "编辑壁纸"}` : `${isPlaylist ? "创建列表" : "创建壁纸"}`}</DialogTitle>
+                <DialogTitle>{props.wallpaper ?
+                    `${isPlaylist ? dictionary['local'].edit_list : dictionary['local'].edit_wallpaper}` :
+                    `${isPlaylist ? dictionary['local'].create_playlist : dictionary['local'].create_wallpaper}`}
+                </DialogTitle>
                 <DialogDescription>
-                    {`${isPlaylist ? "本地列表，仅保存在你本机" : "本地壁纸，仅保存在你本机"}`}
+                    {`${isPlaylist ? dictionary['local'].local_list_description : dictionary['local'].local_wallpaper_description}`}
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
@@ -446,7 +449,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
-                                                <Input autoFocus placeholder="输入标题" {...field} autoComplete="off" ref={inputRef} />
+                                                <Input autoFocus placeholder={dictionary['local'].input_title} {...field} autoComplete="off" ref={inputRef} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -464,7 +467,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         checked={field.value}
                                                         onCheckedChange={field.onChange}
                                                     />
-                                                    <span>播放列表</span>
+                                                    <span>{dictionary['local'].play_list}</span>
                                                 </label>
                                             </FormControl>
                                             <FormMessage />
@@ -497,7 +500,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         </>
                                         :
                                         <>
-                                            <h4 className="text-[#9CA3AF] mb-2">已导入文件:</h4>
+                                            <h4 className="text-[#9CA3AF] mb-2">{dictionary['local'].imported_files}</h4>
                                             <div className="flex justify-between items-center text-[#9CA3AF]">
                                                 <div>
                                                     <div className="flex justify-between items-center">
@@ -522,7 +525,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         </video>
                                                     }
                                                     {
-                                                        loadVideoError && <>加载视频失败，偶尔会出现这种情况，暂时无解，关闭窗口重新打开再试，也可以忽略直接保存 </>
+                                                        loadVideoError && <>{dictionary['local'].failed_to_load_video}</>
                                                     }
                                                     {
                                                         importedFile.fileType === "img" &&
@@ -616,14 +619,14 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                 <div className="flex w-full justify-between">
                     {
                         isPlaylist ? <Button type="button" variant="secondary" onClick={() => { setOpenSelectWallpaperDialog(true) }}>
-                            添加壁纸
+                            {dictionary['local'].add_wallpaper}
                         </Button> : <div></div>
                     }
                     <Button type="submit" disabled={uploading} onClick={() => {
                         form.handleSubmit(onSubmit)();
                     }}>
                         {uploading && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
-                        {uploading ? "创建中..." : "保存"}
+                        {uploading ? dictionary['local'].creating : dictionary['local'].save}
                     </Button>
                 </div>
             </DialogFooter>
