@@ -349,9 +349,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         else {
             var res = await api.createWallpaperNew(wallpaper);
             if (!res.data)
-                toast.warning("创建失败，不支持的格式");
+                toast.warning(dictionary['local'].create_failed_format_not_supported);
             else {
-                toast.success(`创建成功`);
+                toast.success(dictionary['local'].create_successful);
                 props.createSuccess?.();
             }
         }
@@ -360,7 +360,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
     const submitPlaylist = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (!data.wallpapers?.length) {
-            toast.warning("列表模式，壁纸不能为空");
+            toast.warning(dictionary['local'].empty_wallpaper_not_allowed_in_list_mode);
             return;
         }
         console.log("submitPlaylist", data);
@@ -397,9 +397,9 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
             // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
             var res = await api.createWallpaperNew(wallpaper);
             if (!res.data)
-                toast.warning("创建失败，不支持的格式");
+                toast.warning(dictionary['local'].create_failed_format_not_supported);
             else {
-                toast.success(`创建成功`);
+                toast.success(dictionary['local'].create_successful);
                 props.createSuccess?.();
             }
         }
@@ -489,11 +489,11 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         "border-primary bg-muted": isOver,
                                                     }])}>
                                                     <UploadCloudIcon className="text-foreground  w-5 h-5 mb-2" />
-                                                    <p className="text-gray-500">{isOver ? "释放鼠标" : " 点击导入或拖入文件到这里"}</p>
+                                                    <p className="text-gray-500">{isOver ? dictionary['local'].release_mouse : dictionary['local'].click_to_import_or_drag_file_here}</p>
                                                 </div>
                                                 :
                                                 <div>
-                                                    <span> 导入中...</span>
+                                                    <span>{dictionary['local'].importing}</span>
                                                     <Progress className="mt-2" value={progress} />
                                                 </div>
                                             }
@@ -547,7 +547,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                 "border-primary bg-muted": isOver,
                                             }])}>
                                             <ListPlus className="text-foreground w-5 h-5 mb-2" />
-                                            <p className="text-gray-500">{"设置壁纸列表"}</p>
+                                            <p className="text-gray-500">{dictionary['local'].set_wallpaper_list}</p>
                                         </div>
                                     </>}
                                     {wallpapers && wallpapers.length > 0 && <div className="flex flex-col space-y-2">
@@ -607,7 +607,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                             onChangeOpen={setOpenSelectWallpaperDialog}
                             onSaveSuccess={(wallpapers) => {
                                 if (!form.getValues("title"))
-                                    form.setValue("title", "未命名列表");
+                                    form.setValue("title", dictionary['local'].unnamed_list);
                                 //append
                                 form.setValue("wallpapers", [...(form.getValues("wallpapers") || []), ...wallpapers]);
                             }}

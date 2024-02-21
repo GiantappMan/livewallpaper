@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/lib/client/api"
 import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react"
+import { getGlobal } from '@/i18n-config';
 
 interface Props {
     selectedWallpapers: Wallpaper[]
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function SelectWallpaperDialog(props: Props) {
+    const dictionary = getGlobal();
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [selectedWallpapers, setSelectedWallpapers] = useState<Wallpaper[]>([]);
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -98,8 +100,8 @@ export function SelectWallpaperDialog(props: Props) {
     }}>
         <DialogContent className={"lg:max-w-screen-lg"}>
             <DialogHeader>
-                <DialogTitle>选择壁纸</DialogTitle>
-                <DialogDescription>点击选中壁纸</DialogDescription>
+                <DialogTitle>{dictionary['local'].add_wallpaper_to_list}</DialogTitle>
+                <DialogDescription>{dictionary['local'].click_select_wallpaper}</DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
                 <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
@@ -173,10 +175,10 @@ export function SelectWallpaperDialog(props: Props) {
                             htmlFor="chk_All"
                             className="pl-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none"
                         >
-                            全选
+                            {dictionary['local'].select_all}
                         </label>
                     </div>
-                    <Button type="submit" onClick={saveSelectedWallpapers}>确定</Button>
+                    <Button type="submit" onClick={saveSelectedWallpapers}>{dictionary['local'].confirm}</Button>
                 </div>
             </DialogFooter>
         </DialogContent>

@@ -223,7 +223,7 @@ const Page = ({
                                                                             e.stopPropagation();
                                                                         }}
                                                                         className="flex items-center justify-center hover:text-primary lg:px-3 px-1"
-                                                                        title={dictionary["local"].set_screen_effect.replace('{0}', `${screen.deviceName}`)}
+                                                                        title={dictionary["local"].apply_screen_effect.replace('{0}', `${screen.deviceName}`)}
                                                                         variant="ghost"
                                                                     >
                                                                         <svg

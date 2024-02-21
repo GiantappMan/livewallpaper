@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch"
 import { useEffect, useState } from "react"
 import api from "@/lib/client/api"
 import { toast } from "sonner"
+import { getGlobal } from '@/i18n-config';
 
 interface SettingDialogProps {
     wallpaper: Wallpaper
@@ -32,6 +33,7 @@ const formSchema = z.object({
 })
 
 export function SettingDialog(props: SettingDialogProps) {
+    const dictionary = getGlobal();
     const form = useForm<z.infer<typeof formSchema>>({
         mode: "onChange",
         defaultValues: {
@@ -70,10 +72,10 @@ export function SettingDialog(props: SettingDialogProps) {
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);
         if (res.data) {
-            toast.success("设置成功");
+            toast.success(dictionary['local'].set_successful);
         }
         else {
-            toast.error("设置失败");
+            toast.error(dictionary['local'].set_failed);
         }
 
         props.onChange(false);
@@ -84,15 +86,15 @@ export function SettingDialog(props: SettingDialogProps) {
 
     return <Dialog open={props.open} onOpenChange={(e) => {
         if (!e && isDirty) {
-            confirm("尚未保存，确定要关闭吗？") && props.onChange(e);
+            confirm(dictionary['local'].not_saved_confirm_close) && props.onChange(e);
             return;
         }
         props.onChange(e);
     }} >
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>设置</DialogTitle>
-                <DialogDescription>设置壁纸的相关参数</DialogDescription>
+                <DialogTitle>{dictionary['local'].setting}</DialogTitle>
+                <DialogDescription>{dictionary['local'].setting_parameters}</DialogDescription>
             </DialogHeader>
             <Form {...form}>
                 <form className="space-y-6"
@@ -104,9 +106,11 @@ export function SettingDialog(props: SettingDialogProps) {
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
-                                        <FormLabel>鼠标事件</FormLabel>
+                                        <FormLabel>
+                                            {dictionary['local'].mouse_event}
+                                        </FormLabel>
                                         <FormDescription>
-                                            开启鼠标事件，关闭则鼠标穿透
+                                            {dictionary['local'].enable_mouse_events}
                                         </FormDescription>
                                     </div>
                                     <FormControl>
@@ -126,9 +130,11 @@ export function SettingDialog(props: SettingDialogProps) {
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
-                                        <FormLabel>硬解码</FormLabel>
+                                        <FormLabel>
+                                            {dictionary['local'].enable_hardware_decoding}
+                                        </FormLabel>
                                         <FormDescription>
-                                            开启消耗GPU，关闭消耗CPU
+                                            {dictionary['local'].disable_cpu_consumption}
                                         </FormDescription>
                                     </div>
                                     <FormControl>
@@ -146,9 +152,11 @@ export function SettingDialog(props: SettingDialogProps) {
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
-                                        <FormLabel>画面拉伸</FormLabel>
+                                        <FormLabel>
+                                            {dictionary['local'].stretch_image}
+                                        </FormLabel>
                                         <FormDescription>
-                                            打开拉伸画面，关闭保持原比例
+                                            {dictionary['local'].stretch_image_description}
                                         </FormDescription>
                                     </div>
                                     <FormControl>
@@ -192,7 +200,7 @@ export function SettingDialog(props: SettingDialogProps) {
                     <DialogFooter>
                         <Button className="btn btn-primary" type="submit" disabled={saving}>
                             {saving && <div className="animate-spin w-4 h-4 border-t-2 border-muted rounded-full mr-2" />}
-                            {saving ? "保存中..." : "保存"}
+                            {saving ? dictionary['local'].saving : dictionary['local'].save}
                         </Button>
                     </DialogFooter>
                 </form>
