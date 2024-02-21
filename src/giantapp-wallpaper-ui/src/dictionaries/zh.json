@@ -4,15 +4,25 @@
     "donate_membership": "捐赠/会员",
     "encourage": "鼓励一下",
     "feedback_and_source_code": "反馈&源码",
-    "rate_us": "五星好评",
     "give_star": "点个星星",
     "problems_and_suggestions": "问题和建议",
     "produced_by": "{0} ❤ 出品",
     "product_name": "巨应壁纸 {0}",
+    "rate_us": "五星好评",
     "reminder": "（提醒：当前为测试版：bug较多，反馈时，请尽量写下复现操作步骤，不要单一的发泄情绪）"
   },
-  "common": {},
-  "community": {},
+  "common": {
+    "about": "关于",
+    "hub": "社区",
+    "local": "本地",
+    "settings": "设置"
+  },
+  "hub": {
+    "download_wallpaper_with_v2": "可以先用巨应2下载壁纸",
+    "membership_upgrade_to_v3": "巨应2的会员，后期可以免费升级到巨应3",
+    "set_same_directory_for_wallpapers_2_and_3": "2和3壁纸目录都设成一样即可",
+    "still_in_development": "仍在开发中"
+  },
   "local": {
     "add_wallpaper": "添加壁纸",
     "add_wallpaper_to_list": "选择壁纸",

@@ -9,8 +9,10 @@ import { useCallback, useEffect } from "react"
 import api from "@/lib/client/api";
 import { ConfigAppearance } from "@/lib/client/types/config"
 import { Toaster } from "sonner"
+import { setGlobal } from "@/i18n-config";
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
+    setGlobal(dictionary);
     const [_, setConfig] = useConfig()
     //读取主题设置
     const fetchConfig = useCallback(async () => {

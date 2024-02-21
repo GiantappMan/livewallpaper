@@ -10,11 +10,13 @@ import {
     QuestionMarkCircleIcon as questionMarkCircleIcon
 } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
+import { getGlobal } from "@/i18n-config";
 
 export default function SideMenu({ lang }: { lang: string }) {
+    const dictionary = getGlobal();
     const [sidebarTopNavigation] = useState([
         {
-            name: "本地",
+            name: dictionary['common'].local,
             href: `/${lang}`,
             urls: [`/${lang}`, `/${lang}/index.html`],
             icon: HomeIcon,
@@ -23,15 +25,15 @@ export default function SideMenu({ lang }: { lang: string }) {
         },
         // {
         //   name: "旧社区",
-        //   href: "/community-old",
+        //   href: "/hub-old",
         //   icon: Squares2X2Icon,
         //   selectedIcon: solidSquares2X2Icon,
         //   current: false,
         // },
         {
-            name: "社区",
-            href: `/${lang}/community`,
-            urls: [`/${lang}/community`, `/${lang}/community.html`],
+            name: dictionary['common'].hub,
+            href: `/${lang}/hub`,
+            urls: [`/${lang}/hub`, `/${lang}/hub.html`],
             icon: Squares2X2Icon,
             selectedIcon: solidSquares2X2Icon,
             current: false,
@@ -40,7 +42,7 @@ export default function SideMenu({ lang }: { lang: string }) {
 
     const [sidebarBottomNavigation] = useState([
         {
-            name: "设置",
+            name: dictionary['common'].settings,
             href: `/${lang}/settings`,
             urls: [`/${lang}/settings`, `/${lang}/settings.html`],
             icon: CogIcon,
@@ -48,7 +50,7 @@ export default function SideMenu({ lang }: { lang: string }) {
             current: false,
         },
         {
-            name: "关于",
+            name: dictionary['common'].about,
             href: `/${lang}/about`,
             urls: [`/${lang}/about`, `/${lang}/about.html`],
             icon: questionMarkCircleIcon,

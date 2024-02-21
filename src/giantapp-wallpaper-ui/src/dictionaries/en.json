@@ -4,15 +4,25 @@
     "donate_membership": "Donate / Pro",
     "encourage": "Give Encouragement",
     "feedback_and_source_code": "Feedback & Source Code",
-    "rate_us": "Rate us",
     "give_star": "Give a Star",
     "problems_and_suggestions": "Issues and Suggestions",
     "produced_by": "Produced By {0} ❤",
     "product_name": "Giantapp Wallpaper {0}",
+    "rate_us": "Rate us",
     "reminder": "(Reminder: Current Version is a Test Version: Expect Bugs. When Providing Feedback, Please Describe Reproduction Steps Clearly, Avoid Pure Emotional Outbursts)"
   },
-  "common": {},
-  "community": {},
+  "common": {
+    "about": "About",
+    "hub": "Hub",
+    "local": "Local",
+    "settings": "Settings"
+  },
+  "hub": {
+    "download_wallpaper_with_v2": "You can download wallpapers with Version2 first",
+    "membership_upgrade_to_v3": "Members of Version2 can upgrade to Version3 for free later",
+    "set_same_directory_for_wallpapers_2_and_3": "Set the wallpaper directories for 2 and 3 to be the same",
+    "still_in_development": "Still in development"
+  },
   "local": {
     "add_wallpaper": "Add wallpaper",
     "add_wallpaper_to_list": "Select wallpaper",

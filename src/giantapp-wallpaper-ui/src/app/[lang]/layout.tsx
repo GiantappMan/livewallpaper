@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import SideMenu from '@/components/side-menu';
+import { getDictionary } from "@/get-dictionary";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -18,13 +19,14 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-export default function Root({
+export default async function Root({
   children,
   params,
 }: {
   children: React.ReactNode;
   params: { lang: Locale };
 }) {
+  const dictionary = await getDictionary(params.lang);
   return (
     <html lang={params.lang} suppressHydrationWarning>
       <head />
@@ -35,6 +37,7 @@ export default function Root({
         )}
       >
         <ThemeProvider
+          dictionary={dictionary}
           attribute="class"
           defaultTheme="system"
           enableSystem
