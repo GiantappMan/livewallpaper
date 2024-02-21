@@ -28,13 +28,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import PlayingStatus from "@/lib/client/types/playing-status";
 import { setGlobal } from "@/i18n-config";
-const Page = ({
-    lang,
-    dictionary,
-}: {
-    lang: string;
-    dictionary: any;
-}) => {
+const Page = ({ dictionary }: { dictionary: any; }) => {
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
     const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
@@ -79,7 +73,6 @@ const Page = ({
             setRefreshing(false);
         }
     }, [dictionary]);
-
 
     const showWallpaper = useCallback(async (wallpaper: Wallpaper, screen: Screen | null) => {
         if (isAlertDialogOpen) {

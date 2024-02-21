@@ -1,5 +1,16 @@
 {
-  "about": {},
+  "about": {
+    "author": "巨应君",
+    "donate_membership": "捐赠/会员",
+    "encourage": "鼓励一下",
+    "feedback_and_source_code": "反馈&源码",
+    "rate_us": "五星好评",
+    "give_star": "点个星星",
+    "problems_and_suggestions": "问题和建议",
+    "produced_by": "{0} ❤ 出品",
+    "product_name": "巨应壁纸 {0}",
+    "reminder": "（提醒：当前为测试版：bug较多，反馈时，请尽量写下复现操作步骤，不要单一的发泄情绪）"
+  },
   "common": {},
   "community": {},
   "local": {
