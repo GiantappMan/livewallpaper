@@ -15,6 +15,7 @@ public class WallpaperManager
     readonly MpvPlayer _mpvPlayer = new();
     readonly Logger _logger = LogManager.GetCurrentClassLogger();
     readonly bool _isRestore;
+    WallpaperCoveredBehavior _currentCoveredBehavior = WallpaperCoveredBehavior.Pause;
 
     public WallpaperManager(WallpaperManagerSnapshot? snapshot = null)
     {
@@ -150,16 +151,37 @@ public class WallpaperManager
         IsScreenMaximized = screenMaximized;
         if (IsScreenMaximized)
         {
-            _mpvPlayer.Pause();
+            _currentCoveredBehavior = WallpaperApi.Settings.CoveredBehavior;
+            switch (_currentCoveredBehavior)
+            {
+                case WallpaperCoveredBehavior.None:
+                    break;
+                case WallpaperCoveredBehavior.Pause:
+                    _mpvPlayer.Pause();
+                    break;
+                case WallpaperCoveredBehavior.Stop:
+                    _mpvPlayer.Stop();
+                    break;
+            }
         }
         else
         {
             //用户已手动暂停壁纸
             if (Wallpaper == null || Wallpaper.RunningInfo.IsPaused)
                 return;
-
             //恢复壁纸
-            _mpvPlayer.Resume();
+            switch (_currentCoveredBehavior)
+            {
+                case WallpaperCoveredBehavior.None:
+                    break;
+                case WallpaperCoveredBehavior.Pause:
+                    _mpvPlayer.Resume();
+                    break;
+                case WallpaperCoveredBehavior.Stop:
+                    _ = Play();
+                    //todo
+                    break;
+            }
         }
     }
 

@@ -219,8 +219,8 @@ public class ApiObject
 
         res.Screens = WallpaperApi.GetScreens();
         res.Wallpapers = tmpWallpapers;
-        res.Volume = WallpaperApi.Volume;
-        res.AudioScreenIndex = WallpaperApi.AudioSourceIndex;
+        res.Volume = WallpaperApi.Settings.Volume;
+        res.AudioScreenIndex = WallpaperApi.Settings.AudioSourceIndex;
 
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }

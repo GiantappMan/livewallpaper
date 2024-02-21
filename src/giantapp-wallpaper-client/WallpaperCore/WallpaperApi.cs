@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using NLog;
 using System.Collections.Concurrent;
-using System.IO;
+//using System.IO;
 using Windows.Win32;
 
 namespace WallpaperCore;
@@ -17,9 +17,12 @@ public static class WallpaperApi
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     //运行中的屏幕和对应的播放列表，线程安全
     public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; private set; } = new();
-    //小于0就是禁用
-    public static int AudioSourceIndex { get; set; }
-    public static uint Volume { get; set; }
+    ////小于0就是禁用
+    //public static int AudioSourceIndex { get; set; }
+    //public static uint Volume { get; set; }
+    //public static WallpaperCoveredBehavior CoveredBehavior { get; set; }
+
+    public static ApiSettings Settings { get; set; } = new();
 
     public static JsonSerializerSettings JsonSettings { get; private set; } = new()
     {
@@ -279,8 +282,8 @@ public static class WallpaperApi
     //设置音量
     public static void SetVolume(uint volume, int? audioSourceScreenIndex = null)
     {
-        AudioSourceIndex = audioSourceScreenIndex ?? 0;
-        Volume = volume;
+        Settings.AudioSourceIndex = audioSourceScreenIndex ?? 0;
+        Settings.Volume = volume;
 
         var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
         foreach (var item in screenIndexs)
@@ -317,8 +320,8 @@ public static class WallpaperApi
         var res = new WallpaperApiSnapshot
         {
             Data = new List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>(),
-            AudioScreenIndex = AudioSourceIndex,
-            Volume = Volume
+            AudioScreenIndex = Settings.AudioSourceIndex,
+            Volume = Settings.Volume
         };
 
         foreach (var item in RunningWallpapers)
@@ -334,18 +337,18 @@ public static class WallpaperApi
         return res;
     }
 
-    [Obsolete]
-    //创建壁纸
-    public static bool CreateWallpaper(string title, string cover, string path, string saveFolder)
-    {
-        var wallpaper = Wallpaper.From(path);
-        if (wallpaper == null)
-            return false;
+    //[Obsolete]
+    ////创建壁纸
+    //public static bool CreateWallpaper(string title, string cover, string path, string saveFolder)
+    //{
+    //    var wallpaper = Wallpaper.From(path);
+    //    if (wallpaper == null)
+    //        return false;
 
-        wallpaper.CoverPath = cover;
-        wallpaper.Meta.Title = title;
-        return CreateWallpaper(wallpaper, saveFolder);
-    }
+    //    wallpaper.CoverPath = cover;
+    //    wallpaper.Meta.Title = title;
+    //    return CreateWallpaper(wallpaper, saveFolder);
+    //}
 
     public static bool CreateWallpaper(Wallpaper wallpaper, string saveFolder)
     {
@@ -519,15 +522,15 @@ public static class WallpaperApi
 
         try
         {
-            AudioSourceIndex = snapshot.AudioScreenIndex;
-            Volume = snapshot.Volume;
+            Settings.AudioSourceIndex = snapshot.AudioScreenIndex;
+            Settings.Volume = snapshot.Volume;
             foreach (var item in snapshot.Data)
             {
                 var manager = new WallpaperManager(item.SnapshotData);
                 var screenIndex = item.Wallpaper.RunningInfo.ScreenIndexes[0];
-                if (screenIndex == AudioSourceIndex)
+                if (screenIndex == Settings.AudioSourceIndex)
                 {
-                    manager.SetVolume(Volume);
+                    manager.SetVolume(Settings.Volume);
                 }
 
                 item.Wallpaper.Meta.EnsureId();

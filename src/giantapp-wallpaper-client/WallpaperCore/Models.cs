@@ -538,3 +538,25 @@ public class WallpaperApiSnapshot
     public int AudioScreenIndex { get; set; }
     public uint Volume { get; set; }
 }
+
+//壁纸被遮挡时的行为
+public enum WallpaperCoveredBehavior
+{
+    //不做任何处理
+    None,
+    //暂停播放
+    Pause,
+    //停止播放
+    Stop
+}
+
+//WallpaperApi全局设置
+public class ApiSettings
+{
+    //小于0就是禁用
+    public int AudioSourceIndex { get; internal set; }
+    public uint Volume { get; internal set; }
+    public WallpaperCoveredBehavior CoveredBehavior { get; set; }
+}
+
+

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System;
+using WallpaperCore;
 
 namespace Client.Apps.Configs;
 
@@ -17,6 +18,7 @@ public class Wallpaper
     //壁纸目录，支持多个
     public string[] Directories { get; set; } = new string[0];
     public bool KeepWallpaper { get; set; } = false;
+    public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
 
     public string[] EnsureDirectories()
     {
