@@ -9,7 +9,7 @@ import {
     FormControl,
     FormField,
     FormItem,
-    // FormLabel,
+    FormLabel,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -20,6 +20,7 @@ import { ConfigWallpaper } from "@/lib/client/types/config"
 import { Skeleton } from "@/components/ui/skeleton"
 // import { Checkbox } from "@/components/ui/checkbox"
 // import { Switch } from "@/components/ui/switch"
+import { getGlobal } from "@/i18n-config";
 
 const FormSchema = z.object({
     directories: z.array(z.object({
@@ -29,6 +30,7 @@ const FormSchema = z.object({
 })
 
 export default function Page() {
+    const dictionary = getGlobal();
     const [mounted, setMounted] = useState(false)
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -76,7 +78,7 @@ export default function Page() {
             keepWallpaper: data.keepWallpaper,
         })
         if (saveRes.error) {
-            toast.error("保存失败");
+            toast.error(dictionary['settings'].failed_to_save);
             console.error(saveRes.error);
         }
         else {
@@ -87,7 +89,7 @@ export default function Page() {
     const openFileSelector = async (index: number) => {
         const res = await shellApi.showFolderDialog();
         if (res.error)
-            return alert(res.error ? res.error.message : "未知错误");
+            return alert(res.error ? res.error.message : dictionary['settings'].unknown_error);
 
         if (res.data)
             form.setValue(`directories.${index}.path`, res.data);
@@ -99,7 +101,7 @@ export default function Page() {
     const addFolder = async () => {
         const res = await shellApi.showFolderDialog();
         if (res.error)
-            return alert(res.error ? res.error.message : "未知错误");
+            return alert(res.error ? res.error.message : dictionary['settings'].unknown_error);
 
         if (res.data)
             append({ path: res.data });
@@ -111,13 +113,13 @@ export default function Page() {
     return (
         <div className="h-screen space-y-6">
             <div className="space-y-2">
-                <h1 className="text-2xl font-semibold">壁纸设置</h1>
+                <h1 className="text-2xl font-semibold">{dictionary['settings'].wallpaper_settings}</h1>
             </div>
             <div className="space-y-2">
                 {mounted ?
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-                            <h2 className="font-semibold mt-4">保存目录</h2>
+                            <h2 className="font-semibold mt-4">{dictionary['settings'].save_directory}</h2>
                             {
                                 fields.map((field, index) => (
                                     <FormField
@@ -128,10 +130,10 @@ export default function Page() {
                                             <FormItem >
                                                 <div className="flex w-full max-w-sm items-center space-x-2 space-y-0">
                                                     <FormControl>
-                                                        <Input autoComplete="off" placeholder={index === 0 ? "壁纸保存目录" : "壁纸读取目录"} {...field}
+                                                        <Input autoComplete="off" placeholder={index === 0 ? dictionary['settings'].save_wallpaper_directory : dictionary['settings'].wallpaper_directory} {...field}
                                                             onBlur={() => form.handleSubmit(onSubmit)()} />
                                                     </FormControl>
-                                                    <Button type="button" onClick={() => openFileSelector(index)} className="items-center self-center">选择</Button>
+                                                    <Button type="button" onClick={() => openFileSelector(index)} className="items-center self-center">{dictionary['settings'].choose}</Button>
                                                     {
                                                         index > 0 &&
                                                         <Button type="button" className="items-center self-center" onClick={() => {
@@ -146,27 +148,27 @@ export default function Page() {
                                 ))
                             }
 
-                            <Button type="button" onClick={addFolder}>添加目录</Button>
+                            <Button type="button" onClick={addFolder}>{dictionary['settings'].add_directory}</Button>
 
-                            {/* <FormItem>
-                        <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
-                        <FormField
-                            control={control}
-                            name="keepWallpaper"
-                            render={({ field }) => (
-                                <FormItem className="flex items-center space-y-0 space-x-2">
-                                    <FormLabel htmlFor="keepWallpaper">客户端关闭后保留壁纸</FormLabel>
-                                    <FormControl>
-                                        <Switch id="keepWallpaper" checked={field.value}
-                                            onCheckedChange={() => {
-                                                field.onChange(!field.value);
-                                                form.handleSubmit(onSubmit)();
-                                            }} />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-                    </FormItem> */}
+                            <FormItem>
+                                <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
+                                <FormField
+                                    control={control}
+                                    name="keepWallpaper"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center space-y-0 space-x-2">
+                                            <FormLabel htmlFor="keepWallpaper">客户端关闭后保留壁纸</FormLabel>
+                                            <FormControl>
+                                                {/* <Switch id="keepWallpaper" checked={field.value}
+                                                    onCheckedChange={() => {
+                                                        field.onChange(!field.value);
+                                                        form.handleSubmit(onSubmit)();
+                                                    }} /> */}
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </FormItem>
                         </form>
                     </Form>
                     :

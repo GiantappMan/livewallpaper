@@ -99,5 +99,31 @@
     "volume": "Volume",
     "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory."
   },
-  "settings": {}
+  "settings": {
+    "add_directory": "Add Directory",
+    "appearance": "Appearance",
+    "appearance_settings": "Appearance Settings",
+    "choose": "Choose",
+    "color_picker": "Color Picker",
+    "dark_mode": "Dark Mode",
+    "general": "General",
+    "general_settings": "General Settings",
+    "failed_to_read_config": "Failed to Read Config",
+    "failed_to_save": "Failed to Save",
+    "language": "Language",
+    "light_mode": "Light Mode",
+    "minimize_on_startup": "Minimize on Startup",
+    "save_directory": "Save Directory",
+    "save_wallpaper_directory": "Save Wallpaper Directory",
+    "save_wallpaper_failed": "Save Wallpaper Failed",
+    "search": "Search...",
+    "startup": "Launch at startup",
+    "system": "System",
+    "theme_mode": "Theme Mode",
+    "unknown_error": "Unknown Error",
+    "wallpaper": "Wallpaper",
+    "wallpaper_directory": "Wallpaper Directory",
+    "wallpaper_settings": "Wallpaper Settings",
+    "not_found": "Not Found"
+  }
 }

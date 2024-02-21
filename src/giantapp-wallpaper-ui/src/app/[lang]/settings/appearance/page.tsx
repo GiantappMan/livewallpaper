@@ -16,7 +16,10 @@ import {
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
 import { ConfigAppearance } from "@/lib/client/types/config";
+import { getGlobal } from "@/i18n-config";
+
 const Page = () => {
+    const dictionary = getGlobal();
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = useConfig()
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
@@ -38,10 +41,10 @@ const Page = () => {
 
     return <div className="h-screen space-y-6">
         <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">外观设置</h1>
+            <h1 className="text-2xl font-semibold">{dictionary['settings'].appearance_settings}</h1>
         </div>
         <div className="space-y-2">
-            <h2 className="font-semibold mt-4">主题模式</h2>
+            <h2 className="font-semibold mt-4">{dictionary['settings'].theme_mode}</h2>
             <div className="grid grid-cols-3 gap-2">
                 {mounted ? (
                     <>
@@ -52,7 +55,7 @@ const Page = () => {
                             className={cn(config.mode === "system" && "border-2 border-primary")}
                         >
                             <DesktopIcon className="mr-1 -translate-x-1" />
-                            系统
+                            {dictionary['settings'].system}
                         </Button>
                         <Button
                             variant={"outline"}
@@ -61,7 +64,7 @@ const Page = () => {
                             className={cn(config.mode === "light" && "border-2 border-primary")}
                         >
                             <SunIcon className="mr-1 -translate-x-1" />
-                            浅色
+                            {dictionary['settings'].light_mode}
                         </Button>
                         <Button
                             variant={"outline"}
@@ -70,7 +73,7 @@ const Page = () => {
                             className={cn(config.mode === "dark" && "border-2 border-primary")}
                         >
                             <MoonIcon className="mr-1 -translate-x-1" />
-                            深色
+                            {dictionary['settings'].dark_mode}
                         </Button>
                     </>
                 ) : (
@@ -82,7 +85,7 @@ const Page = () => {
             </div>
         </div>
         <div className="space-y-2">
-            <h2 className="font-semibold mt-4">选择颜色</h2>
+            <h2 className="font-semibold mt-4">{dictionary['settings'].color_picker}</h2>
             <div className="grid grid-cols-3 gap-2">
                 {themes.map((theme) => {
                     const isActive = config.theme === theme.name

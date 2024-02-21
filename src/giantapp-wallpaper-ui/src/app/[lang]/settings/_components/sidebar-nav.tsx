@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { getGlobal } from "@/i18n-config";
 
 export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<HTMLElement>) {
+  const dictionary = getGlobal();
   const pathname = usePathname()
   const items = [
     {
-      name: "常规",
+      name: dictionary['settings'].general,
       href: `/${lang}/settings`,
       icon: (
         <svg
@@ -29,7 +31,7 @@ export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<H
       ),
     },
     {
-      name: "壁纸",
+      name: dictionary['settings'].wallpaper,
       href: `/${lang}/settings/wallpaper`,
       icon: (
         <svg
@@ -52,7 +54,7 @@ export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<H
       ),
     },
     {
-      name: "外观",
+      name: dictionary['settings'].appearance,
       href: `/${lang}/settings/appearance`,
       icon: (
         <svg

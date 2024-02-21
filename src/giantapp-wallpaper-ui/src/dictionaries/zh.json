@@ -99,5 +99,31 @@
     "volume": "音量",
     "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。"
   },
-  "settings": {}
+  "settings": {
+    "add_directory": "添加目录",
+    "appearance": "外观",
+    "appearance_settings": "外观设置",
+    "choose": "选择",
+    "color_picker": "选择颜色",
+    "dark_mode": "深色",
+    "general": "常规",
+    "general_settings": "常规设置",
+    "failed_to_read_config": "读取配置失败",
+    "failed_to_save": "保存失败",
+    "language": "多语言",
+    "light_mode": "浅色",
+    "minimize_on_startup": "启动后最小化",
+    "save_directory": "保存目录",
+    "save_wallpaper_directory": "壁纸保存目录",
+    "save_wallpaper_failed": "壁纸保存失败",
+    "search": "搜索...",
+    "startup": "开机启动",
+    "system": "系统",
+    "theme_mode": "主题模式",
+    "unknown_error": "未知错误",
+    "wallpaper": "壁纸",
+    "wallpaper_directory": "壁纸读取目录",
+    "wallpaper_settings": "壁纸设置",
+    "not_found": "未找到"
+  }
 }

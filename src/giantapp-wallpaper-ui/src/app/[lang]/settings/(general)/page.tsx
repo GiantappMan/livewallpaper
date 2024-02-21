@@ -14,8 +14,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
+import { getGlobal } from "@/i18n-config";
+import { useCallback } from 'react';
 
 const Page = () => {
+    const dictionary = getGlobal();
     const router = useRouter()
     const languages = [
         { label: "简体中文", value: "zh" },
@@ -26,39 +29,39 @@ const Page = () => {
     const [open, setOpen] = React.useState(false)
 
     //读取配置
-    const fetchConfig = async () => {
+    const fetchConfig = useCallback(async () => {
         const config = await api.getConfig<ConfigGeneral>("General")
         if (config.error || !config.data) {
-            toast.error("读取配置失败")
+            toast.error(dictionary['settings'].failed_to_read_config)
             return
         }
 
         console.log(config);
         setConfig(config.data)
-    }
+    }, [dictionary, setConfig])
 
     // 保存配置
-    const saveConfig = async (config: ConfigGeneral) => {
+    const saveConfig = useCallback(async (config: ConfigGeneral) => {
         setConfig(config);
         await api.setConfig("General", config);
-    };
+    }, [setConfig]);
 
     React.useEffect(() => {
         if (!mounted) {
             setMounted(true);
             fetchConfig();
         }
-    }, [mounted]);
+    }, [fetchConfig, mounted]);
 
     return <div className="h-screen space-y-6">
         {
             mounted ?
                 <>
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-semibold">常规设置</h1>
+                        <h1 className="text-2xl font-semibold">{dictionary['settings'].general_settings}</h1>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Label htmlFor="startup">开机启动</Label>
+                        <Label htmlFor="startup">{dictionary['settings'].startup}</Label>
                         <Switch id="startup" checked={config.autoStart}
                             onCheckedChange={async (e) => {
                                 saveConfig({ ...config, autoStart: e });
@@ -66,7 +69,7 @@ const Page = () => {
                         />
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Label htmlFor="minimize-after-start">启动后最小化</Label>
+                        <Label htmlFor="minimize-after-start">{dictionary['settings'].minimize_on_startup}</Label>
                         <Switch id="minimize-after-start"
                             checked={config.hideWindow}
                             onCheckedChange={async (e) => {
@@ -75,7 +78,7 @@ const Page = () => {
                         />
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Label htmlFor="minimize-after-start">多语言</Label>
+                        <Label htmlFor="minimize-after-start">{dictionary['settings'].language}</Label>
                         <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger asChild>
                                 <Button
@@ -95,8 +98,8 @@ const Page = () => {
                             </PopoverTrigger>
                             <PopoverContent className="w-[200px] p-0">
                                 <Command>
-                                    <CommandInput placeholder="搜索..." className="h-9" />
-                                    <CommandEmpty>未找到</CommandEmpty>
+                                    <CommandInput placeholder={dictionary['settings'].search} className="h-9" />
+                                    <CommandEmpty>{dictionary['settings'].not_found}</CommandEmpty>
                                     <CommandGroup>
                                         {languages.map((language) => (
                                             <CommandItem
@@ -106,7 +109,7 @@ const Page = () => {
                                                     saveConfig({
                                                         ...config,
                                                         currentLan: language.value
-                                                    }).then(() => {                                                        
+                                                    }).then(() => {
                                                         setOpen(false)
                                                         //重定向
                                                         router.push(`/${language.value}/settings/`)
