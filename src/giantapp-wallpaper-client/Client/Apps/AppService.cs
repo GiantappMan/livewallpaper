@@ -1,4 +1,4 @@
-﻿#define DEBUG_LOCAL
+﻿//#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
@@ -93,10 +93,11 @@ internal class AppService
         //除了需要刷新的页面和本地调试用，其他可以不设
         ShellWindow.RewriteMapping = new()
         {
+            {"/hub","/hub.html" },
+            {"/about","/about.html" },
+            { "/settings(.*)", "/settings(.*).html" },
             {"/zh","/zh.html" },
             {"/en","/en.html" },
-            {"/community","/community.html" },
-            { "/settings(.*)", "/settings(.*).html" },
         };
 #endif
 
