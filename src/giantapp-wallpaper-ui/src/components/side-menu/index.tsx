@@ -18,7 +18,7 @@ export default function SideMenu({ lang }: { lang: string }) {
         {
             name: dictionary['common'].local,
             href: `/${lang}`,
-            urls: [`/${lang}`, `/${lang}/index.html`],
+            urls: [`/${lang}`, `/${lang}.html`],
             icon: HomeIcon,
             selectedIcon: solidHomeIcon,
             current: false,
@@ -62,6 +62,7 @@ export default function SideMenu({ lang }: { lang: string }) {
     //更新current
     sidebarTopNavigation.forEach((item) => {
         item.current = item.urls.includes(pathname)
+        console.log("test", item.urls, pathname, item.current);
     });
 
     sidebarBottomNavigation.forEach((item) => {

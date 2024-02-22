@@ -69,6 +69,9 @@ const LocalPage = ({
       setWallpapers(res.data);
       // setScreens(screens.data);
       setPlayingStatus(_playingStatus.data);
+
+      //等待300ms，防止加载太快不好看
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } catch (e) {
       console.log(e)
       toast.error(dictionary["local"].failed_to_get_wallpaper_list)
@@ -172,15 +175,22 @@ const LocalPage = ({
     setOpenCreateWallpaperDialog(true);
   }
 
+  if (!mounted || refreshing || !wallpapers)
+    return <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
+      {
+        Array.from({ length: 12 }).map((_, index) => {
+          return <Skeleton key={index} className="h-[218px] w-full" />
+        })
+      }
+    </div>
+
   return <div
     onDragEnter={handleDragEnter}
     onDragLeave={handleDragLeave}
     onDragOver={handleDragOver}>
     <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
       {
-        (wallpapers || Array.from({ length: 12 })).map((wallpaper, index) => {
-          if (!mounted)
-            return <Skeleton key={index} className="h-[218px] w-full" />
+        wallpapers.map((wallpaper, index) => {
           if (!wallpaper?.fileUrl)
             return <div key={index}></div>
           return (
