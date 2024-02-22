@@ -464,6 +464,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                             <FormControl>
                                                 <label className="flex items-center space-x-2">
                                                     <Switch
+                                                        disabled={uploading || importing}
                                                         checked={field.value}
                                                         onCheckedChange={field.onChange}
                                                     />
