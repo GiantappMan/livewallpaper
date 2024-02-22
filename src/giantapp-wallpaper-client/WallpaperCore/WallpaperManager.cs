@@ -179,7 +179,6 @@ public class WallpaperManager
                     break;
                 case WallpaperCoveredBehavior.Stop:
                     _ = Play();
-                    //todo
                     break;
             }
         }

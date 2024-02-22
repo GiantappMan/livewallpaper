@@ -320,8 +320,7 @@ public static class WallpaperApi
         var res = new WallpaperApiSnapshot
         {
             Data = new List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>(),
-            AudioScreenIndex = Settings.AudioSourceIndex,
-            Volume = Settings.Volume
+            ApiSettings = (ApiSettings)Settings.Clone()
         };
 
         foreach (var item in RunningWallpapers)
@@ -522,8 +521,7 @@ public static class WallpaperApi
 
         try
         {
-            Settings.AudioSourceIndex = snapshot.AudioScreenIndex;
-            Settings.Volume = snapshot.Volume;
+            Settings = snapshot.ApiSettings;
             foreach (var item in snapshot.Data)
             {
                 var manager = new WallpaperManager(item.SnapshotData);

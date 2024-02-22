@@ -535,8 +535,7 @@ public class Playlist : ICloneable
 public class WallpaperApiSnapshot
 {
     public List<(Wallpaper Wallpaper, WallpaperManagerSnapshot SnapshotData)>? Data { get; set; }
-    public int AudioScreenIndex { get; set; }
-    public uint Volume { get; set; }
+    public ApiSettings ApiSettings { get; set; } = new();
 }
 
 //壁纸被遮挡时的行为
@@ -551,12 +550,17 @@ public enum WallpaperCoveredBehavior
 }
 
 //WallpaperApi全局设置
-public class ApiSettings
+public class ApiSettings : ICloneable
 {
     //小于0就是禁用
     public int AudioSourceIndex { get; internal set; }
     public uint Volume { get; internal set; }
-    public WallpaperCoveredBehavior CoveredBehavior { get; internal set; } = WallpaperCoveredBehavior.Pause;
+    public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
 
 

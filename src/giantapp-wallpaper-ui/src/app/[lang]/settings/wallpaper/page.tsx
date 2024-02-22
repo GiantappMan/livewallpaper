@@ -153,13 +153,13 @@ export default function Page() {
 
                             <Button type="button" onClick={addFolder}>{dictionary['settings'].add_directory}</Button>
                             <FormItem className=" max-w-sm">
-                                <h2 className="mb-4 text-lg font-medium">其他参数</h2>
+                                <h2 className="mb-4 text-lg font-medium">{dictionary['settings'].other_parameters}</h2>
                                 <FormField
                                     control={control}
                                     name="coveredBehavior"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel htmlFor="coveredBehavior">壁纸被遮挡时</FormLabel>
+                                            <FormLabel htmlFor="coveredBehavior">{dictionary['settings'].wallpaper_obscured}</FormLabel>
                                             <Select onValueChange={(e) => {
                                                 let tmp: WallpaperCoveredBehavior = parseInt(e);
                                                 field.onChange(tmp);
@@ -171,9 +171,9 @@ export default function Page() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="0">继续播放</SelectItem>
-                                                    <SelectItem value="1">暂停播放</SelectItem>
-                                                    <SelectItem value="2">停止播放</SelectItem>
+                                                    <SelectItem value="0">{dictionary['settings'].continue_playback}</SelectItem>
+                                                    <SelectItem value="1">{dictionary['settings'].pause_playback}</SelectItem>
+                                                    <SelectItem value="2">{dictionary['settings'].stop_playback}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>

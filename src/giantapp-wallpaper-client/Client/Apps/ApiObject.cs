@@ -126,12 +126,12 @@ public class ApiObject
         return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
     }
 
-    [Obsolete]
-    public string GetScreens()
-    {
-        var screens = WallpaperApi.GetScreens();
-        return JsonConvert.SerializeObject(screens, WallpaperApi.JsonSettings);
-    }
+    //[Obsolete]
+    //public string GetScreens()
+    //{
+    //    var screens = WallpaperApi.GetScreens();
+    //    return JsonConvert.SerializeObject(screens, WallpaperApi.JsonSettings);
+    //}
 
     public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
@@ -155,39 +155,39 @@ public class ApiObject
             }
 
         var res = await WallpaperApi.ShowWallpaper(wallpaper);
-        SaveSnapshot();
+        AppService.SaveSnapshot();
 
         return res;
     }
 
-    [Obsolete("Use GetWallpaperApiStatus instead")]
-    public string GetPlayingWallpaper()
-    {
-        var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
-        {
-            m.Wallpaper?.Meta.EnsureId();
-            return m.Wallpaper;
-        }).ToList();
+    //[Obsolete("Use GetWallpaperApiStatus instead")]
+    //public string GetPlayingWallpaper()
+    //{
+    //    var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
+    //    {
+    //        m.Wallpaper?.Meta.EnsureId();
+    //        return m.Wallpaper;
+    //    }).ToList();
 
-        var config = Configer.Get<ConfigWallpaper>() ?? new();
-        //转换路径
-        foreach (var item in res)
-        {
-            if (item == null)
-                continue;
+    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
+    //    //转换路径
+    //    foreach (var item in res)
+    //    {
+    //        if (item == null)
+    //            continue;
 
-            item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
-            item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
+    //        item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
+    //        item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
 
-            if (item.Meta.IsPlaylist())
-                foreach (var wallpaper in item.Meta.Wallpapers)
-                {
-                    wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
-                    wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
-                }
-        }
-        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
-    }
+    //        if (item.Meta.IsPlaylist())
+    //            foreach (var wallpaper in item.Meta.Wallpapers)
+    //            {
+    //                wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+    //                wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+    //            }
+    //    }
+    //    return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+    //}
 
     //获取播放状态
     public string GetPlayingStatus()
@@ -260,7 +260,7 @@ public class ApiObject
         if (ok)
         {
             WallpaperApi.SetVolume(uint.Parse(volume), screenIndex);
-            SaveSnapshot();
+            AppService.SaveSnapshot();
         }
     }
 
@@ -318,7 +318,7 @@ public class ApiObject
             }
 
         var res = WallpaperApi.CreateWallpaper(wallpaper, config.EnsureDirectories()[0]);
-        SaveSnapshot();
+        AppService.SaveSnapshot();
 
         return res;
     }
@@ -335,19 +335,19 @@ public class ApiObject
     //    return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
     //}
 
-    [Obsolete]
-    public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
-    {
-        var config = Configer.Get<ConfigWallpaper>() ?? new();
-        var path = AppService.ConvertUrlToTmpPath(pathUrl);
-        path = AppService.ConvertUrlToPath(config, path);//有可能没改，就是壁纸目录
-        var cover = AppService.ConvertUrlToTmpPath(coverUrl);
+    //[Obsolete]
+    //public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
+    //{
+    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
+    //    var path = AppService.ConvertUrlToTmpPath(pathUrl);
+    //    path = AppService.ConvertUrlToPath(config, path);//有可能没改，就是壁纸目录
+    //    var cover = AppService.ConvertUrlToTmpPath(coverUrl);
 
-        var oldWallpaper = JsonConvert.DeserializeObject<Wallpaper>(oldWallpaperJson, WallpaperApi.JsonSettings);
-        if (oldWallpaper == null)
-            return false;
-        return WallpaperApi.UpdateWallpaper(title, cover, path, oldWallpaper);
-    }
+    //    var oldWallpaper = JsonConvert.DeserializeObject<Wallpaper>(oldWallpaperJson, WallpaperApi.JsonSettings);
+    //    if (oldWallpaper == null)
+    //        return false;
+    //    return WallpaperApi.UpdateWallpaper(title, cover, path, oldWallpaper);
+    //}
 
     public bool UpdateWallpaperNew(string newWallpaperJson, string oldWallpaperPath)
     {
@@ -518,13 +518,5 @@ public class ApiObject
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);
-    }
-
-    //保存快照，下次启动可恢复
-    public void SaveSnapshot()
-    {
-        var status = WallpaperApi.GetSnapshot();
-        //保存到配置文件
-        Configer.Set(status, out _, true);
     }
 }

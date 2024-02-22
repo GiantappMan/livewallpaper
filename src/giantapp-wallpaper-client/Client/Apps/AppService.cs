@@ -74,7 +74,8 @@ internal class AppService
         {
             await WallpaperApi.RestoreFromSnapshot(snapshot);
             //重新获取快照，有可能pid重新生成了
-            Configer.Set(WallpaperApi.GetSnapshot(), out _, true);
+            //Configer.Set(WallpaperApi.GetSnapshot(), out _, true);
+            SaveSnapshot();
         }
 
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
@@ -120,6 +121,13 @@ internal class AppService
 
         if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
             ShowShell();
+    }
+    //保存快照，下次启动可恢复
+    internal static void SaveSnapshot()
+    {
+        var status = WallpaperApi.GetSnapshot();
+        //保存到配置文件
+        Configer.Set(status, out _, true);
     }
 
     internal static void ApplyTheme(Appearance? config)
@@ -316,6 +324,7 @@ internal class AppService
         }
     }
 
+    //修改配置后的回调
     private static async void Api_SetConfigEvent(object sender, ConfigSetAfterEventArgs e)
     {
         switch (e.Key)
@@ -340,8 +349,14 @@ internal class AppService
                 ConfigWallpaper? oldConfig = null;
                 if (!string.IsNullOrEmpty(e.OldJson))
                     oldConfig = JsonConvert.DeserializeObject<ConfigWallpaper>(e.OldJson);
+
                 if (configWallpaper != null)
                 {
+                    if (WallpaperApi.Settings.CoveredBehavior != configWallpaper.CoveredBehavior)
+                    {
+                        WallpaperApi.Settings.CoveredBehavior = configWallpaper.CoveredBehavior;
+                        SaveSnapshot();
+                    }
                     //目录未变化
                     if (configWallpaper.Directories.SequenceEqual(oldConfig?.Directories))
                         return;
