@@ -16,6 +16,7 @@ namespace Client.Apps;
 public class ConfigSetAfterEventArgs : EventArgs
 {
     public string Key { get; set; } = string.Empty;
+    public string OldJson { get; set; } = string.Empty;
     public string Json { get; set; } = string.Empty;
 }
 
@@ -78,13 +79,14 @@ public class ApiObject
     {
         key = $"Client.Apps.Configs.{key}";
         var obj = JsonConvert.DeserializeObject(json, WallpaperApi.JsonSettings);
-        Configer.Set(key, obj, true);
+        Configer.Set(key, obj, out object? oldConfig, true);
         if (ConfigSetAfterEvent != null && obj != null)
         {
             ConfigSetAfterEvent(this, new ConfigSetAfterEventArgs
             {
                 Key = key,
-                Json = json
+                Json = json,
+                OldJson = oldConfig == null ? string.Empty : JsonConvert.SerializeObject(oldConfig, WallpaperApi.JsonSettings)
             });
         }
     }
@@ -523,6 +525,6 @@ public class ApiObject
     {
         var status = WallpaperApi.GetSnapshot();
         //保存到配置文件
-        Configer.Set(status, true);
+        Configer.Set(status, out _, true);
     }
 }

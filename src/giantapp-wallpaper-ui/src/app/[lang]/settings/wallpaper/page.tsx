@@ -16,17 +16,17 @@ import { toast } from "sonner"
 import shellApi from "@/lib/client/shell";
 import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
-import { ConfigWallpaper } from "@/lib/client/types/config"
+import { ConfigWallpaper, WallpaperCoveredBehavior } from "@/lib/client/types/config"
 import { Skeleton } from "@/components/ui/skeleton"
-// import { Checkbox } from "@/components/ui/checkbox"
-// import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getGlobal } from "@/i18n-config";
 
 const FormSchema = z.object({
     directories: z.array(z.object({
         path: z.string(),
     })),
-    keepWallpaper: z.boolean(),
+    // keepWallpaper: z.boolean(),
+    coveredBehavior: z.nativeEnum(WallpaperCoveredBehavior)
 })
 
 export default function Page() {
@@ -36,7 +36,8 @@ export default function Page() {
         resolver: zodResolver(FormSchema),
         defaultValues: {
             directories: [{ path: "" }],
-            keepWallpaper: false,
+            // keepWallpaper: false,
+            coveredBehavior: WallpaperCoveredBehavior.Pause,
         },
     })
     const { control } = form
@@ -57,7 +58,8 @@ export default function Page() {
         }
 
         form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
-        form.setValue("keepWallpaper", config.data.keepWallpaper);
+        // form.setValue("keepWallpaper", config.data.keepWallpaper);
+        form.setValue("coveredBehavior", config.data.coveredBehavior);
     }, [form]);
 
     useEffect(() => {
@@ -75,7 +77,8 @@ export default function Page() {
         );
         const saveRes = await api.setConfig("Wallpaper", {
             directories,
-            keepWallpaper: data.keepWallpaper,
+            // keepWallpaper: data.keepWallpaper,
+            coveredBehavior: data.coveredBehavior
         })
         if (saveRes.error) {
             toast.error(dictionary['settings'].failed_to_save);
@@ -149,22 +152,30 @@ export default function Page() {
                             }
 
                             <Button type="button" onClick={addFolder}>{dictionary['settings'].add_directory}</Button>
-
-                            <FormItem>
-                                <h3 className="mb-4 text-lg font-medium">壁纸参数</h3>
+                            <FormItem className=" max-w-sm">
+                                <h2 className="mb-4 text-lg font-medium">其他参数</h2>
                                 <FormField
                                     control={control}
-                                    name="keepWallpaper"
+                                    name="coveredBehavior"
                                     render={({ field }) => (
-                                        <FormItem className="flex items-center space-y-0 space-x-2">
-                                            <FormLabel htmlFor="keepWallpaper">壁纸被遮挡时</FormLabel>
-                                            <FormControl>
-                                                {/* <Switch id="keepWallpaper" checked={field.value}
-                                                    onCheckedChange={() => {
-                                                        field.onChange(!field.value);
-                                                        form.handleSubmit(onSubmit)();
-                                                    }} /> */}
-                                            </FormControl>
+                                        <FormItem>
+                                            <FormLabel htmlFor="coveredBehavior">壁纸被遮挡时</FormLabel>
+                                            <Select onValueChange={(e) => {
+                                                let tmp: WallpaperCoveredBehavior = parseInt(e);
+                                                field.onChange(tmp);
+                                                form.handleSubmit(onSubmit)();
+                                            }} value={field.value.toString()} >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="0">继续播放</SelectItem>
+                                                    <SelectItem value="1">暂停播放</SelectItem>
+                                                    <SelectItem value="2">停止播放</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </FormItem>
                                     )}
                                 />

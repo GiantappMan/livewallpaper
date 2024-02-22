@@ -9,7 +9,17 @@ export type ConfigGeneral = {
   currentLan: string;
 };
 
+export enum WallpaperCoveredBehavior {
+  //不做任何处理
+  None,
+  //暂停播放
+  Pause,
+  //停止播放
+  Stop
+}
+
 export type ConfigWallpaper = {
   directories: string[];
-  keepWallpaper: boolean;
+  // keepWallpaper: boolean;
+  coveredBehavior: WallpaperCoveredBehavior;
 };

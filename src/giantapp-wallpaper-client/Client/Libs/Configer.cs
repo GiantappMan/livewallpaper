@@ -46,22 +46,27 @@ public static class Configer
     }
 
     // 保存任意配置，key用nameof生成，缓存到内存中，保存时全部写入文件
-    public static void Set<T>(T config, bool save = false)
+    public static void Set<T>(T config, out object? oldConfig, bool save = false)
     {
+        oldConfig = null;
         if (config == null)
             return;
         string key = typeof(T).FullName;
-        Set(key, config, save);
+        Set(key, config, out oldConfig, save);
     }
 
-    public static void Set(string key, object? config, bool save = false)
+    public static void Set(string key, object? config, out object? oldConfig, bool save = false)
     {
+        oldConfig = null;
         lock (_cache) // 使用锁保护对_cache的访问
         {
             if (config == null)
                 _cache.TryRemove(key, out _);
             else
+            {
+                oldConfig = _cache[key];
                 _cache[key] = config;
+            }
         }
         if (save)
             Save();

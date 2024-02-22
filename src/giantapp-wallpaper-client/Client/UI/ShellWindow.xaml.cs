@@ -294,7 +294,7 @@ public partial class ShellWindow : Window
             Width = Width,
             Height = Height
         };
-        Configer.Set(config);
+        Configer.Set(config, out _);
     }
 
     private static void NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)

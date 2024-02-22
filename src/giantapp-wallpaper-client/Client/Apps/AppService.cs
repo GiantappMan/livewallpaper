@@ -15,6 +15,7 @@ using System.Threading;
 using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using System.IO;
+using System.Linq;
 
 namespace Client.Apps;
 
@@ -73,7 +74,7 @@ internal class AppService
         {
             await WallpaperApi.RestoreFromSnapshot(snapshot);
             //重新获取快照，有可能pid重新生成了
-            Configer.Set(WallpaperApi.GetSnapshot(), true);
+            Configer.Set(WallpaperApi.GetSnapshot(), out _, true);
         }
 
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
@@ -109,7 +110,7 @@ internal class AppService
         if (tmp != generalConfig.AutoStart)
         {
             generalConfig.AutoStart = tmp;
-            Configer.Set(generalConfig);
+            Configer.Set(generalConfig, out _);
         }
         await _autoStart.Set(generalConfig.AutoStart);
 
@@ -138,7 +139,7 @@ internal class AppService
         //if (path == "index")
         //    path = null;
         //本地开发
-        url= $"http://localhost:3000/{config.CurrentLan}";
+        url = $"http://localhost:3000/{config.CurrentLan}";
         //ShellWindow.ShowShell($"http://localhost:3000/{config.CurrentLan}/{path}");
         //return;
 #else
@@ -156,7 +157,7 @@ internal class AppService
         if (!config.KeepWallpaper)
         {
             WallpaperApi.Dispose();
-            Configer.Set<WallpaperApiSnapshot?>(null, true);
+            Configer.Set<WallpaperApiSnapshot?>(null, out _, true);
         }
         //退出
         System.Windows.Application.Current.Shutdown();
@@ -336,8 +337,15 @@ internal class AppService
                 break;
             case ConfigWallpaper.FullName:
                 var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
+                ConfigWallpaper? oldConfig = null;
+                if (!string.IsNullOrEmpty(e.OldJson))
+                    oldConfig = JsonConvert.DeserializeObject<ConfigWallpaper>(e.OldJson);
                 if (configWallpaper != null)
                 {
+                    //目录未变化
+                    if (configWallpaper.Directories.SequenceEqual(oldConfig?.Directories))
+                        return;
+
                     ApplySaveFolderMapping(configWallpaper.EnsureDirectories());
                     _apiObject.TriggerRefreshPageEvent();
                 }
