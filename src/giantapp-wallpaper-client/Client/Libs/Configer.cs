@@ -64,7 +64,7 @@ public static class Configer
                 _cache.TryRemove(key, out _);
             else
             {
-                oldConfig = _cache[key];
+                _cache.TryGetValue(key, out oldConfig);
                 _cache[key] = config;
             }
         }
