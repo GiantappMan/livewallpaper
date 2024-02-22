@@ -10,7 +10,7 @@ import { ConfigGeneral } from "@/lib/client/types/config";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from "@/components/ui/command";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
@@ -127,6 +127,19 @@ const Page = () => {
                                                 />
                                             </CommandItem>
                                         ))}
+
+                                    </CommandGroup>
+                                    {/* 分割线 */}
+                                    <CommandSeparator />
+                                    {/* 贡献你的语言，一个超链接 */}
+                                    <CommandGroup>
+                                        <CommandItem
+                                            onSelect={() => {
+                                                api.openUrl("https://github.com/GiantappMan/livewallpaper/tree/v3.x/src/giantapp-wallpaper-ui/src/dictionaries")
+                                            }}
+                                        >
+                                            {dictionary['settings'].contribute_your_language}
+                                        </CommandItem>
                                     </CommandGroup>
                                 </Command>
                             </PopoverContent>

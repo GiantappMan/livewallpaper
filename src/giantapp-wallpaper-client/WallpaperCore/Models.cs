@@ -556,7 +556,7 @@ public class ApiSettings
     //小于0就是禁用
     public int AudioSourceIndex { get; internal set; }
     public uint Volume { get; internal set; }
-    public WallpaperCoveredBehavior CoveredBehavior { get; set; }
+    public WallpaperCoveredBehavior CoveredBehavior { get; internal set; } = WallpaperCoveredBehavior.Pause;
 }
 
 

@@ -157,7 +157,7 @@ export default function Page() {
                                     name="keepWallpaper"
                                     render={({ field }) => (
                                         <FormItem className="flex items-center space-y-0 space-x-2">
-                                            <FormLabel htmlFor="keepWallpaper">客户端关闭后保留壁纸</FormLabel>
+                                            <FormLabel htmlFor="keepWallpaper">壁纸被遮挡时</FormLabel>
                                             <FormControl>
                                                 {/* <Switch id="keepWallpaper" checked={field.value}
                                                     onCheckedChange={() => {
