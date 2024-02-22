@@ -98,7 +98,6 @@ public static class Configer
             string filePath = Path.Combine(Folder, key + ".json");
             if (File.Exists(filePath))
             {
-
                 string json = File.ReadAllText(filePath);
                 var config = JsonConvert.DeserializeObject<T>(json, WallpaperApi.JsonSettings);
                 if (config != null)

@@ -357,12 +357,13 @@ internal class AppService
                         WallpaperApi.Settings.CoveredBehavior = configWallpaper.CoveredBehavior;
                         SaveSnapshot();
                     }
-                    //目录未变化
-                    if (configWallpaper.Directories.SequenceEqual(oldConfig?.Directories))
-                        return;
 
-                    ApplySaveFolderMapping(configWallpaper.EnsureDirectories());
-                    _apiObject.TriggerRefreshPageEvent();
+                    //保存目录发生变化
+                    if (oldConfig?.Directories == null || !configWallpaper.Directories.SequenceEqual(oldConfig.Directories))
+                    {
+                        ApplySaveFolderMapping(configWallpaper.EnsureDirectories());
+                        _apiObject.TriggerRefreshPageEvent();
+                    }
                 }
                 break;
         }

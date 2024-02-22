@@ -27,9 +27,13 @@ import { SettingDialog } from "./_components/setting-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import PlayingStatus from "@/lib/client/types/playing-status";
-import { getGlobal } from "@/i18n-config";
+import { getGlobal, type Locale } from "@/i18n-config";
 
-const LocalPage = () => {
+const LocalPage = ({
+  params,
+}: {
+  params: { lang: Locale };
+}) => {
   const dictionary = getGlobal();
   const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
   const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
@@ -419,7 +423,7 @@ const LocalPage = () => {
               {dictionary["local"].create_wallpaper}
             </Button>
             <Button variant="outline">
-              <Link href="/settings/wallpaper">
+              <Link href={`${params.lang}/settings/wallpaper`}>
                 {dictionary["local"].modify_folder}
               </Link>
             </Button>
