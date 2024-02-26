@@ -45,11 +45,11 @@ const AboutPage = () => {
                 {dictionary['about'].problems_and_suggestions}
             </LinkClient>
             <LinkClient
-                className="underline-offset-4 hover:underline" href="https://github.com/DaZiYuan/livewallpaper" target="_blank">
+                className="underline-offset-4 hover:underline" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
                 Github
             </LinkClient>
             <LinkClient
-                className="underline-offset-4 hover:underline" href="https://gitee.com/DaZiYuan/livewallpaper" target="_blank">
+                className="underline-offset-4 hover:underline" href="https://gitee.com/GiantappMan/livewallpaper" target="_blank">
                 Gitee
             </LinkClient>
         </div>
@@ -64,7 +64,7 @@ const AboutPage = () => {
             </Button>
             <Button variant="outline" asChild>
                 <LinkClient
-                    className="underline-offset-4 flex items-center" href="https://github.com/DaZiYuan/livewallpaper" target="_blank">
+                    className="underline-offset-4 flex items-center" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
                     <Github className="h-4 w-4 mr-1" />
                     {dictionary['about'].give_star}
                 </LinkClient>

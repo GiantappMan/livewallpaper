@@ -1,3 +1,5 @@
+import { i18n, Locale } from "@/i18n-config";
+
 export type ConfigAppearance = {
   theme: string;
   mode: "system" | "light" | "dark";
@@ -6,7 +8,7 @@ export type ConfigAppearance = {
 export type ConfigGeneral = {
   autoStart: boolean;
   hideWindow: boolean;
-  currentLan: string;
+  currentLan: Locale;
 };
 
 export enum WallpaperCoveredBehavior {

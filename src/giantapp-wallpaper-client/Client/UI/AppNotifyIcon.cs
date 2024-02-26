@@ -88,7 +88,7 @@ internal class AppNotifyIcon
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
     {
         //系统浏览器打开网页
-        OpenBrowser("https://github.com/DaZiYuan/livewallpaper");
+        OpenBrowser("https://github.com/GiantappMan/livewallpaper");
     }
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)

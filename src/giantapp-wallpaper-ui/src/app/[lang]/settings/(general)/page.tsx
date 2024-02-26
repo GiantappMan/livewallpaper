@@ -16,14 +16,11 @@ import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
 import { getGlobal } from "@/i18n-config";
 import { useCallback } from 'react';
+import { i18n } from "@/i18n-config";
 
 const Page = () => {
     const dictionary = getGlobal();
     const router = useRouter()
-    const languages = [
-        { label: "简体中文", value: "zh" },
-        { label: "English", value: "en" },
-    ] as const
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = React.useState<ConfigGeneral>({} as any)
     const [open, setOpen] = React.useState(false)
@@ -88,11 +85,7 @@ const Page = () => {
                                         "w-[200px] justify-between",
                                     )}
                                 >
-                                    {config.currentLan
-                                        ? languages.find(
-                                            (language) => language.value === config.currentLan
-                                        )?.label
-                                        : "Select language"}
+                                    {config.currentLan ? i18n.localesDescriptions[config.currentLan] : "Select language"}
                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
@@ -101,26 +94,26 @@ const Page = () => {
                                     <CommandInput placeholder={dictionary['settings'].search} className="h-9" />
                                     <CommandEmpty>{dictionary['settings'].not_found}</CommandEmpty>
                                     <CommandGroup>
-                                        {languages.map((language) => (
+                                        {i18n.locales.map((language) => (
                                             <CommandItem
-                                                value={language.label}
-                                                key={language.value}
+                                                value={language}
+                                                key={language}
                                                 onSelect={() => {
                                                     saveConfig({
                                                         ...config,
-                                                        currentLan: language.value
+                                                        currentLan: language
                                                     }).then(() => {
                                                         setOpen(false)
                                                         //重定向
-                                                        router.push(`/${language.value}/settings/`)
+                                                        router.push(`/${language}/settings/`)
                                                     });
                                                 }}
                                             >
-                                                {language.label}
+                                                {i18n.localesDescriptions[language]}
                                                 <CheckIcon
                                                     className={cn(
                                                         "ml-auto h-4 w-4",
-                                                        language.value === config.currentLan
+                                                        language === config.currentLan
                                                             ? "opacity-100"
                                                             : "opacity-0"
                                                     )}
