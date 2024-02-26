@@ -45,6 +45,17 @@ const LocalPage = ({
   const [currentWallpaper, setCurrentWallpaper] = useState<Wallpaper | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const mounted = useMounted()
+
+  const refreshPlayingStatus = useCallback(async () => {
+    const _playingStatus = await api.getPlayingStatus();
+    if (_playingStatus.error) {
+      toast.error(dictionary["local"].failed_to_get_current_wallpaper)
+      console.log(_playingStatus.error)
+      return;
+    }
+    setPlayingStatus(_playingStatus.data);
+  }, [dictionary]);
+
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -54,24 +65,18 @@ const LocalPage = ({
         return;
       }
 
-      const _playingStatus = await api.getPlayingStatus();
-      if (_playingStatus.error) {
-        toast.error(dictionary["local"].failed_to_get_current_wallpaper)
-        console.log(_playingStatus.error)
-        return;
-      }
+      await refreshPlayingStatus();
+
       //给coverUrl增加随即参数防止缓存
       res.data?.forEach((wallpaper) => {
         if (wallpaper.coverUrl) {
           wallpaper.coverUrl += `?t=${Date.now()}`;
         }
       })
+
       setWallpapers(res.data);
       // setScreens(screens.data);
-      setPlayingStatus(_playingStatus.data);
-
-      //等待300ms，防止加载太快不好看
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // setPlayingStatus(_playingStatus.data);
     } catch (e) {
       console.log(e)
       toast.error(dictionary["local"].failed_to_get_wallpaper_list)
@@ -79,7 +84,7 @@ const LocalPage = ({
     finally {
       setRefreshing(false);
     }
-  }, [dictionary]);
+  }, [dictionary, refreshPlayingStatus]);
 
   const showWallpaper = useCallback(async (wallpaper: Wallpaper, screen: Screen | null) => {
     if (isAlertDialogOpen) {
@@ -103,11 +108,15 @@ const LocalPage = ({
       alert(res.error);
       return;
     }
-    refresh();
-  }, [isAlertDialogOpen, playingStatus?.screens, refresh]);
+
+    refreshPlayingStatus();
+  }, [isAlertDialogOpen, playingStatus?.screens, refreshPlayingStatus]);
 
   useEffect(() => {
-    refresh();
+    //等待300ms，防止加载太快不好看
+    setTimeout(() => {
+      refresh();
+    }, 300);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -139,7 +148,8 @@ const LocalPage = ({
       toast.error(dictionary["local"].delete_failed);
       return;
     }
-    refresh();
+    let newWallpapers = wallpapers?.filter((item) => item.filePath !== wallpaper.filePath);
+    setWallpapers(newWallpapers);
   }
 
   const handleEditWallpaper = async (wallpaper: Wallpaper) => {
@@ -454,9 +464,17 @@ const LocalPage = ({
       open={openSettingDialog}
       wallpaper={currentWallpaper}
       onChange={(e) => setOpenSettingDialog(e)}
-      saveSuccess={() => {
+      saveSuccess={(e) => {
         setOpenSettingDialog(false)
-        refresh();
+        // refresh();
+        //只更新修改的wallpaper
+        let newWallpapers = wallpapers?.map((item) => {
+          if (item.filePath === e.filePath) {
+            return e;
+          }
+          return item;
+        });
+        setWallpapers(newWallpapers);
       }} />
     }
   </div>

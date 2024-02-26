@@ -22,7 +22,7 @@ interface SettingDialogProps {
     wallpaper: Wallpaper
     open: boolean
     onChange: (open: boolean) => void
-    saveSuccess?: () => void
+    saveSuccess?: (wallpaper: Wallpaper) => void
 }
 
 const formSchema = z.object({
@@ -79,7 +79,7 @@ export function SettingDialog(props: SettingDialogProps) {
         }
 
         props.onChange(false);
-        props.saveSuccess?.();
+        props.saveSuccess?.(props.wallpaper);
 
         setSaving(false);
     }

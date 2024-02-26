@@ -474,6 +474,12 @@ public static class WallpaperApi
         newWallpaper.Meta.UpdateTime = DateTime.Now;
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(newWallpaper.Meta, JsonSettings));
+
+        //移除旧格式project.json
+        string projectJsonFile = Path.Combine(saveFolder, "project.json");
+        if (File.Exists(projectJsonFile))
+            File.Delete(projectJsonFile);
+
         return true;
     }
     //设置壁纸配置
