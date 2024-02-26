@@ -6,11 +6,11 @@ import { getGlobal } from "@/i18n-config";
 
 export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<HTMLElement>) {
   const dictionary = getGlobal();
-  const pathname = usePathname()
   const items = [
     {
       name: dictionary['settings'].general,
       href: `/${lang}/settings`,
+      urls: [`/${lang}/settings`, `/${lang}/settings.html`],
       icon: (
         <svg
           className=" h-4 w-4"
@@ -29,10 +29,12 @@ export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<H
           />
         </svg>
       ),
+      current: false
     },
     {
       name: dictionary['settings'].wallpaper,
       href: `/${lang}/settings/wallpaper`,
+      urls: [`/${lang}/settings/wallpaper`, `/${lang}/settings/wallpaper.html`],
       icon: (
         <svg
           className=" h-4 w-4"
@@ -52,10 +54,12 @@ export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<H
           <path d="M12 17v4" />
         </svg>
       ),
+      current: false
     },
     {
       name: dictionary['settings'].appearance,
       href: `/${lang}/settings/appearance`,
+      urls: [`/${lang}/settings/appearance`, `/${lang}/settings/appearance.html`],
       icon: (
         <svg
           className=" h-4 w-4"
@@ -74,14 +78,23 @@ export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<H
           <path d="M21 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2" />
         </svg>
       ),
+      current: false
     },
   ]
+
+  const pathname = usePathname();
+  //更新current
+  items.forEach((item) => {
+    item.current = item.urls.includes(pathname)
+    // console.log("test", item.urls, pathname, item.current);
+  });
+
   return (
     <aside className="flex flex-col gap-4 px-4 py-6 text-sm font-medium">
       {items.map((item) => (
         <Link
           key={item.href}
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${pathname === item.href
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${item.current
             ? "text-zinc-900 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-50"
             : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-700"
             }`}

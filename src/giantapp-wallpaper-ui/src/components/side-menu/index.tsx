@@ -62,7 +62,7 @@ export default function SideMenu({ lang }: { lang: string }) {
     //更新current
     sidebarTopNavigation.forEach((item) => {
         item.current = item.urls.includes(pathname)
-        console.log("test", item.urls, pathname, item.current);
+        // console.log("test", item.urls, pathname, item.current);
     });
 
     sidebarBottomNavigation.forEach((item) => {
