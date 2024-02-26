@@ -138,6 +138,7 @@ interface WallpaperDialogProps {
     open: boolean
     onChange: (open: boolean) => void
     createSuccess?: () => void
+    updateSuccess?: (wallpaper: Wallpaper) => void
 }
 
 let defaultValues: {
@@ -343,7 +344,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                 toast.warning(dictionary['local'].update_failed_format_not_supported);
             else {
                 toast.success(dictionary['local'].update_successful);
-                props.createSuccess?.();
+                props.updateSuccess?.(wallpaper);
             }
         }
         else {
@@ -390,7 +391,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                 toast.warning(dictionary['local'].update_failed_format_not_supported);
             else {
                 toast.success(dictionary['local'].update_successful);
-                props.createSuccess?.();
+                props.updateSuccess?.(wallpaper);
             }
         }
         else {

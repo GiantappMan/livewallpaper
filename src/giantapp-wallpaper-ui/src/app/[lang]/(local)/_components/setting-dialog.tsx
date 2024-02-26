@@ -79,7 +79,10 @@ export function SettingDialog(props: SettingDialogProps) {
         }
 
         props.onChange(false);
-        props.saveSuccess?.(props.wallpaper);
+        props.saveSuccess?.({
+            ...props.wallpaper,
+            setting,
+        });
 
         setSaving(false);
     }

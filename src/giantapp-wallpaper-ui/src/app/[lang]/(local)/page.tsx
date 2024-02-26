@@ -459,14 +459,25 @@ const LocalPage = ({
       createSuccess={() => {
         setOpenCreateWallpaperDialog(false)
         refresh();
-      }} />
+      }}
+      updateSuccess={(e) => {
+        setOpenCreateWallpaperDialog(false)
+        //只更新修改的wallpaper
+        let newWallpapers = wallpapers?.map((item) => {
+          if (item.filePath === e.filePath) {
+            return e;
+          }
+          return item;
+        });
+        setWallpapers(newWallpapers);
+      }}
+    />
     {currentWallpaper && <SettingDialog
       open={openSettingDialog}
       wallpaper={currentWallpaper}
       onChange={(e) => setOpenSettingDialog(e)}
       saveSuccess={(e) => {
         setOpenSettingDialog(false)
-        // refresh();
         //只更新修改的wallpaper
         let newWallpapers = wallpapers?.map((item) => {
           if (item.filePath === e.filePath) {
