@@ -29,4 +29,4 @@
 
 - [点个星星](https://github.com/GiantappMan/livewallpaper)  
 - [五星好评](ms-windows-store://pdp/?productid=9MWTG433JV6B)  
-- 注册[laf](https://laf.run/signup?code=y0pRFfG)，都会获得10￥激励，可用于抵扣社区费用  
+- 注册serverless 平台[laf](https://laf.run/signup?code=y0pRFfG)，都会获得10￥激励，用于抵扣社区费用  
