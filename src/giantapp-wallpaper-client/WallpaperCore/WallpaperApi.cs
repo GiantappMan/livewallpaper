@@ -580,6 +580,25 @@ public static class WallpaperApi
         manager.SetProgress(progress);
     }
 
+    public static void CloseNoScreenWallpaper()
+    {
+        foreach (var item in RunningWallpapers)
+        {
+            var screenIndexes = item.Value.Wallpaper?.RunningInfo.ScreenIndexes;
+            //如果当前屏幕已不存在就关闭
+            if (screenIndexes != null && screenIndexes.Length > 0)
+            {
+                foreach (var screenIndex in screenIndexes)
+                {
+                    if (GetScreen(screenIndex) == null)
+                    {
+                        CloseWallpaper(screenIndex);
+                        break;
+                    }
+                }
+            }
+        }
+    }
     ////添加到播放列表
     //public static void AddToPlaylist(Playlist playlist, Wallpaper wallpaper)
     //{

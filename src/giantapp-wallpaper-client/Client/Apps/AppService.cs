@@ -16,6 +16,7 @@ using WallpaperCore;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using System.IO;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace Client.Apps;
 
@@ -39,6 +40,14 @@ internal class AppService
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
         _autoStart = new(ProductName, exePath);
 
+        //ScreenChanged
+        SystemEvents.DisplaySettingsChanged += (s, e) =>
+        {
+            //关闭没有屏幕的壁纸
+            WallpaperApi.CloseNoScreenWallpaper();
+            SaveSnapshot();
+            _apiObject.TriggerRefreshPageEvent();
+        };
     }
 
     #region properties
