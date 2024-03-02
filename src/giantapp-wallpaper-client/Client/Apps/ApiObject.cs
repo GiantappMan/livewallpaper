@@ -252,6 +252,7 @@ public class ApiObject
             WallpaperApi.StopWallpaper(screenIndex);
         else
             WallpaperApi.StopWallpaper();
+        AppService.SaveSnapshot();
     }
 
     public void SetVolume(string volume, string screenIndexStr)

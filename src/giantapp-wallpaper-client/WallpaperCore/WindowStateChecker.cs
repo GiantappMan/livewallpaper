@@ -100,6 +100,12 @@ public class WindowStateChecker
             foreach (var item in checkHandlesCopy)
             {
                 var screen = Screen.FromHandle(item);
+                if (!currentScreenState.ContainsKey(screen.DeviceName))
+                {
+                    //新插入的屏幕可能会触发这里
+                    currentScreenState.Add(screen.DeviceName, WindowState.NotMaximized);
+                }
+
                 //已经有其他程序最大化
                 if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName] == WindowState.Maximized)
                     continue;
@@ -123,7 +129,10 @@ public class WindowStateChecker
             //更新数据
             foreach (var item in currentScreenState)
             {
-                var screen = Screen.AllScreens.First(m => m.DeviceName == item.Key);
+                var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == item.Key);
+                if (screen == null)
+                    continue;
+
                 var screenName = item.Key;
                 var state = item.Value;
                 if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
