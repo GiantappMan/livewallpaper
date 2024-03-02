@@ -38,6 +38,7 @@ internal class AppService
     {
         string exePath = Assembly.GetEntryAssembly()!.Location.Replace(".dll", ".exe");
         _autoStart = new(ProductName, exePath);
+
     }
 
     #region properties

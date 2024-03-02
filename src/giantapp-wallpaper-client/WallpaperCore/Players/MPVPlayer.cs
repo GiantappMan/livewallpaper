@@ -101,8 +101,10 @@ public class MpvPlayer
             Process?.CloseMainWindow();
             Process?.Dispose();
 
-            Process = new Process();
-            Process.EnableRaisingEvents = true;
+            Process = new Process
+            {
+                EnableRaisingEvents = true
+            };
             Process.Exited += (s, e) =>
             {
                 ProcessLaunched = false;

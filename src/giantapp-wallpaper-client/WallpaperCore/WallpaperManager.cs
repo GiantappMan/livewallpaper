@@ -93,7 +93,7 @@ public class WallpaperManager
         if (!_mpvPlayer.ProcessLaunched)
         {
             await _mpvPlayer.LaunchAsync(playlistPath);
-            var bounds = WallpaperApi.GetScreens()[screenIndex].Bounds;
+            var bounds = WallpaperApi.GetScreen(screenIndex)?.Bounds;
             DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
         }
         else

@@ -33,7 +33,7 @@ public class DesktopManagerTest
         }
         var handler = p.MainWindowHandle;
 
-        var res = DesktopManager.SendHandleToDesktopBottom(handler, WallpaperApi.GetScreens()[1].Bounds);
+        var res = DesktopManager.SendHandleToDesktopBottom(handler, WallpaperApi.GetScreen(1)?.Bounds);
         Assert.IsTrue(res);
         Thread.Sleep(5000);
         p.Kill();

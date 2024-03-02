@@ -82,9 +82,9 @@ public static class DesktopManager
         return workerw.Value;
     }
 
-    public static bool SendHandleToDesktopBottom(IntPtr handler, Rectangle bounds)
+    public static bool SendHandleToDesktopBottom(IntPtr handler, Rectangle? bounds)
     {
-        if (handler == IntPtr.Zero)
+        if (handler == IntPtr.Zero || bounds == null)
             return false;
 
         var workerw = GetWorkerW();
@@ -111,8 +111,8 @@ public static class DesktopManager
 
         //转换相对worker坐标
         Span<Point> points = new Point[2];
-        points[0] = new Point(bounds.X, bounds.Y);
-        points[1] = new Point(bounds.Right, bounds.Bottom);
+        points[0] = new Point(bounds.Value.X, bounds.Value.Y);
+        points[1] = new Point(bounds.Value.Right, bounds.Value.Bottom);
         PInvoke.MapWindowPoints(HWND.Null, worker, points);
 
         //重新设置大小

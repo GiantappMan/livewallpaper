@@ -118,6 +118,14 @@ public static class WallpaperApi
         return res;
     }
 
+    public static Screen? GetScreen(uint screenIndex)
+    {
+        var screens = GetScreens();
+        if (screenIndex < screens.Length)
+            return screens[screenIndex];
+        return null;
+    }
+
     //显示壁纸
     public static async Task<bool> ShowWallpaper(Wallpaper wallpaper, WallpaperManager? customManager = null)
     {
@@ -129,6 +137,10 @@ public static class WallpaperApi
             var manager = GetRunningManager(screenIndex, customManager);
             var tmp = (Wallpaper)wallpaper.Clone();
             tmp.RunningInfo.ScreenIndexes = new uint[] { screenIndex };
+            var screen = GetScreen(screenIndex);
+            //屏幕可能拔了
+            if (screen == null)
+                continue;
             manager.Wallpaper = tmp;
             await manager.Play();
         }
