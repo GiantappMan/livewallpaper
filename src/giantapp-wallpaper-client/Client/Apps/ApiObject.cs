@@ -160,35 +160,6 @@ public class ApiObject
         return res;
     }
 
-    //[Obsolete("Use GetWallpaperApiStatus instead")]
-    //public string GetPlayingWallpaper()
-    //{
-    //    var res = WallpaperApi.RunningWallpapers.Values.Where(m => m.Wallpaper != null).Select(m =>
-    //    {
-    //        m.Wallpaper?.Meta.EnsureId();
-    //        return m.Wallpaper;
-    //    }).ToList();
-
-    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
-    //    //转换路径
-    //    foreach (var item in res)
-    //    {
-    //        if (item == null)
-    //            continue;
-
-    //        item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
-    //        item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
-
-    //        if (item.Meta.IsPlaylist())
-    //            foreach (var wallpaper in item.Meta.Wallpapers)
-    //            {
-    //                wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
-    //                wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
-    //            }
-    //    }
-    //    return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
-    //}
-
     //获取播放状态
     public string GetPlayingStatus()
     {

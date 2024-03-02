@@ -164,6 +164,9 @@ public class MpvPlayer
             ////保持打开
             //args.Append("--keep-open=yes ");
 
+            //禁用快捷键
+            args.Append("--no-input-default-bindings ");
+
             Process.StartInfo.Arguments = args.ToString();
             var res = Process.Start();
             if (!res)
