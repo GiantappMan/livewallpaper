@@ -10,7 +10,7 @@
     <Platforms>x64</Platforms>
     <AssemblyName>LiveWallpaper3</AssemblyName>
     <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
-    <Version>3.0.13-alpha13</Version>
+    <Version>3.0.14-alpha14</Version>
     <PackageProjectUrl>https://giantapp.cn</PackageProjectUrl>
     <Authors>巨应君 | Giantapp Man</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -52,7 +52,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HandyControl" Version="3.5.0" />
+    <PackageReference Include="HandyControl" Version="3.5.1" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2365.46" />
     <PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.22621.3233" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />

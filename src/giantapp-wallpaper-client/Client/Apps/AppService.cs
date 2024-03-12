@@ -1,4 +1,4 @@
-﻿#define DEBUG_LOCAL
+﻿//#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
@@ -62,6 +62,11 @@ internal class AppService
     #region public
     internal static async void Init()
     {
+        //UWP 通过Package.appxmanifest注册启动协议
+        if (!UWPHelper.IsRunningAsUwp())
+            //注册启动协议
+            RegisterUriScheme();
+
         //全局文件夹映射
         _globalFolderMapping = new()  {
             { DomainStr, "Assets/UI" },
@@ -308,6 +313,23 @@ internal class AppService
         }
 
         ShellWindow.ApplyCustomFolderMapping(dict);
+    }
+
+    private static void RegisterUriScheme()
+    {
+        //启动exe
+        string applicationPath = Assembly.GetExecutingAssembly().Location;
+
+        RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Classes", true);
+        RegistryKey subkey = key.CreateSubKey(ProductName);
+        //subkey.SetValue("", "URL:Custom Protocol");
+        //subkey.SetValue("URL Protocol", "");
+
+        //RegistryKey defaultIcon = subkey.CreateSubKey("DefaultIcon");
+        //defaultIcon.SetValue("", "\"" + applicationPath + "\",1");
+
+        RegistryKey command = subkey.CreateSubKey(@"shell\open\command");
+        command.SetValue("", "\"" + applicationPath + "\" \"%1\"");
     }
 
     #endregion

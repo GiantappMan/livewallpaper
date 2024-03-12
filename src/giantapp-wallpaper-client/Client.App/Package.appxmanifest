@@ -44,6 +44,12 @@
         <uap5:Extension Category="windows.startupTask" Executable="Client\LiveWallpaper3.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="LiveWallpaper3" Enabled="true" DisplayName="LiveWallpaper3" />
         </uap5:Extension>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="livewallpaper3">
+            <uap:Logo>Images\logo.png</uap:Logo>
+            <uap:DisplayName>livewallpaper3</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
       </Extensions>
     </Application>
   </Applications>
