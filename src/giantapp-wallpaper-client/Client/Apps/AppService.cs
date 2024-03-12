@@ -48,6 +48,11 @@ internal class AppService
             SaveSnapshot();
             _apiObject.TriggerRefreshPageEvent();
         };
+
+        DownloadService.StatusChangedEvent += (s, e) =>
+        {
+            _apiObject.TriggerDownloadStatusChangedEvent();
+        };
     }
 
     #region properties

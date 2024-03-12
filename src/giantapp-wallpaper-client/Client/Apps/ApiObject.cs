@@ -56,6 +56,9 @@ public class ApiObject
     //定义一个事件，表示前端需要刷新网页
     public event EventHandler? RefreshPageEvent;
 
+    //下载状态发生变化
+    public event EventHandler? DownloadStatusChangedEvent;
+
     public ApiObject()
     {
         //Task.Run(() =>
@@ -487,8 +490,73 @@ public class ApiObject
     //    }
     //}
 
+    //下载壁纸
+    public async Task<bool> DownloadWallpaper(string coverUrl, string wallpaperUrl, string wallpaperMetaJson)
+    {
+        try
+        {
+            var config = Configer.Get<ConfigWallpaper>() ?? new();
+            config.EnsureDirectories();
+            var saveDir = config.Directories[0];
+
+            var meta = JsonConvert.DeserializeObject<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonSettings);
+            if (meta == null || meta.Id == null)
+                return false;
+
+            string coverFileName = $"{meta.Id}.cover.{Path.GetExtension(coverUrl)}";
+            string wpFileName = $"{meta.Id}.wallpaper.{Path.GetExtension(wallpaperUrl)}";
+            string metaFileName = $"{meta.Id}.meta.json";
+
+            string destCoverPath = Path.Combine(saveDir, coverFileName);
+            string destFilePath = Path.Combine(saveDir, wpFileName);
+            string metaFilePath = Path.Combine(saveDir, metaFileName);
+
+            //下载封面
+            await DownloadService.DownloadAsync(coverUrl, destCoverPath, meta.Title + ".Cover");
+            //下载壁纸
+            bool ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Title);
+            if (!ok)
+                return false;
+
+            //下载完成后，保存meta
+            meta.Cover = coverFileName;
+            meta.CreateTime = DateTime.Now;
+
+            //生成meta.json
+            File.WriteAllText(metaFilePath, JsonConvert.SerializeObject(meta, WallpaperApi.JsonSettings));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+            return false;
+        }
+    }
+
+    //取消下载
+    public void CancelDownloadWallpaper(string wallpaperMetaJson)
+    {
+        var meta = JsonConvert.DeserializeObject<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonSettings);
+        if (meta == null || meta.Id == null)
+            return;
+
+        DownloadService.Cancel(meta.Id);
+    }
+
+    //获取下载状态
+    public string GetDonwloadStatus()
+    {
+        var json = JsonConvert.SerializeObject(DownloadService.Status);
+        return json;
+    }
+
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal void TriggerDownloadStatusChangedEvent()
+    {
+        DownloadStatusChangedEvent?.Invoke(this, EventArgs.Empty);
     }
 }
