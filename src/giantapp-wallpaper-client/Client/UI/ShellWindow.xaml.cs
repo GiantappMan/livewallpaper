@@ -35,6 +35,12 @@ public partial class ShellWindow : Window
 
     public static Dictionary<string, string> CustomFolderMapping { get; private set; } = new();
     public static Dictionary<string, string> RewriteMapping { get; internal set; } = new();
+
+    /// <summary>
+    /// 允许iframe 调用api对象
+    /// </summary>
+    public static string[] Origins { get; set; } = new string[0];
+
     #endregion
 
     public ShellWindow()
@@ -329,6 +335,7 @@ public partial class ShellWindow : Window
         {
             webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
             webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
+            webview2.CoreWebView2.FrameCreated -= CoreWebView2_FrameCreated;
         }
 
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
@@ -351,6 +358,7 @@ public partial class ShellWindow : Window
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
+        webview2.CoreWebView2.FrameCreated += CoreWebView2_FrameCreated;
 
         if (!AllowDragFile)
             DisableDragFile();
@@ -364,6 +372,11 @@ public partial class ShellWindow : Window
         //左下角提示
         webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 #endif
+    }
+
+    private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
+    {
+        e.Frame.AddHostObjectToScript("api", ClientApi, Origins);
     }
 
     private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)

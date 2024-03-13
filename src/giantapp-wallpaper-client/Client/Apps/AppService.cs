@@ -127,6 +127,12 @@ internal class AppService
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
         ApiObject.CorrectConfigEvent += ApiObject_CorrectConfigEvent;
         ShellWindow.ClientApi = _apiObject;
+        ShellWindow.Origins = new[] {
+            "http://localhost:3001",
+            "http://localhost:3000",
+            "http://wallpaper.giantapp.cn",
+            "https://www.giantapp.cn"
+        };
 
         bool tmp = await _autoStart.Check();
         if (tmp != generalConfig.AutoStart)
