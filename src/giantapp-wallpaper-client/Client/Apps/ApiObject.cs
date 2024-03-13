@@ -512,9 +512,12 @@ public class ApiObject
             string metaFilePath = Path.Combine(saveDir, metaFileName);
 
             //下载封面
-            await DownloadService.DownloadAsync(coverUrl, destCoverPath, meta.Title + ".Cover");
+            bool ok = await DownloadService.DownloadAsync(coverUrl, destCoverPath, meta.Id, meta.Title + ".Cover");
+            if (!ok)
+                return false;
+
             //下载壁纸
-            bool ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Title);
+            ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Id, meta.Title);
             if (!ok)
                 return false;
 
