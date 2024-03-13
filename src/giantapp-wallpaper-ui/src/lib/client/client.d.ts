@@ -23,6 +23,7 @@ interface API {
   DeleteWallpaper(wallpaperJSON: string): Promise<boolean>;
   Explore(path: string): Promise<void>;
   SetWallpaperSetting(wallpaperJSON: string, settingJSON: string): Promise<boolean>;
+  DownloadWallpaper(coverUrl: string, wallpaperUrl: string, wallpaperMetaJson: string): Promise<boolean>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

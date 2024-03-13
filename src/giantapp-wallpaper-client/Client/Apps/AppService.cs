@@ -17,6 +17,7 @@ using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using System.IO;
 using System.Linq;
 using Microsoft.Win32;
+using System.Threading.Tasks;
 
 namespace Client.Apps;
 
@@ -65,16 +66,20 @@ internal class AppService
     #endregion
 
     #region public
-    internal static async void Init()
+    internal static async Task Init()
     {
         //UWP 通过Package.appxmanifest注册启动协议
         if (!UWPHelper.IsRunningAsUwp())
             //注册启动协议
             RegisterUriScheme();
 
+        //这里用绝对路径，因为从网页启动后，相对路径会报错
+        string appPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string uiPath = Path.Combine(appPath, "Assets/UI");
+
         //全局文件夹映射
         _globalFolderMapping = new()  {
-            { DomainStr, "Assets/UI" },
+            { DomainStr, uiPath  },
             {TempDomainStr, TempFolder }
         };
 
@@ -333,8 +338,8 @@ internal class AppService
 
         RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Classes", true);
         RegistryKey subkey = key.CreateSubKey(ProductName);
-        //subkey.SetValue("", "URL:Custom Protocol");
-        //subkey.SetValue("URL Protocol", "");
+        subkey.SetValue("", "URL:livewallpaper3");
+        subkey.SetValue("URL Protocol", "");
 
         //RegistryKey defaultIcon = subkey.CreateSubKey("DefaultIcon");
         //defaultIcon.SetValue("", "\"" + applicationPath + "\",1");

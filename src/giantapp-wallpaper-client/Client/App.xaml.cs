@@ -2,6 +2,7 @@
 using Client.Libs;
 using NLog;
 using Client.Apps;
+using System.Security.Policy;
 
 namespace GiantappWallpaper;
 
@@ -17,10 +18,17 @@ public partial class App : Application
 
     #region override
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
-        _logger.Info($"{AppService.ProductName} Start");
-        AppService.Init();
+        _logger.Info($"{AppService.ProductName} Start {string.Join(" ", e.Args)}");
+        await AppService.Init();
+        //读取参数
+        if (e.Args.Length > 0)
+        {
+            string parameter = e.Args[0].Substring("livewallpaper3://".Length);
+            AppService.ShowShell($"hub?target={parameter}");
+        }
+
         base.OnStartup(e);
     }
 

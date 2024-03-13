@@ -109,7 +109,7 @@ public class MpvPlayer
             {
                 ProcessLaunched = false;
             };
-            _logger.Error($"LaunchAsync {PlayerPath}");
+            _logger.Info($"LaunchAsync {PlayerPath}");
             Process.StartInfo.FileName = PlayerPath;
 
             StringBuilder args = new();

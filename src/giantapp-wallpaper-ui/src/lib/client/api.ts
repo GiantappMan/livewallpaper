@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 import { ApiResult /*, InitProgressEvent*/ } from "./types";
-import { Wallpaper, WallpaperSetting } from "./types/wallpaper";
+import { Wallpaper, WallpaperMeta, WallpaperSetting } from "./types/wallpaper";
 import { Screen } from "./types/screen";
 import PlayingStatus from "./types/playing-status";
 
@@ -341,6 +341,36 @@ class API {
       console.log(e);
       return { error: e, data: null };
     }
+  }
+
+  async downloadWallpaper(coverUrl: string, wallpaperUrl: string, meta: WallpaperMeta): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: false };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.DownloadWallpaper(coverUrl, wallpaperUrl, JSON.stringify(meta));
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: false };
+    }
+  }
+
+  async cancelDownloadWallpaper(meta: WallpaperMeta): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.CancelDownloadWallpaper(JSON.stringify(meta));
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  isRunningInClient(): boolean {
+    return typeof window !== 'undefined' && !!window.chrome.webview;
   }
 }
 
