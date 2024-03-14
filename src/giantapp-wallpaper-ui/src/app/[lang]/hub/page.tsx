@@ -19,7 +19,6 @@ const Page = () => {
         }
     }, []);
 
-    // return <iframe className="w-full min-h-[100vh]" src="https://wallpaper.giantapp.cn/zh/hub"></iframe>;
     return <iframe className="w-full min-h-[100vh]" src={iframeSrc}></iframe>;
 };
 

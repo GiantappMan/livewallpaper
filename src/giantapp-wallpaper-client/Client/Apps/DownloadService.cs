@@ -26,8 +26,8 @@ public class DonwloadStatus
 public class DownloadService
 {
     private static readonly object semaphoreLock = new(); // 用于同步
-    private static SemaphoreSlim semaphore = new(maxParallel);
     private static int maxParallel = 2; // 默认并发数
+    private static SemaphoreSlim semaphore = new(maxParallel, maxParallel);
     public static int MaxParallel
     {
         get => maxParallel;

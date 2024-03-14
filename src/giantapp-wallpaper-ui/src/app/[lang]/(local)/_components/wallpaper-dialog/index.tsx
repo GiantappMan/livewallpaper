@@ -503,26 +503,17 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         :
                                         <>
                                             <h4 className="text-[#9CA3AF] mb-2">{dictionary['local'].imported_files}</h4>
-                                            <div className="flex justify-between items-center text-[#9CA3AF]">
+                                            <div className=" relative items-center text-[#9CA3AF]">
                                                 <div>
-                                                    <div className="flex justify-between items-center">
-                                                        <p>{importedFile.name}</p>
-                                                        <Button type="button" variant="ghost" onClick={() => {
-                                                            setImportedFile(undefined);
-                                                            if (fileInputRef.current)
-                                                                fileInputRef.current.value = '';
-                                                            form.setValue("file", undefined);
-                                                        }}>
-                                                            <DeleteIcon className="h-6 w-6" />
-                                                        </Button>
-                                                    </div>
+                                                    <p className="max-w-2xl">{importedFile.name}</p>
+
                                                     {
                                                         importedFile.fileType === "video" && <video
                                                             onError={(e) => {
                                                                 console.error('Video loading error:', e);
                                                                 setLoadVideoError(true);
                                                             }}
-                                                            autoPlay={true} ref={previewVideoRef} className="object-contain">
+                                                            autoPlay={true} ref={previewVideoRef} loop className="object-contain max-w-full">
                                                             <source src={importedFile.url} />
                                                         </video>
                                                     }
@@ -536,6 +527,14 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                         </picture>
                                                     }
                                                 </div>
+                                                <Button type="button" className="absolute -top-2 -right-4" variant="ghost" onClick={() => {
+                                                    setImportedFile(undefined);
+                                                    if (fileInputRef.current)
+                                                        fileInputRef.current.value = '';
+                                                    form.setValue("file", undefined);
+                                                }}>
+                                                    <DeleteIcon className="h-6 w-6" />
+                                                </Button>
                                             </div>
                                         </>
                                     }

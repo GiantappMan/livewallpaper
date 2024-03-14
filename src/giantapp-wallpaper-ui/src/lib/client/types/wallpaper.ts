@@ -93,6 +93,10 @@ export class WallpaperMeta {
   static isPlaylist(meta: WallpaperMeta | undefined): boolean {
     return meta?.type === WallpaperType.Playlist;
   }
+
+  constructor(init?: Partial<WallpaperMeta>) {
+    Object.assign(this, init);
+  }
 };
 
 export class WallpaperSetting {

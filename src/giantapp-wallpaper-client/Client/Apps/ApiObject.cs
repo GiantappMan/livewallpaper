@@ -503,8 +503,8 @@ public class ApiObject
             if (meta == null || meta.Id == null)
                 return false;
 
-            string coverFileName = $"{meta.Id}.cover.{Path.GetExtension(coverUrl)}";
-            string wpFileName = $"{meta.Id}.wallpaper.{Path.GetExtension(wallpaperUrl)}";
+            string coverFileName = $"{meta.Id}.cover{Path.GetExtension(coverUrl)}";
+            string wpFileName = $"{meta.Id}{Path.GetExtension(wallpaperUrl)}";
             string metaFileName = $"{meta.Id}.meta.json";
 
             string destCoverPath = Path.Combine(saveDir, coverFileName);
