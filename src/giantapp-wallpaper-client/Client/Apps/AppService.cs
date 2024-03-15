@@ -135,7 +135,7 @@ internal class AppService
         ShellWindow.Origins = new[] {
             "http://localhost:3001",
             "http://localhost:3000",
-            "http://wallpaper.giantapp.cn",
+            "https://wallpaper.giantapp.cn",
             "https://www.giantapp.cc"
         };
 
