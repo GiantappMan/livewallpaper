@@ -105,22 +105,21 @@ class API {
     }
   }
 
-
-  /**
-   * @deprecated
-   */
-  async getPlayingWallpaper(): Promise<ApiResult<Wallpaper[]>> {
-    try {
-      if (!window.chrome.webview) return { error: "no webview", data: null };
-      const { api } = window.chrome.webview.hostObjects;
-      var json = await api.GetPlayingWallpaper();
-      let res = JSON.parse(json);
-      return { error: null, data: res };
-    } catch (e) {
-      console.log(e);
-      return { error: e, data: null };
-    }
-  }
+  // /**
+  //  * @deprecated
+  //  */
+  // async getPlayingWallpaper(): Promise<ApiResult<Wallpaper[]>> {
+  //   try {
+  //     if (!window.chrome.webview) return { error: "no webview", data: null };
+  //     const { api } = window.chrome.webview.hostObjects;
+  //     var json = await api.GetPlayingWallpaper();
+  //     let res = JSON.parse(json);
+  //     return { error: null, data: res };
+  //   } catch (e) {
+  //     console.log(e);
+  //     return { error: e, data: null };
+  //   }
+  // }
 
   async getPlayingStatus(): Promise<ApiResult<PlayingStatus>> {
     try {
@@ -220,21 +219,21 @@ class API {
     }
   }
 
-  /*
-  *deprecated
-  */
-  async createWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<ApiResult<boolean>> {
-    try {
-      if (!window.chrome.webview) return { error: "no webview", data: null };
-      const { api } = window.chrome.webview.hostObjects;
+  // /*
+  // *deprecated
+  // */
+  // async createWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<ApiResult<boolean>> {
+  //   try {
+  //     if (!window.chrome.webview) return { error: "no webview", data: null };
+  //     const { api } = window.chrome.webview.hostObjects;
 
-      var res = await api.CreateWallpaper(title, coverUrl, pathUrl);
-      return { error: null, data: res };
-    } catch (e) {
-      console.log(e);
-      return { error: e, data: null };
-    }
-  }
+  //     var res = await api.CreateWallpaper(title, coverUrl, pathUrl);
+  //     return { error: null, data: res };
+  //   } catch (e) {
+  //     console.log(e);
+  //     return { error: e, data: null };
+  //   }
+  // }
 
   async createWallpaperNew(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
     try {
@@ -356,12 +355,25 @@ class API {
     }
   }
 
-  async cancelDownloadWallpaper(meta: WallpaperMeta): Promise<ApiResult<null>> {
+  async cancelDownloadWallpaper(id: string): Promise<ApiResult<null>> {
     try {
       if (!window.chrome.webview) return { error: "no webview", data: null };
       const { api } = (window as any).chrome.webview.hostObjects;
 
-      var data = await api.CancelDownloadWallpaper(JSON.stringify(meta));
+      var data = await api.CancelDownloadWallpaper(id);
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getDownloadItemStatus(id: string): Promise<ApiResult<DownloadItem>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      let json = await api.GetDownloadItemStatus(id);
+      let data = JSON.parse(json);
       return { error: null, data };
     } catch (e) {
       console.log(e);

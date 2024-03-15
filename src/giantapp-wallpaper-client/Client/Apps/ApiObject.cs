@@ -511,21 +511,18 @@ public class ApiObject
             string destFilePath = Path.Combine(saveDir, wpFileName);
             string metaFilePath = Path.Combine(saveDir, metaFileName);
 
-            //下载封面
-            bool ok = await DownloadService.DownloadAsync(coverUrl, destCoverPath, meta.Id, meta.Title + ".Cover");
-            if (!ok)
-                return false;
-
             //下载壁纸
-            ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Id, meta.Title);
+            bool ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Id, meta.Title);
             if (!ok)
                 return false;
 
-            //下载完成后，保存meta
-            meta.Cover = coverFileName;
+            //下载封面，封面允许失败
+            ok = await DownloadService.DownloadAsync(coverUrl, destCoverPath, meta.Id + ".cover", meta.Title + ".Cover", false);
+            if (ok)
+                meta.Cover = coverFileName;
             meta.CreateTime = DateTime.Now;
 
-            //生成meta.json
+            //下载完成后，保存meta
             File.WriteAllText(metaFilePath, JsonConvert.SerializeObject(meta, WallpaperApi.JsonSettings));
             return true;
         }
@@ -537,19 +534,25 @@ public class ApiObject
     }
 
     //取消下载
-    public void CancelDownloadWallpaper(string wallpaperMetaJson)
+    public void CancelDownloadWallpaper(string id)
     {
-        var meta = JsonConvert.DeserializeObject<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonSettings);
-        if (meta == null || meta.Id == null)
+        if (id == null)
             return;
 
-        DownloadService.Cancel(meta.Id);
+        DownloadService.Cancel(id);
     }
 
     //获取下载状态
     public string GetDonwloadStatus()
     {
-        var json = JsonConvert.SerializeObject(DownloadService.Status);
+        var json = JsonConvert.SerializeObject(DownloadService.Status, WallpaperApi.JsonSettings);
+        return json;
+    }
+
+    public string GetDownloadItemStatus(string id)
+    {
+        var item = DownloadService.Status.Items.FirstOrDefault(m => m.Id == id);
+        var json = JsonConvert.SerializeObject(item, WallpaperApi.JsonSettings);
         return json;
     }
 

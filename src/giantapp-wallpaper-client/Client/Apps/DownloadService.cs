@@ -16,6 +16,7 @@ public class DonwloadItem
     public double TotalBytes { get; set; }
     public double ReceivedBytes { get; set; }
     public bool IsDownloading { get; set; }
+    public bool IsDownloadCompleted { get; set; }
 }
 
 public class DonwloadStatus
@@ -56,7 +57,7 @@ public class DownloadService
         }
     }
 
-    public static async Task<bool> DownloadAsync(string url, string destPath, string id, string? desc)
+    public static async Task<bool> DownloadAsync(string url, string destPath, string id, string? desc, bool updateStatus = true)
     {
         var item = new DonwloadItem
         {
@@ -68,9 +69,14 @@ public class DownloadService
             TotalBytes = 0 // This will be updated once the download starts
         };
 
-        Status.Items.Add(item);
-        StatusChangedEvent?.Invoke(null, EventArgs.Empty);
+        if (updateStatus)
+        {
+            //清理IsDownloadCompleted的
+            Status.Items.RemoveAll(x => x.IsDownloadCompleted);
 
+            Status.Items.Add(item);
+            StatusChangedEvent?.Invoke(null, EventArgs.Empty);
+        }
         await semaphore.WaitAsync();
         try
         {
@@ -80,6 +86,13 @@ public class DownloadService
 
             var totalBytes = response.Content.Headers.ContentLength ?? 0;
             item.TotalBytes = totalBytes;
+
+            var destFolder = Path.GetDirectoryName(destPath);
+            //判断文件夹不存在
+            if (!Directory.Exists(destFolder))
+            {
+                Directory.CreateDirectory(destFolder);
+            }
 
             using var contentStream = await response.Content.ReadAsStreamAsync();
             using var fileStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
@@ -110,9 +123,11 @@ public class DownloadService
                 }
             }
             while (isMoreToRead);
+            item.IsDownloadCompleted = true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine(ex);
             return false;
         }
         finally
