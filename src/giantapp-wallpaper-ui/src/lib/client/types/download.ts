@@ -5,6 +5,8 @@ type DownloadItem = {
     totalBytes: number;
     receivedBytes: number;
     isDownloading: boolean;
+    isDownloadCompleted: boolean;
+    IsCanceled: boolean;
 }
 
 type DownloadStatus = {

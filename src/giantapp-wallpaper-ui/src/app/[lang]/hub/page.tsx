@@ -12,8 +12,8 @@ const Page = () => {
             setIframeSrc(target);
         }
         else {
-            // setIframeSrc("https://www.giantapp.cc/hub");
-            setIframeSrc("http://localhost:3001/zh/hub");
+            setIframeSrc("https://www.giantapp.cc/hub");
+            // setIframeSrc("http://localhost:3001/zh/hub");
         }
     }, []);
 

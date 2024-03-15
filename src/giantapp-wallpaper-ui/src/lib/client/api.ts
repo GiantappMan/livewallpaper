@@ -380,10 +380,24 @@ class API {
       return { error: e, data: null };
     }
   }
+  async showShell(path: string): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      api.ShowShell(path);
+      return { error: null, data: null };
+    }
+    catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
 
   isRunningInClient(): boolean {
     return typeof window !== 'undefined' && !!window.chrome.webview;
   }
+
+
 }
 
 const api = new API();

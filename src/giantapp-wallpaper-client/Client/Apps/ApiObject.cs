@@ -556,6 +556,11 @@ public class ApiObject
         return json;
     }
 
+    public void ShowShell(string path)
+    {
+        AppService.ShowShell(path);
+    }
+
     internal void TriggerRefreshPageEvent()
     {
         RefreshPageEvent?.Invoke(this, EventArgs.Empty);

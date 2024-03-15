@@ -17,6 +17,7 @@ public class DonwloadItem
     public double ReceivedBytes { get; set; }
     public bool IsDownloading { get; set; }
     public bool IsDownloadCompleted { get; set; }
+    public bool IsCanceled { get; set; }
 }
 
 public class DonwloadStatus
@@ -53,7 +54,7 @@ public class DownloadService
         var item = Status.Items.FirstOrDefault(x => x.Id == id);
         if (item != null)
         {
-            item.IsDownloading = false;
+            item.IsCanceled = true;
         }
     }
 
@@ -71,8 +72,8 @@ public class DownloadService
 
         if (updateStatus)
         {
-            //清理IsDownloadCompleted的
-            Status.Items.RemoveAll(x => x.IsDownloadCompleted);
+            //清理已完成或已取消的状态
+            Status.Items.RemoveAll(x => x.IsDownloadCompleted || x.IsCanceled);
 
             Status.Items.Add(item);
             StatusChangedEvent?.Invoke(null, EventArgs.Empty);
@@ -116,7 +117,7 @@ public class DownloadService
                     item.Percent = (int)((totalReadBytes / (double)totalBytes) * 100);
                     StatusChangedEvent?.Invoke(null, EventArgs.Empty);
 
-                    if (!item.IsDownloading) // Check if canceled
+                    if (item.IsCanceled) // Check if canceled
                     {
                         return false;
                     }
