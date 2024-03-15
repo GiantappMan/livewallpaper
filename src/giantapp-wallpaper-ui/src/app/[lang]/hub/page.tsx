@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const Page = () => {
-    const [iframeSrc, setIframeSrc] = useState("http://localhost:3001/zh/hub");
+    const [iframeSrc, setIframeSrc] = useState("https://www.giantapp.cc/hub");
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);

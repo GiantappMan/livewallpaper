@@ -136,7 +136,7 @@ internal class AppService
             "http://localhost:3001",
             "http://localhost:3000",
             "http://wallpaper.giantapp.cn",
-            "https://www.giantapp.cn"
+            "https://www.giantapp.cc"
         };
 
         bool tmp = await _autoStart.Check();
@@ -185,7 +185,7 @@ internal class AppService
 #else
         //ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
 #endif
-        if (path != null)
+        if (!string.IsNullOrEmpty(path))
             url += $"/{path}";
         ShellWindow.ShowShell(url);
 
