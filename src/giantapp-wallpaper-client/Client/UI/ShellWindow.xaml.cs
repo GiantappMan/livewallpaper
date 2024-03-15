@@ -405,7 +405,13 @@ public partial class ShellWindow : Window
                 var oldContent = matches[0].Value;
                 var newContent = item.Value.Replace(item.Key, oldContent);
                 e.Cancel = true;
-                string rewriteUrl = uri.AbsoluteUri.Replace(oldContent, newContent) + "?rewrited=true";
+                string rewriteAbsolutePath = uri.AbsolutePath.Replace(oldContent, newContent);
+                string rewriteUrl = uri.GetLeftPart(UriPartial.Authority) + rewriteAbsolutePath + uri.Query;
+
+                if (rewriteUrl.Contains("?"))
+                    rewriteUrl += "&rewrited=true";
+                else
+                    rewriteUrl += "?rewrited=true";
                 webview2.CoreWebView2.Navigate(rewriteUrl);
                 break;
             }
