@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const Page = () => {
     const [loading, setLoading] = useState(true);
-    const [iframeSrc, setIframeSrc] = useState("https://www.giantapp.cc/hub");
+    const [iframeSrc, setIframeSrc] = useState(process.env.NEXT_PUBLIC_HUB_Address);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -14,8 +14,7 @@ const Page = () => {
             setIframeSrc(target);
         }
         else {
-            setIframeSrc("https://www.giantapp.cc/hub");
-            // setIframeSrc("http://localhost:3001/zh/hub");
+            setIframeSrc(process.env.NEXT_PUBLIC_HUB_Address);
         }
     }, []);
 
