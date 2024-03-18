@@ -9,6 +9,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import SideMenu from '@/components/side-menu';
 import { getDictionary } from "@/get-dictionary";
+import { RatingDialog } from "@/components/rating-dialog";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default async function Root({
               <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">
                 <main>
                   {children}
+                  <RatingDialog />
                 </main>
               </div>
             </div>

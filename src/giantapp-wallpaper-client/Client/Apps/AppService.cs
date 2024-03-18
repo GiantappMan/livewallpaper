@@ -203,6 +203,7 @@ internal class AppService
         System.Windows.Application.Current.Shutdown();
         DesktopManager.Refresh();
     }
+
     internal static string? ConvertPathToUrl(ConfigWallpaper? wallpaperConfig, string? path)
     {
         //把壁纸目录，转换成对应的Url
@@ -261,7 +262,6 @@ internal class AppService
         }
         return url;
     }
-
     #endregion
 
     #region private
