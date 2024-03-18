@@ -17,7 +17,7 @@ const Author = ({ dictionary }: { dictionary: any; }) => {
     return (
         <p>
             {parts[0]}
-            <LinkClient className="underline-offset-4 hover:underline" href="https://www.mscoder.cn" target="_blank">{dictionary['about'].author}</LinkClient>
+            <LinkClient className="underline-offset-4 hover:underline" href="https://www.mscoder.cn" target="_blank"><span className="font-bold underline">{dictionary['about'].author}</span></LinkClient>
             {parts[1]}
         </p>
     );
