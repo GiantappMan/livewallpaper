@@ -10,6 +10,7 @@ import {
     DollarSign
 } from "lucide-react"
 import { getGlobal } from "@/i18n-config";
+import Link from "next/link";
 
 const Author = ({ dictionary }: { dictionary: any; }) => {
     const parts = dictionary['about'].produced_by.split("{0}");
@@ -56,11 +57,15 @@ const AboutPage = () => {
         <div className="flex flex-col space-y-2">
             <h1 className="text-2xl font-semibold mt-4">{dictionary['about'].encourage}</h1>
             <Button variant="outline" asChild>
-                <LinkClient
-                    className="underline-offset-4 flex items-center" href="ms-windows-store://pdp/?productid=9MWTG433JV6B" target="_blank">
+                <Link
+                    onClick={(e) => {
+                        api.openStoreReview("ms-windows-store://pdp/?productid=9MWTG433JV6B");
+                        e.preventDefault();
+                    }}
+                    className="underline-offset-4 flex items-center" href="#" target="_blank">
                     <LayoutGrid className="h-4 w-4 mr-1" />
                     {dictionary['about'].rate_us}
-                </LinkClient>
+                </Link>
             </Button>
             <Button variant="outline" asChild>
                 <LinkClient

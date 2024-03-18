@@ -26,6 +26,7 @@ interface API {
   DownloadWallpaper(coverUrl: string, wallpaperUrl: string, wallpaperMetaJson: string): Promise<boolean>;
   CancelDownloadWallpaper(id: string): Promise<boolean>;
   GetDownloadItemStatus(id: string): Promise<string>;
+  OpenStoreReview(defaultUrl: string): Promise<boolean>;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

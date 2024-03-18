@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WallpaperCore;
+using Windows.ApplicationModel;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 
 namespace Client.Apps;
@@ -370,7 +372,7 @@ public class ApiObject
     {
         try
         {
-            System.Diagnostics.Process.Start(url);
+            Process.Start(url);
         }
         catch (Exception ex)
         {
@@ -559,6 +561,32 @@ public class ApiObject
     public void ShowShell(string path)
     {
         AppService.ShowShell(path);
+    }
+
+    public async Task<bool> OpenStoreReview(string? defaultUrl)
+    {
+        try
+        {
+            if (UWPHelper.IsRunningAsUwp())
+            {
+                //旧方法，不推荐的方式.但是推荐的方式获取不到ID
+                var pfn = Package.Current.Id.FamilyName;
+                var uri = new Uri($"ms-windows-store://review/?PFN={pfn}");
+                bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+                return success;
+            }
+            else
+            {
+                if (defaultUrl != null)
+                    OpenUrl(defaultUrl);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex);
+            return false;
+        }
     }
 
     internal void TriggerRefreshPageEvent()

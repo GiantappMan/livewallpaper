@@ -393,11 +393,22 @@ class API {
     }
   }
 
+  async openStoreReview(defaultUrl: string): Promise<ApiResult<boolean>> {
+    try {
+      if (!window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      const res = await api.OpenStoreReview(defaultUrl);
+      return { error: null, data: res };
+    }
+    catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   isRunningInClient(): boolean {
     return typeof window !== 'undefined' && !!window.chrome.webview;
   }
-
-
 }
 
 const api = new API();
