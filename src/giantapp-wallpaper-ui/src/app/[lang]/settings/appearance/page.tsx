@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { themes } from "./themes";
 import React from "react";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { useConfig } from "@/hooks/use-config";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";

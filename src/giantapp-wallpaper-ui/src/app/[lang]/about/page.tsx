@@ -59,7 +59,7 @@ const AboutPage = () => {
             <Button variant="outline" asChild>
                 <Link
                     onClick={(e) => {
-                        api.openStoreReview("ms-windows-store://pdp/?productid=9MWTG433JV6B");
+                        api.openStoreReview(process.env.NEXT_PUBLIC_MS_Address!);
                         e.preventDefault();
                     }}
                     className="underline-offset-4 flex items-center" href="#" target="_blank">

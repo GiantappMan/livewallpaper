@@ -18,6 +18,11 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
     const fetchConfig = useCallback(async () => {
         const { data } = await api.getConfig<ConfigAppearance>("Appearance");
         setConfig(data || defaultConfig);
+
+        //尝试修复偶尔主题色不一致
+        if (data) {
+            localStorage.setItem("theme", JSON.stringify(data.mode));
+        }
         return data;
     }, [setConfig]);
 

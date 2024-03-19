@@ -52,7 +52,7 @@ export default async function Root({
               <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">
                 <main>
                   {children}
-                  <RatingDialog />
+                  <RatingDialog  />
                 </main>
               </div>
             </div>
