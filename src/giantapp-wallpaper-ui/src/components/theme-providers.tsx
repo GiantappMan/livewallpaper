@@ -10,10 +10,15 @@ import api from "@/lib/client/api";
 import { ConfigAppearance } from "@/lib/client/types/config"
 import { Toaster } from "sonner"
 import { setGlobal } from "@/i18n-config";
+import { useSearchParams } from 'next/navigation'
 
 export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
+    const searchParams = useSearchParams()
+    const dark = searchParams.get('dark')
+    console.log("test", dark);
+
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
-    const [defaultTheme, setDefaultTheme] = useState<"system" | "light" | "dark">();
+    const [defaultTheme, setDefaultTheme] = useState(!!dark ? "dark" : "light");
     setGlobal(dictionary);
     const [_, setConfig] = useConfig()
     //读取主题设置
@@ -41,7 +46,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
 
     return (
         <>
-            {defaultTheme && <NextThemesProvider {...props}>
+            {defaultTheme && <NextThemesProvider defaultTheme={defaultTheme} {...props}>
                 <TooltipProvider>{children}</TooltipProvider>
             </NextThemesProvider>
             }

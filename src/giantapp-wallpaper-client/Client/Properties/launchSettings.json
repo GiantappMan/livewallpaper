@@ -3,7 +3,7 @@
     "Client": {
       "commandName": "Project",
       //"commandLineArgs": "livewallpaper3://http://localhost:3001/zh/hub/info/28ee4e3e6033c24406f5af1a7a88fc04",
-      "commandLineArgs": "livewallpaper3://https://www.giantapp.cc/zh/hub/info/2da1518365f301ce0251946c42faad99",
+      //"commandLineArgs": "livewallpaper3://https://www.giantapp.cc/zh/hub/info/2da1518365f301ce0251946c42faad99",
       "nativeDebugging": false
     }
   }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import NavMenuItem from "./nav-menu-item";
-import { CogIcon, HomeIcon, Squares2X2Icon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { CogIcon, HomeIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import {
     CogIcon as solidCogIcon,
     HomeIcon as solidHomeIcon,

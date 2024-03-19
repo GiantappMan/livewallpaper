@@ -1,5 +1,4 @@
-﻿using Client.Apps.Configs;
-using Client.Libs;
+﻿using Client.Libs;
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
@@ -22,6 +21,13 @@ class ShellConfig
     public double Height { get; set; }
 }
 
+public enum Mode
+{
+    Light,
+    Dark,
+    System
+}
+
 public partial class ShellWindow : Window
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -29,8 +35,9 @@ public partial class ShellWindow : Window
     #region properties
     public static ShellWindow? Instance { get; private set; }
     public static object? ClientApi { get; set; }
-
-    public static bool DarkBackground { get; set; }
+    public static bool IsDarkMode { get; private set; }//没有System
+    public static Mode Mode { get; private set; }//有System
+    public static string Theme { get; private set; } = string.Empty;
     public static bool AllowDragFile { get; set; } = false;
 
     public static Dictionary<string, string> CustomFolderMapping { get; private set; } = new();
@@ -45,25 +52,9 @@ public partial class ShellWindow : Window
 
     public ShellWindow()
     {
-        var appearance = Configer.Get<Appearance>() ?? new();
-        if (appearance.Mode == "system")
-        {
-            //监控系统主题变化
-            SystemEvents.UserPreferenceChanged += (s, e) =>
-            {
-                if (e.Category == UserPreferenceCategory.General)
-                {
-                    Debouncer.Shared.Delay(() =>
-                    {
-                        SetTheme(appearance.Theme, appearance.Mode);
-                    }, 1000);
-                }
-            };
-        }
-
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
-        if (DarkBackground)
+        if (IsDarkMode)
         {
             webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
         }
@@ -130,33 +121,34 @@ public partial class ShellWindow : Window
         return true;
     }
 
-    public static void SetTheme(string theme, string mode)
+    public static void SetTheme(string theme, Mode mode)
     {
+        Mode = mode;
+        Theme = theme;
+
         //首字母大写
         theme = theme.First().ToString().ToUpper() + theme[1..];
-        if (mode == "system")
+        SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        if (Mode == Mode.System)
         {
-            bool darkMode = ShouldAppsUseDarkMode();
-            if (!darkMode)
-            {
-                mode = "light";
-            }
-            else
-            {
-                mode = "dark";
-            }
+            var tmp = ShouldAppsUseDarkMode();
+            //转换system的实际值
+            mode = tmp ? Mode.Dark : Mode.Light;
+            //监控系统主题变化
+            SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
         }
+
+        IsDarkMode = mode == Mode.Dark;
+
         ResourceDictionary appResources = Application.Current.Resources;
         var old = appResources.MergedDictionaries.FirstOrDefault(x => x.Source?.ToString().Contains("/LiveWallpaper3;component/UI/Themes") == true);
         if (old != null)
-        {
             appResources.MergedDictionaries.Remove(old);
-        }
+
         ResourceDictionary themeDict = new()
         {
             Source = new Uri($"/LiveWallpaper3;component/UI/Themes/{mode}/{theme}.xaml", UriKind.RelativeOrAbsolute)
         };
-        DarkBackground = mode == "dark";
         appResources.MergedDictionaries.Add(themeDict);
     }
 
@@ -188,6 +180,18 @@ public partial class ShellWindow : Window
             WindowState = WindowState.Normal;
 
         Activate();
+
+        if (IsDarkMode)
+        {
+            //判断url是否包含query dark=true
+            if (url != null && !url.Contains("dark=true"))
+            {
+                if (url.Contains("?"))
+                    url += "&dark=true";
+                else
+                    url += "?dark=true";
+            }
+        }
 
         webview2.Source = new Uri(url);
         webview2.NavigationCompleted += NavigationCompleted;
@@ -288,6 +292,16 @@ public partial class ShellWindow : Window
 
     #region callback
 
+    private static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category == UserPreferenceCategory.General)
+        {
+            Debouncer.Shared.Delay(() =>
+            {
+                SetTheme(Theme, Mode);
+            }, 1000);
+        }
+    }
     private void ShellWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (WindowState == WindowState.Maximized)
@@ -331,6 +345,8 @@ public partial class ShellWindow : Window
         SizeChanged -= ShellWindow_SizeChanged;
         StateChanged -= ShellWindow_StateChanged;
         webview2.CoreWebView2InitializationCompleted -= Webview2_CoreWebView2InitializationCompleted;
+        SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+
         if (webview2.CoreWebView2 != null)
         {
             webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;

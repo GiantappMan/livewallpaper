@@ -40,7 +40,7 @@ export default async function Root({
         <ThemeProvider
           dictionary={dictionary}
           attribute="class"
-          defaultTheme="system"
+          // defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >

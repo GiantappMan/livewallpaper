@@ -25,7 +25,7 @@ public partial class App : Application
         //读取参数
         if (e.Args.Length > 0)
         {
-            string parameter = e.Args[0].Substring("livewallpaper3://".Length);
+            string parameter = e.Args[0]["livewallpaper3://".Length..];
             AppService.ShowShell($"hub?target={parameter}");
         }
 

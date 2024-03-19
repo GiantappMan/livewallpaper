@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Win32;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace Client.Apps;
 
@@ -166,7 +167,10 @@ internal class AppService
     {
         if (config == null)
             return;
-        ShellWindow.SetTheme(config.Theme, config.Mode);
+
+        string modeStr = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(config.Mode);
+        Enum.TryParse<Mode>(modeStr, out var mode);
+        ShellWindow.SetTheme(config.Theme, mode);
     }
 
     internal static void ShowShell(string? path = null)
