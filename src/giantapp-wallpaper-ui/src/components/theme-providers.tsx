@@ -18,7 +18,8 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
     console.log("test", dark);
 
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
-    const [defaultTheme, setDefaultTheme] = useState(!!dark ? "dark" : "light");
+    const [defaultTheme, setDefaultTheme] = useState(!!dark ? "dark" : "system");
+    const [mounted, setMounted] = useState(false);
     setGlobal(dictionary);
     const [_, setConfig] = useConfig()
     //读取主题设置
@@ -32,6 +33,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
             setDefaultTheme(data.mode);
             setMode(data.mode);
         }
+        setMounted(true);
         return data;
     }, [setConfig, setMode]);
 
@@ -46,7 +48,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
 
     return (
         <>
-            {defaultTheme && <NextThemesProvider defaultTheme={defaultTheme} {...props}>
+            {mounted && <NextThemesProvider defaultTheme={defaultTheme} {...props}>
                 <TooltipProvider>{children}</TooltipProvider>
             </NextThemesProvider>
             }
