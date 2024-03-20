@@ -16,7 +16,6 @@ import shellApi from "@/lib/client/shell";
 export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
     const searchParams = useSearchParams()
     const dark = searchParams.get('dark')
-    console.log("test", dark);
 
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
     const [defaultTheme, setDefaultTheme] = useState(!!dark ? "dark" : "system");

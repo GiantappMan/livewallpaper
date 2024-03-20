@@ -10,16 +10,13 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { getGlobal } from "@/i18n-config";
 
 interface RatingDialogProps {
 }
 
 export type ConfigLaunchRecord = {
-    lastLaunchTime: number;
     launchTimes: number;
     lastLaunchVersion: string;
     hasShownCommentDialog: boolean;
@@ -27,6 +24,7 @@ export type ConfigLaunchRecord = {
 }
 
 export function RatingDialog(props: RatingDialogProps) {
+    const dictionary = getGlobal();
     const [isClient, setIsClient] = useState(false)
     const [open, setOpen] = useState(false)
 
@@ -41,6 +39,18 @@ export function RatingDialog(props: RatingDialogProps) {
             ...launchRecord,
             hasShownCommentDialog: true,
             lastShownCommentDialogTime: new Date().getTime()
+        }));
+    }
+
+    //拒绝评价
+    const rejectRating = () => {
+        setOpen(false);
+
+        const config = localStorage.getItem('launchRecord');
+        const launchRecord = (config ? JSON.parse(config) : {}) as ConfigLaunchRecord;
+        localStorage.setItem('launchRecord', JSON.stringify({
+            ...launchRecord,
+            launchTimes: 1,
         }));
     }
 
@@ -60,8 +70,8 @@ export function RatingDialog(props: RatingDialogProps) {
             if (launchRecord.lastLaunchVersion !== version) {
                 setLaunchRecord({
                     ...launchRecord,
-                    launchTimes: 1,
-                    lastLaunchTime: new Date().getTime(),
+                    launchTimes: 0,
+                    lastShownCommentDialogTime: new Date().getTime(),
                     lastLaunchVersion: version,
                     hasShownCommentDialog: false
                 })
@@ -72,65 +82,44 @@ export function RatingDialog(props: RatingDialogProps) {
                 setLaunchRecord({
                     ...launchRecord,
                     launchTimes: launchRecord.launchTimes + 1,
-                    lastLaunchTime: new Date().getTime(),
                 })
                 return;
             }
 
             //每启动N次，或者每隔N天，弹出评分对话框
-            const maxLaunchTimes = 5;
+            const maxLaunchTimes = 20;
             const maxLaunchDays = 20;
             const now = new Date().getTime();
-            if (launchRecord.launchTimes > maxLaunchTimes || now - launchRecord.lastShownCommentDialogTime > maxLaunchDays * 24 * 60 * 60 * 1000) {
+            if (launchRecord.launchTimes >= maxLaunchTimes || now - launchRecord.lastShownCommentDialogTime > maxLaunchDays * 24 * 60 * 60 * 1000) {
                 setOpen(true);
             }
             else {
+                //增加一次计数
                 setLaunchRecord({
                     ...launchRecord,
                     launchTimes: launchRecord.launchTimes + 1,
-                    lastLaunchTime: new Date().getTime(),
-                    lastLaunchVersion: version
                 })
             }
-
-            // if (launchRecord.launchTimes > 5 && !launchRecord.hasShownCommentDialog) {
-            //     console.log("show rating dialog")
-            //     setLaunchRecord({
-            //         ...launchRecord,
-            //         hasShownCommentDialog: true,
-            //         lastShownCommentDialogTime: new Date().getTime()
-            //     })
-            // }
-            // else {
-            //     console.log("--------test", launchRecord)
-            //     setLaunchRecord({
-            //         ...launchRecord,
-            //         launchTimes: launchRecord.launchTimes + 1,
-            //         lastLaunchTime: new Date().getTime(),
-            //         lastLaunchVersion: version
-            //     })
-            // }
         });
 
         setLaunchInfo();
         setIsClient(true)
     }, [])
 
-    console.log("ratingDialog test")
     return isClient && <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>开发不易，需要鼓励</DialogTitle>
+                <DialogTitle>{dictionary['common'].encouragementMessage} </DialogTitle>
                 <DialogDescription>
-                    您的好评是对我们至关重要
+                    {dictionary['common'].importanceOfFeedback}
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                您似乎已经使用该版本一段时间了，有什么问题或反馈想告诉开发者吗？
+                {dictionary['common'].feedbackPrompt}
             </div>
             <DialogFooter>
-                <Button type="submit" onClick={openRating}>尚个好评</Button>
-                <Button variant="secondary" onClick={() => setOpen(false)}>残忍拒绝</Button>
+                <Button type="submit" onClick={openRating}>{dictionary['common'].positiveReview}</Button>
+                <Button variant="secondary" onClick={rejectRating}>{dictionary['common'].negativeReview}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

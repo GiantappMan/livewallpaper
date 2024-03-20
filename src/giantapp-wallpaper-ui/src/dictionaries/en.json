@@ -13,8 +13,13 @@
   },
   "common": {
     "about": "About",
+    "encouragementMessage": "Help Us Shine",
+    "feedbackPrompt": "You've been using this version for a while now. Any issues or feedback you'd like to share with the developers?",
     "hub": "Hub",
+    "importanceOfFeedback": "Your positive feedback is crucial to us.",
     "local": "Local",
+    "negativeReview": "Harshly decline",
+    "positiveReview": "Leave a positive review",
     "settings": "Settings"
   },
   "hub": {

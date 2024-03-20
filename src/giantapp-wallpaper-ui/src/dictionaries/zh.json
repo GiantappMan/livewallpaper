@@ -13,8 +13,13 @@
   },
   "common": {
     "about": "关于",
+    "encouragementMessage": "开发不易，需要鼓励",
+    "feedbackPrompt": "您似乎已经使用该版本一段时间了，有什么问题或反馈想告诉开发者吗？",
     "hub": "社区",
+    "importanceOfFeedback": "您的好评是对我们至关重要",
     "local": "本地",
+    "negativeReview": "残忍拒绝",
+    "positiveReview": "赏个好评",
     "settings": "设置"
   },
   "hub": {
