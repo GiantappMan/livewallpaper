@@ -3,20 +3,23 @@
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton"
 
-const Page = () => {
+const Page = ({ params }: {
+    params: { lang: Locale };
+}) => {
     const [loading, setLoading] = useState(true);
-    const [iframeSrc, setIframeSrc] = useState(process.env.NEXT_PUBLIC_HUB_Address);
+    const [iframeSrc, setIframeSrc] = useState();
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const target = params.get('target');
+        const tmpParams = new URLSearchParams(window.location.search);
+        const target = tmpParams.get('target');
         if (target) {
             setIframeSrc(target);
         }
         else {
-            setIframeSrc(process.env.NEXT_PUBLIC_HUB_Address);
+            const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${params.lang}`;
+            setIframeSrc(url);
         }
-    }, []);
+    }, [params.lang]);
 
     return (
         <div className="w-full min-h-[100vh]">
@@ -34,12 +37,12 @@ const Page = () => {
                         ))}
                 </div>}
 
-            <iframe
+            {iframeSrc && <iframe
                 allowFullScreen={true}
                 className={`w-full min-h-[100vh] ${loading ? 'hidden' : 'block'}`}
                 src={iframeSrc}
                 onLoad={() => setLoading(false)}
-            />
+            />}
         </div>
     );
 };
