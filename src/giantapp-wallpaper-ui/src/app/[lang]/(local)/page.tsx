@@ -192,8 +192,8 @@ const LocalPage = ({
           return <div className="flex flex-col space-y-3" key={i}>
             <Skeleton className="h-[180px] rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-4 w-3/5" />
             </div>
           </div>
         })
