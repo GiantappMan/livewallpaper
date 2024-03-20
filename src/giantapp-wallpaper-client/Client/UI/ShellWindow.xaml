@@ -15,7 +15,7 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>
-        <Wpf:WebView2 x:Name="webview2" />
+        <Wpf:WebView2 x:Name="webview2" Visibility="Hidden" />
         <StackPanel
             x:Name="tips"
             HorizontalAlignment="Center"

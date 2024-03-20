@@ -12,6 +12,12 @@ class Shell {
       return { error: e, data: null };
     }
   }
+
+  hideLoading() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.HideLoading();
+  }
 }
 
 const shellApi = new Shell();

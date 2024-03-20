@@ -322,7 +322,6 @@ public partial class ShellWindow : Window
         if (Instance != null)
         {
             Instance.webview2.NavigationCompleted -= NavigationCompleted;
-            Instance.loading.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -441,6 +440,12 @@ public partial class ShellWindow : Window
             //    break;
             //}
         }
+    }
+
+    internal void HideLoading()
+    {
+        loading.Visibility = Visibility.Collapsed;
+        webview2.Visibility = Visibility.Visible;
     }
     #endregion
 }

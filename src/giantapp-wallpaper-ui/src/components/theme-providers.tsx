@@ -11,6 +11,7 @@ import { ConfigAppearance } from "@/lib/client/types/config"
 import { Toaster } from "sonner"
 import { setGlobal } from "@/i18n-config";
 import { useSearchParams } from 'next/navigation'
+import shellApi from "@/lib/client/shell";
 
 export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
     const searchParams = useSearchParams()
@@ -34,6 +35,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
             setMode(data.mode);
         }
         setMounted(true);
+        shellApi.hideLoading();
         return data;
     }, [setConfig, setMode]);
 

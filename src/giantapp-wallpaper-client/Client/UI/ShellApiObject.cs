@@ -75,4 +75,9 @@ public class ShellApiObject
 
         return res;
     }
+
+    public void HideLoading()
+    {
+        ShellWindow.Instance?.HideLoading();
+    }
 }
