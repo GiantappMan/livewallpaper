@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton"
+import { Locale } from "@/i18n-config";
 
 const Page = ({ params }: {
     params: { lang: Locale };
 }) => {
     const [loading, setLoading] = useState(true);
-    const [iframeSrc, setIframeSrc] = useState();
+    const [iframeSrc, setIframeSrc] = useState<string | undefined | null>();
 
     useEffect(() => {
         const tmpParams = new URLSearchParams(window.location.search);
-        const target = tmpParams.get('target');
+        const target = tmpParams.get('target') as string | null;
         if (target) {
             setIframeSrc(target);
         }
