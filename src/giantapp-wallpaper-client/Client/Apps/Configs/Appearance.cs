@@ -6,5 +6,5 @@ public class Appearance
     //选中主题帖
     public string Theme { get; set; } = "zinc";
     //主题模式
-    public string Mode { get; set; } = "system";
+    public string Mode { get; set; } = "dark";
 }

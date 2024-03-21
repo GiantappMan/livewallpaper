@@ -399,6 +399,7 @@ public partial class ShellWindow : Window
         e.Handled = true;
 
         var window = new ShellWindow();
+        window.webview2.Visibility = Visibility.Visible;
         _ = window.ShowUrl(e.Uri);
     }
 
