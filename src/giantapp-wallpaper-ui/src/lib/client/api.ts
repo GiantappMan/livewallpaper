@@ -374,7 +374,6 @@ class API {
     }
   }
 
-
   isRunningInClient(): boolean {
     return typeof window !== 'undefined' && !!window.chrome?.webview;
   }

@@ -12,6 +12,8 @@ const nextConfig = {
 
     //     return config;
     // },
+    //false防止dev模式打印执行两次
+    reactStrictMode: false,
 }
 
 module.exports = nextConfig
