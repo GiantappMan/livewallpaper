@@ -374,6 +374,14 @@ internal class AppService
                     e.Corrected = configWallpaper;
                 }
                 break;
+            case Appearance.FullName:
+                var configApperance = JsonConvert.DeserializeObject<Appearance>(e.Json);
+                if (configApperance == null)
+                {
+                    configApperance = new();
+                    e.Corrected = configApperance;
+                }
+                break;
         }
     }
 

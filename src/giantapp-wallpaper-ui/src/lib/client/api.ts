@@ -374,11 +374,11 @@ class API {
     }
   }
 
-  getRealThemeMode(): string {
+  async getRealThemeMode(): Promise<string> {
     try {
       if (!window.chrome || !window.chrome.webview) return "";
       const { api } = (window as any).chrome.webview.hostObjects;
-      return api.GetRealThemeMode();
+      return await api.GetRealThemeMode();
     }
     catch (e) {
       console.log(e);
