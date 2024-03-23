@@ -27,6 +27,7 @@ interface API {
   CancelDownloadWallpaper(id: string): Promise<boolean>;
   GetDownloadItemStatus(id: string): Promise<string>;
   OpenStoreReview(defaultUrl: string): Promise<boolean>;
+  GetRealThemeMode(): string;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

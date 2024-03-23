@@ -363,7 +363,7 @@ class API {
 
   async openStoreReview(defaultUrl: string): Promise<ApiResult<boolean>> {
     try {
-      if (!window.chrome.webview) return { error: "no webview", data: null };
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
       const { api } = (window as any).chrome.webview.hostObjects;
       const res = await api.OpenStoreReview(defaultUrl);
       return { error: null, data: res };
@@ -371,6 +371,18 @@ class API {
     catch (e) {
       console.log(e);
       return { error: e, data: null };
+    }
+  }
+
+  getRealThemeMode(): string {
+    try {
+      if (!window.chrome || !window.chrome.webview) return "";
+      const { api } = (window as any).chrome.webview.hostObjects;
+      return api.GetRealThemeMode();
+    }
+    catch (e) {
+      console.log(e);
+      return "system";
     }
   }
 

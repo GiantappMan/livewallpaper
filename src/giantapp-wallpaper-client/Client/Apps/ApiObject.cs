@@ -12,6 +12,8 @@ using System.Windows.Forms;
 using WallpaperCore;
 using Windows.ApplicationModel;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
+using ConfigAppearance = Client.Apps.Configs.Appearance;
+using GiantappWallpaper;
 
 namespace Client.Apps;
 
@@ -586,6 +588,17 @@ public class ApiObject
             System.Diagnostics.Debug.WriteLine(ex);
             return false;
         }
+    }
+
+    public string GetRealThemeMode()
+    {
+        //读取配置，如果是system就根据系统判断
+        var config = Configer.Get<ConfigAppearance>() ?? new();
+        if (config.Mode == "system")
+        {
+            return ShellWindow.ShouldAppsUseDarkMode() ? "dark" : "light";
+        }
+        return config.Mode;
     }
 
     internal void TriggerRefreshPageEvent()
