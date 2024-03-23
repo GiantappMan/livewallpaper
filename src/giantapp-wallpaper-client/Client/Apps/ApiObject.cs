@@ -498,8 +498,7 @@ public class ApiObject
         try
         {
             var config = Configer.Get<ConfigWallpaper>() ?? new();
-            config.EnsureDirectories();
-            var saveDir = config.Directories[0];
+            var saveDir = config.EnsureDirectories()[0];
 
             var meta = JsonConvert.DeserializeObject<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonSettings);
             if (meta == null || meta.Id == null)
