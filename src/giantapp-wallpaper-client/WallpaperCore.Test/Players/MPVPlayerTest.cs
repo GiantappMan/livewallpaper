@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using WallpaperCore.Players;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore.Test.Players
 {

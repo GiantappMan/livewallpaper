@@ -1,6 +1,6 @@
 ﻿
 using NLog;
-using WallpaperCore.Players;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore;
 
