@@ -10,13 +10,11 @@ import api from "@/lib/client/api";
 import { ConfigAppearance } from "@/lib/client/types/config"
 import { Toaster } from "sonner"
 import { setGlobal } from "@/i18n-config";
-import { useSearchParams } from 'next/navigation'
 import { useMounted } from "@/hooks/use-mounted";
 import shellApi from "@/lib/client/shell";
 
 export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
     const [config] = useConfig();
-    const searchParams = useSearchParams()
     const mounted = useMounted()
     if (!mounted)
         return <></>
@@ -27,6 +25,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
     });
 
     setGlobal(dictionary);
+    const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode')
     const defaultMode = !!mode ? mode : config.mode;
     console.log("defaultMode", defaultMode)
