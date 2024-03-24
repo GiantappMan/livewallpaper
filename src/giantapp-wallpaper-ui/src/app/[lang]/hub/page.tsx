@@ -17,7 +17,8 @@ const Page = ({ params }: {
             setIframeSrc(target);
         }
         else {
-            const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${params.lang}/hub`;
+            const defaultMode = localStorage.getItem("theme") || "system";
+            const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${params.lang}/hub?mode=${defaultMode}`;
             setIframeSrc(url);
         }
     }, [params.lang]);
