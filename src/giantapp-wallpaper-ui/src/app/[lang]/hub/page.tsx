@@ -9,6 +9,8 @@ const Page = ({ params }: {
 }) => {
     const [loading, setLoading] = useState(true);
     const [iframeSrc, setIframeSrc] = useState<string | undefined | null>();
+    //打开详情dialog
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         const tmpParams = new URLSearchParams(window.location.search);
