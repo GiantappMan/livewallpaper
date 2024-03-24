@@ -46,11 +46,14 @@ export function RatingDialog(props: RatingDialogProps) {
     const rejectRating = () => {
         setOpen(false);
 
+        //延长下次显示时间和次数
         const config = localStorage.getItem('launchRecord');
         const launchRecord = (config ? JSON.parse(config) : {}) as ConfigLaunchRecord;
         localStorage.setItem('launchRecord', JSON.stringify({
             ...launchRecord,
-            launchTimes: 1,
+            launchTimes: -20,
+            //当前时间加20天
+            lastShownCommentDialogTime: new Date().getTime() + 20 * 24 * 60 * 60 * 1000,
         }));
     }
 
@@ -91,6 +94,12 @@ export function RatingDialog(props: RatingDialogProps) {
             const maxLaunchDays = 20;
             const now = new Date().getTime();
             if (launchRecord.launchTimes >= maxLaunchTimes || now - launchRecord.lastShownCommentDialogTime > maxLaunchDays * 24 * 60 * 60 * 1000) {
+                //默认拒绝评价
+                setLaunchRecord({
+                    ...launchRecord,
+                    launchTimes: 1,
+                    lastShownCommentDialogTime: now,
+                })
                 setOpen(true);
             }
             else {

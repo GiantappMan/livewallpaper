@@ -54,14 +54,16 @@ public partial class ShellWindow : Window
     {
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
-        if (IsDarkMode)
-        {
-            webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
-        }
-        else
-        {
-            webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.White);
-        }
+        //if (IsDarkMode)
+        //{
+        //    webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
+        //}
+        //else
+        //{
+        //    webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.White);
+        //}
+        webview2.DefaultBackgroundColor = Color.Transparent;
+
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
         var config = Configer.Get<ShellConfig>();
@@ -181,20 +183,22 @@ public partial class ShellWindow : Window
 
         Activate();
 
-        if (IsDarkMode)
+        //前端没有system，根据后端统一样式
+        var realModel = Mode.ToString().ToLower();
+        if (Mode == Mode.System)
+            realModel = IsDarkMode ? "dark" : "light";
+        //判断url是否包含query
+        if (url != null && !url.Contains("mode="))
         {
-            //判断url是否包含query dark=true
-            if (url != null && !url.Contains("dark=true"))
-            {
-                if (url.Contains("?"))
-                    url += "&dark=true";
-                else
-                    url += "?dark=true";
-            }
+            if (url.Contains("?"))
+                url += $"&mode={realModel}";
+            else
+                url += $"?mode={realModel}";
         }
 
         webview2.Source = new Uri(url);
         webview2.NavigationCompleted += NavigationCompleted;
+
         Show();
     }
 
@@ -367,7 +371,9 @@ public partial class ShellWindow : Window
     {
         if (webview2.CoreWebView2 == null)
             return;
-
+#if DEBUG
+        //webview2.CoreWebView2.OpenDevToolsWindow();
+#endif
         webview2.CoreWebView2.AddHostObjectToScript("api", ClientApi);
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
