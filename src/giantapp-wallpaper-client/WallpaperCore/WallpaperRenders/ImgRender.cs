@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace WallpaperCore.WallpaperRenders;
 
-namespace WallpaperCore.WallpaperRenders
+internal class ImgRender : BaseRender
 {
-    internal class ImgRender
-    {
-    }
+    public override string[] SupportTypes { get; protected set; } = Wallpaper.ImgExtension;
 }
