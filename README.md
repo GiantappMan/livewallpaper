@@ -11,7 +11,7 @@
 ---
 
 - 新版客户端开发中
-- 新版社区开发中，托管在[sealos](https://cloud.sealos.run/?uid=GADZKECTJA)  
+- 新版社区开发中，托管在serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)  
 
 ## 截图  
 
@@ -30,5 +30,5 @@
 
 - [点个星星](https://github.com/GiantappMan/livewallpaper)  
 - [五星好评](https://www.microsoft.com/store/apps/9MWTG433JV6B)
-- 注册按量[sealos](https://cloud.sealos.run/?uid=GADZKECTJA)，赠送5￥测试金额  
-- 注册serverless [laf](https://laf.run/signup?code=y0pRFfG)，赠送10￥测试金额    
+- 注册serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)，赠送5￥测试金额  
+- 注册serverless 平台 [laf](https://laf.run/signup?code=y0pRFfG)，赠送10￥测试金额    
