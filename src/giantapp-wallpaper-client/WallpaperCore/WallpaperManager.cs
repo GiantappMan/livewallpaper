@@ -1,5 +1,6 @@
 ﻿
 using NLog;
+using System.Linq;
 using WallpaperCore.Libs;
 using WallpaperCore.WallpaperRenders;
 
@@ -15,7 +16,7 @@ public class WallpaperManagerSnapshot
 public class WallpaperManager
 {
     readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender() };
-    readonly BaseRender _currentRender = new();
+    BaseRender? _currentRender;
 
     readonly Logger _logger = LogManager.GetCurrentClassLogger();
     WallpaperCoveredBehavior _currentCoveredBehavior = WallpaperCoveredBehavior.Pause;
@@ -54,6 +55,24 @@ public class WallpaperManager
 
     internal async Task Play()
     {
+        if (Wallpaper == null)
+            return;
+
+        //查找wallpaper 所需的render
+        foreach (var item in _renders)
+        {
+            if (item.SupportTypes.ToList().Contains(Wallpaper.Meta.Type))
+            {
+                if (item != _currentRender)
+                {
+                    //类型换了，关闭旧壁纸
+                    _currentRender?.Stop();
+                }
+                _currentRender = item;
+                break;
+            }
+        }
+
         await _currentRender.Play(Wallpaper);
 
         if (IsScreenMaximized)

@@ -6,8 +6,7 @@ internal class VideoRender : BaseRender
 {
     bool _isRestore;
     MpvPlayer _mpvPlayer = new();
-    public override string[] SupportTypes { get; protected set; } = Wallpaper.VideoExtension.Concat(Wallpaper.AnimatedImgExtension).ToArray();
-
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
 
     internal override void Init(WallpaperManagerSnapshot? snapshot)
     {

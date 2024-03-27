@@ -4,7 +4,7 @@ namespace WallpaperCore.WallpaperRenders;
 internal class BaseRender
 {
     //支持的类型
-    public virtual string[] SupportTypes { get; protected set; } = new string[0];
+    public virtual WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[0];
 
     internal virtual void Dispose()
     {

@@ -2,5 +2,10 @@
 
 internal class ImgRender : BaseRender
 {
-    public override string[] SupportTypes { get; protected set; } = Wallpaper.ImgExtension;
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Img };
+
+    internal override void Init(WallpaperManagerSnapshot? snapshot)
+    {
+
+    }
 }
