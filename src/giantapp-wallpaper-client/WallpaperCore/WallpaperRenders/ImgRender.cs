@@ -25,13 +25,14 @@ internal class ImgRender : BaseRender
         return _snapshot;
     }
 
-    internal override Task Play(Wallpaper? wallpaper)
+    internal override async Task Play(Wallpaper? wallpaper)
     {
-        return base.Play(wallpaper);
+        if (wallpaper == null)
+            return;
+
+        uint screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
     }
-
-    internal override void Resume()
+    internal override void Stop()
     {
-
     }
 }
