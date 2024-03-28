@@ -3,7 +3,7 @@ using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
 
-public class MpvPlayerSnapshot
+public class VideoSnapshot
 {
     public string? IPCServerName { get; set; }
     public int? PId { get; set; }
@@ -19,13 +19,12 @@ internal class VideoRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshotObj?.Snapshots.FirstOrDefault(m => m is MpvPlayerSnapshot) is MpvPlayerSnapshot snapshot)
+        if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
         {
             _mpvPlayer = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
             _isRestore = true;
         }
-        if (_mpvPlayer == null)
-            _mpvPlayer = new MpvApi();
+        _mpvPlayer ??= new MpvApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)
@@ -86,7 +85,7 @@ internal class VideoRender : BaseRender
         try
         {
             //缓存当前实力需要的数据
-            return new MpvPlayerSnapshot()
+            return new VideoSnapshot()
             {
                 IPCServerName = _mpvPlayer.IPCServerName,
                 PId = !_mpvPlayer.ProcessLaunched ? null : _mpvPlayer.Process?.Id,

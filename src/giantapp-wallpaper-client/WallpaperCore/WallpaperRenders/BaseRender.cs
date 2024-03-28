@@ -25,7 +25,7 @@ internal abstract class BaseRender
         return 0;
     }
 
-    internal virtual void Init(WallpaperManagerSnapshot? snapshot)
+    internal virtual void Init(WallpaperManagerSnapshot? snapshotObj)
     {
     }
 

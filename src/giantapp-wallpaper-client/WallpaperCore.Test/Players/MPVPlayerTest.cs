@@ -55,7 +55,7 @@ namespace WallpaperCore.Test.Players
             await _player.LaunchAsync();
             string videoFile = @"TestWallpapers\audio.mp4";
             _player.LoadFile(videoFile);
-            var snapshot = new MpvPlayerSnapshot()
+            var snapshot = new VideoSnapshot()
             {
                 IPCServerName = _player.IPCServerName,
                 PId = _player.Process?.Id,
@@ -71,7 +71,7 @@ namespace WallpaperCore.Test.Players
             _player.Quit();
         }
 
-        private MpvApi? GetPlayer(MpvPlayerSnapshot? snapshot = null)
+        private MpvApi? GetPlayer(VideoSnapshot? snapshot = null)
         {
             string fullpath = Path.GetFullPath("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
             MpvApi.PlayerPath = fullpath;
