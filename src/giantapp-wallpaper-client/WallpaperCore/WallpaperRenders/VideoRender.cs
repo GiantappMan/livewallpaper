@@ -8,15 +8,12 @@ internal class VideoRender : BaseRender
     MpvPlayer _mpvPlayer = new();
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
 
-    internal override void Init(WallpaperManagerSnapshot? snapshot)
+    internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshot != null)
+        if (snapshotObj?.Snapshots.FirstOrDefault(m => m is MpvPlayerSnapshot) is MpvPlayerSnapshot snapshot)
         {
-            if (snapshot.MpvPlayerSnapshot != null)
-            {
-                _mpvPlayer = new MpvPlayer(snapshot.MpvPlayerSnapshot);
-                _isRestore = true;
-            }
+            _mpvPlayer = new MpvPlayer(snapshot);
+            _isRestore = true;
         }
     }
 
@@ -71,7 +68,46 @@ internal class VideoRender : BaseRender
             _mpvPlayer.LoadList(playlistPath);
             Resume();
         }
+    }
 
+    internal override object? GetSnapshot()
+    {
+        return _mpvPlayer.GetSnapshot();
+    }
+
+    internal override void Resume()
+    {
+        _mpvPlayer.Resume();
+    }
+
+    internal override double GetDuration()
+    {
+        return _mpvPlayer.GetDuration();
+    }
+
+    internal override double GetTimePos()
+    {
+        return _mpvPlayer.GetTimePos();
+    }
+
+    internal override void Stop()
+    {
+        _mpvPlayer.Stop();
+    }
+
+    internal override void SetProgress(double progress)
+    {
+        _mpvPlayer.SetProgress(progress);
+    }
+
+    internal override void Pause()
+    {
+        _mpvPlayer.Pause();
+    }
+
+    internal override void SetVolume(uint volume)
+    {
+        _mpvPlayer.SetVolume(volume);
     }
 
     internal override void Dispose()

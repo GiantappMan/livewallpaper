@@ -8,4 +8,14 @@ internal class ImgRender : BaseRender
     {
 
     }
+
+    internal override object? GetSnapshot()
+    {
+        return null;
+    }
+
+    internal override void Resume()
+    {
+
+    }
 }

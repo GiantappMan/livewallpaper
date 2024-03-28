@@ -8,7 +8,7 @@ namespace WallpaperCore;
 
 public class WallpaperManagerSnapshot
 {
-    public MpvPlayerSnapshot? MpvPlayerSnapshot { get; set; }
+    //public MpvPlayerSnapshot? MpvPlayerSnapshot { get; set; }
     public List<object> Snapshots { get; set; } = new();
 }
 
@@ -73,27 +73,29 @@ public class WallpaperManager
             }
         }
 
-        await _currentRender.Play(Wallpaper);
+        if (_currentRender != null)
+            await _currentRender.Play(Wallpaper);
 
         if (IsScreenMaximized)
-        {
             SetScreenMaximized(true);
-        }
     }
 
-    internal WallpaperManagerSnapshot GetSnapshotData()
+    internal WallpaperManagerSnapshot GetSnapshot()
     {
         var tmp = new WallpaperManagerSnapshot();
         foreach (var item in _renders)
         {
-            tmp.Snapshots.Add(item.GetSnapshotData());
+            var data = item.GetSnapshot();
+            if (data == null)
+                continue;
+            tmp.Snapshots.Add(data);
         }
         return tmp;
     }
 
     internal void Pause()
     {
-        _currentRender.Pause();
+        _currentRender?.Pause();
 
         if (Wallpaper != null)
             Wallpaper.RunningInfo.IsPaused = true;
@@ -101,7 +103,7 @@ public class WallpaperManager
 
     internal void Resume()
     {
-        _currentRender.Resume();
+        _currentRender?.Resume();
 
         if (Wallpaper != null)
             Wallpaper.RunningInfo.IsPaused = false;
@@ -117,7 +119,7 @@ public class WallpaperManager
 
     internal void Stop()
     {
-        _currentRender.Stop();
+        _currentRender?.Stop();
         Wallpaper = null;
     }
 
@@ -132,10 +134,10 @@ public class WallpaperManager
                 case WallpaperCoveredBehavior.None:
                     break;
                 case WallpaperCoveredBehavior.Pause:
-                    _currentRender.Pause();
+                    _currentRender?.Pause();
                     break;
                 case WallpaperCoveredBehavior.Stop:
-                    _currentRender.Stop();
+                    _currentRender?.Stop();
                     break;
             }
         }
@@ -150,7 +152,7 @@ public class WallpaperManager
                 case WallpaperCoveredBehavior.None:
                     break;
                 case WallpaperCoveredBehavior.Pause:
-                    _currentRender.Resume();
+                    _currentRender?.Resume();
                     break;
                 case WallpaperCoveredBehavior.Stop:
                     _ = Play();
@@ -167,17 +169,21 @@ public class WallpaperManager
 
     internal double GetTimePos()
     {
+        if (_currentRender == null)
+            return 0;
         return _currentRender.GetTimePos();
     }
 
     internal double GetDuration()
     {
+        if (_currentRender == null)
+            return 0;
         return _currentRender.GetDuration();
     }
 
     internal void SetProgress(double progress)
     {
-        _currentRender.SetProgress(progress);
+        _currentRender?.SetProgress(progress);
     }
 
     internal bool CheckIsPlaying(Wallpaper wallpaper)
@@ -204,6 +210,6 @@ public class WallpaperManager
 
     internal void SetVolume(uint volume)
     {
-        _currentRender.SetVolume(volume);
+        _currentRender?.SetVolume(volume);
     }
 }

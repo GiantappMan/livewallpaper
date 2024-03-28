@@ -337,7 +337,7 @@ public static class WallpaperApi
 
         foreach (var item in RunningWallpapers)
         {
-            var snapshotData = item.Value.GetSnapshotData();
+            var snapshotData = item.Value.GetSnapshot();
             if (item.Value.Wallpaper != null)
             {
                 item.Value.Wallpaper.RunningInfo.ScreenIndexes = new uint[] { item.Key };

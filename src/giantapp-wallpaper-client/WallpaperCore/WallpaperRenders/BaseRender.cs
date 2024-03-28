@@ -1,7 +1,7 @@
 ﻿
 namespace WallpaperCore.WallpaperRenders;
 
-internal class BaseRender
+internal abstract class BaseRender
 {
     //支持的类型
     public virtual WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[0];
@@ -16,7 +16,7 @@ internal class BaseRender
         throw new NotImplementedException();
     }
 
-    internal virtual object GetSnapshotData()
+    internal virtual object? GetSnapshot()
     {
         throw new NotImplementedException();
     }
@@ -51,12 +51,12 @@ internal class BaseRender
         throw new NotImplementedException();
     }
 
-    internal void SetVolume(uint volume)
+    internal virtual void SetVolume(uint volume)
     {
         throw new NotImplementedException();
     }
 
-    internal void Stop()
+    internal virtual void Stop()
     {
         throw new NotImplementedException();
     }
