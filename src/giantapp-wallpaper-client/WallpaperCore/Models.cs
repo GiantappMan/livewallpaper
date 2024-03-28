@@ -113,13 +113,6 @@ public enum PlaylistType
     Group
 }
 
-[Obsolete]
-
-public class PlaylistMeta : WallpaperMeta
-{
-    public new PlaylistType Type { get; set; }
-}
-
 public enum PlayMode
 {
     //顺序播放
@@ -128,23 +121,6 @@ public enum PlayMode
     Random,
     //定时切换
     Timer
-}
-/// <summary>
-/// playlist的设置
-/// </summary>
-[Obsolete]
-public class PlaylistSetting : ICloneable
-{
-    public PlayMode Mode { get; set; } = PlayMode.Order;
-    public uint PlayIndex { get; set; } = 0;
-    public uint[] ScreenIndexes { get; set; } = new uint[0];//播放的屏幕
-    public bool IsPaused { get; set; }
-    //public int Volume { get; set; }
-
-    public object Clone()
-    {
-        return MemberwiseClone();
-    }
 }
 
 public class WallpaperRunningInfo : ICloneable
@@ -483,49 +459,6 @@ public class Wallpaper : ICloneable
         };
         return res;
 
-    }
-}
-
-/// <summary>
-/// 播放列表
-/// </summary>
-[Obsolete]
-public class Playlist : ICloneable
-{
-    public Playlist()
-    {
-
-    }
-    public string? Id { get; set; }
-    //描述数据
-    public PlaylistMeta Meta { get; set; } = new();
-
-    //设置
-    public PlaylistSetting Setting { get; set; } = new();
-
-    //播放列表内的壁纸
-    public List<Wallpaper> Wallpapers { get; set; } = new();
-
-    public object Clone()
-    {
-        var res = new Playlist
-        {
-            Id = Id,
-            Meta = Meta,
-            Setting = (PlaylistSetting)Setting.Clone(),
-            Wallpapers = new List<Wallpaper>()
-        };
-        foreach (var item in Wallpapers)
-        {
-            res.Wallpapers.Add(item);
-        }
-        return res;
-    }
-
-    public void EnsureId()
-    {
-        if (string.IsNullOrEmpty(Id))
-            Id = Guid.NewGuid().ToString();
     }
 }
 
