@@ -314,11 +314,11 @@ public static class WallpaperApi
         }
     }
 
-    public static void Dispose()
+    public static async Task Dispose()
     {
         foreach (var item in RunningWallpapers)
         {
-            item.Value.Dispose();
+            await item.Value.Dispose();
         }
 
         RunningWallpapers.Clear();

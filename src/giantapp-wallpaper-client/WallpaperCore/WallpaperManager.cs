@@ -32,13 +32,13 @@ public class WallpaperManager
     public Wallpaper? Wallpaper { get; set; }
     public bool IsScreenMaximized { get; private set; }
 
-    internal void Dispose()
+    internal async Task Dispose()
     {
         try
         {
             foreach (var item in _renders)
             {
-                item.Dispose();
+                await item.Dispose();
             }
         }
         catch (Exception ex)

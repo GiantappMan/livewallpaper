@@ -80,7 +80,7 @@ internal class VideoRender : BaseRender
 
     internal override object? GetSnapshot()
     {
-        if (_mpvPlayer == null)
+        if (_mpvPlayer == null || !_mpvPlayer.ProcessLaunched)
             return null;
         try
         {
@@ -138,13 +138,16 @@ internal class VideoRender : BaseRender
         _mpvPlayer?.SetVolume(volume);
     }
 
-    internal override void Dispose()
+    internal override Task Dispose()
     {
-        if (_mpvPlayer == null)
-            return;
+        return Task.Run(() =>
+        {
+            if (_mpvPlayer == null)
+                return;
 
-        _mpvPlayer.Process?.CloseMainWindow();
-        if (_isRestore && _mpvPlayer.Process?.HasExited == false)
-            _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
+            _mpvPlayer.Process?.CloseMainWindow();
+            if (_isRestore && _mpvPlayer.Process?.HasExited == false)
+                _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
+        });
     }
 }

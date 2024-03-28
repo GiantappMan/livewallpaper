@@ -6,8 +6,9 @@ internal abstract class BaseRender
     //支持的类型
     public virtual WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[0];
 
-    internal virtual void Dispose()
+    internal virtual Task Dispose()
     {
+        return Task.CompletedTask;
     }
 
     internal virtual double GetDuration()

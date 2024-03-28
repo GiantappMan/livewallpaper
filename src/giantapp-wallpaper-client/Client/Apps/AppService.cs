@@ -195,12 +195,12 @@ internal class AppService
 
     }
 
-    internal static void Exit()
+    internal static async void Exit()
     {
         var config = Configer.Get<ConfigWallpaper>() ?? new();
         if (!config.KeepWallpaper)
         {
-            WallpaperApi.Dispose();
+            await WallpaperApi.Dispose();
             Configer.Set<WallpaperApiSnapshot?>(null, out _, true);
         }
         //退出
