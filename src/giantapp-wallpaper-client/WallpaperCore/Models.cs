@@ -1,6 +1,38 @@
 ﻿using Newtonsoft.Json;
+using System.Reflection;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore;
+
+public class ModelUtils
+{
+    public static object? CloneObject(object obj)
+    {
+        if (obj == null)
+            return null;
+
+        Type type = obj.GetType();
+        object clone = Activator.CreateInstance(type);
+
+        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (prop.CanWrite)
+            {
+                object propValue = prop.GetValue(obj, null);
+                if (propValue != null && propValue.GetType().IsClass && !typeof(Delegate).IsAssignableFrom(propValue.GetType()))
+                {
+                    prop.SetValue(clone, CloneObject(propValue), null);
+                }
+                else
+                {
+                    prop.SetValue(clone, propValue, null);
+                }
+            }
+        }
+
+        return clone;
+    }
+}
 
 /// <summary>
 /// 2.x用的
@@ -169,6 +201,8 @@ public class WallpaperSetting : ICloneable
 
     #region img
 
+    public DesktopWallpaperPosition Fit { get; set; } = DesktopWallpaperPosition.DWPOS_FILL;
+
     #endregion
 
     #region playlist
@@ -194,24 +228,7 @@ public class WallpaperSetting : ICloneable
 
     public object Clone()
     {
-        //deep clone
-        var res = new WallpaperSetting
-        {
-            //ScreenIndexes = ScreenIndexes,
-            //IsPlaylist = IsPlaylist,
-            EnableMouseEvent = EnableMouseEvent,
-            HardwareDecoding = HardwareDecoding,
-            IsPanScan = IsPanScan,
-            //Volume = Volume,
-            Mode = Mode,
-            //PlayIndex = PlayIndex,
-            //Wallpapers = new List<Wallpaper>()
-        };
-        //foreach (var item in Wallpapers)
-        //{
-        //    res.Wallpapers.Add((Wallpaper)item.Clone());
-        //}
-        return res;
+        return ModelUtils.CloneObject(this)!;
     }
 }
 

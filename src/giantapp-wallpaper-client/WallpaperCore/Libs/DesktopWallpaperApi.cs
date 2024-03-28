@@ -198,30 +198,10 @@ public static class DesktopWallpaperFactory
 //系统壁纸接口
 public class DesktopWallpaperApi
 {
-    static Lazy<IDesktopWallpaper> _desktopFactory = CreateInstance();
+    static readonly Lazy<IDesktopWallpaper> _desktopFactory = CreateInstance();
 
-
-    public static async Task<string> SetWallpaper(string? filePath, Screen? screen)
-    {
-        if (filePath == null || screen == null)
-            return string.Empty;
-
-        var monitorId = GetMonitoryId(screen);
-        if (monitorId == null)
-            return string.Empty;
-
-        var oldFile = await Task.Run(() => _desktopFactory.Value.GetWallpaper(monitorId));
-
-        await Task.Run(() => _desktopFactory.Value.SetWallpaper(monitorId, filePath));
-        return oldFile;
-    }
-
-    #region private
-    private static Lazy<IDesktopWallpaper> CreateInstance()
-    {
-        return new Lazy<IDesktopWallpaper>(() => DesktopWallpaperFactory.Create());
-    }
-    private static string? GetMonitoryId(Screen? screen)
+    #region public
+    public static string? GetMonitoryId(Screen? screen)
     {
         if (screen == null)
             return null;
@@ -241,5 +221,38 @@ public class DesktopWallpaperApi
         }
         return null;
     }
+    public static string GetWallpaper(string? monitorId)
+    {
+        if (monitorId == null)
+            return string.Empty;
+
+        return _desktopFactory.Value.GetWallpaper(monitorId);
+    }
+
+    public static DesktopWallpaperPosition GetPosition(string? monitorId)
+    {
+        if (monitorId == null)
+            return DesktopWallpaperPosition.DWPOS_CENTER;
+
+        return _desktopFactory.Value.GetPosition();
+    }
+
+    public static void SetWallpaper(string? filePath, string? monitorId, DesktopWallpaperPosition? postion)
+    {
+        if (filePath == null || monitorId == null)
+            return;
+
+        _desktopFactory.Value.SetWallpaper(monitorId, filePath);
+        if (postion != null)
+            _desktopFactory.Value.SetPosition(postion.Value);
+    }
+    #endregion
+
+    #region private
+    private static Lazy<IDesktopWallpaper> CreateInstance()
+    {
+        return new Lazy<IDesktopWallpaper>(() => DesktopWallpaperFactory.Create());
+    }
+
     #endregion
 }

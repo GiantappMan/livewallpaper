@@ -1,4 +1,4 @@
-import { Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Fit, Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
 import {
     Dialog,
     DialogContent,
@@ -17,6 +17,7 @@ import { useEffect, useState } from "react"
 import api from "@/lib/client/api"
 import { toast } from "sonner"
 import { getGlobal } from '@/i18n-config';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface SettingDialogProps {
     wallpaper: Wallpaper
@@ -30,6 +31,7 @@ const formSchema = z.object({
     hardwareDecoding: z.boolean(),
     isPanScan: z.boolean(),
     volume: z.number().min(0).max(100),
+    fit: z.nativeEnum(Fit),
 })
 
 export function SettingDialog(props: SettingDialogProps) {
@@ -41,6 +43,7 @@ export function SettingDialog(props: SettingDialogProps) {
             hardwareDecoding: props.wallpaper?.setting.hardwareDecoding ?? true,
             isPanScan: props.wallpaper?.setting.isPanScan ?? true,
             // volume: props.wallpaper?.setting.volume ?? 100,
+            fit: props.wallpaper?.setting.fit ?? Fit.Center,
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -55,6 +58,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
                 isPanScan: props.wallpaper.setting.isPanScan,
                 // volume: props.wallpaper.setting.volume,
+                fit: props.wallpaper.setting.fit,
             })
         setWallpaperType(props.wallpaper.meta.type || WallpaperType.NotSupported)
     }, [form, props.open, props.wallpaper])
@@ -68,6 +72,7 @@ export function SettingDialog(props: SettingDialogProps) {
             hardwareDecoding: data.hardwareDecoding,
             isPanScan: data.isPanScan,
             // volume: data.volume,
+            fit: data.fit,
         });
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);
@@ -171,34 +176,36 @@ export function SettingDialog(props: SettingDialogProps) {
                                 </FormItem>
                             )}
                         />
-                        {/* <FormField
+                    </>}
+                    {wallpaperType === WallpaperType.Img && <>
+                        <FormField
                             control={form.control}
-                            name="volume"
+                            name="fit"
                             render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                    <div className="space-y-0.5">
-                                        <FormLabel>音量</FormLabel>
-                                        <FormDescription>
-                                            特殊知道此壁纸音量
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <div className="flex items-center flex-row">
-                                            <span className="mr-2">
-                                                {field.value}
-                                            </span>
-                                            <input
-                                                type="range"
-                                                min={0}
-                                                max={100}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                        </div>
-                                    </FormControl>
+                                <FormItem className=" items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <FormLabel>
+                                        {dictionary['local'].fit_mode}
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a verified email to display" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {Object.entries(Fit).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
+                                                <SelectItem key={key.toString()} value={value.toString()}>
+                                                    {dictionary['local'][key.toLowerCase()]}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        {dictionary['local'].fit_description}
+                                    </FormDescription>
                                 </FormItem>
                             )}
-                        /> */}
+                        />
                     </>}
                     <DialogFooter>
                         <Button className="btn btn-primary" type="submit" disabled={saving}>

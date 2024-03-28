@@ -99,6 +99,15 @@ export class WallpaperMeta {
   }
 };
 
+export enum Fit {
+  Center = 0,
+  Tile,
+  Stretch,
+  Fit,
+  Fill,
+  Span,
+}
+
 export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
@@ -111,6 +120,8 @@ export class WallpaperSetting {
   // volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;
+  // img
+  fit?: Fit = Fit.Center;
 };
 
 export class WallpaperRunningInfo {
