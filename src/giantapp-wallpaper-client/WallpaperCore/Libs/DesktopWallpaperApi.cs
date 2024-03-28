@@ -3,7 +3,7 @@
 namespace WallpaperCore.Libs;
 
 //系统壁纸接口
-public class SystemWallpaperApi
+public class DesktopWallpaperApi
 {
     private const int SPI_SETDESKWALLPAPER = 20;
     private const int SPIF_UPDATEINIFILE = 0x01;

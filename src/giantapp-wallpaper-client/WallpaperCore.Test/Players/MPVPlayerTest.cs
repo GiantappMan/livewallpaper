@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using WallpaperCore.Libs;
+using WallpaperCore.WallpaperRenders;
 
 namespace WallpaperCore.Test.Players
 {
@@ -9,7 +10,7 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestLaunch()
         {
-            MpvPlayer? _player = GetPlayer();
+            MpvApi? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
             _player.Quit();
@@ -18,7 +19,7 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestGetPath()
         {
-            MpvPlayer? _player = GetPlayer();
+            MpvApi? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync(@"TestWallpapers\playlist.txt");
             var res = _player.GetPath();
@@ -29,7 +30,7 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestLoadList()
         {
-            MpvPlayer? _player = GetPlayer();
+            MpvApi? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync();
             var res = _player.LoadList(@"TestWallpapers\playlist.txt");
@@ -39,7 +40,7 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestLoadFile()
         {
-            MpvPlayer? _player = GetPlayer();
+            MpvApi? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync();
             _player.LoadFile(@"TestWallpapers\audio.mp4");
@@ -49,12 +50,17 @@ namespace WallpaperCore.Test.Players
         [TestMethod]
         public async Task TestGetSnapshot()
         {
-            MpvPlayer? _player = GetPlayer();
+            MpvApi? _player = GetPlayer();
             Assert.IsNotNull(_player);
             await _player.LaunchAsync();
             string videoFile = @"TestWallpapers\audio.mp4";
             _player.LoadFile(videoFile);
-            var snapshot = _player.GetSnapshot();
+            var snapshot = new MpvPlayerSnapshot()
+            {
+                IPCServerName = _player.IPCServerName,
+                PId = _player.Process?.Id,
+                ProcessName = _player.Process?.ProcessName
+            };
 
             //从快照恢复player
             _player = GetPlayer(snapshot);
@@ -65,11 +71,11 @@ namespace WallpaperCore.Test.Players
             _player.Quit();
         }
 
-        private MpvPlayer? GetPlayer(MpvPlayerSnapshot? snapshot = null)
+        private MpvApi? GetPlayer(MpvPlayerSnapshot? snapshot = null)
         {
             string fullpath = Path.GetFullPath("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
-            MpvPlayer.PlayerPath = fullpath;
-            return new MpvPlayer(snapshot);
+            MpvApi.PlayerPath = fullpath;
+            return new MpvApi(snapshot?.IPCServerName, snapshot?.PId, snapshot?.ProcessName);
         }
     }
 }

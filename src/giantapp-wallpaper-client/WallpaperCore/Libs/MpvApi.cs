@@ -14,17 +14,10 @@ public class MpvRequest
     public string? RequestId { get; set; }
 }
 
-public class MpvPlayerSnapshot
-{
-    public string? IPCServerName { get; set; }
-    public int? PId { get; set; }
-    public string? ProcessName { get; set; }
-}
-
 /// <summary>
 /// mpv播放器管理，管道通信
 /// </summary>
-public class MpvPlayer
+public class MpvApi
 {
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -42,30 +35,30 @@ public class MpvPlayer
     #endregion
 
     #region constructs
-    static MpvPlayer()
+    static MpvApi()
     {
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
         PlayerPath = Path.Combine(currentFolder, "Assets\\Player\\mpv.exe");
         _logger.Info("PlayerPath: " + PlayerPath);
     }
-    public MpvPlayer(MpvPlayerSnapshot? snapshot = null)
+    public MpvApi(string? ipcServerName = null, int? pId = null, string? processName = null)
     {
-        if (snapshot != null)
+        if (ipcServerName != null)
         {
-            IPCServerName = snapshot.IPCServerName;
+            IPCServerName = ipcServerName;
             //检查旧进程是否还存在
-            if (snapshot.PId != null)
+            if (pId != null)
             {
                 try
                 {
                     var runningProcesses = Process.GetProcesses();
-                    if (runningProcesses.Any(p => p.Id == snapshot.PId.Value))
+                    if (runningProcesses.Any(p => p.Id == pId.Value))
                     {
-                        Process = Process.GetProcessById(snapshot.PId.Value);
+                        Process = Process.GetProcessById(pId.Value);
                         ProcessLaunched = true;
                     }
 
-                    if (Process == null || Process.HasExited || Process.ProcessName != snapshot.ProcessName)
+                    if (Process == null || Process.HasExited || Process.ProcessName != processName)
                     {
                         ProcessLaunched = false;
                     }
@@ -86,12 +79,12 @@ public class MpvPlayer
     #endregion
 
     #region public
-    public static MpvPlayer? From(string path)
+    public static MpvApi? From(string path)
     {
         if (!File.Exists(path))
             return null;
 
-        return new MpvPlayer();
+        return new MpvApi();
     }
 
     public async Task<bool> LaunchAsync(string? playlist = null)
@@ -276,25 +269,6 @@ public class MpvPlayer
         SetVolume(Volume);
         SetHwdec(setting.HardwareDecoding);
         SetPanAndScan(setting.IsPanScan);
-    }
-
-    public MpvPlayerSnapshot GetSnapshot()
-    {
-        try
-        {
-            //缓存当前实力需要的数据
-            return new()
-            {
-                IPCServerName = IPCServerName,
-                PId = !ProcessLaunched ? null : Process?.Id,
-                ProcessName = Process?.ProcessName
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.Warn(ex, "Failed to get mpv snapshot.");
-            return new();
-        }
     }
 
     //获取播放进度

@@ -1,20 +1,31 @@
-﻿using WallpaperCore.Libs;
+﻿using NLog;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
 
+public class MpvPlayerSnapshot
+{
+    public string? IPCServerName { get; set; }
+    public int? PId { get; set; }
+    public string? ProcessName { get; set; }
+}
+
 internal class VideoRender : BaseRender
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     bool _isRestore;
-    MpvPlayer _mpvPlayer = new();
+    MpvApi? _mpvPlayer;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
         if (snapshotObj?.Snapshots.FirstOrDefault(m => m is MpvPlayerSnapshot) is MpvPlayerSnapshot snapshot)
         {
-            _mpvPlayer = new MpvPlayer(snapshot);
+            _mpvPlayer = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
             _isRestore = true;
         }
+        if (_mpvPlayer == null)
+            _mpvPlayer = new MpvApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)
@@ -24,9 +35,8 @@ internal class VideoRender : BaseRender
         var playMeta = wallpaper?.Meta;
         var playWallpaper = wallpaper;
 
-        if (playWallpaper == null || playSetting == null || playMeta == null)
+        if (_mpvPlayer == null || playWallpaper == null || playSetting == null || playMeta == null)
             return;
-
 
         bool isPlaylist = playMeta.Type == WallpaperType.Playlist;
 
@@ -38,7 +48,6 @@ internal class VideoRender : BaseRender
 
         //前端可以传入多个屏幕，但是到WallpaperManger只处理一个屏幕
         uint screenIndex = playWallpaper.RunningInfo.ScreenIndexes[0];
-
 
         //是播放列表就更新当前播放的设置
         if (isPlaylist && playMeta.PlayIndex < playMeta.Wallpapers.Count())
@@ -72,46 +81,69 @@ internal class VideoRender : BaseRender
 
     internal override object? GetSnapshot()
     {
-        return _mpvPlayer.GetSnapshot();
+        if (_mpvPlayer == null)
+            return null;
+        try
+        {
+            //缓存当前实力需要的数据
+            return new MpvPlayerSnapshot()
+            {
+                IPCServerName = _mpvPlayer.IPCServerName,
+                PId = !_mpvPlayer.ProcessLaunched ? null : _mpvPlayer.Process?.Id,
+                ProcessName = _mpvPlayer.Process?.ProcessName
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "Failed to get mpv snapshot.");
+            return new();
+        }
     }
 
     internal override void Resume()
     {
-        _mpvPlayer.Resume();
+        _mpvPlayer?.Resume();
     }
 
     internal override double GetDuration()
     {
+        if (_mpvPlayer == null)
+            return 0;
         return _mpvPlayer.GetDuration();
     }
 
     internal override double GetTimePos()
     {
+        if (_mpvPlayer == null)
+            return 0;
         return _mpvPlayer.GetTimePos();
     }
 
     internal override void Stop()
     {
-        _mpvPlayer.Stop();
+        _mpvPlayer?.Stop();
     }
 
     internal override void SetProgress(double progress)
     {
-        _mpvPlayer.SetProgress(progress);
+        _mpvPlayer?.SetProgress(progress);
     }
 
     internal override void Pause()
     {
-        _mpvPlayer.Pause();
+        _mpvPlayer?.Pause();
     }
 
     internal override void SetVolume(uint volume)
     {
-        _mpvPlayer.SetVolume(volume);
+        _mpvPlayer?.SetVolume(volume);
     }
 
     internal override void Dispose()
     {
+        if (_mpvPlayer == null)
+            return;
+
         _mpvPlayer.Process?.CloseMainWindow();
         if (_isRestore && _mpvPlayer.Process?.HasExited == false)
             _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
