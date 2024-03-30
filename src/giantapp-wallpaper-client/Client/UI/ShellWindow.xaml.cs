@@ -44,7 +44,7 @@ public partial class ShellWindow : Window
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private ShellConfig? _cacheShellConfig;
-    private string? _configKey;
+    private readonly string? _configKey;
 
     #region properties
     public static ShellWindow? Instance { get; private set; }
@@ -68,7 +68,7 @@ public partial class ShellWindow : Window
     {
         _configKey = configKey;
         InitializeComponent();
-        tbAddress.Visibility = showAddress ? Visibility.Visible : Visibility.Collapsed;
+        addressPanel.Visibility = showAddress ? Visibility.Visible : Visibility.Collapsed;
         SizeChanged += ShellWindow_SizeChanged;
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
@@ -480,7 +480,6 @@ public partial class ShellWindow : Window
         loading.Visibility = Visibility.Collapsed;
         webview2.Visibility = Visibility.Visible;
     }
-    #endregion
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
@@ -489,4 +488,10 @@ public partial class ShellWindow : Window
             Close();
         }
     }
+
+    private void BtnCopyAddress_Click(object sender, RoutedEventArgs e)
+    {
+        Clipboard.SetText(tbAddress.Text);
+    }
+    #endregion
 }
