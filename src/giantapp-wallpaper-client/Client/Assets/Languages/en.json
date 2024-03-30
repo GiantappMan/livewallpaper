@@ -5,5 +5,7 @@
   "open_main_panel": "Main Panel",
   "installNow": "Install now",
   "installWebview2Tips": "You need to install the Microsoft WebView2 Runtime, click the blue text below to install.",
-  "setting": "Setting"
+  "setting": "Setting",
+  "copy": "Copy",
+  "copied": "Copied"
 }

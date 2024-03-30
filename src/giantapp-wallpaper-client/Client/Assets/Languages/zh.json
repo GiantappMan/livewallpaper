@@ -5,5 +5,7 @@
   "open_main_panel": "打开主面板",
   "installNow": "立刻安装",
   "installWebview2Tips": "需要安装微软webview2运行时，点击下方蓝字安装",
-  "setting": "设置"
+  "setting": "设置",
+  "copy": "复制",
+  "copied": "已复制"
 }

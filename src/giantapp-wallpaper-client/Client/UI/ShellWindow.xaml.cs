@@ -2,6 +2,7 @@
 using Client.UI;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
+using MultiLanguageForXAML;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -430,6 +431,7 @@ public partial class ShellWindow : Window
     {
         string url = ((CoreWebView2)sender).Source;
         tbAddress.Text = url;
+        BtnCopyAddress.Content = LanService.Get("copy");
     }
 
     private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
@@ -491,6 +493,7 @@ public partial class ShellWindow : Window
 
     private void BtnCopyAddress_Click(object sender, RoutedEventArgs e)
     {
+        BtnCopyAddress.Content = LanService.Get("copied");
         Clipboard.SetText(tbAddress.Text);
     }
     #endregion
