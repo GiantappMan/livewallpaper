@@ -12,6 +12,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace GiantappWallpaper;
 
@@ -62,10 +64,11 @@ public partial class ShellWindow : Window
 
     #endregion
 
-    public ShellWindow(string? configKey = null)
+    public ShellWindow(bool showAddress, string? configKey = null)
     {
         _configKey = configKey;
         InitializeComponent();
+        tbAddress.Visibility = showAddress ? Visibility.Visible : Visibility.Collapsed;
         SizeChanged += ShellWindow_SizeChanged;
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
@@ -161,7 +164,7 @@ public partial class ShellWindow : Window
 
     public static async void ShowShell(string? url)
     {
-        Instance ??= new ShellWindow();
+        Instance ??= new ShellWindow(false);
         await Instance.ShowUrl(url);
     }
 
@@ -380,6 +383,7 @@ public partial class ShellWindow : Window
         if (webview2.CoreWebView2 != null)
         {
             webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
+            webview2.CoreWebView2.SourceChanged -= CoreWebView2_SourceChanged;
             webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
             webview2.CoreWebView2.FrameCreated -= CoreWebView2_FrameCreated;
         }
@@ -403,6 +407,7 @@ public partial class ShellWindow : Window
         webview2.CoreWebView2.AddHostObjectToScript("api", ClientApi);
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
+        webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
         webview2.CoreWebView2.FrameCreated += CoreWebView2_FrameCreated;
@@ -421,6 +426,12 @@ public partial class ShellWindow : Window
 #endif
     }
 
+    private void CoreWebView2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)
+    {
+        string url = ((CoreWebView2)sender).Source;
+        tbAddress.Text = url;
+    }
+
     private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
     {
         e.Frame.AddHostObjectToScript("api", ClientApi, Origins);
@@ -430,13 +441,14 @@ public partial class ShellWindow : Window
     {
         e.Handled = true;
 
-        var window = new ShellWindow("InfoWindow");
+        var window = new ShellWindow(true, "InfoWindow");
         window.webview2.Visibility = Visibility.Visible;
         _ = window.ShowUrl(e.Uri);
     }
 
     private void CoreWebView2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
     {
+        tbAddress.Text = e.Uri;
         var uri = new Uri(e.Uri);
         //if rewrited
         if (uri.Query.Contains("rewrited=true"))
@@ -469,4 +481,12 @@ public partial class ShellWindow : Window
         webview2.Visibility = Visibility.Visible;
     }
     #endregion
+
+    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            Close();
+        }
+    }
 }

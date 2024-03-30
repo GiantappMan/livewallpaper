@@ -11,13 +11,27 @@
     MinHeight="482"
     lan:Xaml.Key="app_name"
     Icon="pack://application:,,,/LiveWallpaper3;component/Assets/Img/logo.png"
+    KeyDown="Window_KeyDown"
     Style="{StaticResource GiantappWindow}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid>
-        <Wpf:WebView2 x:Name="webview2" Visibility="Collapsed" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBox
+            x:Name="tbAddress"
+            IsReadOnly="True"
+            Visibility="Collapsed" />
+        <Wpf:WebView2
+            x:Name="webview2"
+            Grid.Row="1"
+            Grid.RowSpan="2"
+            Visibility="Collapsed" />
         <StackPanel
             x:Name="tips"
+            Grid.RowSpan="2"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Visibility="Collapsed">
@@ -35,6 +49,6 @@
                 </Hyperlink>
             </TextBlock>
         </StackPanel>
-        <hc:LoadingCircle x:Name="loading" />
+        <hc:LoadingCircle x:Name="loading" Grid.RowSpan="2" />
     </Grid>
 </Window>
