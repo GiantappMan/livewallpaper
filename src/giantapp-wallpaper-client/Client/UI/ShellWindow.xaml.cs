@@ -42,6 +42,7 @@ public partial class ShellWindow : Window
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private ShellConfig? _cacheShellConfig;
+    private string? _configKey;
 
     #region properties
     public static ShellWindow? Instance { get; private set; }
@@ -61,14 +62,15 @@ public partial class ShellWindow : Window
 
     #endregion
 
-    public ShellWindow()
+    public ShellWindow(string? configKey = null)
     {
+        _configKey = configKey;
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
-        _cacheShellConfig = Configer.Get<ShellConfig>();
+        _cacheShellConfig = Configer.Get<ShellConfig>(configKey);
         const float defaultWidth = 1024;
         const float defaultHeight = 680;
         if (_cacheShellConfig != null)
@@ -337,7 +339,10 @@ public partial class ShellWindow : Window
         {
             Debouncer.Shared.Delay(() =>
             {
-                Configer.Set(config, out _);
+                if (_configKey != null)
+                    Configer.Set(_configKey, config, out _);
+                else
+                    Configer.Set(config, out _);
             }, 300);
             _cacheShellConfig = config;
         }
@@ -425,7 +430,7 @@ public partial class ShellWindow : Window
     {
         e.Handled = true;
 
-        var window = new ShellWindow();
+        var window = new ShellWindow("InfoWindow");
         window.webview2.Visibility = Visibility.Visible;
         _ = window.ShowUrl(e.Uri);
     }

@@ -80,10 +80,11 @@ public static class Configer
         return res;
     }
 
-    public static T? Get<T>(string key)
+    public static T? Get<T>(string? key)
     {
         try
         {
+            key ??= typeof(T).FullName;
             lock (_cache)
             {
                 if (_cache.TryGetValue(key, out object config))
