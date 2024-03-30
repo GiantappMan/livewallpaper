@@ -54,16 +54,7 @@ public partial class ShellWindow : Window
     {
         InitializeComponent();
         SizeChanged += ShellWindow_SizeChanged;
-        //if (IsDarkMode)
-        //{
-        //    webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.Black);
-        //}
-        //else
-        //{
-        //    webview2.DefaultBackgroundColor = Color.FromKnownColor(KnownColor.White);
-        //}
         webview2.DefaultBackgroundColor = Color.Transparent;
-
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
         var config = Configer.Get<ShellConfig>();
@@ -417,9 +408,6 @@ public partial class ShellWindow : Window
             return;
         foreach (var item in RewriteMapping)
         {
-            ////通配符
-            //if (item.Key.Contains("*"))
-            //{
             //用正则匹配
             var matches = System.Text.RegularExpressions.Regex.Matches(uri.AbsolutePath, item.Key);
             if (matches.Count > 0)
@@ -437,15 +425,6 @@ public partial class ShellWindow : Window
                 webview2.CoreWebView2.Navigate(rewriteUrl);
                 break;
             }
-            //}
-            ////全匹配
-            //else if (item.Key.Contains(uri.AbsolutePath))
-            //{
-            //    e.Cancel = true;
-            //    string rewriteUrl = uri.AbsoluteUri + ".html";
-            //    webview2.CoreWebView2.Navigate(rewriteUrl);
-            //    break;
-            //}
         }
     }
 
