@@ -15,10 +15,20 @@ using System.Windows;
 
 namespace GiantappWallpaper;
 
-class ShellConfig
+public class ShellConfig
 {
     public double Width { get; set; }
     public double Height { get; set; }
+    public WindowState WindowState { get; set; } = WindowState.Normal;
+
+    public static bool Compare(ShellConfig? a, ShellConfig? b)
+    {
+        if (a == null && b == null)
+            return true;
+        if (a == null || b == null)
+            return false;
+        return a.Width == b.Width && a.Height == b.Height && a.WindowState == b.WindowState;
+    }
 }
 
 public enum Mode
@@ -31,6 +41,7 @@ public enum Mode
 public partial class ShellWindow : Window
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private ShellConfig? _cacheShellConfig;
 
     #region properties
     public static ShellWindow? Instance { get; private set; }
@@ -57,21 +68,22 @@ public partial class ShellWindow : Window
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
-        var config = Configer.Get<ShellConfig>();
+        _cacheShellConfig = Configer.Get<ShellConfig>();
         const float defaultWidth = 1024;
         const float defaultHeight = 680;
-        if (config != null)
+        if (_cacheShellConfig != null)
         {
-            if (config.Width <= 800 || config.Height <= 482)
+            if (_cacheShellConfig.Width <= 800 || _cacheShellConfig.Height <= 482)
             {
                 Width = defaultWidth;
                 Height = defaultHeight;
             }
             else
             {
-                Width = config.Width;
-                Height = config.Height;
+                Width = _cacheShellConfig.Width;
+                Height = _cacheShellConfig.Height;
             }
+            WindowState = _cacheShellConfig.WindowState;
         }
         else
         {
@@ -281,6 +293,11 @@ public partial class ShellWindow : Window
         //修改webview2，document.shell_hidden 属性
         string value = WindowState == WindowState.Minimized ? "true" : "false";
         webview2.CoreWebView2?.ExecuteScriptAsync($"document.shell_hidden = {value}");
+
+        if (WindowState != WindowState.Minimized)
+        {
+            SaveShellConfig();
+        }
     }
 
     #endregion
@@ -303,13 +320,27 @@ public partial class ShellWindow : Window
         {
             return;
         }
-        //记录窗口大小
+        SaveShellConfig();
+    }
+
+    //记录窗口大小
+    private void SaveShellConfig()
+    {
         ShellConfig config = new()
         {
             Width = Width,
-            Height = Height
+            Height = Height,
+            WindowState = WindowState
         };
-        Configer.Set(config, out _);
+
+        if (!ShellConfig.Compare(_cacheShellConfig, config))
+        {
+            Debouncer.Shared.Delay(() =>
+            {
+                Configer.Set(config, out _);
+            }, 300);
+            _cacheShellConfig = config;
+        }
     }
 
     private static void NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -356,7 +387,6 @@ public partial class ShellWindow : Window
         webview2.Dispose();
         GC.Collect();
     }
-
 
     private void Webview2_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
     {
