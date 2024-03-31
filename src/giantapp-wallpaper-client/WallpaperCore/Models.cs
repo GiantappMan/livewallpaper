@@ -423,6 +423,7 @@ public class Wallpaper : ICloneable
 
     public static WallpaperType ResolveType(string extension)
     {
+        extension = extension.ToLower();
         if (ImgExtension.Contains(extension))
         {
             return WallpaperType.Img;
