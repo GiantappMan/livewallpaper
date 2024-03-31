@@ -2,6 +2,7 @@
 using Ookii.Dialogs.Wpf;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Windows.UI.Xaml;
 
 namespace Client.UI;
 
@@ -12,6 +13,13 @@ namespace Client.UI;
 [ComVisible(true)]
 public class ShellApiObject
 {
+    ShellWindow? _window;
+
+    public ShellApiObject(ShellWindow? window = null)
+    {
+        _window = window;
+    }
+
     /// <summary>
     /// 三方库，感觉要崩
     /// </summary>
@@ -78,6 +86,12 @@ public class ShellApiObject
 
     public void HideLoading()
     {
-        ShellWindow.Instance?.HideLoading();
+        //ShellWindow.Instance?.HideLoading();
+        _window?.HideLoading();
+    }
+
+    public void CloseWindow()
+    {
+        _window?.Close();
     }
 }

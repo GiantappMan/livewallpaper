@@ -391,7 +391,8 @@ public partial class ShellWindow : Window
 
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
         //强制回收webview2
-        Instance = null;
+        if (Instance == this)
+            Instance = null;
         base.OnClosed(e);
         Configer.Save();
         webview2.Dispose();
@@ -406,7 +407,7 @@ public partial class ShellWindow : Window
         //webview2.CoreWebView2.OpenDevToolsWindow();
 #endif
         webview2.CoreWebView2.AddHostObjectToScript("api", ClientApi);
-        webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject());
+        webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject(this));
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
@@ -437,6 +438,7 @@ public partial class ShellWindow : Window
     private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
     {
         e.Frame.AddHostObjectToScript("api", ClientApi, Origins);
+        webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject(this));
     }
 
     private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
