@@ -18,6 +18,12 @@ class Shell {
     const { shell } = window.chrome.webview.hostObjects;
     shell.HideLoading();
   }
+  
+  closeWindow() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.CloseWindow();
+  }
 }
 
 const shellApi = new Shell();

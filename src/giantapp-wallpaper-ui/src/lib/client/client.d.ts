@@ -34,6 +34,7 @@ interface API {
 interface Shell {
   ShowFolderDialog(): Promise<string>;
   HideLoading();
+  CloseWindow();
 }
 
 interface Window {
