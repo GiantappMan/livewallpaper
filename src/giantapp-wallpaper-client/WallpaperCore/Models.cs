@@ -203,6 +203,9 @@ public class WallpaperSetting : ICloneable
 
     public DesktopWallpaperPosition Fit { get; set; } = DesktopWallpaperPosition.DWPOS_FILL;
 
+    //退出程序后，保留壁纸
+    public bool KeepWallpaper { get; set; } = true;
+
     #endregion
 
     #region playlist

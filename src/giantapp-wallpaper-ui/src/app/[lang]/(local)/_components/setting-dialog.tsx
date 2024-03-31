@@ -32,6 +32,7 @@ const formSchema = z.object({
     isPanScan: z.boolean(),
     volume: z.number().min(0).max(100),
     fit: z.nativeEnum(Fit),
+    keepWallpaper: z.boolean()
 })
 
 export function SettingDialog(props: SettingDialogProps) {
@@ -44,6 +45,7 @@ export function SettingDialog(props: SettingDialogProps) {
             isPanScan: props.wallpaper?.setting.isPanScan ?? true,
             // volume: props.wallpaper?.setting.volume ?? 100,
             fit: props.wallpaper?.setting.fit ?? Fit.Center,
+            keepWallpaper: props.wallpaper?.setting.keepWallpaper,
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -59,6 +61,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 isPanScan: props.wallpaper.setting.isPanScan,
                 // volume: props.wallpaper.setting.volume,
                 fit: props.wallpaper.setting.fit,
+                keepWallpaper: props.wallpaper.setting.keepWallpaper,
             })
         setWallpaperType(props.wallpaper.meta.type || WallpaperType.NotSupported)
     }, [form, props.open, props.wallpaper])
@@ -73,6 +76,7 @@ export function SettingDialog(props: SettingDialogProps) {
             isPanScan: data.isPanScan,
             // volume: data.volume,
             fit: data.fit,
+            keepWallpaper: data.keepWallpaper,
         });
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);
@@ -203,6 +207,28 @@ export function SettingDialog(props: SettingDialogProps) {
                                     <FormDescription>
                                         {dictionary['local'].fit_description}
                                     </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="keepWallpaper"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>
+                                            {dictionary['local'].keep_wallpaper}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            {dictionary['local'].keep_wallpaper_description}
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
                                 </FormItem>
                             )}
                         />

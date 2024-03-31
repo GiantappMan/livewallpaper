@@ -110,7 +110,9 @@
     "upload_failed": "File not uploaded",
     "upload_size_limit_exceeded": "File size cannot exceed 1G",
     "volume": "Volume",
-    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory."
+    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory.",
+    "keep_wallpaper": "Keep wallpaper",
+    "keep_wallpaper_description": "Keep the wallpaper after exiting the software"
   },
   "settings": {
     "add_directory": "Add Directory",

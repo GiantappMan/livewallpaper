@@ -122,6 +122,7 @@ export class WallpaperSetting {
   mode?: PlayMode = PlayMode.Order;
   // img
   fit?: Fit = Fit.Center;
+  keepWallpaper: boolean = true;
 };
 
 export class WallpaperRunningInfo {

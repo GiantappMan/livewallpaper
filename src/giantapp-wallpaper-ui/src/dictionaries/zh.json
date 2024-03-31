@@ -110,7 +110,9 @@
     "upload_failed": "文件未上传",
     "upload_size_limit_exceeded": "文件大小不能超过1G",
     "volume": "音量",
-    "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。"
+    "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。",
+    "keep_wallpaper": "保留壁纸",
+    "keep_wallpaper_description": "退出软件后，保留图片壁纸"
   },
   "settings": {
     "add_directory": "添加目录",

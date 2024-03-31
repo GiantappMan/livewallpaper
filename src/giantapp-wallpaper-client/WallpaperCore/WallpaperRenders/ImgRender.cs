@@ -12,6 +12,7 @@ internal class ImgRender : BaseRender
 {
     ImgSnapshot? _snapshot;
     string? _currentMonitorId;
+    Wallpaper? _currentWallpaper;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Img };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
@@ -34,6 +35,7 @@ internal class ImgRender : BaseRender
             if (wallpaper == null)
                 return;
 
+            _currentWallpaper = wallpaper;
             uint screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
             var currentScreen = WallpaperApi.GetScreen(screenIndex);
             if (currentScreen == null)
@@ -44,7 +46,11 @@ internal class ImgRender : BaseRender
             var oldPosition = DesktopWallpaperApi.GetPosition(_currentMonitorId);
             DesktopWallpaperApi.SetWallpaper(wallpaper.FilePath, _currentMonitorId, wallpaper.Setting.Fit);
             _snapshot ??= new();
+
+            //更新旧壁纸，用于退出时还原
             _snapshot.OldWallpaper ??= oldWallpaper;
+            if (wallpaper.Setting.KeepWallpaper)
+                _snapshot.OldWallpaper = wallpaper.FilePath;
             _snapshot.OldPosition ??= oldPosition;
         });
     }
@@ -56,12 +62,19 @@ internal class ImgRender : BaseRender
 
         DesktopWallpaperApi.SetWallpaper(_snapshot.OldWallpaper, _currentMonitorId, _snapshot.OldPosition);
         _snapshot = null;
+        _currentWallpaper = null;
     }
 
     internal override async Task Dispose()
     {
-        Stop();
-        //等待壁纸还原
-        await Task.Delay(300);
+        if (_currentWallpaper == null)
+            return;
+
+        if (!_currentWallpaper.Setting.KeepWallpaper)
+        {
+            Stop();
+            //等待壁纸还原
+            await Task.Delay(300);
+        }
     }
 }
