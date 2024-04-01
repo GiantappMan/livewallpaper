@@ -1,4 +1,4 @@
-import { Wallpaper, WallpaperMeta } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperMeta, WallpaperType } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react";
 import { Reply } from "lucide-react"
 import { cn } from "@/lib/utils";
@@ -237,7 +237,8 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
             </div>
-            {(selectedWallpaper || singlePlaylistMode) && <PlaybackProgress screenIndex={selectedScreenIndex} />}
+            {(selectedWallpaper && selectedWallpaper?.meta.type == WallpaperType.Video ||
+                singlePlaylistMode && playingStatus.wallpapers[0].meta.type == WallpaperType.Video) && <PlaybackProgress screenIndex={selectedScreenIndex} />}
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
