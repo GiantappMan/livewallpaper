@@ -7,6 +7,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <AssemblyName>GiantappVideoPlayer</AssemblyName>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
