@@ -237,8 +237,11 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                     </Button>
                 }
             </div>
-            {(selectedWallpaper && selectedWallpaper?.meta.type == WallpaperType.Video ||
-                singlePlaylistMode && playingStatus.wallpapers[0].meta.type == WallpaperType.Video) && <PlaybackProgress screenIndex={selectedScreenIndex} />}
+            
+            {/* 视频和播放列表显示进度 */}
+            {(selectedWallpaper && (selectedWallpaper?.meta.type == WallpaperType.Video || selectedWallpaper?.meta.type == WallpaperType.Playlist) ||
+                singlePlaylistMode && (playingStatus.wallpapers[0].meta.type == WallpaperType.Video || playingStatus.wallpapers[0].meta.type == WallpaperType.Playlist))
+                && <PlaybackProgress screenIndex={selectedScreenIndex} />}
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">

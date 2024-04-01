@@ -59,8 +59,11 @@ public class WallpaperManager
             return;
 
         //查找wallpaper 所需的render
+        bool found = false;
         foreach (var item in _renders)
         {
+            //todo playlist 特殊处理,目前暂时用mpv播放
+
             if (item.SupportTypes.ToList().Contains(Wallpaper.Meta.Type))
             {
                 if (item != _currentRender)
@@ -69,9 +72,12 @@ public class WallpaperManager
                     _currentRender?.Stop();
                 }
                 _currentRender = item;
+                found = true;
                 break;
             }
         }
+        if (!found)
+            return;
 
         if (_currentRender != null)
             await _currentRender.Play(Wallpaper);

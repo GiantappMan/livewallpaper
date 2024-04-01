@@ -15,7 +15,7 @@ internal class VideoRender : BaseRender
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     bool _isRestore;
     MpvApi? _mpvPlayer;
-    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg, WallpaperType.Playlist };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
