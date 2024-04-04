@@ -1,4 +1,4 @@
-﻿#define DEBUG_LOCAL
+﻿//#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
@@ -117,14 +117,15 @@ internal class AppService
 
 #if !(DEBUG_LOCAL && DEBUG)
         //除了需要刷新的页面和本地调试用，其他可以不设
-        ShellWindow.RewriteMapping = new()
-        {
-            {"/hub","/hub.html" },
-            {"/about","/about.html" },
-            { "/settings(.*)", "/settings(.*).html" },
-            {"/zh","/zh.html" },
-            {"/en","/en.html" },
-        };
+        //ShellWindow.RewriteMapping = new()
+        //{
+        //    {"/hub","/hub.html" },
+        //    {"/about","/about.html" },
+        //    { "/settings(.*)", "/settings(.*).html" },
+        //    {"/zh","/zh.html" },
+        //    {"/en","/en.html" },
+        //};
+        ShellWindow.AutoAppendHtmlDomains = new[] { DomainStr };
 #endif
 
         ApplySaveFolderMapping(wallpaperConfig.EnsureDirectories());

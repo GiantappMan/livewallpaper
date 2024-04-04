@@ -58,6 +58,9 @@ public partial class ShellWindow : Window
     public static Dictionary<string, string> CustomFolderMapping { get; private set; } = new();
     public static Dictionary<string, string> RewriteMapping { get; internal set; } = new();
 
+    //自动追加.html的域名
+    public static string[] AutoAppendHtmlDomains { get; set; } = new string[0];
+
     /// <summary>
     /// 允许iframe 调用api对象
     /// </summary>
@@ -476,6 +479,21 @@ public partial class ShellWindow : Window
                 else
                     rewriteUrl += "?rewrited=true";
                 webview2.CoreWebView2.Navigate(rewriteUrl);
+                break;
+            }
+        }
+
+        //auto append html
+        foreach (var domain in AutoAppendHtmlDomains)
+        {
+            if (uri.Host.Contains(domain))
+            {
+                if (!uri.AbsolutePath.EndsWith(".html"))
+                {
+                    e.Cancel = true;
+                    string rewriteUrl = uri.GetLeftPart(UriPartial.Authority) + uri.AbsolutePath + ".html" + uri.Query;
+                    webview2.CoreWebView2.Navigate(rewriteUrl);
+                }
                 break;
             }
         }
