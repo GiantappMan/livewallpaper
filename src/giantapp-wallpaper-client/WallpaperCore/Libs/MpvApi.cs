@@ -38,7 +38,7 @@ public class MpvApi : IVideoApi
     static MpvApi()
     {
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-        PlayerPath = Path.Combine(currentFolder, "Assets\\Player\\mpv.exe");
+        PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\Mpv\\mpv.exe");
         _logger.Info("PlayerPath: " + PlayerPath);
     }
     public MpvApi(string? ipcServerName = null, int? pId = null, string? processName = null)
