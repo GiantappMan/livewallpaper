@@ -21,7 +21,9 @@ public class MpvApi : IVideoApi
 {
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    WallpaperSetting _setting  = new();
     #endregion
+
 
     #region public properties
     public IntPtr MainHandle { get; private set; }
@@ -29,7 +31,6 @@ public class MpvApi : IVideoApi
     public Process? Process { get; private set; }
     public bool ProcessLaunched { get; private set; }
     public static string PlayerPath { get; set; } = string.Empty;
-    public WallpaperSetting Setting { get; private set; } = new();
     public uint Volume { get; set; } = 0;
 
     #endregion
@@ -79,13 +80,13 @@ public class MpvApi : IVideoApi
     #endregion
 
     #region public
-    public static MpvApi? From(string path)
-    {
-        if (!File.Exists(path))
-            return null;
+    //public static MpvApi? From(string path)
+    //{
+    //    if (!File.Exists(path))
+    //        return null;
 
-        return new MpvApi();
-    }
+    //    return new MpvApi();
+    //}
 
     public async Task<bool> LaunchAsync(string? playlist = null)
     {
@@ -114,10 +115,10 @@ public class MpvApi : IVideoApi
             args.Append("--stop-screensaver=no ");
 
             //设置解码模式为自动，如果条件允许，MPV会启动硬件解码
-            string hwdec = Setting.HardwareDecoding ? "auto-safe" : "no";
+            string hwdec = _setting.HardwareDecoding ? "auto-safe" : "no";
             args.Append($"--hwdec={hwdec} ");
 
-            string panscan = Setting.IsPanScan ? "1.0" : "0.0";
+            string panscan = _setting.IsPanScan ? "1.0" : "0.0";
             //处理黑边
             args.Append($"--panscan={panscan} ");
 
@@ -262,7 +263,7 @@ public class MpvApi : IVideoApi
 
     public void ApplySetting(WallpaperSetting setting)
     {
-        Setting = setting;
+        _setting = setting;
         if (!ProcessLaunched)
             return;
 
