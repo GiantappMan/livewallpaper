@@ -166,6 +166,12 @@ public class WallpaperRunningInfo : ICloneable
     }
 }
 
+public enum VideoPlayer
+{
+    Mpv,
+    MediaElement
+}
+
 //一个壁纸的设置
 public class WallpaperSetting : ICloneable
 {
@@ -192,6 +198,9 @@ public class WallpaperSetting : ICloneable
     ///// 音量0-100
     ///// </summary>
     //public int Volume { get; set; } = 0;
+
+    //播放器类型，覆盖默认配置
+    public static VideoPlayer? VideoPlayer { get; set; }
 
     #endregion
 
