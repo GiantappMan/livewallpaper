@@ -17,7 +17,7 @@ public class MpvRequest
 /// <summary>
 /// mpv播放器管理，管道通信
 /// </summary>
-public class MpvApi
+public class MpvApi : IVideoApi
 {
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -260,7 +260,7 @@ public class MpvApi
         SendMessage(IPCServerName, "set_property", "panscan", enabled ? "1.0" : "0.0");
     }
 
-    internal void ApplySetting(WallpaperSetting setting)
+    public void ApplySetting(WallpaperSetting setting)
     {
         Setting = setting;
         if (!ProcessLaunched)

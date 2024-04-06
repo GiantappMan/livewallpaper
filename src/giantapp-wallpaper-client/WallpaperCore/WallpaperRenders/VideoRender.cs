@@ -14,17 +14,17 @@ internal class VideoRender : BaseRender
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     bool _isRestore;
-    MpvApi? _mpvPlayer;
+    IVideoApi? _playerApi;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg, WallpaperType.Playlist };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
         if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
         {
-            _mpvPlayer = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
+            _playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
             _isRestore = true;
         }
-        _mpvPlayer ??= new MpvApi();
+        _playerApi ??= new MpvApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)
@@ -34,7 +34,7 @@ internal class VideoRender : BaseRender
         var playMeta = wallpaper?.Meta;
         var playWallpaper = wallpaper;
 
-        if (_mpvPlayer == null || playWallpaper == null || playSetting == null || playMeta == null)
+        if (_playerApi == null || playWallpaper == null || playSetting == null || playMeta == null)
             return;
 
         bool isPlaylist = playMeta.Type == WallpaperType.Playlist;
@@ -53,7 +53,7 @@ internal class VideoRender : BaseRender
         {
             playSetting = playMeta.Wallpapers[(int)playMeta.PlayIndex].Setting;
         }
-        _mpvPlayer.ApplySetting(playSetting);
+        _playerApi.ApplySetting(playSetting);
 
         //生成playlist.txt
         var playlist = new string[] { playWallpaper.FilePath! };
@@ -65,31 +65,31 @@ internal class VideoRender : BaseRender
         var playlistPath = Path.Combine(Path.GetTempPath(), $"playlist{screenIndex}.txt");
         File.WriteAllLines(playlistPath, playlist);
 
-        if (!_mpvPlayer.ProcessLaunched)
+        if (!_playerApi.ProcessLaunched)
         {
-            await _mpvPlayer.LaunchAsync(playlistPath);
+            await _playerApi.LaunchAsync(playlistPath);
             var bounds = WallpaperApi.GetScreen(screenIndex)?.Bounds;
-            DesktopManager.SendHandleToDesktopBottom(_mpvPlayer.MainHandle, bounds);
+            DesktopManager.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
         }
         else
         {
-            _mpvPlayer.LoadList(playlistPath);
+            _playerApi.LoadList(playlistPath);
             Resume();
         }
     }
 
     internal override object? GetSnapshot()
     {
-        if (_mpvPlayer == null || !_mpvPlayer.ProcessLaunched)
+        if (_playerApi == null || !_playerApi.ProcessLaunched)
             return null;
         try
         {
             //缓存当前实力需要的数据
             return new VideoSnapshot()
             {
-                IPCServerName = _mpvPlayer.IPCServerName,
-                PId = !_mpvPlayer.ProcessLaunched ? null : _mpvPlayer.Process?.Id,
-                ProcessName = _mpvPlayer.Process?.ProcessName
+                IPCServerName = _playerApi.IPCServerName,
+                PId = !_playerApi.ProcessLaunched ? null : _playerApi.Process?.Id,
+                ProcessName = _playerApi.Process?.ProcessName
             };
         }
         catch (Exception ex)
@@ -101,53 +101,53 @@ internal class VideoRender : BaseRender
 
     internal override void Resume()
     {
-        _mpvPlayer?.Resume();
+        _playerApi?.Resume();
     }
 
     internal override double GetDuration()
     {
-        if (_mpvPlayer == null)
+        if (_playerApi == null)
             return 0;
-        return _mpvPlayer.GetDuration();
+        return _playerApi.GetDuration();
     }
 
     internal override double GetTimePos()
     {
-        if (_mpvPlayer == null)
+        if (_playerApi == null)
             return 0;
-        return _mpvPlayer.GetTimePos();
+        return _playerApi.GetTimePos();
     }
 
     internal override void Stop()
     {
-        _mpvPlayer?.Stop();
+        _playerApi?.Stop();
     }
 
     internal override void SetProgress(double progress)
     {
-        _mpvPlayer?.SetProgress(progress);
+        _playerApi?.SetProgress(progress);
     }
 
     internal override void Pause()
     {
-        _mpvPlayer?.Pause();
+        _playerApi?.Pause();
     }
 
     internal override void SetVolume(uint volume)
     {
-        _mpvPlayer?.SetVolume(volume);
+        _playerApi?.SetVolume(volume);
     }
 
     internal override Task Dispose()
     {
         return Task.Run(() =>
         {
-            if (_mpvPlayer == null)
+            if (_playerApi == null)
                 return;
 
-            _mpvPlayer.Process?.CloseMainWindow();
-            if (_isRestore && _mpvPlayer.Process?.HasExited == false)
-                _mpvPlayer.Process?.Kill();//快照恢复的进程关不掉
+            _playerApi.Process?.CloseMainWindow();
+            if (_isRestore && _playerApi.Process?.HasExited == false)
+                _playerApi.Process?.Kill();//快照恢复的进程关不掉
         });
     }
 }
