@@ -25,6 +25,7 @@ internal class VideoRender : BaseRender
             _isRestore = true;
         }
         _playerApi ??= new MpvApi();
+        _playerApi ??= new VideoPlayerApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)

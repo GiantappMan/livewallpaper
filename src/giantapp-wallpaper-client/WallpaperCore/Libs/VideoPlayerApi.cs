@@ -1,9 +1,15 @@
-﻿using System.Diagnostics;
+﻿using NLog;
+using System.Diagnostics;
 
 namespace WallpaperCore.Libs;
 
 public class VideoPlayerApi : IVideoApi
 {
+    #region filed
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    #endregion
+
+    public static string PlayerPath { get; set; } = string.Empty;
     public bool ProcessLaunched => throw new NotImplementedException();
 
     public IntPtr MainHandle => throw new NotImplementedException();
@@ -11,6 +17,15 @@ public class VideoPlayerApi : IVideoApi
     public string IPCServerName => throw new NotImplementedException();
 
     public Process Process => throw new NotImplementedException();
+
+    #region constructs
+    static VideoPlayerApi()
+    {
+        string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+        PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\Mpv\\mpv.exe");
+        _logger.Info("PlayerPath: " + PlayerPath);
+    }
+    #endregion
 
     public void ApplySetting(WallpaperSetting playSetting)
     {

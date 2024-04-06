@@ -9,6 +9,8 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>GiantappVideoPlayer</AssemblyName>
     <Platforms>x64</Platforms>
+    <OutputPath>..\WallpaperCore\Assets\Players\VideoPlayer</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />

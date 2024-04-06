@@ -12,6 +12,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
+    <OutputPath>..\WallpaperCore\Assets\Players\WebPlayer</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
