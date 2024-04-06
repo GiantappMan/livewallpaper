@@ -10,5 +10,4 @@ namespace Player.Video
     public partial class App : Application
     {
     }
-
 }
