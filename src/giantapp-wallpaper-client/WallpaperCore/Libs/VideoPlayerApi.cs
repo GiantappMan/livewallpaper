@@ -22,7 +22,7 @@ public class VideoPlayerApi : IVideoApi
     static VideoPlayerApi()
     {
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-        PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\Mpv\\mpv.exe");
+        PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\VideoPlayer\\GiantappVideoPlayer.exe");
         _logger.Info("PlayerPath: " + PlayerPath);
     }
     #endregion

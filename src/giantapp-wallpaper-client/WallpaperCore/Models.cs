@@ -192,7 +192,7 @@ public class WallpaperSetting : ICloneable
     /// <summary>
     /// 是否铺满
     /// </summary>
-    public bool IsPanScan { get; set; } = false;
+    public bool IsPanScan { get; set; } = true;
 
     ///// <summary>
     ///// 音量0-100
