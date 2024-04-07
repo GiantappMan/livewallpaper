@@ -105,7 +105,6 @@ public class MpvApi : IVideoApi
             };
             _logger.Info($"LaunchAsync {PlayerPath}");
             Process.StartInfo.FileName = PlayerPath;
-
             StringBuilder args = new();
 
             if (playlist != null)

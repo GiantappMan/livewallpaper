@@ -1,15 +1,8 @@
 ﻿using Player.Shared;
 using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Player.Video;
 
@@ -20,14 +13,23 @@ public partial class MainWindow : Window
 {
     List<string>? _playlist;
     int? _playIndex;
+    IpcServer? _ipcServer;
 
     public MainWindow()
     {
         InitializeComponent();
     }
 
-    internal void ApplySetting(ArgsParser argsParser)
+    internal void Initlize(ArgsParser argsParser)
     {
+        string? ipcServer = argsParser.Get("input-ipc-server");
+        if (ipcServer == null)
+            return;
+
+        _ipcServer = new IpcServer(ipcServer);
+        _ipcServer.ReceivedMessage += IpcServer_ReceivedMessage;
+        _ipcServer.Start();
+
         media.LoadedBehavior = MediaState.Manual;
 
         string panscan = argsParser.Get("panscan") ?? "1.0";
@@ -57,9 +59,26 @@ public partial class MainWindow : Window
         media.Play();
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        if (_ipcServer != null)
+            _ipcServer.ReceivedMessage -= IpcServer_ReceivedMessage;
+        _ipcServer?.Dispose();
+        _ipcServer = null;
+        base.OnClosed(e);
+    }
+
+    #region callback
+    private void IpcServer_ReceivedMessage(object sender, string e)
+    {
+
+    }
+
     private void Media_MediaEnded(object sender, RoutedEventArgs e)
     {
         media.Position = TimeSpan.Zero;
         media.Play();
     }
+    #endregion
+
 }

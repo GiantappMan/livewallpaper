@@ -17,7 +17,7 @@ public partial class App : Application
 
         var playlist = _argsParser.Get("playlist");
 
-        window.ApplySetting(_argsParser);
+        window.Initlize(_argsParser);
         window.Show(playlist);
     }
 }

@@ -15,4 +15,8 @@
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
 
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="5.2.8" />
+  </ItemGroup>
+
 </Project>

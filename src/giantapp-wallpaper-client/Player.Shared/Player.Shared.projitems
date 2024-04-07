@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ArgsParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IpcServer.cs" />
   </ItemGroup>
 </Project>
