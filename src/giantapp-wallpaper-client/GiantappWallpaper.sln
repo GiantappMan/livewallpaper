@@ -27,11 +27,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{AB5E502B-C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Players", "Players", "{D656259A-5983-4579-B9E9-E95E22805CEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Player.Video", "Player.Video\Player.Video.csproj", "{E743A0E2-2DDF-4154-86CD-00BE41773B96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Player.Video", "Player.Video\Player.Video.csproj", "{E743A0E2-2DDF-4154-86CD-00BE41773B96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Player.Web", "Player.Web\Player.Web.csproj", "{D16C3450-9E1C-4256-A836-F4BAD9E3C38E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Player.Web", "Player.Web\Player.Web.csproj", "{D16C3450-9E1C-4256-A836-F4BAD9E3C38E}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Player.Shared", "Player.Shared\Player.Shared.shproj", "{56E54249-6961-48E7-9B45-52C0E4D17A7E}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Client.Shared", "Client.Shared\Client.Shared.shproj", "{E1E1CA46-C7F8-4B7A-A226-3B8B53083CEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,7 +92,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Player.Shared\Player.Shared.projitems*{56e54249-6961-48e7-9b45-52c0e4d17a7e}*SharedItemsImports = 13
+		Client.Shared\Client.Shared.projitems*{b0730daf-ce15-4fb9-9b03-afa5cae5bd18}*SharedItemsImports = 5
+		Client.Shared\Client.Shared.projitems*{d16c3450-9e1c-4256-a836-f4bad9e3c38e}*SharedItemsImports = 5
 		Player.Shared\Player.Shared.projitems*{d16c3450-9e1c-4256-a836-f4bad9e3c38e}*SharedItemsImports = 5
+		Client.Shared\Client.Shared.projitems*{e1e1ca46-c7f8-4b7a-a226-3b8b53083ceb}*SharedItemsImports = 13
+		Client.Shared\Client.Shared.projitems*{e743a0e2-2ddf-4154-86cd-00be41773b96}*SharedItemsImports = 5
 		Player.Shared\Player.Shared.projitems*{e743a0e2-2ddf-4154-86cd-00be41773b96}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

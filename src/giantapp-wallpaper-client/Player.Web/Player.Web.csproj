@@ -18,6 +18,8 @@
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
 
+  <Import Project="..\Client.Shared\Client.Shared.projitems" Label="Shared" />
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2420.47" />
     <PackageReference Include="NLog" Version="5.2.8" />

@@ -1,4 +1,5 @@
-﻿using Player.Shared;
+﻿using Client.Libs;
+using Player.Shared;
 using System.Windows;
 
 namespace Player.Video;
@@ -11,6 +12,8 @@ public partial class App : Application
     ArgsParser? _argsParser;
     protected override void OnStartup(StartupEventArgs e)
     {
+        NLogHelper.Init("GiantappVideoPlayer");
+
         _argsParser = new ArgsParser(e.Args);
 
         var window = new MainWindow();

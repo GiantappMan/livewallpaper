@@ -77,5 +77,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <Import Project="..\Client.Shared\Client.Shared.projitems" Label="Shared" />
 
 </Project>
