@@ -9,5 +9,6 @@
     <Import_RootNamespace>Player.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ArgsParser.cs" />
   </ItemGroup>
 </Project>

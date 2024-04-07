@@ -21,7 +21,7 @@ public class MpvApi : IVideoApi
 {
     #region filed
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    WallpaperSetting _setting  = new();
+    WallpaperSetting _setting = new();
     #endregion
 
 
@@ -97,7 +97,7 @@ public class MpvApi : IVideoApi
 
             Process = new Process
             {
-                EnableRaisingEvents = true
+                EnableRaisingEvents = true,
             };
             Process.Exited += (s, e) =>
             {
@@ -162,6 +162,7 @@ public class MpvApi : IVideoApi
             args.Append("--no-input-default-bindings ");
 
             Process.StartInfo.Arguments = args.ToString();
+            //Process.StartInfo.UseShellExecute = false;
             var res = Process.Start();
             if (!res)
                 return res;
