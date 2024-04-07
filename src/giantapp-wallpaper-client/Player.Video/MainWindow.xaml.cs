@@ -73,7 +73,7 @@ public partial class MainWindow : Window
     #region callback
     private void IpcServer_ReceivedMessage(object sender, string e)
     {
-
+        _logger.Info($"ReceivedMessage: {e}");
     }
 
     private void Media_MediaEnded(object sender, RoutedEventArgs e)

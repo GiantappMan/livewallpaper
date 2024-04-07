@@ -1,10 +1,12 @@
 ﻿using System.IO.Pipes;
 using System.IO;
+using NLog;
 
 namespace Player.Shared;
 
 public class IpcServer : IDisposable
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly string _ipcServerName;
     private NamedPipeServerStream? _pipeServer;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -33,15 +35,14 @@ public class IpcServer : IDisposable
         {
             try
             {
+                if (_pipeServer == null)
+                    break;
+
                 await _pipeServer.WaitForConnectionAsync(cancellationToken);
 
-                using (var streamReader = new StreamReader(_pipeServer))
-                {
-                    var message = await streamReader.ReadLineAsync();
-                    ReceivedMessage?.Invoke(this, message);
-                }
-
-                _pipeServer.Disconnect();
+                using var streamReader = new StreamReader(_pipeServer);
+                var message = await streamReader.ReadLineAsync();
+                ReceivedMessage?.Invoke(this, message);
             }
             catch (OperationCanceledException)
             {
@@ -51,13 +52,19 @@ public class IpcServer : IDisposable
             catch (Exception ex)
             {
                 // Handle any other exceptions that may occur
-                Console.WriteLine($"Error in ListenForMessagesAsync: {ex.Message}");
+                _logger.Error($"Error in ListenForMessagesAsync: {ex.Message}");
+            }
+            finally
+            {
+                // 断开连接, 等待下一个客户端连接
+                _pipeServer?.Disconnect();
             }
         }
     }
 
     public void Dispose()
     {
+        _logger.Info("IpcServer Dispose");
         _cancellationTokenSource?.Cancel();
         if (_cancellationTokenSource != null)
             Task.WhenAny(_listenerTask, Task.Delay(Timeout.Infinite, _cancellationTokenSource.Token)).Wait();
