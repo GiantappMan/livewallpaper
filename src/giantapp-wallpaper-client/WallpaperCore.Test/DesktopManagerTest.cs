@@ -39,24 +39,4 @@ public class DesktopManagerTest
         p.Kill();
         DesktopManager.CreateWorkerW();//刷新背景
     }
-
-    [TestMethod]
-    public void Test()
-    {
-        //var p = Process.Start("TestWallpapers\\TestExeWallpaper.exe");
-        //while (p.MainWindowHandle == IntPtr.Zero)
-        //{
-        //    Thread.Sleep(100);
-        //}
-        //var handler = p.MainWindowHandle;
-        var process = Process.GetProcessesByName("GiantappVideoPlayer");
-        var tmp = process[0].MainWindowHandle;
-        //var res = DesktopManager.SendHandleToDesktopBottom(new IntPtr(00071382), WallpaperApi.GetScreen(1)?.Bounds);
-        var bounds = WallpaperApi.GetScreen(0)?.Bounds;
-        var res = DesktopManager.SendHandleToDesktopBottom(tmp, bounds);
-        //Assert.IsTrue(res);
-        //Thread.Sleep(5000);
-        //p.Kill();
-        //DesktopManager.CreateWorkerW();//刷新背景
-    }
 }

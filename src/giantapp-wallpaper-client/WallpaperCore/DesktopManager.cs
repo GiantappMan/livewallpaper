@@ -101,7 +101,8 @@ public static class DesktopManager
         var hwnd = new HWND(handler);
         var worker = new HWND(workerw);
 
-        RemoveFromTaskbar(hwnd);
+        //有bug暂时屏蔽
+        //RemoveFromTaskbar(hwnd);
         BorderlessWindow(hwnd);
 
         //先放到屏幕外，防止产生残影

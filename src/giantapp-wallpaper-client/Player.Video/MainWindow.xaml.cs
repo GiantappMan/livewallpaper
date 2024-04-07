@@ -33,10 +33,11 @@ public partial class MainWindow : Window
         string panscan = argsParser.Get("panscan") ?? "1.0";
         media.Stretch = panscan == "1.0" ? Stretch.Fill : Stretch.UniformToFill;
 
-        //string windowMinimized = argsParser.Get("window-minimized") ?? "yes";
-        //if (windowMinimized == "yes")
-        //    WindowState = WindowState.Minimized;
+        string windowMinimized = argsParser.Get("window-minimized") ?? "yes";
+        if (windowMinimized == "yes")
+            WindowState = WindowState.Minimized;
 
+        //不能隐藏，隐藏后找不到窗口句柄
         //ShowInTaskbar = false;
     }
 

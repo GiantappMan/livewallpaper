@@ -8,10 +8,6 @@
     Title="GiantappVideoPlayer"
     Width="800"
     Height="450"
-    Background="Red"
     mc:Ignorable="d">
-    <Grid>
-        <MediaElement x:Name="media" MediaEnded="Media_MediaEnded" Visibility="Collapsed" />
-        <Button Width="100" Height="20">123</Button>
-    </Grid>
+    <MediaElement x:Name="media" MediaEnded="Media_MediaEnded" />
 </Window>
