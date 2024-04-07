@@ -1,4 +1,5 @@
-﻿using Player.Shared;
+﻿using NLog;
+using Player.Shared;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,6 +12,7 @@ namespace Player.Video;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     List<string>? _playlist;
     int? _playIndex;
     IpcServer? _ipcServer;

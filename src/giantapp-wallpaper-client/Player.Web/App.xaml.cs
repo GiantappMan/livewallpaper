@@ -10,7 +10,7 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        NLogHelper.Init("GiantappWebPlayer");
+        NLogHelper.Init("LiveWallpaper3_WebPlayer");
         base.OnStartup(e);
     }
 }
