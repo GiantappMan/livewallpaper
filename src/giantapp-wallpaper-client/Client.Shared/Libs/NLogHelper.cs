@@ -28,7 +28,7 @@ public class NLogHelper
 
         string logPath = Path.Combine(Folder, "log.txt");
         string erroLlogPath = Path.Combine(Folder, "err.txt");
-        var logfile = new NLog.Targets.FileTarget("logfile") { FileName = logPath, MaxArchiveFiles = 3, ArchiveEvery = NLog.Targets.FileArchivePeriod.Month };
+        var logfile = new NLog.Targets.FileTarget("logfile") { FileName = logPath, MaxArchiveFiles = 10, ArchiveAboveSize = 10 * 1024 * 1024, ArchiveEvery = NLog.Targets.FileArchivePeriod.Month };
         var erroLogfile = new NLog.Targets.FileTarget("erroLogfile")
         {
             FileName = erroLlogPath,

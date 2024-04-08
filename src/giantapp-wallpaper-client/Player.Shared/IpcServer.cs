@@ -1,8 +1,8 @@
 ﻿using System.IO.Pipes;
-using System.IO;
 using NLog;
 using System.Text.Json;
 using System.Dynamic;
+using System.Text;
 
 namespace Player.Shared;
 
@@ -23,37 +23,44 @@ public class IpcServer : IDisposable
 
     public void Start()
     {
-        _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         _cancellationTokenSource = new CancellationTokenSource();
         _listenerTask = ListenForMessagesAsync(_cancellationTokenSource.Token);
     }
 
     private async Task ListenForMessagesAsync(CancellationToken cancellationToken)
     {
-        if (_pipeServer == null)
-            return;
-
-        var streamReader = new StreamReader(_pipeServer);
-        var streamWriter = new StreamWriter(_pipeServer);
-        await _pipeServer.WaitForConnectionAsync(cancellationToken);
-
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                if (_pipeServer == null)
-                    break;
+                _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                await _pipeServer.WaitForConnectionAsync(cancellationToken);
 
-                var message = await streamReader.ReadLineAsync();
-                dynamic? tmp = JsonSerializer.Deserialize<ExpandoObject>(message);
-                ReceivedMessage?.Invoke(this, message);
+                while (true)
+                {
+                    if (_pipeServer == null)
+                        break;
 
-                dynamic res = new ExpandoObject();
-                res.request_id = tmp?.request_id;
-                res.data = "tmp";
-                string json = JsonSerializer.Serialize(res);
-                await streamWriter.WriteLineAsync(json);
-                await streamWriter.FlushAsync();
+                    // 接收消息
+                    byte[] buffer = new byte[256];
+                    int bytesRead = await _pipeServer.ReadAsync(buffer, 0, buffer.Length);
+                    if (bytesRead == 0) // 如果没有读取到数据，表示客户端已经断开连接
+                        break;
+
+                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    _logger.Info($"接收到消息: {message}");
+
+                    dynamic? tmp = JsonSerializer.Deserialize<ExpandoObject>(message);
+                    ReceivedMessage?.Invoke(this, message);
+
+                    dynamic res = new ExpandoObject();
+                    res.request_id = tmp?.request_id;
+                    res.data = "5";
+                    string json = JsonSerializer.Serialize(res);
+                    byte[] responseBytes = Encoding.UTF8.GetBytes(json);
+                    await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
+                    await _pipeServer.FlushAsync();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -65,11 +72,16 @@ public class IpcServer : IDisposable
                 // Handle any other exceptions that may occur
                 _logger.Error($"Error in ListenForMessagesAsync: {ex.Message}");
             }
+            finally
+            {
+                // 断开连接, 等待下一个客户端连接
+                if (_pipeServer != null && _pipeServer.IsConnected)
+                    _pipeServer.Disconnect();
+                _pipeServer?.Dispose();
+                _pipeServer = null;
+                _logger.Info("_pipeServer Disconnnect");
+            }
         }
-
-        // 断开连接, 等待下一个客户端连接
-        _pipeServer?.Disconnect();
-        _logger.Info("_pipeServer Disconnnect");
     }
 
     public void Dispose()
