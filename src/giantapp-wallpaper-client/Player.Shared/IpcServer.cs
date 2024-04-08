@@ -1,6 +1,8 @@
 ﻿using System.IO.Pipes;
 using System.IO;
 using NLog;
+using System.Text.Json;
+using System.Dynamic;
 
 namespace Player.Shared;
 
@@ -31,6 +33,10 @@ public class IpcServer : IDisposable
         if (_pipeServer == null)
             return;
 
+        var streamReader = new StreamReader(_pipeServer);
+        var streamWriter = new StreamWriter(_pipeServer);
+        await _pipeServer.WaitForConnectionAsync(cancellationToken);
+
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -38,11 +44,16 @@ public class IpcServer : IDisposable
                 if (_pipeServer == null)
                     break;
 
-                await _pipeServer.WaitForConnectionAsync(cancellationToken);
-
-                using var streamReader = new StreamReader(_pipeServer);
                 var message = await streamReader.ReadLineAsync();
+                dynamic? tmp = JsonSerializer.Deserialize<ExpandoObject>(message);
                 ReceivedMessage?.Invoke(this, message);
+
+                dynamic res = new ExpandoObject();
+                res.request_id = tmp?.request_id;
+                res.data = "tmp";
+                string json = JsonSerializer.Serialize(res);
+                await streamWriter.WriteLineAsync(json);
+                await streamWriter.FlushAsync();
             }
             catch (OperationCanceledException)
             {
@@ -54,12 +65,11 @@ public class IpcServer : IDisposable
                 // Handle any other exceptions that may occur
                 _logger.Error($"Error in ListenForMessagesAsync: {ex.Message}");
             }
-            finally
-            {
-                // 断开连接, 等待下一个客户端连接
-                _pipeServer?.Disconnect();
-            }
         }
+
+        // 断开连接, 等待下一个客户端连接
+        _pipeServer?.Disconnect();
+        _logger.Info("_pipeServer Disconnnect");
     }
 
     public void Dispose()

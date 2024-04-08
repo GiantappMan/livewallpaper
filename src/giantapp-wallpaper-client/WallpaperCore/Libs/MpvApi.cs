@@ -24,7 +24,6 @@ public class MpvApi : IVideoApi
     WallpaperSetting _setting = new();
     #endregion
 
-
     #region public properties
     public IntPtr MainHandle { get; private set; }
     public string? IPCServerName { get; private set; }
@@ -168,14 +167,14 @@ public class MpvApi : IVideoApi
 
             ProcessLaunched = true;
             //异步等待窗口句柄
-            await Task.Run(async () =>
-            {
-                while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
-                {
-                    //Thread.Sleep(100);
-                    await Task.Delay(100);
-                }
-            });
+            //await Task.Run(async () =>
+            //{
+            //    while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
+            //    {
+            //        //Thread.Sleep(100);
+            //        await Task.Delay(100);
+            //    }
+            //});
 
             if (ProcessLaunched)
                 MainHandle = Process.MainWindowHandle;

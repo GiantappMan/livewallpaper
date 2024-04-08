@@ -20,14 +20,16 @@ internal class VideoRender : BaseRender
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
         //测试
-        _playerApi ??= new VideoPlayerApi();
-        return;
+        //_playerApi ??= new VideoPlayerApi();
+        //return;
         if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
         {
-            _playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
+            //_playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
+            _playerApi = new VideoPlayerApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
             _isRestore = true;
         }
-        _playerApi ??= new MpvApi();
+        //_playerApi ??= new MpvApi();
+        _playerApi ??= new VideoPlayerApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)
@@ -72,7 +74,7 @@ internal class VideoRender : BaseRender
         {
             await _playerApi.LaunchAsync(playlistPath);
             var bounds = WallpaperApi.GetScreen(screenIndex)?.Bounds;
-            DesktopManager.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
+            //DesktopManager.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
         }
         else
         {

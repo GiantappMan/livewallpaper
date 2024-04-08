@@ -2,7 +2,8 @@
   "profiles": {
     "Player.Video": {
       "commandName": "Project",
-      "commandLineArgs": "--playlist=C:\\Users\\Ying\\AppData\\Local\\Temp\\playlist1.txt --stop-screensaver=no --hwdec=auto-safe --panscan=0.0 --keepaspect=yes --input-ipc-server=mpvcb40391c-56fa-432f-bc24-3c2b5eb7a8c8 --loop-playlist=inf --window-minimized=yes --stop-screensaver=no --no-osc --geometry=-10000:-10000 --no-border --volume=0 --no-input-default-bindings"
+      //"commandLineArgs": "--playlist=C:\\Users\\Ying\\AppData\\Local\\Temp\\playlist1.txt --stop-screensaver=no --hwdec=auto-safe --panscan=0.0 --keepaspect=yes --input-ipc-server=mpvcb40391c-56fa-432f-bc24-3c2b5eb7a8c8 --loop-playlist=inf --window-minimized=yes --stop-screensaver=no --no-osc --geometry=-10000:-10000 --no-border --volume=0 --no-input-default-bindings",
+      "commandLineArgs": "--playlist=C:\\Users\\dhswg\\AppData\\Local\\Temp\\playlist1.txt --stop-screensaver=no --hwdec=auto-safe --panscan=1.0 --keepaspect=yes --input-ipc-server=mpv8320ee01-3d8c-40e8-9439-f7a0cf822366 --loop-playlist=inf --window-minimized=yes --stop-screensaver=no --no-osc --geometry=-10000:-10000 --no-border --volume=0 --no-input-default-bindings"
     }
   }
 }
