@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 
     internal void Initlize(ArgsParser argsParser)
     {
-        MessageBox.Show("test");
+        //MessageBox.Show("test");
         string? ipcServer = argsParser.Get("input-ipc-server");
         if (ipcServer == null)
             return;

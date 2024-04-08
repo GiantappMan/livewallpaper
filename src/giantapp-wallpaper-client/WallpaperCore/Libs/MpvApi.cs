@@ -167,14 +167,14 @@ public class MpvApi : IVideoApi
 
             ProcessLaunched = true;
             //异步等待窗口句柄
-            //await Task.Run(async () =>
-            //{
-            //    while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
-            //    {
-            //        //Thread.Sleep(100);
-            //        await Task.Delay(100);
-            //    }
-            //});
+            await Task.Run(async () =>
+            {
+                while (ProcessLaunched && Process.MainWindowHandle == IntPtr.Zero)
+                {
+                    //Thread.Sleep(100);
+                    await Task.Delay(100);
+                }
+            });
 
             if (ProcessLaunched)
                 MainHandle = Process.MainWindowHandle;
