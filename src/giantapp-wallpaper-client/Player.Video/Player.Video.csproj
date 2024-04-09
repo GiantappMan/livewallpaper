@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="System.Text.Json" Version="8.0.3" />
   </ItemGroup>

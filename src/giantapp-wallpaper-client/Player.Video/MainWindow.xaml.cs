@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Newtonsoft.Json;
+using NLog;
 using Player.Shared;
 using System.IO;
 using System.Windows;
@@ -7,6 +8,13 @@ using System.Windows.Media;
 
 namespace Player.Video;
 
+public class MpvRequest
+{
+    [JsonProperty("command")]
+    public object[]? Command { get; set; }
+    [JsonProperty("request_id")]
+    public string? RequestId { get; set; }
+}
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
@@ -75,6 +83,14 @@ public partial class MainWindow : Window
     private void IpcServer_ReceivedMessage(object sender, string e)
     {
         _logger.Info($"ReceivedMessage: {e}");
+        try
+        {
+            var test = JsonConvert.DeserializeObject<MpvRequest>(e);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+        }
     }
 
     private void Media_MediaEnded(object sender, RoutedEventArgs e)

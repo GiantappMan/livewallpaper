@@ -33,8 +33,11 @@ public class IpcServer : IDisposable
         {
             try
             {
-                _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                _logger.Info($"new NamedPipeServerStream: {_ipcServerName}");
+                _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                _logger.Info($"WaitForConnectionAsync");
                 await _pipeServer.WaitForConnectionAsync(cancellationToken);
+                _logger.Info($"WaitForConnectionAsync1");
 
                 while (true)
                 {
@@ -48,18 +51,16 @@ public class IpcServer : IDisposable
                         break;
 
                     string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    _logger.Info($"接收到消息: {message}");
 
                     dynamic? tmp = JsonSerializer.Deserialize<ExpandoObject>(message);
                     ReceivedMessage?.Invoke(this, message);
-
-                    dynamic res = new ExpandoObject();
-                    res.request_id = tmp?.request_id;
-                    res.data = "5";
-                    string json = JsonSerializer.Serialize(res);
-                    byte[] responseBytes = Encoding.UTF8.GetBytes(json);
-                    await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
-                    await _pipeServer.FlushAsync();
+                    //dynamic res = new ExpandoObject();
+                    //res.request_id = tmp?.request_id;
+                    //res.data = "5";
+                    //string json = JsonSerializer.Serialize(res);
+                    //byte[] responseBytes = Encoding.UTF8.GetBytes(json);
+                    //await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
+                    //await _pipeServer.FlushAsync();
                 }
             }
             catch (OperationCanceledException)
