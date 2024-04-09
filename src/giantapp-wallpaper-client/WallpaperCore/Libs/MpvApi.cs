@@ -1,17 +1,20 @@
-﻿using Newtonsoft.Json;
-using NLog;
+﻿using NLog;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WallpaperCore.Libs;
 
-public class MpvRequest
+public class IpcPayload
 {
-    [JsonProperty("command")]
+    [JsonPropertyName("command")]
     public object[]? Command { get; set; }
-    [JsonProperty("request_id")]
+    [JsonPropertyName("request_id")]
     public string? RequestId { get; set; }
+    [JsonPropertyName("data")]
+    public string? Data { get; set; }
 }
 
 /// <summary>
@@ -331,17 +334,17 @@ public class MpvApi : IVideoApi
         {
             string id = Guid.NewGuid().ToString();
             using NamedPipeClientStream pipeClient = new(serverName);
-            pipeClient.Connect(0); // 连接超时时间
+            pipeClient.Connect(); // 连接超时时间
 
             if (pipeClient.IsConnected)
             {
                 // 发送命令
-                var request = new MpvRequest
+                var request = new IpcPayload
                 {
                     Command = command,
                     RequestId = id
                 };
-                var sendContent = JsonConvert.SerializeObject(request) + "\n";
+                var sendContent = JsonSerializer.Serialize(request) + "\n";
                 byte[] commandBytes = Encoding.UTF8.GetBytes(sendContent);
                 pipeClient.Write(commandBytes, 0, commandBytes.Length);
 
@@ -357,10 +360,10 @@ public class MpvApi : IVideoApi
                     Debug.WriteLine(sendContent + "mpv response: " + response);
                 }
                 //查找id匹配的结果
-                var jobj = JsonConvert.DeserializeObject<dynamic>(response);
-                if (jobj?.request_id == id)
+                var jobj = JsonSerializer.Deserialize<IpcPayload>(response);
+                if (jobj?.RequestId == id)
                 {
-                    return jobj.data;
+                    return jobj.Data;
                 }
             }
             else

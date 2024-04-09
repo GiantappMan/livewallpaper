@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using NLog;
+﻿using NLog;
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
+
+using System.Text.Json;
+
 //using System.IO;
 using Windows.Win32;
 
@@ -24,14 +26,20 @@ public static class WallpaperApi
 
     public static ApiSettings Settings { get; set; } = new();
 
-    public static JsonSerializerSettings JsonSettings { get; private set; } = new()
+    //public static JsonSerializerSettings JsonSettings { get; private set; } = new()
+    //{
+    //    Formatting = Formatting.Indented,
+    //    TypeNameHandling = TypeNameHandling.Auto,
+    //    ContractResolver = new DefaultContractResolver
+    //    {
+    //        NamingStrategy = new CamelCaseNamingStrategy()
+    //    }
+    //};
+    public static JsonSerializerOptions JsonOptitons { get; private set; } = new JsonSerializerOptions
     {
-        Formatting = Formatting.Indented,
-        TypeNameHandling = TypeNameHandling.Auto,
-        ContractResolver = new DefaultContractResolver
-        {
-            NamingStrategy = new CamelCaseNamingStrategy()
-        }
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        //Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
     #endregion
@@ -181,7 +189,7 @@ public static class WallpaperApi
                 {
                     //旧壁纸
                     //读取json
-                    var oldData = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
+                    var oldData = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile), JsonOptitons);
 
                     //删除封面
                     if (oldData?.Preview != null)
@@ -411,7 +419,7 @@ public static class WallpaperApi
         //保存meta
         wallpaper.Meta.CreateTime = DateTime.Now;
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
-        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(wallpaper.Meta, JsonSettings));
+        File.WriteAllText(metaJsonFile, JsonSerializer.Serialize(wallpaper.Meta, JsonOptitons));
 
         ////保存setting
         //string settingJsonFile = Path.Combine(saveFolder, $"{saveName}.setting.json");
@@ -450,7 +458,7 @@ public static class WallpaperApi
         oldWallpaper.Meta.UpdateTime = DateTime.Now;
         oldWallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
-        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(oldWallpaper.Meta, JsonSettings));
+        File.WriteAllText(metaJsonFile, JsonSerializer.Serialize(oldWallpaper.Meta, JsonOptitons));
         return true;
     }
     public static bool UpdateWallpaper(Wallpaper newWallpaper, Wallpaper oldWallpaper)
@@ -485,7 +493,7 @@ public static class WallpaperApi
         //保存meta
         newWallpaper.Meta.UpdateTime = DateTime.Now;
         string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
-        File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(newWallpaper.Meta, JsonSettings));
+        File.WriteAllText(metaJsonFile, JsonSerializer.Serialize(newWallpaper.Meta, JsonOptitons));
 
         //移除旧格式project.json
         string projectJsonFile = Path.Combine(saveFolder, "project.json");
@@ -505,7 +513,7 @@ public static class WallpaperApi
 
         //保存setting
         string settingJsonFile = Path.Combine(saveFolder, $"{saveFileName}.setting.json");
-        File.WriteAllText(settingJsonFile, JsonConvert.SerializeObject(setting, JsonSettings));
+        File.WriteAllText(settingJsonFile, JsonSerializer.Serialize(setting, JsonOptitons));
 
         //如果壁纸正在播放，重新调用ShowWallpaper以生效
         foreach (var item in RunningWallpapers)

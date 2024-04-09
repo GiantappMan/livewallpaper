@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using NLog;
 using WallpaperCore;
 
@@ -39,7 +37,7 @@ public static class Configer
                 string key = kvp.Key;
                 object config = kvp.Value;
                 string filePath = Path.Combine(Folder, key + ".json");
-                string json = JsonConvert.SerializeObject(config, WallpaperApi.JsonSettings);
+                string json = JsonSerializer.Serialize(config, WallpaperApi.JsonOptitons);
                 File.WriteAllText(filePath, json);
             }
         }
@@ -89,8 +87,8 @@ public static class Configer
             {
                 if (_cache.TryGetValue(key, out object config))
                 {
-                    if (config is JObject)
-                        return JsonConvert.DeserializeObject<T>(config.ToString());
+                    if (config is JsonElement)
+                        return JsonSerializer.Deserialize<T>(config.ToString(), WallpaperApi.JsonOptitons);
                     return (T)config;
                 }
             }
@@ -100,7 +98,7 @@ public static class Configer
             if (File.Exists(filePath))
             {
                 string json = File.ReadAllText(filePath);
-                var config = JsonConvert.DeserializeObject<T>(json, WallpaperApi.JsonSettings);
+                var config = JsonSerializer.Deserialize<T>(json, WallpaperApi.JsonOptitons);
                 if (config != null)
                 {
                     // 将从文件中读取的配置存储到缓存中

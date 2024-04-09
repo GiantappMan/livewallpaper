@@ -198,7 +198,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                         </FormControl>
                                         <SelectContent>
                                             {Object.entries(Fit).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
-                                                <SelectItem key={key.toString()} value={value.toString()}>
+                                                <SelectItem key={key.toString()} value={value}>
                                                     {dictionary['local'][key.toLowerCase()]}
                                                 </SelectItem>
                                             ))}

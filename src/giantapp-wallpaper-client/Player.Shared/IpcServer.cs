@@ -85,6 +85,17 @@ public class IpcServer : IDisposable
         }
     }
 
+    public async Task Send(object msg)
+    {
+        if (_pipeServer == null)
+            return;
+        string json = JsonSerializer.Serialize(msg);
+        byte[] responseBytes = Encoding.UTF8.GetBytes(json);
+        await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
+        await _pipeServer.FlushAsync();
+        _logger.Info("SendMessage:" + json);
+    }
+
     public void Dispose()
     {
         _logger.Info("IpcServer Dispose");

@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Reflection;
+﻿using System.Reflection;
+using System.Text.Json;
 using WallpaperCore.Libs;
 
 namespace WallpaperCore;
@@ -317,7 +317,7 @@ public class Wallpaper : ICloneable
             string metaJsonFile = Path.Combine(Dir, $"{fileName}.meta.json");
             if (File.Exists(metaJsonFile))
             {
-                var meta = JsonConvert.DeserializeObject<WallpaperMeta>(File.ReadAllText(metaJsonFile));
+                var meta = JsonSerializer.Deserialize<WallpaperMeta>(File.ReadAllText(metaJsonFile), WallpaperApi.JsonOptitons);
                 Meta = meta ?? new();
                 if (meta?.Cover != null)
                     CoverPath = Path.Combine(Dir, meta.Cover);
@@ -346,7 +346,7 @@ public class Wallpaper : ICloneable
             string settingJsonFile = Path.Combine(Dir, $"{fileName}.setting.json");
             if (File.Exists(settingJsonFile))
             {
-                var setting = JsonConvert.DeserializeObject<WallpaperSetting>(File.ReadAllText(settingJsonFile));
+                var setting = JsonSerializer.Deserialize<WallpaperSetting>(File.ReadAllText(settingJsonFile), WallpaperApi.JsonOptitons);
                 var Setting = setting ?? new();
                 return Setting;
             }
@@ -397,7 +397,7 @@ public class Wallpaper : ICloneable
             existProjectFile = true;
             //包含 project.json
             //迁移数据到meta.json
-            var projectJson = JsonConvert.DeserializeObject<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
+            var projectJson = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile), WallpaperApi.JsonOptitons);
             if (projectJson != null)
             {
                 if (projectJson.File != data.FileName)

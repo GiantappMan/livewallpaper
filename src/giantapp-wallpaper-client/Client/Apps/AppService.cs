@@ -1,11 +1,10 @@
-﻿//#define DEBUG_LOCAL
+﻿#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
 using GiantappWallpaper;
 using MultiLanguageForXAML.DB;
 using MultiLanguageForXAML;
-using Newtonsoft.Json;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -19,6 +18,7 @@ using System.Linq;
 using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Text.Json;
 
 namespace Client.Apps;
 
@@ -361,13 +361,13 @@ internal class AppService
         switch (e.Key)
         {
             case General.FullName:
-                var configGeneral = JsonConvert.DeserializeObject<General>(e.Json) ?? new();
+                var configGeneral = JsonSerializer.Deserialize<General>(e.Json, WallpaperApi.JsonOptitons) ?? new();
                 bool tmp = await _autoStart.Check();
                 configGeneral.AutoStart = tmp;//用真实情况修改返回值
                 e.Corrected = configGeneral;
                 break;
             case ConfigWallpaper.FullName:
-                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
+                var configWallpaper = JsonSerializer.Deserialize<ConfigWallpaper>(e.Json, WallpaperApi.JsonOptitons);
                 if (configWallpaper == null || configWallpaper.Directories.Length == 0)
                 {
                     configWallpaper ??= new();
@@ -376,7 +376,7 @@ internal class AppService
                 }
                 break;
             case Appearance.FullName:
-                var configApperance = JsonConvert.DeserializeObject<Appearance>(e.Json);
+                var configApperance = JsonSerializer.Deserialize<Appearance>(e.Json, WallpaperApi.JsonOptitons);
                 if (configApperance == null)
                 {
                     configApperance = new();
@@ -392,14 +392,14 @@ internal class AppService
         switch (e.Key)
         {
             case Appearance.FullName:
-                var configApperance = JsonConvert.DeserializeObject<Appearance>(e.Json);
+                var configApperance = JsonSerializer.Deserialize<Appearance>(e.Json, WallpaperApi.JsonOptitons);
                 if (configApperance != null)
                 {
                     ApplyTheme(configApperance);
                 }
                 break;
             case General.FullName:
-                var configGeneral = JsonConvert.DeserializeObject<General>(e.Json);
+                var configGeneral = JsonSerializer.Deserialize<General>(e.Json, WallpaperApi.JsonOptitons);
                 if (configGeneral != null)
                 {
                     await _autoStart.Set(configGeneral.AutoStart);
@@ -407,10 +407,10 @@ internal class AppService
                 }
                 break;
             case ConfigWallpaper.FullName:
-                var configWallpaper = JsonConvert.DeserializeObject<ConfigWallpaper>(e.Json);
+                var configWallpaper = JsonSerializer.Deserialize<ConfigWallpaper>(e.Json, WallpaperApi.JsonOptitons);
                 ConfigWallpaper? oldConfig = null;
                 if (!string.IsNullOrEmpty(e.OldJson))
-                    oldConfig = JsonConvert.DeserializeObject<ConfigWallpaper>(e.OldJson);
+                    oldConfig = JsonSerializer.Deserialize<ConfigWallpaper>(e.OldJson, WallpaperApi.JsonOptitons);
 
                 if (configWallpaper != null)
                 {

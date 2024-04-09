@@ -1,5 +1,4 @@
 ﻿using Client.Libs;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +13,7 @@ using Windows.ApplicationModel;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using ConfigAppearance = Client.Apps.Configs.Appearance;
 using GiantappWallpaper;
+using System.Text.Json;
 
 namespace Client.Apps;
 
@@ -85,7 +85,7 @@ public class ApiObject
     public void SetConfig(string key, string json)
     {
         key = $"Client.Apps.Configs.{key}";
-        var obj = JsonConvert.DeserializeObject(json, WallpaperApi.JsonSettings);
+        var obj = JsonSerializer.Deserialize<object>(json, WallpaperApi.JsonOptitons);
         Configer.Set(key, obj, out object? oldConfig, true);
         if (ConfigSetAfterEvent != null && obj != null)
         {
@@ -93,7 +93,7 @@ public class ApiObject
             {
                 Key = key,
                 Json = json,
-                OldJson = oldConfig == null ? string.Empty : JsonConvert.SerializeObject(oldConfig, WallpaperApi.JsonSettings)
+                OldJson = oldConfig == null ? string.Empty : JsonSerializer.Serialize(oldConfig, WallpaperApi.JsonOptitons)
             });
         }
     }
@@ -102,7 +102,7 @@ public class ApiObject
     {
         key = $"Client.Apps.Configs.{key}";
         var config = Configer.Get<object>(key) ?? "";
-        var json = JsonConvert.SerializeObject(config, WallpaperApi.JsonSettings);
+        var json = JsonSerializer.Serialize(config, WallpaperApi.JsonOptitons);
         if (CorrectConfigEvent != null)
         {
             var e = new CorrectConfigEventArgs
@@ -113,7 +113,7 @@ public class ApiObject
             CorrectConfigEvent(this, e);
             if (e.Corrected != null)
             {
-                json = JsonConvert.SerializeObject(e.Corrected, WallpaperApi.JsonSettings);
+                json = JsonSerializer.Serialize(e.Corrected, WallpaperApi.JsonOptitons);
             }
         }
 
@@ -130,7 +130,7 @@ public class ApiObject
             item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
             item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
         }
-        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
 
     //[Obsolete]
@@ -142,7 +142,7 @@ public class ApiObject
 
     public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
-        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return false;
 
@@ -202,7 +202,7 @@ public class ApiObject
         res.Volume = WallpaperApi.Settings.Volume;
         res.AudioScreenIndex = WallpaperApi.Settings.AudioSourceIndex;
 
-        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
 
     public void PauseWallpaper(string? screenIndexStr)
@@ -277,7 +277,7 @@ public class ApiObject
 
     public bool CreateWallpaperNew(string wallpaperJson)
     {
-        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return false;
 
@@ -330,7 +330,7 @@ public class ApiObject
 
     public bool UpdateWallpaperNew(string newWallpaperJson, string oldWallpaperPath)
     {
-        var newWallpaper = JsonConvert.DeserializeObject<Wallpaper>(newWallpaperJson, WallpaperApi.JsonSettings);
+        var newWallpaper = JsonSerializer.Deserialize<Wallpaper>(newWallpaperJson, WallpaperApi.JsonOptitons);
         ConfigWallpaper config = Configer.Get<ConfigWallpaper>() ?? new();
 
         if (newWallpaper == null || string.IsNullOrEmpty(oldWallpaperPath))
@@ -363,7 +363,7 @@ public class ApiObject
 
     public bool DeleteWallpaper(string wallpaperJson)
     {
-        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper != null)
             return WallpaperApi.DeleteWallpaper(wallpaper);
         return false;
@@ -397,8 +397,8 @@ public class ApiObject
 
     public bool SetWallpaperSetting(string settingJson, string wallpaperJson)
     {
-        var setting = JsonConvert.DeserializeObject<WallpaperSetting>(settingJson, WallpaperApi.JsonSettings);
-        var wallpaper = JsonConvert.DeserializeObject<Wallpaper>(wallpaperJson, WallpaperApi.JsonSettings);
+        var setting = JsonSerializer.Deserialize<WallpaperSetting>(settingJson, WallpaperApi.JsonOptitons);
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
 
         if (setting != null && wallpaper != null)
         {
@@ -455,7 +455,7 @@ public class ApiObject
             Duration = duration,
             Position = position
         };
-        return JsonConvert.SerializeObject(res, WallpaperApi.JsonSettings);
+        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
 
     //设置播放进度
@@ -502,7 +502,7 @@ public class ApiObject
             var config = Configer.Get<ConfigWallpaper>() ?? new();
             var saveDir = config.EnsureDirectories()[0];
 
-            var meta = JsonConvert.DeserializeObject<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonSettings);
+            var meta = JsonSerializer.Deserialize<WallpaperMeta>(wallpaperMetaJson, WallpaperApi.JsonOptitons);
             if (meta == null || meta.Id == null)
                 return false;
 
@@ -526,7 +526,7 @@ public class ApiObject
             meta.CreateTime = DateTime.Now;
 
             //下载完成后，保存meta
-            File.WriteAllText(metaFilePath, JsonConvert.SerializeObject(meta, WallpaperApi.JsonSettings));
+            File.WriteAllText(metaFilePath, JsonSerializer.Serialize(meta, WallpaperApi.JsonOptitons));
             return true;
         }
         catch (Exception ex)
@@ -548,14 +548,14 @@ public class ApiObject
     //获取下载状态
     public string GetDonwloadStatus()
     {
-        var json = JsonConvert.SerializeObject(DownloadService.Status, WallpaperApi.JsonSettings);
+        var json = JsonSerializer.Serialize(DownloadService.Status, WallpaperApi.JsonOptitons);
         return json;
     }
 
     public string GetDownloadItemStatus(string id)
     {
         var item = DownloadService.Status.Items.FirstOrDefault(m => m.Id == id);
-        var json = JsonConvert.SerializeObject(item, WallpaperApi.JsonSettings);
+        var json = JsonSerializer.Serialize(item, WallpaperApi.JsonOptitons);
         return json;
     }
 

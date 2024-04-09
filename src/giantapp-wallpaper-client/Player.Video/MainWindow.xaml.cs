@@ -1,19 +1,22 @@
-﻿using Newtonsoft.Json;
-using NLog;
+﻿using NLog;
 using Player.Shared;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace Player.Video;
 
-public class MpvRequest
+public class IpcPayload
 {
-    [JsonProperty("command")]
+    [JsonPropertyName("command")]
     public object[]? Command { get; set; }
-    [JsonProperty("request_id")]
+    [JsonPropertyName("request_id")]
     public string? RequestId { get; set; }
+    [JsonPropertyName("data")]
+    public string? Data { get; set; }
 }
 /// <summary>
 /// Interaction logic for MainWindow.xaml
@@ -32,6 +35,7 @@ public partial class MainWindow : Window
 
     internal void Initlize(ArgsParser argsParser)
     {
+
         //MessageBox.Show("test");
         string? ipcServer = argsParser.Get("input-ipc-server");
         if (ipcServer == null)
@@ -80,12 +84,21 @@ public partial class MainWindow : Window
     }
 
     #region callback
-    private void IpcServer_ReceivedMessage(object sender, string e)
+    private async void IpcServer_ReceivedMessage(object sender, string e)
     {
         _logger.Info($"ReceivedMessage: {e}");
         try
         {
-            var test = JsonConvert.DeserializeObject<MpvRequest>(e);
+            var data = JsonSerializer.Deserialize<IpcPayload>(e);
+
+            var res = new IpcPayload
+            {
+                RequestId = data?.RequestId,
+                Data = "5"
+            };
+
+            if (_ipcServer != null)
+                await _ipcServer.Send(res);
         }
         catch (Exception ex)
         {
