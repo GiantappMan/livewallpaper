@@ -26,10 +26,12 @@
     <None Remove="Assets\Img\logo.ico" />
     <None Remove="Assets\Img\logo.png" />
     <None Remove="Assets\Languages\en.json" />
+    <None Remove="Assets\Languages\ru.json" />
     <None Remove="Assets\Languages\zh.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Assets\Languages\ru.json" />
     <EmbeddedResource Include="Assets\Languages\en.json" />
     <EmbeddedResource Include="Assets\Languages\zh.json" />
   </ItemGroup>

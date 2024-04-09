@@ -18,6 +18,11 @@ import { getGlobal } from "@/i18n-config";
 import { useCallback } from 'react';
 import { i18n } from "@/i18n-config";
 
+const localesDescriptions = {
+    zh: "中文",
+    en: "English",
+    ru: "Русский"
+}
 const Page = () => {
     const dictionary = getGlobal();
     const router = useRouter()
@@ -85,7 +90,7 @@ const Page = () => {
                                         "w-[200px] justify-between",
                                     )}
                                 >
-                                    {config.currentLan ? i18n.localesDescriptions[config.currentLan] : "Select language"}
+                                    {config.currentLan ? localesDescriptions[config.currentLan] : "Select language"}
                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
@@ -109,7 +114,7 @@ const Page = () => {
                                                     });
                                                 }}
                                             >
-                                                {i18n.localesDescriptions[language]}
+                                                {localesDescriptions[language]}
                                                 <CheckIcon
                                                     className={cn(
                                                         "ml-auto h-4 w-4",

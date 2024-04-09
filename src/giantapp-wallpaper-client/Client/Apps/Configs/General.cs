@@ -21,7 +21,7 @@ public class General : ICloneable
     public void CheckLan()
     {
         //可用语言
-        var lans = new[] { "zh", "en" };
+        var lans = new[] { "zh", "en", "ru" };
         //如果不包含，默认英文
         if (!lans.Contains(CurrentLan))
         {
