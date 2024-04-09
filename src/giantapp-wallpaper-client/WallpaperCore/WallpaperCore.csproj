@@ -40,4 +40,5 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
 </Project>

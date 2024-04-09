@@ -95,6 +95,7 @@ Global
 		Client.Shared\Client.Shared.projitems*{b0730daf-ce15-4fb9-9b03-afa5cae5bd18}*SharedItemsImports = 5
 		Client.Shared\Client.Shared.projitems*{d16c3450-9e1c-4256-a836-f4bad9e3c38e}*SharedItemsImports = 5
 		Player.Shared\Player.Shared.projitems*{d16c3450-9e1c-4256-a836-f4bad9e3c38e}*SharedItemsImports = 5
+		Player.Shared\Player.Shared.projitems*{d5c04ff5-2f11-4112-8abb-47fcf788faa9}*SharedItemsImports = 5
 		Client.Shared\Client.Shared.projitems*{e1e1ca46-c7f8-4b7a-a226-3b8b53083ceb}*SharedItemsImports = 13
 		Client.Shared\Client.Shared.projitems*{e743a0e2-2ddf-4154-86cd-00be41773b96}*SharedItemsImports = 5
 		Player.Shared\Player.Shared.projitems*{e743a0e2-2ddf-4154-86cd-00be41773b96}*SharedItemsImports = 5

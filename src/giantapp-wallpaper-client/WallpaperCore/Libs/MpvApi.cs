@@ -1,4 +1,5 @@
 ﻿using NLog;
+using Player.Shared;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
@@ -6,16 +7,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace WallpaperCore.Libs;
-
-public class IpcPayload
-{
-    [JsonPropertyName("command")]
-    public object[]? Command { get; set; }
-    [JsonPropertyName("request_id")]
-    public string? RequestId { get; set; }
-    [JsonPropertyName("data")]
-    public string? Data { get; set; }
-}
 
 /// <summary>
 /// mpv播放器管理，管道通信
@@ -330,51 +321,20 @@ public class MpvApi : IVideoApi
             return null;
         }
 
-        try
+
+        string id = Guid.NewGuid().ToString();
+        using IpcClient client = new(serverName);
+        IpcPayload? res = client.Send(new IpcPayload
         {
-            string id = Guid.NewGuid().ToString();
-            using NamedPipeClientStream pipeClient = new(serverName);
-            pipeClient.Connect(); // 连接超时时间
+            Command = command,
+            RequestId = id
+        });
 
-            if (pipeClient.IsConnected)
-            {
-                // 发送命令
-                var request = new IpcPayload
-                {
-                    Command = command,
-                    RequestId = id
-                };
-                var sendContent = JsonSerializer.Serialize(request) + "\n";
-                byte[] commandBytes = Encoding.UTF8.GetBytes(sendContent);
-                pipeClient.Write(commandBytes, 0, commandBytes.Length);
-
-                // 读取响应
-                byte[] buffer = new byte[4096];
-                int bytesRead = pipeClient.Read(buffer, 0, buffer.Length);
-
-                // 将字节数组转换为字符串
-                string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                if (!sendContent.Contains("duration") && !sendContent.Contains("time-pos"))
-                {
-                    _logger.Info(sendContent + "mpv response: " + response);
-                    Debug.WriteLine(sendContent + "mpv response: " + response);
-                }
-                //查找id匹配的结果
-                var jobj = JsonSerializer.Deserialize<IpcPayload>(response);
-                if (jobj?.RequestId == id)
-                {
-                    return jobj.Data;
-                }
-            }
-            else
-            {
-                _logger.Warn("Failed to connect to mpv.");
-            }
-        }
-        catch (Exception ex)
+        if (res?.RequestId == id)
         {
-            _logger.Warn(ex, "Failed to get mpv info.");
+            return res.Data;
         }
+
         return null;
     }
 
