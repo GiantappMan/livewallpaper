@@ -101,7 +101,14 @@ public class ApiObject
     public string GetConfig(string key)
     {
         key = $"Client.Apps.Configs.{key}";
-        var config = Configer.Get<object>(key) ?? "";
+        var config = Configer.Get<object>(key);
+        if (config == null)
+        {
+            //反射key对应的类型，创建一个新的实例
+            var type = Type.GetType(key);
+            if (type != null)
+                config = Activator.CreateInstance(type);
+        }
         var json = JsonSerializer.Serialize(config, WallpaperApi.JsonOptitons);
         if (CorrectConfigEvent != null)
         {

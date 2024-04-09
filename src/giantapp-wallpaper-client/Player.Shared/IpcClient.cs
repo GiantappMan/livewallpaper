@@ -15,7 +15,7 @@ public class IpcClient : IDisposable
 
     public IpcClient(string serverName)
     {
-        this._serverName = serverName;
+        _serverName = serverName;
     }
 
     public void Dispose()
@@ -27,7 +27,7 @@ public class IpcClient : IDisposable
         try
         {
             using NamedPipeClientStream pipeClient = new(_serverName);
-            pipeClient.Connect(); // 连接超时时间
+            pipeClient.Connect(10); // 连接超时时间
 
             if (pipeClient.IsConnected)
             {

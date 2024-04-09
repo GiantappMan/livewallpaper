@@ -2,10 +2,10 @@
 using Player.Shared;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Linq;
 
 namespace Player.Video;
 
@@ -81,19 +81,26 @@ public partial class MainWindow : Window
         try
         {
             var data = JsonSerializer.Deserialize<IpcPayload>(e);
-
-            var res = new IpcPayload
+            string[]? commands = data?.Command.Select(m => m.ToString()).ToArray();
+            if (commands != null && commands.Contains("get_property"))
             {
-                RequestId = data?.RequestId,
-                Data = "5"
-            };
+                if (commands.Contains("duration"))
+                {
+                    var res = new IpcPayload
+                    {
+                        RequestId = data?.RequestId,
+                        Data = media.Position.TotalSeconds.ToString()
+                    };
 
-            if (_ipcServer != null)
-                await _ipcServer.Send(res);
+                    if (_ipcServer != null)
+                        await _ipcServer.Send(res);
+                }
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine(ex.Message);
+            _logger.Error($"IpcServer_ReceivedMessage: {ex}");
         }
     }
 
