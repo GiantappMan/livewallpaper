@@ -1,7 +1,5 @@
 ﻿
 using NLog;
-using System.Linq;
-using WallpaperCore.Libs;
 using WallpaperCore.WallpaperRenders;
 
 namespace WallpaperCore;

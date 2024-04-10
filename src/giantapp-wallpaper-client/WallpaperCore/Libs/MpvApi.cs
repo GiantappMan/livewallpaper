@@ -212,7 +212,7 @@ public class MpvApi : IVideoApi
         var res = SendMessage(IPCServerName, "get_property", "playlist-pos");
         if (res == null)
             return 0;
-        return Convert.ToInt32(res);
+        return Convert.ToInt32(res.ToString());
     }
 
     public void Pause()
@@ -274,7 +274,7 @@ public class MpvApi : IVideoApi
         var res = SendMessage(IPCServerName, "get_property", "percent-pos");
         if (res == null)
             return 0;
-        return Convert.ToDouble(res);
+        return Convert.ToDouble(res.ToString());
     }
 
     //获取播放了多少秒
@@ -283,7 +283,7 @@ public class MpvApi : IVideoApi
         var res = SendMessage(IPCServerName, "get_property", "time-pos");
         if (res == null)
             return 0;
-        return Convert.ToDouble(res);
+        return Convert.ToDouble(res.ToString());
     }
 
     //获取播放总时长
@@ -292,7 +292,7 @@ public class MpvApi : IVideoApi
         var res = SendMessage(IPCServerName, "get_property", "duration");
         if (res == null)
             return 0;
-        return Convert.ToDouble(res);
+        return Convert.ToDouble(res.ToString());
     }
 
     //设置播放进度

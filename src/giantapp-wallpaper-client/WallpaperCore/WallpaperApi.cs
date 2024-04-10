@@ -37,6 +37,7 @@ public static class WallpaperApi
     //};
     public static JsonSerializerOptions JsonOptitons { get; private set; } = new JsonSerializerOptions
     {
+        IncludeFields = true,
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         //Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }

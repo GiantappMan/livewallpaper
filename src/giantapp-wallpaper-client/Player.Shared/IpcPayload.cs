@@ -9,5 +9,5 @@ public class IpcPayload
     [JsonPropertyName("request_id")]
     public string? RequestId { get; set; }
     [JsonPropertyName("data")]
-    public string? Data { get; set; }
+    public object? Data { get; set; }
 }
