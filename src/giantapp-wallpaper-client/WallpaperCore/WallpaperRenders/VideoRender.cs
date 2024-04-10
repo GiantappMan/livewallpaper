@@ -19,7 +19,7 @@ internal class VideoRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        bool useMpv = true;
+        bool useMpv = false;
         if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
         {
             if (useMpv)

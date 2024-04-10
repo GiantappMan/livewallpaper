@@ -80,22 +80,29 @@ public partial class MainWindow : Window
     #region callback
     private IpcPayload IpcServer_ReceivedMessage(IpcPayload payload)
     {
-        _logger.Info($"ReceivedMessage: {payload}");
+        _logger.Info($"ReceivedMessage: {JsonSerializer.Serialize(payload)}");
+        var res = new IpcPayload
+        {
+            RequestId = payload?.RequestId,
+        };
         try
         {
             string[]? commands = payload?.Command.Select(m => m.ToString()).ToArray();
-            if (commands != null && commands.Contains("get_property"))
+            string? command = commands?[0];
+            switch(command)
             {
-                if (commands.Contains("duration"))
-                {
-                    var res = new IpcPayload
+                case "get_property":
+                    string? para = commands?[1];
+                    switch(para)
                     {
-                        RequestId = payload?.RequestId,
-                        Data = media.Position.TotalSeconds.ToString()
-                    };
-
-                    return res;
-                }
+                        case "duration":
+                            res.Data = media.NaturalDuration.TimeSpan.TotalSeconds.ToString();
+                            break;
+                        case "time-pos":
+                            res.Data = media.Position.TotalSeconds.ToString();
+                            break;
+                    }
+                    break;
             }
         }
         catch (Exception ex)
@@ -103,10 +110,7 @@ public partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine(ex.Message);
             _logger.Error($"IpcServer_ReceivedMessage: {ex}");
         }
-        return new IpcPayload()
-        {
-            RequestId = payload.RequestId
-        };
+        return res;
     }
 
     private void Media_MediaEnded(object sender, RoutedEventArgs e)
