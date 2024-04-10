@@ -13,6 +13,7 @@ export default function NavMenuItem(props: Props) {
   return (
     <Link
       prefetch={false}
+      title={props.name}
       href={props.href}
       className={cn([
         props.current ? "bg-secondary" : "text-muted-foreground hover:bg-accent hover:text-primary",
@@ -49,7 +50,7 @@ export default function NavMenuItem(props: Props) {
       </div>
       <span
         className={[
-          "transition-all duration-300",
+          "transition-all duration-300 whitespace-nowrap",
           props.current ? "translate-y-2 opacity-0" : "opacity-100",
         ].join(" ")}
       >

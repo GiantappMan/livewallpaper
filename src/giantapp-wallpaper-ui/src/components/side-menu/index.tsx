@@ -74,7 +74,7 @@ export default function SideMenu({ lang }: { lang: string }) {
 
     return (
         <>
-            <div className="flex w-[68px] overflow-y-auto">
+            <div className="flex w-[68px] overflow-y-auto overflow-x-clip">
                 <div className="flex flex-1 w-full flex-col items-center">
                     <div className="w-full flex-1 space-y-1 px-1">
                         {sidebarTopNavigation.map((item) => (
