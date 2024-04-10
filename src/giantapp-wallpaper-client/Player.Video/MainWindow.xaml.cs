@@ -32,8 +32,11 @@ public partial class MainWindow : Window
         if (ipcServer == null)
             return;
 
-        _ipcServer = new IpcServer(ipcServer);
-        _ipcServer.ReceivedMessage += IpcServer_ReceivedMessage;
+        _ipcServer = new(ipcServer)
+        {
+            //_ipcServer.ReceivedMessage += IpcServer_ReceivedMessage;
+            ReceivedMessageFunc = IpcServer_ReceivedMessage
+        };
         _ipcServer.Start();
 
         media.LoadedBehavior = MediaState.Manual;
@@ -67,33 +70,31 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        if (_ipcServer != null)
-            _ipcServer.ReceivedMessage -= IpcServer_ReceivedMessage;
+        //if (_ipcServer != null)
+        //    _ipcServer.ReceivedMessage -= IpcServer_ReceivedMessage;
         _ipcServer?.Dispose();
         _ipcServer = null;
         base.OnClosed(e);
     }
 
     #region callback
-    private async void IpcServer_ReceivedMessage(object sender, string e)
+    private IpcPayload IpcServer_ReceivedMessage(IpcPayload payload)
     {
-        _logger.Info($"ReceivedMessage: {e}");
+        _logger.Info($"ReceivedMessage: {payload}");
         try
         {
-            var data = JsonSerializer.Deserialize<IpcPayload>(e);
-            string[]? commands = data?.Command.Select(m => m.ToString()).ToArray();
+            string[]? commands = payload?.Command.Select(m => m.ToString()).ToArray();
             if (commands != null && commands.Contains("get_property"))
             {
                 if (commands.Contains("duration"))
                 {
                     var res = new IpcPayload
                     {
-                        RequestId = data?.RequestId,
+                        RequestId = payload?.RequestId,
                         Data = media.Position.TotalSeconds.ToString()
                     };
 
-                    if (_ipcServer != null)
-                        await _ipcServer.Send(res);
+                    return res;
                 }
             }
         }
@@ -102,6 +103,10 @@ public partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine(ex.Message);
             _logger.Error($"IpcServer_ReceivedMessage: {ex}");
         }
+        return new IpcPayload()
+        {
+            RequestId = payload.RequestId
+        };
     }
 
     private void Media_MediaEnded(object sender, RoutedEventArgs e)

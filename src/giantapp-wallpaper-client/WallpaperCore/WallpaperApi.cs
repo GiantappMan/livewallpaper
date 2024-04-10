@@ -551,6 +551,8 @@ public static class WallpaperApi
             foreach (var item in snapshot.Data)
             {
                 var manager = new WallpaperManager(item.SnapshotData);
+                if (item.Wallpaper == null)
+                    continue;
                 var screenIndex = item.Wallpaper.RunningInfo.ScreenIndexes[0];
                 if (screenIndex == Settings.AudioSourceIndex)
                 {

@@ -19,17 +19,19 @@ internal class VideoRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        //测试
-        //_playerApi ??= new VideoPlayerApi();
-        //return;
+        bool useMpv = true;
         if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
         {
-            //_playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
-            _playerApi = new VideoPlayerApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
+            if (useMpv)
+                _playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
+            else
+                _playerApi = new VideoPlayerApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
             _isRestore = true;
         }
-        //_playerApi ??= new MpvApi();
-        _playerApi ??= new VideoPlayerApi();
+        if (useMpv)
+            _playerApi ??= new MpvApi();
+        else
+            _playerApi ??= new VideoPlayerApi();
     }
 
     internal override async Task Play(Wallpaper? wallpaper)

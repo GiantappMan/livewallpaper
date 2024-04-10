@@ -158,8 +158,11 @@ public class MpvApi : IVideoApi
             var res = Process.Start();
             if (!res)
                 return res;
+            //var res = true;
 
             ProcessLaunched = true;
+
+            //Process = Process.GetProcessesByName("LiveWallpaper3_VideoPlayer")[0];
             //异步等待窗口句柄
             await Task.Run(async () =>
             {
