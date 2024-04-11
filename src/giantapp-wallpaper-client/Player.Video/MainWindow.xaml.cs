@@ -43,7 +43,7 @@ public partial class MainWindow : Window
         media.LoadedBehavior = MediaState.Manual;
 
         string panscan = argsParser.Get("panscan") ?? "1.0";
-        media.Stretch = panscan == "1.0" ? Stretch.Fill : Stretch.UniformToFill;
+        media.Stretch = panscan == "1.0" ? Stretch.Fill : Stretch.Uniform;
 
         string windowMinimized = argsParser.Get("window-minimized") ?? "yes";
         if (windowMinimized == "yes")
