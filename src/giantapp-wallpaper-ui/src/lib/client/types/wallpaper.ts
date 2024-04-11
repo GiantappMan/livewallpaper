@@ -108,20 +108,26 @@ export enum Fit {
   Span,
 }
 
+export enum VideoPlayer {
+  MPV_Player,
+  System_Player
+}
+
 export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
   }
-  // exe
-  enableMouseEvent?: boolean = false;
+  // exe||web
+  enableMouseEvent: boolean = true;
   // video
-  hardwareDecoding?: boolean = true;
-  isPanScan?: boolean = false;
+  hardwareDecoding: boolean = true;
+  isPanScan: boolean = true;
+  videoPlayer: VideoPlayer = VideoPlayer.MPV_Player;
   // volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;
   // img
-  fit?: Fit = Fit.Center;
+  fit: Fit = Fit.Center;
   keepWallpaper: boolean = true;
 };
 

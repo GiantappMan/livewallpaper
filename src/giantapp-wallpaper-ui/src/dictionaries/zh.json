@@ -112,7 +112,11 @@
     "volume": "音量",
     "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。",
     "keep_wallpaper": "保留壁纸",
-    "keep_wallpaper_description": "退出软件后，保留图片壁纸"
+    "keep_wallpaper_description": "退出软件后，保留图片壁纸",
+    "video_player": "视频播放器",
+    "video_player_description": "推荐使用Mpv播放器，以支持更多的视频格式。但如果你觉得卡顿可以尝试切换到系统播放器。",
+    "mpv_player": "MPV 播放器",
+    "system_player": "系统播放器"
   },
   "settings": {
     "add_directory": "添加目录",

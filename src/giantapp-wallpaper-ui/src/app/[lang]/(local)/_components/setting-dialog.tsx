@@ -1,4 +1,4 @@
-import { Fit, Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Fit, VideoPlayer, Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
 import {
     Dialog,
     DialogContent,
@@ -30,6 +30,7 @@ const formSchema = z.object({
     enableMouseEvent: z.boolean(),
     hardwareDecoding: z.boolean(),
     isPanScan: z.boolean(),
+    videoPlayer: z.nativeEnum(VideoPlayer),
     volume: z.number().min(0).max(100),
     fit: z.nativeEnum(Fit),
     keepWallpaper: z.boolean()
@@ -40,12 +41,13 @@ export function SettingDialog(props: SettingDialogProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         mode: "onChange",
         defaultValues: {
-            enableMouseEvent: props.wallpaper?.setting.enableMouseEvent ?? true,
-            hardwareDecoding: props.wallpaper?.setting.hardwareDecoding ?? true,
-            isPanScan: props.wallpaper?.setting.isPanScan ?? true,
-            // volume: props.wallpaper?.setting.volume ?? 100,
-            fit: props.wallpaper?.setting.fit ?? Fit.Center,
-            keepWallpaper: props.wallpaper?.setting.keepWallpaper,
+            enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
+            hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
+            isPanScan: props.wallpaper.setting.isPanScan,
+            videoPlayer: props.wallpaper.setting.videoPlayer,
+            // volume: props.wallpaper.setting.volume ?? 100,
+            fit: props.wallpaper.setting.fit,
+            keepWallpaper: props.wallpaper.setting.keepWallpaper,
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -59,6 +61,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
                 hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
                 isPanScan: props.wallpaper.setting.isPanScan,
+                videoPlayer: props.wallpaper.setting.videoPlayer,
                 // volume: props.wallpaper.setting.volume,
                 fit: props.wallpaper.setting.fit,
                 keepWallpaper: props.wallpaper.setting.keepWallpaper,
@@ -74,6 +77,7 @@ export function SettingDialog(props: SettingDialogProps) {
             enableMouseEvent: data.enableMouseEvent,
             hardwareDecoding: data.hardwareDecoding,
             isPanScan: data.isPanScan,
+            videoPlayer: data.videoPlayer,
             // volume: data.volume,
             fit: data.fit,
             keepWallpaper: data.keepWallpaper,
@@ -136,6 +140,36 @@ export function SettingDialog(props: SettingDialogProps) {
                         />
                     </>}
                     {wallpaperType === WallpaperType.Video && <>
+                        <FormField
+                            control={form.control}
+                            name="videoPlayer"
+                            render={({ field }) => (
+                                <FormItem className=" items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <FormLabel>
+                                        {dictionary['local'].video_player}
+                                    </FormLabel>
+                                    <Select onValueChange={(e) => {
+                                        field.onChange(Number(e));
+                                    }} defaultValue={field.value.toString()}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a video player" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {Object.entries(VideoPlayer).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
+                                                <SelectItem key={key.toString()} value={value.toString()}>
+                                                    {dictionary['local'][key.toLowerCase()]}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        {dictionary['local'].video_player_description}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="hardwareDecoding"
