@@ -1,4 +1,5 @@
-﻿using WallpaperCore.Libs;
+﻿using System.Text.Json;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
 
@@ -17,9 +18,21 @@ internal class ImgRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshotObj?.Snapshots.FirstOrDefault(m => m is ImgSnapshot) is ImgSnapshot snapshot)
+        if (snapshotObj?.Snapshots == null)
+            return;
+
+        foreach (var item in snapshotObj.Snapshots)
         {
-            _snapshot = snapshot;
+            if (item is JsonElement jsonElement)
+            {
+                _snapshot = JsonSerializer.Deserialize<ImgSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
+                break;
+            }
+            else if (item is ImgSnapshot snapshot)
+            {
+                _snapshot = snapshot;
+                break;
+            }
         }
     }
 

@@ -167,7 +167,7 @@ public class WallpaperManager
 
     internal void ReApplySetting()
     {
-        _currentRender?.ReApplySetting();
+        _currentRender?.ReApplySetting(Wallpaper);
     }
 
     internal double GetTimePos()

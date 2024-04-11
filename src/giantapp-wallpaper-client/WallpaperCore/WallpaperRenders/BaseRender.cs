@@ -40,7 +40,7 @@ internal abstract class BaseRender
         return Task.CompletedTask;
     }
 
-    internal virtual void ReApplySetting()
+    internal virtual void ReApplySetting(Wallpaper? wallpaper)
     {
     }
 

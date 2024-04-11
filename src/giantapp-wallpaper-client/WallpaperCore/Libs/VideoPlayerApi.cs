@@ -10,16 +10,13 @@ public class VideoPlayerApi : MpvApi
     #endregion
 
     #region constructs
-    static VideoPlayerApi()
+
+    public VideoPlayerApi(string? ipcServerName = null, int? pId = null, string? processName = null) : base(ipcServerName, pId, processName)
     {
         //打算和mpv兼容
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
         PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\VideoPlayer\\LiveWallpaper3_VideoPlayer.exe");
         _logger.Info("PlayerPath: " + PlayerPath);
-    }
-
-    public VideoPlayerApi(string? ipcServerName = null, int? pId = null, string? processName = null) : base(ipcServerName, pId, processName)
-    {
     }
     #endregion
 }

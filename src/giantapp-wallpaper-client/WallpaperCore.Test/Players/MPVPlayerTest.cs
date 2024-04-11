@@ -74,8 +74,7 @@ namespace WallpaperCore.Test.Players
         private MpvApi? GetPlayer(VideoSnapshot? snapshot = null)
         {
             string fullpath = Path.GetFullPath("../../../../../../giantapp-wallpaper-client/Client/Assets/Player/mpv.exe");
-            MpvApi.PlayerPath = fullpath;
-            return new MpvApi(snapshot?.IPCServerName, snapshot?.PId, snapshot?.ProcessName);
+            return new MpvApi(snapshot?.IPCServerName, snapshot?.PId, snapshot?.ProcessName, fullpath);
         }
     }
 }

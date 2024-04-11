@@ -9,7 +9,6 @@ public class Wallpaper
 {
     public const string FullName = "Client.Apps.Configs.Wallpaper";
     public static string[] DefaultWallpaperSaveFolder { get; private set; } = new string[0];
-    public static VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
 
     static Wallpaper()
     {
@@ -20,6 +19,7 @@ public class Wallpaper
     public string[] Directories { get; set; } = new string[0];
     public bool KeepWallpaper { get; set; } = false;
     public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
+    public VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
 
     public string[] EnsureDirectories()
     {

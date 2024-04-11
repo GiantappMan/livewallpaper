@@ -394,7 +394,7 @@ public class ApiObject
     {
         try
         {
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\"");
+            Process.Start("explorer.exe", $"/select,\"{path}\"");
         }
         catch (Exception ex)
         {
@@ -414,6 +414,14 @@ public class ApiObject
             //    //修改了声音，先全部静音
             //    WallpaperApi.SetVolume(0);
             //}
+
+            if (setting.VideoPlayer == VideoPlayer.Default_Player)
+            {
+                ConfigWallpaper config = Configer.Get<ConfigWallpaper>() ?? new();
+                //修改默认值
+                setting.DefaultVideoPlayer = config.DefaultVideoPlayer;
+            }
+
             return WallpaperApi.SetWallpaperSetting(setting, wallpaper);
         }
         return false;

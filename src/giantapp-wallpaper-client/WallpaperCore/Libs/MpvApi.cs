@@ -23,20 +23,19 @@ public class MpvApi : IVideoApi
     public string? IPCServerName { get; private set; }
     public Process? Process { get; private set; }
     public bool ProcessLaunched { get; private set; }
-    public static string PlayerPath { get; set; } = string.Empty;
+    public string PlayerPath { get; set; } = string.Empty;
     public uint Volume { get; set; } = 0;
 
     #endregion
 
     #region constructs
-    static MpvApi()
+
+    public MpvApi(string? ipcServerName = null, int? pId = null, string? processName = null, string? playerPath = null)
     {
         string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-        PlayerPath = Path.Combine(currentFolder, "Assets\\Players\\Mpv\\mpv.exe");
+        PlayerPath = playerPath ?? Path.Combine(currentFolder, "Assets\\Players\\Mpv\\mpv.exe");
         _logger.Info("PlayerPath: " + PlayerPath);
-    }
-    public MpvApi(string? ipcServerName = null, int? pId = null, string? processName = null)
-    {
+
         if (ipcServerName != null)
         {
             IPCServerName = ipcServerName;

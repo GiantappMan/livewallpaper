@@ -1,4 +1,5 @@
 ﻿using NLog;
+using System.Text.Json;
 using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
@@ -13,30 +14,34 @@ public class VideoSnapshot
 internal class VideoRender : BaseRender
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    bool _isRestore;
+    private VideoSnapshot? _snapshot;
+    readonly bool _isRestore;
     IVideoApi? _playerApi;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg, WallpaperType.Playlist };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        bool useMpv = false;
-        if (snapshotObj?.Snapshots.FirstOrDefault(m => m is VideoSnapshot) is VideoSnapshot snapshot)
+        if (snapshotObj?.Snapshots == null)
+            return;
+
+        foreach (var item in snapshotObj.Snapshots)
         {
-            if (useMpv)
-                _playerApi = new MpvApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
-            else
-                _playerApi = new VideoPlayerApi(snapshot.IPCServerName, snapshot.PId, snapshot.ProcessName);
-            _isRestore = true;
+            if (item is JsonElement jsonElement)
+            {
+                _snapshot = JsonSerializer.Deserialize<VideoSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
+                break;
+            }
+            else if (item is VideoSnapshot snapshot)
+            {
+                _snapshot = snapshot;
+                break;
+            }
         }
-        if (useMpv)
-            _playerApi ??= new MpvApi();
-        else
-            _playerApi ??= new VideoPlayerApi();
     }
 
-    internal override void ReApplySetting()
+    internal override void ReApplySetting(Wallpaper? wallpaper)
     {
-        base.ReApplySetting();
+        _ = Play(wallpaper);
     }
 
     internal override async Task Play(Wallpaper? wallpaper)
@@ -46,7 +51,37 @@ internal class VideoRender : BaseRender
         var playMeta = wallpaper?.Meta;
         var playWallpaper = wallpaper;
 
-        if (_playerApi == null || playWallpaper == null || playSetting == null || playMeta == null)
+        if (playWallpaper == null || playSetting == null || playMeta == null)
+            return;
+
+        var videoPlayerType = playSetting.VideoPlayer;
+        if (videoPlayerType == VideoPlayer.Default_Player)
+            videoPlayerType = playSetting.DefaultVideoPlayer;
+        switch (videoPlayerType)
+        {
+            case VideoPlayer.MPV_Player:
+                if (_playerApi?.GetType() != typeof(MpvApi))
+                {
+                    //切换播放器类型了
+                    _playerApi?.Stop();
+                    _playerApi = null;
+                }
+
+                _playerApi ??= new MpvApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
+                break;
+            case VideoPlayer.System_Player:
+                if (_playerApi?.GetType() != typeof(VideoPlayerApi))
+                {
+                    //切换播放器类型了
+                    _playerApi?.Stop();
+                    _playerApi = null;
+                }
+
+                _playerApi ??= new VideoPlayerApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
+                break;
+        }
+
+        if (_playerApi == null)
             return;
 
         bool isPlaylist = playMeta.Type == WallpaperType.Playlist;
