@@ -37,9 +37,9 @@ public class IpcServer : IDisposable
             {
                 _logger.Info($"new NamedPipeServerStream: {_ipcServerName}");
                 _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-                _logger.Info($"WaitForConnectionAsync");
+                //_logger.Info($"WaitForConnectionAsync");
                 await _pipeServer.WaitForConnectionAsync(cancellationToken);
-                _logger.Info($"WaitForConnectionAsync1");
+                //_logger.Info($"WaitForConnectionAsync1");
 
                 while (true)
                 {
@@ -67,15 +67,6 @@ public class IpcServer : IDisposable
                         await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
                         await _pipeServer.FlushAsync();
                     }
-                    //ReceivedMessage?.Invoke(this, message);
-                    //dynamic? tmp = JsonSerializer.Deserialize<ExpandoObject>(message);
-                    //dynamic res = new ExpandoObject();
-                    //res.request_id = tmp?.request_id;
-                    //res.data = "5";
-                    //string json = JsonSerializer.Serialize(res);
-                    //byte[] responseBytes = Encoding.UTF8.GetBytes(json);
-                    //await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
-                    //await _pipeServer.FlushAsync();
                 }
             }
             catch (OperationCanceledException)
@@ -95,7 +86,7 @@ public class IpcServer : IDisposable
                     _pipeServer.Disconnect();
                 _pipeServer?.Dispose();
                 _pipeServer = null;
-                _logger.Info("_pipeServer Disconnnect");
+                //_logger.Info("_pipeServer Disconnnect");
             }
         }
     }
@@ -113,7 +104,7 @@ public class IpcServer : IDisposable
 
     public void Dispose()
     {
-        _logger.Info("IpcServer Dispose");
+        //_logger.Info("IpcServer Dispose");
         _cancellationTokenSource?.Cancel();
         if (_cancellationTokenSource != null)
             Task.WhenAny(_listenerTask, Task.Delay(Timeout.Infinite, _cancellationTokenSource.Token)).Wait();

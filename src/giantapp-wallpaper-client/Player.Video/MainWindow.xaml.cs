@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Player.Video;
 
@@ -48,6 +49,9 @@ public partial class MainWindow : Window
         if (windowMinimized == "yes")
             WindowState = WindowState.Minimized;
 
+        double volume = double.Parse(argsParser.Get("volume") ?? "0") / 100;
+        media.Volume = volume;
+
         //不能隐藏，隐藏后找不到窗口句柄
         //ShowInTaskbar = false;
     }
@@ -88,12 +92,12 @@ public partial class MainWindow : Window
         try
         {
             string[]? commands = payload?.Command.Select(m => m.ToString()).ToArray();
-            string? command = commands?[0];
-            switch(command)
+            string? command = commands?.Length > 0 ? commands[0] : null;
+            string? para = commands?.Length > 1 ? commands[1] : null;
+            switch (command)
             {
                 case "get_property":
-                    string? para = commands?[1];
-                    switch(para)
+                    switch (para)
                     {
                         case "duration":
                             res.Data = media.NaturalDuration.TimeSpan.TotalSeconds.ToString();
@@ -102,6 +106,44 @@ public partial class MainWindow : Window
                             res.Data = media.Position.TotalSeconds.ToString();
                             break;
                     }
+                    break;
+                case "set_property":
+                    switch (para)
+                    {
+                        case "pause":
+                            bool pause = commands?[2] == "True";
+                            if (pause)
+                                media.Pause();
+                            else
+                                media.Play();
+                            break;
+                        case "mute":
+                            media.IsMuted = true;
+                            break;
+                        case "unmute":
+                            media.IsMuted = false;
+                            break;
+                        case "volume":
+                            media.Volume = double.Parse(commands?[2] ?? "0") / 100;
+                            break;
+                        case "percent-pos":
+                            var percent = double.Parse(commands?[2] ?? "0");
+                            media.Position = TimeSpan.FromSeconds(media.NaturalDuration.TimeSpan.TotalSeconds * percent / 100);
+                            break;
+                    }
+                    break;
+                case "stop":
+                    media.Stop();
+                    //刷新桌面
+                    media.Source = null;
+                    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, null, SPIF_UPDATEINIFILE);
+                    Close();
+                    break;
+                case "quit":
+                    Close();
+                    break;
+                case "loadlist":
+                    Show(para);
                     break;
             }
         }
@@ -120,4 +162,9 @@ public partial class MainWindow : Window
     }
     #endregion
 
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    [return: MarshalAs(UnmanagedType.I4)]
+    public static extern Int32 SystemParametersInfo(UInt32 uiAction, UInt32 uiParam, String? pvParam, UInt32 fWinIni);
+    public static UInt32 SPI_SETDESKWALLPAPER = 20;
+    public static UInt32 SPIF_UPDATEINIFILE = 0x1;
 }
