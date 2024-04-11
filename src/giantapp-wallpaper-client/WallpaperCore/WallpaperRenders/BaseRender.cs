@@ -1,4 +1,5 @@
 ﻿
+
 namespace WallpaperCore.WallpaperRenders;
 
 internal abstract class BaseRender
@@ -37,6 +38,10 @@ internal abstract class BaseRender
     internal virtual Task Play(Wallpaper? wallpaper)
     {
         return Task.CompletedTask;
+    }
+
+    internal virtual void ReApplySetting()
+    {
     }
 
     internal virtual void Resume()

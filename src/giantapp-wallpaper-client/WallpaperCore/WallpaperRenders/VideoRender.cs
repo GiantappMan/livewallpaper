@@ -34,6 +34,11 @@ internal class VideoRender : BaseRender
             _playerApi ??= new VideoPlayerApi();
     }
 
+    internal override void ReApplySetting()
+    {
+        base.ReApplySetting();
+    }
+
     internal override async Task Play(Wallpaper? wallpaper)
     {
         //当前播放设置
