@@ -20,13 +20,15 @@ import { ConfigWallpaper, WallpaperCoveredBehavior } from "@/lib/client/types/co
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getGlobal } from "@/i18n-config";
+import { VideoPlayer } from "@/lib/client/types/wallpaper"
 
 const FormSchema = z.object({
     directories: z.array(z.object({
         path: z.string(),
     })),
     // keepWallpaper: z.boolean(),
-    coveredBehavior: z.nativeEnum(WallpaperCoveredBehavior)
+    coveredBehavior: z.nativeEnum(WallpaperCoveredBehavior),
+    defaultVideoPlayer: z.nativeEnum(VideoPlayer),
 })
 
 export default function Page() {
@@ -38,6 +40,7 @@ export default function Page() {
             directories: [{ path: "" }],
             // keepWallpaper: false,
             coveredBehavior: WallpaperCoveredBehavior.Pause,
+            defaultVideoPlayer: VideoPlayer.MPV_Player
         },
     })
     const { control } = form
@@ -60,6 +63,8 @@ export default function Page() {
         form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
         // form.setValue("keepWallpaper", config.data.keepWallpaper);
         form.setValue("coveredBehavior", config.data.coveredBehavior);
+        form.setValue("defaultVideoPlayer", config.data.defaultVideoPlayer);
+
     }, [form]);
 
     useEffect(() => {
@@ -78,7 +83,8 @@ export default function Page() {
         const saveRes = await api.setConfig("Wallpaper", {
             directories,
             // keepWallpaper: data.keepWallpaper,
-            coveredBehavior: data.coveredBehavior
+            coveredBehavior: data.coveredBehavior,
+            defaultVideoPlayer: data.defaultVideoPlayer
         })
         if (saveRes.error) {
             toast.error(dictionary['settings'].failed_to_save);
@@ -174,6 +180,31 @@ export default function Page() {
                                                     <SelectItem value="0">{dictionary['settings'].continue_playback}</SelectItem>
                                                     <SelectItem value="1">{dictionary['settings'].pause_playback}</SelectItem>
                                                     <SelectItem value="2">{dictionary['settings'].stop_playback}</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name="defaultVideoPlayer"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel htmlFor="defaultVideoPlayer">{dictionary['settings'].defaultVideoPlayer}</FormLabel>
+                                            <Select onValueChange={(e) => {
+                                                let tmp: VideoPlayer = parseInt(e);
+                                                field.onChange(tmp);
+                                                form.handleSubmit(onSubmit)();
+                                            }} value={field.value.toString()} >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {/* <SelectItem value="0">{dictionary['local'].default_player}</SelectItem> */}
+                                                    <SelectItem value="1">{dictionary['local'].mpv_player}</SelectItem>
+                                                    <SelectItem value="2">{dictionary['local'].system_player}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>

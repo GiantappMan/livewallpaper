@@ -115,6 +115,7 @@
     "keep_wallpaper_description": "退出软件后，保留图片壁纸",
     "video_player": "视频播放器",
     "video_player_description": "推荐使用Mpv播放器，以支持更多的视频格式。但如果你觉得卡顿可以尝试切换到系统播放器。",
+    "default_player": "使用全局配置",
     "mpv_player": "MPV 播放器",
     "system_player": "系统播放器"
   },
@@ -149,6 +150,7 @@
     "wallpaper": "壁纸",
     "wallpaper_directory": "壁纸读取目录",
     "wallpaper_obscured": "当壁纸被遮挡时",
-    "wallpaper_settings": "壁纸设置"
+    "wallpaper_settings": "壁纸设置",
+    "defaultVideoPlayer": "默认视频播放器"
   }
 }

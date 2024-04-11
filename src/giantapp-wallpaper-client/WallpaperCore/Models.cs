@@ -168,6 +168,7 @@ public class WallpaperRunningInfo : ICloneable
 
 public enum VideoPlayer
 {
+    Default_Player,//全局配置
     MPV_Player,
     System_Player
 }

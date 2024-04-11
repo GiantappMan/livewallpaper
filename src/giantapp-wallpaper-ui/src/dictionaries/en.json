@@ -115,6 +115,7 @@
     "keep_wallpaper_description": "Keep the wallpaper after exiting the software",
     "video_player": "Video player",
     "video_player_description": "It is recommended to use Mpv player to support more video formats. But if you feel stuck, you can try switching to the system player.",
+    "default_player": "Use global configuration",
     "mpv_player": "MPV player",
     "system_player": "System Player"
   },
@@ -149,6 +150,7 @@
     "wallpaper": "Wallpaper",
     "wallpaper_directory": "Wallpaper Directory",
     "wallpaper_obscured": "When Wallpaper is Obscured",
-    "wallpaper_settings": "Wallpaper Settings"
+    "wallpaper_settings": "Wallpaper Settings",
+    "defaultVideoPlayer": "Default Video Player"
   }
 }

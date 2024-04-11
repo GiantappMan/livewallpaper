@@ -168,8 +168,6 @@ public class WallpaperManager
     internal void ReApplySetting()
     {
         _currentRender?.ReApplySetting();
-        ////mpv 重新play就行了
-        //_ = Play();
     }
 
     internal double GetTimePos()

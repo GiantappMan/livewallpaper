@@ -109,6 +109,7 @@ export enum Fit {
 }
 
 export enum VideoPlayer {
+  Default_Player,
   MPV_Player,
   System_Player
 }
@@ -122,7 +123,7 @@ export class WallpaperSetting {
   // video
   hardwareDecoding: boolean = true;
   isPanScan: boolean = true;
-  videoPlayer: VideoPlayer = VideoPlayer.MPV_Player;
+  videoPlayer: VideoPlayer = VideoPlayer.Default_Player;
   // volume: number = 0;
   // playlist
   mode?: PlayMode = PlayMode.Order;

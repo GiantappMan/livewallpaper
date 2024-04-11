@@ -1,4 +1,5 @@
 import { i18n, Locale } from "@/i18n-config";
+import { VideoPlayer } from "./wallpaper";
 
 export type ConfigAppearance = {
   theme: string;
@@ -24,4 +25,5 @@ export type ConfigWallpaper = {
   directories: string[];
   // keepWallpaper: boolean;
   coveredBehavior: WallpaperCoveredBehavior;
+  defaultVideoPlayer: VideoPlayer;
 };
