@@ -56,7 +56,7 @@ public partial class MainWindow : Window
         //ShowInTaskbar = false;
     }
 
-    internal void Show(string? playlistPath)
+    internal async void Show(string? playlistPath)
     {
         if (playlistPath != null)
         {
@@ -69,6 +69,9 @@ public partial class MainWindow : Window
 
         media.Source = new Uri(_playlist[_playIndex.Value]);
         Show();
+
+        //尝试修复花屏
+        await Task.Delay(300);
         media.Play();
     }
 
