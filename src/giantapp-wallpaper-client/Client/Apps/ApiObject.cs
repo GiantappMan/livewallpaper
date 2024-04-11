@@ -156,6 +156,10 @@ public class ApiObject
         wallpaper.RunningInfo.IsPaused = false;
 
         var config = Configer.Get<ConfigWallpaper>() ?? new();
+        if (wallpaper.Setting.VideoPlayer == VideoPlayer.Default_Player)
+        {
+            wallpaper.Setting.VideoPlayer = config.DefaultVideoPlayer;
+        }
 
         //把playlist里面的url转换成本地路径
         wallpaper.CoverUrl = AppService.ConvertUrlToPath(config, wallpaper.CoverPath);
