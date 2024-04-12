@@ -46,6 +46,8 @@ public class IpcClient : IDisposable
                     _logger.Info(sendContent + "mpv response: " + response);
                     Debug.WriteLine(sendContent + "mpv response: " + response);
                 }
+                if (string.IsNullOrEmpty(response))
+                    return null;
                 var res = JsonSerializer.Deserialize<IpcPayload>(response);
                 return res;
             }

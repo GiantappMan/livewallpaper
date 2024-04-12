@@ -27,7 +27,6 @@ public partial class MainWindow : Window
 
     internal void Initlize(ArgsParser argsParser)
     {
-
         //MessageBox.Show("test");
         string? ipcServer = argsParser.Get("input-ipc-server");
         if (ipcServer == null)
@@ -46,8 +45,8 @@ public partial class MainWindow : Window
         media.Stretch = panscan == "1.0" ? Stretch.Fill : Stretch.Uniform;
 
         string windowMinimized = argsParser.Get("window-minimized") ?? "yes";
-        if (windowMinimized == "yes")
-            WindowState = WindowState.Minimized;
+        //if (windowMinimized == "yes")
+        //    WindowState = WindowState.Minimized;
 
         double volume = double.Parse(argsParser.Get("volume") ?? "0") / 100;
         media.Volume = volume;
