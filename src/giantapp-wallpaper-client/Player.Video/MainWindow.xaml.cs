@@ -22,6 +22,10 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        Left = -10000;
+        Top = -1000;
+        WindowStyle = WindowStyle.None;
+        Background = Brushes.Transparent;
         InitializeComponent();
     }
 

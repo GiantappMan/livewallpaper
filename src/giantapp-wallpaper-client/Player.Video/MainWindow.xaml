@@ -5,10 +5,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="GiantappVideoPlayer"
-    Width="800"
-    Height="450"
-    Background="Transparent"
-    WindowStyle="None"
     mc:Ignorable="d">
     <!--
         Background="Gray"
