@@ -1,10 +1,13 @@
-﻿using Windows.Win32;
+﻿using NLog;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 
 namespace WallpaperCore;
 
 public static class DesktopManager
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
     public static unsafe void Refresh()
     {
         //刷新桌面，清楚残影
@@ -108,7 +111,20 @@ public static class DesktopManager
         //先放到屏幕外，防止产生残影
         _ = PInvoke.SetWindowPos(hwnd, HWND.Null, -10000, 0, 0, 0, Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
 
-        PInvoke.SetParent(hwnd, worker);
+        var res = PInvoke.SetParent(hwnd, worker);
+        if (res == HWND.Null)
+        {
+            //获取错误
+            //var test = PInvoke.GetLastError();
+        }
+
+        ////检查parent是否生效
+        //var parent = PInvoke.GetParent(hwnd);
+        //if (parent != worker)
+        //{
+        //    _logger.Error($"SendHandleToDesktopBottom {handler} worker:{worker} parent:{parent}");
+        //    return false;
+        //}
 
         //转换相对worker坐标
         Span<Point> points = new Point[2];
@@ -119,6 +135,8 @@ public static class DesktopManager
         //重新设置大小
         var tmpBounds = new Rectangle(points[0].X, points[0].Y, points[1].X - points[0].X, points[1].Y - points[0].Y);
         _ = PInvoke.SetWindowPos(hwnd, HWND.Null, tmpBounds.X, tmpBounds.Y, tmpBounds.Width, tmpBounds.Height, Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
+
+        _logger.Info($"SendHandleToDesktopBottom {handler} worker:{worker} SetParentRes:{res} bounds:{bounds} tmpBounds:{tmpBounds}");
         return true;
     }
 

@@ -88,6 +88,11 @@ public partial class MainWindow : Window
     }
 
     #region callback
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        ShowInTaskbar = false;
+    }
+
     private IpcPayload IpcServer_ReceivedMessage(IpcPayload payload)
     {
         _logger.Info($"ReceivedMessage: {JsonSerializer.Serialize(payload)}");
@@ -173,4 +178,5 @@ public partial class MainWindow : Window
     public static extern Int32 SystemParametersInfo(UInt32 uiAction, UInt32 uiParam, String? pvParam, UInt32 fWinIni);
     public static UInt32 SPI_SETDESKWALLPAPER = 20;
     public static UInt32 SPIF_UPDATEINIFILE = 0x1;
+
 }
