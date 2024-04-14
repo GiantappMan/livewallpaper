@@ -12,6 +12,7 @@
     <OutputPath>..\WallpaperCore\Assets\Players\VideoPlayer</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ApplicationIcon>Img\logo.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <Import Project="..\Player.Shared\Player.Shared.projitems" Label="Shared" />
