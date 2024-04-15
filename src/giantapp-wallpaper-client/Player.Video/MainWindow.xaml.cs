@@ -90,7 +90,8 @@ public partial class MainWindow : Window
     #region callback
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        ShowInTaskbar = false;
+        //ShowInTaskbar = false;
+        //ShowInTaskbar = true;
     }
 
     private IpcPayload IpcServer_ReceivedMessage(IpcPayload payload)
