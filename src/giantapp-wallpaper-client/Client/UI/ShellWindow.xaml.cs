@@ -515,8 +515,25 @@ public partial class ShellWindow : Window
 
     private void BtnCopyAddress_Click(object sender, RoutedEventArgs e)
     {
-        BtnCopyAddress.Content = LanService.Get("copied");
-        Clipboard.SetText(tbAddress.Text);
+        try
+        {
+            BtnCopyAddress.Content = LanService.Get("copied");
+            if (UWPHelper.IsRunningAsUwp())
+            {
+                var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                dataPackage.SetText(tbAddress.Text);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+            }
+            else
+            {
+                System.Windows.Forms.Clipboard.SetText(tbAddress.Text);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+            MessageBox.Show(ex.Message);
+        }
     }
     #endregion
 }
