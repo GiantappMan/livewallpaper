@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     List<string>? _playlist;
     int? _playIndex;
     IpcServer? _ipcServer;
+    //bool _isPaused;
 
     public MainWindow()
     {
@@ -59,7 +60,7 @@ public partial class MainWindow : Window
         //ShowInTaskbar = false;
     }
 
-    internal async void Show(string? playlistPath)
+    internal void Show(string? playlistPath)
     {
         if (playlistPath != null)
         {
@@ -73,8 +74,8 @@ public partial class MainWindow : Window
         media.Source = new Uri(_playlist[_playIndex.Value]);
         Show();
 
-        //尝试修复花屏
-        await Task.Delay(300);
+        ////尝试修复花屏
+        //await Task.Delay(300);
         media.Play();
     }
 

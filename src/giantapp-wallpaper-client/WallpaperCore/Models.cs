@@ -201,7 +201,7 @@ public class WallpaperSetting : ICloneable
     //public int Volume { get; set; } = 0;
 
     //播放器类型，覆盖默认配置
-    public VideoPlayer VideoPlayer { get; set; } = VideoPlayer.MPV_Player;
+    public VideoPlayer VideoPlayer { get; set; } = VideoPlayer.Default_Player;
 
     //界面不做展示，仅当VideoPlayer为默认时，读取数据并保存
     public VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
