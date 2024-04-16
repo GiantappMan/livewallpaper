@@ -143,6 +143,9 @@ public partial class MainWindow : Window
                             var percent = double.Parse(commands?[2] ?? "0");
                             media.Position = TimeSpan.FromSeconds(media.NaturalDuration.TimeSpan.TotalSeconds * percent / 100);
                             break;
+                        case "panscan":
+                            media.Stretch = para == "1.0" ? Stretch.Fill : Stretch.Uniform;
+                            break;
                     }
                     break;
                 case "stop":
