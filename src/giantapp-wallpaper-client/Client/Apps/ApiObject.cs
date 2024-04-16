@@ -249,7 +249,9 @@ public class ApiObject
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok)
         {
-            WallpaperApi.SetVolume(uint.Parse(volume), screenIndex);
+            WallpaperApi.Settings.AudioSourceIndex = screenIndex;
+            WallpaperApi.Settings.Volume = uint.Parse(volume);
+            WallpaperApi.ApplySetting();
             AppService.SaveSnapshot();
         }
     }

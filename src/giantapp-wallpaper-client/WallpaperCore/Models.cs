@@ -520,8 +520,8 @@ public enum WallpaperCoveredBehavior
 public class ApiSettings : ICloneable
 {
     //小于0就是禁用
-    public int AudioSourceIndex { get; internal set; }
-    public uint Volume { get; internal set; }
+    public int AudioSourceIndex { get; set; }
+    public uint Volume { get; set; }
     public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
 
     public object Clone()

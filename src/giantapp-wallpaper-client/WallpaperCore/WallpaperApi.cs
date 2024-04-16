@@ -301,16 +301,13 @@ public static class WallpaperApi
     }
 
     //设置音量
-    public static void SetVolume(uint volume, int? audioSourceScreenIndex = null)
+    public static void ApplySetting()
     {
-        Settings.AudioSourceIndex = audioSourceScreenIndex ?? 0;
-        Settings.Volume = volume;
-
         var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
         foreach (var item in screenIndexs)
         {
             var manger = GetRunningManager((uint)item);
-            manger.SetVolume(item == audioSourceScreenIndex ? volume : 0);
+            manger.SetVolume(item == Settings.AudioSourceIndex ? Settings.Volume : 0);
             //var currentWallpaper = manger.GetRunningWallpaper();
             ////播放列表的当前壁纸
             //if (currentWallpaper != null)
@@ -548,7 +545,7 @@ public static class WallpaperApi
 
         try
         {
-            Settings = snapshot.ApiSettings;
+            Settings = snapshot.ApiSettings;         
             foreach (var item in snapshot.Data)
             {
                 var manager = new WallpaperManager(item.SnapshotData);
@@ -563,6 +560,7 @@ public static class WallpaperApi
                 item.Wallpaper.Meta.EnsureId();
                 await ShowWallpaper(item.Wallpaper, manager);
             }
+            ApplySetting();
         }
         catch (Exception ex)
         {
