@@ -66,6 +66,9 @@ public partial class ShellWindow : Window
     /// </summary>
     public static string[] Origins { get; set; } = new string[0];
 
+    //按Esc关闭窗口
+    public bool CloseByEsc { get; set; } = false;
+
     #endregion
 
     public ShellWindow(bool showAddress, string? configKey = null)
@@ -450,7 +453,10 @@ public partial class ShellWindow : Window
     {
         e.Handled = true;
 
-        var window = new ShellWindow(true, "InfoWindow");
+        var window = new ShellWindow(true, "InfoWindow")
+        {
+            CloseByEsc = true
+        };
         window.webview2.Visibility = Visibility.Visible;
         _ = window.ShowUrl(e.Uri);
     }
@@ -507,7 +513,7 @@ public partial class ShellWindow : Window
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        if (CloseByEsc && e.Key == Key.Escape)
         {
             Close();
         }
