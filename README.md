@@ -14,8 +14,10 @@
 - 新版社区开发中，托管在serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)  
 
 ## 截图  
+![image](https://github.com/GiantappMan/livewallpaper/assets/80653/671d275a-372a-496f-892d-8e0053edff4c)
 
-![LiveWallpaper3_bDZCtYcXuN](https://github.com/GiantappMan/livewallpaper/assets/80653/85829a3b-9002-4d73-9474-5d22e3effbee) 
+![image](https://github.com/GiantappMan/livewallpaper/assets/80653/ff184b2b-ea4f-4215-aef9-bb3eb7a70de1)
+
 
 ## [愿景](./docs/0.愿景.md)
 
