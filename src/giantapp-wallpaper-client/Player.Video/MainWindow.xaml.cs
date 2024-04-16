@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Player.Video;
@@ -180,8 +179,8 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     [return: MarshalAs(UnmanagedType.I4)]
-    public static extern Int32 SystemParametersInfo(UInt32 uiAction, UInt32 uiParam, String? pvParam, UInt32 fWinIni);
-    public static UInt32 SPI_SETDESKWALLPAPER = 20;
-    public static UInt32 SPIF_UPDATEINIFILE = 0x1;
+    public static extern int SystemParametersInfo(uint uiAction, uint uiParam, string? pvParam, uint fWinIni);
+    public static uint SPI_SETDESKWALLPAPER = 20;
+    public static uint SPIF_UPDATEINIFILE = 0x1;
 
 }

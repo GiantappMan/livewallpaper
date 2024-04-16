@@ -10,5 +10,5 @@
     Width="800"
     Height="450"
     mc:Ignorable="d">
-    <Wpf:WebView2 />
+    <Wpf:WebView2 x:Name="webview2" />
 </Window>
