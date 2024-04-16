@@ -117,7 +117,15 @@
     "video_player_description": "It is recommended to use Mpv player to support more video formats. But if you feel stuck, you can try switching to the system player.",
     "default_player": "Use global configuration",
     "mpv_player": "MPV player",
-    "system_player": "System Player"
+    "system_player": "System Player",
+    "wallpaper_type": "Wallpaper type",
+    "wallpaper_type_auto_detect": "Auto detect",
+    "wallpaper_type_img": "Image",
+    "wallpaper_type_animated_img": "Animated Image",
+    "wallpaper_type_video": "Video",
+    "wallpaper_type_web": "Web",
+    "wallpaper_type_exe": "Executable file",
+    "wallpaper_type_playlist": "Playlist"
   },
   "settings": {
     "add_directory": "Add Directory",

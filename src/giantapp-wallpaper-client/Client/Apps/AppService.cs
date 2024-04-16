@@ -1,4 +1,4 @@
-﻿//#define DEBUG_LOCAL
+﻿#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;

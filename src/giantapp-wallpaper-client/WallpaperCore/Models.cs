@@ -333,6 +333,9 @@ public class Wallpaper : ICloneable
 
             //设置type
             string extension = Path.GetExtension(FileName);
+            if (Meta.Type != WallpaperType.NotSupported)
+                //手动设置过的
+                return;
             Meta.Type = ResolveType(extension);
         }
         catch (Exception ex)

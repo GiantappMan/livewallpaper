@@ -117,7 +117,15 @@
     "video_player_description": "推荐使用Mpv播放器，以支持更多的视频格式。但如果你觉得卡顿可以尝试切换到系统播放器。",
     "default_player": "使用全局配置",
     "mpv_player": "MPV 播放器",
-    "system_player": "系统播放器"
+    "system_player": "系统播放器",
+    "wallpaper_type": "壁纸类型",
+    "wallpaper_type_auto_detect": "自动检测",
+    "wallpaper_type_img": "图片",
+    "wallpaper_type_animated_img": "动图",
+    "wallpaper_type_video": "视频",
+    "wallpaper_type_web": "网页",
+    "wallpaper_type_exe": "应用",
+    "wallpaper_type_playlist": "列表"
   },
   "settings": {
     "add_directory": "添加目录",

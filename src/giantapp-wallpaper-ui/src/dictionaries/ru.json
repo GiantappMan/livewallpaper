@@ -117,7 +117,15 @@
     "video_player_description": "Для поддержки большего количества видеоформатов рекомендуется использовать Mpv-плеер. Но если вы чувствуете, что застряли, вы можете попробовать переключиться на системный проигрыватель.",
     "default_player": "Использовать глобальную конфигурацию",
     "mpv_player": "MPV-плеер",
-    "system_player": "Системный проигрыватель"
+    "system_player": "Системный проигрыватель",
+    "wallpaper_type": "Тип обоев",
+    "wallpaper_type_auto_detect": "Автоопределение",
+    "wallpaper_type_img": "Изображение",
+    "wallpaper_type_animated_img": "Анимированное изображение",
+    "wallpaper_type_video": "Видео",
+    "wallpaper_type_web": "Веб-страница",
+    "wallpaper_type_exe": "Исполняемый файл",
+    "wallpaper_type_playlist": "Плейлист"
   },
   "settings": {
     "add_directory": "Добавить папку",

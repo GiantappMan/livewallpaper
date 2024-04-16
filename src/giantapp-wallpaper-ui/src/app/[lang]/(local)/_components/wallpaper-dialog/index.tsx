@@ -18,13 +18,13 @@ import { toast } from "sonner"
 import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Wallpaper, WallpaperMeta, WallpaperType } from "@/lib/client/types/wallpaper"
 import processFile from "./process-file"
-import { Switch } from "@/components/ui/switch"
 import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getGlobal } from '@/i18n-config';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 function getBase64FromBlob(blob: Blob): Promise<string> {
@@ -143,12 +143,12 @@ interface WallpaperDialogProps {
 
 let defaultValues: {
     title: string,
-    isPlaylist: boolean,
+    wallpaperType: WallpaperType,
     file: File | undefined,
     wallpapers: Wallpaper[]
 } = {
     title: "",
-    isPlaylist: false,
+    wallpaperType: WallpaperType.NotSupported,
     file: undefined,
     wallpapers: [],
 }
@@ -159,13 +159,12 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         title: z.string().refine(value => value !== '', {
             message: dictionary['local'].title_cannot_be_empty,
         }),
-        isPlaylist: z.boolean().optional(),
+        wallpaperType: z.nativeEnum(WallpaperType),
         file: z.instanceof(File, {
             message: dictionary['local'].upload_failed,
         }).optional(),
         wallpapers: z.array(z.any()).optional(),
     });
-
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -175,8 +174,8 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
     const [progress, setProgress] = useState(0);
     const [importing, setImporting] = useState(false);
     const importingFile = form.watch("file");
-    const isPlaylist = form.watch("isPlaylist");
     const wallpapers = form.watch("wallpapers");
+    const isPlaylist = form.watch("wallpaperType") === WallpaperType.Playlist;
     const [importedFile, setImportedFile] = useState<{
         name: string,
         url: string,
@@ -213,7 +212,7 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
             defaultValues.wallpapers = props.wallpaper?.meta.wallpapers || [];
             defaultValues.title = props.wallpaper?.meta.title || "";
-            defaultValues.isPlaylist = isPlaylist;
+            defaultValues.wallpaperType = props.wallpaper?.meta.type || WallpaperType.NotSupported;
 
             form.reset(defaultValues);
         }
@@ -280,6 +279,27 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         }
     }, [uploadFile, importingFile]);
 
+    const submitToServer = useCallback(async (wallpaper: Wallpaper) => {
+        if (props.wallpaper?.meta.id) {
+            var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
+            if (!res.data)
+                toast.warning(dictionary['local'].update_failed_format_not_supported);
+            else {
+                toast.success(dictionary['local'].update_successful);
+                props.updateSuccess?.(wallpaper);
+            }
+        }
+        else {
+            var res = await api.createWallpaperNew(wallpaper);
+            if (!res.data)
+                toast.warning(dictionary['local'].create_failed_format_not_supported);
+            else {
+                toast.success(dictionary['local'].create_successful);
+                props.createSuccess?.();
+            }
+        }
+    }, [dictionary, props]);
+
     const submitWallpaper = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (uploading)
             return;
@@ -334,30 +354,32 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
         });
 
         wallpaper.meta.title = data.title;
-        wallpaper.meta.type = WallpaperType.Video;//todo 更细节的判断
+        // wallpaper.meta.type = WallpaperType.Video;//todo 更细节的判断
+        wallpaper.meta.type = data.wallpaperType;
         wallpaper.coverUrl = coverUrl || "";
         wallpaper.fileUrl = importedFile.url;
 
-        if (props.wallpaper) {
-            var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
-            if (!res.data)
-                toast.warning(dictionary['local'].update_failed_format_not_supported);
-            else {
-                toast.success(dictionary['local'].update_successful);
-                props.updateSuccess?.(wallpaper);
-            }
-        }
-        else {
-            var res = await api.createWallpaperNew(wallpaper);
-            if (!res.data)
-                toast.warning(dictionary['local'].create_failed_format_not_supported);
-            else {
-                toast.success(dictionary['local'].create_successful);
-                props.createSuccess?.();
-            }
-        }
+        await submitToServer(wallpaper);
+        // if (props.wallpaper?.meta.id) {
+        //     var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
+        //     if (!res.data)
+        //         toast.warning(dictionary['local'].update_failed_format_not_supported);
+        //     else {
+        //         toast.success(dictionary['local'].update_successful);
+        //         props.updateSuccess?.(wallpaper);
+        //     }
+        // }
+        // else {
+        //     var res = await api.createWallpaperNew(wallpaper);
+        //     if (!res.data)
+        //         toast.warning(dictionary['local'].create_failed_format_not_supported);
+        //     else {
+        //         toast.success(dictionary['local'].create_successful);
+        //         props.createSuccess?.();
+        //     }
+        // }
         setUploading(false);
-    }, [dictionary, importedFile, importing, props, uploading]);
+    }, [dictionary, importedFile, importing, props.wallpaper, submitToServer, uploading]);
 
     const submitPlaylist = useCallback(async (data: z.infer<typeof formSchema>) => {
         if (!data.wallpapers?.length) {
@@ -382,33 +404,34 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
 
         wallpaper.meta.title = data.title;
         wallpaper.meta.wallpapers = data.wallpapers;
-        wallpaper.meta.type = WallpaperType.Playlist;
+        // wallpaper.meta.type = WallpaperType.Playlist;
+        wallpaper.meta.type = data.wallpaperType;
         wallpaper.coverUrl = coverUrl || "";
 
-        if (props.wallpaper?.meta.id) {
-            var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
-            if (!res.data)
-                toast.warning(dictionary['local'].update_failed_format_not_supported);
-            else {
-                toast.success(dictionary['local'].update_successful);
-                props.updateSuccess?.(wallpaper);
-            }
-        }
-        else {
-            // var res = await api.createWallpaper(data.title, coverUrl || "", importedFile.url);
-            var res = await api.createWallpaperNew(wallpaper);
-            if (!res.data)
-                toast.warning(dictionary['local'].create_failed_format_not_supported);
-            else {
-                toast.success(dictionary['local'].create_successful);
-                props.createSuccess?.();
-            }
-        }
+        await submitToServer(wallpaper);
+        // if (props.wallpaper?.meta.id) {
+        //     var res = await api.updateWallpaperNew(wallpaper, props.wallpaper.fileUrl || "");
+        //     if (!res.data)
+        //         toast.warning(dictionary['local'].update_failed_format_not_supported);
+        //     else {
+        //         toast.success(dictionary['local'].update_successful);
+        //         props.updateSuccess?.(wallpaper);
+        //     }
+        // }
+        // else {
+        //     var res = await api.createWallpaperNew(wallpaper);
+        //     if (!res.data)
+        //         toast.warning(dictionary['local'].create_failed_format_not_supported);
+        //     else {
+        //         toast.success(dictionary['local'].create_successful);
+        //         props.createSuccess?.();
+        //     }
+        // }
         setUploading(false);
-    }, [dictionary, props]);
+    }, [dictionary, props.wallpaper, submitToServer]);
 
     const onSubmit = useCallback((data: z.infer<typeof formSchema>) => {
-        if (data.isPlaylist) {
+        if (data.wallpaperType === WallpaperType.Playlist) {
             return submitPlaylist(data);
         }
         else {
@@ -456,23 +479,31 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                         </FormItem>
                                     )}
                                 />
-                                {/* 是否是播放列表 */}
+                                {/* 壁纸类型 */}
                                 <FormField
                                     control={form.control}
-                                    name="isPlaylist"
+                                    name="wallpaperType"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormControl>
-                                                <label className="flex items-center space-x-2">
-                                                    <Switch
-                                                        disabled={uploading || importing}
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                    />
-                                                    <span>{dictionary['local'].play_list}</span>
-                                                </label>
-                                            </FormControl>
-                                            <FormMessage />
+                                            <Select onValueChange={(e) => {
+                                                let tmp: WallpaperType = parseInt(e);
+                                                field.onChange(tmp);
+                                            }} value={field.value.toString()} >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="0">{dictionary['local'].wallpaper_type_auto_detect}</SelectItem>
+                                                    <SelectItem value="1">{dictionary['local'].wallpaper_type_img}</SelectItem>
+                                                    <SelectItem value="2">{dictionary['local'].wallpaper_type_animated_img}</SelectItem>
+                                                    <SelectItem value="3">{dictionary['local'].wallpaper_type_video}</SelectItem>
+                                                    <SelectItem value="4">{dictionary['local'].wallpaper_type_web}</SelectItem>
+                                                    {/* <SelectItem value="5">{dictionary['local'].wallpaper_type_exe}</SelectItem> */}
+                                                    <SelectItem value="6">{dictionary['local'].wallpaper_type_playlist}</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </FormItem>
                                     )}
                                 />

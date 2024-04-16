@@ -57,29 +57,41 @@ internal class VideoRender : BaseRender
         var videoPlayerType = playSetting.VideoPlayer;
         if (videoPlayerType == VideoPlayer.Default_Player)
             videoPlayerType = playSetting.DefaultVideoPlayer;
-        switch (videoPlayerType)
+
+        if (playMeta.Type == WallpaperType.AnimatedImg || playMeta.Type == WallpaperType.Playlist)
         {
-            case VideoPlayer.MPV_Player:
-                if (_playerApi?.GetType() != typeof(MpvApi))
-                {
-                    //切换播放器类型了
-                    _playerApi?.Stop();
-                    _playerApi = null;
-                }
-
-                _playerApi ??= new MpvApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
-                break;
-            case VideoPlayer.System_Player:
-                if (_playerApi?.GetType() != typeof(VideoPlayerApi))
-                {
-                    //切换播放器类型了
-                    _playerApi?.Stop();
-                    _playerApi = null;
-                }
-
-                _playerApi ??= new VideoPlayerApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
-                break;
+            //动图和播放列表（暂时）用mpv支持
+            if (_playerApi?.GetType() != typeof(MpvApi))
+            {
+                //切换播放器类型了
+                _playerApi?.Stop();                
+                _playerApi = new MpvApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
+            }
         }
+        else
+            switch (videoPlayerType)
+            {
+                case VideoPlayer.MPV_Player:
+                    if (_playerApi?.GetType() != typeof(MpvApi))
+                    {
+                        //切换播放器类型了
+                        _playerApi?.Stop();
+                        _playerApi = null;
+                    }
+
+                    _playerApi ??= new MpvApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
+                    break;
+                case VideoPlayer.System_Player:
+                    if (_playerApi?.GetType() != typeof(VideoPlayerApi))
+                    {
+                        //切换播放器类型了
+                        _playerApi?.Stop();
+                        _playerApi = null;
+                    }
+
+                    _playerApi ??= new VideoPlayerApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
+                    break;
+            }
 
         if (_playerApi == null)
             return;
