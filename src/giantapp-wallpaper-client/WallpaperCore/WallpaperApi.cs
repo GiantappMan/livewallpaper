@@ -152,6 +152,10 @@ public static class WallpaperApi
                 continue;
             manager.Wallpaper = tmp;
             await manager.Play();
+
+            //设置音量，因为音量是全局控制
+            var volume = screenIndex == Settings.AudioSourceIndex ? Settings.Volume : 0;
+            manager.SetVolume(volume);
         }
 
         WindowStateChecker.Instance.Start();
@@ -307,7 +311,8 @@ public static class WallpaperApi
         foreach (var item in screenIndexs)
         {
             var manger = GetRunningManager((uint)item);
-            manger.SetVolume(item == Settings.AudioSourceIndex ? Settings.Volume : 0);
+            var volume = item == Settings.AudioSourceIndex ? Settings.Volume : 0;
+            manger.SetVolume(volume);
             //var currentWallpaper = manger.GetRunningWallpaper();
             ////播放列表的当前壁纸
             //if (currentWallpaper != null)
@@ -545,17 +550,15 @@ public static class WallpaperApi
 
         try
         {
-            Settings = snapshot.ApiSettings;         
+            Settings = snapshot.ApiSettings;
             foreach (var item in snapshot.Data)
             {
                 var manager = new WallpaperManager(item.SnapshotData);
                 if (item.Wallpaper == null)
                     continue;
                 var screenIndex = item.Wallpaper.RunningInfo.ScreenIndexes[0];
-                if (screenIndex == Settings.AudioSourceIndex)
-                {
-                    manager.SetVolume(Settings.Volume);
-                }
+                var volume = screenIndex == Settings.AudioSourceIndex ? Settings.Volume : 0;
+                manager.SetVolume(volume);
 
                 item.Wallpaper.Meta.EnsureId();
                 await ShowWallpaper(item.Wallpaper, manager);
