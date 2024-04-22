@@ -128,7 +128,7 @@ internal class VideoRender : BaseRender
         {
             await _playerApi.LaunchAsync(playlistPath);
             var bounds = WallpaperApi.GetScreen(screenIndex)?.Bounds;
-            DesktopManager.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
+            DeskTopHelper.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
         }
         else
         {

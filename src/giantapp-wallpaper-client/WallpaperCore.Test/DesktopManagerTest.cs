@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore.Test;
 
@@ -19,7 +20,7 @@ public class DesktopManagerTest
         Process.Start("explorer");
         Thread.Sleep(3000);
 
-        var res = DesktopManager.GetWorkerW();
+        var res = DeskTopHelper.GetWorkerW();
         Assert.IsTrue(res != IntPtr.Zero);
     }
 
@@ -33,10 +34,10 @@ public class DesktopManagerTest
         }
         var handler = p.MainWindowHandle;
 
-        var res = DesktopManager.SendHandleToDesktopBottom(handler, WallpaperApi.GetScreen(0)?.Bounds);
+        var res = DeskTopHelper.SendHandleToDesktopBottom(handler, WallpaperApi.GetScreen(0)?.Bounds);
         Assert.IsTrue(res);
         Thread.Sleep(5000);
         p.Kill();
-        DesktopManager.CreateWorkerW();//刷新背景
+        DeskTopHelper.CreateWorkerW();//刷新背景
     }
 }

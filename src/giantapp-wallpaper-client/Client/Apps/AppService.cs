@@ -19,6 +19,7 @@ using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json;
+using WallpaperCore.Libs;
 
 namespace Client.Apps;
 
@@ -215,7 +216,7 @@ internal class AppService
         }
         //退出
         System.Windows.Application.Current.Shutdown();
-        DesktopManager.Refresh();
+        DeskTopHelper.Refresh();
     }
 
     internal static string? ConvertPathToUrl(ConfigWallpaper? wallpaperConfig, string? path)

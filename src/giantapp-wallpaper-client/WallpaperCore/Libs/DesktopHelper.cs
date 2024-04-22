@@ -2,9 +2,9 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
-namespace WallpaperCore;
+namespace WallpaperCore.Libs;
 
-public static class DesktopManager
+public static class DeskTopHelper
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 

@@ -1,10 +1,7 @@
 ﻿using NLog;
 using Player.Shared;
 using System.Diagnostics;
-using System.IO.Pipes;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace WallpaperCore.Libs;
 
