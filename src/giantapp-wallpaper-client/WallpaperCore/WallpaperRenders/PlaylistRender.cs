@@ -1,8 +1,9 @@
-﻿namespace WallpaperCore.WallpaperRenders;
+﻿
+namespace WallpaperCore.WallpaperRenders;
 
-internal class WebRender : BaseRender
+internal class PlaylistRender : BaseRender
 {
-    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Web };
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Playlist };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
