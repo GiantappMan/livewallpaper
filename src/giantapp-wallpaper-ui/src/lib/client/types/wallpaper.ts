@@ -118,6 +118,8 @@ export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
   }
+  //播放时长
+  duration?: string;
   // exe||web
   enableMouseEvent: boolean = true;
   // video

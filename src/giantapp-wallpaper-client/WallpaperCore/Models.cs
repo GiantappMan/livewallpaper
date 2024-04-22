@@ -176,6 +176,11 @@ public enum VideoPlayer
 //一个壁纸的设置
 public class WallpaperSetting : ICloneable
 {
+    /// <summary>
+    /// 播放时长，没设就用默认值，图片默认一小时
+    /// </summary>
+    public string? Duration { get; set; }
+
     #region exe
     /// <summary>
     /// 是否支持鼠标事件，exe和web才行。其他类型设置无效

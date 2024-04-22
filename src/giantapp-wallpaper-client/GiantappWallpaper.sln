@@ -10,6 +10,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client.Test", "Client.Test\Client.Test.csproj", "{BA1345BC-DAD9-42F7-B49E-16FCD15EAC51}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WallpaperCore", "WallpaperCore\WallpaperCore.csproj", "{D5C04FF5-2F11-4112-8ABB-47FCF788FAA9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D16C3450-9E1C-4256-A836-F4BAD9E3C38E} = {D16C3450-9E1C-4256-A836-F4BAD9E3C38E}
+		{E743A0E2-2DDF-4154-86CD-00BE41773B96} = {E743A0E2-2DDF-4154-86CD-00BE41773B96}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WallpaperCore.Test", "WallpaperCore.Test\WallpaperCore.Test.csproj", "{E6B1AA0D-708C-4916-90A5-40F498494AE8}"
 EndProject

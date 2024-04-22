@@ -18,6 +18,7 @@ import api from "@/lib/client/api"
 import { toast } from "sonner"
 import { getGlobal } from '@/i18n-config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 interface SettingDialogProps {
     wallpaper: Wallpaper
@@ -27,13 +28,23 @@ interface SettingDialogProps {
 }
 
 const formSchema = z.object({
-    enableMouseEvent: z.boolean(),
-    hardwareDecoding: z.boolean(),
-    isPanScan: z.boolean(),
-    videoPlayer: z.nativeEnum(VideoPlayer),
-    volume: z.number().min(0).max(100),
-    fit: z.nativeEnum(Fit),
-    keepWallpaper: z.boolean()
+    // enableMouseEvent: z.boolean(),
+    // hardwareDecoding: z.boolean(),
+    // isPanScan: z.boolean(),
+    // videoPlayer: z.nativeEnum(VideoPlayer),
+    // volume: z.number().min(0).max(100),
+    // fit: z.nativeEnum(Fit),
+    // keepWallpaper: z.boolean(),
+    setting: z.object({
+        duration: z.string().optional(),
+        enableMouseEvent: z.boolean(),
+        hardwareDecoding: z.boolean(),
+        isPanScan: z.boolean(),
+        videoPlayer: z.nativeEnum(VideoPlayer),
+        volume: z.number().min(0).max(100),
+        fit: z.nativeEnum(Fit),
+        keepWallpaper: z.boolean()
+    })
 })
 
 export function SettingDialog(props: SettingDialogProps) {
@@ -41,13 +52,13 @@ export function SettingDialog(props: SettingDialogProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         mode: "onChange",
         defaultValues: {
-            enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
-            hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
-            isPanScan: props.wallpaper.setting.isPanScan,
-            videoPlayer: props.wallpaper.setting.videoPlayer,
-            // volume: props.wallpaper.setting.volume ?? 100,
-            fit: props.wallpaper.setting.fit,
-            keepWallpaper: props.wallpaper.setting.keepWallpaper,
+            // enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
+            // hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
+            // isPanScan: props.wallpaper.setting.isPanScan,
+            // videoPlayer: props.wallpaper.setting.videoPlayer,
+            // fit: props.wallpaper.setting.fit,
+            // keepWallpaper: props.wallpaper.setting.keepWallpaper,
+            setting: props.wallpaper.setting,
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -58,13 +69,13 @@ export function SettingDialog(props: SettingDialogProps) {
     useEffect(() => {
         if (props.open)
             form.reset({
-                enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
-                hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
-                isPanScan: props.wallpaper.setting.isPanScan,
-                videoPlayer: props.wallpaper.setting.videoPlayer,
-                // volume: props.wallpaper.setting.volume,
-                fit: props.wallpaper.setting.fit,
-                keepWallpaper: props.wallpaper.setting.keepWallpaper,
+                // enableMouseEvent: props.wallpaper.setting.enableMouseEvent,
+                // hardwareDecoding: props.wallpaper.setting.hardwareDecoding,
+                // isPanScan: props.wallpaper.setting.isPanScan,
+                // videoPlayer: props.wallpaper.setting.videoPlayer,
+                // fit: props.wallpaper.setting.fit,
+                // keepWallpaper: props.wallpaper.setting.keepWallpaper,
+                setting: props.wallpaper.setting,
             })
         setWallpaperType(props.wallpaper.meta.type || WallpaperType.NotSupported)
     }, [form, props.open, props.wallpaper])
@@ -72,16 +83,8 @@ export function SettingDialog(props: SettingDialogProps) {
     async function onSubmit(data: z.infer<typeof formSchema>) {
         if (saving) return;
         setSaving(true);
-
-        const setting = new WallpaperSetting({
-            enableMouseEvent: data.enableMouseEvent,
-            hardwareDecoding: data.hardwareDecoding,
-            isPanScan: data.isPanScan,
-            videoPlayer: data.videoPlayer,
-            // volume: data.volume,
-            fit: data.fit,
-            keepWallpaper: data.keepWallpaper,
-        });
+        console.log("test", data.setting);
+        const setting = new WallpaperSetting({ ...data.setting });
 
         const res = await api.setWallpaperSetting(setting, props.wallpaper);
         if (res.data) {
@@ -115,10 +118,27 @@ export function SettingDialog(props: SettingDialogProps) {
             <Form {...form}>
                 <form className="space-y-6"
                     onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormField
+                        control={form.control}
+                        name="setting.duration"
+                        render={({ field }) => (
+                            <FormItem className="items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <FormLabel>
+                                    {dictionary['local'].duration}
+                                </FormLabel>
+                                <FormControl>
+                                    <Input type="time"  {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                    {dictionary['local'].duration_description}
+                                </FormDescription>
+                            </FormItem>
+                        )}
+                    />
                     {wallpaperType === WallpaperType.Exe && <>
                         <FormField
                             control={form.control}
-                            name="enableMouseEvent"
+                            name="setting.enableMouseEvent"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
@@ -126,7 +146,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                             {dictionary['local'].mouse_event}
                                         </FormLabel>
                                         <FormDescription>
-                                            {dictionary['local'].enable_mouse_events}
+                                            {dictionary['local'].mouse_events_description}
                                         </FormDescription>
                                     </div>
                                     <FormControl>
@@ -142,7 +162,7 @@ export function SettingDialog(props: SettingDialogProps) {
                     {wallpaperType === WallpaperType.Video && <>
                         <FormField
                             control={form.control}
-                            name="videoPlayer"
+                            name="setting.videoPlayer"
                             render={({ field }) => (
                                 <FormItem className=" items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <FormLabel>
@@ -172,7 +192,7 @@ export function SettingDialog(props: SettingDialogProps) {
                         />
                         <FormField
                             control={form.control}
-                            name="hardwareDecoding"
+                            name="setting.hardwareDecoding"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
@@ -194,7 +214,7 @@ export function SettingDialog(props: SettingDialogProps) {
                         />
                         <FormField
                             control={form.control}
-                            name="isPanScan"
+                            name="setting.isPanScan"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
@@ -218,7 +238,7 @@ export function SettingDialog(props: SettingDialogProps) {
                     {wallpaperType === WallpaperType.Img && <>
                         <FormField
                             control={form.control}
-                            name="fit"
+                            name="setting.fit"
                             render={({ field }) => (
                                 <FormItem className=" items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <FormLabel>
@@ -248,7 +268,7 @@ export function SettingDialog(props: SettingDialogProps) {
                         />
                         <FormField
                             control={form.control}
-                            name="keepWallpaper"
+                            name="setting.keepWallpaper"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
