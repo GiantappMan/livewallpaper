@@ -28,6 +28,37 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import PlayingStatus from "@/lib/client/types/playing-status";
 import { getGlobal, type Locale } from "@/i18n-config";
+import { FileImageIcon, FileVideoIcon, ListVideoIcon } from "lucide-react"
+
+const WallpaperTypeIcon = ({ type }: { type?: WallpaperType }) => {
+  const className = "w-5 h-5 opacity-70 mr-2 bg-transparent";
+  switch (type) {
+    case WallpaperType.Img:
+      return <FileImageIcon className={className} />;
+    case WallpaperType.Video:
+      return <FileVideoIcon className={className} />;
+    case WallpaperType.Playlist:
+      return <ListVideoIcon className={className} />;
+    default:
+      return null; // 或者返回一个默认图标
+  }
+};
+function getWallpaperTypeString(dictionary: any, type?: WallpaperType) {
+  let key;
+  switch (type) {
+    case WallpaperType.Img:
+      key = 'img';
+      break;
+    case WallpaperType.Video:
+      key = 'video';
+      break;
+    case WallpaperType.Playlist:
+      key = 'playlist';
+      break;
+  }
+  if (!key) return '';
+  return dictionary["local"][`wallpaper_type_${key}`];
+}
 
 const LocalPage = ({
   params,
@@ -229,7 +260,6 @@ const LocalPage = ({
                     width="300"
                   />
                 </picture>
-
                 <ContextMenu modal={false}>
                   <ContextMenuTrigger>
                     {/* 遮罩 */}
@@ -404,8 +434,11 @@ const LocalPage = ({
                 </ContextMenu>
               </div>
 
-              <div className="px-6 py-4">
-                <div className="font-bold text-sm mb-2 lg:text-xl">{wallpaper?.meta?.title}</div>
+              <div className="px-6 pl-0 py-4">
+                <div className="flex font-bold text-sm mb-2 lg:text-xl" title={getWallpaperTypeString(dictionary, wallpaper.meta.type)}>
+                  <WallpaperTypeIcon type={wallpaper.meta.type} />
+                  {wallpaper?.meta?.title}
+                </div>
                 {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
               </div>
             </div>
@@ -478,23 +511,24 @@ const LocalPage = ({
         setWallpapers(newWallpapers);
       }}
     />
-    {currentWallpaper && <SettingDialog
-      open={openSettingDialog}
-      wallpaper={currentWallpaper}
-      onChange={(e) => setOpenSettingDialog(e)}
-      saveSuccess={(e) => {
-        setOpenSettingDialog(false)
-        //只更新修改的wallpaper
-        let newWallpapers = wallpapers?.map((item) => {
-          if (item.filePath === e.filePath) {
-            return e;
-          }
-          return item;
-        });
-        setWallpapers(newWallpapers);
-      }} />
+    {
+      currentWallpaper && <SettingDialog
+        open={openSettingDialog}
+        wallpaper={currentWallpaper}
+        onChange={(e) => setOpenSettingDialog(e)}
+        saveSuccess={(e) => {
+          setOpenSettingDialog(false)
+          //只更新修改的wallpaper
+          let newWallpapers = wallpapers?.map((item) => {
+            if (item.filePath === e.filePath) {
+              return e;
+            }
+            return item;
+          });
+          setWallpapers(newWallpapers);
+        }} />
     }
-  </div>
+  </div >
 };
 
 export default LocalPage;
