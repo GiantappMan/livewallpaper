@@ -4,9 +4,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/lib/client/api"
-import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Wallpaper, WallpaperType, getWallpaperTypeString } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react"
 import { getGlobal } from '@/i18n-config';
+import { WallpaperTypeIcon } from "@/components/wallpaper-type-icon"
 
 interface Props {
     selectedWallpapers: Wallpaper[]
@@ -98,7 +99,7 @@ export function SelectWallpaperDialog(props: Props) {
     return <Dialog open={props.open} onOpenChange={(e) => {
         props.onChangeOpen(e);
     }}>
-        <DialogContent className={"lg:max-w-screen-lg"}>
+        <DialogContent className={"max-w-[95vw] w-full max-h-[95vh] h-full"}>
             <DialogHeader>
                 <DialogTitle>{dictionary['local'].add_wallpaper_to_list}</DialogTitle>
                 <DialogDescription>{dictionary['local'].click_select_wallpaper}</DialogDescription>
@@ -152,7 +153,8 @@ export function SelectWallpaperDialog(props: Props) {
                                         }
                                     </div>
 
-                                    <div className="px-2 py-1">
+                                    <div className="flex pr-2 pt-2" title={getWallpaperTypeString(dictionary, wallpaper.meta.type)}>
+                                        <WallpaperTypeIcon type={wallpaper.meta.type} />
                                         <div className="text-sm overflow-hidden overflow-ellipsis whitespace-nowrap">{wallpaper?.meta?.title}</div>
                                         {/* <p className="text-gray-700 text-base">{wallpaper?.meta?.description}</p> */}
                                     </div>
