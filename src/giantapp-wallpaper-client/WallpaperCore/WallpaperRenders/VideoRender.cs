@@ -17,7 +17,7 @@ internal class VideoRender : BaseRender
     private VideoSnapshot? _snapshot;
     readonly bool _isRestore;
     IVideoApi? _playerApi;
-    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg, WallpaperType.Playlist };
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {

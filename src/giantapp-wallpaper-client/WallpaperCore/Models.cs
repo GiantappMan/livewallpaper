@@ -349,6 +349,11 @@ public class Wallpaper : ICloneable
         }
     }
 
+    public void LoadSetting()
+    {
+        Setting = LoadSetting(FileName, Dir);
+    }
+
     public static WallpaperSetting LoadSetting(string? FileName, string? Dir)
     {
         try

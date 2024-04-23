@@ -13,7 +13,7 @@ public class WallpaperManagerSnapshot
 //管理一个屏幕的壁纸播放
 public class WallpaperManager
 {
-    readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender() };
+    readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new PlaylistRender(), new WebRender() };
     BaseRender? _currentRender;
 
     readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -60,8 +60,6 @@ public class WallpaperManager
         bool found = false;
         foreach (var item in _renders)
         {
-            //todo playlist 特殊处理,目前暂时用mpv播放
-
             if (item.SupportTypes.ToList().Contains(Wallpaper.Meta.Type))
             {
                 if (item != _currentRender)

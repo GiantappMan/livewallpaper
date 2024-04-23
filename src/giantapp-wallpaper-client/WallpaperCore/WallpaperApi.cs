@@ -25,6 +25,8 @@ public static class WallpaperApi
     //public static WallpaperCoveredBehavior CoveredBehavior { get; set; }
 
     public static ApiSettings Settings { get; set; } = new();
+    //上次获取的壁纸
+    public static Wallpaper[] LastWallpapers { get; set; } = new Wallpaper[0];
 
     //public static JsonSerializerSettings JsonSettings { get; private set; } = new()
     //{
@@ -86,7 +88,8 @@ public static class WallpaperApi
             return b.Meta.CreateTime.Value.CompareTo(a.Meta.CreateTime.Value);
         });
 
-        return wallpapers.ToArray();
+        LastWallpapers = wallpapers.ToArray();
+        return LastWallpapers;
     }
 
     //枚举目录内的壁纸
