@@ -1,4 +1,4 @@
-
+//壁纸编辑对话框
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -86,6 +86,7 @@ function generatePlaylistCover(imageUrls: string[]): Promise<Blob> {
 
         // 定义单张图片的宽度和canvas的总宽度
         const singleWidth = 500;
+        const singleHeight = 280;
         const canvasWidth = singleWidth * 3;  // 3x3网格
         canvas.width = canvasWidth;
 
@@ -94,6 +95,10 @@ function generatePlaylistCover(imageUrls: string[]): Promise<Blob> {
         // 加载所有图片
         const images = processedImageUrls.map(url => {
             const img = new Image();
+            // //设置高宽
+            // img.style.objectFit = "cover";
+            // img.width = singleWidth;
+            // img.height = singleHeight;
             img.src = url;
             img.crossOrigin = 'Anonymous';
             return img;
@@ -107,16 +112,16 @@ function generatePlaylistCover(imageUrls: string[]): Promise<Blob> {
 
         Promise.all(loadPromises).then(loadedImages => {
             // 计算每张图片的缩放后高度，选择最大高度作为行高
-            const heights = loadedImages.map(img => singleWidth * (img.height / img.width));
-            const rowHeight = Math.max(...heights);
+            // const heights = loadedImages.map(img => singleWidth * (img.height / img.width));
+            // const rowHeight = Math.max(...heights);
             // 设置canvas的总高度
-            canvas.height = rowHeight * 3; // 3行
+            canvas.height = singleHeight * 3; // 3行
 
             loadedImages.forEach((img, index) => {
                 const x = (index % 3) * singleWidth; // 每3张图片换行
-                const y = Math.floor(index / 3) * rowHeight; // 计算当前行
-                const height = singleWidth * (img.height / img.width); // 缩放后的高度
-                ctx.drawImage(img, x, y, singleWidth, height);
+                const y = Math.floor(index / 3) * singleHeight; // 计算当前行
+                // const height = singleWidth * (rowHeight / img.width); // 缩放后的高度
+                ctx.drawImage(img, x, y, singleWidth, singleHeight);
             });
 
             // 导出结果并解析 Promise

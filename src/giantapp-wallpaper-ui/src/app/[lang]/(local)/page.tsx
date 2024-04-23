@@ -474,6 +474,8 @@ const LocalPage = ({
         //只更新修改的wallpaper
         let newWallpapers = wallpapers?.map((item) => {
           if (item.filePath === e.filePath) {
+            //修改cover缓存
+            e.coverUrl = e.coverUrl + `?t=${Date.now()}`;
             return e;
           }
           return item;
