@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
-import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
+import { Wallpaper, WallpaperType, getWallpaperTypeString } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
 import { useCallback, useEffect, useState } from "react";
 import { ToolBar } from "./_components/tool-bar/index";
@@ -28,37 +28,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import PlayingStatus from "@/lib/client/types/playing-status";
 import { getGlobal, type Locale } from "@/i18n-config";
-import { FileImageIcon, FileVideoIcon, ListVideoIcon } from "lucide-react"
-
-const WallpaperTypeIcon = ({ type }: { type?: WallpaperType }) => {
-  const className = "w-5 h-5 opacity-70 mr-2 bg-transparent";
-  switch (type) {
-    case WallpaperType.Img:
-      return <FileImageIcon className={className} />;
-    case WallpaperType.Video:
-      return <FileVideoIcon className={className} />;
-    case WallpaperType.Playlist:
-      return <ListVideoIcon className={className} />;
-    default:
-      return null; // 或者返回一个默认图标
-  }
-};
-function getWallpaperTypeString(dictionary: any, type?: WallpaperType) {
-  let key;
-  switch (type) {
-    case WallpaperType.Img:
-      key = 'img';
-      break;
-    case WallpaperType.Video:
-      key = 'video';
-      break;
-    case WallpaperType.Playlist:
-      key = 'playlist';
-      break;
-  }
-  if (!key) return '';
-  return dictionary["local"][`wallpaper_type_${key}`];
-}
+import { WallpaperTypeIcon } from "@/components/wallpaper-type-icon";
 
 const LocalPage = ({
   params,

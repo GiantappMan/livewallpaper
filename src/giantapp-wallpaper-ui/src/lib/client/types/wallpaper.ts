@@ -138,3 +138,20 @@ export class WallpaperRunningInfo {
   screenIndexes: number[] = [];
   isPaused?: boolean = false;
 }
+
+export function getWallpaperTypeString(dictionary: any, type?: WallpaperType) {
+  let key;
+  switch (type) {
+    case WallpaperType.Img:
+      key = 'img';
+      break;
+    case WallpaperType.Video:
+      key = 'video';
+      break;
+    case WallpaperType.Playlist:
+      key = 'playlist';
+      break;
+  }
+  if (!key) return '';
+  return dictionary["local"][`wallpaper_type_${key}`];
+}
