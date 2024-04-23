@@ -68,8 +68,8 @@ internal class PlaylistRender : BaseRender
 
         //更新运行时数据
         playingWallpaper.RunningInfo = playlist.RunningInfo;
-        ////读取最新setting
-        //playingWallpaper.LoadSetting();
+        //读取最新setting，用户可能该过了
+        playingWallpaper.LoadSetting();
 
         //查找wallpaper 所需的render
         bool found = false;
@@ -96,7 +96,7 @@ internal class PlaylistRender : BaseRender
 
     internal override void ReApplySetting(Wallpaper? wallpaper)
     {
-        base.ReApplySetting(wallpaper);
+        _ = Play(wallpaper);
     }
 
     internal override void Resume()
@@ -116,7 +116,7 @@ internal class PlaylistRender : BaseRender
 
     internal override void Stop()
     {
-        base.Stop();
+        _currentRender?.Stop();
     }
 
     internal override Task Dispose()
