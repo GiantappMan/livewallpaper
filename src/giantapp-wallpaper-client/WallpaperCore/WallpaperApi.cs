@@ -527,7 +527,7 @@ public static class WallpaperApi
             if (item.Value.Wallpaper == null)
                 continue;
 
-            bool isPlaying = item.Value.CheckIsPlaying(item.Value.Wallpaper);
+            bool isPlaying = item.Value.CheckIsPlaying(wallpaper);
             if (isPlaying)
             {
                 var playingWallpaper = item.Value.GetRunningWallpaper();

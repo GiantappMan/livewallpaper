@@ -66,6 +66,11 @@ internal class ImgRender : BaseRender
         });
     }
 
+    internal override void ReApplySetting(Wallpaper? wallpaper)
+    {
+        _ = Play(wallpaper);
+    }
+
     internal override void Stop()
     {
         if (_currentMonitorId == null || _snapshot?.OldWallpaper == null)

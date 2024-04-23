@@ -68,8 +68,8 @@ internal class PlaylistRender : BaseRender
 
         //更新运行时数据
         playingWallpaper.RunningInfo = playlist.RunningInfo;
-        //读取最新setting
-        playingWallpaper.LoadSetting();
+        ////读取最新setting
+        //playingWallpaper.LoadSetting();
 
         //查找wallpaper 所需的render
         bool found = false;
