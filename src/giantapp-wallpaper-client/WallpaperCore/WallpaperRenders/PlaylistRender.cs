@@ -14,6 +14,7 @@ internal class PlaylistRender : BaseRender
 
     PlaylistSnapshot? _snapshot;
     BaseRender? _currentRender;
+    Wallpaper? _playingWallpaper;
     readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
@@ -38,7 +39,26 @@ internal class PlaylistRender : BaseRender
 
     internal override double GetDuration()
     {
-        return base.GetDuration();
+        var tmp = _currentRender?.GetDuration() ?? 0;
+        if (tmp == 0)
+        {
+            if (_playingWallpaper == null)
+                return 0;
+
+            var tmpDuration = _playingWallpaper.Setting.Duration;
+            if (string.IsNullOrEmpty(tmpDuration))
+            {
+                //没设置的默认一小时
+                tmpDuration = "01:00";
+            }
+
+            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
+            if (!parseOk)
+                return 0;
+
+            return duration.TotalSeconds;
+        }
+        return tmp;
     }
 
     internal override object? GetSnapshot()
@@ -48,12 +68,13 @@ internal class PlaylistRender : BaseRender
 
     internal override double GetTimePos()
     {
-        return base.GetTimePos();
+        var res = _currentRender?.GetTimePos();
+        return res ?? 0;
     }
 
     internal override void Pause()
     {
-        base.Pause();
+        _currentRender?.Pause();
     }
 
     internal override async Task Play(Wallpaper? playlist)
@@ -62,20 +83,21 @@ internal class PlaylistRender : BaseRender
             return;
 
         var meta = playlist.Meta;
-        var playingWallpaper = meta.Wallpapers.ElementAtOrDefault((int)meta.PlayIndex);
-        if (playingWallpaper == null)
+
+        _playingWallpaper = meta.Wallpapers.ElementAtOrDefault((int)meta.PlayIndex);
+        if (_playingWallpaper == null)
             return;
 
         //更新运行时数据
-        playingWallpaper.RunningInfo = playlist.RunningInfo;
+        _playingWallpaper.RunningInfo = playlist.RunningInfo;
         //读取最新setting，用户可能该过了
-        playingWallpaper.LoadSetting();
+        _playingWallpaper.LoadSetting();
 
         //查找wallpaper 所需的render
         bool found = false;
         foreach (var item in _renders)
         {
-            if (item.SupportTypes.ToList().Contains(playingWallpaper.Meta.Type))
+            if (item.SupportTypes.ToList().Contains(_playingWallpaper.Meta.Type))
             {
                 if (item != _currentRender)
                 {
@@ -91,7 +113,7 @@ internal class PlaylistRender : BaseRender
             return;
 
         if (_currentRender != null)
-            await _currentRender.Play(playingWallpaper);
+            await _currentRender.Play(_playingWallpaper);
     }
 
     internal override void ReApplySetting(Wallpaper? wallpaper)
@@ -101,17 +123,17 @@ internal class PlaylistRender : BaseRender
 
     internal override void Resume()
     {
-        base.Resume();
+        _currentRender?.Resume();
     }
 
     internal override void SetProgress(double progress)
     {
-        base.SetProgress(progress);
+        _currentRender?.SetProgress(progress);
     }
 
     internal override void SetVolume(uint volume)
     {
-        base.SetVolume(volume);
+        _currentRender?.SetVolume(volume);
     }
 
     internal override void Stop()
@@ -121,6 +143,7 @@ internal class PlaylistRender : BaseRender
 
     internal override Task Dispose()
     {
-        return base.Dispose();
+        Stop();
+        return Task.CompletedTask;
     }
 }

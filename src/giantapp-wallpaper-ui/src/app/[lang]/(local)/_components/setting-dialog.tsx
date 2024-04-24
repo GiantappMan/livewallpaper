@@ -118,23 +118,25 @@ export function SettingDialog(props: SettingDialogProps) {
             <Form {...form}>
                 <form className="space-y-6"
                     onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormField
-                        control={form.control}
-                        name="setting.duration"
-                        render={({ field }) => (
-                            <FormItem className="items-center justify-between rounded-lg border p-3 shadow-sm">
-                                <FormLabel>
-                                    {dictionary['local'].duration}
-                                </FormLabel>
-                                <FormControl>
-                                    <Input type="time"  {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                    {dictionary['local'].duration_description}
-                                </FormDescription>
-                            </FormItem>
-                        )}
-                    />
+                    {wallpaperType !== WallpaperType.Playlist && <>
+                        <FormField
+                            control={form.control}
+                            name="setting.duration"
+                            render={({ field }) => (
+                                <FormItem className="items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <FormLabel>
+                                        {dictionary['local'].duration}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="time"  {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        {dictionary['local'].duration_description}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                    </>}
                     {wallpaperType === WallpaperType.Exe && <>
                         <FormField
                             control={form.control}

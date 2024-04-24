@@ -178,6 +178,7 @@ public class WallpaperSetting : ICloneable
 {
     /// <summary>
     /// 播放时长，没设就用默认值，图片默认一小时
+    /// 除了playlist，都显示这个值
     /// </summary>
     public string? Duration { get; set; }
 

@@ -32,11 +32,11 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@radix-ui/react-tooltip": "^1.0.7",
     "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
+    "clsx": "^2.1.1",
     "cmdk": "^0.2.1",
     "jotai": "^2.8.0",
-    "lucide-react": "^0.372.0",
-    "next": "14.2.2",
+    "lucide-react": "^0.373.0",
+    "next": "14.2.3",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-dom": "^18",
@@ -45,7 +45,7 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.0",
-    "zod": "^3.23.3"
+    "zod": "^3.23.4"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -53,7 +53,7 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10",
     "eslint": "^8",
-    "eslint-config-next": "14.2.2",
+    "eslint-config-next": "14.2.3",
     "ncp": "^2.0.0",
     "postcss": "^8",
     "rimraf": "^5.0.5",
