@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore.Test;
 

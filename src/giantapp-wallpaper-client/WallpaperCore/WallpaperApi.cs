@@ -1,11 +1,10 @@
 ﻿using NLog;
 using System.Collections.Concurrent;
-using System.Text.Json.Serialization;
-
 using System.Text.Json;
 
 //using System.IO;
 using Windows.Win32;
+using WallpaperCore.Libs;
 
 namespace WallpaperCore;
 

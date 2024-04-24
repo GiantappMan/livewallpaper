@@ -7,8 +7,11 @@ using System.Timers;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
-namespace WallpaperCore;
+namespace WallpaperCore.Libs;
 
+/// <summary>
+/// 检查窗口是否最大化了
+/// </summary>
 public class WindowStateChecker
 {
     #region private fields
