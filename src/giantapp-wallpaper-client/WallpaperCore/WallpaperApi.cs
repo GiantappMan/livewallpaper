@@ -1,8 +1,6 @@
 ﻿using NLog;
 using System.Collections.Concurrent;
 using System.Text.Json;
-
-//using System.IO;
 using Windows.Win32;
 using WallpaperCore.Libs;
 
@@ -13,41 +11,32 @@ namespace WallpaperCore;
 /// </summary>
 public static class WallpaperApi
 {
+    static readonly System.Timers.Timer _timer = new(1000);
+    static readonly WindowStateChecker _windowStateChecker = new(_timer);
+
     #region properties
 
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     //运行中的屏幕和对应的播放列表，线程安全
     public static ConcurrentDictionary<uint, WallpaperManager> RunningWallpapers { get; private set; } = new();
-    ////小于0就是禁用
-    //public static int AudioSourceIndex { get; set; }
-    //public static uint Volume { get; set; }
-    //public static WallpaperCoveredBehavior CoveredBehavior { get; set; }
 
     public static ApiSettings Settings { get; set; } = new();
     //上次获取的壁纸
     public static Wallpaper[] LastWallpapers { get; set; } = new Wallpaper[0];
 
-    //public static JsonSerializerSettings JsonSettings { get; private set; } = new()
-    //{
-    //    Formatting = Formatting.Indented,
-    //    TypeNameHandling = TypeNameHandling.Auto,
-    //    ContractResolver = new DefaultContractResolver
-    //    {
-    //        NamingStrategy = new CamelCaseNamingStrategy()
-    //    }
-    //};
     public static JsonSerializerOptions JsonOptitons { get; private set; } = new JsonSerializerOptions
     {
         IncludeFields = true,
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        //Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
+
+    public static System.Timers.Timer Timer { get => _timer; }
 
     #endregion
     static WallpaperApi()
     {
-        WindowStateChecker.Instance.WindowStateChanged += Instance_WindowStateChanged;
+        _windowStateChecker.WindowStateChanged += Instance_WindowStateChanged;
 
         //禁用DPI
         SetPerMonitorV2DpiAwareness();
@@ -160,7 +149,8 @@ public static class WallpaperApi
             manager.SetVolume(volume);
         }
 
-        WindowStateChecker.Instance.Start();
+        if (!Timer.Enabled)
+            Timer.Start();
 
         return true;
     }
@@ -335,8 +325,9 @@ public static class WallpaperApi
         }
 
         RunningWallpapers.Clear();
-        WindowStateChecker.Instance.WindowStateChanged -= Instance_WindowStateChanged;
-        WindowStateChecker.Instance.Stop();
+        _windowStateChecker.WindowStateChanged -= Instance_WindowStateChanged;
+        _windowStateChecker.Stop();
+        Timer.Stop();
     }
 
     //获取快照

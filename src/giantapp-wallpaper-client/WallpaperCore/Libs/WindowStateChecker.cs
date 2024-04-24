@@ -3,6 +3,7 @@
 using System.Runtime.InteropServices;
 #endif
 using Microsoft.Win32;
+using NLog;
 using System.Timers;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -15,9 +16,11 @@ namespace WallpaperCore.Libs;
 public class WindowStateChecker
 {
     #region private fields
-    private readonly System.Timers.Timer? _timer;
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly Dictionary<string, WindowState> _globalCacheScreenState = new();
     private List<IntPtr> _checkHandles = new();//等待检查的窗口
+    //正在检查中
+    private bool _isChecking = false;
 
     //是否已锁屏
     private static bool _isLocked = false;
@@ -38,14 +41,12 @@ public class WindowStateChecker
         };
     }
 
-    public WindowStateChecker()
+    public WindowStateChecker(System.Timers.Timer timer)
     {
-        _timer = new(1000);
-        _timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
+        timer.Elapsed += CheckWindowState; // 每秒调用一次CheckWindowState方法
     }
 
     #region properties
-    public static WindowStateChecker Instance { get; } = new();
     // 定义一个枚举类型，表示窗口的状态
     public enum WindowState
     {
@@ -85,68 +86,79 @@ public class WindowStateChecker
 
     private void CheckWindowState(object source, ElapsedEventArgs e)
     {
-        _timer?.Stop();
+        if (_isChecking)
+            return;
 
-        if (WindowStateChanged != null)
+        _isChecking = true;
+        try
         {
-            var tmp = GetAllWindowHandle();
-            _checkHandles.AddRange(tmp);
-
-            //下次有限检查的句柄
-            var nextCheckHandles = new List<IntPtr>();
-            //当前屏幕状态，默认没有最大化
-            Dictionary<string, WindowState> currentScreenState = new();
-            foreach (var item in Screen.AllScreens)
-                currentScreenState.Add(item.DeviceName, WindowState.NotMaximized);
-            //遍历检查列表
-            List<IntPtr> checkHandlesCopy = new(_checkHandles);
-            foreach (var item in checkHandlesCopy)
+            if (WindowStateChanged != null)
             {
-                var screen = Screen.FromHandle(item);
-                if (!currentScreenState.ContainsKey(screen.DeviceName))
+                var tmp = GetAllWindowHandle();
+                _checkHandles.AddRange(tmp);
+
+                //下次有限检查的句柄
+                var nextCheckHandles = new List<IntPtr>();
+                //当前屏幕状态，默认没有最大化
+                Dictionary<string, WindowState> currentScreenState = new();
+                foreach (var item in Screen.AllScreens)
+                    currentScreenState.Add(item.DeviceName, WindowState.NotMaximized);
+                //遍历检查列表
+                List<IntPtr> checkHandlesCopy = new(_checkHandles);
+                foreach (var item in checkHandlesCopy)
                 {
-                    //新插入的屏幕可能会触发这里
-                    currentScreenState.Add(screen.DeviceName, WindowState.NotMaximized);
+                    var screen = Screen.FromHandle(item);
+                    if (!currentScreenState.ContainsKey(screen.DeviceName))
+                    {
+                        //新插入的屏幕可能会触发这里
+                        currentScreenState.Add(screen.DeviceName, WindowState.NotMaximized);
+                    }
+
+                    //已经有其他程序最大化
+                    if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName] == WindowState.Maximized)
+                        continue;
+
+                    WindowState state = IsWindowMaximized(item) ? WindowState.Maximized : WindowState.NotMaximized;
+                    //最大化的handle优先插入到前面，方便下次检查
+                    if (state == WindowState.Maximized)
+                    {
+                        if (!nextCheckHandles.Contains(item))
+                            nextCheckHandles.Add(item);
+                    }
+                    else
+                    {
+                        //debug
+                    }
+
+                    currentScreenState[screen.DeviceName] = state;
                 }
+                _checkHandles = nextCheckHandles;
 
-                //已经有其他程序最大化
-                if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName] == WindowState.Maximized)
-                    continue;
-
-                WindowState state = IsWindowMaximized(item) ? WindowState.Maximized : WindowState.NotMaximized;
-                //最大化的handle优先插入到前面，方便下次检查
-                if (state == WindowState.Maximized)
+                //更新数据
+                foreach (var item in currentScreenState)
                 {
-                    if (!nextCheckHandles.Contains(item))
-                        nextCheckHandles.Add(item);
-                }
-                else
-                {
-                    //debug
-                }
+                    var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == item.Key);
+                    if (screen == null)
+                        continue;
 
-                currentScreenState[screen.DeviceName] = state;
-            }
-            _checkHandles = nextCheckHandles;
-
-            //更新数据
-            foreach (var item in currentScreenState)
-            {
-                var screen = Screen.AllScreens.FirstOrDefault(m => m.DeviceName == item.Key);
-                if (screen == null)
-                    continue;
-
-                var screenName = item.Key;
-                var state = item.Value;
-                if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
-                {
-                    WindowStateChanged?.Invoke(state, screen);
-                    _globalCacheScreenState[screenName] = state;
+                    var screenName = item.Key;
+                    var state = item.Value;
+                    if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
+                    {
+                        WindowStateChanged?.Invoke(state, screen);
+                        _globalCacheScreenState[screenName] = state;
+                    }
                 }
             }
         }
-
-        _timer?.Start();
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "CheckWindowState");
+        }
+        finally
+        {
+            _isChecking = false;
+        }
     }
     #endregion
 
@@ -233,16 +245,8 @@ public class WindowStateChecker
         }
     }
 
-    public void Start()
-    {
-        if (_timer != null && _timer.Enabled)
-            return;
-        _timer?.Start(); // 开始定时器
-    }
-
     public void Stop()
     {
-        _timer?.Stop(); // 停止定时器
         _globalCacheScreenState.Clear();
     }
 }
