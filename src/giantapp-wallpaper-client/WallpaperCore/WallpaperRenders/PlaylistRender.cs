@@ -15,6 +15,10 @@ internal class PlaylistRender : BaseRender
     PlaylistSnapshot? _snapshot;
     BaseRender? _currentRender;
     Wallpaper? _playingWallpaper;
+    //壁纸开始时间
+    DateTime? _startTime;
+    //下次壁纸切换时间
+    DateTime? _nextSwitchTime;
     readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
@@ -37,39 +41,9 @@ internal class PlaylistRender : BaseRender
         }
     }
 
-    internal override double GetDuration()
-    {
-        var tmp = _currentRender?.GetDuration() ?? 0;
-        if (tmp == 0)
-        {
-            if (_playingWallpaper == null)
-                return 0;
-
-            var tmpDuration = _playingWallpaper.Setting.Duration;
-            if (string.IsNullOrEmpty(tmpDuration))
-            {
-                //没设置的默认一小时
-                tmpDuration = "01:00";
-            }
-
-            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
-            if (!parseOk)
-                return 0;
-
-            return duration.TotalSeconds;
-        }
-        return tmp;
-    }
-
     internal override object? GetSnapshot()
     {
         return _snapshot;
-    }
-
-    internal override double GetTimePos()
-    {
-        var res = _currentRender?.GetTimePos();
-        return res ?? 0;
     }
 
     internal override void Pause()
@@ -113,7 +87,11 @@ internal class PlaylistRender : BaseRender
             return;
 
         if (_currentRender != null)
+        {
             await _currentRender.Play(_playingWallpaper);
+            _startTime = DateTime.Now;
+            _nextSwitchTime = _startTime.Value.AddSeconds(GetDuration());
+        }
     }
 
     internal override void ReApplySetting(Wallpaper? wallpaper)
@@ -126,9 +104,69 @@ internal class PlaylistRender : BaseRender
         _currentRender?.Resume();
     }
 
+    internal override double GetDuration()
+    {
+        var tmp = _currentRender?.GetDuration() ?? 0;
+        if (tmp == 0)
+        {
+            if (_playingWallpaper == null)
+                return 0;
+
+            var tmpDuration = _playingWallpaper.Setting.Duration;
+            if (string.IsNullOrEmpty(tmpDuration))
+            {
+                //没设置的默认一小时
+                tmpDuration = "01:00";
+            }
+
+            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
+            if (!parseOk)
+                return 0;
+
+            return duration.TotalSeconds;
+        }
+        return tmp;
+    }
+
+    internal override double GetTimePos()
+    {
+        if (_currentRender == null)
+            return 0;
+
+        if (_currentRender.IsSupportProgress)
+            return _currentRender.GetTimePos();
+
+        //根据下次切换时间和开始时间计算
+        if (_startTime == null)
+            return 0;
+
+        var res = (DateTime.Now - _startTime.Value).TotalSeconds;
+        var duration = GetDuration();
+        if (res > duration)
+        {
+            return duration;
+        }
+        return res;
+    }
+
     internal override void SetProgress(double progress)
     {
-        _currentRender?.SetProgress(progress);
+        if (_currentRender == null)
+            return;
+
+        if (_currentRender.IsSupportProgress)
+        {
+            _currentRender.SetProgress(progress);
+            return;
+        }
+
+        //根据进度计算时间
+
+        progress /= 100;
+        var duration = GetDuration();
+
+        _startTime = DateTime.Now.AddSeconds(-progress * duration);
+        _nextSwitchTime = DateTime.Now.AddSeconds((1 - progress) * duration);
     }
 
     internal override void SetVolume(uint volume)
@@ -139,6 +177,8 @@ internal class PlaylistRender : BaseRender
     internal override void Stop()
     {
         _currentRender?.Stop();
+        _startTime = null;
+        _nextSwitchTime = null;
     }
 
     internal override Task Dispose()

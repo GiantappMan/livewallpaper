@@ -18,6 +18,7 @@ internal class VideoRender : BaseRender
     readonly bool _isRestore;
     IVideoApi? _playerApi;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
+    public override bool IsSupportProgress { get; protected set; } = true;
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
@@ -64,7 +65,7 @@ internal class VideoRender : BaseRender
             if (_playerApi?.GetType() != typeof(MpvApi))
             {
                 //切换播放器类型了
-                _playerApi?.Stop();                
+                _playerApi?.Stop();
                 _playerApi = new MpvApi(_snapshot?.IPCServerName, _snapshot?.PId, _snapshot?.ProcessName);
             }
         }

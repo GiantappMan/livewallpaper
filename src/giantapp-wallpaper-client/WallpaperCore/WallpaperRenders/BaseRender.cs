@@ -6,6 +6,9 @@ internal abstract class BaseRender
 {
     //支持的类型
     public virtual WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[0];
+    //是否支持进度设置
+    public virtual bool IsSupportProgress { get; protected set; } = false;
+
 
     internal virtual Task Dispose()
     {

@@ -156,11 +156,17 @@ export function SettingDialog(props: SettingDialogProps) {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {Object.entries(PlayMode).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
+                                            {/* {Object.entries(PlayMode).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
                                                 <SelectItem key={key.toString()} value={value.toString()}>
                                                     {dictionary['local'][`play_mode_${key.toLowerCase()}`]}
                                                 </SelectItem>
-                                            ))}
+                                            ))} */}
+                                            <SelectItem key={PlayMode.Order.toString()} value={PlayMode.Order.toString()}>
+                                                {dictionary['local'][`play_mode_order`]}
+                                            </SelectItem>
+                                            <SelectItem key={PlayMode.Random.toString()} value={PlayMode.Random.toString()}>
+                                                {dictionary['local'][`play_mode_random`]}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormDescription>
