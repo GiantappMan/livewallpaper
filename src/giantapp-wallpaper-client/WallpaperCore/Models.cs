@@ -228,7 +228,7 @@ public class WallpaperSetting : ICloneable
     #endregion
 
     #region playlist
-    public PlayMode Mode { get; set; } = PlayMode.Order;
+    public PlayMode PlayMode { get; set; } = PlayMode.Order;
     #endregion
 
     public static WallpaperSetting From(Dictionary<string, object> dic)

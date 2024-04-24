@@ -127,7 +127,12 @@
     "wallpaper_type_playlist": "列表",
     "wallpaper_type_video": "视频",
     "wallpaper_type_web": "网页",
-    "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。"
+    "you_can_create_wallpaper": "你可以创建一个壁纸或者修改壁纸扫描目录。",
+    "play_mode": "播放模式",
+    "play_mode_description": "设置如何切换列表中的壁纸",
+    "play_mode_order": "顺序播放",
+    "play_mode_random": "随机播放",
+    "play_mode_timer": "定时切换"
   },
   "settings": {
     "add_directory": "添加目录",

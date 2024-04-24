@@ -1,4 +1,4 @@
-import { Fit, VideoPlayer, Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
+import { Fit, PlayMode, VideoPlayer, Wallpaper, WallpaperSetting, WallpaperType } from "@/lib/client/types/wallpaper"
 import {
     Dialog,
     DialogContent,
@@ -37,6 +37,7 @@ const formSchema = z.object({
     // keepWallpaper: z.boolean(),
     setting: z.object({
         duration: z.string().optional(),
+        playMode: z.nativeEnum(PlayMode),
         enableMouseEvent: z.boolean(),
         hardwareDecoding: z.boolean(),
         isPanScan: z.boolean(),
@@ -132,6 +133,38 @@ export function SettingDialog(props: SettingDialogProps) {
                                     </FormControl>
                                     <FormDescription>
                                         {dictionary['local'].duration_description}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                    </>}
+                    {wallpaperType === WallpaperType.Playlist && <>
+                        <FormField
+                            control={form.control}
+                            name="setting.playMode"
+                            render={({ field }) => (
+                                <FormItem className=" items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <FormLabel>
+                                        {dictionary['local'].play_mode}
+                                    </FormLabel>
+                                    <Select onValueChange={(e) => {
+                                        field.onChange(Number(e));
+                                    }} defaultValue={field.value.toString()}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a mode" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {Object.entries(PlayMode).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
+                                                <SelectItem key={key.toString()} value={value.toString()}>
+                                                    {dictionary['local'][`play_mode_${key.toLowerCase()}`]}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        {dictionary['local'].play_mode_description}
                                     </FormDescription>
                                 </FormItem>
                             )}

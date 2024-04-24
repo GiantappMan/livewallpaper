@@ -1,5 +1,3 @@
-import { PlayMode } from "./playlist";
-
 export class Wallpaper {
   constructor(init?: Partial<Wallpaper>) {
     Object.assign(this, init);
@@ -113,7 +111,14 @@ export enum VideoPlayer {
   MPV_Player,
   System_Player
 }
-
+export enum PlayMode {
+  //顺序播放
+  Order,
+  //随机播放
+  Random,
+  //定时切换
+  Timer
+}
 export class WallpaperSetting {
   constructor(init?: Partial<WallpaperSetting>) {
     Object.assign(this, init);
@@ -128,7 +133,7 @@ export class WallpaperSetting {
   videoPlayer: VideoPlayer = VideoPlayer.Default_Player;
   // volume: number = 0;
   // playlist
-  mode?: PlayMode = PlayMode.Order;
+  playMode: PlayMode = PlayMode.Order;
   // img
   fit: Fit = Fit.Center;
   keepWallpaper: boolean = true;

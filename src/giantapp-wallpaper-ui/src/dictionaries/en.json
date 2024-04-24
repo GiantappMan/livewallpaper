@@ -127,7 +127,12 @@
     "wallpaper_type_playlist": "Playlist",
     "wallpaper_type_video": "Video",
     "wallpaper_type_web": "Web",
-    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory."
+    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory.",
+    "play_mode": "Play mode",
+    "play_mode_description": "Set how to switch wallpapers in the list",
+    "play_mode_order": "Play in order",
+    "play_mode_random": "Play randomly",
+    "play_mode_timer": "Scheduled switching"
   },
   "settings": {
     "add_directory": "Add Directory",

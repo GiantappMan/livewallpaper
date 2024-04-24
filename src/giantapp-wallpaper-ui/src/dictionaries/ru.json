@@ -127,7 +127,12 @@
     "wallpaper_type_playlist": "Плейлист",
     "wallpaper_type_video": "Видео",
     "wallpaper_type_web": "Веб-страница",
-    "you_can_create_wallpaper": "Вы можете создать обои или изменить папку для сканирования обоев"
+    "you_can_create_wallpaper": "Вы можете создать обои или изменить папку для сканирования обоев",
+    "play_mode": "Режим игры",
+    "play_mode_description": "Установите способ переключения обоев в списке",
+    "play_mode_order": "Играть по порядку",
+    "play_mode_random": "Играть в случайном порядке",
+    "play_mode_timer": "Переключение по расписанию"
   },
   "settings": {
     "add_directory": "Добавить папку",
