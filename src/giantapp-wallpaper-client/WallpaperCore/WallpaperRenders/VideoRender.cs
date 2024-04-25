@@ -15,7 +15,7 @@ internal class VideoRender : BaseRender
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private VideoSnapshot? _snapshot;
-    readonly bool _isRestore;
+    bool _isRestore;
     IVideoApi? _playerApi;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
     public override bool IsSupportProgress { get; protected set; } = true;
@@ -35,6 +35,7 @@ internal class VideoRender : BaseRender
             else if (item is VideoSnapshot snapshot)
             {
                 _snapshot = snapshot;
+                _isRestore = true;
                 break;
             }
         }

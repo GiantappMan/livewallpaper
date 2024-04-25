@@ -15,7 +15,6 @@ internal class PlaylistRender : BaseRender
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private PlaylistSnapshot? _snapshot;
     private BaseRender? _currentRender;
-    private Wallpaper? _playingWallpaper;
     //壁纸开始时间
     private DateTime? _startTime;
     //下次壁纸切换时间
@@ -24,6 +23,7 @@ internal class PlaylistRender : BaseRender
     //正在检查timer
     private bool _isChecking = false;
     private readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
+    private Wallpaper? _playingWallpaper;
     private Wallpaper? _playlist;
     #endregion
 
@@ -51,16 +51,18 @@ internal class PlaylistRender : BaseRender
         {
             if (DateTime.Now >= _nextSwitchTime)
             {
-                //切换壁纸
-                //_playingWallpaper?.Meta.Next();
-                //_ = Play(Wallpaper);
+                _playlist?.UpdateNextPlayIndex();
+                _ = Play(_playlist);
             }
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Timer_Elapsed");
         }
-        finally { _isChecking = false; }
+        finally
+        {
+            _isChecking = false;
+        }
     }
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
@@ -83,7 +85,7 @@ internal class PlaylistRender : BaseRender
         }
     }
 
-    internal override object? GetSnapshot() 
+    internal override object? GetSnapshot()
     {
         return _snapshot;
     }
@@ -153,26 +155,31 @@ internal class PlaylistRender : BaseRender
 
     internal override double GetDuration()
     {
-        var tmp = _currentRender?.GetDuration() ?? 0;
-        if (tmp == 0)
+        if (_currentRender == null)
+            return 0;
+
+        if (_currentRender.IsSupportProgress)
+            return _currentRender.GetDuration();
+
+        if (_playingWallpaper == null)
+            return 0;
+
+        var tmpDuration = _playingWallpaper.Setting.Duration;
+        if (string.IsNullOrEmpty(tmpDuration))
         {
-            if (_playingWallpaper == null)
-                return 0;
-
-            var tmpDuration = _playingWallpaper.Setting.Duration;
-            if (string.IsNullOrEmpty(tmpDuration))
-            {
-                //没设置的默认一小时
-                tmpDuration = "01:00";
-            }
-
-            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
-            if (!parseOk)
-                return 0;
-
-            return duration.TotalSeconds;
+            //没设置的默认一小时
+            tmpDuration = "01:00:00";
         }
-        return tmp;
+
+        //添加0day 符合timespan 格式
+        if (tmpDuration?.Split(':').Length == 2)
+            tmpDuration = $"00:{tmpDuration}";
+
+        bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
+        if (!parseOk)
+            return 0;
+
+        return duration.TotalSeconds;
     }
 
     internal override double GetTimePos()

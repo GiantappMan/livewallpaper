@@ -276,6 +276,8 @@ public class Wallpaper : ICloneable
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
     public static readonly string[] PlaylistExtension = new[] { ".playlist" };
+    //当前随机播放数据，播放完后重新生成
+    public Queue<uint> RandomPlaylist { get; private set; } = new();
 
     public Wallpaper(string? filePath)
     {
@@ -507,6 +509,45 @@ public class Wallpaper : ICloneable
         };
         return res;
 
+    }
+
+    internal void UpdateNextPlayIndex()
+    {
+        if (Meta.Type != WallpaperType.Playlist)
+            return;
+
+        uint newIndex = Meta.PlayIndex;
+        switch (Setting.PlayMode)
+        {
+            case PlayMode.Order:
+                newIndex += 1;
+                if (newIndex >= Meta.Wallpapers.Count)
+                {
+                    newIndex = 0;
+                }
+                break;
+            case PlayMode.Timer:
+                //todo
+                break;
+            case PlayMode.Random:
+                if (RandomPlaylist.Count > 0)
+                {
+                    newIndex = RandomPlaylist.Dequeue();
+                }
+                else
+                {
+                    //生成随机播放列表
+                    // 生成所有索引
+                    List<int> allIndexes = Enumerable.Range(0, Meta.Wallpapers.Count).ToList();
+
+                    // 随机排序索引
+                    Random rng = new();
+                    List<int> shuffledIndexes = allIndexes.OrderBy(i => rng.Next()).ToList();
+                    RandomPlaylist = new Queue<uint>(shuffledIndexes.Select(i => (uint)i));
+                }
+                break;
+        }
+        Meta.PlayIndex = newIndex;
     }
 }
 
