@@ -1,4 +1,5 @@
 ﻿
+using NLog;
 using System.Text.Json;
 
 namespace WallpaperCore.WallpaperRenders;
@@ -10,16 +11,57 @@ public class PlaylistSnapshot
 
 internal class PlaylistRender : BaseRender
 {
-    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Playlist };
-
-    PlaylistSnapshot? _snapshot;
-    BaseRender? _currentRender;
-    Wallpaper? _playingWallpaper;
+    #region fields
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private PlaylistSnapshot? _snapshot;
+    private BaseRender? _currentRender;
+    private Wallpaper? _playingWallpaper;
     //壁纸开始时间
-    DateTime? _startTime;
+    private DateTime? _startTime;
     //下次壁纸切换时间
-    DateTime? _nextSwitchTime;
-    readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
+    private DateTime? _nextSwitchTime;
+    private readonly System.Timers.Timer _timer;
+    //正在检查timer
+    private bool _isChecking = false;
+    private readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
+    private Wallpaper? _playlist;
+    #endregion
+
+    #region properties
+    public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Playlist };
+    #endregion
+
+    public PlaylistRender(System.Timers.Timer timer)
+    {
+        _timer = timer;
+        _timer.Elapsed += Timer_Elapsed;
+    }
+
+    private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        //检查是否切换壁纸
+        if (_nextSwitchTime == null)
+            return;
+
+        if (_isChecking)
+            return;
+        _isChecking = true;
+
+        try
+        {
+            if (DateTime.Now >= _nextSwitchTime)
+            {
+                //切换壁纸
+                //_playingWallpaper?.Meta.Next();
+                //_ = Play(Wallpaper);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Timer_Elapsed");
+        }
+        finally { _isChecking = false; }
+    }
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
@@ -41,7 +83,7 @@ internal class PlaylistRender : BaseRender
         }
     }
 
-    internal override object? GetSnapshot()
+    internal override object? GetSnapshot() 
     {
         return _snapshot;
     }
@@ -53,6 +95,8 @@ internal class PlaylistRender : BaseRender
 
     internal override async Task Play(Wallpaper? playlist)
     {
+        _playlist = playlist;
+
         if (playlist == null)
             return;
 
@@ -91,6 +135,9 @@ internal class PlaylistRender : BaseRender
             await _currentRender.Play(_playingWallpaper);
             _startTime = DateTime.Now;
             _nextSwitchTime = _startTime.Value.AddSeconds(GetDuration());
+
+            _timer.Elapsed -= Timer_Elapsed;
+            _timer.Elapsed += Timer_Elapsed;
         }
     }
 
@@ -176,6 +223,7 @@ internal class PlaylistRender : BaseRender
 
     internal override void Stop()
     {
+        _timer.Elapsed -= Timer_Elapsed;
         _currentRender?.Stop();
         _startTime = null;
         _nextSwitchTime = null;

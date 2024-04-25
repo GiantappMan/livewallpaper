@@ -13,7 +13,7 @@ public class WallpaperManagerSnapshot
 //管理一个屏幕的壁纸播放
 public class WallpaperManager
 {
-    readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new PlaylistRender(), new WebRender() };
+    readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new PlaylistRender(WallpaperApi.Timer), new WebRender() };
     BaseRender? _currentRender;
 
     readonly Logger _logger = LogManager.GetCurrentClassLogger();

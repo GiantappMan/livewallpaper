@@ -61,8 +61,8 @@ internal class ImgRender : BaseRender
             _snapshot ??= new();
 
             //更新旧壁纸，用于退出时还原
-            _snapshot.OldWallpaper ??= oldWallpaper;
-            _snapshot.OldPosition ??= oldPosition;
+            _snapshot.OldWallpaper = oldWallpaper;
+            _snapshot.OldPosition = oldPosition;
         });
     }
 
