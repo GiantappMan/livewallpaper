@@ -93,6 +93,8 @@ public class WallpaperMeta : ICloneable
     public uint PlayIndex { get; set; } = 0;
     //播放列表内的壁纸
     public List<Wallpaper> Wallpapers { get; set; } = new();
+    //真正的播放列表，如果是随机播放，会和默认不一样
+    public List<Wallpaper> RealPlaylist { get; set; } = new();
 
     //确保有Id
     public void EnsureId(string? filePath = null)
@@ -511,43 +513,63 @@ public class Wallpaper : ICloneable
 
     }
 
-    internal void UpdateNextPlayIndex()
+    internal void GenerateRealPlaylist()
     {
         if (Meta.Type != WallpaperType.Playlist)
             return;
 
-        uint newIndex = Meta.PlayIndex;
         switch (Setting.PlayMode)
         {
             case PlayMode.Order:
-                newIndex += 1;
-                if (newIndex >= Meta.Wallpapers.Count)
-                {
-                    newIndex = 0;
-                }
-                break;
-            case PlayMode.Timer:
-                //todo
+                Meta.RealPlaylist = new(Meta.Wallpapers);
                 break;
             case PlayMode.Random:
-                if (RandomPlaylist.Count > 0)
+                var shuffled = ShuffleList(Meta.Wallpapers);
+                while (Enumerable.SequenceEqual(Meta.RealPlaylist, shuffled))
                 {
-                    newIndex = RandomPlaylist.Dequeue();
+                    shuffled = ShuffleList(Meta.Wallpapers);
                 }
-                else
-                {
-                    //生成随机播放列表
-                    // 生成所有索引
-                    List<int> allIndexes = Enumerable.Range(0, Meta.Wallpapers.Count).ToList();
-
-                    // 随机排序索引
-                    Random rng = new();
-                    List<int> shuffledIndexes = allIndexes.OrderBy(i => rng.Next()).ToList();
-                    RandomPlaylist = new Queue<uint>(shuffledIndexes.Select(i => (uint)i));
-                }
+                Meta.RealPlaylist = shuffled;
                 break;
         }
-        Meta.PlayIndex = newIndex;
+    }
+
+    static List<T> ShuffleList<T>(List<T> inputList)
+    {
+        Random rng = new();
+        List<T> list = new(inputList);
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            (list[n], list[k]) = (list[k], list[n]);
+        }
+        return list;
+    }
+
+    internal void IncrementPlayIndex()
+    {
+        if (Meta.Type != WallpaperType.Playlist)
+            return;
+
+        Meta.PlayIndex += 1;
+        if (Meta.PlayIndex >= Meta.RealPlaylist.Count)
+        {
+            Meta.PlayIndex = 0;
+        }
+    }
+
+    internal void DecrementPlayIndex()
+    {
+        if (Meta.Type != WallpaperType.Playlist)
+            return;
+
+        Meta.PlayIndex -= 1;
+        if (Meta.PlayIndex < 0)
+        {
+            Meta.PlayIndex = (uint)(Meta.RealPlaylist.Count - 1);
+        }
     }
 }
 

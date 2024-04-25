@@ -51,7 +51,7 @@ internal class PlaylistRender : BaseRender
         {
             if (DateTime.Now >= _nextSwitchTime)
             {
-                _playlist?.UpdateNextPlayIndex();
+                _playlist?.IncrementPlayIndex();
                 _ = Play(_playlist);
             }
         }
@@ -104,7 +104,10 @@ internal class PlaylistRender : BaseRender
 
         var meta = playlist.Meta;
 
-        _playingWallpaper = meta.Wallpapers.ElementAtOrDefault((int)meta.PlayIndex);
+        if (playlist.Meta.RealPlaylist.Count == 0)
+            playlist.GenerateRealPlaylist();
+
+        _playingWallpaper = meta.RealPlaylist.ElementAtOrDefault((int)meta.PlayIndex);
         if (_playingWallpaper == null)
             return;
 
@@ -145,6 +148,11 @@ internal class PlaylistRender : BaseRender
 
     internal override void ReApplySetting(Wallpaper? wallpaper)
     {
+        if (wallpaper == null)
+            return;
+
+        //重新生成播放列表
+        wallpaper.GenerateRealPlaylist();
         _ = Play(wallpaper);
     }
 

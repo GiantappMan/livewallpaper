@@ -514,9 +514,19 @@ public static class WallpaperApi
         //如果壁纸正在播放，重新调用ShowWallpaper以生效
         foreach (var item in RunningWallpapers)
         {
-            if (item.Value.Wallpaper == null)
+            var currentWallpaper = item.Value.Wallpaper;
+            if (currentWallpaper == null)
                 continue;
 
+            //当前是播放列表，并且修改的是播放列表的参数
+            if (currentWallpaper.Meta.IsPlaylist() && currentWallpaper.FilePath == wallpaper.FilePath)
+            {
+                currentWallpaper.Setting = setting;
+                item.Value.ReApplySetting();
+                continue;
+            }
+
+            //检查壁纸是否正在播放，包括playlist里面
             bool isPlaying = item.Value.CheckIsPlaying(wallpaper);
             if (isPlaying)
             {
@@ -528,12 +538,6 @@ public static class WallpaperApi
         }
         return true;
     }
-
-    ////设置播放列表配置
-    //public static bool SetPlaylistSetting(PlaylistSetting setting, Playlist playlist)
-    //{
-    //    return true;
-    //}
 
     //恢复快照
     public static async Task RestoreFromSnapshot(WallpaperApiSnapshot? snapshot)
