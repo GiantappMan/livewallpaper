@@ -193,7 +193,11 @@ public class WallpaperManager
             return false;
 
         if (Wallpaper.Meta.IsPlaylist())
-        {            
+        {
+            //传进来的是playlist
+            if (wallpaper.FilePath == Wallpaper.FilePath)
+                return true;
+
             bool isInPlaylist = Wallpaper.Meta.Wallpapers.Exists(m => m.FileUrl == wallpaper.FileUrl);
             return isInPlaylist;
         }

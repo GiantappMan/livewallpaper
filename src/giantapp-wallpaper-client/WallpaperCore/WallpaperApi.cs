@@ -498,6 +498,7 @@ public static class WallpaperApi
 
         return true;
     }
+
     //设置壁纸配置
     public static bool SetWallpaperSetting(WallpaperSetting setting, Wallpaper wallpaper)
     {
@@ -518,19 +519,20 @@ public static class WallpaperApi
             if (currentWallpaper == null)
                 continue;
 
-            //当前是播放列表，并且修改的是播放列表的参数
-            if (currentWallpaper.Meta.IsPlaylist() && currentWallpaper.FilePath == wallpaper.FilePath)
-            {
-                currentWallpaper.Setting = setting;
-                item.Value.ReApplySetting();
-                continue;
-            }
-
             //检查壁纸是否正在播放，包括playlist里面
             bool isPlaying = item.Value.CheckIsPlaying(wallpaper);
             if (isPlaying)
             {
-                var playingWallpaper = item.Value.GetRunningWallpaper();
+                Wallpaper? playingWallpaper;
+                if (wallpaper.Meta.IsPlaylist())
+                {
+                    playingWallpaper = currentWallpaper;
+                }
+                else
+                {
+                    playingWallpaper = item.Value.GetRunningWallpaper();
+                }
+
                 if (playingWallpaper != null)
                     playingWallpaper.Setting = setting;
                 item.Value.ReApplySetting();

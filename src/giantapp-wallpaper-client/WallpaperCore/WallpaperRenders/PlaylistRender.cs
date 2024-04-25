@@ -102,10 +102,10 @@ internal class PlaylistRender : BaseRender
         if (playlist == null)
             return;
 
-        var meta = playlist.Meta;
-
         if (playlist.Meta.RealPlaylist.Count == 0)
             playlist.GenerateRealPlaylist();
+
+        var meta = playlist.Meta;
 
         _playingWallpaper = meta.RealPlaylist.ElementAtOrDefault((int)meta.PlayIndex);
         if (_playingWallpaper == null)

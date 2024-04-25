@@ -525,7 +525,7 @@ public class Wallpaper : ICloneable
                 break;
             case PlayMode.Random:
                 var shuffled = ShuffleList(Meta.Wallpapers);
-                while (Enumerable.SequenceEqual(Meta.RealPlaylist, shuffled))
+                while (Enumerable.SequenceEqual(Meta.Wallpapers, shuffled))
                 {
                     shuffled = ShuffleList(Meta.Wallpapers);
                 }
