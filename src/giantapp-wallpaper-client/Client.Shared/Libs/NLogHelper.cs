@@ -42,6 +42,10 @@ public class NLogHelper
         config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
         config.AddRule(LogLevel.Error, LogLevel.Fatal, erroLogfile);
 
+        //在vs调试窗口输出
+        var debugconsole = new NLog.Targets.DebuggerTarget("logconsole");
+        config.AddRule(LogLevel.Debug, LogLevel.Fatal, debugconsole);
+
         // Apply config           
         LogManager.Configuration = config;
 
