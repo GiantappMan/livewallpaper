@@ -174,7 +174,8 @@ public static class WallpaperApi
                 bool isPlaying = item.Value.CheckIsPlaying(wallpaper);
                 if (isPlaying)
                 {
-                    CloseWallpaper(item.Key);//正在播放关闭壁纸
+                    //CloseWallpaper(item.Key);//正在播放关闭壁纸
+                    StopWallpaper((int)item.Key);
                     Thread.Sleep(100);
                 }
             }
