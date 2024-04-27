@@ -176,12 +176,12 @@ internal class PlaylistRender : BaseRender
         if (string.IsNullOrEmpty(tmpDuration))
         {
             //没设置的默认一小时
-            tmpDuration = "01:00:00";
+            tmpDuration = "01:00";
         }
 
         //添加0day 符合timespan 格式
         if (tmpDuration?.Split(':').Length == 2)
-            tmpDuration = $"00:{tmpDuration}";
+            tmpDuration = $"{tmpDuration}:00";
 
         bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
         if (!parseOk)
