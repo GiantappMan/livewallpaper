@@ -151,6 +151,7 @@ const LocalPage = ({
     }
     let newWallpapers = wallpapers?.filter((item) => item.filePath !== wallpaper.filePath);
     setWallpapers(newWallpapers);
+    await refreshPlayingStatus();
   }
 
   const handleEditWallpaper = async (wallpaper: Wallpaper) => {
