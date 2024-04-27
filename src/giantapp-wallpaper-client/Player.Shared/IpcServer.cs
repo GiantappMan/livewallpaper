@@ -36,38 +36,14 @@ public class IpcServer : IDisposable
             try
             {
                 _logger.Info($"new NamedPipeServerStream: {_ipcServerName}");
-                _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                _pipeServer = new NamedPipeServerStream(_ipcServerName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
                 //_logger.Info($"WaitForConnectionAsync");
+
+                // 等待客户端连接
                 await _pipeServer.WaitForConnectionAsync(cancellationToken);
-                //_logger.Info($"WaitForConnectionAsync1");
 
-                while (true)
-                {
-                    if (_pipeServer == null)
-                        break;
-
-                    // 接收消息
-                    byte[] buffer = new byte[256];
-                    int bytesRead = await _pipeServer.ReadAsync(buffer, 0, buffer.Length);
-                    if (bytesRead == 0) // 如果没有读取到数据，表示客户端已经断开连接
-                        break;
-
-                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
-                    if (ReceivedMessageFunc != null)
-                    {
-                        var data = JsonSerializer.Deserialize<IpcPayload>(message);
-                        if (data == null)
-                            continue;
-
-                        var res = ReceivedMessageFunc.Invoke(data);
-
-                        string json = JsonSerializer.Serialize(res);
-                        byte[] responseBytes = Encoding.UTF8.GetBytes(json);
-                        await _pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
-                        await _pipeServer.FlushAsync();
-                    }
-                }
+                // 使用异步任务处理客户端消息
+                Task handleClientTask = HandleClientAsync(_pipeServer);
             }
             catch (OperationCanceledException)
             {
@@ -79,15 +55,52 @@ public class IpcServer : IDisposable
                 // Handle any other exceptions that may occur
                 _logger.Error($"Error in ListenForMessagesAsync: {ex.Message}");
             }
-            finally
+        }
+    }
+
+    private async Task HandleClientAsync(NamedPipeServerStream pipeServer)
+    {
+        try
+        {
+            while (pipeServer.IsConnected)
             {
-                // 断开连接, 等待下一个客户端连接
-                if (_pipeServer != null && _pipeServer.IsConnected)
-                    _pipeServer.Disconnect();
-                _pipeServer?.Dispose();
-                _pipeServer = null;
-                //_logger.Info("_pipeServer Disconnnect");
+                // 接收消息
+                byte[] buffer = new byte[4096];
+                int bytesRead = await pipeServer.ReadAsync(buffer, 0, buffer.Length);
+                if (bytesRead == 0)
+                {
+                    // 如果客户端已经断开连接，则退出循环
+                    break;
+                }
+
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                if (ReceivedMessageFunc != null)
+                {
+                    var data = JsonSerializer.Deserialize<IpcPayload>(message);
+                    if (data == null)
+                        continue;
+
+                    var res = ReceivedMessageFunc.Invoke(data);
+
+                    string json = JsonSerializer.Serialize(res);
+                    byte[] responseBytes = Encoding.UTF8.GetBytes(json);
+
+                    // 发送响应
+                    await pipeServer.WriteAsync(responseBytes, 0, responseBytes.Length);
+                    await pipeServer.FlushAsync();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error handling client connection: {ex.Message}");
+        }
+        finally
+        {
+            // 断开连接
+            pipeServer.Disconnect();
+            pipeServer.Dispose();
         }
     }
 

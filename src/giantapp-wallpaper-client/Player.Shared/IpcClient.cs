@@ -24,14 +24,15 @@ public class IpcClient : IDisposable
 
     public IpcPayload? Send(IpcPayload ipcPayload)
     {
+        string sendContent = "";
         try
         {
+            sendContent = JsonSerializer.Serialize(ipcPayload) + "\n";
             using NamedPipeClientStream pipeClient = new(_serverName);
-            pipeClient.Connect(); // 连接超时时间
+            pipeClient.Connect(0); // 连接超时时间
 
             if (pipeClient.IsConnected)
             {
-                var sendContent = JsonSerializer.Serialize(ipcPayload) + "\n";
                 byte[] commandBytes = Encoding.UTF8.GetBytes(sendContent);
                 pipeClient.Write(commandBytes, 0, commandBytes.Length);
 
@@ -41,11 +42,12 @@ public class IpcClient : IDisposable
 
                 // 将字节数组转换为字符串
                 string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                if (!sendContent.Contains("duration") && !sendContent.Contains("time-pos"))
-                {
-                    _logger.Info(sendContent + "mpv response: " + response);
-                    Debug.WriteLine(sendContent + "mpv response: " + response);
-                }
+                //减少打印
+                //if (!sendContent.Contains("duration") && !sendContent.Contains("time-pos"))
+                //{
+                //_logger.Info(sendContent + "mpv response: " + response);
+                Debug.WriteLine(sendContent + "mpv response: " + response);
+                //}
                 if (string.IsNullOrEmpty(response))
                     return null;
                 var res = JsonSerializer.Deserialize<IpcPayload>(response);
@@ -59,7 +61,7 @@ public class IpcClient : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Warn(ex, "Failed to get mpv info.");
+            _logger.Warn(ex, sendContent + "Failed to get mpv info.");
             return null;
         }
     }
