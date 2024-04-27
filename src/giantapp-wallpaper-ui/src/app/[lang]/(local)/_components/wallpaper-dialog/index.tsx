@@ -628,9 +628,15 @@ export function WallpaperDialog(props: WallpaperDialogProps) {
                                                     style={{ display: 'none' }}
                                                     onChange={(e) => {
                                                         const file = e.target.files ? e.target.files[0] : null;
+                                                        //判断文件大小
+                                                        if (file && file.size > 1024 * 1024 * 500) {
+                                                            toast.warning(dictionary['local'].upload_size_limit_exceeded, { duration: 5000 });
+                                                            //清空value
+                                                            fileInputRef.current!.value = '';
+                                                            return;
+                                                        }
                                                         field.onChange(file);
-                                                    }
-                                                    } />
+                                                    }} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

@@ -115,7 +115,7 @@
     "update_successful": "Update successful",
     "updating": "Updating, please wait",
     "upload_failed": "File not uploaded",
-    "upload_size_limit_exceeded": "File size cannot exceed 1G",
+    "upload_size_limit_exceeded": "The file is too large. Please copy large files directly to the wallpaper directory.",
     "video_player": "Video player",
     "video_player_description": "It is recommended to use Mpv player to support more video formats. But if you feel stuck, you can try switching to the system player.",
     "volume": "Volume",

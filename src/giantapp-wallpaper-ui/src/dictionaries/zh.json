@@ -115,7 +115,7 @@
     "update_successful": "更新成功",
     "updating": "导入中，请稍等",
     "upload_failed": "文件未上传",
-    "upload_size_limit_exceeded": "文件大小不能超过1G",
+    "upload_size_limit_exceeded": "文件过大，请直接拷贝到壁纸保存目录",
     "video_player": "视频播放器",
     "video_player_description": "推荐使用Mpv播放器，以支持更多的视频格式。但如果你觉得卡顿可以尝试切换到系统播放器。",
     "volume": "音量",
