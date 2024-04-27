@@ -112,6 +112,10 @@ public partial class MainWindow : Window
                     switch (para)
                     {
                         case "duration":
+                            if (!media.NaturalDuration.HasTimeSpan)
+                            {
+                                Thread.Sleep(1000);
+                            }
                             res.Data = media.NaturalDuration.TimeSpan.TotalSeconds.ToString();
                             break;
                         case "time-pos":

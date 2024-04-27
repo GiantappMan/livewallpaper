@@ -15,8 +15,9 @@ internal class VideoRender : BaseRender
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private VideoSnapshot? _snapshot;
-    bool _isRestore;
-    IVideoApi? _playerApi;
+    private bool _isRestore;
+    private IVideoApi? _playerApi;
+    private double _duration = -1;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
     public override bool IsSupportProgress { get; protected set; } = true;
 
@@ -137,6 +138,7 @@ internal class VideoRender : BaseRender
             _playerApi.LoadList(playlistPath);
             Resume();
         }
+        _duration = -1;
     }
 
     internal override object? GetSnapshot()
@@ -169,7 +171,12 @@ internal class VideoRender : BaseRender
     {
         if (_playerApi == null)
             return 0;
-        return _playerApi.GetDuration();
+
+        if (_duration > 0)
+            return _duration;
+
+        _duration = _playerApi.GetDuration();
+        return _duration;
     }
 
     internal override double GetTimePos()
@@ -182,6 +189,7 @@ internal class VideoRender : BaseRender
     internal override void Stop()
     {
         _playerApi?.Stop();
+        _duration = -1;
     }
 
     internal override void SetProgress(double progress)

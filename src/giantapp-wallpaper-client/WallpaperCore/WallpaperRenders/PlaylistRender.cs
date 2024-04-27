@@ -138,12 +138,32 @@ internal class PlaylistRender : BaseRender
         if (_currentRender != null)
         {
             await _currentRender.Play(_playingWallpaper);
+            var duration = -1d;
+            for (int i = 0; i < 10; i++)
+            {
+                //多试几次，可能刚切视频获取不出来
+                duration = GetDuration();
+                await Task.Delay(100);
+                if (duration > 0)
+                    break;
+            }
             _startTime = DateTime.Now;
-            _nextSwitchTime = _startTime.Value.AddSeconds(GetDuration());
+            if (duration > 0)
+                UpdateNextSwitchTime(_startTime, duration);
 
             _timer.Elapsed -= Timer_Elapsed;
             _timer.Elapsed += Timer_Elapsed;
         }
+    }
+
+    private void UpdateNextSwitchTime(DateTime? startTime, double duration)
+    {
+        if (startTime == null)
+            return;
+
+        var oldTime = _nextSwitchTime;
+        _nextSwitchTime = startTime.Value.AddSeconds(duration);
+        _logger.Info($"UpdateNextSwitchTime {oldTime} to {_nextSwitchTime},{duration}");
     }
 
     internal override void ReApplySetting(Wallpaper? wallpaper)
@@ -168,26 +188,29 @@ internal class PlaylistRender : BaseRender
 
         if (_currentRender.IsSupportProgress)
             return _currentRender.GetDuration();
-
-        if (_playingWallpaper == null)
-            return 0;
-
-        var tmpDuration = _playingWallpaper.Setting.Duration;
-        if (string.IsNullOrEmpty(tmpDuration))
+        else
         {
-            //没设置的默认一小时
-            tmpDuration = "01:00";
+
+            if (_playingWallpaper == null)
+                return 0;
+
+            var tmpDuration = _playingWallpaper.Setting.Duration;
+            if (string.IsNullOrEmpty(tmpDuration))
+            {
+                //没设置的默认一小时
+                tmpDuration = "01:00";
+            }
+
+            //添加0day 符合timespan 格式
+            if (tmpDuration?.Split(':').Length == 2)
+                tmpDuration = $"{tmpDuration}:00";
+
+            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
+            if (!parseOk)
+                return 0;
+
+            return duration.TotalSeconds;
         }
-
-        //添加0day 符合timespan 格式
-        if (tmpDuration?.Split(':').Length == 2)
-            tmpDuration = $"{tmpDuration}:00";
-
-        bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
-        if (!parseOk)
-            return 0;
-
-        return duration.TotalSeconds;
     }
 
     internal override double GetTimePos()
@@ -216,19 +239,20 @@ internal class PlaylistRender : BaseRender
         if (_currentRender == null)
             return;
 
+        var duration = GetDuration();
         if (_currentRender.IsSupportProgress)
         {
             _currentRender.SetProgress(progress);
-            return;
         }
-
+        //else
+        //{
         //根据进度计算时间
-
         progress /= 100;
-        var duration = GetDuration();
 
         _startTime = DateTime.Now.AddSeconds(-progress * duration);
-        _nextSwitchTime = DateTime.Now.AddSeconds((1 - progress) * duration);
+        //_nextSwitchTime = DateTime.Now.AddSeconds((1 - progress) * duration);
+        //}
+        UpdateNextSwitchTime(_startTime, duration);
     }
 
     internal override void SetVolume(uint volume)

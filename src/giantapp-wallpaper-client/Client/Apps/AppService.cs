@@ -367,6 +367,7 @@ internal class AppService
     #endregion
 
     #region callback
+    //发送给前端的配置，需要修改的时候
     private static async void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
     {
         switch (e.Key)
@@ -437,6 +438,7 @@ internal class AppService
                         ApplySaveFolderMapping(configWallpaper.EnsureDirectories());
                         _apiObject.TriggerRefreshPageEvent();
                     }
+                    WallpaperApi.DefaultVideoPlayer = configWallpaper.DefaultVideoPlayer;
                 }
                 break;
         }

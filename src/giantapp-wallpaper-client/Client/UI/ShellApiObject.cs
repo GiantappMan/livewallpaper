@@ -13,7 +13,7 @@ namespace Client.UI;
 [ComVisible(true)]
 public class ShellApiObject
 {
-    ShellWindow? _window;
+    readonly ShellWindow? _window;
 
     public ShellApiObject(ShellWindow? window = null)
     {
