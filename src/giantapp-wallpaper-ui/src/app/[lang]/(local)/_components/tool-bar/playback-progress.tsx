@@ -45,8 +45,11 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
                 // console.log("getWallpaperTime:", res);
 
                 if (res.data) {
-                    setTime(formatTime(res.data.position));
-                    setTotalTime(formatTime(res.data.duration));
+                    //-1 是获取失败
+                    if (res.data.position != -1)
+                        setTime(formatTime(res.data.position));
+                    if (res.data.duration != -1)
+                        setTotalTime(formatTime(res.data.duration));
                     setProgress(res.data.position / res.data.duration * 100);
                 }
                 else {

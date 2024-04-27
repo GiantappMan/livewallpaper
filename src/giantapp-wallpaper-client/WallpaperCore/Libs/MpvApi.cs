@@ -278,7 +278,7 @@ public class MpvApi : IVideoApi
     {
         var res = SendMessage(IPCServerName, "get_property", "time-pos");
         if (res == null)
-            return 0;
+            return -1;
         return Convert.ToDouble(res.ToString());
     }
 
@@ -287,7 +287,7 @@ public class MpvApi : IVideoApi
     {
         var res = SendMessage(IPCServerName, "get_property", "duration");
         if (res == null)
-            return 0;
+            return -1;
         return Convert.ToDouble(res.ToString());
     }
 
@@ -319,7 +319,6 @@ public class MpvApi : IVideoApi
             ProcessLaunched = false;
             return null;
         }
-
 
         string id = Guid.NewGuid().ToString();
         using IpcClient client = new(serverName);
