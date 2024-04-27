@@ -425,7 +425,7 @@ public class ApiObject
             {
                 ConfigWallpaper config = Configer.Get<ConfigWallpaper>() ?? new();
                 //修改默认值
-                setting.DefaultVideoPlayer = config.DefaultVideoPlayer;
+                WallpaperApi.DefaultVideoPlayer = config.DefaultVideoPlayer;
             }
 
             return WallpaperApi.SetWallpaperSetting(setting, wallpaper);

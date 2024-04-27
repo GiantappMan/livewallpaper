@@ -11,26 +11,29 @@ public class ModelUtils
         if (obj == null)
             return null;
 
-        Type type = obj.GetType();
-        object clone = Activator.CreateInstance(type);
+        //用json序列化clone，反射有时候要崩
+        return JsonSerializer.Deserialize(JsonSerializer.Serialize(obj), obj.GetType(), WallpaperApi.JsonOptitons);
 
-        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (prop.CanWrite)
-            {
-                object propValue = prop.GetValue(obj, null);
-                if (propValue != null && propValue.GetType().IsClass && !typeof(Delegate).IsAssignableFrom(propValue.GetType()))
-                {
-                    prop.SetValue(clone, CloneObject(propValue), null);
-                }
-                else
-                {
-                    prop.SetValue(clone, propValue, null);
-                }
-            }
-        }
+        //Type type = obj.GetType();
+        //object clone = Activator.CreateInstance(type);
 
-        return clone;
+        //foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        //{
+        //    if (prop.CanWrite)
+        //    {
+        //        object propValue = prop.GetValue(obj, null);
+        //        if (propValue != null && propValue.GetType().IsClass && !typeof(Delegate).IsAssignableFrom(propValue.GetType()))
+        //        {
+        //            prop.SetValue(clone, CloneObject(propValue), null);
+        //        }
+        //        else
+        //        {
+        //            prop.SetValue(clone, propValue, null);
+        //        }
+        //    }
+        //}
+
+        //return clone;
     }
 }
 
@@ -211,8 +214,8 @@ public class WallpaperSetting : ICloneable
     //播放器类型，覆盖默认配置
     public VideoPlayer VideoPlayer { get; set; } = VideoPlayer.Default_Player;
 
-    //界面不做展示，仅当VideoPlayer为默认时，读取数据并保存
-    public VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
+    ////界面不做展示，仅当VideoPlayer为默认时，读取数据并保存
+    //public VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
 
     #endregion
 

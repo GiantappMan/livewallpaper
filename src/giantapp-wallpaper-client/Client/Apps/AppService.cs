@@ -97,19 +97,20 @@ internal class AppService
 
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
         var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
+        WallpaperApi.DefaultVideoPlayer = wallpaperConfig.DefaultVideoPlayer;
         //从快照恢复壁纸
         var snapshot = Configer.Get<WallpaperApiSnapshot>();
         if (snapshot != null)
         {
-            if (snapshot.Data != null)
-                foreach (var item in snapshot.Data)
-                {
-                    if (item.Wallpaper.Setting.VideoPlayer == VideoPlayer.Default_Player)
-                    {
-                        //更新全局配置
-                        item.Wallpaper.Setting.DefaultVideoPlayer = wallpaperConfig.DefaultVideoPlayer;
-                    }
-                }
+            //if (snapshot.Data != null)
+            //    foreach (var item in snapshot.Data)
+            //    {
+            //        if (item.Wallpaper.Setting.VideoPlayer == VideoPlayer.Default_Player)
+            //        {
+            //            //更新全局配置
+            //            WallpaperApi.DefaultVideoPlayer = wallpaperConfig.DefaultVideoPlayer;
+            //        }
+            //    }
             await WallpaperApi.RestoreFromSnapshot(snapshot);
             //重新获取快照，有可能pid重新生成了
             //Configer.Set(WallpaperApi.GetSnapshot(), out _, true);

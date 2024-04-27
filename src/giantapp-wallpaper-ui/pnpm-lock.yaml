@@ -78,8 +78,8 @@ importers:
         specifier: ^2.8.0
         version: 2.8.0(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       lucide-react:
-        specifier: ^0.373.0
-        version: 0.373.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+        specifier: ^0.376.0
+        version: 0.376.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       next:
         specifier: 14.2.3
         version: 14.2.3(react-dom@https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
@@ -2051,9 +2051,9 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lucide-react@0.373.0:
-    resolution: {integrity: sha512-0kygFhk/DmK4mi+zf1t5mNStJQGaElACZdDdLiHOHFJzi7g3maC3SR86AcaUsxvDkZPId3XCd4vRngnjkPHu3Q==}
-    version: 0.373.0
+  lucide-react@0.376.0:
+    resolution: {integrity: sha512-g91IX3ERD6yUR1TL2dsL4BkcGygpZz/EsqjAeL/kcRQV0EApIOr/9eBfKhYOVyQIcGGuotFGjF3xKLHMEz+b7g==}
+    version: 0.376.0
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
 
@@ -4772,7 +4772,7 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  lucide-react@0.373.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
+  lucide-react@0.376.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
     dependencies:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
 

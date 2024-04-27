@@ -58,7 +58,7 @@ internal class VideoRender : BaseRender
 
         var videoPlayerType = playSetting.VideoPlayer;
         if (videoPlayerType == VideoPlayer.Default_Player)
-            videoPlayerType = playSetting.DefaultVideoPlayer;
+            videoPlayerType = WallpaperApi.DefaultVideoPlayer;
 
         if (playMeta.Type == WallpaperType.AnimatedImg || playMeta.Type == WallpaperType.Playlist)
         {

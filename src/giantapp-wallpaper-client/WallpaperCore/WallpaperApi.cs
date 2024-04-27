@@ -32,6 +32,7 @@ public static class WallpaperApi
     };
 
     public static System.Timers.Timer Timer { get => _timer; }
+    public static VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
 
     #endregion
     static WallpaperApi()
