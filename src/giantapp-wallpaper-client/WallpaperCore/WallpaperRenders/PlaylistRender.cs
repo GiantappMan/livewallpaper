@@ -186,31 +186,31 @@ internal class PlaylistRender : BaseRender
         if (_currentRender == null)
             return 0;
 
-        if (_currentRender.IsSupportProgress)
-            return _currentRender.GetDuration();
-        else
+
+        if (_playingWallpaper == null)
+            return 0;
+
+        var tmpDuration = _playingWallpaper.Setting.Duration;
+        if (string.IsNullOrEmpty(tmpDuration) && !_currentRender.IsSupportProgress)
         {
-
-            if (_playingWallpaper == null)
-                return 0;
-
-            var tmpDuration = _playingWallpaper.Setting.Duration;
-            if (string.IsNullOrEmpty(tmpDuration))
-            {
-                //没设置的默认一小时
-                tmpDuration = "01:00";
-            }
-
-            //添加0day 符合timespan 格式
-            if (tmpDuration?.Split(':').Length == 2)
-                tmpDuration = $"{tmpDuration}:00";
-
-            bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
-            if (!parseOk)
-                return 0;
-
-            return duration.TotalSeconds;
+            //没设置时间，并且本身没有进度的，默认一小时
+            tmpDuration = "01:00";
         }
+
+        //添加0day 符合timespan 格式
+        if (tmpDuration?.Split(':').Length == 2)
+            tmpDuration = $"{tmpDuration}:00";
+
+        bool parseOk = TimeSpan.TryParse(tmpDuration, out TimeSpan duration);
+
+        var res = duration.TotalSeconds;
+        //有配置的，按配置时间
+        if (parseOk && res > 0 || !_currentRender.IsSupportProgress)
+            return res;
+
+        //获取真实长度
+        res = _currentRender.GetDuration();
+        return res;
     }
 
     internal override double GetTimePos()

@@ -406,7 +406,7 @@ const LocalPage = ({
               </div>
 
               <div className="px-6 pl-0 py-4">
-                <div className="flex font-bold text-sm mb-2 lg:text-xl" title={getWallpaperTypeString(dictionary, wallpaper.meta.type)}>
+                <div className="flex font-bold text-sm mb-2 lg:text-xl items-center" title={getWallpaperTypeString(dictionary, wallpaper.meta.type)}>
                   <WallpaperTypeIcon type={wallpaper.meta.type} />
                   {wallpaper?.meta?.title}
                 </div>
