@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json;
 using WallpaperCore.Libs;
+using WallpaperCore.WallpaperRenders;
 
 namespace Client.Apps;
 
@@ -98,6 +99,7 @@ internal class AppService
         var generalConfig = Configer.Get<General>() ?? new();//常规设置
         var wallpaperConfig = Configer.Get<ConfigWallpaper>() ?? new();//壁纸设置
         WallpaperApi.DefaultVideoPlayer = wallpaperConfig.DefaultVideoPlayer;
+        PlaylistRender.PlaylistChanged += PlaylistRender_PlaylistChanged;
         //从快照恢复壁纸
         var snapshot = Configer.Get<WallpaperApiSnapshot>();
         if (snapshot != null)
@@ -167,6 +169,7 @@ internal class AppService
         if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
             ShowShell();
     }
+
     //保存快照，下次启动可恢复
     internal static void SaveSnapshot()
     {
@@ -367,6 +370,12 @@ internal class AppService
     #endregion
 
     #region callback
+
+    private static void PlaylistRender_PlaylistChanged(object sender, EventArgs e)
+    {
+        SaveSnapshot();
+    }
+
     //发送给前端的配置，需要修改的时候
     private static async void ApiObject_CorrectConfigEvent(object sender, CorrectConfigEventArgs e)
     {

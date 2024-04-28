@@ -1,15 +1,16 @@
 ﻿
 using NLog;
-using System.Text.Json;
 
 namespace WallpaperCore.WallpaperRenders;
 
-public class PlaylistSnapshot
+public class PlaylistSnapshot : BaseSnapshot
 {
+    public override string Key { get; set; } = nameof(PlaylistSnapshot);
+    public WallpaperManagerSnapshot? RenderSnapshos { get; set; }
 }
 
 
-internal class PlaylistRender : BaseRender
+public class PlaylistRender : BaseRender
 {
     #region fields
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -27,6 +28,9 @@ internal class PlaylistRender : BaseRender
     private Wallpaper? _playlist;
     #endregion
 
+    //静态时间，通知播放列表发生变化
+    public static event EventHandler? PlaylistChanged;
+
     #region properties
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Playlist };
     #endregion
@@ -37,7 +41,7 @@ internal class PlaylistRender : BaseRender
         _timer.Elapsed += Timer_Elapsed;
     }
 
-    private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+    private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
         //检查是否切换壁纸
         if (_nextSwitchTime == null)
@@ -52,7 +56,8 @@ internal class PlaylistRender : BaseRender
             if (DateTime.Now >= _nextSwitchTime)
             {
                 _playlist?.IncrementPlayIndex();
-                _ = Play(_playlist);
+                await Play(_playlist);
+                PlaylistChanged?.Invoke(null, new EventArgs());
             }
         }
         catch (Exception ex)
@@ -67,27 +72,57 @@ internal class PlaylistRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshotObj?.Snapshots == null)
-            return;
+        //if (snapshotObj?.Snapshots == null)
+        //    return;
 
-        foreach (var item in snapshotObj.Snapshots)
+        //foreach (var item in snapshotObj.Snapshots)
+        //{
+        //    if (item is JsonElement jsonElement)
+        //    {
+        //        try
+        //        {
+        //            _snapshot = JsonSerializer.Deserialize<PlaylistSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
+        //        }
+        //        catch (JsonException ex)
+        //        {
+        //            Debug.WriteLine(ex);
+        //        }
+        //        break;
+        //    }
+        //    else if (item is PlaylistSnapshot snapshot)
+        //    {
+        //        _snapshot = snapshot;
+        //        break;
+        //    }
+        //}
+        _snapshot = GetSnapshot<PlaylistSnapshot>(snapshotObj);
+        if (_snapshot != null)
         {
-            if (item is JsonElement jsonElement)
+            foreach (var item in _renders)
             {
-                _snapshot = JsonSerializer.Deserialize<PlaylistSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
-                break;
-            }
-            else if (item is PlaylistSnapshot snapshot)
-            {
-                _snapshot = snapshot;
-                break;
+                item.Init(_snapshot.RenderSnapshos);
             }
         }
     }
 
     internal override object? GetSnapshot()
     {
-        return _snapshot;
+        List<object> res = new();
+        foreach (var item in _renders)
+        {
+            var tmpSnapshot = item.GetSnapshot();
+            if (tmpSnapshot == null)
+                continue;
+
+            res.Add(tmpSnapshot);
+        }
+        return new PlaylistSnapshot()
+        {
+            RenderSnapshos = new WallpaperManagerSnapshot()
+            {
+                Snapshots = res
+            }
+        };
     }
 
     internal override void Pause()

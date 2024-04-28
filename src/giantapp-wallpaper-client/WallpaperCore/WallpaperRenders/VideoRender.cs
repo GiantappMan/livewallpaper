@@ -1,11 +1,13 @@
 ﻿using NLog;
+using System.Diagnostics;
 using System.Text.Json;
 using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
 
-public class VideoSnapshot
+public class VideoSnapshot : BaseSnapshot
 {
+    public override string Key { get; set; } = nameof(VideoSnapshot);
     public string? IPCServerName { get; set; }
     public int? PId { get; set; }
     public string? ProcessName { get; set; }
@@ -23,23 +25,37 @@ internal class VideoRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshotObj?.Snapshots == null)
-            return;
+        _snapshot = GetSnapshot<VideoSnapshot>(snapshotObj);
+        if (_snapshot != null)
+            _isRestore = true;
+        //if (snapshotObj?.Snapshots == null)
+        //    return;
 
-        foreach (var item in snapshotObj.Snapshots)
-        {
-            if (item is JsonElement jsonElement)
-            {
-                _snapshot = JsonSerializer.Deserialize<VideoSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
-                break;
-            }
-            else if (item is VideoSnapshot snapshot)
-            {
-                _snapshot = snapshot;
-                _isRestore = true;
-                break;
-            }
-        }
+        //foreach (var item in snapshotObj.Snapshots)
+        //{
+        //    if (item is JsonElement jsonElement)
+        //    {
+        //        jsonElement.TryGetProperty("key", out JsonElement keyProperty);
+        //        if (keyProperty.ValueKind == JsonValueKind.Undefined || keyProperty.GetString() != nameof(VideoSnapshot))
+        //            continue;
+        //        try
+        //        {
+        //            _snapshot = JsonSerializer.Deserialize<VideoSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
+        //            _isRestore = true;
+        //        }
+        //        catch (JsonException ex)
+        //        {
+        //            Debug.WriteLine(ex);
+        //        }
+        //        break;
+        //    }
+        //    else if (item is VideoSnapshot snapshot)
+        //    {
+        //        _snapshot = snapshot;
+        //        _isRestore = true;
+        //        break;
+        //    }
+        //}
     }
 
     internal override void ReApplySetting(Wallpaper? wallpaper)

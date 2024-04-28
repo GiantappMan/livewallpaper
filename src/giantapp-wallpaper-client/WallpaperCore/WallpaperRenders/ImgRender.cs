@@ -1,10 +1,12 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using WallpaperCore.Libs;
 
 namespace WallpaperCore.WallpaperRenders;
 
-public class ImgSnapshot
+public class ImgSnapshot : BaseSnapshot
 {
+    public override string Key { get; set; } = nameof(ImgSnapshot);
     public string? OldWallpaper { get; set; }
     public DesktopWallpaperPosition? OldPosition { get; set; }
 }
@@ -18,22 +20,30 @@ internal class ImgRender : BaseRender
 
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
-        if (snapshotObj?.Snapshots == null)
-            return;
+        _snapshot = GetSnapshot<ImgSnapshot>(snapshotObj);
+        //if (snapshotObj?.Snapshots == null)
+        //    return;
 
-        foreach (var item in snapshotObj.Snapshots)
-        {
-            if (item is JsonElement jsonElement)
-            {
-                _snapshot = JsonSerializer.Deserialize<ImgSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
-                break;
-            }
-            else if (item is ImgSnapshot snapshot)
-            {
-                _snapshot = snapshot;
-                break;
-            }
-        }
+        //foreach (var item in snapshotObj.Snapshots)
+        //{
+        //    if (item is JsonElement jsonElement)
+        //    {
+        //        try
+        //        {
+        //            _snapshot = JsonSerializer.Deserialize<ImgSnapshot>(jsonElement, WallpaperApi.JsonOptitons);
+        //        }
+        //        catch (JsonException ex)
+        //        {
+        //            Debug.WriteLine(ex);
+        //        }
+        //        break;
+        //    }
+        //    else if (item is ImgSnapshot snapshot)
+        //    {
+        //        _snapshot = snapshot;
+        //        break;
+        //    }
+        //}
     }
 
     internal override object? GetSnapshot()
