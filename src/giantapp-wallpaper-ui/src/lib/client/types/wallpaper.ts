@@ -14,10 +14,12 @@ export class Wallpaper {
     if (!path)
       return null;
     //根据后缀名返回 img/video
-    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".gif", ".webp"];
+    const imgExt = [".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".avif"];
     const videoExt = [".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv"];
-    const playlistExt = [".playlist"];
+    const webExt = [".html", ".htm"];
     const appExt = [".exe"];
+    const animatedImgExt = [".gif", ".webp"];
+    const playlistExt = [".playlist"];
     const ext = path.substring(path.lastIndexOf(".")).toLowerCase();
     if (imgExt.includes(ext))
       return "img";

@@ -275,7 +275,7 @@ public enum WallpaperType
 /// </summary>
 public class Wallpaper : ICloneable
 {
-    public static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif" };
+    public static readonly string[] ImgExtension = new[] { ".jpg", ".jpeg", ".bmp", ".png", ".jfif", ".avif" };
     public static readonly string[] VideoExtension = new[] { ".mp4", ".flv", ".blv", ".avi", ".mov", ".webm", ".mkv" };
     public static readonly string[] WebExtension = new[] { ".html", ".htm" };
     public static readonly string[] ExeExtension = new[] { ".exe" };
