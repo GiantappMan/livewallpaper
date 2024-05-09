@@ -136,6 +136,14 @@ public class ApiObject
             //把本地路径转换为网址
             item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
             item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
+            if (item.Meta.IsPlaylist())
+            {
+                foreach (var wallpaper in item.Meta.Wallpapers)
+                {
+                    wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+                    wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+                }
+            }
         }
         return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
