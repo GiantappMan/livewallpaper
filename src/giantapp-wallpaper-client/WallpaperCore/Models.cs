@@ -422,7 +422,8 @@ public class Wallpaper : ICloneable
             existProjectFile = true;
             //包含 project.json
             //迁移数据到meta.json
-            var projectJson = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile), WallpaperApi.JsonOptitons);
+            //这里不用加option
+            var projectJson = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
             if (projectJson != null)
             {
                 if (projectJson.File != data.FileName)
