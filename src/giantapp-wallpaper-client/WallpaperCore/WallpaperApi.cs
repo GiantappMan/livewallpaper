@@ -94,7 +94,7 @@ public static class WallpaperApi
             var fileInfo = new FileInfo(file);
 
             // 符合支持格式的
-            if (Wallpaper.IsSupportedFile(fileInfo.Extension))
+            if (Wallpaper.IsSupportedFile(fileInfo.Extension) || fileInfo.Extension == ".group")
             {
                 Wallpaper? wallpaper = Wallpaper.From(file);
                 if (wallpaper == null)

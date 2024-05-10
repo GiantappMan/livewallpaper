@@ -422,7 +422,8 @@ public class Wallpaper : ICloneable
             existProjectFile = true;
             //包含 project.json
             //迁移数据到meta.json
-            var projectJson = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile), WallpaperApi.JsonOptitons);
+            //这里不用加option
+            var projectJson = JsonSerializer.Deserialize<V2ProjectInfo>(File.ReadAllText(projectJsonFile));
             if (projectJson != null)
             {
                 if (projectJson.File != data.FileName)
@@ -431,14 +432,30 @@ public class Wallpaper : ICloneable
                     return null;
                 }
 
+                string extension = Path.GetExtension(projectJson.File);
                 var meta = new WallpaperMeta
                 {
                     Title = projectJson.Title,
                     Description = projectJson.Description,
                     Cover = projectJson.Preview,
-                    Type = ResolveType(Path.GetExtension(projectJson.File)),
+                    Type = ResolveType(extension),
                 };
 
+                if (extension == ".group"/*v2的旧格式*/)
+                {
+                    meta.Type = WallpaperType.Playlist;
+                    if (projectJson.GroupItems != null)
+                        foreach (var item in projectJson.GroupItems)
+                        {
+                            if (item.LocalID == null)
+                                continue;
+                            var tmp = WallpaperApi.GetWallpapers(item.LocalID);
+                            if (tmp == null || tmp.Length < 1)
+                                continue;
+                            var wallpaper = tmp[0];
+                            meta.Wallpapers.Add(wallpaper);
+                        }
+                }
                 data.Meta = meta;
 
                 if (meta?.Cover != null)
