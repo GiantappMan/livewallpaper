@@ -25,7 +25,7 @@ public class WindowStateCheckerTest
         Assert.IsTrue(hWnd != IntPtr.Zero);
 
         //检查窗口状态
-        Assert.IsTrue(WindowStateChecker.IsWindowMaximized(hWnd));
+        Assert.IsTrue(WindowStateChecker.IsWindowMaximized(hWnd, out _, out _));
 
         //关闭notepad
         p.CloseMainWindow();

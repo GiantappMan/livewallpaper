@@ -84,6 +84,21 @@ public class WindowStateChecker
         return className;
     }
 
+    private static string GetWindowTitle(HWND tophandle)
+    {
+        const int bufferSize = 256;
+        string windowTitle;
+        unsafe
+        {
+            fixed (char* windowTitleChars = new char[bufferSize])
+            {
+                PInvoke.GetWindowText(tophandle, windowTitleChars, bufferSize);
+                windowTitle = new(windowTitleChars);
+            }
+        }
+        return windowTitle;
+    }
+
     private void CheckWindowState(object source, ElapsedEventArgs e)
     {
         if (_isChecking)
@@ -100,9 +115,9 @@ public class WindowStateChecker
                 //下次有限检查的句柄
                 var nextCheckHandles = new List<IntPtr>();
                 //当前屏幕状态，默认没有最大化
-                Dictionary<string, WindowState> currentScreenState = new();
+                Dictionary<string, (WindowState, string?, string?)> currentScreenState = new();
                 foreach (var item in Screen.AllScreens)
-                    currentScreenState.Add(item.DeviceName, WindowState.NotMaximized);
+                    currentScreenState.Add(item.DeviceName, (WindowState.NotMaximized, null, null));
                 //遍历检查列表
                 List<IntPtr> checkHandlesCopy = new(_checkHandles);
                 foreach (var item in checkHandlesCopy)
@@ -111,26 +126,27 @@ public class WindowStateChecker
                     if (!currentScreenState.ContainsKey(screen.DeviceName))
                     {
                         //新插入的屏幕可能会触发这里
-                        currentScreenState.Add(screen.DeviceName, WindowState.NotMaximized);
+                        currentScreenState.Add(screen.DeviceName, (WindowState.NotMaximized, null, null));
                     }
 
                     //已经有其他程序最大化
-                    if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName] == WindowState.Maximized)
+                    if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName].Item1 == WindowState.Maximized)
                         continue;
 
-                    WindowState state = IsWindowMaximized(item) ? WindowState.Maximized : WindowState.NotMaximized;
+                    WindowState state = IsWindowMaximized(item, out string? title, out string? className) ? WindowState.Maximized : WindowState.NotMaximized;
                     //最大化的handle优先插入到前面，方便下次检查
                     if (state == WindowState.Maximized)
                     {
                         if (!nextCheckHandles.Contains(item))
+                        {
                             nextCheckHandles.Add(item);
+                        }
                     }
                     else
                     {
-                        //debug
                     }
 
-                    currentScreenState[screen.DeviceName] = state;
+                    currentScreenState[screen.DeviceName] = (state, title, className);
                 }
                 _checkHandles = nextCheckHandles;
 
@@ -143,10 +159,12 @@ public class WindowStateChecker
 
                     var screenName = item.Key;
                     var state = item.Value;
-                    if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state != previousState)
+                    if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state.Item1 != previousState)
                     {
-                        WindowStateChanged?.Invoke(state, screen);
-                        _globalCacheScreenState[screenName] = state;
+                        WindowStateChanged?.Invoke(state.Item1, screen);
+                        _logger.Info($"{screenName}: {state.Item1}, {state.Item2}, {state.Item3}");
+
+                        _globalCacheScreenState[screenName] = state.Item1;
                     }
                 }
             }
@@ -162,8 +180,9 @@ public class WindowStateChecker
     }
     #endregion
 
-    public static bool IsWindowMaximized(IntPtr hWnd)
+    public static bool IsWindowMaximized(IntPtr hWnd, out string? title, out string? className)
     {
+        className = title = null;
         if (_isLocked)
             return true;
 
@@ -193,7 +212,7 @@ public class WindowStateChecker
         }
 
         //过滤掉一些不需要的窗口
-        string className = GetClassName(handle);
+        className = GetClassName(handle);
         string[] ignoreClass = new string[] { "WorkerW", "Progman" };
         if (ignoreClass.Contains(className))
         {
@@ -222,6 +241,7 @@ public class WindowStateChecker
 #if PrintInfo
             System.Diagnostics.Debug.WriteLine($"{handle},{windowName},{className} is IsZoomed");
 #endif
+            title = GetWindowTitle(handle);
             return true;
         }
         else
@@ -241,6 +261,10 @@ public class WindowStateChecker
                 System.Diagnostics.Debug.WriteLine($"{handle.Value},{windowName},{className} IsZoomed: {windowArea / screenArea}, {tmp}");
             }
 #endif
+            if (tmp)
+            {
+                title = GetWindowTitle(handle);
+            }
             return tmp;
         }
     }
