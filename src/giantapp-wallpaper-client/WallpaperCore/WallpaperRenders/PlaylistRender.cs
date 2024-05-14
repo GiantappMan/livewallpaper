@@ -221,7 +221,6 @@ public class PlaylistRender : BaseRender
         if (_currentRender == null)
             return 0;
 
-
         if (_playingWallpaper == null)
             return 0;
 

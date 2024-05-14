@@ -4,11 +4,8 @@ interface API {
   GetWallpapers(): Promise<string>;
   GetScreens(): Promise<string>;
   ShowWallpaper(wallpaper: string);
-
-  /**
-   * @deprecated
-   */
-  GetPlayingWallpaper(): Promise<string>;
+  PlayPrevInPlaylist(wallpaper: string);
+  PlayNextInPlaylist(wallpaper: string);
   GetPlayingStatus(): Promise<string>;
   PauseWallpaper(screenIndex?: number): Promise<void>;
   ResumeWallpaper(screenIndex?: number): Promise<void>;

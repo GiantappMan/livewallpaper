@@ -322,6 +322,23 @@ public class ApiObject
 
         return res;
     }
+    public async void PlayNextInPlaylist(string wallpaperJson)
+    {
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
+        if (wallpaper == null)
+            return;
+
+        await WallpaperApi.PlayNextInPlaylist(wallpaper);
+    }
+
+    public async void PlayPrevInPlaylist(string wallpaperJson)
+    {
+        var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
+        if (wallpaper == null)
+            return;
+
+        await WallpaperApi.PlayPrevInPlaylist(wallpaper);
+    }
 
     //[Obsolete]
     //public bool CreateWallpaper(string title, string coverUrl, string pathUrl)

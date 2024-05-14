@@ -109,6 +109,15 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         });
     }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
 
+    //播放列表中的下一个壁纸
+    const playNextWallpaper = useCallback(() => {
+
+    }, []);
+
+    const playPreviousWallpaper = useCallback(() => {
+
+    }, []);
+
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
             {playingStatus.wallpapers.map((item, index) => {
@@ -129,7 +138,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                             className={cn(["rounded-lg object-scale-cover aspect-square", { "hover:border-2 hover:border-primary": !singlePlaylistMode }
                             ])}
                             height={50}
-                            src={`${item.coverUrl}?t=${Date.now()}` || "/wp-placeholder.webp"}
+                            src={`${item.coverUrl}?t = ${Date.now()} ` || "/wp-placeholder.webp"}
                             width={50}
                         />
                     </picture>
@@ -147,7 +156,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             <div className="flex space-x-4 items-center justify-between">
                 {
                     // 上一条
-                    showPlaylistButton ? <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].previous_wallpaper}>
+                    showPlaylistButton ? <Button onClick={playPreviousWallpaper} variant="ghost" className="hover:text-primary" title={dictionary['local'].previous_wallpaper}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -224,7 +233,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 </div>
                 {
                     // 下一条
-                    showPlaylistButton ? <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].next_wallpaper}>
+                    showPlaylistButton ? <Button onClick={playNextWallpaper} variant="ghost" className="hover:text-primary" title={dictionary['local'].next_wallpaper}>
                         <svg
                             className=" h-5 w-5 "
                             fill="none"

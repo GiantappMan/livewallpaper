@@ -156,6 +156,18 @@ public static class WallpaperApi
         return true;
     }
 
+    //播放列表中的下一个壁纸
+    public static async Task PlayNextInPlaylist(Wallpaper wallpaper)
+    {
+      //todo
+    }
+
+    //播放列表中的上一个壁纸
+    public static async Task PlayPrevInPlaylist(Wallpaper wallpaper)
+    {
+        //todo
+    }
+
     //关闭壁纸
     public static void CloseWallpaper(uint screenIndex = 0)
     {

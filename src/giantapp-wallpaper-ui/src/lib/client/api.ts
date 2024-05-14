@@ -105,6 +105,30 @@ class API {
     }
   }
 
+  async playPrevInPlaylist(wallpaper: Wallpaper): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      await api.PlayPrevInPlaylist(JSON.stringify(wallpaper));
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async playNextInPlaylist(wallpaper: Wallpaper): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      await api.PlayNextInPlaylist(JSON.stringify(wallpaper));
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   async getPlayingStatus(): Promise<ApiResult<PlayingStatus>> {
     try {
       if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
