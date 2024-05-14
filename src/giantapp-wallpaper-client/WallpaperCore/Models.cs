@@ -513,8 +513,7 @@ public class Wallpaper : ICloneable
                ExeExtension.Contains(lowerCaseExtension) ||
                WebExtension.Contains(lowerCaseExtension) ||
                AnimatedImgExtension.Contains(lowerCaseExtension) ||
-               PlaylistExtension.Contains(lowerCaseExtension)
-               ;
+               PlaylistExtension.Contains(lowerCaseExtension);
     }
 
     public object Clone()
@@ -530,7 +529,6 @@ public class Wallpaper : ICloneable
             CoverUrl = CoverUrl
         };
         return res;
-
     }
 
     internal void GenerateRealPlaylist()
