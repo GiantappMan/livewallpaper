@@ -3,13 +3,29 @@ import { useState, useCallback, useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { VideoSlider } from "../video-slider";
 
-//把秒转换成00:00格式
+//把秒转换成方便阅读的格式
 function formatTime(seconds: number) {
-    var min = Math.floor(seconds / 60);
+    var days = Math.floor(seconds / (24 * 60 * 60));
+    seconds %= 24 * 60 * 60;
+    var hours = Math.floor(seconds / (60 * 60));
+    seconds %= 60 * 60;
+    var minutes = Math.floor(seconds / 60);
     var sec = Math.floor(seconds % 60);
-    return `${min < 10 ? '0' + min : min}:${sec < 10 ? '0' + sec : sec}`;
-}
 
+    if (sec === 0 && minutes === 0 && hours === 0) {
+        return `${days}d`;
+    }
+    if (sec === 0 && minutes === 0) {
+        return `${hours}h`;
+    }
+
+    const dayStr = days > 0 ? days + 'd ' : '';
+    const hourStr = hours > 0 ? (hours < 10 ? '0' + hours : hours) + ':' : '';
+    const minStr = minutes < 10 ? '0' + minutes : minutes;
+    const secStr = sec < 10 ? '0' + sec : sec;
+
+    return `${dayStr}${hourStr}${minStr}:${secStr}`;
+}
 const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
     // console.log("PlaybackProgress:", screenIndex)
     const [time, setTime] = useState('00:00');
