@@ -19,7 +19,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     const dictionary = getGlobal();
     const singlePlaylistMode = playingStatus.wallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
-    const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(false);
+    const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(true);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(-1); //当前选中的屏幕索引
 
@@ -51,6 +51,8 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
         }
         else
             setSelectedScreenIndex(-1);
+
+        setShowPlaylistButton(selectedWallpaper?.meta.type == WallpaperType.Playlist);
     }, [selectedWallpaper]);
 
     const handleStopClick = useCallback(() => {
@@ -141,10 +143,11 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             })}
         </div>
 
-        <div className="flex flex-col flex-1 w-1/2 items-center justify-between">
-            <div className="space-x-4">
+        <div className="flex flex-col flex-1 w-1/2">
+            <div className="flex space-x-4 items-center justify-between">
                 {
-                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].previous_wallpaper}>
+                    // 上一条
+                    showPlaylistButton ? <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].previous_wallpaper}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -160,28 +163,11 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                             <polygon points="11 19 2 12 11 5 11 19" />
                             <polygon points="22 19 13 12 22 5 22 19" />
                         </svg>
-                    </Button>
+                    </Button> : <div></div>
                 }
-                {/* 停止按钮 */}
-                {<Button variant="ghost" className="hover:text-primary" title={dictionary['local'].stop} onClick={handleStopClick}>
-                    <svg
-                        className="h-5 w-5 "
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        width="24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <rect height="20" rx="2" ry="2" width="20" x="2" y="2" />
-                    </svg>
-                </Button>
-                }
-                {
-                    isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].play} onClick={handlePlayClick}>
+                <div>
+                    {/* 停止按钮 */}
+                    {<Button variant="ghost" className="hover:text-primary" title={dictionary['local'].stop} onClick={handleStopClick}>
                         <svg
                             className="h-5 w-5 "
                             fill="none"
@@ -194,31 +180,51 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                             width="24"
                             xmlns="http://www.w3.org/2000/svg"
                         >
-                            <polygon points="5 3 19 12 5 21 5 3" />
+                            <rect height="20" rx="2" ry="2" width="20" x="2" y="2" />
                         </svg>
                     </Button>
-                }
+                    }
+                    {
+                        isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].play} onClick={handlePlayClick}>
+                            <svg
+                                className="h-5 w-5 "
+                                fill="none"
+                                height="24"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                width="24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </Button>
+                    }
+                    {
+                        !isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].pause} onClick={handlePauseClick}>
+                            <svg
+                                className="h-5 w-5 "
+                                fill="none"
+                                height="24"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                width="24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <rect height="20" rx="2" ry="2" width="6" x="4" y="2" />
+                                <rect height="20" rx="2" ry="2" width="6" x="14" y="2" />
+                            </svg>
+                        </Button>
+                    }
+                </div>
                 {
-                    !isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].pause} onClick={handlePauseClick}>
-                        <svg
-                            className="h-5 w-5 "
-                            fill="none"
-                            height="24"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            width="24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <rect height="20" rx="2" ry="2" width="6" x="4" y="2" />
-                            <rect height="20" rx="2" ry="2" width="6" x="14" y="2" />
-                        </svg>
-                    </Button>
-                }
-                {
-                    showPlaylistButton && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].next_wallpaper}>
+                    // 下一条
+                    showPlaylistButton ? <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].next_wallpaper}>
                         <svg
                             className=" h-5 w-5 "
                             fill="none"
@@ -234,10 +240,10 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                             <polygon points="13 19 22 12 13 5 13 19" />
                             <polygon points="2 19 11 12 2 5 2 19" />
                         </svg>
-                    </Button>
+                    </Button> : <div></div>
                 }
             </div>
-            
+
             {/* 视频和播放列表显示进度 */}
             {(selectedWallpaper && (selectedWallpaper?.meta.type == WallpaperType.Video || selectedWallpaper?.meta.type == WallpaperType.Playlist) ||
                 singlePlaylistMode && (playingStatus.wallpapers[0].meta.type == WallpaperType.Video || playingStatus.wallpapers[0].meta.type == WallpaperType.Playlist))
@@ -250,9 +256,10 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
                 :
                 <AudioIndexBtn playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
             }
-            {
+            {/* {
+                //播放列表按钮
                 showPlaylistButton && <PlaylistSheet selectedWallpaper={selectedWallpaper} />
-            }
+            } */}
         </div>
     </div>
 }
