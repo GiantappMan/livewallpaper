@@ -253,8 +253,8 @@ public class PlaylistRender : BaseRender
         if (_currentRender == null)
             return 0;
 
-        if (_currentRender.IsSupportProgress)
-            return _currentRender.GetTimePos();
+        //if (_currentRender.IsSupportProgress)
+        //    return _currentRender.GetTimePos();
 
         //根据下次切换时间和开始时间计算
         if (_startTime == null)
