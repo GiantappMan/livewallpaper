@@ -1,5 +1,5 @@
 import PlayingStatus from "@/lib/client/types/playing-status";
-import { Wallpaper } from "@/lib/client/types/wallpaper";
+import { Wallpaper, WallpaperType } from "@/lib/client/types/wallpaper";
 import { atom } from "jotai";
 
 //播放状态
@@ -54,7 +54,7 @@ export const volumeAtom = atom((get) => {
 //音源
 export const audioScreenIndexAtom = atom((get) => {
     const playingStatus = get(playingStatusAtom);
-    return playingStatus?.audioScreenIndex || -1;
+    return playingStatus?.audioScreenIndex === undefined ? -1 : playingStatus?.audioScreenIndex;
 },
     (_get, set, audioScreenIndex: number) => {
         set(playingStatusAtom, (prev) => {
@@ -72,3 +72,25 @@ export const audioScreenIndexAtom = atom((get) => {
 
 //选中的壁纸
 export const selectedWallpaperAtom = atom<Wallpaper | null>(null);
+
+function supportPause(type: WallpaperType | undefined) {
+    return !type || type == WallpaperType.Video || type == WallpaperType.Playlist;
+}
+
+//当前是否支持暂停
+export const canPauseAtom = atom((get) => {
+    const playingWallpapers = get(playingWallpapersAtom);
+    const selectedWallpaper = get(selectedWallpaperAtom);
+    if (selectedWallpaper && playingWallpapers.length > 0) {
+        return supportPause(selectedWallpaper.meta.type);
+    }
+
+    //检查playingWallpapers中是否有支持的
+    for (const wallpaper of playingWallpapers) {
+        if (supportPause(wallpaper.meta.type)) {
+            return true;
+        }
+    }
+
+    return false;
+});

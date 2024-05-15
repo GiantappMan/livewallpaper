@@ -7,23 +7,23 @@ import { cn } from "@/lib/utils";
 import api from "@/lib/client/api";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
-import { screensAtom, selectedScreenIndexAtom, volumeAtom } from "@/atoms/player";
+import { audioScreenIndexAtom, screensAtom, volumeAtom } from "@/atoms/player";
 
 //音量按钮，修改音源
 export default function AudioIndexBtn() {
     const dictionary = useAtomValue(langDictAtom);
     const [open, setOpen] = useState(false)
-    const [selectedScreenIndex, setSelectedScreenIndex] = useAtom(selectedScreenIndexAtom);
+    const [audioScreenIndex, setAudioScreenIndex] = useAtom(audioScreenIndexAtom);
     const setVolume = useSetAtom(volumeAtom);
     const screens = useAtomValue(screensAtom);
 
     const handleScreenIndexChange = useCallback(async (value: string) => {
         var index = Number(value)
-        setSelectedScreenIndex(index)
+        setAudioScreenIndex(index)
         api.setVolume(index < 0 ? 0 : 100, index);
         setOpen(false)
         setVolume(index < 0 ? 0 : 100)
-    }, [setSelectedScreenIndex, setVolume]);
+    }, [setAudioScreenIndex, setVolume]);
 
     return (
         <>
@@ -31,7 +31,7 @@ export default function AudioIndexBtn() {
                 <PopoverTrigger asChild>
                     <Button variant="ghost" className="hover:text-primary px-3" title={dictionary['local'].audio_source}>
                         {
-                            selectedScreenIndex === -1 ?
+                            audioScreenIndex === -1 ?
                                 <SpeakerOffIcon /> :
                                 <SpeakerLoudIcon />
                         }
@@ -51,7 +51,7 @@ export default function AudioIndexBtn() {
                                         <CheckIcon
                                             className={cn(
                                                 "ml-auto h-4 w-4",
-                                                selectedScreenIndex === Number(currentValue) ? "opacity-100" : "opacity-0"
+                                                audioScreenIndex === Number(currentValue) ? "opacity-100" : "opacity-0"
                                             )} />
                                     </CommandItem>
                                 })
@@ -62,7 +62,7 @@ export default function AudioIndexBtn() {
                                 <CheckIcon
                                     className={cn(
                                         "ml-auto h-4 w-4",
-                                        selectedScreenIndex === -1 ? "opacity-100" : "opacity-0"
+                                        audioScreenIndex === -1 ? "opacity-100" : "opacity-0"
                                     )} />
                             </CommandItem>
                         </CommandGroup>

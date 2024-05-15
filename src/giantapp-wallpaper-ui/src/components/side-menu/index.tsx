@@ -10,7 +10,6 @@ import {
     QuestionMarkCircleIcon as questionMarkCircleIcon
 } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
-import { getGlobal } from "@/i18n-config";
 import { useAtomValue } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
 

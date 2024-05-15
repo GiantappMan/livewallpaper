@@ -9,7 +9,7 @@ import api from "@/lib/client/api";
 import AudioIndexBtn from "./audio-index-btn";
 import AudioVolumeBtn from "./audio-volume-btn";
 import { useAtom, useAtomValue } from "jotai";
-import { playingWallpapersAtom, selectedScreenIndexAtom } from "@/atoms/player";
+import { canPauseAtom, playingWallpapersAtom, selectedScreenIndexAtom } from "@/atoms/player";
 import { langDictAtom } from "@/atoms/lang";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
@@ -19,6 +19,7 @@ interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
 export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarProps) {
     const dictionary = useAtomValue(langDictAtom);
 
+    const canPause = useAtomValue(canPauseAtom);
     const [playingWallpapers, setPlayingWallpapers] = useAtom(playingWallpapersAtom);
     const singlePlaylistMode = playingWallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
@@ -187,7 +188,7 @@ export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarPro
                     </Button>
                     }
                     {
-                        isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].play} onClick={handlePlayClick}>
+                        canPause && isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].play} onClick={handlePlayClick}>
                             <svg
                                 className="h-5 w-5 "
                                 fill="none"
@@ -205,7 +206,7 @@ export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarPro
                         </Button>
                     }
                     {
-                        !isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].pause} onClick={handlePauseClick}>
+                        canPause && !isPaused && <Button variant="ghost" className="hover:text-primary" title={dictionary['local'].pause} onClick={handlePauseClick}>
                             <svg
                                 className="h-5 w-5 "
                                 fill="none"
@@ -254,7 +255,11 @@ export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarPro
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
             {selectedScreenIndex >= 0 ?
-                <AudioVolumeBtn />
+                <>
+                    {
+                        canPause && <AudioVolumeBtn />
+                    }
+                </>
                 :
                 <AudioIndexBtn />
             }
