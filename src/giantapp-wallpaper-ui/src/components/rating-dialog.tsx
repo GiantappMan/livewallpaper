@@ -76,7 +76,7 @@ export function RatingDialog(props: RatingDialogProps) {
                     launchTimes: 0,
                     lastShownCommentDialogTime: new Date().getTime(),
                     lastLaunchVersion: version,
-                    hasShownCommentDialog: false
+                    // hasShownCommentDialog: false
                 })
                 return;
             }
