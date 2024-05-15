@@ -26,9 +26,10 @@ import {
 import { SettingDialog } from "./_components/setting-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
-import PlayingStatus from "@/lib/client/types/playing-status";
 import { getGlobal, type Locale } from "@/i18n-config";
 import { WallpaperTypeIcon } from "@/components/wallpaper-type-icon";
+import { useAtom } from "jotai";
+import { playingStatusAtom } from "@/atoms/player";
 
 const LocalPage = ({
   params,
@@ -37,7 +38,7 @@ const LocalPage = ({
 }) => {
   const dictionary = getGlobal();
   const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
-  const [playingStatus, setPlayingStatus] = useState<PlayingStatus | null>();
+  const [playingStatus, setPlayingStatus] = useAtom(playingStatusAtom);
   const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
   const [openSettingDialog, setOpenSettingDialog] = useState<boolean>(false);
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState<boolean>(false);
@@ -55,7 +56,7 @@ const LocalPage = ({
       return;
     }
     setPlayingStatus(_playingStatus.data);
-  }, [dictionary]);
+  }, [dictionary, setPlayingStatus]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
