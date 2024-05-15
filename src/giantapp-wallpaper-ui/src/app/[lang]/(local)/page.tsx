@@ -437,7 +437,10 @@ const LocalPage = ({
           playingStatus={playingStatus}
           onChangePlayingStatus={(e) => {
             console.log("playing status change", e)
-            setPlayingStatus(e);
+            if (e)
+              setPlayingStatus(e);
+            else
+              refreshPlayingStatus();
           }}
         />
       }

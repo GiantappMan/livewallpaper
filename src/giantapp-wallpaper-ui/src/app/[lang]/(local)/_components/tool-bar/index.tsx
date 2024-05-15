@@ -13,7 +13,7 @@ import { getGlobal } from '@/i18n-config';
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
     playingStatus: PlayingStatus
-    onChangePlayingStatus: (e: PlayingStatus) => void
+    onChangePlayingStatus: (e?: PlayingStatus) => void
 }
 export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) {
     const dictionary = getGlobal();
@@ -110,13 +110,17 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
     }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
 
     //播放列表中的下一个壁纸
-    const playNextWallpaper = useCallback(() => {
+    const playNextWallpaper = useCallback(async () => {
+        if (selectedWallpaper)
+            await api.playNextInPlaylist(selectedWallpaper);
+        onChangePlayingStatus?.(undefined);
+    }, [onChangePlayingStatus, selectedWallpaper]);
 
-    }, []);
-
-    const playPreviousWallpaper = useCallback(() => {
-
-    }, []);
+    const playPreviousWallpaper = useCallback(async () => {
+        if (selectedWallpaper)
+            await api.playPrevInPlaylist(selectedWallpaper);
+        onChangePlayingStatus?.(undefined);
+    }, [onChangePlayingStatus, selectedWallpaper]);
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
