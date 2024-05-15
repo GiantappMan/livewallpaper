@@ -42,8 +42,9 @@ export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarPro
         if (playingWallpapers.length == 1)
             setSelectedWallpaper(playingWallpapers[0]);
         else {
-            //如果被选中的不存在了则清空
-            var exist = playingWallpapers.find(x => x.fileUrl == selectedWallpaper?.fileUrl);
+            //如果被选中的的屏幕还有数据，就选中
+            const currentScreenIndex = getScreenIndex(selectedWallpaper);
+            var exist = playingWallpapers.find(x => getScreenIndex(x) === currentScreenIndex);
             if (selectedWallpaper && !exist)
                 setSelectedWallpaper(null);
             if (exist)
