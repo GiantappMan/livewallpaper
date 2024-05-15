@@ -12,6 +12,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { getGlobal } from "@/i18n-config";
+import { useAtomValue } from "jotai";
+import { langDictAtom } from "@/atoms/lang";
 
 interface RatingDialogProps {
 }
@@ -24,7 +26,7 @@ export type ConfigLaunchRecord = {
 }
 
 export function RatingDialog(props: RatingDialogProps) {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const [isClient, setIsClient] = useState(false)
     const [open, setOpen] = useState(false)
 

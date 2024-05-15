@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { getGlobal } from "@/i18n-config";
+import { langDictAtom } from "@/atoms/lang";
+import { useAtomValue } from "jotai";
 
 export function SidebarNav({ className, lang, ...props }: React.HTMLAttributes<HTMLElement>) {
-  const dictionary = getGlobal();
+  const dictionary = useAtomValue(langDictAtom);
   const items = [
     {
       name: dictionary['settings'].general,

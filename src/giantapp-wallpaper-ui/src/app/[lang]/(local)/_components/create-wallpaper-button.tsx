@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 import { WallpaperIcon, ListPlus } from "lucide-react"
 import { getGlobal } from '@/i18n-config';
+import { langDictAtom } from '@/atoms/lang';
+import { useAtomValue } from 'jotai';
 
 interface Props {
     //创建壁纸回调
@@ -11,7 +13,7 @@ interface Props {
 }
 
 function CreateWallpaperButton({ createWallpaper, createList }: Props) {
-    const dictionary = getGlobal();
+  const dictionary = useAtomValue(langDictAtom);
     return (
         <div className="flex w-full h-full hover:text-primary justify-center items-center">
             <div className="flex justify-center items-center space-x-4">

@@ -6,8 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/lib/client/api"
 import { Wallpaper, WallpaperType, getWallpaperTypeString } from "@/lib/client/types/wallpaper"
 import { useCallback, useEffect, useState } from "react"
-import { getGlobal } from '@/i18n-config';
 import { WallpaperTypeIcon } from "@/components/wallpaper-type-icon"
+import { useAtomValue } from "jotai"
+import { langDictAtom } from "@/atoms/lang"
 
 interface Props {
     selectedWallpapers: Wallpaper[]
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export function SelectWallpaperDialog(props: Props) {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
     const [selectedWallpapers, setSelectedWallpapers] = useState<Wallpaper[]>([]);
     const [refreshing, setRefreshing] = useState<boolean>(false);

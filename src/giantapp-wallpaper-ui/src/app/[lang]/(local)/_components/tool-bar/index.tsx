@@ -7,38 +7,41 @@ import PlaybackProgress from "./playback-progress";
 import PlaylistSheet from "./playlist-sheet";
 import api from "@/lib/client/api";
 import AudioIndexBtn from "./audio-index-btn";
-import PlayingStatus from "@/lib/client/types/playing-status";
 import AudioVolumeBtn from "./audio-volume-btn";
-import { getGlobal } from '@/i18n-config';
+import { useAtom, useAtomValue } from "jotai";
+import { playingWallpapersAtom, selectedScreenIndexAtom } from "@/atoms/player";
+import { langDictAtom } from "@/atoms/lang";
 
 interface ToolBarProps extends React.HTMLAttributes<HTMLElement> {
-    playingStatus: PlayingStatus
-    onChangePlayingStatus: (e?: PlayingStatus) => void
+    // playingStatus: PlayingStatus
+    // onChangePlayingStatus: (e?: PlayingStatus) => void
 }
-export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) {
-    const dictionary = getGlobal();
-    const singlePlaylistMode = playingStatus.wallpapers.length == 1;
+export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarProps) {
+    const dictionary = useAtomValue(langDictAtom);
+
+    const [playingWallpapers, setPlayingWallpapers] = useAtom(playingWallpapersAtom);
+    const singlePlaylistMode = playingWallpapers.length == 1;
     const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null); //当前选中的壁纸
     const [showPlaylistButton, setShowPlaylistButton] = useState<boolean>(true);
     const [isPaused, setIsPaused] = useState<boolean>(false);
-    const [selectedScreenIndex, setSelectedScreenIndex] = useState<number>(-1); //当前选中的屏幕索引
+    const [selectedScreenIndex, setSelectedScreenIndex] = useAtom(selectedScreenIndexAtom);
 
     //监控wallpapers，如果只有一个，默认选中
     useEffect(() => {
-        if (playingStatus.wallpapers.length == 1)
-            setSelectedWallpaper(playingStatus.wallpapers[0]);
+        if (playingWallpapers.length == 1)
+            setSelectedWallpaper(playingWallpapers[0]);
         else {
             //如果被选中的不存在了则清空
-            if (selectedWallpaper && !playingStatus.wallpapers.includes(selectedWallpaper))
+            if (selectedWallpaper && !playingWallpapers.includes(selectedWallpaper))
                 setSelectedWallpaper(null);
         }
 
-        var isPaused = playingStatus.wallpapers.every(x => Wallpaper.findPlayingWallpaper(x).runningInfo.isPaused);
+        var isPaused = playingWallpapers.every(x => Wallpaper.findPlayingWallpaper(x).runningInfo.isPaused);
         if (selectedWallpaper) {
             isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper).runningInfo.isPaused || false;
         }
         setIsPaused(isPaused);
-    }, [playingStatus.wallpapers, selectedWallpaper]);
+    }, [playingWallpapers, selectedWallpaper]);
 
     //监控selectedWallpaper变化
     useEffect(() => {
@@ -53,7 +56,7 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
             setSelectedScreenIndex(-1);
 
         setShowPlaylistButton(selectedWallpaper?.meta.type == WallpaperType.Playlist);
-    }, [selectedWallpaper]);
+    }, [selectedWallpaper, setSelectedScreenIndex]);
 
     const handleStopClick = useCallback(() => {
         //获取要关闭的屏幕
@@ -61,72 +64,58 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
 
         //更新playlist
         if (selectedWallpaper) {
-            var index = playingStatus.wallpapers.indexOf(selectedWallpaper);
+            var index = playingWallpapers.indexOf(selectedWallpaper);
             if (index > -1) {
-                var newWallpapers = [...playingStatus.wallpapers];
+                var newWallpapers = [...playingWallpapers];
                 newWallpapers.splice(index, 1);
-                onChangePlayingStatus?.({
-                    ...playingStatus,
-                    wallpapers: newWallpapers,
-                });
+                setPlayingWallpapers(newWallpapers);
             }
         }
         else {
-            onChangePlayingStatus?.(
-                {
-                    ...playingStatus,
-                    wallpapers: [],
-                }
-            );
+            setPlayingWallpapers([]);
         }
-    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex, selectedWallpaper]);
+    }, [playingWallpapers, selectedScreenIndex, selectedWallpaper, setPlayingWallpapers]);
 
     const handlePlayClick = useCallback(() => {
         api.resumeWallpaper(selectedScreenIndex);
-        onChangePlayingStatus?.({
-            ...playingStatus,
-            wallpapers: playingStatus.wallpapers.map(x => {
-                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-                if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
-                    playingWallpaper.runningInfo.isPaused = false;
-                }
-                return x;
-            })
+        const wallpapers = playingWallpapers.map(x => {
+            var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+            if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
+                playingWallpaper.runningInfo.isPaused = false;
+            }
+            return x;
         });
-    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
+        setPlayingWallpapers(wallpapers);
+    }, [playingWallpapers, selectedScreenIndex, setPlayingWallpapers]);
 
     const handlePauseClick = useCallback(() => {
         api.pauseWallpaper(selectedScreenIndex);
-        onChangePlayingStatus?.({
-            ...playingStatus,
-            wallpapers: playingStatus.wallpapers.map(x => {
-                var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-                if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
-                    playingWallpaper.runningInfo.isPaused = true;
-                }
-                return x;
-            })
-        });
-    }, [onChangePlayingStatus, playingStatus, selectedScreenIndex]);
+        const wallpapers = playingWallpapers.map(x => {
+            var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+            if (selectedScreenIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === selectedScreenIndex) {
+                playingWallpaper.runningInfo.isPaused = true;
+            }
+            return x;
+        })
+        setPlayingWallpapers(wallpapers);
+    }, [playingWallpapers, selectedScreenIndex, setPlayingWallpapers]);
 
     //播放列表中的下一个壁纸
     const playNextWallpaper = useCallback(async () => {
         if (selectedWallpaper)
             await api.playNextInPlaylist(selectedWallpaper);
-        onChangePlayingStatus?.(undefined);
-    }, [onChangePlayingStatus, selectedWallpaper]);
+    }, [selectedWallpaper]);
 
     const playPreviousWallpaper = useCallback(async () => {
         if (selectedWallpaper)
             await api.playPrevInPlaylist(selectedWallpaper);
-        onChangePlayingStatus?.(undefined);
-    }, [onChangePlayingStatus, selectedWallpaper]);
+    }, [selectedWallpaper]);
 
     return <div className="fixed inset-x-0 ml-18 bottom-0 bg-background h-20 border-t border-primary-300 dark:border-primary-600 flex items-center px-4 space-x-4">
         <div className="flex flex-wrap flex-initial w-1/4 overflow-hidden h-full">
-            {playingStatus.wallpapers.map((item, index) => {
+            {playingWallpapers.map((item, index) => {
                 const isSelected = selectedWallpaper == item;
-                const showBackBtn = isSelected && playingStatus.wallpapers.length > 1;
+                const showBackBtn = isSelected && playingWallpapers.length > 1;
                 const showWallpaperItem = isSelected || !selectedWallpaper//只显示选中的，如果没选中就都显示
                 return showWallpaperItem && <div key={index} className="flex items-center p-0 m-0" >
                     {
@@ -259,15 +248,15 @@ export function ToolBar({ playingStatus, onChangePlayingStatus }: ToolBarProps) 
 
             {/* 视频和播放列表显示进度 */}
             {(selectedWallpaper && (selectedWallpaper?.meta.type == WallpaperType.Video || selectedWallpaper?.meta.type == WallpaperType.Playlist) ||
-                singlePlaylistMode && (playingStatus.wallpapers[0].meta.type == WallpaperType.Video || playingStatus.wallpapers[0].meta.type == WallpaperType.Playlist))
+                singlePlaylistMode && (playingWallpapers[0].meta.type == WallpaperType.Video || playingWallpapers[0].meta.type == WallpaperType.Playlist))
                 && <PlaybackProgress screenIndex={selectedScreenIndex} />}
         </div>
 
         <div className="flex flex-initial w-1/4 items-center justify-end">
             {selectedScreenIndex >= 0 ?
-                <AudioVolumeBtn screenIndex={selectedScreenIndex} playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
+                <AudioVolumeBtn />
                 :
-                <AudioIndexBtn playingStatus={playingStatus} playingStatusChange={onChangePlayingStatus} />
+                <AudioIndexBtn />
             }
             {/* {
                 //播放列表按钮

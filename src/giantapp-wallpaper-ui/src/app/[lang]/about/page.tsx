@@ -8,9 +8,10 @@ import {
     LayoutGrid,
     Github,
     DollarSign
-} from "lucide-react"
-import { getGlobal } from "@/i18n-config";
+} from "lucide-react";
 import Link from "next/link";
+import { langDictAtom } from "@/atoms/lang";
+import { useAtomValue } from "jotai";
 
 const Author = ({ dictionary }: { dictionary: any; }) => {
     const parts = dictionary['about'].produced_by.split("{0}");
@@ -26,7 +27,7 @@ const Author = ({ dictionary }: { dictionary: any; }) => {
 
 const AboutPage = () => {
     const [version, setVersion] = useState<string | null>();
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
 
     //获取version
     useEffect(() => {

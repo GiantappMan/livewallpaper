@@ -14,9 +14,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
-import { getGlobal } from "@/i18n-config";
 import { useCallback } from 'react';
 import { i18n } from "@/i18n-config";
+import { langDictAtom } from "@/atoms/lang";
+import { useAtomValue } from "jotai";
 
 const localesDescriptions = {
     zh: "中文",
@@ -24,7 +25,7 @@ const localesDescriptions = {
     ru: "Русский"
 }
 const Page = () => {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const router = useRouter()
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = React.useState<ConfigGeneral>({} as any)

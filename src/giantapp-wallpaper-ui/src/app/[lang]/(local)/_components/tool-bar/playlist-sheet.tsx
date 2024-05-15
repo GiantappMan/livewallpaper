@@ -1,16 +1,17 @@
+import { langDictAtom } from "@/atoms/lang";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet } from "@/components/ui/sheet";
 import { Wallpaper } from "@/lib/client/types/wallpaper";
 import { Label } from "@radix-ui/react-label";
-import { getGlobal } from '@/i18n-config';
+import { useAtomValue } from "jotai";
 
 //定义组件
 const PlaylistSheet = ({ selectedWallpaper }: {
     selectedWallpaper?: Wallpaper | null
 }) => {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     return <Sheet modal={true}>
         <SheetTrigger asChild>
             <Button variant="ghost" className="hover:text-primary px-3" title={dictionary['local'].play_list}>

@@ -19,8 +19,9 @@ import { useCallback, useEffect, useState } from "react"
 import { ConfigWallpaper, WallpaperCoveredBehavior } from "@/lib/client/types/config"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getGlobal } from "@/i18n-config";
 import { VideoPlayer } from "@/lib/client/types/wallpaper"
+import { langDictAtom } from "@/atoms/lang"
+import { useAtomValue } from "jotai"
 
 const FormSchema = z.object({
     directories: z.array(z.object({
@@ -32,7 +33,7 @@ const FormSchema = z.object({
 })
 
 export default function Page() {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const [mounted, setMounted] = useState(false)
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),

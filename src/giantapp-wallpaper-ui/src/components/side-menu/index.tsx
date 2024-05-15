@@ -11,9 +11,11 @@ import {
 } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
 import { getGlobal } from "@/i18n-config";
+import { useAtomValue } from "jotai";
+import { langDictAtom } from "@/atoms/lang";
 
 export default function SideMenu({ lang }: { lang: string }) {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const [sidebarTopNavigation] = useState([
         {
             name: dictionary['common'].local,

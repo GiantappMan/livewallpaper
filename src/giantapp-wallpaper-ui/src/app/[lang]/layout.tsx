@@ -4,7 +4,7 @@ import '@/app/styles/globals.css'
 import "@/app/styles/themes.css"
 import { Inter as FontSans } from "next/font/google"
 import { cn } from '@/lib/utils'
-import { ThemeProvider } from '@/components/theme-providers';
+import { Providers } from '@/components/providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import SideMenu from '@/components/side-menu';
@@ -37,7 +37,8 @@ export default async function Root({
           fontSans.variable
         )}
       >
-        <ThemeProvider
+        <Providers
+          lang={params.lang}
           dictionary={dictionary}
           attribute="class"
           // defaultTheme="system"
@@ -52,12 +53,12 @@ export default async function Root({
               <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">
                 <main>
                   {children}
-                  <RatingDialog  />
+                  <RatingDialog />
                 </main>
               </div>
             </div>
           </ThemeWrapper>
-        </ThemeProvider>
+        </Providers>
         <ThemeSwitcher />
       </body>
     </html>

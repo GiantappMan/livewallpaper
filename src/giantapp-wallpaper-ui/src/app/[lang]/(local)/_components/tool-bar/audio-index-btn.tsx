@@ -5,26 +5,25 @@ import { useCallback, useState } from "react";
 import { CheckIcon, SpeakerOffIcon, SpeakerLoudIcon } from "@radix-ui/react-icons"
 import { cn } from "@/lib/utils";
 import api from "@/lib/client/api";
-import PlayingStatus from "@/lib/client/types/playing-status";
-import { getGlobal } from '@/i18n-config';
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { langDictAtom } from "@/atoms/lang";
+import { screensAtom, selectedScreenIndexAtom, volumeAtom } from "@/atoms/player";
 
 //音量按钮，修改音源
-export default function AudioIndexBtn(props: { playingStatus: PlayingStatus, playingStatusChange: (e: PlayingStatus) => void }) {
-    const dictionary = getGlobal();
+export default function AudioIndexBtn() {
+    const dictionary = useAtomValue(langDictAtom);
     const [open, setOpen] = useState(false)
-    const [selectedScreenIndex, setSelectedScreenIndex] = useState(props.playingStatus.audioScreenIndex)
+    const [selectedScreenIndex, setSelectedScreenIndex] = useAtom(selectedScreenIndexAtom);
+    const setVolume = useSetAtom(volumeAtom);
+    const screens = useAtomValue(screensAtom);
 
     const handleScreenIndexChange = useCallback(async (value: string) => {
         var index = Number(value)
         setSelectedScreenIndex(index)
         api.setVolume(index < 0 ? 0 : 100, index);
         setOpen(false)
-        props.playingStatusChange({
-            ...props.playingStatus,
-            audioScreenIndex: index,
-            volume: index < 0 ? 0 : 100
-        });
-    }, [props]);
+        setVolume(index < 0 ? 0 : 100)
+    }, [setSelectedScreenIndex, setVolume]);
 
     return (
         <>
@@ -42,7 +41,7 @@ export default function AudioIndexBtn(props: { playingStatus: PlayingStatus, pla
                     <Command>
                         <CommandGroup>
                             {
-                                props.playingStatus.screens.map((screen, index) => {
+                                screens.map((screen, index) => {
                                     const currentValue = index.toString()
                                     return <CommandItem
                                         key={index}

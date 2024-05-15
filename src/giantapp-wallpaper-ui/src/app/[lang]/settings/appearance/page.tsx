@@ -16,10 +16,11 @@ import {
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
 import { ConfigAppearance } from "@/lib/client/types/config";
-import { getGlobal } from "@/i18n-config";
+import { langDictAtom } from "@/atoms/lang";
+import { useAtomValue } from "jotai";
 
 const Page = () => {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const [mounted, setMounted] = React.useState(false)
     const [config, setConfig] = useConfig()
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()

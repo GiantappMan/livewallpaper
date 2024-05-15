@@ -12,8 +12,18 @@ import { Toaster } from "sonner"
 import { setGlobal } from "@/i18n-config";
 import { useMounted } from "@/hooks/use-mounted";
 import shellApi from "@/lib/client/shell";
+import { Provider as JotaiProvider, useSetAtom } from "jotai";
+import { langAtom, langDictAtom } from "@/atoms/lang"
+import { rootStore } from "@/atoms/store"
 
-export function ThemeProvider({ children, dictionary, ...props }: { children: React.ReactNode, dictionary: any } & ThemeProviderProps) {
+const LangInitializer = ({ lang, dictionary }: { lang: string, dictionary: any }) => {
+    const setLang = useSetAtom(langAtom);
+    const setLangDictionary = useSetAtom(langDictAtom);
+    setLang(lang);
+    setLangDictionary(dictionary);
+    return <></>;
+}
+export function Providers({ lang, children, dictionary, ...props }: { children: React.ReactNode, dictionary: any, lang: string; } & ThemeProviderProps) {
     const [config] = useConfig();
     const mounted = useMounted()
     if (!mounted)
@@ -24,7 +34,7 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
         window.location.reload();
     });
 
-    setGlobal(dictionary);
+    // setGlobal(dictionary);
     const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode')
     const defaultMode = !!mode ? mode : config.mode;
@@ -36,10 +46,14 @@ export function ThemeProvider({ children, dictionary, ...props }: { children: Re
     shellApi.hideLoading();
     return (
         <>
-            <NextThemesProvider defaultTheme={defaultMode} {...props}>
-                <TooltipProvider>{children}</TooltipProvider>
-            </NextThemesProvider>
-            <Toaster closeButton={true} position="top-center" />
+            <JotaiProvider store={rootStore}>
+                {/* 必须在provider里面，调用jotai才有效 */}
+                <LangInitializer lang={lang} dictionary={dictionary} />
+                <NextThemesProvider defaultTheme={defaultMode} {...props}>
+                    <TooltipProvider>{children}</TooltipProvider>
+                </NextThemesProvider>
+                <Toaster closeButton={true} position="top-center" />
+            </JotaiProvider>
         </>
     )
 }

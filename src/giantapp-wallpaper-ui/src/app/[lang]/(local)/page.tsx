@@ -28,15 +28,16 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import CreateWallpaperButton from "./_components/create-wallpaper-button";
 import { getGlobal, type Locale } from "@/i18n-config";
 import { WallpaperTypeIcon } from "@/components/wallpaper-type-icon";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { playingStatusAtom } from "@/atoms/player";
+import { langDictAtom } from "@/atoms/lang";
 
 const LocalPage = ({
   params,
 }: {
   params: { lang: Locale };
 }) => {
-  const dictionary = getGlobal();
+  const dictionary = useAtomValue(langDictAtom);
   const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
   const [playingStatus, setPlayingStatus] = useAtom(playingStatusAtom);
   const [openCreateWallpaperDialog, setOpenCreateWallpaperDialog] = useState<boolean>(false);
@@ -435,14 +436,13 @@ const LocalPage = ({
         playingStatus?.wallpapers &&
         playingStatus?.wallpapers.length > 0 &&
         <ToolBar
-          playingStatus={playingStatus}
-          onChangePlayingStatus={(e) => {
-            console.log("playing status change", e)
-            if (e)
-              setPlayingStatus(e);
-            else
-              refreshPlayingStatus();
-          }}
+        // onChangePlayingStatus={(e) => {
+        //   console.log("playing status change", e)
+        //   if (e)
+        //     setPlayingStatus(e);
+        //   else
+        //     refreshPlayingStatus();
+        // }}
         />
       }
     </div >

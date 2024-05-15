@@ -25,6 +25,8 @@ import { SelectWallpaperDialog } from "../select-wallpaper-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getGlobal } from '@/i18n-config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAtomValue } from "jotai"
+import { langDictAtom } from "@/atoms/lang"
 
 
 function getBase64FromBlob(blob: Blob): Promise<string> {
@@ -159,7 +161,7 @@ let defaultValues: {
 }
 
 export function WallpaperDialog(props: WallpaperDialogProps) {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const formSchema = z.object({
         title: z.string().refine(value => value !== '', {
             message: dictionary['local'].title_cannot_be_empty,

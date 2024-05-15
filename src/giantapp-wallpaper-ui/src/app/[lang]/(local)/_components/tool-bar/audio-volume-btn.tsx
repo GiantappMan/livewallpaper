@@ -1,32 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { SpeakerLoudIcon, SpeakerOffIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
-import PlayingStatus from "@/lib/client/types/playing-status";
-import { getGlobal } from '@/i18n-config';
+import { useAtom, useAtomValue } from "jotai";
+import { langDictAtom } from "@/atoms/lang";
+import { audioScreenIndexAtom, volumeAtom } from "@/atoms/player";
 
 //音量按钮，修改音量
-export default function AudioVolumeBtn(props: { playingStatus: PlayingStatus, screenIndex: number, playingStatusChange: (e: PlayingStatus) => void }) {
-    const dictionary = getGlobal();
-    const [volume, setVolume] = useState(props.playingStatus.volume)
-
-    //监控screenIndex变化
-    useEffect(() => {
-        setVolume(props.screenIndex === props.playingStatus.audioScreenIndex ? props.playingStatus.volume : 0)
-    }, [props.playingStatus.audioScreenIndex, props.playingStatus.volume, props.screenIndex]);
+export default function AudioVolumeBtn() {
+    const dictionary = useAtomValue(langDictAtom);
+    const [volume, setVolume] = useAtom(volumeAtom);
+    const screenIndex = useAtomValue(audioScreenIndexAtom);
 
     const handleVolumeChange = useCallback(async (value: number[]) => {
         setVolume(value[0])
-        api.setVolume(value[0], props.screenIndex);
-        props.playingStatusChange({
-            ...props.playingStatus,
-            volume: value[0],
-            audioScreenIndex: props.screenIndex
-        })
-    }, [props]);
+        api.setVolume(value[0], screenIndex);
+    }, [screenIndex, setVolume]);
 
     const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
         handleVolumeChange(value);

@@ -16,9 +16,10 @@ import { Switch } from "@/components/ui/switch"
 import { useEffect, useState } from "react"
 import api from "@/lib/client/api"
 import { toast } from "sonner"
-import { getGlobal } from '@/i18n-config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { useAtomValue } from "jotai"
+import { langDictAtom } from "@/atoms/lang"
 
 interface SettingDialogProps {
     wallpaper: Wallpaper
@@ -49,7 +50,7 @@ const formSchema = z.object({
 })
 
 export function SettingDialog(props: SettingDialogProps) {
-    const dictionary = getGlobal();
+    const dictionary = useAtomValue(langDictAtom);
     const form = useForm<z.infer<typeof formSchema>>({
         mode: "onChange",
         defaultValues: {
