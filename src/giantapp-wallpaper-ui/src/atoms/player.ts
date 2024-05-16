@@ -44,12 +44,12 @@ export const isPausedAtom = atom(
     (get) => {
         const selectedWallpaper = get(selectedWallpaperAtom);
         if (selectedWallpaper) {
-            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper).runningInfo.isPaused || false;
+            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.isPaused || false;
             if (isPaused)
                 return true;
         }
         const playingWallpapers = get(playingWallpapersAtom);
-        var isPaused = playingWallpapers.every(x => Wallpaper.findPlayingWallpaper(x).runningInfo.isPaused);
+        var isPaused = playingWallpapers.every(x => Wallpaper.findPlayingWallpaper(x)?.runningInfo.isPaused);
         return isPaused;
     }
 );
