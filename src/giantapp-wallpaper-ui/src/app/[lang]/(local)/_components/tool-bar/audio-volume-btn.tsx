@@ -7,18 +7,21 @@ import { SpeakerLoudIcon, SpeakerOffIcon, SpeakerQuietIcon } from "@radix-ui/rea
 import api from "@/lib/client/api";
 import { useAtom, useAtomValue } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
-import { audioScreenIndexAtom, volumeAtom } from "@/atoms/player";
+import { audioScreenIndexAtom, getScreenIndex, selectedWallpaperAtom, volumeAtom } from "@/atoms/player";
 
 //音量按钮，修改音量
 export default function AudioVolumeBtn() {
     const dictionary = useAtomValue(langDictAtom);
     const [volume, setVolume] = useAtom(volumeAtom);
-    const screenIndex = useAtomValue(audioScreenIndexAtom);
+    const [audioScreenIndex, setAudioScreenIndex] = useAtom(audioScreenIndexAtom);
+    const selectedWallpaper = useAtomValue(selectedWallpaperAtom);
 
     const handleVolumeChange = useCallback(async (value: number[]) => {
         setVolume(value[0])
-        api.setVolume(value[0], screenIndex);
-    }, [screenIndex, setVolume]);
+        const currentWallpaperScreenIndex = getScreenIndex(selectedWallpaper);
+        api.setVolume(value[0], currentWallpaperScreenIndex);
+        setAudioScreenIndex(currentWallpaperScreenIndex);
+    }, [selectedWallpaper, setAudioScreenIndex, setVolume]);
 
     const handleVolumeChangeDebounced = useDebouncedCallback((value) => {
         handleVolumeChange(value);

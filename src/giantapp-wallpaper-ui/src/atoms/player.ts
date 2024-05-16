@@ -63,6 +63,12 @@ export const screensAtom = atom((get) => {
 //音量
 export const volumeAtom = atom(
     (get) => {
+        const selectedWallpaper = get(selectedWallpaperAtom);
+        const audioScreenIndex = get(audioScreenIndexAtom);
+
+        if (selectedWallpaper && getScreenIndex(selectedWallpaper) != audioScreenIndex) {
+            return 0;
+        }
         const playingStatus = get(playingStatusAtom);
         return playingStatus?.volume || 0;
     },
