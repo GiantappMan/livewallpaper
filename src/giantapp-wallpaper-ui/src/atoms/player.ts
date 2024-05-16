@@ -44,7 +44,8 @@ export const isPausedAtom = atom(
     (get) => {
         const selectedWallpaper = get(selectedWallpaperAtom);
         if (selectedWallpaper) {
-            isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.isPaused || false;
+            // isPaused = Wallpaper.findPlayingWallpaper(selectedWallpaper)?.runningInfo.isPaused || false;
+            isPaused = selectedWallpaper.runningInfo.isPaused || false;
             if (isPaused)
                 return true;
         }

@@ -26,6 +26,8 @@ public class PlaylistRender : BaseRender
     private readonly BaseRender[] _renders = new BaseRender[] { new VideoRender(), new ImgRender(), new WebRender() };
     private Wallpaper? _playingWallpaper;
     private Wallpaper? _playlist;
+
+    private bool _isPaused;
     #endregion
 
     //静态时间，通知播放列表发生变化
@@ -44,7 +46,7 @@ public class PlaylistRender : BaseRender
     private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
         //检查是否切换壁纸
-        if (_nextSwitchTime == null)
+        if (_nextSwitchTime == null || _isPaused)
             return;
 
         if (_isChecking)
@@ -127,6 +129,7 @@ public class PlaylistRender : BaseRender
 
     internal override void Pause()
     {
+        _isPaused = true;
         _currentRender?.Pause();
     }
 
@@ -213,6 +216,7 @@ public class PlaylistRender : BaseRender
 
     internal override void Resume()
     {
+        _isPaused = false;
         _currentRender?.Resume();
     }
 

@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { SpeakerLoudIcon, SpeakerOffIcon, SpeakerQuietIcon } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
 import { audioScreenIndexAtom, getScreenIndex, selectedWallpaperAtom, volumeAtom } from "@/atoms/player";
 
@@ -13,7 +13,7 @@ import { audioScreenIndexAtom, getScreenIndex, selectedWallpaperAtom, volumeAtom
 export default function AudioVolumeBtn() {
     const dictionary = useAtomValue(langDictAtom);
     const [volume, setVolume] = useAtom(volumeAtom);
-    const [audioScreenIndex, setAudioScreenIndex] = useAtom(audioScreenIndexAtom);
+    const setAudioScreenIndex = useSetAtom(audioScreenIndexAtom);
     const selectedWallpaper = useAtomValue(selectedWallpaperAtom);
 
     const handleVolumeChange = useCallback(async (value: number[]) => {

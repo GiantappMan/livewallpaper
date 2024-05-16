@@ -2,6 +2,8 @@ import api from "@/lib/client/api";
 import { useState, useCallback, useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { VideoSlider } from "../video-slider";
+import { useAtomValue } from "jotai";
+import { isPausedAtom } from "@/atoms/player";
 
 //把秒转换成方便阅读的格式
 function formatTime(seconds: number) {
@@ -31,6 +33,7 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
     const [time, setTime] = useState('00:00');
     const [totalTime, setTotalTime] = useState('00:00');
     const [progress, setProgress] = useState(0);
+    const isPaused = useAtomValue(isPausedAtom);
     //记录设置进度的时间
     const [lastSetTime, setLastSetTime] = useState<number>(0);
 
@@ -57,6 +60,9 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
                     return;
                 }
 
+                if (isPaused)
+                    return;
+
                 const res = await api.getWallpaperTime(screenIndex);
                 // console.log("getWallpaperTime:", res);
 
@@ -79,7 +85,7 @@ const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
         fetch();//先立即执行一次
         const timer = setInterval(fetch, 1000);
         return () => clearInterval(timer); // cleanup on component unmount
-    }, [lastSetTime, screenIndex]);
+    }, [isPaused, lastSetTime, screenIndex]);
 
     return <div className="flex items-center justify-between text-xs w-full select-none">
         <div className="text-primary-600 dark:text-primary-400">{time}</div>
