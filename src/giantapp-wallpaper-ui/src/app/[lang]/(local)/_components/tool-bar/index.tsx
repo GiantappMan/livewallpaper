@@ -70,31 +70,35 @@ export function ToolBar({ /*playingStatus, onChangePlayingStatus*/ }: ToolBarPro
         }
     }, [playingWallpapers, selectedWallpaper, setPlayingWallpapers]);
 
-    const handlePlayClick = useCallback(() => {
+    const handlePlayClick = useCallback(async () => {
         const screeIndex = getScreenIndex(selectedWallpaper);
         api.resumeWallpaper(screeIndex);
-        const wallpapers = playingWallpapers.map(x => {
-            var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-            if (screeIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === screeIndex) {
-                playingWallpaper.runningInfo.isPaused = false;
-            }
-            return x;
-        });
-        setPlayingWallpapers(wallpapers);
-    }, [playingWallpapers, selectedWallpaper, setPlayingWallpapers]);
+        // const wallpapers = playingWallpapers.map(x => {
+        //     // var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+        //     var playingWallpaper = x;
+        //     if (screeIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === screeIndex) {
+        //         playingWallpaper.runningInfo.isPaused = false;
+        //     }
+        //     return x;
+        // });
+        // setPlayingWallpapers(wallpapers);
+        await refreshPlayingStatus();
+    }, [refreshPlayingStatus, selectedWallpaper]);
 
-    const handlePauseClick = useCallback(() => {
+    const handlePauseClick = useCallback(async () => {
         const screeIndex = getScreenIndex(selectedWallpaper);
-        api.pauseWallpaper(screeIndex);
-        const wallpapers = playingWallpapers.map(x => {
-            var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
-            if (screeIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === screeIndex) {
-                playingWallpaper.runningInfo.isPaused = true;
-            }
-            return x;
-        })
-        setPlayingWallpapers(wallpapers);
-    }, [playingWallpapers, selectedWallpaper, setPlayingWallpapers]);
+        await api.pauseWallpaper(screeIndex);
+        // const wallpapers = playingWallpapers.map(x => {
+        //     // var playingWallpaper = Wallpaper.findPlayingWallpaper(x);
+        //     var playingWallpaper = x;
+        //     if (screeIndex < 0 || playingWallpaper.runningInfo.screenIndexes[0] === screeIndex) {
+        //         playingWallpaper.runningInfo.isPaused = true;
+        //     }
+        //     return x;
+        // })
+        // setPlayingWallpapers(wallpapers);
+        refreshPlayingStatus();
+    }, [refreshPlayingStatus, selectedWallpaper]);
 
     //播放列表中的下一个壁纸
     const playNextWallpaper = useCallback(async () => {

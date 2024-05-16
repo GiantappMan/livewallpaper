@@ -584,10 +584,9 @@ public class Wallpaper : ICloneable
             return;
 
         if (Meta.PlayIndex == 0)
-        {
             Meta.PlayIndex = (uint)(Meta.RealPlaylist.Count - 1);
-        }
-        Meta.PlayIndex -= 1;
+        else
+            Meta.PlayIndex -= 1;
     }
 }
 

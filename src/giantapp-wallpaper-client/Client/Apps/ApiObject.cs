@@ -322,7 +322,7 @@ public class ApiObject
 
         return res;
     }
-    public async void PlayNextInPlaylist(string wallpaperJson)
+    public async Task PlayNextInPlaylist(string wallpaperJson)
     {
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
@@ -331,7 +331,7 @@ public class ApiObject
         await WallpaperApi.PlayNextInPlaylist(wallpaper);
     }
 
-    public async void PlayPrevInPlaylist(string wallpaperJson)
+    public async Task PlayPrevInPlaylist(string wallpaperJson)
     {
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)

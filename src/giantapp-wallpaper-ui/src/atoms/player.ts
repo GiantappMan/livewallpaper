@@ -49,9 +49,10 @@ export const isPausedAtom = atom(
             if (isPaused)
                 return true;
         }
-        const playingWallpapers = get(playingWallpapersAtom);
+        // const playingWallpapers = get(playingWallpapersAtom);
         // var isPaused = playingWallpapers.every(x => Wallpaper.findPlayingWallpaper(x)?.runningInfo.isPaused);
-        var isPaused = playingWallpapers.every(x => x.runningInfo.isPaused);
+        const playingStatus = get(playingStatusAtom);
+        var isPaused = playingStatus?.wallpapers.every(x => x.runningInfo.isPaused);
         return isPaused;
     }
 );

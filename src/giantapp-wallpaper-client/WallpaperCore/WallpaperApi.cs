@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Windows.Win32;
 using WallpaperCore.Libs;
+using System.Resources;
 
 namespace WallpaperCore;
 
@@ -157,23 +158,25 @@ public static class WallpaperApi
     }
 
     //播放列表中的下一个壁纸
-    public static async Task PlayNextInPlaylist(Wallpaper wallpaper)
+    public static async Task<bool> PlayNextInPlaylist(Wallpaper wallpaper)
     {
         var screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
         var manager = GetRunningManager(screenIndex);
         wallpaper = manager.Wallpaper ?? wallpaper;
         wallpaper.IncrementPlayIndex();
-        await ShowWallpaper(wallpaper);
+        var res = await ShowWallpaper(wallpaper);
+        return res;
     }
 
     //播放列表中的上一个壁纸
-    public static async Task PlayPrevInPlaylist(Wallpaper wallpaper)
+    public static async Task<bool> PlayPrevInPlaylist(Wallpaper wallpaper)
     {
         var screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
         var manager = GetRunningManager(screenIndex);
         wallpaper = manager.Wallpaper ?? wallpaper;
         wallpaper.DecrementPlayIndex();
-        await ShowWallpaper(wallpaper);
+        var res = await ShowWallpaper(wallpaper);
+        return res;
     }
 
     //关闭壁纸

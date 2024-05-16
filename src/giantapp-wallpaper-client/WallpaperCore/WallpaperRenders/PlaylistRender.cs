@@ -155,14 +155,18 @@ public class PlaylistRender : BaseRender
 
         //查找wallpaper 所需的render
         bool found = false;
+        //等待关闭的render
+        List<BaseRender> toStop = new();
         foreach (var item in _renders)
         {
             if (item.SupportTypes.ToList().Contains(_playingWallpaper.Meta.Type))
             {
-                if (item != _currentRender)
+                if (item != _currentRender && _currentRender != null)
                 {
                     //类型换了，关闭旧壁纸
-                    _currentRender?.Stop();
+                    toStop.Add(_currentRender);
+                    //if (_currentRender is not ImgRender)
+                    //_currentRender?.Stop();
                 }
                 _currentRender = item;
                 found = true;
@@ -190,6 +194,12 @@ public class PlaylistRender : BaseRender
 
             _timer.Elapsed -= Timer_Elapsed;
             _timer.Elapsed += Timer_Elapsed;
+        }
+
+        //关闭旧壁纸
+        foreach (var item in toStop)
+        {
+            item.Stop();
         }
 
         PlaylistChanged?.Invoke(null, new EventArgs());

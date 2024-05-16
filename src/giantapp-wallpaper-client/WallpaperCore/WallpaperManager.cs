@@ -76,7 +76,11 @@ public class WallpaperManager
             return;
 
         if (_currentRender != null)
+        {
             await _currentRender.Play(Wallpaper);
+            if (Wallpaper != null)
+                Wallpaper.RunningInfo.IsPaused = false;
+        }
 
         if (IsScreenMaximized)
             SetScreenMaximized(true);
