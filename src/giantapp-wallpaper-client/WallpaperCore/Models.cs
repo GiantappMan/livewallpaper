@@ -12,7 +12,7 @@ public class ModelUtils
             return null;
 
         //用json序列化clone，反射有时候要崩
-        return JsonSerializer.Deserialize(JsonSerializer.Serialize(obj), obj.GetType(), WallpaperApi.JsonOptitons);
+        return JsonSerializer.Deserialize(JsonSerializer.Serialize(obj), obj.GetType());
 
         //Type type = obj.GetType();
         //object clone = Activator.CreateInstance(type);

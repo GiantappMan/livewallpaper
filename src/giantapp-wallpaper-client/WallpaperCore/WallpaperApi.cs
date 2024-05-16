@@ -159,6 +159,9 @@ public static class WallpaperApi
     //播放列表中的下一个壁纸
     public static async Task PlayNextInPlaylist(Wallpaper wallpaper)
     {
+        var screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
+        var manager = GetRunningManager(screenIndex);
+        wallpaper = manager.Wallpaper ?? wallpaper;
         wallpaper.IncrementPlayIndex();
         await ShowWallpaper(wallpaper);
     }
@@ -166,6 +169,9 @@ public static class WallpaperApi
     //播放列表中的上一个壁纸
     public static async Task PlayPrevInPlaylist(Wallpaper wallpaper)
     {
+        var screenIndex = wallpaper.RunningInfo.ScreenIndexes[0];
+        var manager = GetRunningManager(screenIndex);
+        wallpaper = manager.Wallpaper ?? wallpaper;
         wallpaper.DecrementPlayIndex();
         await ShowWallpaper(wallpaper);
     }

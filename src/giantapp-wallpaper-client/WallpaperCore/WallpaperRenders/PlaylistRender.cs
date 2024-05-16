@@ -59,7 +59,6 @@ public class PlaylistRender : BaseRender
             {
                 _playlist?.IncrementPlayIndex();
                 await Play(_playlist);
-                PlaylistChanged?.Invoke(null, new EventArgs());
             }
         }
         catch (Exception ex)
@@ -192,6 +191,8 @@ public class PlaylistRender : BaseRender
             _timer.Elapsed -= Timer_Elapsed;
             _timer.Elapsed += Timer_Elapsed;
         }
+
+        PlaylistChanged?.Invoke(null, new EventArgs());
     }
 
     private void UpdateNextSwitchTime(DateTime? startTime, double duration)
