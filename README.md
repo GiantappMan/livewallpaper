@@ -2,7 +2,8 @@
 
 体验地址：https://github.com/GiantappMan/livewallpaper/releases  
 应用商店：https://www.microsoft.com/store/apps/9MWTG433JV6B  
-阿里云盘：https://www.aliyundrive.com/s/J3qUQHd984u/folder/65918ded633035b5c68047649de77de03a7c09d5  
+阿里云盘：https://www.aliyundrive.com/s/J3qUQHd984u/folder/65918ded633035b5c68047649de77de03a7c09d5
+Github: https://github.com/GiantappMan/livewallpaper/releases/tag/v3.0.19-alpha.19  
 
 ---
 
