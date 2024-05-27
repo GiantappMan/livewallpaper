@@ -12,8 +12,8 @@ importers:
         specifier: ^2.1.3
         version: 2.1.3(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       '@hookform/resolvers':
-        specifier: ^3.4.0
-        version: 3.4.0(react-hook-form@7.51.4(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))
+        specifier: ^3.4.2
+        version: 3.4.2(react-hook-form@7.51.5(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))
       '@radix-ui/react-alert-dialog':
         specifier: ^1.0.5
         version: 1.0.5(@types/react-dom@https://registry.npmmirror.com/@types/react-dom/-/react-dom-18.2.14.tgz)(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react-dom@https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
@@ -75,11 +75,11 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react-dom@https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       jotai:
-        specifier: ^2.8.0
-        version: 2.8.0(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+        specifier: ^2.8.2
+        version: 2.8.2(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       lucide-react:
-        specifier: ^0.378.0
-        version: 0.378.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+        specifier: ^0.379.0
+        version: 0.379.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       next:
         specifier: 14.2.3
         version: 14.2.3(react-dom@https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
@@ -93,8 +93,8 @@ importers:
         specifier: ^18
         version: https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       react-hook-form:
-        specifier: ^7.51.4
-        version: 7.51.4(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+        specifier: ^7.51.5
+        version: 7.51.5(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       sonner:
         specifier: ^1.4.41
         version: 1.4.41(react-dom@https://registry.npmmirror.com/react-dom/-/react-dom-18.2.0.tgz(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
@@ -105,8 +105,8 @@ importers:
         specifier: ^1.0.7
         version: https://registry.npmmirror.com/tailwindcss-animate/-/tailwindcss-animate-1.0.7.tgz(tailwindcss@https://registry.npmmirror.com/tailwindcss/-/tailwindcss-3.3.5.tgz)
       use-debounce:
-        specifier: ^10.0.0
-        version: 10.0.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+        specifier: ^10.0.1
+        version: 10.0.1(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -217,9 +217,9 @@ packages:
     peerDependencies:
       react: '>= 16'
 
-  '@hookform/resolvers@3.4.0':
-    resolution: {integrity: sha512-+oAqK3okmoEDnvUkJ3N/mvNMeeMv5Apgy1jkoRmlaaAF4vBgcJs9tHvtXU7VE4DvPosvAUUkPOaNFunzt1dbgA==}
-    version: 3.4.0
+  '@hookform/resolvers@3.4.2':
+    resolution: {integrity: sha512-1m9uAVIO8wVf7VCDAGsuGA0t6Z3m6jVGAN50HkV9vYLl0yixKK/Z1lr01vaRvYCkIKGoy1noVRxMzQYb4y/j1Q==}
+    version: 3.4.2
     peerDependencies:
       react-hook-form: ^7.0.0
 
@@ -1967,9 +1967,9 @@ packages:
     version: 1.21.0
     hasBin: true
 
-  jotai@2.8.0:
-    resolution: {integrity: sha512-yZNMC36FdLOksOr8qga0yLf14miCJlEThlp5DeFJNnqzm2+ZG7wLcJzoOyij5K6U6Xlc5ljQqPDlJRgqW0Y18g==}
-    version: 2.8.0
+  jotai@2.8.2:
+    resolution: {integrity: sha512-AU+EU82YqP94izfbGYQQL3oa/06gmn+Ijf/CKx0QybAURtbqh2e4N6zA2fxeIh0JEUgASF6z5IhagJ8NicR95A==}
+    version: 2.8.2
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=17.0.0'
@@ -2051,9 +2051,9 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lucide-react@0.378.0:
-    resolution: {integrity: sha512-u6EPU8juLUk9ytRcyapkWI18epAv3RU+6+TC23ivjR0e+glWKBobFeSgRwOIJihzktILQuy6E0E80P2jVTDR5g==}
-    version: 0.378.0
+  lucide-react@0.379.0:
+    resolution: {integrity: sha512-KcdeVPqmhRldldAAgptb8FjIunM2x2Zy26ZBh1RsEUcdLIvsEmbcw7KpzFYUy5BbpGeWhPu9Z9J5YXfStiXwhg==}
+    version: 0.379.0
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
 
@@ -2325,9 +2325,9 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  react-hook-form@7.51.4:
-    resolution: {integrity: sha512-V14i8SEkh+V1gs6YtD0hdHYnoL4tp/HX/A45wWQN15CYr9bFRmmRdYStSO5L65lCCZRF+kYiSKhm9alqbcdiVA==}
-    version: 7.51.4
+  react-hook-form@7.51.5:
+    resolution: {integrity: sha512-J2ILT5gWx1XUIJRETiA7M19iXHlG74+6O3KApzvqB/w8S5NQR7AbU8HVZrMALdmDgWpRPYiZJl0zx8Z4L2mP6Q==}
+    version: 7.51.5
     engines: {node: '>=12.22.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18
@@ -2692,9 +2692,9 @@ packages:
       '@types/react':
         optional: true
 
-  use-debounce@10.0.0:
-    resolution: {integrity: sha512-XRjvlvCB46bah9IBXVnq/ACP2lxqXyZj0D9hj4K5OzNroMDpTEBg8Anuh1/UfRTRs7pLhQ+RiNxxwZu9+MVl1A==}
-    version: 10.0.0
+  use-debounce@10.0.1:
+    resolution: {integrity: sha512-0uUXjOfm44e6z4LZ/woZvkM8FwV1wiuoB6xnrrOmeAEjRDDzTLQNRFtYHvqUsJdrz1X37j0rVGIVp144GLHGKg==}
+    version: 10.0.1
     engines: {node: '>= 16.0.0'}
     peerDependencies:
       react: '>=16.8.0'
@@ -2829,9 +2829,9 @@ snapshots:
     dependencies:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
 
-  '@hookform/resolvers@3.4.0(react-hook-form@7.51.4(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))':
+  '@hookform/resolvers@3.4.2(react-hook-form@7.51.5(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz))':
     dependencies:
-      react-hook-form: 7.51.4(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
+      react-hook-form: 7.51.5(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz)
 
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
@@ -4705,7 +4705,7 @@ snapshots:
 
   jiti@https://registry.npmmirror.com/jiti/-/jiti-1.21.0.tgz: {}
 
-  jotai@2.8.0(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
+  jotai@2.8.2(@types/react@https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz)(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
     optionalDependencies:
       '@types/react': https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
@@ -4772,7 +4772,7 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  lucide-react@0.378.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
+  lucide-react@0.379.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
     dependencies:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
 
@@ -5010,7 +5010,7 @@ snapshots:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
       scheduler: https://registry.npmmirror.com/scheduler/-/scheduler-0.23.0.tgz
 
-  react-hook-form@7.51.4(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
+  react-hook-form@7.51.5(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
     dependencies:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
 
@@ -5396,7 +5396,7 @@ snapshots:
     optionalDependencies:
       '@types/react': https://registry.npmmirror.com/@types/react/-/react-18.2.34.tgz
 
-  use-debounce@10.0.0(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
+  use-debounce@10.0.1(react@https://registry.npmmirror.com/react/-/react-18.2.0.tgz):
     dependencies:
       react: https://registry.npmmirror.com/react/-/react-18.2.0.tgz
 

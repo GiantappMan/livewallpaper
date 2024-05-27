@@ -434,6 +434,8 @@ public partial class ShellWindow : Window
         //左下角提示
         webview2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 #endif
+        //允许记住密码
+        webview2.CoreWebView2.Settings.IsPasswordAutosaveEnabled = true;
     }
 
     private void CoreWebView2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)
