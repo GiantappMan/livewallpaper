@@ -48,7 +48,7 @@ internal class AppService
         SystemEvents.DisplaySettingsChanged += (s, e) =>
         {
             //关闭没有屏幕的壁纸
-            WallpaperApi.CloseNoScreenWallpaper();
+            WallpaperApi.StopNoScreenWallpaper();
             SaveSnapshot();
             _apiObject.TriggerRefreshPageEvent();
         };

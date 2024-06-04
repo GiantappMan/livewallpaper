@@ -179,14 +179,6 @@ public static class WallpaperApi
         return res;
     }
 
-    //关闭壁纸
-    public static void CloseWallpaper(uint screenIndex = 0)
-    {
-        var manager = GetRunningManager(screenIndex);
-        manager.Stop();
-        //RunningWallpapers.TryRemove(screenIndex, out _);
-    }
-
     //删除壁纸
     public static bool DeleteWallpaper(params Wallpaper[] wallpapers)
     {
@@ -303,6 +295,33 @@ public static class WallpaperApi
                 continue;
             var manger = GetRunningManager((uint)screenIndex);
             manger.Resume();
+        }
+    }
+    ////关闭壁纸
+    //public static void CloseWallpaper(uint screenIndex = 0)
+    //{
+    //    var manager = GetRunningManager(screenIndex);
+    //    manager.Stop();
+    //    //RunningWallpapers.TryRemove(screenIndex, out _);
+    //}
+
+    public static void StopNoScreenWallpaper()
+    {
+        foreach (var item in RunningWallpapers)
+        {
+            var screenIndexes = item.Value.Wallpaper?.RunningInfo.ScreenIndexes;
+            //如果当前屏幕已不存在就关闭
+            if (screenIndexes != null && screenIndexes.Length > 0)
+            {
+                foreach (var screenIndex in screenIndexes)
+                {
+                    if (GetScreen(screenIndex) == null)
+                    {
+                        StopWallpaper((int)screenIndex);
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -616,25 +635,6 @@ public static class WallpaperApi
         manager.SetProgress(progress);
     }
 
-    public static void CloseNoScreenWallpaper()
-    {
-        foreach (var item in RunningWallpapers)
-        {
-            var screenIndexes = item.Value.Wallpaper?.RunningInfo.ScreenIndexes;
-            //如果当前屏幕已不存在就关闭
-            if (screenIndexes != null && screenIndexes.Length > 0)
-            {
-                foreach (var screenIndex in screenIndexes)
-                {
-                    if (GetScreen(screenIndex) == null)
-                    {
-                        CloseWallpaper(screenIndex);
-                        break;
-                    }
-                }
-            }
-        }
-    }
     ////添加到播放列表
     //public static void AddToPlaylist(Playlist playlist, Wallpaper wallpaper)
     //{
