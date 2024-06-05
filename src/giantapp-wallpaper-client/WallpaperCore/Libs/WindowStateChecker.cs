@@ -213,7 +213,7 @@ public class WindowStateChecker
 
         //过滤掉一些不需要的窗口
         className = GetClassName(handle);
-        string[] ignoreClass = new string[] { "WorkerW", "Progman" };
+        string[] ignoreClass = new string[] { "WorkerW", "Progman", "CEF-OSC-WIDGET" };
         if (ignoreClass.Contains(className))
         {
             return false;
