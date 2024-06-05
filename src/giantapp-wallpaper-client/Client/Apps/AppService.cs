@@ -53,6 +53,23 @@ internal class AppService
             _apiObject.TriggerRefreshPageEvent();
         };
 
+        //用户锁屏
+        SystemEvents.SessionSwitch += async (s, e) =>
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock)
+            {
+                //锁屏关闭壁纸
+                SaveSnapshot();
+                WallpaperApi.StopWallpaper();
+            }
+            else if (e.Reason == SessionSwitchReason.SessionUnlock)
+            {
+                //解锁重现运行，有些电脑锁屏自动杀进程
+                var snapshot = Configer.Get<WallpaperApiSnapshot>();
+                await WallpaperApi.RestoreFromSnapshot(snapshot);
+            }
+        };
+
         DownloadService.StatusChangedEvent += (s, e) =>
         {
             _apiObject.TriggerDownloadStatusChangedEvent();
