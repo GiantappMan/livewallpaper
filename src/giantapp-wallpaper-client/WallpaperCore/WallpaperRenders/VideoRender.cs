@@ -18,6 +18,7 @@ internal class VideoRender : BaseRender
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private VideoSnapshot? _snapshot;
     private bool _isRestore;
+    private Wallpaper? _latestWallpaper;
     private IVideoApi? _playerApi;
     private double _duration = -1;
     public override WallpaperType[] SupportTypes { get; protected set; } = new WallpaperType[] { WallpaperType.Video, WallpaperType.AnimatedImg };
@@ -72,6 +73,8 @@ internal class VideoRender : BaseRender
 
         if (playWallpaper == null || playSetting == null || playMeta == null)
             return;
+
+        _latestWallpaper = wallpaper;
 
         var videoPlayerType = playSetting.VideoPlayer;
         if (videoPlayerType == VideoPlayer.Default_Player)
@@ -180,7 +183,17 @@ internal class VideoRender : BaseRender
 
     internal override void Resume()
     {
-        _playerApi?.Resume();
+        if (_latestWallpaper == null)
+            return;
+
+        if (_playerApi?.Process == null || _playerApi.Process.HasExited)
+        {
+            //检查进程是不是崩了
+            //有些情况下电脑锁屏自动杀进程
+            _ = Play(_latestWallpaper);
+        }
+        else
+            _playerApi?.Resume();
     }
 
     internal override double GetDuration()
@@ -204,6 +217,7 @@ internal class VideoRender : BaseRender
 
     internal override void Stop()
     {
+        _latestWallpaper = null;
         _playerApi?.Stop();
         _duration = -1;
     }
