@@ -410,6 +410,20 @@ class API {
     }
   }
 
+  openLogFolder(): ApiResult<null> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      debugger
+      api.OpenLogFolder();
+      return { error: null, data: null };
+    }
+    catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   isRunningInClient(): boolean {
     return typeof window !== 'undefined' && !!window.chrome?.webview;
   }

@@ -1,4 +1,4 @@
-﻿//#define DEBUG_LOCAL
+﻿#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
@@ -21,6 +21,7 @@ using System.Globalization;
 using System.Text.Json;
 using WallpaperCore.Libs;
 using WallpaperCore.WallpaperRenders;
+using Windows.Storage;
 
 namespace Client.Apps;
 
@@ -121,18 +122,8 @@ internal class AppService
         var snapshot = Configer.Get<WallpaperApiSnapshot>();
         if (snapshot != null)
         {
-            //if (snapshot.Data != null)
-            //    foreach (var item in snapshot.Data)
-            //    {
-            //        if (item.Wallpaper.Setting.VideoPlayer == VideoPlayer.Default_Player)
-            //        {
-            //            //更新全局配置
-            //            WallpaperApi.DefaultVideoPlayer = wallpaperConfig.DefaultVideoPlayer;
-            //        }
-            //    }
             await WallpaperApi.RestoreFromSnapshot(snapshot);
             //重新获取快照，有可能pid重新生成了
-            //Configer.Set(WallpaperApi.GetSnapshot(), out _, true);
             SaveSnapshot();
         }
 
@@ -298,6 +289,37 @@ internal class AppService
         }
         return url;
     }
+
+    //打开文件夹
+    public static void OpenFolder(string path)
+    {
+        try
+        {
+            string? targetPath = path;
+
+            if (UWPHelper.IsRunningAsUwp())
+                targetPath = GetUwpRealPath(path);
+
+            //uwp映射路径不存在，真实路径却存在
+            //感觉uwp映射路径没有生成文件了？ 2024.6
+            if (!File.Exists(targetPath) && !Directory.Exists(targetPath) &&
+                (File.Exists(path) || Directory.Exists(path)))
+                targetPath = path;
+
+            Process.Start("Explorer.exe", $" /select, {targetPath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "OpenFolder");
+        }
+    }
+
+    public static void OpenLogFolder()
+    {
+        if (NLogHelper.Folder != null)
+            OpenFolder(NLogHelper.Folder);
+    }
+
     #endregion
 
     #region private
@@ -384,6 +406,29 @@ internal class AppService
         command.SetValue("", "\"" + applicationPath + "\" \"%1\"");
     }
 
+    private static string? GetUwpRealPath(string? path)
+    {
+        try
+        {
+            if (path == null)
+                return null;
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            //uwp 真实存储路径不一样
+            //https://stackoverflow.com/questions/48849076/uwp-app-does-not-copy-file-to-appdata-folder
+            if (path.Contains(appData))
+            {
+                string realAppData = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Local");
+                path = path.Replace(appData, realAppData);
+            }
+
+            return path;
+        }
+        catch (Exception)
+        {
+            return path;
+        }
+    }
     #endregion
 
     #region callback

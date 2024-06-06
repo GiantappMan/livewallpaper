@@ -1,8 +1,8 @@
 ﻿using GiantappWallpaper;
+using NLog;
 using Ookii.Dialogs.Wpf;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Windows.UI.Xaml;
 
 namespace Client.UI;
 

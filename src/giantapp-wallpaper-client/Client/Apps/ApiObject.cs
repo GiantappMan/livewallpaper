@@ -148,13 +148,6 @@ public class ApiObject
         return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
 
-    //[Obsolete]
-    //public string GetScreens()
-    //{
-    //    var screens = WallpaperApi.GetScreens();
-    //    return JsonConvert.SerializeObject(screens, WallpaperApi.JsonSettings);
-    //}
-
     public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
@@ -322,6 +315,7 @@ public class ApiObject
 
         return res;
     }
+
     public async Task PlayNextInPlaylist(string wallpaperJson)
     {
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
@@ -339,32 +333,6 @@ public class ApiObject
 
         await WallpaperApi.PlayPrevInPlaylist(wallpaper);
     }
-
-    //[Obsolete]
-    //public bool CreateWallpaper(string title, string coverUrl, string pathUrl)
-    //{
-    //    var path = AppService.ConvertUrlToTmpPath(pathUrl);
-    //    var cover = AppService.ConvertUrlToTmpPath(coverUrl);
-    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
-    //    if (config.Directories.Length == 0 || string.IsNullOrEmpty(path))
-    //        return false;
-
-    //    return WallpaperApi.CreateWallpaper(title, cover, path, config.Directories[0]);
-    //}
-
-    //[Obsolete]
-    //public bool UpdateWallpaper(string title, string coverUrl, string pathUrl, string oldWallpaperJson)
-    //{
-    //    var config = Configer.Get<ConfigWallpaper>() ?? new();
-    //    var path = AppService.ConvertUrlToTmpPath(pathUrl);
-    //    path = AppService.ConvertUrlToPath(config, path);//有可能没改，就是壁纸目录
-    //    var cover = AppService.ConvertUrlToTmpPath(coverUrl);
-
-    //    var oldWallpaper = JsonConvert.DeserializeObject<Wallpaper>(oldWallpaperJson, WallpaperApi.JsonSettings);
-    //    if (oldWallpaper == null)
-    //        return false;
-    //    return WallpaperApi.UpdateWallpaper(title, cover, path, oldWallpaper);
-    //}
 
     public bool UpdateWallpaperNew(string newWallpaperJson, string oldWallpaperPath)
     {
@@ -457,15 +425,6 @@ public class ApiObject
         }
         return false;
     }
-
-    //public bool SetPlaylistSetting(string playlistSettingJson, string playlistJson)
-    //{
-    //    var playlistSetting = JsonConvert.DeserializeObject<PlaylistSetting>(playlistSettingJson, WallpaperApi.JsonSettings);
-    //    var playlist = JsonConvert.DeserializeObject<Playlist>(playlistJson, WallpaperApi.JsonSettings);
-    //    if (playlistSetting != null && playlist != null)
-    //        return WallpaperApi.SetPlaylistSetting(playlistSetting, playlist);
-    //    return false;
-    //}
 
     //获取指定屏幕的壁纸的当前播放时间和总时间
     public string? GetWallpaperTime(string screenIndexStr)
@@ -655,5 +614,10 @@ public class ApiObject
     internal void TriggerDownloadStatusChangedEvent()
     {
         DownloadStatusChangedEvent?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void OpenLogFolder()
+    {
+        AppService.OpenLogFolder();
     }
 }

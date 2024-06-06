@@ -9,7 +9,8 @@
     "produced_by": "Made with ❤ By {0}",
     "product_name": "LiveWallpaper {0} by Giantapp ",
     "rate_us": "Rate us",
-    "reminder": "(Reminder: Current Version is a Test Version: Expect Bugs. When Providing Feedback, Please Describe Reproduction Steps Clearly, Avoid Pure Emotional Outbursts)"
+    "reminder": "(Reminder: Current Version is a Test Version: Expect Bugs. When Providing Feedback, Please Describe Reproduction Steps Clearly, Avoid Pure Emotional Outbursts)",
+    "open_log_folder": "Open Log Folder"
   },
   "common": {
     "about": "About",
@@ -90,6 +91,11 @@
     "pause": "Pause",
     "play": "Play",
     "play_list": "Play list",
+    "play_mode": "Play mode",
+    "play_mode_description": "Set how to switch wallpapers in the list",
+    "play_mode_order": "Play in order",
+    "play_mode_random": "Play randomly",
+    "play_mode_timer": "Scheduled switching",
     "previous_wallpaper": "Previous wallpaper",
     "release_mouse": "Release the mouse",
     "return_to_list": "Return to list",
@@ -127,12 +133,7 @@
     "wallpaper_type_playlist": "Playlist",
     "wallpaper_type_video": "Video",
     "wallpaper_type_web": "Web",
-    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory.",
-    "play_mode": "Play mode",
-    "play_mode_description": "Set how to switch wallpapers in the list",
-    "play_mode_order": "Play in order",
-    "play_mode_random": "Play randomly",
-    "play_mode_timer": "Scheduled switching"
+    "you_can_create_wallpaper": "You can create a wallpaper or modify the wallpaper scan directory."
   },
   "settings": {
     "add_directory": "Add Directory",

@@ -25,6 +25,7 @@ interface API {
   GetDownloadItemStatus(id: string): Promise<string>;
   OpenStoreReview(defaultUrl: string): Promise<boolean>;
   GetRealThemeMode(): string;
+  OpenLogFolder(): void;
   addEventListener(type: string, listener: (e: any) => void);
 }
 
