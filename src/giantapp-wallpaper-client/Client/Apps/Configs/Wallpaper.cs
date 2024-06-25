@@ -1,12 +1,14 @@
 ﻿using System.IO;
 using System;
 using WallpaperCore;
+using NLog;
 
 namespace Client.Apps.Configs;
 
 //壁纸设置
 public class Wallpaper
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     public const string FullName = "Client.Apps.Configs.Wallpaper";
     public static string[] DefaultWallpaperSaveFolder { get; private set; } = new string[0];
 
@@ -30,10 +32,20 @@ public class Wallpaper
 
     internal static void UpdateDefaultWallpaperSaveFolder()
     {
-        if (Directory.Exists(@"D:\"))
+        try
         {
-            DefaultWallpaperSaveFolder = new string[] { @"D:\LiveWallpaper" };
-            return;
+            if (Directory.Exists(@"D:\"))
+            {
+                DefaultWallpaperSaveFolder = new string[] { @"D:\LiveWallpaper" };
+
+                //尝试创建文件夹，有些虚拟机D盘是驱动              
+                Directory.CreateDirectory(DefaultWallpaperSaveFolder[0]);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "UpdateDefaultWallpaperSaveFolder");
         }
 
         string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
