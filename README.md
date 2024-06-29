@@ -32,5 +32,5 @@ Github：https://github.com/GiantappMan/livewallpaper/releases
 
 - [点个星星](https://github.com/GiantappMan/livewallpaper)  
 - [五星好评](https://www.microsoft.com/store/apps/9MWTG433JV6B)
-- 注册serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)，赠送5￥测试金额  
-- 注册serverless 平台 [laf](https://laf.run/signup?code=y0pRFfG)，赠送10￥测试金额    
+- 注册serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)，赠送5￥测试金额
+  
