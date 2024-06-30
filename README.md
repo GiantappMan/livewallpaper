@@ -26,6 +26,7 @@ Github：https://github.com/GiantappMan/livewallpaper/releases
 ## 仓库地址
 
 <https://github.com/GiantappMan/livewallpaper.git>  
+<https://gitcode.com/GiantappMan/livewallpaper>  
 <https://gitee.com/GiantappMan/liveWallpaper.git>  
 
 ## 鼓励一下
