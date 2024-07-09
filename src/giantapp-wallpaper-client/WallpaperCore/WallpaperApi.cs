@@ -4,6 +4,7 @@ using System.Text.Json;
 using Windows.Win32;
 using WallpaperCore.Libs;
 using System.Resources;
+using System.Windows.Forms;
 
 namespace WallpaperCore;
 
@@ -120,9 +121,11 @@ public static class WallpaperApi
         return res;
     }
 
-    public static Screen? GetScreen(uint screenIndex)
+    public static Screen? GetScreen(uint screenIndex, Screen[]? screens = null)
     {
-        var screens = GetScreens();
+        if (screens == null)
+            screens = GetScreens();
+
         if (screenIndex < screens.Length)
             return screens[screenIndex];
         return null;
@@ -305,25 +308,36 @@ public static class WallpaperApi
     //    //RunningWallpapers.TryRemove(screenIndex, out _);
     //}
 
-    public static void StopNoScreenWallpaper()
+    //重新关闭播放当前壁纸
+    public static Task RePlayWallpaper()
     {
-        foreach (var item in RunningWallpapers)
-        {
-            var screenIndexes = item.Value.Wallpaper?.RunningInfo.ScreenIndexes;
-            //如果当前屏幕已不存在就关闭
-            if (screenIndexes != null && screenIndexes.Length > 0)
-            {
-                foreach (var screenIndex in screenIndexes)
-                {
-                    if (GetScreen(screenIndex) == null)
-                    {
-                        StopWallpaper((int)screenIndex);
-                        break;
-                    }
-                }
-            }
-        }
+        //获取快照
+        var snap = GetSnapshot();
+        //关闭所有壁纸
+        StopWallpaper();
+        //恢复快照
+        return RestoreFromSnapshot(snap);
     }
+
+    //public static void StopNoScreenWallpaper()
+    //{
+    //    foreach (var item in RunningWallpapers)
+    //    {
+    //        var screenIndexes = item.Value.Wallpaper?.RunningInfo.ScreenIndexes;
+    //        //如果当前屏幕已不存在就关闭
+    //        if (screenIndexes != null && screenIndexes.Length > 0)
+    //        {
+    //            foreach (var screenIndex in screenIndexes)
+    //            {
+    //                if (GetScreen(screenIndex) == null)
+    //                {
+    //                    StopWallpaper((int)screenIndex);
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     //停止壁纸
     public static void StopWallpaper(params int[] screenIndexs)
@@ -600,6 +614,7 @@ public static class WallpaperApi
                 if (item.Wallpaper == null)
                     continue;
                 var screenIndex = item.Wallpaper.RunningInfo.ScreenIndexes[0];
+
                 var volume = screenIndex == Settings.AudioSourceIndex ? Settings.Volume : 0;
                 manager.SetVolume(volume);
 

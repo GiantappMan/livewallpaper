@@ -48,10 +48,13 @@ internal class AppService
         //ScreenChanged
         SystemEvents.DisplaySettingsChanged += (s, e) =>
         {
-            //关闭没有屏幕的壁纸
-            WallpaperApi.StopNoScreenWallpaper();
-            SaveSnapshot();
-            _apiObject.TriggerRefreshPageEvent();
+            Debouncer.Shared.Delay(() =>
+            {
+                //拔插显示器，分辨率修改
+                WallpaperApi.RePlayWallpaper();
+                SaveSnapshot();
+                _apiObject.TriggerRefreshPageEvent();
+            }, 1000);
         };
 
         //用户锁屏
