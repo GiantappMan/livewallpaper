@@ -10,7 +10,7 @@
     <Platforms>x64</Platforms>
     <AssemblyName>LiveWallpaper3</AssemblyName>
     <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
-    <Version>3.0.20-alpha20</Version>
+    <Version>3.0.21-alpha21</Version>
     <PackageProjectUrl>https://giantapp.cn</PackageProjectUrl>
     <Authors>巨应君 | Giantapp Man</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -52,13 +52,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HandyControl" Version="3.5.1" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2535.41" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
     <PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.26100.1" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
     <PackageReference Include="MultiLanguageForXAML" Version="2.3.0.2" />
     <PackageReference Include="NLog" Version="5.3.2" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.3" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WallpaperCore\WallpaperCore.csproj" />
