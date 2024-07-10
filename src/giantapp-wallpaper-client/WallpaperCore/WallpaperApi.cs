@@ -237,19 +237,36 @@ public static class WallpaperApi
 
                 //存在meta删除meta
                 string fileName = Path.GetFileNameWithoutExtension(wallpaper.FileName);
-                string metaJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
-                if (File.Exists(metaJsonFile))
-                    File.Delete(metaJsonFile);
+
+                //-----------------↓v3.0
+                string metaJsonFile_3_0 = Path.Combine(wallpaper.Dir, $"{fileName}.meta.json");
+                if (File.Exists(metaJsonFile_3_0))
+                    File.Delete(metaJsonFile_3_0);
 
                 //存在cover删除cover
-                string coverFile = Path.Combine(wallpaper.Dir, $"{fileName}.cover{Path.GetExtension(wallpaper.Meta.Cover)}");
-                if (File.Exists(coverFile))
-                    File.Delete(coverFile);
+                string coverFile_3_0 = Path.Combine(wallpaper.Dir, $"{fileName}.cover{Path.GetExtension(wallpaper.Meta.Cover)}");
+                if (File.Exists(coverFile_3_0))
+                    File.Delete(coverFile_3_0);
 
                 //存在setting删除setting
-                string settingJsonFile = Path.Combine(wallpaper.Dir, $"{fileName}.setting.json");
-                if (File.Exists(settingJsonFile))
-                    File.Delete(settingJsonFile);
+                string settingJsonFile_3_0 = Path.Combine(wallpaper.Dir, $"{fileName}.setting.json");
+                if (File.Exists(settingJsonFile_3_0))
+                    File.Delete(settingJsonFile_3_0);
+
+                //-----------------↓v3.1
+                string metaJsonFile_3_1 = Path.Combine(wallpaper.Dir, Wallpaper.MetaFolder, $"{fileName}.meta.json");
+                if (File.Exists(metaJsonFile_3_1))
+                    File.Delete(metaJsonFile_3_1);
+
+                //存在cover删除cover
+                string coverFile_3_1 = Path.Combine(wallpaper.Dir, Wallpaper.MetaFolder, $"{fileName}.cover{Path.GetExtension(wallpaper.Meta.Cover)}");
+                if (File.Exists(coverFile_3_1))
+                    File.Delete(coverFile_3_1);
+
+                //存在setting删除setting
+                string settingJsonFile_3_1 = Path.Combine(wallpaper.Dir, Wallpaper.MetaFolder, $"{fileName}.setting.json");
+                if (File.Exists(settingJsonFile_3_1))
+                    File.Delete(settingJsonFile_3_1);
 
                 //如果文件夹空了，删除文件夹
                 if (Directory.GetFiles(wallpaper.Dir).Length == 0 && Directory.GetDirectories(wallpaper.Dir).Length == 0)
@@ -440,8 +457,7 @@ public static class WallpaperApi
                 return false;
         }
 
-        if (!Directory.Exists(saveFolder))
-            Directory.CreateDirectory(saveFolder);
+        EnsureDir(saveFolder);
 
         string? path = wallpaper.FilePath;
         string cover = wallpaper.CoverPath;
@@ -539,14 +555,15 @@ public static class WallpaperApi
         if (!string.IsNullOrEmpty(newWallpaper.CoverPath) && newWallpaper.CoverPath != oldWallpaper.CoverPath)
         {
             string coverExtension = Path.GetExtension(newWallpaper.CoverPath);
-            string coverSavePath = Path.Combine(saveFolder, $"{saveFileName}.cover{coverExtension}");
+            string coverSavePath = Path.Combine(saveFolder, Wallpaper.MetaFolder, $"{saveFileName}.cover{coverExtension}");
+            EnsureDir(coverSavePath, true);
             File.Copy(newWallpaper.CoverPath, coverSavePath, true);
-            newWallpaper.Meta.Cover = $"{saveFileName}.cover{Path.GetExtension(newWallpaper.CoverPath)}";
+            newWallpaper.Meta.Cover = $"{saveFileName}.cover{coverExtension}";
         }
 
         //保存meta
         newWallpaper.Meta.UpdateTime = DateTime.Now;
-        string metaJsonFile = Path.Combine(saveFolder, $"{saveFileName}.meta.json");
+        string metaJsonFile = Path.Combine(saveFolder, Wallpaper.MetaFolder, $"{saveFileName}.meta.json");
         File.WriteAllText(metaJsonFile, JsonSerializer.Serialize(newWallpaper.Meta, JsonOptitons));
 
         //移除旧格式project.json
@@ -567,7 +584,7 @@ public static class WallpaperApi
         string saveFileName = Path.GetFileNameWithoutExtension(wallpaper.FileName);
 
         //保存setting
-        string settingJsonFile = Path.Combine(saveFolder, $"{saveFileName}.setting.json");
+        string settingJsonFile = Path.Combine(saveFolder, Wallpaper.MetaFolder, $"{saveFileName}.setting.json");
         File.WriteAllText(settingJsonFile, JsonSerializer.Serialize(setting, JsonOptitons));
 
         //如果壁纸正在播放，重新调用ShowWallpaper以生效
@@ -707,6 +724,16 @@ public static class WallpaperApi
         {
             Logger.Error($"设置DPI感知时出错：{ex.Message}");
         }
+    }
+
+    //确保目录存在
+    private static void EnsureDir(string path, bool isPath = false)
+    {
+        string dir = path;
+        if (isPath)
+            dir = Path.GetDirectoryName(path);
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
     }
 
     #endregion

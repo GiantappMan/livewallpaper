@@ -515,9 +515,9 @@ public class ApiObject
             string wpFileName = $"{meta.Id}{Path.GetExtension(wallpaperUrl)}";
             string metaFileName = $"{meta.Id}.meta.json";
 
-            string destCoverPath = Path.Combine(saveDir, coverFileName);
+            string destCoverPath = Path.Combine(saveDir, Wallpaper.MetaFolder, coverFileName);
             string destFilePath = Path.Combine(saveDir, wpFileName);
-            string metaFilePath = Path.Combine(saveDir, metaFileName);
+            string metaFilePath = Path.Combine(saveDir, Wallpaper.MetaFolder, metaFileName);
 
             //下载壁纸
             bool ok = await DownloadService.DownloadAsync(wallpaperUrl, destFilePath, meta.Id, meta.Title);

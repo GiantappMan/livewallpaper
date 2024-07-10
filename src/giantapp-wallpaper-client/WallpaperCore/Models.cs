@@ -278,7 +278,7 @@ public class Wallpaper : ICloneable
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
     public static readonly string[] PlaylistExtension = new[] { ".playlist" };
-    const string MetaFolder = ".metadata";
+    public const string MetaFolder = ".metadata";
     //当前随机播放数据，播放完后重新生成
     public Queue<uint> RandomPlaylist { get; private set; } = new();
 
@@ -349,15 +349,18 @@ public class Wallpaper : ICloneable
                 Meta = meta ?? new();
                 if (meta?.Cover != null)
                 {
+                    //3.0格式
                     string oldCover = Path.Combine(Dir, meta.Cover);
+                    string newColver = Path.Combine(Dir, MetaFolder, meta.Cover);
                     if (File.Exists(oldCover))
                     {
                         //迁移
                         if (!Directory.Exists(Path.Combine(Dir, MetaFolder)))
                             Directory.CreateDirectory(Path.Combine(Dir, MetaFolder));
-                        File.Move(oldCover, Path.Combine(Dir, MetaFolder, meta.Cover));
+                        File.Move(oldCover, newColver);
                     }
-                    CoverPath = Path.Combine(Dir, MetaFolder, meta.Cover);
+                    //3.1格式
+                    CoverPath = newColver;
                 }
             }
             else
