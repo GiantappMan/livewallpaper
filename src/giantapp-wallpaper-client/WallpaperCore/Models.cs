@@ -110,11 +110,8 @@ public class WallpaperMeta : ICloneable
             //dir is not guid
             if (!Guid.TryParse(id, out _))
             {
-                //fileName is guid
-                if (Guid.TryParse(fileName, out _))
-                {
-                    id = fileName;
-                }
+                //不论filename是不是guid都作为标识
+                id = fileName;
             }
             Id = id;
         }
