@@ -278,6 +278,7 @@ public class Wallpaper : ICloneable
     public static readonly string[] ExeExtension = new[] { ".exe" };
     public static readonly string[] AnimatedImgExtension = new[] { ".gif", ".webp" };
     public static readonly string[] PlaylistExtension = new[] { ".playlist" };
+    const string MetaFolder = ".metadata";
     //当前随机播放数据，播放完后重新生成
     public Queue<uint> RandomPlaylist { get; private set; } = new();
 
@@ -328,19 +329,41 @@ public class Wallpaper : ICloneable
         {
             // 同目录包含[文件名].meta.json 的
             string fileName = Path.GetFileNameWithoutExtension(FileName);
-            string metaJsonFile = Path.Combine(Dir, $"{fileName}.meta.json");
-            if (File.Exists(metaJsonFile))
+
+            //3.0位置
+            string metaJsonFile_3_0 = Path.Combine(Dir, $"{fileName}.meta.json");
+            string metaJsonFile_3_1 = Path.Combine(Dir, MetaFolder, $"{fileName}.meta.json");
+            if (File.Exists(metaJsonFile_3_0))
             {
-                var meta = JsonSerializer.Deserialize<WallpaperMeta>(File.ReadAllText(metaJsonFile), WallpaperApi.JsonOptitons);
+                //移动
+                //判断目标文件夹是否存在
+                if (!Directory.Exists(Path.Combine(Dir, MetaFolder)))
+                    Directory.CreateDirectory(Path.Combine(Dir, MetaFolder));
+                File.Move(metaJsonFile_3_0, metaJsonFile_3_1);
+            }
+
+            //3.1位置
+            if (File.Exists(metaJsonFile_3_1))
+            {
+                var meta = JsonSerializer.Deserialize<WallpaperMeta>(File.ReadAllText(metaJsonFile_3_1), WallpaperApi.JsonOptitons);
                 Meta = meta ?? new();
                 if (meta?.Cover != null)
-                    CoverPath = Path.Combine(Dir, meta.Cover);
+                {
+                    string oldCover = Path.Combine(Dir, meta.Cover);
+                    if (File.Exists(oldCover))
+                    {
+                        //迁移
+                        if (!Directory.Exists(Path.Combine(Dir, MetaFolder)))
+                            Directory.CreateDirectory(Path.Combine(Dir, MetaFolder));
+                        File.Move(oldCover, Path.Combine(Dir, MetaFolder, meta.Cover));
+                    }
+                    CoverPath = Path.Combine(Dir, MetaFolder, meta.Cover);
+                }
             }
             else
             {
                 Meta.Title = FileName;
             }
-
             //设置type
             string extension = Path.GetExtension(FileName);
             if (Meta.Type != WallpaperType.NotSupported)
@@ -363,12 +386,25 @@ public class Wallpaper : ICloneable
     {
         try
         {
-            // 同目录包含[文件名].setting.json 的
             string fileName = Path.GetFileNameWithoutExtension(FileName);
-            string settingJsonFile = Path.Combine(Dir, $"{fileName}.setting.json");
-            if (File.Exists(settingJsonFile))
+            //3.0格式
+            // 同目录包含[文件名].setting.json 的
+            string settingJsonFile3_0 = Path.Combine(Dir, $"{fileName}.setting.json");
+            string settingJsonFile3_1 = Path.Combine(Dir, MetaFolder, $"{fileName}.setting.json");
+
+            if (File.Exists(settingJsonFile3_0))
             {
-                var setting = JsonSerializer.Deserialize<WallpaperSetting>(File.ReadAllText(settingJsonFile), WallpaperApi.JsonOptitons);
+                //移动到.metadata目录下
+                //判断目标文件夹是否存在
+                if (!Directory.Exists(Path.Combine(Dir, MetaFolder)))
+                    Directory.CreateDirectory(Path.Combine(Dir, MetaFolder));
+                File.Move(settingJsonFile3_0, settingJsonFile3_1);
+            }
+
+            //3.1改到.metadata目录下
+            if (File.Exists(settingJsonFile3_1))
+            {
+                var setting = JsonSerializer.Deserialize<WallpaperSetting>(File.ReadAllText(settingJsonFile3_1), WallpaperApi.JsonOptitons);
                 var Setting = setting ?? new();
                 return Setting;
             }
