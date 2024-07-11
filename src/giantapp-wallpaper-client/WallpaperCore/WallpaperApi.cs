@@ -5,6 +5,7 @@ using Windows.Win32;
 using WallpaperCore.Libs;
 using System.Resources;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace WallpaperCore;
 
@@ -128,8 +129,7 @@ public static class WallpaperApi
 
     public static Screen? GetScreen(uint screenIndex, Screen[]? screens = null)
     {
-        if (screens == null)
-            screens = GetScreens();
+        screens ??= GetScreens();
 
         if (screenIndex < screens.Length)
             return screens[screenIndex];
@@ -686,6 +686,27 @@ public static class WallpaperApi
     //        }
     //    }
     //}
+
+    //mpv生成截图
+    public static bool TakeScreenshot(string videoPath, string output)
+    {
+        try
+        {
+            //  .\mpv.exe xx3.mp4  -o out.png  -vf=scale:500:-1
+            string mpvPath = MpvApi.DefaultPlayerPath;
+            Process process = new();
+            process.StartInfo.FileName = mpvPath;
+            process.StartInfo.Arguments = $"\"{videoPath}\" -o \"{output}\" -vf=scale:500:-1";
+            process.Start();
+            process.WaitForExit();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Failed to take screenshot.");
+            return false;
+        }
+    }
 
     #endregion
 

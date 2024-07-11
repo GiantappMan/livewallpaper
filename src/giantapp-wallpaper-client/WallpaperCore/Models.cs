@@ -367,18 +367,26 @@ public class Wallpaper : ICloneable
             else
             {
                 Meta.Title = FileName;
-                //生成默认cover，否则前端会报错
-                Meta.Cover = "default_cover.webp";
+                Meta.Cover = $"{fileName}.cover.png";
+                string coverFile_3_1 = Path.Combine(Dir, MetaFolder, Meta.Cover);
                 string newColver = Path.Combine(Dir, MetaFolder, Meta.Cover);
-                CoverPath = newColver;
 
                 string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                string defaultImage = Path.Combine(currentFolder, "Assets\\default_cover.webp");
-                if (!File.Exists(newColver))
+                if (!File.Exists(newColver) && FilePath != null)
                 {
                     WallpaperApi.EnsureDir(newColver, true);
-                    File.Copy(defaultImage, newColver, true);
+
+                    bool ok = WallpaperApi.TakeScreenshot(FilePath, newColver);
+                    if (!ok)
+                    {
+                        //生成默认cover，否则前端会报错
+                        string defaultImage = Path.Combine(currentFolder, "Assets\\default_cover.webp");
+                        Meta.Cover = "default_cover.webp";
+                        newColver = Path.Combine(Dir, MetaFolder, Meta.Cover);
+                        File.Copy(defaultImage, coverFile_3_1, true);
+                    }
                 }
+                CoverPath = newColver;
             }
             //设置type
             string extension = Path.GetExtension(FileName);
