@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 using WallpaperCore.Libs;
 
@@ -366,6 +367,18 @@ public class Wallpaper : ICloneable
             else
             {
                 Meta.Title = FileName;
+                //生成默认cover，否则前端会报错
+                Meta.Cover = "default_cover.webp";
+                string newColver = Path.Combine(Dir, MetaFolder, Meta.Cover);
+                CoverPath = newColver;
+
+                string currentFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string defaultImage = Path.Combine(currentFolder, "Assets\\default_cover.webp");
+                if (!File.Exists(newColver))
+                {
+                    WallpaperApi.EnsureDir(newColver, true);
+                    File.Copy(defaultImage, newColver, true);
+                }
             }
             //设置type
             string extension = Path.GetExtension(FileName);

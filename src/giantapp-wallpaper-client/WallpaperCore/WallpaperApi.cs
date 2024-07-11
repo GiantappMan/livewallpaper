@@ -95,6 +95,11 @@ public static class WallpaperApi
         {
             var fileInfo = new FileInfo(file);
 
+            if (fileInfo.FullName.Contains(Wallpaper.MetaFolder))
+            {
+                continue;
+            }
+
             // 符合支持格式的
             if (Wallpaper.IsSupportedFile(fileInfo.Extension) || fileInfo.Extension == ".group")
             {
@@ -726,8 +731,12 @@ public static class WallpaperApi
         }
     }
 
+    #endregion
+
+    #region internal methods
+
     //确保目录存在
-    private static void EnsureDir(string path, bool isPath = false)
+    internal static void EnsureDir(string path, bool isPath = false)
     {
         string dir = path;
         if (isPath)
@@ -735,10 +744,6 @@ public static class WallpaperApi
         if (!Directory.Exists(dir))
             Directory.CreateDirectory(dir);
     }
-
-    #endregion
-
-    #region internal methods
 
     #endregion
 }
