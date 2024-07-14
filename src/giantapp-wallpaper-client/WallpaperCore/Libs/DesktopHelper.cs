@@ -111,11 +111,20 @@ public static class DeskTopHelper
         //先放到屏幕外，防止产生残影
         _ = PInvoke.SetWindowPos(hwnd, HWND.Null, -10000, 0, 0, 0, Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
 
-        var res = PInvoke.SetParent(hwnd, worker);
-        if (res == HWND.Null)
+        var res = HWND.Null;
+        int attempts = 0;
+        const int maxAttempts = 50; // 尝试次数
+        while (res.IsNull && attempts < maxAttempts)
         {
-            //获取错误
-            //var test = PInvoke.GetLastError();
+            res = PInvoke.SetParent(hwnd, worker);
+            if (res.IsNull)
+            {
+                // 获取错误
+                // var test = PInvoke.GetLastError();
+                System.Threading.Thread.Sleep(100); // 等待100ms后重试
+            }
+            attempts++;
+            _logger.Info($"SendHandleToDesktopBottom {handler} worker:{worker} SetParentRes:{res} attempts:{attempts}");
         }
 
         ////检查parent是否生效

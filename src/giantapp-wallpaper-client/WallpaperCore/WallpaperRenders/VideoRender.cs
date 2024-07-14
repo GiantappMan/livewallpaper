@@ -150,7 +150,10 @@ internal class VideoRender : BaseRender
         {
             await _playerApi.LaunchAsync(playlistPath);
             var bounds = WallpaperApi.GetScreen(screenIndex)?.Bounds;
-            DeskTopHelper.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
+            await Task.Run(() =>
+            {
+                DeskTopHelper.SendHandleToDesktopBottom(_playerApi.MainHandle, bounds);
+            });
         }
         else
         {
