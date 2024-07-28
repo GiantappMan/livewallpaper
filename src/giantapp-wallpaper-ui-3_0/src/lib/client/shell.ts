@@ -1,4 +1,4 @@
-import { ApiResult } from "./types";
+import type { ApiResult } from "./types";
 
 class Shell {
   async showFolderDialog(): Promise<ApiResult<string>> {
@@ -18,7 +18,7 @@ class Shell {
     const { shell } = window.chrome.webview.hostObjects;
     shell.HideLoading();
   }
-  
+
   closeWindow() {
     if (!window.chrome.webview) return;
     const { shell } = window.chrome.webview.hostObjects;
