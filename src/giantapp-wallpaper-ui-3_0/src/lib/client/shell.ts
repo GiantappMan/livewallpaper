@@ -24,6 +24,10 @@ class Shell {
     const { shell } = window.chrome.webview.hostObjects;
     shell.CloseWindow();
   }
+
+  isRunningInClient(): boolean {
+    return typeof window !== 'undefined' && !!window.chrome?.webview;
+  }
 }
 
 const shellApi = new Shell();
