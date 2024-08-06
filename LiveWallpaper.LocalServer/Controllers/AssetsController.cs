@@ -31,9 +31,7 @@ namespace LiveWallpaper.LocalServer.Controllers
         {
             try
             {
-                using (Stream stream = new FileStream(filename, FileMode.Open))
-                {
-                }
+                using Stream stream = new FileStream(filename, FileMode.Open);
                 return true;
             }
             catch
