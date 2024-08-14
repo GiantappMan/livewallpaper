@@ -327,6 +327,15 @@ namespace Giantapp.LiveWallpaper.Engine.Utils
 
                 return true;
             }), IntPtr.Zero);
+
+            if (_workerw == IntPtr.Zero)
+            {
+                //部分特殊机型
+                var progman = User32Wrapper.FindWindow("Progman", null);
+                if (progman != IntPtr.Zero)
+                    _workerw = User32Wrapper.FindWindowEx(progman, IntPtr.Zero, "WorkerW", IntPtr.Zero);
+            }
+
             return _workerw;
         }
 
