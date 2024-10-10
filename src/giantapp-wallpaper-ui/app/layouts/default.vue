@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import shellApi from '~/utils/client/shell';
+
 const isMaximized = ref(false)
 const isSidebarOpen = ref(true)
 
@@ -19,6 +21,10 @@ const close = () => {
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value
 }
+
+onMounted(() => {
+    shellApi.hideLoading();
+})
 </script>
 
 <template>
