@@ -33,6 +33,10 @@ interface Shell {
   ShowFolderDialog(): Promise<string>;
   HideLoading();
   CloseWindow();
+  MinimizeWindow(): Promise<void>;
+  MaximizeWindow(): Promise<void>;
+  RestoreWindow(): Promise<void>;
+  addEventListener(type: string, listener: (e: any) => void);
 }
 
 interface Window {

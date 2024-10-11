@@ -1,6 +1,6 @@
 ﻿using GiantappWallpaper;
-using NLog;
 using Ookii.Dialogs.Wpf;
+using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -18,7 +18,18 @@ public class ShellApiObject
     public ShellApiObject(ShellWindow? window = null)
     {
         _window = window;
+        if (_window != null)
+            _window.StateChanged += Window_StateChanged;
     }
+
+    private void Window_StateChanged(object sender, EventArgs e)
+    {
+        if (_window != null)
+            WindowStateChanged?.Invoke(_window.WindowState.ToString());
+    }
+
+    //窗口状态发生变化事件
+    public event Action<string>? WindowStateChanged;
 
     /// <summary>
     /// 三方库，感觉要崩
@@ -93,5 +104,26 @@ public class ShellApiObject
     public void CloseWindow()
     {
         _window?.Close();
+    }
+
+    //最小化窗口
+    public void MinimizeWindow()
+    {
+        if (_window != null)
+            _window.WindowState = System.Windows.WindowState.Minimized;
+    }
+
+    //最大化窗口
+    public void MaximizeWindow()
+    {
+        if (_window != null)
+            _window.WindowState = System.Windows.WindowState.Maximized;
+    }
+
+    //还原窗口
+    public void RestoreWindow()
+    {
+        if (_window != null)
+            _window.WindowState = System.Windows.WindowState.Normal;
     }
 }

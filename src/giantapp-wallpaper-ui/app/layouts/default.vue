@@ -6,35 +6,36 @@ const isSidebarOpen = ref(true)
 
 const toggleMaximize = () => {
     isMaximized.value = !isMaximized.value
-}
-
-const minimize = () => {
-    // 这里可以添加最小化窗口的逻辑
-    console.log('最小化窗口')
-}
-
-const close = () => {
-    // 这里可以添加关闭窗口的逻辑
-    console.log('关闭窗口')
+    if (isMaximized.value) {
+        shellApi.maximizeWindow()
+    } else {
+        shellApi.restoreWindow()
+    }
 }
 
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value
 }
 
-onMounted(() => {
-    shellApi.hideLoading();
+shellApi.hideLoading();
+shellApi.onWindowStateChanged((state) => {
+    if (state === 'maximized') {
+        isMaximized.value = true
+    } else {
+        isMaximized.value = false
+    }
 })
 </script>
 
 <template>
-    <div class="border border-gray-300 rounded overflow-hidden" :class="{ 'fixed inset-0 z-50': isMaximized }">
+    <div :class="{ 'fixed inset-0 z-50': isMaximized }">
         <div class="flex justify-between items-center px-3 py-2">
             <div class="font-bold">窗口标题</div>
             <div class="flex">
-                <button @click="minimize" class="text-lg ml-2 hover:bg-gray-300 px-1">-</button>
+                <button @click="shellApi.minimizeWindow" class="text-lg ml-2 hover:bg-gray-300 px-1">-</button>
                 <button @click="toggleMaximize" class="text-lg ml-2 hover:bg-gray-300 px-1">□</button>
-                <button @click="close" class="text-lg ml-2 hover:bg-red-500 hover:text-white px-1">×</button>
+                <button @click="shellApi.closeWindow"
+                    class="text-lg ml-2 hover:bg-red-500 hover:text-white px-1">×</button>
             </div>
         </div>
         <div class="flex">
