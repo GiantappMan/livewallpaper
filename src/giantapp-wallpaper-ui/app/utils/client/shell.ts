@@ -69,8 +69,6 @@ class Shell {
     if (!window.chrome.webview) return;
     const { shell } = window.chrome.webview.hostObjects;
     shell.addEventListener('WindowStateChanged', (event: any) => {
-      console.log('window state changed1', event);
-      console.log('window state changed2', JSON.parse(event));
       callback(event);
     });
   }
