@@ -28,18 +28,18 @@ shellApi.onWindowStateChanged((state) => {
 </script>
 
 <template>
-    <div :class="{ 'fixed inset-0 z-50': isMaximized }">
-        <div class="flex justify-between items-center px-3 py-2">
+    <div :class="{ 'fixed inset-0 z-50': isMaximized }" class="select-none flex flex-col h-screen">
+        <div class="flex justify-between items-center px-3 py-2" style="-webkit-app-region: drag">
             <div class="font-bold">窗口标题</div>
             <div class="flex">
-                <UButton @click="shellApi.minimizeWindow" variant="ghost" icon="i-heroicons-minus-solid" />
+                <UButton @click="shellApi.minimizeWindow" variant="ghost" icon="i-heroicons-minus-solid" color="gray" />
                 <UButton @click="toggleMaximize" variant="ghost"
-                    :icon="isMaximized ? 'i-heroicons-square-2-stack' : 'i-heroicons-stop'" />
-                <UButton @click="shellApi.closeWindow" variant="ghost" icon="i-heroicons-x-mark-solid" />
+                    :icon="isMaximized ? 'i-heroicons-square-2-stack' : 'i-heroicons-stop'" color="gray" />
+                <UButton @click="shellApi.closeWindow" variant="ghost" icon="i-heroicons-x-mark-solid" color="gray" />
             </div>
         </div>
-        <div class="flex">
-            <aside class="w-64 p-4" v-if="isSidebarOpen">
+        <div class="flex flex-grow overflow-hidden">
+            <aside v-if="isSidebarOpen" class="w-64 p-4 overflow-y-auto">
                 <nav>
                     <ul>
                         <li class="mb-2">
@@ -51,11 +51,11 @@ shellApi.onWindowStateChanged((state) => {
                     </ul>
                 </nav>
             </aside>
-            <div class="flex-grow p-4">
+            <div class="flex-grow flex flex-col overflow-hidden">
                 <button @click="toggleSidebar" class="mb-4 px-2 py-1 bg-blue-500 text-white rounded">
                     {{ isSidebarOpen ? '隐藏侧边栏' : '显示侧边栏' }}
                 </button>
-                <UMain>
+                <UMain class="flex-grow overflow-y-auto">
                     <slot />
                 </UMain>
             </div>
