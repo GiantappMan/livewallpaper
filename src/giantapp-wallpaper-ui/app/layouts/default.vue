@@ -29,8 +29,11 @@ shellApi.onWindowStateChanged((state) => {
 
 <template>
     <div :class="{ 'fixed inset-0 z-50': isMaximized }" class="select-none flex flex-col h-screen">
-        <div class="flex justify-between items-center px-3 py-2" style="-webkit-app-region: drag">
-            <div class="font-bold">窗口标题</div>
+        <div class="flex justify-between  items-start h-12" style="-webkit-app-region: drag">
+            <div class="text-xs text-gray-400 flex items-center h-full mx-3">
+                <img src="/logo.png" alt="Logo" class="h-6 mr-4" /> <!-- 添加logo图片 -->
+                巨应壁纸3-Beta
+            </div>
             <div class="flex">
                 <UButton @click="shellApi.minimizeWindow" variant="ghost" icon="i-heroicons-minus-solid" color="gray" />
                 <UButton @click="toggleMaximize" variant="ghost"

@@ -112,12 +112,14 @@ internal class AppService
             {TempDomainStr, TempFolder }
         };
 
+#if !(DEBUG_LOCAL && DEBUG)
         //检查单实例
         bool ok = CheckMutex();
         if (!ok)
         {
             _killOldProcess = KillOldProcess();
         }
+#endif
 
         //配置初始化
         Configer.Init(ProductName);
