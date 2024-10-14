@@ -2,7 +2,6 @@
 import shellApi from '~/utils/client/shell';
 
 const isMaximized = ref(false)
-const isSidebarOpen = ref(true)
 
 const toggleMaximize = () => {
     isMaximized.value = !isMaximized.value
@@ -13,9 +12,6 @@ const toggleMaximize = () => {
     }
 }
 
-const toggleSidebar = () => {
-    isSidebarOpen.value = !isSidebarOpen.value
-}
 
 shellApi.hideLoading();
 shellApi.onWindowStateChanged((state) => {
@@ -42,22 +38,8 @@ shellApi.onWindowStateChanged((state) => {
             </div>
         </div>
         <div class="flex flex-grow overflow-hidden">
-            <aside v-if="isSidebarOpen" class="w-64 p-4 overflow-y-auto">
-                <nav>
-                    <ul>
-                        <li class="mb-2">
-                            <NuxtLink href="/" class="text-blue-600 hover:underline">本地</NuxtLink>
-                        </li>
-                        <li class="mb-2">
-                            <NuxtLink href="/hub" class="text-blue-600 hover:underline">社区</NuxtLink>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
+            <SideMenu />
             <div class="flex-grow flex flex-col overflow-hidden">
-                <button @click="toggleSidebar" class="mb-4 px-2 py-1 bg-blue-500 text-white rounded">
-                    {{ isSidebarOpen ? '隐藏侧边栏' : '显示侧边栏' }}
-                </button>
                 <UMain class="flex-grow overflow-y-auto">
                     <slot />
                 </UMain>
