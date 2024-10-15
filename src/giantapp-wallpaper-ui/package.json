@@ -8,13 +8,20 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "upgrade": "nuxt upgrade"
+    "upgrade": "nuxt upgrade",
+    "clean:client": "rimraf ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && mkdir ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && echo '' > ..\\giantapp-wallpaper-client\\Client\\Assets\\UI\\.gitkeep",
+    "copy:client": "ncp .output\\public\\ ..\\giantapp-wallpaper-client\\Client\\Assets\\UI",
+    "build:client": "pnpm clean:client && nuxt generate && pnpm copy:client"
   },
   "dependencies": {
+    "@iconify-json/heroicons": "^1.2.1",
     "@nuxt/ui-pro": "^1.4.4",
     "@vueuse/core": "^10.11.1",
     "@vueuse/nuxt": "^10.11.1",
     "nuxt": "^3.13.2",
     "vue": "latest"
+  },
+  "devDependencies": {
+    "ncp": "^2.0.0"
   }
 }

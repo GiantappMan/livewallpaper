@@ -1,4 +1,4 @@
-﻿#define DEBUG_LOCAL
+﻿//#define DEBUG_LOCAL
 using Client.Apps.Configs;
 using Client.Libs;
 using Client.UI;
@@ -211,7 +211,7 @@ internal class AppService
         var config = Configer.Get<General>() ?? new();
         config.CheckLan();
 
-        string url = $"https://{DomainStr}/{config.CurrentLan}";
+        string url = $"https://{DomainStr}/index.html";
 #if DEBUG_LOCAL && DEBUG
         //if (path == "index")
         //    path = null;
@@ -223,7 +223,7 @@ internal class AppService
         //ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
 #endif
         if (!string.IsNullOrEmpty(path))
-            url += $"/{path}";
+            url += $"#/{path}";
         ShellWindow.ShowShell(url);
 
     }
