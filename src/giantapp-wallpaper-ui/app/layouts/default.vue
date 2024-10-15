@@ -39,8 +39,9 @@ shellApi.onWindowStateChanged((state) => {
         </div>
         <div class="flex flex-grow overflow-hidden">
             <SideMenu />
-            <div class="flex-grow flex flex-col overflow-hidden">
-                <UMain class="flex-grow overflow-y-auto">
+            <!-- Content area  -->
+            <div
+                class="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none border-gray-200 dark:border-gray-800">                <UMain class="flex-grow overflow-y-auto">
                     <slot />
                 </UMain>
             </div>

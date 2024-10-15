@@ -28,22 +28,17 @@ const sidebarBottomNavigation = computed(() => [
         selectedIcon: 'i-heroicons-cog-solid',
         current: route.path === '/settings',
     },
+    {
+        name: '关于',
+        href: '/about',
+        icon: 'i-heroicons-question-mark-circle',
+        selectedIcon: 'i-heroicons-question-mark-circle-solid',
+        current: route.path === '/about',
+    },
 ]);
 </script>
 
 <template>
-    <!-- <aside class="w-64 p-4 overflow-y-auto">
-        <nav>
-            <ul>
-                <li class="mb-2">
-                    <NuxtLink href="/" class="text-blue-600 hover:underline">本地</NuxtLink>
-                </li>
-                <li class="mb-2">
-                    <NuxtLink href="/hub" class="text-blue-600 hover:underline">社区</NuxtLink>
-                </li>
-            </ul>
-        </nav>
-    </aside> -->
     <aside class="flex w-[68px] overflow-y-auto overflow-x-clip">
         <div class="flex flex-1 w-full flex-col items-center">
             <div class="w-full flex-1 space-y-1 px-1">
