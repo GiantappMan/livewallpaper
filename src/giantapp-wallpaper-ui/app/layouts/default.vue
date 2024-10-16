@@ -25,7 +25,7 @@ shellApi.onWindowStateChanged((state) => {
 
 <template>
     <div :class="{ 'fixed inset-0 z-50': isMaximized }" class="select-none flex flex-col h-screen">
-        <div class="flex justify-between  items-start h-12" style="-webkit-app-region: drag">
+        <div class="flex justify-between items-center min-h-[48px]" style="-webkit-app-region: drag">
             <div class="text-xs text-gray-400 flex items-center h-full mx-3">
                 <img src="/logo.png" alt="Logo" class="h-6 mr-4" /> <!-- 添加logo图片 -->
                 巨应壁纸3-Beta
@@ -41,7 +41,8 @@ shellApi.onWindowStateChanged((state) => {
             <SideMenu />
             <!-- Content area  -->
             <div
-                class="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none border-gray-200 dark:border-gray-800">                <UMain class="flex-grow overflow-y-auto">
+                class="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none border-gray-200 dark:border-gray-800">
+                <UMain class="flex-grow overflow-y-auto">
                     <slot />
                 </UMain>
             </div>

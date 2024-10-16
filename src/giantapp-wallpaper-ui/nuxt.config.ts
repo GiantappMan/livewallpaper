@@ -9,10 +9,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-07-03",
   devtools: { enabled: true },
   extends: ['@nuxt/ui-pro'],
-  modules: [
-    '@nuxt/ui',
-    '@vueuse/nuxt',
-  ],
+  modules: ['@nuxt/ui', '@vueuse/nuxt', '@nuxtjs/i18n'],
   future: {
     compatibilityVersion: 4
   },
@@ -20,5 +17,26 @@ export default defineNuxtConfig({
     public: {
       HUB_Address: process.env.HUB_Address
     }
-  }
+  },
+  i18n: {
+    strategy: 'prefix_and_default',
+    vueI18n: './i18n.config.ts',
+    locales: [
+      {
+        code: 'zh',
+        file: 'zh.json'
+      },
+      {
+        code: 'en',
+        file: 'en.json'
+      },
+      {
+        code: 'ru',
+        file: 'ru.json'
+      }
+    ],
+    defaultLocale: 'zh',
+    lazy: true,
+    langDir: 'lang',
+  },
 })

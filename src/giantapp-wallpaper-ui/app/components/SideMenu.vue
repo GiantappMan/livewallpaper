@@ -2,17 +2,17 @@
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-
+const { t } = useI18n()
 const sidebarTopNavigation = computed(() => [
     {
-        name: '本地',
+        name: t('common.local'),
         href: '/',
         icon: 'i-heroicons-home',
         selectedIcon: 'i-heroicons-home-solid',
         current: route.path === '/',
     },
     {
-        name: '社区',
+        name: t('common.hub'),
         href: '/hub',
         icon: 'i-heroicons-star',
         selectedIcon: 'i-heroicons-star-solid',
@@ -22,14 +22,14 @@ const sidebarTopNavigation = computed(() => [
 
 const sidebarBottomNavigation = computed(() => [
     {
-        name: '设置',
+        name: t('common.settings'),
         href: '/settings',
         icon: 'i-heroicons-cog',
         selectedIcon: 'i-heroicons-cog-solid',
         current: route.path === '/settings',
     },
     {
-        name: '关于',
+        name: t('common.about'),
         href: '/about',
         icon: 'i-heroicons-question-mark-circle',
         selectedIcon: 'i-heroicons-question-mark-circle-solid',
