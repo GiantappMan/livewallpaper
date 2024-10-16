@@ -7,7 +7,7 @@ import type { DownloadItem } from "./types/download";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 
-class API {
+class ClientApi {
   private emitter = new EventEmitter();
 
   constructor() {
@@ -430,5 +430,5 @@ class API {
   }
 }
 
-const api = new API();
-export default api;
+const clientApi = new ClientApi();
+export default clientApi;
