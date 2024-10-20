@@ -54,10 +54,10 @@
                             <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                                 <Grid x:Name="PART_MainLayer" Background="{TemplateBinding Background}">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
+                                        <!--<RowDefinition Height="Auto" />-->
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
-                                    <Grid
+                                    <!--<Grid
                                         Grid.Row="0"
                                         Height="48"
                                         VerticalAlignment="Top"
@@ -102,17 +102,14 @@
                                                 Foreground="{TemplateBinding Foreground}"
                                                 Style="{DynamicResource BtnClose}" />
                                         </StackPanel>
-                                    </Grid>
-                                    <ContentPresenter
-                                        Grid.Row="1"
-                                        Grid.RowSpan="1"
-                                        Margin="2" />
+                                    </Grid>-->
+                                    <ContentPresenter Margin="2" />
                                 </Grid>
                             </Border>
                         </AdornerDecorator>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="WindowState" Value="Maximized">
+                        <!--<Trigger Property="WindowState" Value="Maximized">
                             <Setter TargetName="BtnMaximize" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="BtnRestore" Property="Visibility" Value="Visible" />
                             <Setter Property="BorderThickness" Value="8" />
@@ -126,7 +123,7 @@
                         <Trigger Property="ResizeMode" Value="CanMinimize">
                             <Setter TargetName="BtnMaximize" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="BtnRestore" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
+                        </Trigger>-->
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -139,27 +136,4 @@
         </Style.Triggers>
     </Style>
 
-    <!--<Style x:Key="WindowStyle1" TargetType="{x:Type Window}">
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
-        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type Window}">
-                    <Border
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                        <AdornerDecorator>
-                            <ContentPresenter />
-                        </AdornerDecorator>
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Style.Triggers>
-            <Trigger Property="Window.ResizeMode" Value="CanResizeWithGrip">
-                <Setter Property="Template" Value="{StaticResource WindowTemplateKey}" />
-            </Trigger>
-        </Style.Triggers>
-    </Style>-->
 </ResourceDictionary>

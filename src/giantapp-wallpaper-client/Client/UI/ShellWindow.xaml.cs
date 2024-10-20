@@ -74,7 +74,9 @@ public partial class ShellWindow : Window
     public ShellWindow(bool showAddress, string? configKey = null)
     {
         //允许视频自动播放 https://stackoverflow.com/questions/68709227/how-to-enable-media-autoplay-in-microsoft-webview2
-        Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--autoplay-policy=no-user-gesture-required");
+        //允许 拖动 https://github.com/MicrosoftEdge/WebView2Feedback/issues/2243
+        Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--autoplay-policy=no-user-gesture-required --enable-features=msWebView2EnableDraggableRegions");
+
         _configKey = configKey;
         InitializeComponent();
         addressPanel.Visibility = showAddress ? Visibility.Visible : Visibility.Collapsed;

@@ -1,8 +1,9 @@
 import EventEmitter from "events";
-import { ApiResult /*, InitProgressEvent*/ } from "./types";
+import type { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper, WallpaperMeta, WallpaperSetting } from "./types/wallpaper";
-import { Screen } from "./types/screen";
+import type { Screen } from "./types/screen";
 import PlayingStatus from "./types/playing-status";
+import type { DownloadItem } from "./types/download";
 
 type Key = "Appearance" | "General" | "Wallpaper";
 

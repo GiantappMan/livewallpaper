@@ -1,4 +1,4 @@
-type DownloadItem = {
+export type DownloadItem = {
     id: string;
     desc: string;
     percent: number;
