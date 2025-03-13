@@ -205,7 +205,7 @@ export default function Page() {
                                                 <SelectContent>
                                                     {/* <SelectItem value="0">{dictionary['local'].default_player}</SelectItem> */}
                                                     <SelectItem value="1">{dictionary['local'].mpv_player}</SelectItem>
-                                                    <SelectItem value="2">{dictionary['local'].system_player}</SelectItem>
+                                                    {/* <SelectItem value="2">{dictionary['local'].system_player}</SelectItem> */}
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>
