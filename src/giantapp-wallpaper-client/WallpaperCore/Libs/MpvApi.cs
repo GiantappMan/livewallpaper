@@ -103,7 +103,7 @@ public class MpvApi : IVideoApi
             StringBuilder args = new();
 
             if (playlist != null)
-                args.Append($"--playlist={playlist} ");
+                args.Append($"--playlist=\"{playlist}\" ");
 
             //允许休眠
             args.Append("--stop-screensaver=no ");
