@@ -22,8 +22,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaperEngineAPI", "L
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveWallpaper.Shell", "LiveWallpaper.Shell\LiveWallpaper.Shell.csproj", "{383B649E-B95C-4FA4-A492-E50CDF85B3FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mpv.NET", "Mpv.NET-lib-\src\Mpv.NET\Mpv.NET.csproj", "{AE61D31F-3384-43F4-AD91-CA1CB9ABA191}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -48,10 +46,6 @@ Global
 		{383B649E-B95C-4FA4-A492-E50CDF85B3FF}.Debug|x64.Build.0 = Debug|x64
 		{383B649E-B95C-4FA4-A492-E50CDF85B3FF}.Release|x64.ActiveCfg = Release|x64
 		{383B649E-B95C-4FA4-A492-E50CDF85B3FF}.Release|x64.Build.0 = Release|x64
-		{AE61D31F-3384-43F4-AD91-CA1CB9ABA191}.Debug|x64.ActiveCfg = Debug|x64
-		{AE61D31F-3384-43F4-AD91-CA1CB9ABA191}.Debug|x64.Build.0 = Debug|x64
-		{AE61D31F-3384-43F4-AD91-CA1CB9ABA191}.Release|x64.ActiveCfg = Release|x64
-		{AE61D31F-3384-43F4-AD91-CA1CB9ABA191}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

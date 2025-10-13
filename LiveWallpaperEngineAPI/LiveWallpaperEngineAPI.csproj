@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Remove="Renders\EngineRender.cs" />
+    <Compile Remove="Renders\VideoRenders\MpvControl.cs" />
     <Compile Remove="Renders\VideoRenders\RenderForm.cs" />
     <Compile Remove="Renders\VideoRenders\RenderForm.Designer.cs" />
     <Compile Remove="Renders\VideoRenders\VideoRenderObsolete.cs" />
@@ -46,14 +47,6 @@
     <PackageReference Include="NAudio" Version="2.1.0" />
     <PackageReference Include="NLog" Version="6.0.5" />
     <PackageReference Include="SharpCompress" Version="0.32.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Mpv.NET-lib-\src\Mpv.NET\Mpv.NET.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Renders\VideoRenders\MpvControl.cs" />
   </ItemGroup>
 
   <ItemGroup>

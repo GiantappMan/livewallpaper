@@ -67,9 +67,9 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 if (ct.IsCancellationRequested)
                     break;
 
-                var host = LiveWallpaperRenderForm.GetHost(screenItem);
-                if (host == null)
-                    continue;
+                //var host = LiveWallpaperRenderForm.GetHost(screenItem);
+                //if (host == null)
+                //    continue;
 
                 //显示控件
                 _mpvApis.TryGetValue(screenItem, out MpvApi? api);
@@ -84,7 +84,8 @@ namespace Giantapp.LiveWallpaper.Engine.Renders
                 {
                     await api.LaunchAsync(targetPath);
                     //todo 获取壁纸所在屏幕索引
-                    var bounds = GetScreen(1)?.Bounds;
+                    var screenIndex = WallpaperApi.Screens.ToList().IndexOf(screenItem);
+                    var bounds = GetScreen((uint)screenIndex)?.Bounds;
                     await Task.Run(() =>
                     {
                         DeskTopHelper.SendHandleToDesktopBottom(api.MainHandle, bounds);

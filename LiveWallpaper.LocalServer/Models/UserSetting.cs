@@ -88,6 +88,8 @@ namespace LiveWallpaper.LocalServer.Models
             }
             // 过滤移除的屏幕
             ScreenOptions = ScreenOptions.Where(m => WallpaperApi.Screens.Contains(m.Screen)).ToList();
+            // 排除重复索引的屏幕
+            ScreenOptions = ScreenOptions.GroupBy(m => m.Screen).Select(g => g.First()).ToList();
         }
         public static string GetDefaultSaveDir()
         {
