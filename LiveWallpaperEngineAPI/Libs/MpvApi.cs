@@ -106,8 +106,12 @@ namespace Giantapp.LiveWallpaper.Engine.Libs
                 Process.StartInfo.FileName = PlayerPath;
                 StringBuilder args = new();
 
+                //if (playlist != null)
+                //    args.Append($"--playlist=\"{playlist}\" ");
+
+                //单个文件
                 if (playlist != null)
-                    args.Append($"--playlist=\"{playlist}\" ");
+                    args.Append($"\"{playlist}\" ");
 
                 //允许休眠
                 args.Append("--stop-screensaver=no ");
