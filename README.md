@@ -33,10 +33,9 @@ Github：https://github.com/GiantappMan/livewallpaper/releases
 
 - [点个星星](https://github.com/GiantappMan/livewallpaper)  
 - [五星好评](https://www.microsoft.com/store/apps/9MWTG433JV6B)
-- 注册serverless 平台 [sealos](https://cloud.sealos.run/?uid=GADZKECTJA)，赠送5￥测试金额
 
-## 赞助
+## 云服务商
 
-本项目 CDN 加速及安全防护由 Tencent EdgeOne 赞助
-![image](https://github.com/user-attachments/assets/f1dcea69-9f55-4e76-9b38-bbbf6489982e) 
-https://edgeone.ai/zh?from=github
+- [Sealos](https://cloud.sealos.run/?uid=GADZKECTJA) 认证后奖励10￥
+- [Tencent EdgeOne](https://edgeone.ai/zh?from=github)
+
