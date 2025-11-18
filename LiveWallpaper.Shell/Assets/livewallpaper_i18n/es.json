@@ -1,0 +1,18 @@
+{
+  "lan": "Español",
+  "clientStarted": "El cliente se ha iniciado, por favor revise la esquina inferior derecha del escritorio.",
+  "ok": "Aceptar",
+  "reviewTitle": "¿Está bien esta versión?",
+  "reviewContent": "Parece que llevas un tiempo usando LiveWallpaper, ¿hay algo que quieras contarnos?",
+  "thumbUp": "Dar un pulgar arriba",
+  "close": "Cerrar",
+  "about": "Acerca de",
+  "wallpaperCommunity": "Comunidad de Fondos de Pantalla",
+  "wallpaperCommunityBrowser": "Comunidad de fondos de pantalla a través del navegador",
+  "localWallpaper": "Fondo de Pantalla Local",
+  "exit": "Salir",
+  "settings": "Configuraciones",
+  "appName": "Fondo de Pantalla Vivo 2",
+  "installWebview2Tips": "Esta función requiere el soporte del último entorno de ejecución webview2 de Microsoft. Por favor, vuelva a abrir esta ventana después de la instalación manual",
+  "installNow": "Instalar ahora"
+}

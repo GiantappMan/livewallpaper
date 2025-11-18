@@ -1,0 +1,18 @@
+{
+  "lan": "한국어",
+  "clientStarted": "클라이언트가 시작되었습니다. 데스크톱의 오른쪽 아래를 확인해 주세요.",
+  "ok": "확인",
+  "reviewTitle": "이 버전이 괜찮나요?",
+  "reviewContent": "LiveWallpaper를 사용한 지 꽤 되었네요. 저희에게 할 말이 있나요?",
+  "thumbUp": "좋아요 누르기",
+  "close": "닫기",
+  "about": "정보",
+  "wallpaperCommunity": "배경화면 커뮤니티",
+  "wallpaperCommunityBrowser": "브라우저를 통한 배경화면 커뮤니티",
+  "localWallpaper": "로컬 배경화면",
+  "exit": "종료",
+  "settings": "설정",
+  "appName": "라이브 배경화면 2",
+  "installWebview2Tips": "이 기능은 Microsoft의 최신 webview2 런타임 지원이 필요합니다. 수동 설치 후 이 창을 다시 열어주세요",
+  "installNow": "지금 설치"
+}

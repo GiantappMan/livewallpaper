@@ -1,0 +1,18 @@
+{
+  "lan": "العربية",
+  "clientStarted": "تم تشغيل العميل، يرجى التحقق من الزاوية السفلى اليمنى من سطح المكتب.",
+  "ok": "موافق",
+  "reviewTitle": "هل هذه النسخة جيدة؟",
+  "reviewContent": "يبدو أنك تستخدم LiveWallpaper منذ فترة، هل هناك شيء تريد إخبارنا به؟",
+  "thumbUp": "إعطاء إبهام مرفوع",
+  "close": "إغلاق",
+  "about": "حول",
+  "wallpaperCommunity": "مجتمع الخلفيات",
+  "wallpaperCommunityBrowser": "مجتمع الخلفيات عبر المتصفح",
+  "localWallpaper": "خلفية محلية",
+  "exit": "خروج",
+  "settings": "إعدادات",
+  "appName": "خلفية حية 2",
+  "installWebview2Tips": "هذه الوظيفة تتطلب دعم وقت تشغيل webview2 الأحدث من Microsoft. يرجى إعادة فتح هذه النافذة بعد التثبيت اليدوي",
+  "installNow": "تثبيت الآن"
+}

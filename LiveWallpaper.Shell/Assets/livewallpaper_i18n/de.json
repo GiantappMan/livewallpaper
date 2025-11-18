@@ -1,0 +1,18 @@
+{
+  "lan": "Deutsch",
+  "clientStarted": "Der Client wurde gestartet, bitte überprüfen Sie die rechte untere Ecke des Desktops.",
+  "ok": "OK",
+  "reviewTitle": "Ist diese Version in Ordnung?",
+  "reviewContent": "Sie scheinen LiveWallpaper schon eine Weile zu verwenden, gibt es etwas, was Sie uns mitteilen möchten?",
+  "thumbUp": "Daumen hoch geben",
+  "close": "Schließen",
+  "about": "Über",
+  "wallpaperCommunity": "Hintergrundbild-Community",
+  "wallpaperCommunityBrowser": "Hintergrundbild-Community über Browser",
+  "localWallpaper": "Lokales Hintergrundbild",
+  "exit": "Beenden",
+  "settings": "Einstellungen",
+  "appName": "Live Wallpaper 2",
+  "installWebview2Tips": "Diese Funktion erfordert die Unterstützung der neuesten webview2-Laufzeitumgebung von Microsoft. Bitte öffnen Sie dieses Fenster nach der manuellen Installation erneut",
+  "installNow": "Jetzt installieren"
+}

@@ -1,0 +1,18 @@
+{
+  "lan": "Português (Brasil)",
+  "clientStarted": "O cliente foi iniciado, por favor verifique o canto inferior direito da área de trabalho.",
+  "ok": "OK",
+  "reviewTitle": "Esta versão está boa?",
+  "reviewContent": "Você parece estar usando o LiveWallpaper há um tempo, há algo que você queira nos contar?",
+  "thumbUp": "Dar um joinha",
+  "close": "Fechar",
+  "about": "Sobre",
+  "wallpaperCommunity": "Comunidade de Papéis de Parede",
+  "wallpaperCommunityBrowser": "Comunidade de papéis de parede via navegador",
+  "localWallpaper": "Papel de Parede Local",
+  "exit": "Sair",
+  "settings": "Configurações",
+  "appName": "Papel de Parede ao Vivo 2",
+  "installWebview2Tips": "Esta função requer o suporte do runtime webview2 mais recente da Microsoft. Por favor, reabra esta janela após a instalação manual",
+  "installNow": "Instalar agora"
+}

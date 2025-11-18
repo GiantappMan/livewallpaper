@@ -1,0 +1,18 @@
+{
+  "lan": "日本語",
+  "clientStarted": "クライアントが起動されました。デスクトップの右下を確認してください。",
+  "ok": "OK",
+  "reviewTitle": "このバージョンは大丈夫ですか？",
+  "reviewContent": "LiveWallpaperをしばらく使用しているようですが、何かご意見はありますか？",
+  "thumbUp": "いいねする",
+  "close": "閉じる",
+  "about": "について",
+  "wallpaperCommunity": "壁紙コミュニティ",
+  "wallpaperCommunityBrowser": "ブラウザ経由の壁紙コミュニティ",
+  "localWallpaper": "ローカル壁紙",
+  "exit": "終了",
+  "settings": "設定",
+  "appName": "ライブ壁紙2",
+  "installWebview2Tips": "この機能にはMicrosoftの最新webview2ランタイムサポートが必要です。手動インストール後にこのウィンドウを再オープンしてください",
+  "installNow": "今すぐインストール"
+}

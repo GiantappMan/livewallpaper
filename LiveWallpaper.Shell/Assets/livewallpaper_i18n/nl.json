@@ -1,0 +1,18 @@
+{
+  "lan": "Nederlands",
+  "clientStarted": "De client is gestart, controleer de rechterbenedenhoek van het bureaublad.",
+  "ok": "OK",
+  "reviewTitle": "Is deze versie goed?",
+  "reviewContent": "Het lijkt erop dat je LiveWallpaper al een tijdje gebruikt, is er iets dat je ons wilt vertellen?",
+  "thumbUp": "Geef een duim omhoog",
+  "close": "Sluiten",
+  "about": "Over",
+  "wallpaperCommunity": "Achtergrondcommunity",
+  "wallpaperCommunityBrowser": "Achtergrondcommunity via browser",
+  "localWallpaper": "Lokale achtergrond",
+  "exit": "Afsluiten",
+  "settings": "Instellingen",
+  "appName": "Live Achtergrond 2",
+  "installWebview2Tips": "Deze functie vereist ondersteuning van Microsofts nieuwste webview2-runtime. Gelieve dit venster opnieuw te openen na handmatige installatie",
+  "installNow": "Nu installeren"
+}

@@ -1,0 +1,18 @@
+{
+  "lan": "Italiano",
+  "clientStarted": "Il client è stato avviato, controlla l'angolo in basso a destra del desktop.",
+  "ok": "OK",
+  "reviewTitle": "Questa versione va bene?",
+  "reviewContent": "Sembra che tu stia usando LiveWallpaper da un po' di tempo, c'è qualcosa che vorresti dirci?",
+  "thumbUp": "Dai un pollice in su",
+  "close": "Chiudi",
+  "about": "Informazioni",
+  "wallpaperCommunity": "Community degli sfondi",
+  "wallpaperCommunityBrowser": "Community degli sfondi tramite browser",
+  "localWallpaper": "Sfondo locale",
+  "exit": "Esci",
+  "settings": "Impostazioni",
+  "appName": "Sfondo Animato 2",
+  "installWebview2Tips": "Questa funzione richiede il supporto dell'ultima versione di webview2 di Microsoft. Si prega di riaprire questa finestra dopo l'installazione manuale",
+  "installNow": "Installa ora"
+}

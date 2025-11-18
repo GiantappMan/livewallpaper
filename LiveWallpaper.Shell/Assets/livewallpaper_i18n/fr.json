@@ -1,0 +1,18 @@
+{
+  "lan": "Français",
+  "clientStarted": "Le client a été démarré, veuillez vérifier le coin inférieur droit du bureau.",
+  "ok": "OK",
+  "reviewTitle": "Cette version est-elle correcte ?",
+  "reviewContent": "Vous semblez utiliser LiveWallpaper depuis un moment, y a-t-il quelque chose que vous souhaitez nous dire ?",
+  "thumbUp": "Donner un pouce levé",
+  "close": "Fermer",
+  "about": "À propos",
+  "wallpaperCommunity": "Communauté de fonds d'écran",
+  "wallpaperCommunityBrowser": "Communauté de fonds d'écran via navigateur",
+  "localWallpaper": "Fond d'écran local",
+  "exit": "Quitter",
+  "settings": "Paramètres",
+  "appName": "Fond d'écran animé 2",
+  "installWebview2Tips": "Cette fonction nécessite le support de l'environnement d'exécution webview2 le plus récent de Microsoft. Veuillez rouvrir cette fenêtre après l'installation manuelle",
+  "installNow": "Installer maintenant"
+}
