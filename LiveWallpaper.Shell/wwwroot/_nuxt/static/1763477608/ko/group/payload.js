@@ -1,0 +1,1 @@
+__NUXT_JSONP__("/ko/group", {data:[{}],fetch:{},mutations:[]});

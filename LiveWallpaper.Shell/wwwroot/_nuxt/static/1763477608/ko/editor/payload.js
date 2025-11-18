@@ -1,0 +1,1 @@
+__NUXT_JSONP__("/ko/editor", {data:[{}],fetch:{},mutations:[]});
