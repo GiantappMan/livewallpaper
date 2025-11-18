@@ -123,7 +123,23 @@ export default {
 
   i18n: {
     locales: [
+      { code: 'ar', iso: 'ar', file: 'ar.json', name: 'العربية' },
+      { code: 'de', iso: 'de', file: 'de.json', name: 'Deutsch' },
       { code: 'en', iso: 'en', file: 'en.json', name: 'English' },
+      { code: 'es', iso: 'es', file: 'es.json', name: 'Español' },
+      { code: 'fr', iso: 'fr', file: 'fr.json', name: 'Français' },
+      { code: 'hi', iso: 'hi', file: 'hi.json', name: 'हिन्दी' },
+      { code: 'it', iso: 'it', file: 'it.json', name: 'Italiano' },
+      { code: 'ja', iso: 'ja', file: 'ja.json', name: '日本語' },
+      { code: 'ko', iso: 'ko', file: 'ko.json', name: '한국어' },
+      { code: 'nl', iso: 'nl', file: 'nl.json', name: 'Nederlands' },
+      { code: 'pt', iso: 'pt', file: 'pt.json', name: 'Português' },
+      {
+        code: 'pt-BR',
+        iso: 'pt-BR',
+        file: 'pt-BR.json',
+        name: 'Português (Brasil)',
+      },
       { code: 'ru', iso: 'ru', file: 'ru.json', name: 'Русский' },
       { code: 'zh', iso: 'zh', file: 'zh.json', name: '中文（简体）' },
       {
@@ -131,12 +147,6 @@ export default {
         iso: 'zh-TW',
         file: 'zh-CHT.json',
         name: '中文（繁體）',
-      },
-      {
-        code: 'pt-BR',
-        iso: 'pt-BR',
-        file: 'pt-BR.json',
-        name: 'Português (Brasil)',
       },
     ],
     langDir: 'livewallpaper_i18n/',
