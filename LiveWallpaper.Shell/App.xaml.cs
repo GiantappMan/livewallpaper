@@ -178,6 +178,9 @@ namespace LiveWallpaper.Shell
                 _btnExit.Header = await AppManager.GetText("exit");
                 _btnSetting.Header = await AppManager.GetText("settings");
                 _notifyIcon.Text = await AppManager.GetText("appName");
+                //重新切换，才会更新文字
+                _notifyIcon.Visibility = Visibility.Collapsed;
+                _notifyIcon.Visibility = Visibility.Visible;
             });
         }
         private void InitApp()
@@ -217,7 +220,7 @@ namespace LiveWallpaper.Shell
 
             //Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); 多屏 DPI
         }
-        private void InitNotifyIcon()
+        private async void InitNotifyIcon()
         {
             string? dir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
             string settingImage = Path.Combine(dir!, "Assets", "setting.png");
@@ -260,6 +263,9 @@ namespace LiveWallpaper.Shell
             };
             _notifyIcon.ContextMenu = _contextMenu;
             _notifyIcon.MouseDoubleClick += NotifyIcon_MouseDoubleClick;
+            //_notifyIcon.Text = "test";
+
+            _notifyIcon.Text = await AppManager.GetText("appName");
             _notifyIcon.Init();
         }
         /// <summary>

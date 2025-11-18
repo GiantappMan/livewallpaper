@@ -6,7 +6,7 @@
 		<UseWPF>true</UseWPF>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 		<AssemblyName>LiveWallpaper2</AssemblyName>
-		<Version>2.6.6.0</Version>
+		<Version>2.6.7.0</Version>
 		<Platforms>x86;x64</Platforms>
 		<ApplicationIcon>Assets\logo128.ico</ApplicationIcon>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -23,8 +23,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.0.0" />
-		<PackageReference Include="HandyControl" Version="3.3.0" />
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
+		<PackageReference Include="HandyControl" Version="3.5.1" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
 	</ItemGroup>
 
 	<ItemGroup>

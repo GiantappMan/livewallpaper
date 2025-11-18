@@ -34,7 +34,7 @@ namespace Giantapp.LiveWallpaper.Engine
         static WallpaperApi()
         {
             //怀疑某些系统用不了
-            WallpaperHelper.DoSomeMagic();
+            Task.Run(WallpaperHelper.DoSomeMagic);
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
