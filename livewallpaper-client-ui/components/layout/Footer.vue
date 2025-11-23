@@ -7,7 +7,7 @@
             <p>
               <a
                 class="navbar-item"
-                href="https://www.giantapp.cn"
+                href="https://www.mscoder.cn"
                 target="_blank"
               >
                 {{
