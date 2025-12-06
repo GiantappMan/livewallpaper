@@ -62,11 +62,7 @@ public class WallpaperManager
         {
             if (item.SupportTypes.ToList().Contains(Wallpaper.Meta.Type))
             {
-                if (item != _currentRender)
-                {
-                    //类型换了，关闭旧壁纸
-                    _currentRender?.Stop();
-                }
+                _currentRender?.Stop();
                 _currentRender = item;
                 found = true;
                 break;
