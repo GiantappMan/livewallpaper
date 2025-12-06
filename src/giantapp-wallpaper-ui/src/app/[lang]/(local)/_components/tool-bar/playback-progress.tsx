@@ -14,19 +14,12 @@ function formatTime(seconds: number) {
     var minutes = Math.floor(seconds / 60);
     var sec = Math.floor(seconds % 60);
 
-    if (sec === 0 && minutes === 0 && hours === 0) {
-        return `${days}d`;
-    }
-    if (sec === 0 && minutes === 0) {
-        return `${hours}h`;
-    }
-
     const dayStr = days > 0 ? days + 'd ' : '';
     const hourStr = hours > 0 ? (hours < 10 ? '0' + hours : hours) + ':' : '';
-    const minStr = minutes < 10 ? '0' + minutes : minutes;
+    const minStr = (minutes < 10 ? '0' + minutes : minutes) + ':';
     const secStr = sec < 10 ? '0' + sec : sec;
 
-    return `${dayStr}${hourStr}${minStr}:${secStr}`;
+    return `${dayStr}${hourStr}${minStr}${secStr}`;
 }
 const PlaybackProgress = ({ screenIndex }: { screenIndex?: number }) => {
     // console.log("PlaybackProgress:", screenIndex)
