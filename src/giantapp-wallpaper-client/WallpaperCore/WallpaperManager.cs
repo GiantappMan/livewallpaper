@@ -1,5 +1,7 @@
 ﻿
 using NLog;
+using System.Runtime;
+using System.Windows.Forms;
 using WallpaperCore.WallpaperRenders;
 
 namespace WallpaperCore;
@@ -125,16 +127,28 @@ public class WallpaperManager
         Wallpaper = null;
     }
 
-    internal void SetScreenMaximized(bool screenMaximized)
+    internal async void SetScreenMaximized(bool screenMaximized)
     {
         IsScreenMaximized = screenMaximized;
         if (IsScreenMaximized)
         {
             _currentCoveredBehavior = WallpaperApi.Settings.CoveredBehavior;
+            if (_currentCoveredBehavior == WallpaperCoveredBehavior.None)
+                return;
+
+            //平滑过渡声音
+            var volume = WallpaperApi.Settings.Volume;
+            var steps = volume / 5;
+            var increment = volume / steps;
+            for (var i = steps; i > 0; i--)
+            {
+                _currentRender?.SetVolume((uint)(increment * i));
+                await Task.Delay(100);
+            }
+            _currentRender?.SetVolume(0);
+
             switch (_currentCoveredBehavior)
             {
-                case WallpaperCoveredBehavior.None:
-                    break;
                 case WallpaperCoveredBehavior.Pause:
                     _currentRender?.Pause();
                     break;
@@ -148,11 +162,13 @@ public class WallpaperManager
             //用户已手动暂停壁纸
             if (Wallpaper == null || Wallpaper.RunningInfo.IsPaused)
                 return;
+
             //恢复壁纸
+            _currentRender?.SetVolume(0);
             switch (_currentCoveredBehavior)
             {
                 case WallpaperCoveredBehavior.None:
-                    break;
+                    return;
                 case WallpaperCoveredBehavior.Pause:
                     _currentRender?.Resume();
                     break;
@@ -160,6 +176,17 @@ public class WallpaperManager
                     _ = Play();
                     break;
             }
+
+            //平滑过渡声音
+            var volume = WallpaperApi.Settings.Volume;
+            var steps = volume / 5;
+            var increment = volume / steps;
+            for (var i = 1; i <= steps; i++)
+            {
+                _currentRender?.SetVolume((uint)(increment * i));
+                await Task.Delay(100);
+            }
+            _currentRender?.SetVolume(volume);
         }
     }
 

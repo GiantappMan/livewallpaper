@@ -252,7 +252,7 @@ public class ApiObject
         {
             WallpaperApi.Settings.AudioSourceIndex = screenIndex;
             WallpaperApi.Settings.Volume = uint.Parse(volume);
-            WallpaperApi.ApplySetting();
+            WallpaperApi.ApplyVolumeSetting();
             AppService.SaveSnapshot();
         }
     }

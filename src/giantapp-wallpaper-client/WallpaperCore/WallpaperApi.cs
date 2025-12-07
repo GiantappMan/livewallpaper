@@ -377,7 +377,7 @@ public static class WallpaperApi
     }
 
     //设置音量
-    public static void ApplySetting()
+    public static void ApplyVolumeSetting()
     {
         var screenIndexs = Enumerable.Range(0, GetScreens().Length).ToArray();
         foreach (var item in screenIndexs)
@@ -643,7 +643,7 @@ public static class WallpaperApi
                 item.Wallpaper.Meta.EnsureId();
                 await ShowWallpaper(item.Wallpaper, manager);
             }
-            ApplySetting();
+            ApplyVolumeSetting();
         }
         catch (Exception ex)
         {
