@@ -135,6 +135,7 @@ export class WallpaperSetting {
   videoPlayer: VideoPlayer = VideoPlayer.Default_Player;
   // volume: number = 0;
   // playlist
+  defaultDuration?: string;
   playMode: PlayMode = PlayMode.Order;
   // img
   fit: Fit = Fit.Center;

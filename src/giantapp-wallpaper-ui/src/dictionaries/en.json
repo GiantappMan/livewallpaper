@@ -46,6 +46,8 @@
     "create_successful": "Creation successful",
     "create_wallpaper": "Create wallpaper",
     "creating": "Creating...",
+    "default_duration": "Default Playing Duration",
+    "default_duration_description": "If no duration is set, static wallpapers will play for the default duration",
     "default_player": "Use global configuration",
     "default_title": "Untitled",
     "delete": "Delete",

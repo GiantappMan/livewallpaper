@@ -38,6 +38,7 @@ const formSchema = z.object({
     // keepWallpaper: z.boolean(),
     setting: z.object({
         duration: z.string().optional(),
+        defaultDuration: z.string().optional(),
         playMode: z.nativeEnum(PlayMode),
         enableMouseEvent: z.boolean(),
         hardwareDecoding: z.boolean(),
@@ -140,6 +141,23 @@ export function SettingDialog(props: SettingDialogProps) {
                         />
                     </>}
                     {wallpaperType === WallpaperType.Playlist && <>
+                        <FormField
+                            control={form.control}
+                            name="setting.defaultDuration"
+                            render={({ field }) => (
+                                <FormItem className="items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <FormLabel>
+                                        {dictionary['local'].default_duration}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="time"  {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        {dictionary['local'].default_duration_description}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="setting.playMode"

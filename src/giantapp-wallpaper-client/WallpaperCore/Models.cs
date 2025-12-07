@@ -180,7 +180,7 @@ public enum VideoPlayer
 public class WallpaperSetting : ICloneable
 {
     /// <summary>
-    /// 播放时长，没设就用默认值，图片默认一小时
+    /// 播放时长，没设就用默认值DefaultDuration
     /// 除了playlist，都显示这个值
     /// </summary>
     public string? Duration { get; set; }
@@ -231,7 +231,11 @@ public class WallpaperSetting : ICloneable
     #endregion
 
     #region playlist
+
+    public string? DefaultDuration { get; set; } = "00:01:00";
+
     public PlayMode PlayMode { get; set; } = PlayMode.Order;
+
     #endregion
 
     public static WallpaperSetting From(Dictionary<string, object> dic)

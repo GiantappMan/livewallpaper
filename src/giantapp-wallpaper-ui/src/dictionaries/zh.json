@@ -46,6 +46,8 @@
     "create_successful": "创建成功",
     "create_wallpaper": "创建壁纸",
     "creating": "创建中...",
+    "default_duration": "默认播放时长",
+    "default_duration_description": "如果静态壁纸未设置播放时长，将使用默认时长",
     "default_player": "使用全局配置",
     "default_title": "未命名",
     "delete": "删除",

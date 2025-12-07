@@ -242,8 +242,8 @@ public class PlaylistRender : BaseRender
         var tmpDuration = _playingWallpaper.Setting.Duration;
         if (string.IsNullOrEmpty(tmpDuration) && !_currentRender.IsSupportProgress)
         {
-            //没设置时间，并且本身没有进度的，默认一小时
-            tmpDuration = "01:00";
+            //没设置时间，并且本身没有进度的，默认DefaultDuration或一分钟
+            tmpDuration = _playlist?.Setting.DefaultDuration ?? "00:01:00";
         }
 
         //添加0day 符合timespan 格式
