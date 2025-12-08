@@ -139,13 +139,16 @@ public class WallpaperManager
             //平滑过渡声音
             var volume = WallpaperApi.Settings.Volume;
             var steps = volume / 5;
-            var increment = volume / steps;
-            for (var i = steps; i > 0; i--)
+            if (steps > 0)
             {
-                _currentRender?.SetVolume((uint)(increment * i));
-                await Task.Delay(100);
+                var increment = volume / steps;
+                for (var i = steps; i > 0; i--)
+                {
+                    _currentRender?.SetVolume((uint)(increment * i));
+                    await Task.Delay(100);
+                }
+                _currentRender?.SetVolume(0);
             }
-            _currentRender?.SetVolume(0);
 
             switch (_currentCoveredBehavior)
             {
@@ -180,13 +183,16 @@ public class WallpaperManager
             //平滑过渡声音
             var volume = WallpaperApi.Settings.Volume;
             var steps = volume / 5;
-            var increment = volume / steps;
-            for (var i = 1; i <= steps; i++)
+            if (steps > 0)
             {
-                _currentRender?.SetVolume((uint)(increment * i));
-                await Task.Delay(100);
+                var increment = volume / steps;
+                for (var i = 1; i <= steps; i++)
+                {
+                    _currentRender?.SetVolume((uint)(increment * i));
+                    await Task.Delay(100);
+                }
+                _currentRender?.SetVolume(volume);
             }
-            _currentRender?.SetVolume(volume);
         }
     }
 
