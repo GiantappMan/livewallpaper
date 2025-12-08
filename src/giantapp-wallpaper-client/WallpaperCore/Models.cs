@@ -671,6 +671,34 @@ public enum WallpaperCoveredBehavior
     Stop
 }
 
+//遮挡壁纸的程序过滤标识
+public class WallpaperCoveringProcessFilter
+{
+    public int Pid { get; }
+    public string Title { get; }
+    public string ClassName { get; }
+    public string FileName { get; }
+
+    public WallpaperCoveringProcessFilter(int pid, string title, string className, string fileName)
+    {
+        Pid = pid;
+        Title = title;
+        ClassName = className;
+        FileName = fileName;
+    }
+}
+
+//程序过滤优先级
+public enum WallpaperCoveringProcessFilterPriority
+{
+    //窗口标题必须匹配
+    Title,
+    //匹配标题，否则查找相同类型的窗口
+    Class,
+    //匹配标题，否则查找相同可执行程序的窗口
+    Executable
+}
+
 //WallpaperApi全局设置
 public class ApiSettings : ICloneable
 {
@@ -678,6 +706,8 @@ public class ApiSettings : ICloneable
     public int AudioSourceIndex { get; set; }
     public uint Volume { get; set; }
     public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
+    public WallpaperCoveringProcessFilter[] CoveringProcessFilters { get; set; } = new WallpaperCoveringProcessFilter[0];
+    public WallpaperCoveringProcessFilterPriority CoveringProcessFilterPriority { get; set; } = WallpaperCoveringProcessFilterPriority.Class;
 
     public object Clone()
     {

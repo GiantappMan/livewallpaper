@@ -19,6 +19,8 @@ public class Wallpaper
     public string[] Directories { get; set; } = new string[0];
     public bool KeepWallpaper { get; set; } = false;
     public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
+    public WallpaperCoveringProcessFilter[] CoveringProcessFilters { get; set; } = new WallpaperCoveringProcessFilter[0];
+    public WallpaperCoveringProcessFilterPriority CoveringProcessFilterPriority { get; set; } = WallpaperCoveringProcessFilterPriority.Class;
     public VideoPlayer DefaultVideoPlayer { get; set; } = VideoPlayer.MPV_Player;
 
     public string[] EnsureDirectories()

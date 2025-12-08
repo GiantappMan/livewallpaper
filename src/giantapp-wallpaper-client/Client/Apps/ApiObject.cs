@@ -1,4 +1,5 @@
 ﻿using Client.Libs;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using ConfigAppearance = Client.Apps.Configs.Appearance;
 using GiantappWallpaper;
 using System.Text.Json;
+using WallpaperCore.Libs;
 
 namespace Client.Apps;
 
@@ -399,6 +401,38 @@ public class ApiObject
         {
             MessageBox.Show(ex.Message);
         }
+    }
+
+    //获取所有正在运行的程序
+    public string GetProcesses()
+    {
+        var processes = new List<object>();
+        foreach (var item in Process.GetProcesses())
+        {
+            var pid = item.Id;
+            var title = item.MainWindowTitle;
+            if (!string.IsNullOrEmpty(title) && DeskTopHelper.IsWindowVisible(item.MainWindowHandle))
+                processes.Add(new { PID = pid, Title = title });
+        }
+
+        return JsonSerializer.Serialize(processes, WallpaperApi.JsonOptitons);
+    }
+
+    public string GetProcess(int pid)
+    {
+        var process = Process.GetProcessById(pid);
+        var handle = process.MainWindowHandle;
+
+        var title = DeskTopHelper.GetWindowTitle(handle);
+        var className = DeskTopHelper.GetClassName(handle);
+        var fileName = process.MainModule.FileName;
+        var res = new
+        {
+            Title = title,
+            ClassName = className,
+            FileName = fileName
+        };
+        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
     }
 
     public bool SetWallpaperSetting(string settingJson, string wallpaperJson)

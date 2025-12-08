@@ -1,4 +1,5 @@
 ﻿using NLog;
+using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
@@ -12,6 +13,57 @@ public static class DeskTopHelper
     {
         //刷新桌面，清楚残影
         PInvoke.SystemParametersInfo(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETDESKWALLPAPER, 0, null, Windows.Win32.UI.WindowsAndMessaging.SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS.SPIF_UPDATEINIFILE);
+    }
+
+    public static bool IsWindowVisible(IntPtr hWnd)
+    {
+        var handle = new HWND(hWnd);
+        if (PInvoke.IsWindowVisible(handle))
+        {
+            //判断UWP程序是否可见
+            int cloakedVal;
+            unsafe
+            {
+                PInvoke.DwmGetWindowAttribute(handle, Windows.Win32.Graphics.Dwm.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloakedVal, sizeof(int));
+            }
+
+            if (cloakedVal == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static string GetClassName(IntPtr hWnd)
+    {
+        const int bufferSize = 256;
+        string className;
+        unsafe
+        {
+            fixed (char* classNameChars = new char[bufferSize])
+            {
+                PInvoke.GetClassName(new HWND(hWnd), classNameChars, bufferSize);
+                className = new(classNameChars);
+            }
+        }
+        return className;
+    }
+
+    public static string GetWindowTitle(IntPtr hWnd)
+    {
+        const int bufferSize = 256;
+        string windowTitle;
+        unsafe
+        {
+            fixed (char* windowTitleChars = new char[bufferSize])
+            {
+                PInvoke.GetWindowText(new HWND(hWnd), windowTitleChars, bufferSize);
+                windowTitle = new(windowTitleChars);
+            }
+        }
+        return windowTitle;
     }
 
     /// <summary>

@@ -21,9 +21,27 @@ export enum WallpaperCoveredBehavior {
   Stop
 }
 
+export type WallpaperCoveringProcessFilter = {
+  pid: number;
+  title: string;
+  className: string;
+  fileName: string;
+};
+
+export enum WallpaperCoveringProcessFilterPriority {
+  //窗口标题必须匹配
+  Title,
+  //匹配标题，否则查找相同类型的窗口
+  Class,
+  //匹配标题，否则查找相同可执行程序的窗口
+  Executable
+}
+
 export type ConfigWallpaper = {
   directories: string[];
   // keepWallpaper: boolean;
   coveredBehavior: WallpaperCoveredBehavior;
+  coveringProcessFilters: WallpaperCoveringProcessFilter[];
+  coveringProcessFilterPriority: WallpaperCoveringProcessFilterPriority;
   defaultVideoPlayer: VideoPlayer;
 };

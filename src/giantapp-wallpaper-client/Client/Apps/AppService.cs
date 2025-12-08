@@ -505,11 +505,10 @@ internal class AppService
 
                 if (configWallpaper != null)
                 {
-                    if (WallpaperApi.Settings.CoveredBehavior != configWallpaper.CoveredBehavior)
-                    {
-                        WallpaperApi.Settings.CoveredBehavior = configWallpaper.CoveredBehavior;
-                        SaveSnapshot();
-                    }
+                    WallpaperApi.Settings.CoveredBehavior = configWallpaper.CoveredBehavior;
+                    WallpaperApi.Settings.CoveringProcessFilters = configWallpaper.CoveringProcessFilters;
+                    WallpaperApi.Settings.CoveringProcessFilterPriority = configWallpaper.CoveringProcessFilterPriority;
+                    SaveSnapshot();
 
                     //保存目录发生变化
                     if (oldConfig?.Directories == null || !configWallpaper.Directories.SequenceEqual(oldConfig.Directories))

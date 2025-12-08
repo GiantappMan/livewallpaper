@@ -150,7 +150,7 @@ public class PlaylistRender : BaseRender
 
         //更新运行时数据
         _playingWallpaper.RunningInfo = playlist.RunningInfo;
-        //读取最新setting，用户可能该过了
+        //读取最新setting，用户可能改过了
         _playingWallpaper.LoadSetting();
 
         //查找wallpaper 所需的render
@@ -179,6 +179,8 @@ public class PlaylistRender : BaseRender
         if (_currentRender != null)
         {
             await _currentRender.Play(_playingWallpaper);
+            WallpaperApi.ApplyVolumeSetting();
+
             var duration = -1d;
             for (int i = 0; i < 10; i++)
             {

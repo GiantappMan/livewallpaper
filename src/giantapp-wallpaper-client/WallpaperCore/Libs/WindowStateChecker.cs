@@ -4,7 +4,12 @@ using System.Runtime.InteropServices;
 #endif
 using Microsoft.Win32;
 using NLog;
+using NLog.Filters;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Timers;
+using System.Xml.Linq;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
@@ -67,36 +72,6 @@ public class WindowStateChecker
             return true;
         }), IntPtr.Zero);
         return list;
-    }
-
-    private static string GetClassName(HWND tophandle)
-    {
-        const int bufferSize = 256;
-        string className;
-        unsafe
-        {
-            fixed (char* classNameChars = new char[bufferSize])
-            {
-                PInvoke.GetClassName(tophandle, classNameChars, bufferSize);
-                className = new(classNameChars);
-            }
-        }
-        return className;
-    }
-
-    private static string GetWindowTitle(HWND tophandle)
-    {
-        const int bufferSize = 256;
-        string windowTitle;
-        unsafe
-        {
-            fixed (char* windowTitleChars = new char[bufferSize])
-            {
-                PInvoke.GetWindowText(tophandle, windowTitleChars, bufferSize);
-                windowTitle = new(windowTitleChars);
-            }
-        }
-        return windowTitle;
     }
 
     private void CheckWindowState(object source, ElapsedEventArgs e)
@@ -162,7 +137,7 @@ public class WindowStateChecker
                     if (!_globalCacheScreenState.TryGetValue(screenName, out var previousState) || state.Item1 != previousState)
                     {
                         WindowStateChanged?.Invoke(state.Item1, screen);
-                        _logger.Info($"{screenName}: {state.Item1}, {state.Item2}, {state.Item3}");
+                        _logger.Info($"{screenName}: (State:{state.Item1}, ClassName: {state.Item2}, Title: {state.Item3})");
 
                         _globalCacheScreenState[screenName] = state.Item1;
                     }
@@ -194,29 +169,53 @@ public class WindowStateChecker
         }
 
         //判断窗口是否可见
-        if (!PInvoke.IsWindowVisible(handle))
+        if (!DeskTopHelper.IsWindowVisible(handle))
         {
             return false;
         }
 
-        //判断UWP程序是否可见
-        int cloakedVal;
-        unsafe
-        {
-            PInvoke.DwmGetWindowAttribute(handle, Windows.Win32.Graphics.Dwm.DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloakedVal, sizeof(int));
-        }
+        var localTitle = DeskTopHelper.GetWindowTitle(handle);
+        var localClassName = DeskTopHelper.GetClassName(handle);
+        title = localTitle;
+        className = localClassName;
 
-        if (cloakedVal != 0)
-        {
-            return false;
-        }
-
+        string[] ignoreClass = new string[] { "WorkerW", "Progman", "CEF-OSC-WIDGET", "Shell_TrayWnd" };
         //过滤掉一些不需要的窗口
-        className = GetClassName(handle);
-        string[] ignoreClass = new string[] { "WorkerW", "Progman", "CEF-OSC-WIDGET" };
         if (ignoreClass.Contains(className))
         {
             return false;
+        }
+        //过滤掉此应用本身
+        if (className.StartsWith("HwndWrapper") && className.Contains("LiveWallpaper3.exe"))
+        {
+            return false;
+        }
+
+        var filters = WallpaperApi.Settings.CoveringProcessFilters;
+        if (filters.Any(filter => filter.Title == localTitle)) return false;
+        switch (WallpaperApi.Settings.CoveringProcessFilterPriority)
+        {
+            case WallpaperCoveringProcessFilterPriority.Class:
+                if (filters.Any(filter => filter.ClassName == localClassName)) return false;
+                break;
+            case WallpaperCoveringProcessFilterPriority.Executable:
+                uint pid = 0;
+                unsafe
+                {
+                    PInvoke.GetWindowThreadProcessId(handle, &pid);
+                }
+
+                try
+                {
+                    Process process = Process.GetProcessById((int)pid);
+                    var localFileName = process.MainModule.FileName;
+                    if (filters.Any(filter => filter.FileName == localFileName)) return false;
+                } catch (Exception)
+                {
+                    //do nothing
+                }
+
+                break;
         }
 
 #if PrintInfo
@@ -241,7 +240,6 @@ public class WindowStateChecker
 #if PrintInfo
             System.Diagnostics.Debug.WriteLine($"{handle},{windowName},{className} is IsZoomed");
 #endif
-            title = GetWindowTitle(handle);
             return true;
         }
         else
@@ -261,10 +259,6 @@ public class WindowStateChecker
                 System.Diagnostics.Debug.WriteLine($"{handle.Value},{windowName},{className} IsZoomed: {windowArea / screenArea}, {tmp}");
             }
 #endif
-            if (tmp)
-            {
-                title = GetWindowTitle(handle);
-            }
             return tmp;
         }
     }

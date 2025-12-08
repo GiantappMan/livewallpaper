@@ -12,16 +12,14 @@ MapWindowPoints
 SetWindowPos
 SetProcessDpiAwarenessContext
 SetProcessDpiAwareness
-SetWindowLong
 WINDOW_STYLE
 WINDOW_EX_STYLE
 SystemParametersInfo
 IsZoomed
 GetForegroundWindow
-GetWindowRect
 GetWindowText
 GetWindowTextLength
 IsWindowVisible
 DwmGetWindowAttribute
-GetClassName
 IsIconic
+GetWindowThreadProcessId

@@ -292,6 +292,39 @@ class API {
     }
   }
 
+  async getProcesses(): Promise<ApiResult<{
+    pid: number,
+    title: string
+  }[]>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.getProcesses();
+      return { error: null, data: JSON.parse(data) };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getProcess(pid: number): Promise<ApiResult<{
+    title: string,
+    className: string,
+    fileName: string
+  }>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+
+      var data = await api.getProcess(pid);
+      return { error: null, data: JSON.parse(data) };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   async setWallpaperSetting(setting: WallpaperSetting, wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
     try {
       if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
