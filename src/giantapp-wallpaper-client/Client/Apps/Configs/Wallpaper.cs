@@ -1,7 +1,9 @@
-﻿using System.IO;
+﻿using NLog;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json.Serialization;
 using WallpaperCore;
-using NLog;
 
 namespace Client.Apps.Configs;
 
@@ -10,12 +12,8 @@ public class Wallpaper
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     public const string FullName = "Client.Apps.Configs.Wallpaper";
-    public static string[] DefaultWallpaperSaveFolder { get; private set; } = new string[0];
-
-    static Wallpaper()
-    {
-        UpdateDefaultWallpaperSaveFolder();
-    }
+    [JsonIgnore]
+    public bool EnsureExists { get; set; } = false;
 
     //壁纸目录，支持多个
     public string[] Directories { get; set; } = new string[0];
@@ -25,31 +23,41 @@ public class Wallpaper
 
     public string[] EnsureDirectories()
     {
-        if (Directories.Length == 0)
-            return DefaultWallpaperSaveFolder;
-        return Directories;
-    }
+        //只尝试创建一次目录
+        if (EnsureExists)
+            return Directories;
 
-    internal static void UpdateDefaultWallpaperSaveFolder()
-    {
-        try
+        List<string> folders = new();
+        foreach (var item in (Directories.Length != 0 ? Directories : new string[] { @"D:\LiveWallpaper" }))
         {
-            if (Directory.Exists(@"D:\"))
+            if (!Directory.Exists(item))
             {
-                DefaultWallpaperSaveFolder = new string[] { @"D:\LiveWallpaper" };
-
-                //尝试创建文件夹，有些虚拟机D盘是驱动              
-                Directory.CreateDirectory(DefaultWallpaperSaveFolder[0]);
-                return;
+                try
+                {
+                    Directory.CreateDirectory(item);
+                    folders.Add(item);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "EnsureDirectories");
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "UpdateDefaultWallpaperSaveFolder");
+            else
+                folders.Add(item);
         }
 
-        string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        folder = Path.Combine(folder, "LiveWallpaper");
-        DefaultWallpaperSaveFolder = new string[] { folder };
+        //如果至少有一个目录已存在或创建成功就直接返回
+        if (folders.Count > 0)
+            Directories = folders.ToArray();
+        //否则切换至Videos目录下
+        else
+        {
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "LiveWallpaper");
+            Directory.CreateDirectory(path);
+            Directories = new string[] { path };
+        }
+
+        EnsureExists = true;
+        return Directories;
     }
 }
