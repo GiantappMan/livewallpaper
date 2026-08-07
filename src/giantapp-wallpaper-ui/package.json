@@ -19,7 +19,7 @@
     "@nuxtjs/i18n": "^8.5.5",
     "@vueuse/core": "^10.11.1",
     "@vueuse/nuxt": "^10.11.1",
-    "nuxt": "^3.16.0",
+    "nuxt": "^3.21.10",
     "vue": "latest"
   },
   "devDependencies": {
