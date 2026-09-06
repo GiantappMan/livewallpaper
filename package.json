@@ -5,7 +5,7 @@
     "src/giantapp-wallpaper-ui"
   ],
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "bun run scripts/dev-pre.ts && tauri dev",
     "dev:ui": "bun run --cwd src/giantapp-wallpaper-ui dev",
     "build": "tauri build",
     "check": "cargo check --manifest-path src-tauri/Cargo.toml",
