@@ -16,10 +16,8 @@ pub(crate) enum Render {
     Mpv(Arc<crate::mpv::MpvPlayer>),
     Player,
     Web,
-    /// 静态图：remember 原壁纸用于还原。
-    Image {
-        restore: Option<syswallpaper::SysWallpaperSnapshot>,
-    },
+    /// 静态图（系统桌面壁纸；还原信息统一放在 img_restore）。
+    Image,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -102,28 +100,48 @@ impl ScreenManager {
         };
         let item = wallpaper.current_item().clone();
 
+        // 取出旧渲染（新渲染就位后再按类型清理，避免切换闪屏）
+        let old_render = self.render.take();
+
         // 视频引擎无缝切换：同屏已有 mpv 进程且新项同为 mpv 引擎时，
         // 直接 loadlist 复用（杀进程重启需要 2s+，loadlist 近乎即时）
         let reuse_mpv = matches!(item.meta.wallpaper_type, WallpaperType::Video | WallpaperType::AnimatedImg)
-            && matches!(self.render.as_ref(), Some(Render::Mpv(_)))
+            && matches!(old_render.as_ref(), Some(Render::Mpv(_)))
             && self.resolves_to_mpv(&item, settings);
 
-        if !reuse_mpv {
-            self.stop_render(settings.covered_behavior).await;
-        }
         self.item = Some(item.clone());
         self.item_started_at = Some(Instant::now());
         self.item_duration = None;
 
         let result = match item.meta.wallpaper_type {
-            WallpaperType::Img => self.play_image(&item).await,
+            WallpaperType::Img => {
+                // 先设新图（系统壁纸层），再撤旧渲染，桌面不出现空档
+                let r = self.play_image(&item).await;
+                self.cleanup_render(old_render).await;
+                r
+            }
             WallpaperType::AnimatedImg | WallpaperType::Video => {
+                if !reuse_mpv {
+                    self.cleanup_render(old_render).await;
+                }
                 self.play_video(&item, settings, reuse_mpv).await
             }
-            WallpaperType::Web => self.play_web(&item).await,
-            WallpaperType::Playlist => Err("嵌套播放列表不支持".into()),
-            WallpaperType::Exe => Err("exe 壁纸暂不支持".into()),
-            WallpaperType::NotSupported => Err("不支持的文件类型".into()),
+            WallpaperType::Web => {
+                self.cleanup_render(old_render).await;
+                self.play_web(&item).await
+            }
+            WallpaperType::Playlist => {
+                self.cleanup_render(old_render).await;
+                Err("嵌套播放列表不支持".into())
+            }
+            WallpaperType::Exe => {
+                self.cleanup_render(old_render).await;
+                Err("exe 壁纸暂不支持".into())
+            }
+            WallpaperType::NotSupported => {
+                self.cleanup_render(old_render).await;
+                Err("不支持的文件类型".into())
+            }
         };
 
         if let Err(e) = &result {
@@ -144,9 +162,11 @@ impl ScreenManager {
         let fit = item.setting.fit;
         let old = syswallpaper::set_wallpaper(&path, self.screen, fit)
             .map_err(|e| format!("设置桌面壁纸失败: {e}"))?;
-        // keepWallpaper = false 时不保存旧壁纸信息（不还原）
-        self.img_restore = item.setting.keep_wallpaper.then_some(old.clone());
-        self.render = Some(Render::Image { restore: Some(old) });
+        // 仅在首次用图片接管桌面时记录原壁纸；切换图片不覆盖还原信息
+        if self.img_restore.is_none() && item.setting.keep_wallpaper {
+            self.img_restore = Some(old);
+        }
+        self.render = Some(Render::Image);
         Ok(())
     }
 
@@ -419,7 +439,10 @@ impl ScreenManager {
             CoveredBehavior::Stop => {
                 if covered {
                     log::info!("screen {} covered -> stop", self.screen);
-                    self.stop_render(settings.covered_behavior).await;
+                    let old = self.render.take();
+                    self.cleanup_render(old).await;
+                    self.item_started_at = None;
+                    self.item_duration = None;
                 } else if self.wallpaper.is_some() {
                     log::info!("screen {} uncovered -> replay", self.screen);
                     let _ = self.play_current_item(settings).await;
@@ -443,35 +466,32 @@ impl ScreenManager {
         self.set_manual_paused(false, settings).await;
     }
 
-    /// 用户主动停止：卸载渲染并清空壁纸。
+    /// 用户主动停止：卸载渲染并清空壁纸；图片壁纸还原接管前的桌面。
     pub async fn stop(&mut self, settings: &ApiSettings) {
-        self.stop_render(settings.covered_behavior).await;
+        let old = self.render.take();
+        self.cleanup_render(old).await;
+        if let Some(restore) = self.img_restore.take() {
+            syswallpaper::restore(&restore);
+        }
         self.wallpaper = None;
         self.item = None;
         self.item_started_at = None;
         self.item_duration = None;
     }
 
-    async fn stop_render(&mut self, _behavior: CoveredBehavior) {
-        match self.render.take() {
-            Some(Render::Mpv(p)) => {
-                p.shutdown().await;
-            }
+    /// 清理旧渲染（mpv 退出 / 内嵌窗口关闭）。图片渲染无资源需要清理，
+    /// 且不做桌面还原——还原只在用户停止/退出时发生，避免切换时闪屏。
+    async fn cleanup_render(&self, render: Option<Render>) {
+        match render {
+            Some(Render::Mpv(p)) => p.shutdown().await,
             Some(Render::Player) => {
                 let _ = self.host.player_close(self.screen);
             }
             Some(Render::Web) => {
                 let _ = self.host.web_close(self.screen);
             }
-            Some(Render::Image { restore }) => {
-                if let Some(restore) = restore.or_else(|| self.img_restore.clone()) {
-                    syswallpaper::restore(&restore);
-                }
-            }
-            None => {}
+            _ => {}
         }
-        self.item_started_at = None;
-        self.item_duration = None;
     }
 
     // ---------- 音量 ----------
@@ -515,7 +535,7 @@ impl ScreenManager {
                 Some(TimePos { duration, position })
             }
             Render::Player => self.host.player_time(self.screen),
-            Render::Image { .. } => {
+            Render::Image => {
                 // 图片：用已运行时间模拟进度（供播放列表 UI）
                 let (Some(started), Some(duration)) = (self.item_started_at, self.item_duration)
                 else {

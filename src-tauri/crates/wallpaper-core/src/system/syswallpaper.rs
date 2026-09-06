@@ -138,6 +138,7 @@ pub fn restore(snapshot: &SysWallpaperSnapshot) {
     if snapshot.path.is_empty() {
         return;
     }
+    log::info!("restore desktop wallpaper: {} -> {}", snapshot.monitor_id, snapshot.path);
     let Ok(wall) = desktop_wallpaper() else {
         return;
     };
