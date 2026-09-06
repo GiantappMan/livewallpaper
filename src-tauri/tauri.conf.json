@@ -24,16 +24,6 @@
         "center": true,
         "skipTaskbar": true,
         "visible": true
-      },
-      {
-        "label": "main",
-        "title": "巨应壁纸",
-        "width": 1024,
-        "height": 680,
-        "minWidth": 800,
-        "minHeight": 482,
-        "center": true,
-        "visible": false
       }
     ],
     "security": {

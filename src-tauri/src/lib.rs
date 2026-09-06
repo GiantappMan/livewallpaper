@@ -28,8 +28,10 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             // 二次启动：深链参数转发 + 唤起主窗口
+            log::info!("single-instance args: {args:?}");
             if let Some(target) = extract_deep_link(&args) {
                 use tauri::Emitter;
+                log::info!("deep link target: {target}");
                 let _ = app.emit("navigate", serde_json::json!({ "target": target }));
             }
             if let Some(window) = app.get_webview_window("main") {
@@ -93,6 +95,20 @@ fn extract_deep_link(args: &[String]) -> Option<String> {
 
 fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::Error>> {
     log::info!("GiantappWallpaper v{APP_VERSION} starting");
+
+    // 创建主窗口（Rust 创建以便注入 Hub 兼容层初始化脚本）
+    const HUB_COMPAT_SCRIPT: &str = include_str!("hub_compat.js");
+    {
+        use tauri::WebviewUrl;
+        tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            .title("巨应壁纸")
+            .inner_size(1024.0, 680.0)
+            .min_inner_size(800.0, 482.0)
+            .center()
+            .visible(false)
+            .initialization_script(HUB_COMPAT_SCRIPT)
+            .build()?;
+    }
 
     // 注册深链协议（幂等）
     if let Ok(exe) = std::env::current_exe() {

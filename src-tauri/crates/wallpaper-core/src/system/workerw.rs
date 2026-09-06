@@ -182,9 +182,11 @@ pub fn detach_from_desktop(hwnd: HWND) {
 /// 找到属于指定 PID 的、类名匹配的主窗口。
 pub fn find_window_by_pid(pid: u32, class_hint: &str) -> Option<HWND> {
     for hwnd in top_level_windows() {
-        let pid_out =
-            unsafe { GetWindowThreadProcessId(hwnd, None) };
-        if pid_out != pid {
+        let mut wnd_pid = 0u32;
+        unsafe {
+            GetWindowThreadProcessId(hwnd, Some(&mut wnd_pid));
+        }
+        if wnd_pid != pid {
             continue;
         }
         if window_class(hwnd).eq_ignore_ascii_case(class_hint) {

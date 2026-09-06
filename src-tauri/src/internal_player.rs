@@ -86,8 +86,10 @@ impl InternalPlayerController {
         };
 
         if let Some(window) = self.app.get_webview_window(label) {
+            log::info!("[player:{label}] reuse existing window");
             return Ok(window);
         }
+        log::info!("[player:{label}] creating window");
 
         info.ready.store(false, Ordering::SeqCst);
         let ready_flag = info.ready.clone();
@@ -106,18 +108,34 @@ impl InternalPlayerController {
             .map_err(|e| format!("创建窗口失败: {e}"))?;
 
         // 等待页面加载（最多 15s）
+        let mut ready = false;
         for _ in 0..300 {
             if info.ready.load(Ordering::SeqCst) {
+                ready = true;
                 break;
             }
             std::thread::sleep(Duration::from_millis(50));
         }
+        log::info!("[player:{label}] window ready={ready}");
         Ok(window)
     }
 
     fn attach(&self, window: &tauri::WebviewWindow, screen: u32) -> Result<(), String> {
+        // WebView2 控制器异步创建，hwnd 可能稍后才可用：重试等待
+        let mut hwnd_raw = None;
+        for _ in 0..200 {
+            match window.hwnd() {
+                Ok(h) => {
+                    hwnd_raw = Some(h.0 as isize);
+                    break;
+                }
+                Err(_) => std::thread::sleep(Duration::from_millis(50)),
+            }
+        }
+        let Some(hwnd_raw) = hwnd_raw else {
+            return Err("获取窗口句柄超时".into());
+        };
         // tauri(wry) 使用 windows 0.61，引擎使用 0.62，跨版本用原始句柄传递
-        let hwnd_raw = window.hwnd().map_err(|e| e.to_string())?.0 as isize;
         let hwnd = windows::Win32::Foundation::HWND(hwnd_raw as *mut _);
         if !workerw::send_handle_to_desktop_bottom(hwnd, screen) {
             return Err("挂载到桌面失败（WorkerW 不可用）".into());
@@ -178,6 +196,7 @@ impl EngineHost for InternalPlayerController {
         panscan: bool,
     ) -> Result<(), String> {
         let label = Self::label_player(screen);
+        log::info!("player_load: screen {screen} url={media_url} volume={volume} panscan={panscan}");
         let window = self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
         self.attach(&window, screen)?;
         let _ = window.show();
@@ -283,6 +302,11 @@ impl EngineHost for InternalPlayerController {
             if p.exists() {
                 return p;
             }
+        }
+        // 3) 开发模式：源码树 src-tauri/assets
+        let dev = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/players/mpv/mpv.exe");
+        if dev.exists() {
+            return dev;
         }
         std::path::PathBuf::new()
     }

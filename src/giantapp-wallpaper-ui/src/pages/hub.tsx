@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "react-router-dom";
 import { useAtomValue } from "jotai";
 import { langAtom } from "@/atoms/lang";
 
@@ -10,21 +11,21 @@ const HUB_ADDRESS =
 
 const HubPage = () => {
   const lang = useAtomValue(langAtom);
+  const [searchParams] = useSearchParams();
+  const target = searchParams.get("target");
   const [loading, setLoading] = useState(true);
   const [iframeSrc, setIframeSrc] = useState<string | undefined>();
 
   useEffect(() => {
+    setLoading(true);
     // 深链 target 参数：#/hub?target=xxx
-    const hash = window.location.hash;
-    const query = hash.includes("?") ? hash.split("?")[1] : "";
-    const target = new URLSearchParams(query).get("target");
     if (target) {
       setIframeSrc(target);
       return;
     }
     const defaultMode = localStorage.getItem("theme") || "system";
     setIframeSrc(`${HUB_ADDRESS}/${lang}/explorer?mode=${defaultMode}`);
-  }, [lang]);
+  }, [lang, target]);
 
   return (
     <div className="w-full min-h-[100vh]">

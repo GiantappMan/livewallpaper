@@ -134,6 +134,12 @@ impl ScreenManager {
             VideoPlayer::DefaultPlayer => settings.default_video_player,
             other => other,
         };
+        log::info!(
+            "play_video screen {} engine={engine:?} mpv_exists={} file={}",
+            self.screen,
+            self.host.mpv_path().exists(),
+            path.display()
+        );
         let volume = self.volume_for(settings);
 
         match engine {
