@@ -81,9 +81,11 @@ impl WallpaperApi {
 
         let mut managers = self.managers.lock().await;
         for m in managers.iter_mut() {
+            m.latest_settings = settings.clone();
             let is_covered = covered.contains(&m.screen);
             m.set_covered(is_covered, &settings).await;
             m.tick(&settings).await;
+            m.reap_dead_render().await;
         }
     }
 

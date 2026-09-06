@@ -62,8 +62,10 @@ impl MpvPlayer {
         let playlist_arg = format!("--playlist={}", playlist_file.display());
 
         let mut cmd = tokio::process::Command::new(mpv_exe);
+        let log_file = playlist_file.with_extension("mpv.log");
         let args: Vec<String> = vec![
             playlist_arg,
+            format!("--log-file={}", log_file.display()),
             "--stop-screensaver=no".into(),
             if hardware_decoding {
                 "--hwdec=auto-safe".into()
@@ -77,6 +79,8 @@ impl MpvPlayer {
             },
             "--keepaspect=yes".into(),
             format!("--input-ipc-server={pipe_short}"),
+            // 单文件播放列表用文件循环：规避 mpv 在播放列表 EOF 时偶发退出的 bug
+            "--loop-file=inf".into(),
             "--loop-playlist=inf".into(),
             "--window-minimized=yes".into(),
             "--no-osc".into(),
@@ -173,9 +177,10 @@ impl MpvPlayer {
 
     pub async fn request(&self, command: Value) -> Result<Value> {
         let mut conn = self.ipc.inner.lock().await;
-        let id = conn.next_id.to_string();
+        let id = conn.next_id;
         conn.next_id += 1;
 
+        // request_id 必须是整数（mpv 新版已弃用字符串形式）
         let payload = json!({"command": command, "request_id": id});
         let mut bytes = serde_json::to_string(&payload)?.into_bytes();
         bytes.push(b'\n');
@@ -204,8 +209,11 @@ impl MpvPlayer {
             let Ok(value) = serde_json::from_str::<Value>(&line) else {
                 continue;
             };
-            if value.get("request_id").and_then(|v| v.as_str()) != Some(id.as_str()) {
-                continue; // 事件或错位响应
+            let resp_id = value
+                .get("request_id")
+                .and_then(|v| v.as_u64());
+            if resp_id != Some(conn.next_id.wrapping_sub(1)) {
+                continue; // 事件或错位响应（按发起顺序串行匹配）
             }
             return match value.get("error").and_then(|v| v.as_str()) {
                 Some("success") => Ok(value.get("data").cloned().unwrap_or(Value::Null)),

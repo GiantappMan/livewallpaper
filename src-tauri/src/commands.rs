@@ -176,46 +176,51 @@ fn resolve_wallpaper_urls(dirs: &AppDirs, wallpaper: &mut Wallpaper) {
     }
 }
 
+/// v3 语义：screen_index 为负（UI 传 -1 表示未选中）时作用于全部屏幕。
+fn normalize_screen_index(screen_index: Option<i32>) -> Option<u32> {
+    screen_index.filter(|i| *i >= 0).map(|i| i as u32)
+}
+
 #[tauri::command]
-pub async fn pause_wallpaper(app: AppHandle, screen_index: Option<u32>) -> Result<()> {
+pub async fn pause_wallpaper(app: AppHandle, screen_index: Option<i32>) -> Result<()> {
     let st = state(&app);
-    st.api.pause_wallpaper(screen_index).await;
+    st.api.pause_wallpaper(normalize_screen_index(screen_index)).await;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(())
 }
 
 #[tauri::command]
-pub async fn resume_wallpaper(app: AppHandle, screen_index: Option<u32>) -> Result<()> {
+pub async fn resume_wallpaper(app: AppHandle, screen_index: Option<i32>) -> Result<()> {
     let st = state(&app);
-    st.api.resume_wallpaper(screen_index).await;
+    st.api.resume_wallpaper(normalize_screen_index(screen_index)).await;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(())
 }
 
 #[tauri::command]
-pub async fn stop_wallpaper(app: AppHandle, screen_index: Option<u32>) -> Result<()> {
+pub async fn stop_wallpaper(app: AppHandle, screen_index: Option<i32>) -> Result<()> {
     let st = state(&app);
-    st.api.stop_wallpaper(screen_index).await;
+    st.api.stop_wallpaper(normalize_screen_index(screen_index)).await;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(())
 }
 
 #[tauri::command]
-pub async fn play_next_in_playlist(app: AppHandle, screen_index: Option<u32>) -> Result<()> {
+pub async fn play_next_in_playlist(app: AppHandle, screen_index: Option<i32>) -> Result<()> {
     let st = state(&app);
-    st.api.advance_playlist(1, screen_index).await;
+    st.api.advance_playlist(1, normalize_screen_index(screen_index)).await;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(())
 }
 
 #[tauri::command]
-pub async fn play_prev_in_playlist(app: AppHandle, screen_index: Option<u32>) -> Result<()> {
+pub async fn play_prev_in_playlist(app: AppHandle, screen_index: Option<i32>) -> Result<()> {
     let st = state(&app);
-    st.api.advance_playlist(-1, screen_index).await;
+    st.api.advance_playlist(-1, normalize_screen_index(screen_index)).await;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(())
@@ -236,11 +241,11 @@ pub async fn set_volume(
 }
 
 #[tauri::command]
-pub async fn get_wallpaper_time(app: AppHandle, screen_index: Option<u32>) -> Result<TimePos> {
+pub async fn get_wallpaper_time(app: AppHandle, screen_index: Option<i32>) -> Result<TimePos> {
     let st = state(&app);
     Ok(st
         .api
-        .wallpaper_time(screen_index)
+        .wallpaper_time(normalize_screen_index(screen_index))
         .await
         .unwrap_or(TimePos {
             duration: -1.0,
@@ -252,10 +257,10 @@ pub async fn get_wallpaper_time(app: AppHandle, screen_index: Option<u32>) -> Re
 pub async fn set_progress(
     app: AppHandle,
     progress: f64,
-    screen_index: Option<u32>,
+    screen_index: Option<i32>,
 ) -> Result<()> {
     let st = state(&app);
-    st.api.set_progress(progress, screen_index).await
+    st.api.set_progress(progress, normalize_screen_index(screen_index)).await
 }
 
 // ---------- 壁纸管理 ----------

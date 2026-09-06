@@ -57,6 +57,10 @@ pub(crate) struct ScreenManager {
     item_duration: Option<u64>,
     /// 图片壁纸的原桌面壁纸（供还原 / 快照）。
     img_restore: Option<syswallpaper::SysWallpaperSnapshot>,
+    /// 最近一次 apply 的全局设置（供自愈重启时使用）。
+    pub(crate) latest_settings: ApiSettings,
+    /// 连续意外死亡计数（成功播放后清零）。
+    death_streak: u32,
 }
 
 impl ScreenManager {
@@ -73,6 +77,8 @@ impl ScreenManager {
             item_started_at: None,
             item_duration: None,
             img_restore: None,
+            latest_settings: ApiSettings::default(),
+            death_streak: 0,
         }
     }
 
@@ -81,7 +87,13 @@ impl ScreenManager {
     pub async fn play(&mut self, wallpaper: Wallpaper, settings: &ApiSettings) -> Result<(), String> {
         self.manual_paused = false;
         self.wallpaper = Some(wallpaper);
-        self.play_current_item(settings).await
+        let result = self.play_current_item(settings).await;
+        if result.is_err() {
+            // 播放失败不保留"播放中"状态，避免工具条幻影
+            self.wallpaper = None;
+            self.item = None;
+        }
+        result
     }
 
     async fn play_current_item(&mut self, settings: &ApiSettings) -> Result<(), String> {
@@ -89,7 +101,16 @@ impl ScreenManager {
             return Ok(());
         };
         let item = wallpaper.current_item().clone();
-        self.stop_render(settings.covered_behavior).await;
+
+        // 视频引擎无缝切换：同屏已有 mpv 进程且新项同为 mpv 引擎时，
+        // 直接 loadlist 复用（杀进程重启需要 2s+，loadlist 近乎即时）
+        let reuse_mpv = matches!(item.meta.wallpaper_type, WallpaperType::Video | WallpaperType::AnimatedImg)
+            && matches!(self.render.as_ref(), Some(Render::Mpv(_)))
+            && self.resolves_to_mpv(&item, settings);
+
+        if !reuse_mpv {
+            self.stop_render(settings.covered_behavior).await;
+        }
         self.item = Some(item.clone());
         self.item_started_at = Some(Instant::now());
         self.item_duration = None;
@@ -97,7 +118,7 @@ impl ScreenManager {
         let result = match item.meta.wallpaper_type {
             WallpaperType::Img => self.play_image(&item).await,
             WallpaperType::AnimatedImg | WallpaperType::Video => {
-                self.play_video(&item, settings).await
+                self.play_video(&item, settings, reuse_mpv).await
             }
             WallpaperType::Web => self.play_web(&item).await,
             WallpaperType::Playlist => Err("嵌套播放列表不支持".into()),
@@ -109,6 +130,7 @@ impl ScreenManager {
             log::error!("screen {} play failed: {e}", self.screen);
             return result;
         }
+        self.death_streak = 0;
 
         // 探测时长（用于播放列表推进），失败回退 1 小时
         self.item_duration = self.resolve_item_duration().await;
@@ -128,14 +150,28 @@ impl ScreenManager {
         Ok(())
     }
 
-    async fn play_video(&mut self, item: &Wallpaper, settings: &ApiSettings) -> Result<(), String> {
+    /// 该项解析后是否由 mpv 引擎播放。
+    fn resolves_to_mpv(&self, item: &Wallpaper, settings: &ApiSettings) -> bool {
+        let engine = match item.setting.video_player {
+            VideoPlayer::DefaultPlayer => settings.default_video_player,
+            other => other,
+        };
+        engine == VideoPlayer::Mpv && self.host.mpv_path().exists()
+    }
+
+    async fn play_video(
+        &mut self,
+        item: &Wallpaper,
+        settings: &ApiSettings,
+        reuse: bool,
+    ) -> Result<(), String> {
         let path = item.file_path.clone().ok_or("缺少文件路径")?;
         let engine = match item.setting.video_player {
             VideoPlayer::DefaultPlayer => settings.default_video_player,
             other => other,
         };
         log::info!(
-            "play_video screen {} engine={engine:?} mpv_exists={} file={}",
+            "play_video screen {} engine={engine:?} reuse={reuse} mpv_exists={} file={}",
             self.screen,
             self.host.mpv_path().exists(),
             path.display()
@@ -144,6 +180,20 @@ impl ScreenManager {
 
         match engine {
             VideoPlayer::Mpv if self.host.mpv_path().exists() => {
+                // 复用：替换播放列表，进程保持存活
+                if reuse {
+                    if let Some(Render::Mpv(p)) = self.render.as_ref() {
+                        let list = self.dirs.playlist_tmp_file(self.screen);
+                        write_playlist_file(&list, &[&path])?;
+                        p.loadlist(&list)
+                            .await
+                            .map_err(|e| format!("loadlist 失败: {e}"))?;
+                        let _ = p.set_panscan(if item.setting.is_pan_scan { 1.0 } else { 0.0 }).await;
+                        let _ = p.set_volume(volume).await;
+                        return Ok(());
+                    }
+                }
+
                 let list = self.dirs.playlist_tmp_file(self.screen);
                 write_playlist_file(&list, &[&path])?;
                 let player = crate::mpv::MpvPlayer::launch(
@@ -290,6 +340,40 @@ impl ScreenManager {
         }
     }
 
+    /// 检测 mpv 进程意外退出：自动重启当前壁纸（自愈）。
+    /// 连续失败超限后放弃并清空，避免死亡循环。
+    pub async fn reap_dead_render(&mut self) {
+        let dead = match self.render.as_ref() {
+            Some(Render::Mpv(p)) => !p.is_alive().await,
+            _ => false,
+        };
+        if !dead {
+            self.death_streak = 0;
+            return;
+        }
+        self.death_streak += 1;
+        log::warn!(
+            "screen {} mpv died unexpectedly (streak {}), reviving",
+            self.screen, self.death_streak
+        );
+        self.render = None;
+        self.item_started_at = None;
+        self.item_duration = None;
+
+        if self.death_streak > 3 || self.wallpaper.is_none() {
+            if self.death_streak == 4 {
+                log::error!("screen {} giving up mpv revival", self.screen);
+            }
+            if self.death_streak > 3 {
+                return;
+            }
+        }
+        if self.wallpaper.is_some() {
+            let settings = self.latest_settings.clone();
+            let _ = self.play_current_item(&settings).await;
+        }
+    }
+
     // ---------- 暂停 / 恢复 / 停止 ----------
 
     fn should_pause(&self, settings: &ApiSettings) -> bool {
@@ -390,6 +474,7 @@ impl ScreenManager {
     }
 
     pub async fn apply_settings(&mut self, settings: &ApiSettings) {
+        self.latest_settings = settings.clone();
         let volume = self.volume_for(settings);
         match self.render.as_ref() {
             Some(Render::Mpv(p)) => {
