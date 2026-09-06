@@ -1,4 +1,4 @@
-# 巨应壁纸 3-Alpha发布 
+# 巨应壁纸 Ⅲ
 
 Github：https://github.com/GiantappMan/livewallpaper/releases  
 应用商店：https://www.microsoft.com/store/apps/9MWTG433JV6B  
