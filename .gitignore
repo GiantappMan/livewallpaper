@@ -1,6 +1,16 @@
-/src/giantapp-wallpaper-client/Client/Assets/UI
-/src/giantapp-wallpaper-client/Client/Assets/Player
-/src/build/publish
-/src/build/dist
-/src/giantapp-wallpaper-ui/.env
-/src/giantapp-wallpaper-client/WallpaperCore/Assets/Players/
+# build outputs
+target/
+/src-tauri/gen/schemas
+
+# frontend
+node_modules
+/src/giantapp-wallpaper-ui/dist
+/src/giantapp-wallpaper-ui/.env*.local
+
+# bundled player binaries (downloaded at build time, see docs/1.开发.md)
+/src-tauri/assets/players/mpv/*
+!/src-tauri/assets/players/mpv/.gitkeep
+
+# logs / local
+*.log
+.DS_Store

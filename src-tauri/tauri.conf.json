@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GiantappWallpaper",
+  "version": "4.0.0",
+  "identifier": "cn.giantapp.livewallpaper4",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../src/giantapp-wallpaper-ui dev",
+    "devUrl": "http://localhost:5173/",
+    "beforeBuildCommand": "pnpm --dir ../src/giantapp-wallpaper-ui build",
+    "frontendDist": "../src/giantapp-wallpaper-ui/dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "splashscreen",
+        "title": "GiantappWallpaper",
+        "url": "splash.html",
+        "width": 360,
+        "height": 240,
+        "resizable": false,
+        "decorations": false,
+        "transparent": false,
+        "center": true,
+        "skipTaskbar": true,
+        "visible": true
+      },
+      {
+        "label": "main",
+        "title": "巨应壁纸",
+        "width": 1024,
+        "height": 680,
+        "minWidth": 800,
+        "minHeight": 482,
+        "center": true,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/32x32.png", "icons/128x128.png", "icons/icon.png"],
+    "resources": ["assets/*"],
+    "copyright": "Copyright © 2026 GiantappMan",
+    "category": "Utility",
+    "shortDescription": "简洁、轻量、易用、无打扰的动态壁纸客户端",
+    "longDescription": "巨应壁纸 IV：支持图片/动图/视频/Web/播放列表壁纸，多显示器独立设置，全屏遮挡智能暂停。",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": false
+      }
+    }
+  },
+  "plugins": {}
+}
