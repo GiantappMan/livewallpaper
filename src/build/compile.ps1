@@ -14,10 +14,12 @@ $MpvDir = Join-Path $TauriDir "assets/players/mpv"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-Write-Host "==> [1/4] 前端构建" -ForegroundColor Cyan
+Write-Host "==> [1/4] 前端依赖与构建" -ForegroundColor Cyan
 Push-Location $UiDir
-if (-Not (Test-Path "node_modules")) { pnpm i }
-pnpm build
+if (-Not (Test-Path "node_modules")) { bun install }
+Pop-Location
+Push-Location $Root
+bun --cwd src/giantapp-wallpaper-ui build
 Pop-Location
 
 if (-Not $SkipMpv) {
@@ -49,8 +51,8 @@ if (-Not $SkipMpv) {
 }
 
 Write-Host "==> [3/4] Rust release 构建 + NSIS 打包" -ForegroundColor Cyan
-Push-Location $TauriDir
-pnpm --dir $UiDir tauri build
+Push-Location $Root
+bun run build
 Pop-Location
 
 Write-Host "==> [4/4] 收集产物" -ForegroundColor Cyan

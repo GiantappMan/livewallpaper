@@ -1,0 +1,14 @@
+{
+  "name": "livewallpaper",
+  "private": true,
+  "workspaces": [
+    "src/giantapp-wallpaper-ui"
+  ],
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:ui": "bun run --cwd src/giantapp-wallpaper-ui dev",
+    "build": "tauri build",
+    "check": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml"
+  }
+}

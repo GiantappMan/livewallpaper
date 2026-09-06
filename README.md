@@ -8,6 +8,15 @@
 
 - Github Releases：<https://github.com/GiantappMan/livewallpaper/releases>
 
+## 开发调试
+
+```bash
+bun install   # 首次
+bun dev       # 根目录一键启动（Vite + Rust + 应用）
+```
+
+详见 [docs/1.开发.md](./docs/1.开发.md)。
+
 ## 功能
 
 - [x] 图片壁纸（bmp / jpg / jpeg / png / jfif / avif）

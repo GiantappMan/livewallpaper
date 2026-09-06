@@ -6,7 +6,6 @@ target/
 node_modules
 /src/giantapp-wallpaper-ui/dist
 /src/giantapp-wallpaper-ui/.env*.local
-
 # bundled player binaries (downloaded at build time, see docs/1.开发.md)
 /src-tauri/assets/players/mpv/*
 !/src-tauri/assets/players/mpv/.gitkeep

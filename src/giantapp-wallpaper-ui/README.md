@@ -27,11 +27,12 @@ src/
 
 ## 开发
 
+> 推荐从仓库根目录操作：`bun install` + `bun dev`（完整应用调试）。
+
 ```bash
-pnpm i
-pnpm dev        # http://localhost:5173（浏览器打开时桥接层优雅降级）
-pnpm build      # tsc + vite build → dist/
-pnpm tauri dev  # 从 src-tauri 一键启动完整应用
+bun install     # 或在根目录执行（workspace 已关联）
+bun run dev     # 仅前端 http://localhost:5173（浏览器打开时桥接层优雅降级）
+bun run build   # tsc + vite build → dist/
 ```
 
 ## 与 v3 的差异
