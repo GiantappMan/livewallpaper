@@ -180,17 +180,28 @@ impl ScreenManager {
 
         match engine {
             VideoPlayer::Mpv if self.host.mpv_path().exists() => {
-                // 复用：替换播放列表，进程保持存活
+                // 复用：替换播放列表，进程保持存活（切换近乎即时）
                 if reuse {
                     if let Some(Render::Mpv(p)) = self.render.as_ref() {
                         let list = self.dirs.playlist_tmp_file(self.screen);
                         write_playlist_file(&list, &[&path])?;
-                        p.loadlist(&list)
-                            .await
-                            .map_err(|e| format!("loadlist 失败: {e}"))?;
-                        let _ = p.set_panscan(if item.setting.is_pan_scan { 1.0 } else { 0.0 }).await;
-                        let _ = p.set_volume(volume).await;
-                        return Ok(());
+                        match p.loadlist(&list).await {
+                            Ok(()) => {
+                                let _ = p
+                                    .set_panscan(if item.setting.is_pan_scan { 1.0 } else { 0.0 })
+                                    .await;
+                                let _ = p.set_volume(volume).await;
+                                return Ok(());
+                            }
+                            Err(e) => {
+                                // 进程已死或管道断裂：丢弃渲染器，落回完整重启
+                                log::warn!(
+                                    "screen {} mpv reuse failed ({e}), relaunching",
+                                    self.screen
+                                );
+                                self.render = None;
+                            }
+                        }
                     }
                 }
 

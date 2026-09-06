@@ -104,7 +104,7 @@ const LocalPage = () => {
     wallpaper.runningInfo.screenIndexes = screenIndexes;
     const res = await api.showWallpaper(wallpaper);
     if (res.error) {
-      alert(res.error);
+      toast.error(String(res.error?.message || res.error).slice(0, 120));
       return;
     }
 
