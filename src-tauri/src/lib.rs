@@ -70,6 +70,9 @@ pub fn run() {
             commands::cancel_download_wallpaper,
             commands::get_download_status,
             commands::get_download_item_status,
+            commands::get_download_history,
+            commands::clear_download_history,
+            commands::remove_download_history_item,
             commands::open_url,
             commands::explore,
             commands::open_store_review,
@@ -140,7 +143,8 @@ fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::
             use tauri::Emitter;
             let _ = handle.emit("download-status-changed", &status);
         });
-        Arc::new(DownloadManager::new(emit))
+        let history_path = dirs.config_file("download-history");
+        Arc::new(DownloadManager::new(emit, Some(history_path)))
     };
 
     let launched_hidden = config.lock().general.hide_window;

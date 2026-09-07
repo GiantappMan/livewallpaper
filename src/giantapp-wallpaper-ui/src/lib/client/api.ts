@@ -9,6 +9,7 @@ import type {
   ConfigAppearance,
   ConfigGeneral,
   ConfigWallpaper,
+  DownloadHistoryItem,
   DownloadItem,
   DownloadStatus,
   PlayingStatus,
@@ -350,6 +351,39 @@ class API {
       if (!this.isRunningInClient()) return noClient();
       const data = await invoke<DownloadStatus>("get_download_status");
       return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getDownloadHistory(): Promise<ApiResult<DownloadHistoryItem[]>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<DownloadHistoryItem[]>("get_download_history");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async clearDownloadHistory(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("clear_download_history");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async removeDownloadHistoryItem(id: string): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("remove_download_history_item", { id });
+      return { error: null, data: null };
     } catch (e) {
       console.error(e);
       return { error: e, data: null };

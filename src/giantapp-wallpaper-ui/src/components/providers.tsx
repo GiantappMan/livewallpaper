@@ -8,13 +8,19 @@ import { Provider as JotaiProvider, useSetAtom } from "jotai";
 import { listen } from "@tauri-apps/api/event";
 import { useNavigate } from "react-router-dom";
 import { langAtom, langDictAtom } from "@/atoms/lang";
+import { activeDownloadIdsAtom } from "@/atoms/downloads";
 import { rootStore } from "@/atoms/store";
 import { useConfig } from "@/hooks/use-config";
 import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
 import shellApi from "@/lib/client/shell";
 import { getDictionary } from "@/i18n";
-import type { ConfigAppearance, ConfigGeneral } from "@/lib/client/types";
+import type {
+  ConfigAppearance,
+  ConfigGeneral,
+  DownloadItem as DownloadItemPayload,
+  DownloadStatus as DownloadStatusPayload,
+} from "@/lib/client/types";
 
 /** 启动引导：从后端读取语言/外观配置，注册全局事件。 */
 function Bootstrap({ children }: { children: React.ReactNode }) {
@@ -78,6 +84,33 @@ function Bootstrap({ children }: { children: React.ReactNode }) {
       un.then((f) => f());
     };
   }, [navigate]);
+
+  // 下载状态 -> 侧边栏角标计数（事件为增量推送，按 id 合并；挂载时用全量状态播种）
+  const setActiveDownloads = useSetAtom(activeDownloadIdsAtom);
+  React.useEffect(() => {
+    const apply = (items: DownloadItemPayload[]) => {
+      setActiveDownloads((prev: string[]) => {
+        const ids = new Set(prev);
+        for (const it of items) {
+          if (it.isDownloading && !it.IsCanceled) ids.add(it.id);
+          else ids.delete(it.id);
+        }
+        return Array.from(ids);
+      });
+    };
+
+    (async () => {
+      const res = await api.getDownloadStatus();
+      if (!res.error && res.data) apply(res.data.items);
+    })();
+
+    const un = listen<DownloadStatusPayload>("download-status-changed", (e) => {
+      apply(e.payload?.items || []);
+    });
+    return () => {
+      un.then((f) => f());
+    };
+  }, [setActiveDownloads]);
 
   if (!ready) return null;
   return <>{children}</>;

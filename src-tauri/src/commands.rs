@@ -609,6 +609,48 @@ pub async fn get_download_item_status(
     Ok(state(&app).downloads.status_of(&id).await)
 }
 
+/// 带展示用 URL 的历史条目（封面/文件走 media 协议）。
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadHistoryEntry {
+    #[serde(flatten)]
+    item: wallpaper_core::DownloadHistoryItem,
+    cover_url: Option<String>,
+    file_url: String,
+}
+
+#[tauri::command]
+pub fn get_download_history(app: AppHandle) -> Result<Vec<DownloadHistoryEntry>> {
+    let items = state(&app).downloads.history_all();
+    Ok(items
+        .into_iter()
+        .map(|item| {
+            let cover_url = item
+                .cover_path
+                .as_deref()
+                .map(|p| path_to_media_url(std::path::Path::new(p)));
+            let file_url = path_to_media_url(std::path::Path::new(&item.file_path));
+            DownloadHistoryEntry {
+                item,
+                cover_url,
+                file_url,
+            }
+        })
+        .collect())
+}
+
+#[tauri::command]
+pub fn clear_download_history(app: AppHandle) -> Result<()> {
+    state(&app).downloads.clear_history();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn remove_download_history_item(app: AppHandle, id: String) -> Result<()> {
+    state(&app).downloads.remove_history(&id);
+    Ok(())
+}
+
 // ---------- 外壳 ----------
 
 #[tauri::command]

@@ -237,3 +237,17 @@ export type DownloadItem = {
 export type DownloadStatus = {
   items: DownloadItem[];
 };
+
+export type DownloadHistoryItem = {
+  id: string;
+  title: string;
+  filePath: string;
+  coverPath: string | null;
+  totalBytes: number;
+  /** 完成时间（Unix 毫秒） */
+  completedAt: number;
+  /** 封面 media URL（后端生成） */
+  coverUrl: string | null;
+  /** 媒体文件 media URL（后端生成） */
+  fileUrl: string;
+};

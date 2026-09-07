@@ -23,6 +23,20 @@
       "positiveReview": "Dejar una reseña positiva",
       "settings": "Configuración"
     },
+    "downloads": {
+      "cancel": "Cancelar",
+      "cleared": "Historial borrado",
+      "clear_confirm": "Se borrarán todos los registros de descarga. Los fondos de pantalla descargados no se eliminarán. ¿Borrar ahora?",
+      "clear_history": "Borrar historial",
+      "downloading": "Descargando",
+      "empty_downloading": "No hay descargas activas",
+      "empty_history": "No hay registros de descarga",
+      "failed_to_clear": "Error en la operación, inténtalo de nuevo",
+      "history": "Descargados",
+      "nav": "Descargas",
+      "subtitle": "Administra las descargas de fondos y el historial",
+      "title": "Gestor de descargas"
+    },
     "hub": {
       "download_wallpaper_with_v2": "Puedes descargar fondos de pantalla primero con la Versión2",
       "membership_upgrade_to_v3": "Los usuarios Pro de la Versión2 pueden actualizar a la Versión3 gratis más tarde",

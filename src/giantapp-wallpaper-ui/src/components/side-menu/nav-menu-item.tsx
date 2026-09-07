@@ -7,6 +7,8 @@ interface Props {
   icon?: any;
   selectedIcon?: any;
   current?: boolean;
+  /** 角标数字（如进行中的下载任务数），0 或缺省不显示 */
+  badge?: number;
 }
 
 export default function NavMenuItem(props: Props) {
@@ -30,11 +32,11 @@ export default function NavMenuItem(props: Props) {
       >
         {/* 左边条 */}
       </div>
-      <div>
+      <div className="relative">
         {/* 未选中 */}
         <props.icon
           className={[
-            "h-6 w-6 transition-all duration-300 absolute ",
+            "h-7 w-7 transition-all duration-300 absolute ",
             props.current ? "translate-y-2 opacity-0" : "opacity-100",
           ].join(" ")}
           aria-hidden="true"
@@ -42,15 +44,23 @@ export default function NavMenuItem(props: Props) {
         {/* 选中 */}
         <props.icon
           className={[
-            "h-6 w-6 transition-all duration-300 text-primary",
+            "h-7 w-7 transition-all duration-300 text-primary",
             props.current ? "translate-y-2 opacity-100 " : "opacity-0",
           ].join(" ")}
           aria-hidden="true"
         />
+        {props.badge != null && props.badge > 0 && (
+          <span
+            className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center font-semibold"
+            aria-hidden="true"
+          >
+            {props.badge > 99 ? "99+" : props.badge}
+          </span>
+        )}
       </div>
       <span
         className={[
-          "transition-all duration-300 whitespace-nowrap",
+          "transition-all duration-300 whitespace-nowrap text-[11px]",
           props.current ? "translate-y-2 opacity-0" : "opacity-100",
         ].join(" ")}
       >

@@ -23,6 +23,20 @@
     "positiveReview": "赏个好评",
     "settings": "设置"
   },
+  "downloads": {
+    "cancel": "取消",
+    "cleared": "记录已清空",
+    "clear_confirm": "将清空全部下载记录，不会删除已下载的壁纸文件。确定清空吗？",
+    "clear_history": "清空记录",
+    "downloading": "正在下载",
+    "empty_downloading": "暂无下载任务",
+    "empty_history": "暂无下载记录",
+    "failed_to_clear": "操作失败，请重试",
+    "history": "已下载记录",
+    "nav": "下载",
+    "subtitle": "管理壁纸的下载任务与已下载记录",
+    "title": "下载管理"
+  },
   "hub": {
     "download_wallpaper_with_v2": "可以先用巨应2下载壁纸",
     "membership_upgrade_to_v3": "巨应2的会员，后期可以免费升级到巨应3",

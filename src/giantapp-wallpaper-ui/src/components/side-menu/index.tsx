@@ -2,19 +2,27 @@
 
 import { useState } from "react";
 import NavMenuItem from "./nav-menu-item";
-import { CogIcon, HomeIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import {
+    ArrowDownTrayIcon,
+    CogIcon,
+    HomeIcon,
+    Squares2X2Icon,
+} from "@heroicons/react/24/outline";
+import {
+    ArrowDownTrayIcon as solidArrowDownTrayIcon,
     CogIcon as solidCogIcon,
     HomeIcon as solidHomeIcon,
+    QuestionMarkCircleIcon as questionMarkCircleIcon,
     Squares2X2Icon as solidSquares2X2Icon,
-    QuestionMarkCircleIcon as questionMarkCircleIcon
 } from "@heroicons/react/24/solid";
 import { useLocation } from "react-router-dom";
 import { useAtomValue } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
+import { activeDownloadIdsAtom } from "@/atoms/downloads";
 
 export default function SideMenu() {
     const dictionary = useAtomValue(langDictAtom);
+    const activeDownloadCount = useAtomValue(activeDownloadIdsAtom).length;
     const [sidebarTopNavigation] = useState([
         {
             name: dictionary['common'].local,
@@ -42,6 +50,14 @@ export default function SideMenu() {
     ]);
 
     const [sidebarBottomNavigation] = useState([
+        {
+            name: dictionary['downloads']?.nav ?? "Downloads",
+            href: `/downloads`,
+            urls: [`/downloads`],
+            icon: ArrowDownTrayIcon,
+            selectedIcon: solidArrowDownTrayIcon,
+            current: false,
+        },
         {
             name: dictionary['common'].settings,
             href: `/settings`,
@@ -87,6 +103,7 @@ export default function SideMenu() {
                                 icon={item.icon}
                                 selectedIcon={item.selectedIcon}
                                 current={item.current}
+                                badge={item.href === `/downloads` ? activeDownloadCount : undefined}
                             />
                         ))}
                     </div>
@@ -99,6 +116,7 @@ export default function SideMenu() {
                                 icon={item.icon}
                                 selected-icon={item.selectedIcon}
                                 current={item.current}
+                                badge={item.href === `/downloads` ? activeDownloadCount : undefined}
                             />
                         ))}
                     </div>

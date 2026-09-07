@@ -18,7 +18,9 @@ pub mod mpv;
 pub use api::WallpaperApi;
 pub use config::{ConfigAppearance, ConfigGeneral, ConfigStore, ConfigWallpaper};
 pub use dirs::AppDirs;
-pub use download::{DownloadEventCallback, DownloadItem, DownloadManager, DownloadStatus};
+pub use download::{
+    DownloadEventCallback, DownloadHistoryItem, DownloadItem, DownloadManager, DownloadStatus,
+};
 pub use host::{EngineHost, NullHost};
 pub use manager::ScreenSnapshot;
 pub use models::prelude::*;
