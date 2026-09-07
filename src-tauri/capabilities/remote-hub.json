@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "remote-hub",
-  "description": "社区 Hub 远程页面（iframe）可用的最小权限：事件监听 + 应用命令",
+  "description": "社区 Hub 远程页面（iframe / 详情弹窗）可用的最小权限：事件监听 + 应用命令",
   "remote": {
     "urls": [
       "https://wallpaper.giantapp.cn/*",
@@ -10,7 +10,7 @@
       "http://localhost:3000/*"
     ]
   },
-  "windows": ["main"],
+  "windows": ["main", "hub-detail-*"],
   "permissions": [
     "core:event:default"
   ]

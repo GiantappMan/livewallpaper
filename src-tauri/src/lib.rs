@@ -11,12 +11,26 @@ mod urls;
 
 use parking_lot::Mutex;
 use state::AppState;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use tauri::Manager;
 use wallpaper_core::{AppDirs, ConfigStore, DownloadManager, WallpaperApi};
 
 pub const DEEP_LINK_SCHEME: &str = "livewallpaper4";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+const HUB_COMPAT_SCRIPT: &str = include_str!("hub_compat.js");
+
+/// Hub 兼容层里 ALLOWED_ORIGINS 的 Rust 侧镜像，用于判定新窗口请求是否来自社区页。
+const HUB_ORIGINS: &[&str] = &[
+    "https://wallpaper.giantapp.cn",
+    "https://www.giantapp.cc",
+    "https://livewallpaper.giantapp.cn",
+    "http://localhost:3000",
+    "http://localhost:3001",
+];
+
+static HUB_WINDOW_SEQ: AtomicU32 = AtomicU32::new(1);
 
 pub fn run() {
     let dirs = AppDirs::resolve();
@@ -96,13 +110,82 @@ fn extract_deep_link(args: &[String]) -> Option<String> {
         .map(|a| a.trim_start_matches(&format!("{DEEP_LINK_SCHEME}://")).to_string())
 }
 
+fn is_hub_origin(url: &tauri::Url) -> bool {
+    HUB_ORIGINS.contains(&url.origin().ascii_serialization().as_str())
+}
+
+/// 新窗口请求入口（社区页“打开”即 target=_blank / window.open）。
+/// Hub 页面 -> 应用内新窗口；其余 http(s) -> 系统浏览器；其他一律拒绝。
+fn handle_new_window_request(
+    app: &tauri::AppHandle,
+    url: tauri::Url,
+    features: tauri::webview::NewWindowFeatures,
+) -> tauri::webview::NewWindowResponse<tauri::Wry> {
+    if is_hub_origin(&url) {
+        let label = format!("hub-detail-{}", HUB_WINDOW_SEQ.fetch_add(1, Ordering::Relaxed));
+        match build_hub_popup(app, label, url, features) {
+            Ok(window) => return tauri::webview::NewWindowResponse::Create { window },
+            Err(e) => log::warn!("create hub detail window failed: {e}"),
+        }
+        return tauri::webview::NewWindowResponse::Deny;
+    }
+
+    if matches!(url.scheme(), "http" | "https") {
+        let url = url.to_string();
+        std::thread::spawn(move || {
+            if let Err(e) = wallpaper_core::system::open_url(&url) {
+                log::warn!("open url in browser failed: {e}");
+            }
+        });
+    }
+    tauri::webview::NewWindowResponse::Deny
+}
+
+/// 社区壁纸详情弹窗：注入 Hub 兼容层，加载完成后才显示（避免白屏闪烁）。
+fn build_hub_popup(
+    app: &tauri::AppHandle,
+    label: String,
+    url: tauri::Url,
+    features: tauri::webview::NewWindowFeatures,
+) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
+    use tauri::WebviewUrl;
+
+    let handle = app.clone();
+    // 请求未带位置时居中显示（center 标志在构建时总会覆盖显式位置，故互斥处理）
+    let has_position = features.position().is_some();
+    let builder =
+        tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(url))
+            .title("巨应壁纸")
+            .inner_size(1100.0, 780.0)
+            .min_inner_size(700.0, 500.0)
+            .visible(false)
+            .window_features(features)
+            .initialization_script(HUB_COMPAT_SCRIPT)
+            .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
+            .on_document_title_changed(|window, title| {
+                let _ = window.set_title(&title);
+            })
+            .on_page_load(|window, payload| {
+                if payload.event() == tauri::webview::PageLoadEvent::Finished {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            });
+
+    if has_position {
+        builder.build()
+    } else {
+        builder.center().build()
+    }
+}
+
 fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::Error>> {
     log::info!("GiantappWallpaper v{APP_VERSION} starting");
 
     // 创建主窗口（Rust 创建以便注入 Hub 兼容层初始化脚本）
-    const HUB_COMPAT_SCRIPT: &str = include_str!("hub_compat.js");
     {
         use tauri::WebviewUrl;
+        let handle = app.handle().clone();
         tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
             .title("巨应壁纸")
             .inner_size(1024.0, 680.0)
@@ -112,6 +195,9 @@ fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::
             // 去掉系统标题栏，由前端自绘（见 components/title-bar.tsx）
             .decorations(false)
             .initialization_script(HUB_COMPAT_SCRIPT)
+            // 社区页卡片“打开”等 target=_blank 请求默认被 WebView 拒绝，
+            // 在这里接管：Hub 详情页开应用内新窗口，其余交给系统浏览器
+            .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
             .build()?;
     }
 
