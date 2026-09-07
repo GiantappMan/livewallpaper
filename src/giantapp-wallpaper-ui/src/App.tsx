@@ -4,6 +4,7 @@ import { ThemeWrapper } from "@/components/theme-wrapper";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { RatingDialog } from "@/components/rating-dialog";
 import SideMenu from "@/components/side-menu";
+import { TitleBar } from "@/components/title-bar";
 import HomePage from "@/pages/home";
 import HubPage from "@/pages/hub";
 import SettingsLayout from "@/pages/settings/layout";
@@ -16,23 +17,26 @@ export default function App() {
   return (
     <Providers>
       <ThemeWrapper>
-        <div className="flex h-screen bg-background">
-          <SideMenu />
-          {/* 内容区 */}
-          <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">
-            <main>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/hub" element={<HubPage />} />
-                <Route path="/settings" element={<SettingsLayout />}>
-                  <Route index element={<GeneralSettings />} />
-                  <Route path="wallpaper" element={<WallpaperSettings />} />
-                  <Route path="appearance" element={<AppearanceSettings />} />
-                </Route>
-                <Route path="/about" element={<AboutPage />} />
-              </Routes>
-              <RatingDialog />
-            </main>
+        <div className="flex h-screen flex-col bg-background">
+          <TitleBar />
+          <div className="flex flex-1 overflow-hidden">
+            <SideMenu />
+            {/* 内容区 */}
+            <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">
+              <main>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/hub" element={<HubPage />} />
+                  <Route path="/settings" element={<SettingsLayout />}>
+                    <Route index element={<GeneralSettings />} />
+                    <Route path="wallpaper" element={<WallpaperSettings />} />
+                    <Route path="appearance" element={<AppearanceSettings />} />
+                  </Route>
+                  <Route path="/about" element={<AboutPage />} />
+                </Routes>
+                <RatingDialog />
+              </main>
+            </div>
           </div>
         </div>
       </ThemeWrapper>

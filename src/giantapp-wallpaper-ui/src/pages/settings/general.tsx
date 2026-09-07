@@ -50,7 +50,7 @@ const Page = () => {
         }
     }, [fetchConfig, mounted]);
 
-    return <div className="h-screen space-y-6">
+    return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] space-y-6">
         {
             mounted ?
                 <>

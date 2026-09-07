@@ -121,7 +121,10 @@ impl ScreenManager {
                 r
             }
             WallpaperType::AnimatedImg | WallpaperType::Video => {
-                if !reuse_mpv {
+                if reuse_mpv {
+                    // 复用路径：旧 mpv 放回 render，play_video 内部 loadlist 换源
+                    self.render = old_render;
+                } else {
                     self.cleanup_render(old_render).await;
                 }
                 self.play_video(&item, settings, reuse_mpv).await
@@ -214,11 +217,12 @@ impl ScreenManager {
                                 return Ok(());
                             }
                             Err(e) => {
-                                // 进程已死或管道断裂：丢弃渲染器，落回完整重启
+                                // 进程已死或管道断裂：先收掉旧实例，落回完整重启
                                 log::warn!(
                                     "screen {} mpv reuse failed ({e}), relaunching",
                                     self.screen
                                 );
+                                p.shutdown().await;
                                 self.render = None;
                             }
                         }

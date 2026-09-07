@@ -40,7 +40,7 @@ const Page = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    return <div className="h-screen space-y-6">
+    return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] space-y-6">
         <div className="space-y-2">
             <h1 className="text-2xl font-semibold">{dictionary['settings'].appearance_settings}</h1>
         </div>

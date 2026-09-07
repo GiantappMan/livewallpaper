@@ -3,7 +3,7 @@ import { SidebarNav } from "./sidebar-nav";
 
 export default function SettingsLayout() {
   return (
-    <div className="grid h-screen min-h-screen w-full overflow-hidden grid-cols-[280px_1fr]">
+    <div className="grid h-[calc(100vh_-_var(--app-titlebar-h))] w-full overflow-hidden grid-cols-[280px_1fr]">
       <div className="border-r">
         <SidebarNav />
       </div>

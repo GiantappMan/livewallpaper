@@ -189,7 +189,7 @@ const LocalPage = () => {
   }
 
   if (!mounted || refreshing || !wallpapers)
-    return <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
+    return <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[calc(100vh_-_var(--app-titlebar-h))] pb-20 h-ful">
       {
         Array.from({ length: 12 }).map((_, i) => {
           return <div className="flex flex-col space-y-3" key={i}>
@@ -207,7 +207,7 @@ const LocalPage = () => {
     onDragEnter={handleDragEnter}
     onDragLeave={handleDragLeave}
     onDragOver={handleDragOver}>
-    <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
+    <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[calc(100vh_-_var(--app-titlebar-h))] pb-20 h-ful">
       {
         wallpapers.map((wallpaper, index) => {
           if (!wallpaper?.fileUrl)
@@ -447,7 +447,7 @@ const LocalPage = () => {
     </div >
     {
       mounted && !refreshing && (!wallpapers || wallpapers.length === 0) &&
-      <div className="flex items-center justify-center min-h-screen -mt-20">
+      <div className="flex items-center justify-center min-h-[calc(100vh_-_var(--app-titlebar-h))] -mt-20">
         <div className="flex flex-col items-center justify-center">
           <h2 className="text-xl font-semibold mb-2">{dictionary["local"].no_wallpaper_found}</h2>
           <p className="text-gray-500 mb-4">{dictionary["local"].you_can_create_wallpaper}</p>

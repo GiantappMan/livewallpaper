@@ -106,6 +106,8 @@ fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::
             .min_inner_size(800.0, 482.0)
             .center()
             .visible(false)
+            // 去掉系统标题栏，由前端自绘（见 components/title-bar.tsx）
+            .decorations(false)
             .initialization_script(HUB_COMPAT_SCRIPT)
             .build()?;
     }

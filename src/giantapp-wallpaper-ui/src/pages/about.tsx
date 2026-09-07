@@ -38,7 +38,7 @@ const AboutPage = () => {
         });
     }, [version]);
 
-    return <div className="h-screen flex flex-col items-start space-y-6 m-6">
+    return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] flex flex-col items-start space-y-6 m-6">
         <h1 className="text-2xl">{dictionary['about'].product_name.replace("{0}", version)} </h1>
         <div className="flex flex-col space-y-2">
             <h1 className="text-2xl font-semibold mt-4">

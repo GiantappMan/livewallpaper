@@ -121,7 +121,7 @@ export default function Page() {
     }
 
     return (
-        <div className="h-screen space-y-6">
+        <div className="h-[calc(100vh_-_var(--app-titlebar-h))] space-y-6">
             <div className="space-y-2">
                 <h1 className="text-2xl font-semibold">{dictionary['settings'].wallpaper_settings}</h1>
             </div>

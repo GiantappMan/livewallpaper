@@ -4,6 +4,8 @@
  
 @layer base {
   :root {
+    /* 自绘标题栏高度，页面内视口高度需扣除（见各页面的 calc(100vh_-_var(--app-titlebar-h))） */
+    --app-titlebar-h: 3rem;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 

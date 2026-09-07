@@ -17,7 +17,7 @@ export default function NavMenuItem(props: Props) {
       href={props.href}
       className={cn([
         props.current ? "bg-secondary" : "text-muted-foreground hover:bg-accent hover:text-primary",
-        "relative group w-full p-2 rounded-md flex flex-col items-center text-xs font-medium",
+        "relative group w-full px-2 py-2.5 rounded-md flex flex-col items-center text-xs font-medium",
       ])}
       aria-current={props.current ? "page" : undefined}
     >
