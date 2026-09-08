@@ -172,18 +172,16 @@ fn build_hub_popup(
             .title("巨应壁纸")
             .inner_size(1100.0, 780.0)
             .min_inner_size(700.0, 500.0)
-            .visible(false)
+            // 立即显示：深色底 + 外壳页加载动画先出现，远程详情页在窗口内继续加载。
+            // 之前 visible(false) + 页面 Finished 才 show，会等远程 iframe 整页
+            // 加载完（HTML/JS/图片全下完）才弹窗，点击后体感数秒无响应。
+            .visible(true)
+            .background_color(tauri::utils::config::Color(20, 20, 20, 255))
             .window_features(features)
             .initialization_script(HUB_COMPAT_SCRIPT)
             .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
             .on_document_title_changed(|window, title| {
                 let _ = window.set_title(&title);
-            })
-            .on_page_load(|window, payload| {
-                if payload.event() == tauri::webview::PageLoadEvent::Finished {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
             });
 
     if has_position {

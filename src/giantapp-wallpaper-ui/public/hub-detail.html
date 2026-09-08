@@ -23,9 +23,33 @@
         border: 0;
         background: #141414;
       }
+      /* 远程详情页装载期间的加载动画，iframe 就绪后移除 */
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #141414;
+      }
+      #boot .ring {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(255, 255, 255, 0.14);
+        border-top-color: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        animation: boot-spin 0.8s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
+    <div id="boot"><div class="ring"></div></div>
     <script>
       (function () {
         // 与 src-tauri/src/lib.rs HUB_ORIGINS 保持一致
@@ -44,10 +68,21 @@
         try {
           url = new URL(raw);
         } catch (e) {}
-        if (!url || ALLOWED_ORIGINS.indexOf(url.origin) < 0) return;
+        var boot = document.getElementById("boot");
+        if (!url || ALLOWED_ORIGINS.indexOf(url.origin) < 0) {
+          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+          return;
+        }
 
         var iframe = document.createElement("iframe");
         iframe.allow = "fullscreen; autoplay";
+        // 装载完成（或失败出现错误页）后撤掉动画；兜底 15s 强制移除防卡死
+        iframe.addEventListener("load", function () {
+          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+        });
+        setTimeout(function () {
+          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+        }, 15000);
         iframe.src = url.href;
         document.body.appendChild(iframe);
 
