@@ -428,6 +428,29 @@ class API {
   isRunningInClient(): boolean {
     return typeof window !== "undefined" && !!window.__TAURI_INTERNALS__;
   }
+
+  /** 在独立顶层窗口打开社区页：用于账号登录（授权页拒绝 iframe 嵌套，
+   *  顶层窗口里完成的登录会话 Cookie 才能落入应用的 WebView2 Cookie 罐） */
+  async openCommunityWindow(url: string): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) {
+        window.open(url, "_blank");
+        return { error: null, data: null };
+      }
+      await invoke("open_community_window", { url });
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 登录窗口完成 OAuth 回调后广播，收到后应重载社区页 iframe 以携带新会话 */
+  onHubSessionChanged(callback: () => void) {
+    listen("hub-session-changed", callback).then((un) =>
+      this.unlisteners.push(un)
+    );
+  }
 }
 
 const api = new API();

@@ -765,3 +765,28 @@ pub fn exit_app(app: AppHandle) -> Result<()> {
     crate::tray::quit(app);
     Ok(())
 }
+
+// ---------- 社区登录 ----------
+
+/// 在独立顶层窗口打开社区页：用于账号登录等依赖第一方 Cookie 的场景
+/// （hub iframe 是跨站上下文，授权页拒绝被嵌套，会话 Cookie 也受第三方限制）。
+/// 已有社区/登录窗口时直接聚焦。
+#[tauri::command]
+pub fn open_community_window(app: AppHandle, url: String) -> Result<()> {
+    use crate::{build_oauth_window, is_hub_origin, next_hub_window_seq};
+
+    if let Some((_, win)) = app
+        .webview_windows()
+        .into_iter()
+        .find(|(label, _)| label.starts_with("oauth-"))
+    {
+        let _ = win.set_focus();
+        return Ok(());
+    }
+    let parsed = tauri::Url::parse(&url).map_err(|e| e.to_string())?;
+    if !is_hub_origin(&parsed) {
+        return Err("origin not allowed".to_string());
+    }
+    let label = format!("oauth-{}", next_hub_window_seq());
+    build_oauth_window(&app, &label, parsed).map_err(|e| e.to_string())
+}

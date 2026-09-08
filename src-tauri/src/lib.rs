@@ -11,7 +11,7 @@ mod urls;
 
 use parking_lot::Mutex;
 use state::AppState;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use tauri::Manager;
 use wallpaper_core::{AppDirs, ConfigStore, DownloadManager, WallpaperApi};
@@ -31,6 +31,10 @@ const HUB_ORIGINS: &[&str] = &[
 ];
 
 static HUB_WINDOW_SEQ: AtomicU32 = AtomicU32::new(1);
+
+pub(crate) fn next_hub_window_seq() -> u32 {
+    HUB_WINDOW_SEQ.fetch_add(1, Ordering::Relaxed)
+}
 
 pub fn run() {
     let dirs = AppDirs::resolve();
@@ -95,6 +99,7 @@ pub fn run() {
             commands::show_shell,
             commands::hide_loading,
             commands::set_window_state,
+            commands::open_community_window,
             commands::exit_app,
         ])
         .build(tauri::generate_context!())
@@ -110,8 +115,18 @@ fn extract_deep_link(args: &[String]) -> Option<String> {
         .map(|a| a.trim_start_matches(&format!("{DEEP_LINK_SCHEME}://")).to_string())
 }
 
-fn is_hub_origin(url: &tauri::Url) -> bool {
+pub(crate) fn is_hub_origin(url: &tauri::Url) -> bool {
     HUB_ORIGINS.contains(&url.origin().ascii_serialization().as_str())
+}
+
+/// OAuth 授权页地址（GitHub / 微信扫码）。只匹配路径避免误伤普通分享链接。
+fn is_oauth_url(url: &tauri::Url) -> bool {
+    let (host, path) = (url.host_str().unwrap_or(""), url.path());
+    match host {
+        "github.com" => path.starts_with("/login") || path.starts_with("/sso") || path.starts_with("/session"),
+        "open.weixin.qq.com" => path.starts_with("/connect"),
+        _ => false,
+    }
 }
 
 /// 新窗口请求入口（社区页“打开”即 target=_blank / window.open）。
@@ -122,15 +137,25 @@ fn handle_new_window_request(
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::webview::NewWindowResponse<tauri::Wry> {
     if is_hub_origin(&url) {
-        let n = HUB_WINDOW_SEQ.fetch_add(1, Ordering::Relaxed);
-        let label = format!("hub-detail-{n}");
-        match build_hub_popup(app, &label, n, url, features) {
+        let label = format!("hub-detail-{}", next_hub_window_seq());
+        match build_hub_popup(app, &label, url, features) {
             Ok(_) => {}
             Err(e) => log::warn!("create hub detail window failed: {e}"),
         }
         // 无论创建成功与否都拒绝 WebView2 的默认新窗口流程：
         // Create/SetNewWindow 会让 WebView2 用目标 URL 导航我们创建的外壳页，
         // 外壳（本地 frame 的中继接收器）必须存活才能代远程页执行桥调用。
+        return tauri::webview::NewWindowResponse::Deny;
+    }
+
+    // GitHub / 微信授权页：改用应用内顶层窗口承载。授权页禁止被 iframe 嵌套，
+    // 转系统浏览器又会把登录会话留在浏览器的 Cookie 罐里；顶层窗口里完成的
+    // 登录会话以第一方身份写入应用共享的 WebView2 Cookie 罐，社区页可直接复用。
+    if is_oauth_url(&url) {
+        let label = format!("oauth-{}", next_hub_window_seq());
+        if let Err(e) = build_oauth_window(app, &label, url) {
+            log::warn!("create oauth window failed: {e}");
+        }
         return tauri::webview::NewWindowResponse::Deny;
     }
 
@@ -151,7 +176,6 @@ fn handle_new_window_request(
 fn build_hub_popup(
     app: &tauri::AppHandle,
     label: &str,
-    seq: u32,
     url: tauri::Url,
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
@@ -164,7 +188,7 @@ fn build_hub_popup(
     // 唯一 query 破缓存，确保外壳页始终为最新
     let shell = format!(
         "hub-detail.html?w={}#{}",
-        seq,
+        label,
         utf8_percent_encode(url.as_str(), NON_ALPHANUMERIC)
     );
     let builder =
@@ -189,6 +213,53 @@ fn build_hub_popup(
     } else {
         builder.center().build()
     }
+}
+
+/// OAuth 登录窗口：顶层直接加载授权页（GitHub/微信），顶层导航不受
+/// X-Frame-Options 限制，登录产生的会话 Cookie 以第一方身份写入应用
+/// 共享的 WebView2 Cookie 罐。跳去授权域后又回到社区域名视为登录完成：
+/// 自动关窗并广播 hub-session-changed，主窗口收到后重载社区页 iframe。
+pub(crate) fn build_oauth_window(
+    app: &tauri::AppHandle,
+    label: &str,
+    url: tauri::Url,
+) -> tauri::Result<()> {
+    // 是否已离开过社区域名（= 走过一次外部授权页）。用于支持直接从社区域名
+    // 打开的登录窗口：只有在“离开→回来”后关窗，避免刚打开就被误关。
+    let went_external = Arc::new(AtomicBool::new(false));
+    let flag = went_external.clone();
+
+    tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::External(url))
+        .title("账号登录")
+        .inner_size(1024.0, 720.0)
+        .min_inner_size(420.0, 480.0)
+        .center()
+        .visible(true)
+        .background_color(tauri::utils::config::Color(20, 20, 20, 255))
+        .on_page_load(move |window, payload| {
+            if payload.event() != tauri::webview::PageLoadEvent::Finished {
+                return;
+            }
+            let on_hub = window.url().map(|u| is_hub_origin(&u)).unwrap_or(false);
+            if !on_hub {
+                flag.store(true, Ordering::Relaxed);
+                return;
+            }
+            if !flag.swap(false, Ordering::Relaxed) {
+                return;
+            }
+            let app = window.app_handle().clone();
+            let win = window.clone();
+            std::thread::spawn(move || {
+                // 留给回调页写 Cookie / 收尾跳转一点时间
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                let _ = win.close();
+                use tauri::Emitter;
+                let _ = app.emit("hub-session-changed", ());
+            });
+        })
+        .build()?;
+    Ok(())
 }
 
 fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::Error>> {
