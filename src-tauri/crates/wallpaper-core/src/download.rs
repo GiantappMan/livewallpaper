@@ -81,6 +81,9 @@ impl DownloadManager {
             emit,
             client: reqwest::Client::builder()
                 .user_agent("GiantappWallpaper/4")
+                // 无超时的连接一旦僵死，任务会永远停在"下载中"
+                .connect_timeout(Duration::from_secs(15))
+                .read_timeout(Duration::from_secs(30))
                 .build()
                 .unwrap_or_default(),
             history_path,
@@ -107,7 +110,23 @@ impl DownloadManager {
             }),
             cancel: AtomicBool::new(false),
         });
-        self.items.lock().await.insert(id.to_string(), state.clone());
+        // 同 id 去重：任务仍在进行中则忽略重复提交（社区页弹窗/速览可能对同一
+        // 壁纸各点一次下载），否则两个任务共写同一 .part，并互相覆盖/清理状态
+        {
+            let mut items = self.items.lock().await;
+            let duplicated = match items.get(id) {
+                Some(existing) => {
+                    let info = existing.info.lock().await;
+                    info.is_downloading && !info.is_download_completed && !info.is_canceled
+                }
+                None => false,
+            };
+            if duplicated {
+                log::info!("download {id} already in progress, ignore duplicate submit");
+                return;
+            }
+            items.insert(id.to_string(), state.clone());
+        }
         self.notify().await;
 
         let items = self.items.clone();
@@ -156,7 +175,11 @@ impl DownloadManager {
                     }
                     Err(e) => {
                         log::error!("download {id} failed: {e}");
-                        let _ = std::fs::remove_file(&media_dest);
+                        // 失败也是终态：社区页轮询只在 isDownloadCompleted 或
+                        // IsCanceled 时结束，缺了会永远停在"下载中"。
+                        // 只清 .part 残留，不动可能已存在的成品文件。
+                        info.is_canceled = true;
+                        let _ = std::fs::remove_file(media_dest.with_extension("part"));
                     }
                 }
             }
@@ -180,9 +203,19 @@ impl DownloadManager {
                 );
             }
 
-            // 保留最终状态 30s 供 UI 查询，然后清理
+            // 保留最终状态 30s 供 UI 查询，然后清理。
+            // 仅当 map 中仍是本任务时才移除：期间可能有同 id 的新任务接管条目
             tokio::time::sleep(Duration::from_secs(30)).await;
-            items.lock().await.remove(&id);
+            {
+                let mut items_map = items.lock().await;
+                if items_map
+                    .get(&id)
+                    .map(|s| Arc::ptr_eq(s, &job.state))
+                    .unwrap_or(false)
+                {
+                    items_map.remove(&id);
+                }
+            }
             job.notify().await;
         });
     }
