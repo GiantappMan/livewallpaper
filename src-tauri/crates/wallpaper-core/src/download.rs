@@ -154,7 +154,11 @@ impl DownloadManager {
                 let permit = semaphore.acquire_owned().await?;
                 let _permit = permit;
 
-                let mut progress = JobProgress::default();
+                // 分母默认可信（响应带 Content-Length），任一文件缺失时再降级
+                let mut progress = JobProgress {
+                    total_known: true,
+                    ..Default::default()
+                };
                 // 先下媒体再下封面：大文件的进度连续走完，小封面只补最后一段，
                 // 整体进度条单调递增，不会出现"进度跑两次"
                 job.download_file(&media_url, &media_dest, &mut progress).await?;
