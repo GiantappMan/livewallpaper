@@ -122,11 +122,15 @@ fn handle_new_window_request(
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::webview::NewWindowResponse<tauri::Wry> {
     if is_hub_origin(&url) {
-        let label = format!("hub-detail-{}", HUB_WINDOW_SEQ.fetch_add(1, Ordering::Relaxed));
-        match build_hub_popup(app, label, url, features) {
-            Ok(window) => return tauri::webview::NewWindowResponse::Create { window },
+        let n = HUB_WINDOW_SEQ.fetch_add(1, Ordering::Relaxed);
+        let label = format!("hub-detail-{n}");
+        match build_hub_popup(app, &label, n, url, features) {
+            Ok(_) => {}
             Err(e) => log::warn!("create hub detail window failed: {e}"),
         }
+        // 无论创建成功与否都拒绝 WebView2 的默认新窗口流程：
+        // Create/SetNewWindow 会让 WebView2 用目标 URL 导航我们创建的外壳页，
+        // 外壳（本地 frame 的中继接收器）必须存活才能代远程页执行桥调用。
         return tauri::webview::NewWindowResponse::Deny;
     }
 
@@ -141,20 +145,30 @@ fn handle_new_window_request(
     tauri::webview::NewWindowResponse::Deny
 }
 
-/// 社区壁纸详情弹窗：注入 Hub 兼容层，加载完成后才显示（避免白屏闪烁）。
+/// 社区壁纸详情弹窗：加载本地外壳页 hub-detail.html 承载远程详情页。
+/// 远程 origin 无权直接 invoke 应用命令（ACL），外壳页的接收器负责
+/// 执行 hub_compat 中继过来的桥调用（与主窗口 hub iframe 同一机制）。
 fn build_hub_popup(
     app: &tauri::AppHandle,
-    label: String,
+    label: &str,
+    seq: u32,
     url: tauri::Url,
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
+    use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
     use tauri::WebviewUrl;
 
     let handle = app.clone();
     // 请求未带位置时居中显示（center 标志在构建时总会覆盖显式位置，故互斥处理）
     let has_position = features.position().is_some();
+    // 唯一 query 破缓存，确保外壳页始终为最新
+    let shell = format!(
+        "hub-detail.html?w={}#{}",
+        seq,
+        utf8_percent_encode(url.as_str(), NON_ALPHANUMERIC)
+    );
     let builder =
-        tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(url))
+        tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::App(shell.into()))
             .title("巨应壁纸")
             .inner_size(1100.0, 780.0)
             .min_inner_size(700.0, 500.0)

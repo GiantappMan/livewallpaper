@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "local-windows",
-  "description": "本地窗口权限（主窗口 / 启动屏 / 播放器 / Web 壁纸）",
-  "windows": ["main", "splashscreen", "player-*", "web-*"],
+  "description": "本地窗口权限（主窗口 / 启动屏 / 播放器 / Web 壁纸 / 详情弹窗外壳）",
+  "windows": ["main", "splashscreen", "player-*", "web-*", "hub-detail-*"],
   "permissions": [
     "core:default",
     "core:event:default",

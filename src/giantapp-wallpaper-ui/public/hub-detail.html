@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>巨应壁纸</title>
+    <style>
+      /* 详情弹窗外壳：本地页承载远程详情页 iframe。
+         远程 origin 无权 invoke 应用命令（ACL），桥调用经 hub_compat.js
+         中继到本页（本地 frame），再由本页接收器执行。 */
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #141414;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #141414;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      (function () {
+        // 与 src-tauri/src/lib.rs HUB_ORIGINS 保持一致
+        var ALLOWED_ORIGINS = [
+          "https://wallpaper.giantapp.cn",
+          "https://www.giantapp.cc",
+          "https://livewallpaper.giantapp.cn",
+          "http://localhost:3000",
+          "http://localhost:3001",
+        ];
+        var raw = "";
+        try {
+          raw = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+        } catch (e) {}
+        var url = null;
+        try {
+          url = new URL(raw);
+        } catch (e) {}
+        if (!url || ALLOWED_ORIGINS.indexOf(url.origin) < 0) return;
+
+        var iframe = document.createElement("iframe");
+        iframe.allow = "fullscreen; autoplay";
+        iframe.src = url.href;
+        document.body.appendChild(iframe);
+
+        // 远程页标题（hub_compat 转发）→ 窗口标题
+        window.addEventListener("message", function (e) {
+          if (e.data && e.data.__wpRelay === 4 && e.data.title) {
+            document.title = e.data.title;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -253,6 +253,24 @@
     if (!installed) {
       log?.('WP compat: failed to install hostObjects shim');
     }
+
+    // 把页面标题转发给父窗口（详情弹窗外壳用它同步窗口标题）
+    if (window.parent !== window) {
+      var postTitle = function () {
+        try {
+          window.parent.postMessage({ __wpRelay: 4, title: document.title }, '*');
+        } catch (err) {}
+      };
+      window.addEventListener('load', postTitle);
+      // SPA 会替换/修改 <title>，监听 head 变化持续同步
+      if (window.MutationObserver && document.head) {
+        new MutationObserver(postTitle).observe(document.head, {
+          subtree: true,
+          childList: true,
+          characterData: true,
+        });
+      }
+    }
   }
 
   function log_noop() {}
