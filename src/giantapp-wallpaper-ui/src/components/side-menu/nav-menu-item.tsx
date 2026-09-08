@@ -19,15 +19,15 @@ export default function NavMenuItem(props: Props) {
       href={props.href}
       className={cn([
         props.current ? "bg-secondary" : "text-muted-foreground hover:bg-accent hover:text-primary",
-        "relative group w-full px-2 py-2.5 rounded-md flex flex-col items-center text-xs font-medium",
+        "relative group w-full px-2 py-[clamp(5px,1vh,7px)] rounded-md flex flex-col items-center text-xs font-medium",
       ])}
       aria-current={props.current ? "page" : undefined}
     >
       <div
         className={[
-          "transition-al duration-300",
+          "transition-all duration-300",
           props.current ? "opacity-1" : "opacity-0",
-          "w-1 my-4 bg-primary absolute left-0 inset-y-0",
+          "w-[3px] h-[clamp(18px,3.4vh,23px)] bg-primary absolute left-0 top-1/2 -translate-y-1/2 rounded-full",
         ].join(" ")}
       >
         {/* 左边条 */}
@@ -36,16 +36,16 @@ export default function NavMenuItem(props: Props) {
         {/* 未选中 */}
         <props.icon
           className={[
-            "h-7 w-7 transition-all duration-300 absolute ",
-            props.current ? "translate-y-2 opacity-0" : "opacity-100",
+            "h-[clamp(22px,4.1vh,28px)] w-[clamp(22px,4.1vh,28px)] transition-all duration-300 absolute ",
+            props.current ? "translate-y-[clamp(4px,1vh,7px)] opacity-0" : "opacity-100",
           ].join(" ")}
           aria-hidden="true"
         />
         {/* 选中 */}
         <props.icon
           className={[
-            "h-7 w-7 transition-all duration-300 text-primary",
-            props.current ? "translate-y-2 opacity-100 " : "opacity-0",
+            "h-[clamp(22px,4.1vh,28px)] w-[clamp(22px,4.1vh,28px)] transition-all duration-300 text-primary",
+            props.current ? "translate-y-[clamp(4px,1vh,7px)] opacity-100 " : "opacity-0",
           ].join(" ")}
           aria-hidden="true"
         />
@@ -60,8 +60,8 @@ export default function NavMenuItem(props: Props) {
       </div>
       <span
         className={[
-          "transition-all duration-300 whitespace-nowrap text-[11px]",
-          props.current ? "translate-y-2 opacity-0" : "opacity-100",
+          "transition-all duration-300 whitespace-nowrap text-[clamp(10px,1.75vh,12px)]",
+          props.current ? "translate-y-[clamp(4px,1vh,7px)] opacity-0" : "opacity-100",
         ].join(" ")}
       >
         {props.name}

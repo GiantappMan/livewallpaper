@@ -92,9 +92,11 @@ export default function SideMenu() {
 
     return (
         <>
-            <div className="flex w-[68px] overflow-y-auto overflow-x-clip">
+            {/* 侧边栏随窗口高度整体缩放：尺寸基准对齐 Windows Store 侧边栏实测值
+                （默认 680px 高时：栏宽 76 / 条目 64x58 / 图标笔画 21 / 文字 12） */}
+            <div className="flex w-[clamp(60px,11.2vh,76px)] overflow-y-auto overflow-x-clip">
                 <div className="flex flex-1 w-full flex-col items-center">
-                    <div className="w-full flex-1 space-y-1 px-1">
+                    <div className="w-full flex-1 space-y-[clamp(2px,0.45vh,3px)] px-1.5">
                         {sidebarTopNavigation.map((item) => (
                             <NavMenuItem
                                 key={item.name}
@@ -107,7 +109,7 @@ export default function SideMenu() {
                             />
                         ))}
                     </div>
-                    <div className="w-full px-1 mb-1 space-y-1">
+                    <div className="w-full px-1.5 mb-[clamp(2px,0.45vh,3px)] space-y-[clamp(2px,0.45vh,3px)]">
                         {sidebarBottomNavigation.map((item) => (
                             <NavMenuItem
                                 key={item.name}
