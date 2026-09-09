@@ -788,5 +788,7 @@ pub fn open_community_window(app: AppHandle, url: String) -> Result<()> {
         return Err("origin not allowed".to_string());
     }
     let label = format!("oauth-{}", next_hub_window_seq());
-    build_oauth_window(&app, &label, parsed).map_err(|e| e.to_string())
+    build_oauth_window(&app, &label, parsed)
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
