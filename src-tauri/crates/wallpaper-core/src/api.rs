@@ -6,6 +6,8 @@ use crate::dirs::AppDirs;
 use crate::host::EngineHost;
 use crate::manager::{ScreenManager, ScreenSnapshot};
 use crate::models::{ApiSettings, Screen, TimePos, Wallpaper};
+use crate::mpv::MpvFactory;
+use crate::player::PlayerRegistry;
 use crate::system::screens as sys_screens;
 
 use std::sync::{Arc, Weak};
@@ -22,6 +24,8 @@ struct SnapshotFile {
 pub struct WallpaperApi {
     pub host: Arc<dyn EngineHost>,
     pub dirs: AppDirs,
+    /// 全部视频播放器工厂（引擎自带 mpv + 宿主注入的自定义播放器）。
+    pub players: Arc<PlayerRegistry>,
     managers: tokio::sync::Mutex<Vec<ScreenManager>>,
     pub settings: StdMutexLike<ApiSettings>,
     on_change: StdMutexLike<Option<Box<dyn Fn() + Send + Sync>>>,
@@ -30,11 +34,19 @@ pub struct WallpaperApi {
 }
 
 impl WallpaperApi {
-    /// 初始化引擎：枚举屏幕、建管理器、启动 tick。不恢复快照（restore 单独调）。
+    /// 初始化引擎：枚举屏幕、组装播放器工厂、建管理器、启动 tick。
+    /// 不恢复快照（restore 单独调）。
     pub async fn init(host: Arc<dyn EngineHost>, dirs: AppDirs) -> Arc<Self> {
+        // 播放器工厂：引擎自带 mpv 在前（兜底优先），宿主注入的自定义播放器在后
+        let mut factories = Vec::new();
+        factories.push(Arc::new(MpvFactory::new(host.clone(), dirs.clone())) as _);
+        factories.extend(host.player_factories());
+        let players = Arc::new(PlayerRegistry::new(factories));
+
         let api = Arc::new(Self {
-            host,
+            host: host.clone(),
             dirs,
+            players: players.clone(),
             managers: tokio::sync::Mutex::new(Vec::new()),
             settings: StdMutexLike::new(ApiSettings::default()),
             on_change: StdMutexLike::new(None),
@@ -102,7 +114,11 @@ impl WallpaperApi {
         managers.retain(|m| m.screen < count);
         for i in 0..count {
             if !managers.iter().any(|m| m.screen == i) {
-                managers.push(ScreenManager::new(i, self.host.clone(), self.dirs.clone()));
+                managers.push(ScreenManager::new(
+                    i,
+                    self.host.clone(),
+                    self.players.clone(),
+                ));
             }
         }
         managers.sort_by_key(|m| m.screen);
@@ -289,13 +305,17 @@ impl WallpaperApi {
         let parsed: Option<SnapshotFile> =
             file.and_then(|text| serde_json::from_str(&text).ok());
 
-        let entries: Vec<ScreenSnapshot> = match parsed {
+        let mut entries: Vec<ScreenSnapshot> = match parsed {
             Some(f) => {
                 *self.settings.lock() = f.api_settings;
                 f.wallpapers
             }
             None => legacy,
         };
+        // v4.0 早期快照只有 mpv 专字段，迁移为通用 players 列表
+        for entry in entries.iter_mut() {
+            entry.migrate_legacy();
+        }
 
         let settings = self.settings.lock().clone();
         let mut managers = self.managers.lock().await;
@@ -325,8 +345,9 @@ impl WallpaperApi {
                 if let Some(wallpaper) = wallpaper {
                     out.push(ScreenSnapshot {
                         wallpaper,
-                        mpv: None,
+                        players: Vec::new(),
                         img_restore: None,
+                        mpv: None,
                     });
                 }
             }

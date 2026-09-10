@@ -1,28 +1,15 @@
-//! 应用层（Tauri）注入到引擎的能力：内嵌播放器窗口、web 壁纸窗口、资源路径。
+//! 应用层（Tauri）注入到引擎的能力：web 壁纸窗口、资源路径、自定义播放器工厂。
 //! 引擎核心保持 UI 框架无关，方便测试与复用。
+//!
+//! 视频播放器的控制不在本 trait——统一走 [`crate::player::PlayerFactory`] /
+//! [`crate::player::PlayerEngine`]；宿主可通过 [`EngineHost::player_factories`]
+//! 注入自己的播放器（内嵌 WebView 播放器就是这么接入的）。
 
-use crate::models::TimePos;
+use crate::player::PlayerFactory;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub trait EngineHost: Send + Sync {
-    // ---- 内嵌播放器窗口（视频/动图，每屏一个）----
-
-    /// 加载并显示。窗口不存在时会自动创建。
-    fn player_load(
-        &self,
-        screen: u32,
-        media_url: &str,
-        volume: u32,
-        panscan: bool,
-    ) -> Result<(), String>;
-    fn player_set_paused(&self, screen: u32, paused: bool) -> Result<(), String>;
-    fn player_set_volume(&self, screen: u32, volume: u32) -> Result<(), String>;
-    /// 按百分比跳转（0-100）。
-    fn player_seek_percent(&self, screen: u32, percent: f64) -> Result<(), String>;
-    fn player_time(&self, screen: u32) -> Option<TimePos>;
-    fn player_is_alive(&self, screen: u32) -> bool;
-    fn player_close(&self, screen: u32) -> Result<(), String>;
-
     // ---- web 壁纸窗口（每屏一个）----
 
     fn web_load(&self, screen: u32, url: &str, mouse_enabled: bool) -> Result<(), String>;
@@ -31,35 +18,23 @@ pub trait EngineHost: Send + Sync {
 
     // ---- 资源 ----
 
+    /// 外部 mpv.exe 的路径（空 PathBuf 表示不可用）。
     fn mpv_path(&self) -> PathBuf;
     fn default_cover(&self) -> PathBuf;
+
+    // ---- 播放器工厂 ----
+
+    /// 宿主提供的视频播放器工厂（如内嵌 WebView 播放器）。
+    /// 引擎自身提供的工厂（mpv）之外的自定义播放器都从这里注入。
+    fn player_factories(&self) -> Vec<Arc<dyn PlayerFactory>> {
+        Vec::new()
+    }
 }
 
 /// 无操作宿主（测试用）。
 pub struct NullHost;
 
 impl EngineHost for NullHost {
-    fn player_load(&self, _s: u32, _u: &str, _v: u32, _p: bool) -> Result<(), String> {
-        Err("no host".into())
-    }
-    fn player_set_paused(&self, _s: u32, _p: bool) -> Result<(), String> {
-        Ok(())
-    }
-    fn player_set_volume(&self, _s: u32, _v: u32) -> Result<(), String> {
-        Ok(())
-    }
-    fn player_seek_percent(&self, _s: u32, _p: f64) -> Result<(), String> {
-        Ok(())
-    }
-    fn player_time(&self, _s: u32) -> Option<TimePos> {
-        None
-    }
-    fn player_is_alive(&self, _s: u32) -> bool {
-        false
-    }
-    fn player_close(&self, _s: u32) -> Result<(), String> {
-        Ok(())
-    }
     fn web_load(&self, _s: u32, _u: &str, _m: bool) -> Result<(), String> {
         Err("no host".into())
     }

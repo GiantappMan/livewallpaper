@@ -1497,6 +1497,7 @@ name = "giantapp-wallpaper"
 version = "4.0.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64 0.22.1",
  "chrono",
  "futures-util",
@@ -4823,6 +4824,7 @@ name = "wallpaper-core"
 version = "4.0.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64 0.22.1",
  "chrono",
  "dirs",

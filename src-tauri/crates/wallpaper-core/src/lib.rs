@@ -1,5 +1,6 @@
 //! wallpaper-core：巨应壁纸 v4 引擎。
-//! UI 框架无关（不依赖 Tauri），宿主能力通过 [`host::EngineHost`] 注入。
+//! UI 框架无关（不依赖 Tauri），宿主能力通过 [`host::EngineHost`] 注入，
+//! 视频播放器通过 [`player::PlayerFactory`] / [`player::PlayerEngine`] 接入。
 
 pub mod api;
 pub mod config;
@@ -9,6 +10,7 @@ pub mod host;
 pub mod library;
 pub mod manager;
 pub mod models;
+pub mod player;
 pub mod system;
 pub mod window_state;
 
@@ -24,3 +26,6 @@ pub use download::{
 pub use host::{EngineHost, NullHost};
 pub use manager::ScreenSnapshot;
 pub use models::prelude::*;
+pub use player::{
+    MediaSource, PlayerConfig, PlayerEngine, PlayerFactory, PlayerRegistry, PlayerSnapshot,
+};

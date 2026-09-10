@@ -1,20 +1,20 @@
-//! 逐屏管理器：路由壁纸到对应渲染（mpv / 内嵌播放器 / 图片 / web），
+//! 逐屏管理器：路由壁纸到对应渲染（统一视频播放器引擎 / 图片 / web），
 //! 播放列表推进计时、暂停状态机、快照。
+//! 管理器不感知具体视频引擎——一切控制走 [`player::PlayerEngine`]，
+//! 引擎选择走 [`player::PlayerRegistry`]。
 
-use crate::dirs::AppDirs;
 use crate::host::EngineHost;
 use crate::models::{
     ApiSettings, CoveredBehavior, TimePos, VideoPlayer, Wallpaper, WallpaperType,
 };
-use crate::system::{syswallpaper, workerw};
-use crate::mpv::MpvSnapshot;
-use std::path::Path;
+use crate::player::{PlayerEngine, PlayerFactory, PlayerRegistry, PlayerSnapshot};
+use crate::system::syswallpaper;
 use std::sync::Arc;
 use std::time::Instant;
 
 pub(crate) enum Render {
-    Mpv(Arc<crate::mpv::MpvPlayer>),
-    Player,
+    /// 统一视频播放器引擎（mpv / 内嵌 WebView / 自定义播放器…）。
+    Video(Arc<dyn PlayerEngine>),
     Web,
     /// 静态图（系统桌面壁纸；还原信息统一放在 img_restore）。
     Image,
@@ -33,16 +33,40 @@ pub struct ImgRestore {
 #[serde(rename_all = "camelCase")]
 pub struct ScreenSnapshot {
     pub wallpaper: Wallpaper,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub mpv: Option<MpvSnapshot>,
+    /// 各视频引擎的恢复信息（崩溃后供对应工厂接管）。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub players: Vec<PlayerSnapshot>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub img_restore: Option<ImgRestore>,
+    /// v4.0 早期快照的 mpv 专字段；仅用于读取旧文件，序列化时跳过。
+    #[serde(default, skip_serializing)]
+    pub(crate) mpv: Option<serde_json::Value>,
+}
+
+impl ScreenSnapshot {
+    /// 把旧版 `mpv` 专字段迁移为 players 列表（读取旧快照文件后调用一次）。
+    pub fn migrate_legacy(&mut self) {
+        if let Some(mpv) = self.mpv.take() {
+            self.players.push(PlayerSnapshot {
+                kind: crate::mpv::MPV_KIND.into(),
+                data: mpv,
+            });
+        }
+    }
+}
+
+/// 该项按用户设置应使用的视频引擎。
+fn requested_engine(item: &Wallpaper, settings: &ApiSettings) -> VideoPlayer {
+    match item.setting.video_player {
+        VideoPlayer::DefaultPlayer => settings.default_video_player,
+        other => other,
+    }
 }
 
 pub(crate) struct ScreenManager {
     pub screen: u32,
     host: Arc<dyn EngineHost>,
-    dirs: AppDirs,
+    players: Arc<PlayerRegistry>,
     /// 顶层壁纸（可能是播放列表）。
     pub wallpaper: Option<Wallpaper>,
     /// 实际渲染的项（播放列表成员或自身）。
@@ -62,11 +86,15 @@ pub(crate) struct ScreenManager {
 }
 
 impl ScreenManager {
-    pub fn new(screen: u32, host: Arc<dyn EngineHost>, dirs: AppDirs) -> Self {
+    pub fn new(
+        screen: u32,
+        host: Arc<dyn EngineHost>,
+        players: Arc<PlayerRegistry>,
+    ) -> Self {
         Self {
             screen,
             host,
-            dirs,
+            players,
             wallpaper: None,
             item: None,
             render: None,
@@ -100,14 +128,27 @@ impl ScreenManager {
         };
         let item = wallpaper.current_item().clone();
 
+        // 视频项：解析目标引擎工厂（用户设置 -> 可用性兜底）
+        let video_factory = match item.meta.wallpaper_type {
+            WallpaperType::Video | WallpaperType::AnimatedImg => Some(
+                self.players
+                    .resolve(requested_engine(&item, settings))
+                    .ok_or_else(|| "无可用视频播放引擎".to_string())?,
+            ),
+            _ => None,
+        };
+
         // 取出旧渲染（新渲染就位后再按类型清理，避免切换闪屏）
         let old_render = self.render.take();
 
-        // 视频引擎无缝切换：同屏已有 mpv 进程且新项同为 mpv 引擎时，
-        // 直接 loadlist 复用（杀进程重启需要 2s+，loadlist 近乎即时）
-        let reuse_mpv = matches!(item.meta.wallpaper_type, WallpaperType::Video | WallpaperType::AnimatedImg)
-            && matches!(old_render.as_ref(), Some(Render::Mpv(_)))
-            && self.resolves_to_mpv(&item, settings);
+        // 同引擎无缝复用：旧实例仍归属同一工厂时直接换源，
+        // （杀进程重启需要 2s+，换源近乎即时）
+        let reuse_video = matches!(item.meta.wallpaper_type, WallpaperType::Video | WallpaperType::AnimatedImg)
+            && matches!(
+                &old_render,
+                Some(Render::Video(p))
+                    if video_factory.as_ref().is_some_and(|f| f.kind() == p.kind())
+            );
 
         self.item = Some(item.clone());
         self.item_started_at = Some(Instant::now());
@@ -121,13 +162,13 @@ impl ScreenManager {
                 r
             }
             WallpaperType::AnimatedImg | WallpaperType::Video => {
-                if reuse_mpv {
-                    // 复用路径：旧 mpv 放回 render，play_video 内部 loadlist 换源
+                if reuse_video {
+                    // 复用路径：旧实例放回 render，play_video 内部换源
                     self.render = old_render;
                 } else {
                     self.cleanup_render(old_render).await;
                 }
-                self.play_video(&item, settings, reuse_mpv).await
+                self.play_video(&item, settings, video_factory.unwrap()).await
             }
             WallpaperType::Web => {
                 self.cleanup_render(old_render).await;
@@ -173,101 +214,65 @@ impl ScreenManager {
         Ok(())
     }
 
-    /// 该项解析后是否由 mpv 引擎播放。
-    fn resolves_to_mpv(&self, item: &Wallpaper, settings: &ApiSettings) -> bool {
-        let engine = match item.setting.video_player {
-            VideoPlayer::DefaultPlayer => settings.default_video_player,
-            other => other,
-        };
-        engine == VideoPlayer::Mpv && self.host.mpv_path().exists()
-    }
-
     async fn play_video(
         &mut self,
         item: &Wallpaper,
         settings: &ApiSettings,
-        reuse: bool,
+        factory: Arc<dyn PlayerFactory>,
     ) -> Result<(), String> {
         let path = item.file_path.clone().ok_or("缺少文件路径")?;
-        let engine = match item.setting.video_player {
-            VideoPlayer::DefaultPlayer => settings.default_video_player,
-            other => other,
+        let source = crate::player::MediaSource {
+            path,
+            url: item.file_url.clone(),
+        };
+        let config = crate::player::PlayerConfig {
+            screen: self.screen,
+            volume: self.volume_for(settings),
+            panscan: item.setting.is_pan_scan,
+            hardware_decoding: item.setting.hardware_decoding,
         };
         log::info!(
-            "play_video screen {} engine={engine:?} reuse={reuse} mpv_exists={} file={}",
+            "play_video screen {} engine={} reuse_available={} file={}",
             self.screen,
-            self.host.mpv_path().exists(),
-            path.display()
+            factory.kind(),
+            factory.is_available(),
+            source.path.display()
         );
-        let volume = self.volume_for(settings);
 
-        match engine {
-            VideoPlayer::Mpv if self.host.mpv_path().exists() => {
-                // 复用：替换播放列表，进程保持存活（切换近乎即时）
-                if reuse {
-                    if let Some(Render::Mpv(p)) = self.render.as_ref() {
-                        let list = self.dirs.playlist_tmp_file(self.screen);
-                        write_playlist_file(&list, &[&path])?;
-                        match p.loadlist(&list).await {
-                            Ok(()) => {
-                                let _ = p
-                                    .set_panscan(if item.setting.is_pan_scan { 1.0 } else { 0.0 })
-                                    .await;
-                                let _ = p.set_volume(volume).await;
-                                return Ok(());
-                            }
-                            Err(e) => {
-                                // 进程已死或管道断裂：先收掉旧实例，落回完整重启
-                                log::warn!(
-                                    "screen {} mpv reuse failed ({e}), relaunching",
-                                    self.screen
-                                );
-                                p.shutdown().await;
-                                self.render = None;
-                            }
-                        }
+        // 复用：旧实例原地换源（切换近乎即时）
+        if let Some(Render::Video(old)) = self.render.take() {
+            if old.kind() == factory.kind() {
+                match old.load(&source).await {
+                    Ok(()) => {
+                        let _ = old
+                            .set_panscan(if config.panscan { 1.0 } else { 0.0 })
+                            .await;
+                        let _ = old.set_volume(config.volume).await;
+                        self.render = Some(Render::Video(old));
+                        return Ok(());
+                    }
+                    Err(e) => {
+                        // 实例已死或通道断裂：先收掉旧实例，落回完整重启
+                        log::warn!(
+                            "screen {} engine {} reuse failed ({e}), relaunching",
+                            self.screen,
+                            factory.kind()
+                        );
+                        old.shutdown().await;
                     }
                 }
-
-                let list = self.dirs.playlist_tmp_file(self.screen);
-                write_playlist_file(&list, &[&path])?;
-                let player = crate::mpv::MpvPlayer::launch(
-                    &self.host.mpv_path(),
-                    &list,
-                    self.screen,
-                    item.setting.hardware_decoding,
-                    item.setting.is_pan_scan,
-                    volume,
-                )
-                .await
-                .map_err(|e| e.to_string())?;
-
-                // 等待窗口出现并挂到 WorkerW
-                let pid = player.pid().await;
-                let screen = self.screen;
-                let hwnd_raw = tokio::task::spawn_blocking(move || wait_window(pid, screen))
-                    .await
-                    .map_err(|e| e.to_string())?
-                    .map_err(|e| format!("等待 mpv 窗口失败: {e}"))?;
-                let hwnd = hwnd_from_raw(hwnd_raw);
-                if !workerw::send_handle_to_desktop_bottom(hwnd, self.screen) {
-                    let _ = player.shutdown().await;
-                    return Err("挂载到桌面失败（WorkerW 不可用）".into());
-                }
-
-                self.render = Some(Render::Mpv(Arc::new(player)));
-            }
-            _ => {
-                // 内嵌播放器（System 或 mpv 缺失时的兜底）
-                let url = item
-                    .file_url
-                    .clone()
-                    .ok_or("缺少媒体 URL（内嵌播放器需要）")?;
-                self.host
-                    .player_load(self.screen, &url, volume, item.setting.is_pan_scan)?;
-                self.render = Some(Render::Player);
+            } else {
+                old.shutdown().await;
             }
         }
+
+        // 完整启动：创建实例 -> 等待窗口就绪并挂载到桌面 WorkerW
+        let player = factory.create(&source, &config).await.map_err(|e| e.to_string())?;
+        if let Err(e) = player.attach_to_desktop().await {
+            let _ = player.shutdown().await;
+            return Err(format!("挂载到桌面失败: {e}"));
+        }
+        self.render = Some(Render::Video(player));
         Ok(())
     }
 
@@ -362,24 +367,19 @@ impl ScreenManager {
 
     async fn current_media_duration(&self) -> Option<f64> {
         match self.render.as_ref()? {
-            Render::Mpv(p) => {
+            Render::Video(p) => {
                 let (d, _) = p.time_pos().await;
                 (d > 0.0).then_some(d)
             }
-            Render::Player => self
-                .host
-                .player_time(self.screen)
-                .filter(|t| t.duration > 0.0)
-                .map(|t| t.duration),
-            _ => None,
+            Render::Web | Render::Image => None,
         }
     }
 
-    /// 检测 mpv 进程意外退出：自动重启当前壁纸（自愈）。
+    /// 检测播放器实例意外退出：自动重启当前壁纸（自愈）。
     /// 连续失败超限后放弃并清空，避免死亡循环。
     pub async fn reap_dead_render(&mut self) {
         let dead = match self.render.as_ref() {
-            Some(Render::Mpv(p)) => !p.is_alive().await,
+            Some(Render::Video(p)) => !p.is_alive().await,
             _ => false,
         };
         if !dead {
@@ -388,7 +388,7 @@ impl ScreenManager {
         }
         self.death_streak += 1;
         log::warn!(
-            "screen {} mpv died unexpectedly (streak {}), reviving",
+            "screen {} player died unexpectedly (streak {}), reviving",
             self.screen, self.death_streak
         );
         self.render = None;
@@ -397,7 +397,7 @@ impl ScreenManager {
 
         if self.death_streak > 3 || self.wallpaper.is_none() {
             if self.death_streak == 4 {
-                log::error!("screen {} giving up mpv revival", self.screen);
+                log::error!("screen {} giving up player revival", self.screen);
             }
             if self.death_streak > 3 {
                 return;
@@ -417,14 +417,8 @@ impl ScreenManager {
 
     async fn apply_pause(&self, settings: &ApiSettings) {
         let paused = self.should_pause(settings);
-        match self.render.as_ref() {
-            Some(Render::Mpv(p)) => {
-                let _ = p.pause(paused).await;
-            }
-            Some(Render::Player) => {
-                let _ = self.host.player_set_paused(self.screen, paused);
-            }
-            _ => {}
+        if let Some(Render::Video(p)) = self.render.as_ref() {
+            let _ = p.set_paused(paused).await;
         }
     }
 
@@ -483,14 +477,11 @@ impl ScreenManager {
         self.item_duration = None;
     }
 
-    /// 清理旧渲染（mpv 退出 / 内嵌窗口关闭）。图片渲染无资源需要清理，
+    /// 清理旧渲染（引擎实例退出 / web 窗口关闭）。图片渲染无资源需要清理，
     /// 且不做桌面还原——还原只在用户停止/退出时发生，避免切换时闪屏。
     async fn cleanup_render(&self, render: Option<Render>) {
         match render {
-            Some(Render::Mpv(p)) => p.shutdown().await,
-            Some(Render::Player) => {
-                let _ = self.host.player_close(self.screen);
-            }
+            Some(Render::Video(p)) => p.shutdown().await,
             Some(Render::Web) => {
                 let _ = self.host.web_close(self.screen);
             }
@@ -511,14 +502,8 @@ impl ScreenManager {
     pub async fn apply_settings(&mut self, settings: &ApiSettings) {
         self.latest_settings = settings.clone();
         let volume = self.volume_for(settings);
-        match self.render.as_ref() {
-            Some(Render::Mpv(p)) => {
-                let _ = p.set_volume(volume).await;
-            }
-            Some(Render::Player) => {
-                let _ = self.host.player_set_volume(self.screen, volume);
-            }
-            _ => {}
+        if let Some(Render::Video(p)) = self.render.as_ref() {
+            let _ = p.set_volume(volume).await;
         }
         self.apply_pause(settings).await;
     }
@@ -534,11 +519,10 @@ impl ScreenManager {
 
     pub async fn time_pos(&self) -> Option<TimePos> {
         match self.render.as_ref()? {
-            Render::Mpv(p) => {
+            Render::Video(p) => {
                 let (duration, position) = p.time_pos().await;
                 Some(TimePos { duration, position })
             }
-            Render::Player => self.host.player_time(self.screen),
             Render::Image => {
                 // 图片：用已运行时间模拟进度（供播放列表 UI）
                 let (Some(started), Some(duration)) = (self.item_started_at, self.item_duration)
@@ -556,8 +540,7 @@ impl ScreenManager {
 
     pub async fn seek_percent(&self, percent: f64) -> Result<(), String> {
         match self.render.as_ref() {
-            Some(Render::Mpv(p)) => p.seek_percent(percent).await.map_err(|e| e.to_string()),
-            Some(Render::Player) => self.host.player_seek_percent(self.screen, percent),
+            Some(Render::Video(p)) => p.seek_percent(percent).await.map_err(|e| e.to_string()),
             _ => Err("当前壁纸不支持跳转".into()),
         }
     }
@@ -566,22 +549,32 @@ impl ScreenManager {
 
     pub async fn snapshot(&self) -> Option<ScreenSnapshot> {
         let wallpaper = self.wallpaper.clone()?;
-        let mpv = match self.render.as_ref() {
-            Some(Render::Mpv(p)) => p.snapshot().await,
-            _ => None,
+        let players = match self.render.as_ref() {
+            Some(Render::Video(p)) => p
+                .snapshot()
+                .await
+                .map(|data| {
+                    vec![PlayerSnapshot {
+                        kind: p.kind().into(),
+                        data,
+                    }]
+                })
+                .unwrap_or_default(),
+            _ => Vec::new(),
         };
         Some(ScreenSnapshot {
             wallpaper,
-            mpv,
+            players,
             img_restore: self.img_restore.as_ref().map(|r| ImgRestore {
                 monitor_id: r.monitor_id.clone(),
                 path: r.path.clone(),
                 position: r.position as i32,
             }),
+            mpv: None,
         })
     }
 
-    /// 从快照恢复（先尝试接管 mpv，失败则重新启动）。
+    /// 从快照恢复（逐引擎尝试接管仍在运行的实例，全部失败则重新启动）。
     pub async fn restore(
         &mut self,
         snapshot: &ScreenSnapshot,
@@ -596,31 +589,34 @@ impl ScreenManager {
             });
         }
 
-        // mpv 接管
-        if let Some(mpv_snapshot) = &snapshot.mpv {
-            let item = snapshot.wallpaper.current_item().clone();
-            match crate::mpv::MpvPlayer::adopt(mpv_snapshot, self.screen).await {
+        // 播放器接管
+        for ps in &snapshot.players {
+            let Some(factory) = self.players.get(&ps.kind) else {
+                log::warn!("screen {} unknown player engine {}", self.screen, ps.kind);
+                continue;
+            };
+            match factory.restore(&ps.data, self.screen).await {
                 Ok(player) => {
-                    let pid = player.pid().await;
-                    let screen = self.screen;
-                    let hwnd_raw = tokio::task::spawn_blocking(move || wait_window(pid, screen))
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok();
-                    if let Some(hwnd) = hwnd_raw.map(hwnd_from_raw) {
-                        if workerw::send_handle_to_desktop_bottom(hwnd, self.screen) {
-                            self.wallpaper = Some(snapshot.wallpaper.clone());
-                            self.item = Some(item);
-                            self.render = Some(Render::Mpv(Arc::new(player)));
-                            self.apply_pause(settings).await;
-                            self.apply_settings(settings).await;
-                            return Ok(());
-                        }
+                    if player.attach_to_desktop().await.is_ok() {
+                        self.wallpaper = Some(snapshot.wallpaper.clone());
+                        self.item = Some(snapshot.wallpaper.current_item().clone());
+                        self.render = Some(Render::Video(player));
+                        self.apply_pause(settings).await;
+                        self.apply_settings(settings).await;
+                        return Ok(());
                     }
-                    log::warn!("screen {} mpv adopt failed, relaunch", self.screen);
+                    log::warn!(
+                        "screen {} engine {} attach failed after restore",
+                        self.screen,
+                        factory.kind()
+                    );
                     let _ = player.shutdown().await;
                 }
-                Err(e) => log::warn!("screen {} mpv adopt error: {e}", self.screen),
+                Err(e) => log::warn!(
+                    "screen {} engine {} restore error: {e}",
+                    self.screen,
+                    factory.kind()
+                ),
             }
         }
 
@@ -641,33 +637,4 @@ fn num_to_fit(v: i32) -> crate::models::Fit {
         5 => crate::models::Fit::Span,
         _ => crate::models::Fit::Fill,
     }
-}
-
-/// 等待并返回 mpv 的主窗口句柄（最多 ~10s）。返回原始句柄值（HWND 非 Send）。
-fn wait_window(pid: u32, screen: u32) -> Result<isize, String> {
-    let _ = screen;
-    for _ in 0..100 {
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        if let Some(hwnd) = workerw::find_window_by_pid(pid, crate::mpv::MPV_WINDOW_CLASS) {
-            return Ok(hwnd.0 as isize);
-        }
-    }
-    Err("mpv window not found".into())
-}
-
-fn hwnd_from_raw(raw: isize) -> windows::Win32::Foundation::HWND {
-    windows::Win32::Foundation::HWND(raw as *mut _)
-}
-
-/// 写 mpv --playlist 文件。
-fn write_playlist_file(path: &Path, items: &[&Path]) -> Result<(), String> {
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let content: String = items
-        .iter()
-        .map(|p| p.display().to_string())
-        .collect::<Vec<_>>()
-        .join("\n");
-    std::fs::write(path, content).map_err(|e| e.to_string())
 }

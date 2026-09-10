@@ -1,19 +1,26 @@
-//! 内嵌播放器 / Web 壁纸窗口控制器（EngineHost 实现）。
+//! 内嵌 WebView 播放器 / Web 壁纸窗口控制器。
 //! v3 中这是独立的播放器进程；v4 改为应用内 WebView 窗口，SetParent 到
 //! WorkerW 嵌入桌面。零外部进程依赖，天然支持 web 壁纸。
+//!
+//! 内嵌视频播放器通过 [`WebViewPlayerFactory`] / [`WebViewPlayer`] 接入
+//! wallpaper-core 的统一播放器接口（`PlayerFactory` / `PlayerEngine`），
+//! 与 mpv 等外部引擎平级，由屏幕管理器统一调度。
 
 use std::collections::HashMap;
-use tauri::Listener;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Listener, Manager, WebviewUrl, WebviewWindowBuilder};
 use wallpaper_core::host::EngineHost;
-use wallpaper_core::models::TimePos;
+use wallpaper_core::models::{TimePos, VideoPlayer};
+use wallpaper_core::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory};
 use wallpaper_core::system::workerw;
 
 const PLAYER_PREFIX: &str = "player-";
 const WEB_PREFIX: &str = "web-";
+
+/// 内嵌 WebView 播放器的引擎 kind 标识。
+pub const WEBVIEW_KIND: &str = "webview";
 
 #[derive(Default)]
 struct WindowInfo {
@@ -24,6 +31,8 @@ struct WindowInfo {
 pub struct InternalPlayerController {
     app: tauri::AppHandle,
     windows: parking_lot::Mutex<HashMap<String, Arc<WindowInfo>>>,
+    /// 本控制器提供的播放器工厂（构造时初始化，供 EngineHost 返回）。
+    factories: std::sync::OnceLock<Vec<Arc<dyn PlayerFactory>>>,
 }
 
 static INSTANCE: std::sync::OnceLock<Arc<InternalPlayerController>> = std::sync::OnceLock::new();
@@ -33,7 +42,11 @@ impl InternalPlayerController {
         let controller = Arc::new(Self {
             app,
             windows: parking_lot::Mutex::new(HashMap::new()),
+            factories: std::sync::OnceLock::new(),
         });
+        let _ = controller.factories.set(vec![Arc::new(WebViewPlayerFactory {
+            controller: controller.clone(),
+        })]);
         let _ = INSTANCE.set(controller.clone());
         controller.listen_time_events();
         controller
@@ -151,6 +164,91 @@ impl InternalPlayerController {
             serde_json::json!({ "action": action }).merge(extra),
         );
     }
+
+    // ---- 内嵌视频播放器窗口（由 WebViewPlayer 引擎驱动）----
+
+    /// 打开（或复用）播放器窗口并加载媒体。不挂载不显示——
+    /// 由引擎的 attach_to_desktop 统一处理；复用窗口时保持原状实现无缝换源。
+    fn player_open(&self, screen: u32, url: &str, volume: u32, panscan: bool) -> Result<(), String> {
+        let label = Self::label_player(screen);
+        log::info!("player_open: screen {screen} url={url} volume={volume} panscan={panscan}");
+        // 窗口本身以不可见方式创建：复用时保持原状（已挂载可见则无缝换源），
+        // 全新窗口则等 attach_to_desktop 挂载成功后再显示
+        self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
+        self.emit_cmd(
+            &label,
+            "load",
+            serde_json::json!({ "src": url, "volume": volume, "panscan": panscan }),
+        );
+        Ok(())
+    }
+
+    /// 把播放器窗口挂载到桌面并显示。
+    fn player_attach(&self, screen: u32) -> Result<(), String> {
+        let label = Self::label_player(screen);
+        let window = self
+            .app
+            .get_webview_window(&label)
+            .ok_or("播放器窗口不存在")?;
+        self.attach(&window, screen)?;
+        let _ = window.show();
+        Ok(())
+    }
+
+    fn player_set_paused(&self, screen: u32, paused: bool) -> Result<(), String> {
+        self.emit_cmd(
+            &Self::label_player(screen),
+            "paused",
+            serde_json::json!({ "paused": paused }),
+        );
+        Ok(())
+    }
+
+    fn player_set_volume(&self, screen: u32, volume: u32) -> Result<(), String> {
+        self.emit_cmd(
+            &Self::label_player(screen),
+            "volume",
+            serde_json::json!({ "volume": volume }),
+        );
+        Ok(())
+    }
+
+    fn player_set_panscan(&self, screen: u32, panscan: bool) -> Result<(), String> {
+        self.emit_cmd(
+            &Self::label_player(screen),
+            "panscan",
+            serde_json::json!({ "panscan": panscan }),
+        );
+        Ok(())
+    }
+
+    fn player_seek_percent(&self, screen: u32, percent: f64) -> Result<(), String> {
+        self.emit_cmd(
+            &Self::label_player(screen),
+            "seek",
+            serde_json::json!({ "percent": percent }),
+        );
+        Ok(())
+    }
+
+    fn player_time(&self, screen: u32) -> Option<TimePos> {
+        let info = self.info_of(&Self::label_player(screen))?;
+        let time = *info.time.lock();
+        time
+    }
+
+    fn player_is_alive(&self, screen: u32) -> bool {
+        self.app.get_webview_window(&Self::label_player(screen)).is_some()
+    }
+
+    fn player_close(&self, screen: u32) -> Result<(), String> {
+        let label = Self::label_player(screen);
+        if let Some(window) = self.app.get_webview_window(&label) {
+            let _ = window.destroy();
+        }
+        self.windows.lock().remove(&label);
+        Ok(())
+    }
 }
 
 /// serde_json helper: merge two objects.
@@ -187,71 +285,148 @@ fn subscribe_to(
     rx
 }
 
-impl EngineHost for InternalPlayerController {
-    fn player_load(
-        &self,
-        screen: u32,
-        media_url: &str,
-        volume: u32,
-        panscan: bool,
-    ) -> Result<(), String> {
-        let label = Self::label_player(screen);
-        log::info!("player_load: screen {screen} url={media_url} volume={volume} panscan={panscan}");
-        let window = self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
-        self.attach(&window, screen)?;
-        let _ = window.show();
-        self.emit_cmd(
-            &label,
-            "load",
-            serde_json::json!({ "src": media_url, "volume": volume, "panscan": panscan }),
-        );
-        Ok(())
+// ---------------------------------------------------------------------------
+// 统一播放器接口实现：内嵌 WebView 播放器引擎
+// ---------------------------------------------------------------------------
+
+/// 一个已打开的内嵌 WebView 播放器实例（对应一块屏幕）。
+/// 缓存最近的音量/铺满设置，供复用换源时随 load 一起下发。
+struct WebViewPlayer {
+    controller: Arc<InternalPlayerController>,
+    screen: u32,
+    volume: AtomicU32,
+    panscan: AtomicBool,
+}
+
+fn err_msg(e: String) -> anyhow::Error {
+    anyhow::anyhow!(e)
+}
+
+#[async_trait::async_trait]
+impl PlayerEngine for WebViewPlayer {
+    fn kind(&self) -> &'static str {
+        WEBVIEW_KIND
     }
 
-    fn player_set_paused(&self, screen: u32, paused: bool) -> Result<(), String> {
-        self.emit_cmd(
-            &Self::label_player(screen),
-            "paused",
-            serde_json::json!({ "paused": paused }),
-        );
-        Ok(())
+    /// 复用窗口换源：重发 load 命令（携带缓存的音量/铺满，避免换源闪断）。
+    async fn load(&self, source: &MediaSource) -> anyhow::Result<()> {
+        let url = source
+            .url
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
+        self.controller
+            .player_open(
+                self.screen,
+                &url,
+                self.volume.load(Ordering::SeqCst),
+                self.panscan.load(Ordering::SeqCst),
+            )
+            .map_err(err_msg)
     }
 
-    fn player_set_volume(&self, screen: u32, volume: u32) -> Result<(), String> {
-        self.emit_cmd(
-            &Self::label_player(screen),
-            "volume",
-            serde_json::json!({ "volume": volume }),
-        );
-        Ok(())
+    async fn attach_to_desktop(&self) -> anyhow::Result<()> {
+        self.controller.player_attach(self.screen).map_err(err_msg)
     }
 
-    fn player_seek_percent(&self, screen: u32, percent: f64) -> Result<(), String> {
-        self.emit_cmd(
-            &Self::label_player(screen),
-            "seek",
-            serde_json::json!({ "percent": percent }),
-        );
-        Ok(())
+    async fn set_paused(&self, paused: bool) -> anyhow::Result<()> {
+        self.controller
+            .player_set_paused(self.screen, paused)
+            .map_err(err_msg)
     }
 
-    fn player_time(&self, screen: u32) -> Option<TimePos> {
-        let info = self.info_of(&Self::label_player(screen))?;
-        let time = *info.time.lock();
-        time
+    async fn set_volume(&self, volume: u32) -> anyhow::Result<()> {
+        self.volume.store(volume, Ordering::SeqCst);
+        self.controller
+            .player_set_volume(self.screen, volume)
+            .map_err(err_msg)
     }
 
-    fn player_is_alive(&self, screen: u32) -> bool {
-        self.app.get_webview_window(&Self::label_player(screen)).is_some()
+    async fn set_panscan(&self, value: f64) -> anyhow::Result<()> {
+        let panscan = value > 0.5;
+        self.panscan.store(panscan, Ordering::SeqCst);
+        self.controller
+            .player_set_panscan(self.screen, panscan)
+            .map_err(err_msg)
     }
 
-    fn player_close(&self, screen: u32) -> Result<(), String> {
-        let label = Self::label_player(screen);
-        if let Some(window) = self.app.get_webview_window(&label) {
-            let _ = window.destroy();
+    async fn seek_percent(&self, percent: f64) -> anyhow::Result<()> {
+        self.controller
+            .player_seek_percent(self.screen, percent)
+            .map_err(err_msg)
+    }
+
+    async fn time_pos(&self) -> (f64, f64) {
+        match self.controller.player_time(self.screen) {
+            Some(t) => (t.duration, t.position),
+            None => (-1.0, -1.0),
         }
-        self.windows.lock().remove(&label);
-        Ok(())
+    }
+
+    async fn is_alive(&self) -> bool {
+        self.controller.player_is_alive(self.screen)
+    }
+
+    /// WebView 窗口随应用退出而销毁，无需跨启动接管。
+    async fn shutdown(&self) {
+        let _ = self.controller.player_close(self.screen);
+    }
+}
+
+/// 内嵌 WebView 播放器工厂。
+pub struct WebViewPlayerFactory {
+    controller: Arc<InternalPlayerController>,
+}
+
+#[async_trait::async_trait]
+impl PlayerFactory for WebViewPlayerFactory {
+    fn kind(&self) -> &'static str {
+        WEBVIEW_KIND
+    }
+
+    fn serves(&self) -> &'static [VideoPlayer] {
+        &[VideoPlayer::System]
+    }
+
+    fn is_available(&self) -> bool {
+        true // 应用内 WebView，无外部依赖
+    }
+
+    async fn create(
+        &self,
+        source: &MediaSource,
+        config: &PlayerConfig,
+    ) -> anyhow::Result<Arc<dyn PlayerEngine>> {
+        let url = source
+            .url
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
+        self.controller
+            .player_open(config.screen, &url, config.volume, config.panscan)
+            .map_err(err_msg)?;
+        Ok(Arc::new(WebViewPlayer {
+            controller: self.controller.clone(),
+            screen: config.screen,
+            volume: AtomicU32::new(config.volume),
+            panscan: AtomicBool::new(config.panscan),
+        }))
+    }
+
+    async fn restore(
+        &self,
+        _data: &serde_json::Value,
+        _screen: u32,
+    ) -> anyhow::Result<Arc<dyn PlayerEngine>> {
+        Err(anyhow::anyhow!("内嵌播放器不支持跨启动接管"))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// EngineHost：web 壁纸窗口 + 资源路径 + 播放器工厂注入
+// ---------------------------------------------------------------------------
+
+impl EngineHost for InternalPlayerController {
+    fn player_factories(&self) -> Vec<Arc<dyn PlayerFactory>> {
+        self.factories.get().cloned().unwrap_or_default()
     }
 
     fn web_load(&self, screen: u32, url: &str, mouse_enabled: bool) -> Result<(), String> {
