@@ -766,6 +766,41 @@ pub fn exit_app(app: AppHandle) -> Result<()> {
     Ok(())
 }
 
+// ---------- mpv 播放器 ----------
+
+/// mpv 可用性（发布包不含 mpv，缺失时可在设置页一键自动下载）。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MpvStatus {
+    pub available: bool,
+    pub path: String,
+    pub downloading: bool,
+}
+
+#[tauri::command]
+pub fn get_mpv_status(app: AppHandle) -> Result<MpvStatus> {
+    let st = state(&app);
+    let path = st.player.mpv_path();
+    Ok(MpvStatus {
+        available: path.exists(),
+        path: path.to_string_lossy().into_owned(),
+        downloading: crate::mpv_download::in_progress(),
+    })
+}
+
+/// 后台启动 mpv 下载；进度/结果经 `mpv-download-event` 事件推送。
+#[tauri::command]
+pub fn download_mpv(app: AppHandle) -> Result<()> {
+    let dirs = state(&app).dirs.clone();
+    crate::mpv_download::start(app, dirs)
+}
+
+#[tauri::command]
+pub fn cancel_download_mpv(_app: AppHandle) -> Result<()> {
+    crate::mpv_download::cancel();
+    Ok(())
+}
+
 // ---------- 社区登录 ----------
 
 /// 在独立顶层窗口打开社区页：用于账号登录等依赖第一方 Cookie 的场景

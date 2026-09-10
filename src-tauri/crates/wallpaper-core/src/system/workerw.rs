@@ -9,7 +9,7 @@ use windows::Win32::Graphics::Gdi::MapWindowPoints;
 use windows::Win32::UI::WindowsAndMessaging::{
     EnumWindows, FindWindowExW, FindWindowW, GetClassNameW, GetWindowLongPtrW,
     GetWindowThreadProcessId, SendMessageTimeoutW, SetParent, SetWindowLongPtrW, SetWindowPos,
-    SMTO_NORMAL, SWP_NOSIZE, SWP_NOZORDER, HWND_BOTTOM,
+    ShowWindow, SMTO_NORMAL, SWP_NOSIZE, SWP_NOZORDER, HWND_BOTTOM, SW_SHOWNOACTIVATE,
     WINDOW_LONG_PTR_INDEX, WS_CAPTION, WS_EX_TOOLWINDOW, WS_MAXIMIZEBOX,
     WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME,
 };
@@ -154,6 +154,11 @@ fn attach_to(hwnd: HWND, parent: HWND, x: i32, y: i32, w: i32, h: i32) -> bool {
             return false;
         }
 
+        // mpv 的窗口以隐藏状态启动（--window-minimized），SetParent 不会显示它，
+        // 不补 ShowWindow 则进程/IPC 都正常但桌面上无画面。趁窗口还在屏幕外时
+        // 无激活显示（不抢焦点），再定位到目标屏幕。
+        let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+
         // 屏幕坐标 -> WorkerW 相对坐标
         let mut points = [POINT { x, y }];
         MapWindowPoints(None, Some(parent), &mut points);
@@ -200,5 +205,90 @@ pub fn find_window_by_pid(pid: u32, class_hint: &str) -> Option<HWND> {
 pub fn refresh_desktop() {
     if let Err(e) = super::syswallpaper::refresh() {
         log::warn!("refresh desktop failed: {e}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::process::{Command, Stdio};
+    use windows::Win32::UI::WindowsAndMessaging::{IsIconic, IsWindowVisible};
+
+    fn test_mpv_exe() -> Option<std::path::PathBuf> {
+        if let Some(p) = std::env::var_os("MPV_TEST_EXE") {
+            return Some(std::path::PathBuf::from(p));
+        }
+        // 应用内自动下载的 mpv 落点
+        let p = crate::AppDirs::resolve().root.join("players").join("mpv").join("mpv.exe");
+        p.exists().then_some(p)
+    }
+
+    fn is_iconic(hwnd: HWND) -> bool {
+        unsafe { IsIconic(hwnd) }.as_bool()
+    }
+
+    fn is_visible(hwnd: HWND) -> bool {
+        unsafe { IsWindowVisible(hwnd) }.as_bool()
+    }
+
+    /// 端到端复现 mpv 挂桌面的完整链路：--window-minimized 启动（窗口隐藏）->
+    /// 等窗口 -> 挂 WorkerW -> 断言窗口已显示（回归：此前挂载后仍隐藏，
+    /// 桌面无画面）。会在真实桌面短暂创建 WorkerW 子窗口，默认忽略。
+    #[test]
+    #[ignore = "会在真实桌面短暂创建 WorkerW 子窗口"]
+    fn mpv_minimized_window_becomes_visible_on_attach() {
+        let Some(mpv) = test_mpv_exe() else {
+            eprintln!("未找到 mpv.exe（可设 MPV_TEST_EXE 指定），跳过");
+            return;
+        };
+        let mut child = Command::new(&mpv)
+            .args([
+                // idle 时 mpv 默认不开窗口，与生产（播视频开窗口）对齐需 force-window
+                "--idle=yes",
+                "--force-window=yes",
+                "--window-minimized=yes",
+                "--geometry=-10000:-10000",
+                "--no-border",
+                "--no-osc",
+                "--no-terminal",
+            ])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("launch mpv");
+        let pid = child.id();
+
+        // 等窗口出现
+        let mut hwnd = None;
+        for _ in 0..100 {
+            if let Some(h) = find_window_by_pid(pid, "mpv") {
+                hwnd = Some(h);
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        let hwnd = hwnd.expect("mpv 窗口未出现");
+        eprintln!(
+            "挂载前: iconic={} visible={}",
+            is_iconic(hwnd),
+            is_visible(hwnd)
+        );
+
+        assert!(
+            send_handle_to_desktop_bottom(hwnd, 0),
+            "挂载 WorkerW 失败"
+        );
+        eprintln!(
+            "挂载后: iconic={} visible={}",
+            is_iconic(hwnd),
+            is_visible(hwnd)
+        );
+
+        // 修复点：挂载后窗口必须可见
+        assert!(is_visible(hwnd), "挂载后窗口不可见");
+
+        let _ = child.kill();
+        let _ = child.wait();
     }
 }

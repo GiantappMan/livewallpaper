@@ -16,7 +16,7 @@ import { toast } from "sonner"
 import shellApi from "@/lib/client/shell";
 import api from "@/lib/client/api"
 import { useCallback, useEffect, useState } from "react"
-import { ConfigWallpaper, WallpaperCoveredBehavior } from "@/lib/client/types"
+import { ConfigWallpaper, WallpaperCoveredBehavior, MpvDownloadEvent, MpvStatus } from "@/lib/client/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VideoPlayer } from "@/lib/client/types"
@@ -52,6 +52,44 @@ export default function Page() {
             minLength: 1
         },
     })
+    // mpv 可用性（缺失时提供自动下载）；progress 非空表示下载中
+    const [mpvStatus, setMpvStatus] = useState<MpvStatus | null>(null)
+    const [mpvProgress, setMpvProgress] = useState<number | null>(null)
+
+    const refreshMpvStatus = useCallback(async () => {
+        const res = await api.getMpvStatus();
+        if (res.data) setMpvStatus(res.data);
+    }, []);
+
+    useEffect(() => {
+        refreshMpvStatus();
+        api.onMpvDownloadEvent(async (event: MpvDownloadEvent) => {
+            if (event.state === "progress") {
+                setMpvProgress(event.percent);
+                return;
+            }
+            setMpvProgress(null);
+            if (event.state === "done") {
+                setMpvStatus({ available: true, path: event.path, downloading: false });
+                toast.success(dictionary['settings'].mpv_download_success);
+                // 重载页面让库扫描/封面生成立即用上 mpv（与 refresh-page 行为一致）
+                setTimeout(() => window.location.reload(), 1200);
+            } else if (event.message !== "已取消") {
+                toast.error(`${dictionary['settings'].mpv_download_failed}: ${event.message}`);
+            }
+            await refreshMpvStatus();
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const downloadMpv = async () => {
+        const res = await api.downloadMpv();
+        if (res.error) {
+            toast.error(String(res.error));
+            return;
+        }
+        setMpvProgress(0);
+    };
 
     //读取配置
     const fetchConfig = useCallback(async () => {
@@ -211,6 +249,30 @@ export default function Page() {
                                         </FormItem>
                                     )}
                                 />
+                                {mpvStatus && !mpvStatus.available && (
+                                    <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                                        <span>{dictionary['settings'].mpv_missing_hint}</span>
+                                        {mpvProgress === null ? (
+                                            <Button type="button" size="sm" onClick={downloadMpv}>
+                                                {dictionary['settings'].download_mpv}
+                                            </Button>
+                                        ) : (
+                                            <>
+                                                <span className="whitespace-nowrap tabular-nums">
+                                                    {dictionary['settings'].downloading_mpv} {mpvProgress.toFixed(0)}%
+                                                </span>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => api.cancelDownloadMpv()}
+                                                >
+                                                    {dictionary['local'].cancel}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </FormItem>
                         </form>
                     </Form>

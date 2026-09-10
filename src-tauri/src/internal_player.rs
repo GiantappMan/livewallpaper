@@ -308,6 +308,11 @@ impl EngineHost for InternalPlayerController {
         if dev.exists() {
             return dev;
         }
+        // 4) 数据目录（应用内自动下载的 mpv）
+        let downloaded = crate::mpv_download::target_mpv_path(&wallpaper_core::AppDirs::resolve());
+        if downloaded.exists() {
+            return downloaded;
+        }
         std::path::PathBuf::new()
     }
 

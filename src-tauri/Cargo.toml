@@ -34,6 +34,7 @@ tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-single-instance = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros", "net", "io-util", "fs", "process"] }
 uuid = { version = "1", features = ["v4"] }
+sevenz-rust2 = "0.22.2"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [

@@ -4,6 +4,7 @@ mod commands;
 mod internal_player;
 mod logger;
 mod media_protocol;
+mod mpv_download;
 mod state;
 mod system_events;
 mod tray;
@@ -101,6 +102,9 @@ pub fn run() {
             commands::set_window_state,
             commands::open_community_window,
             commands::exit_app,
+            commands::get_mpv_status,
+            commands::download_mpv,
+            commands::cancel_download_mpv,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

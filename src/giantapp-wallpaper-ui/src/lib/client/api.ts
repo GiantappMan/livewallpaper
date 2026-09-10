@@ -12,6 +12,8 @@ import type {
   DownloadHistoryItem,
   DownloadItem,
   DownloadStatus,
+  MpvDownloadEvent,
+  MpvStatus,
   PlayingStatus,
   Screen,
   TimePos,
@@ -450,6 +452,47 @@ class API {
     listen("hub-session-changed", callback).then((un) =>
       this.unlisteners.push(un)
     );
+  }
+
+  async getMpvStatus(): Promise<ApiResult<MpvStatus>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<MpvStatus>("get_mpv_status");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 后台启动 mpv 自动下载，进度经 onMpvDownloadEvent 推送 */
+  async downloadMpv(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("download_mpv");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async cancelDownloadMpv(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("cancel_download_mpv");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** mpv 下载进度/结果事件 */
+  onMpvDownloadEvent(callback: (event: MpvDownloadEvent) => void) {
+    listen<MpvDownloadEvent>("mpv-download-event", (e) =>
+      callback(e.payload)
+    ).then((un) => this.unlisteners.push(un));
   }
 }
 

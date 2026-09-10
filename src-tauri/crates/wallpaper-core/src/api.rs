@@ -163,11 +163,10 @@ impl WallpaperApi {
     }
 
     pub async fn stop_wallpaper(&self, screen_index: Option<u32>) {
-        let settings = self.settings.lock().clone();
         let mut managers = self.managers.lock().await;
         for m in managers.iter_mut() {
             if screen_index.is_none() || screen_index == Some(m.screen) {
-                m.stop(&settings).await;
+                m.stop().await;
             }
         }
     }
@@ -342,11 +341,10 @@ impl WallpaperApi {
     pub async fn dispose(&self, keep_wallpaper: bool) {
         self.running
             .store(false, std::sync::atomic::Ordering::SeqCst);
-        let settings = self.settings.lock().clone();
         {
             let mut managers = self.managers.lock().await;
             for m in managers.iter_mut() {
-                m.stop(&settings).await;
+                m.stop().await;
             }
         }
         if !keep_wallpaper {

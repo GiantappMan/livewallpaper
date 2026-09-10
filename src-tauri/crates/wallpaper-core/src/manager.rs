@@ -471,7 +471,7 @@ impl ScreenManager {
     }
 
     /// 用户主动停止：卸载渲染并清空壁纸；图片壁纸还原接管前的桌面。
-    pub async fn stop(&mut self, settings: &ApiSettings) {
+    pub async fn stop(&mut self) {
         let old = self.render.take();
         self.cleanup_render(old).await;
         if let Some(restore) = self.img_restore.take() {

@@ -238,6 +238,23 @@ export type DownloadStatus = {
   items: DownloadItem[];
 };
 
+export type MpvStatus = {
+  available: boolean;
+  path: string;
+  downloading: boolean;
+};
+
+export type MpvDownloadEvent =
+  | {
+      state: "progress";
+      percent: number;
+      receivedBytes: number;
+      totalBytes: number;
+    }
+  | { state: "done"; path: string }
+  | { state: "error"; message: string };
+
+
 export type DownloadHistoryItem = {
   id: string;
   title: string;
