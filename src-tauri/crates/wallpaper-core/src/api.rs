@@ -114,11 +114,7 @@ impl WallpaperApi {
         managers.retain(|m| m.screen < count);
         for i in 0..count {
             if !managers.iter().any(|m| m.screen == i) {
-                managers.push(ScreenManager::new(
-                    i,
-                    self.host.clone(),
-                    self.players.clone(),
-                ));
+                managers.push(ScreenManager::new(i, self.players.clone()));
             }
         }
         managers.sort_by_key(|m| m.screen);

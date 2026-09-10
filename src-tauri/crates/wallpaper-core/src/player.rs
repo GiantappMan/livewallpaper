@@ -36,6 +36,11 @@ impl MediaSource {
     }
 }
 
+/// web 壁纸播放器的 kind 标识。web 壁纸（`WallpaperType::Web`）不走
+/// `VideoPlayer` 用户设置，管理器按此 kind 从注册表直接取对应工厂；
+/// 宿主注入的 web 播放器工厂需使用相同的 kind。
+pub const WEB_KIND: &str = "web";
+
 /// 播放器启动参数。
 #[derive(Debug, Clone)]
 pub struct PlayerConfig {
@@ -44,6 +49,8 @@ pub struct PlayerConfig {
     /// 铺满裁剪（true = cover，false = contain）。
     pub panscan: bool,
     pub hardware_decoding: bool,
+    /// 页面是否接收鼠标事件（web 类引擎使用；视频引擎可忽略）。
+    pub mouse_events: bool,
 }
 
 /// 播放器实例的可序列化恢复信息（写入屏幕快照，崩溃后供 `restore` 接管）。
@@ -62,8 +69,9 @@ pub trait PlayerEngine: Send + Sync {
     fn kind(&self) -> &'static str;
 
     /// 在仍存活的实例上换源播放（同引擎切换壁纸的复用路径）。
+    /// `config` 为本次播放的参数（换源时音量/鼠标等设置可能已变化）。
     /// 不支持换源的引擎返回 Err，管理器会回收实例并整体重启。
-    async fn load(&self, source: &MediaSource) -> Result<()>;
+    async fn load(&self, source: &MediaSource, config: &PlayerConfig) -> Result<()>;
 
     /// 等待渲染窗口就绪并嵌入桌面（WorkerW 层）。失败时管理器会回收实例。
     async fn attach_to_desktop(&self) -> Result<()>;
@@ -135,13 +143,18 @@ impl PlayerRegistry {
         self.factories.iter().find(|f| f.kind() == kind).cloned()
     }
 
-    /// 按用户设置解析可用引擎；设置指定的引擎不可用时退回第一个可用引擎，
-    /// 全部不可用返回 None。
+    /// 按用户设置解析可用引擎；设置指定的引擎不可用时退回第一个可用的
+    /// 视频引擎（按注册顺序），全部不可用返回 None。
     pub fn resolve(&self, player: VideoPlayer) -> Option<Arc<dyn PlayerFactory>> {
         self.factories
             .iter()
             .find(|f| f.serves().contains(&player) && f.is_available())
-            .or_else(|| self.factories.iter().find(|f| f.is_available()))
+            .or_else(|| {
+                // 兜底只考虑视频引擎（serves 非空）；web 等按类型路由的引擎不参与
+                self.factories
+                    .iter()
+                    .find(|f| !f.serves().is_empty() && f.is_available())
+            })
             .cloned()
     }
 }

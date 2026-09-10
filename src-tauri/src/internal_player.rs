@@ -2,18 +2,19 @@
 //! v3 中这是独立的播放器进程；v4 改为应用内 WebView 窗口，SetParent 到
 //! WorkerW 嵌入桌面。零外部进程依赖，天然支持 web 壁纸。
 //!
-//! 内嵌视频播放器通过 [`WebViewPlayerFactory`] / [`WebViewPlayer`] 接入
-//! wallpaper-core 的统一播放器接口（`PlayerFactory` / `PlayerEngine`），
-//! 与 mpv 等外部引擎平级，由屏幕管理器统一调度。
+//! 两个引擎均接入 wallpaper-core 的统一播放器接口（`PlayerFactory` /
+//! `PlayerEngine`），与 mpv 等外部引擎平级，由屏幕管理器统一调度：
+//! - [`WebViewPlayerFactory`] / [`WebViewPlayer`]：内嵌视频播放器（kind `"webview"`）
+//! - [`WebPlayerFactory`] / [`WebPlayer`]：web 壁纸播放器（kind `"web"`）
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::{Listener, Manager, WebviewUrl, WebviewWindowBuilder};
 use wallpaper_core::host::EngineHost;
 use wallpaper_core::models::{TimePos, VideoPlayer};
-use wallpaper_core::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory};
+use wallpaper_core::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory, WEB_KIND};
 use wallpaper_core::system::workerw;
 
 const PLAYER_PREFIX: &str = "player-";
@@ -44,9 +45,14 @@ impl InternalPlayerController {
             windows: parking_lot::Mutex::new(HashMap::new()),
             factories: std::sync::OnceLock::new(),
         });
-        let _ = controller.factories.set(vec![Arc::new(WebViewPlayerFactory {
-            controller: controller.clone(),
-        })]);
+        let _ = controller.factories.set(vec![
+            Arc::new(WebViewPlayerFactory {
+                controller: controller.clone(),
+            }),
+            Arc::new(WebPlayerFactory {
+                controller: controller.clone(),
+            }),
+        ]);
         let _ = INSTANCE.set(controller.clone());
         controller.listen_time_events();
         controller
@@ -249,6 +255,58 @@ impl InternalPlayerController {
         self.windows.lock().remove(&label);
         Ok(())
     }
+
+    // ---- web 壁纸窗口（由 WebPlayer 引擎驱动）----
+
+    /// 打开（或复用）web 壁纸窗口并加载 URL。不挂载不显示——
+    /// 由引擎的 attach_to_desktop 统一处理。
+    fn web_open(&self, screen: u32, url: &str) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        log::info!("web_open: screen {screen} url={url}");
+        // 本地 media 协议地址已注册为可导航 scheme，与 http(s) 一样直接解析
+        let parsed: tauri::Url = url.parse().map_err(|e| format!("bad url: {e}"))?;
+        self.ensure_window(&label, WebviewUrl::External(parsed))?;
+        Ok(())
+    }
+
+    /// 把 web 窗口挂载到桌面并显示。
+    fn web_attach(&self, screen: u32) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        let window = self.app.get_webview_window(&label).ok_or("web 窗口不存在")?;
+        self.attach(&window, screen)?;
+        let _ = window.show();
+        Ok(())
+    }
+
+    /// 设置鼠标事件：enabled = 页面接收鼠标（否则穿透到桌面）。
+    fn web_set_mouse(&self, screen: u32, enabled: bool) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        if let Some(window) = self.app.get_webview_window(&label) {
+            let _ = window.set_ignore_cursor_events(!enabled);
+        }
+        Ok(())
+    }
+
+    /// 已存活的窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
+    fn web_navigate(&self, screen: u32, url: &str) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        let window = self.app.get_webview_window(&label).ok_or("web 窗口不存在")?;
+        let parsed: tauri::Url = url.parse().map_err(|e| format!("bad url: {e}"))?;
+        window.navigate(parsed).map_err(|e| format!("导航失败: {e}"))
+    }
+
+    fn web_is_alive(&self, screen: u32) -> bool {
+        self.app.get_webview_window(&Self::label_web(screen)).is_some()
+    }
+
+    fn web_close(&self, screen: u32) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        if let Some(window) = self.app.get_webview_window(&label) {
+            let _ = window.destroy();
+        }
+        self.windows.lock().remove(&label);
+        Ok(())
+    }
 }
 
 /// serde_json helper: merge two objects.
@@ -290,12 +348,9 @@ fn subscribe_to(
 // ---------------------------------------------------------------------------
 
 /// 一个已打开的内嵌 WebView 播放器实例（对应一块屏幕）。
-/// 缓存最近的音量/铺满设置，供复用换源时随 load 一起下发。
 struct WebViewPlayer {
     controller: Arc<InternalPlayerController>,
     screen: u32,
-    volume: AtomicU32,
-    panscan: AtomicBool,
 }
 
 fn err_msg(e: String) -> anyhow::Error {
@@ -308,8 +363,8 @@ impl PlayerEngine for WebViewPlayer {
         WEBVIEW_KIND
     }
 
-    /// 复用窗口换源：重发 load 命令（携带缓存的音量/铺满，避免换源闪断）。
-    async fn load(&self, source: &MediaSource) -> anyhow::Result<()> {
+    /// 复用窗口换源：重发 load 命令（参数随 config 下发，避免换源闪断）。
+    async fn load(&self, source: &MediaSource, config: &PlayerConfig) -> anyhow::Result<()> {
         let url = source
             .url
             .clone()
@@ -318,8 +373,8 @@ impl PlayerEngine for WebViewPlayer {
             .player_open(
                 self.screen,
                 &url,
-                self.volume.load(Ordering::SeqCst),
-                self.panscan.load(Ordering::SeqCst),
+                config.volume,
+                config.panscan,
             )
             .map_err(err_msg)
     }
@@ -335,17 +390,14 @@ impl PlayerEngine for WebViewPlayer {
     }
 
     async fn set_volume(&self, volume: u32) -> anyhow::Result<()> {
-        self.volume.store(volume, Ordering::SeqCst);
         self.controller
             .player_set_volume(self.screen, volume)
             .map_err(err_msg)
     }
 
     async fn set_panscan(&self, value: f64) -> anyhow::Result<()> {
-        let panscan = value > 0.5;
-        self.panscan.store(panscan, Ordering::SeqCst);
         self.controller
-            .player_set_panscan(self.screen, panscan)
+            .player_set_panscan(self.screen, value > 0.5)
             .map_err(err_msg)
     }
 
@@ -406,8 +458,6 @@ impl PlayerFactory for WebViewPlayerFactory {
         Ok(Arc::new(WebViewPlayer {
             controller: self.controller.clone(),
             screen: config.screen,
-            volume: AtomicU32::new(config.volume),
-            panscan: AtomicBool::new(config.panscan),
         }))
     }
 
@@ -421,43 +471,127 @@ impl PlayerFactory for WebViewPlayerFactory {
 }
 
 // ---------------------------------------------------------------------------
-// EngineHost：web 壁纸窗口 + 资源路径 + 播放器工厂注入
+// 统一播放器接口实现：web 壁纸播放器引擎
+// ---------------------------------------------------------------------------
+
+/// 一个 web 壁纸播放器实例（对应一块屏幕的 web 壁纸窗口）。
+struct WebPlayer {
+    controller: Arc<InternalPlayerController>,
+    screen: u32,
+    /// 页面是否接收鼠标事件（换源导航时可能变化）。
+    mouse_events: AtomicBool,
+}
+
+#[async_trait::async_trait]
+impl PlayerEngine for WebPlayer {
+    fn kind(&self) -> &'static str {
+        WEB_KIND
+    }
+
+    /// 复用窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
+    async fn load(&self, source: &MediaSource, config: &PlayerConfig) -> anyhow::Result<()> {
+        let url = source
+            .url
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("web 播放器需要 URL"))?;
+        self.mouse_events.store(config.mouse_events, Ordering::SeqCst);
+        self.controller
+            .web_navigate(self.screen, &url)
+            .map_err(err_msg)?;
+        self.controller
+            .web_set_mouse(self.screen, config.mouse_events)
+            .map_err(err_msg)
+    }
+
+    async fn attach_to_desktop(&self) -> anyhow::Result<()> {
+        self.controller.web_attach(self.screen).map_err(err_msg)?;
+        self.controller
+            .web_set_mouse(self.screen, self.mouse_events.load(Ordering::SeqCst))
+            .map_err(err_msg)
+    }
+
+    /// 网页壁纸无暂停/音量/进度语义，保持 no-op（与旧 Render::Web 行为一致）。
+    async fn set_paused(&self, _paused: bool) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    async fn set_volume(&self, _volume: u32) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    async fn seek_percent(&self, _percent: f64) -> anyhow::Result<()> {
+        Err(anyhow::anyhow!("web 壁纸不支持跳转"))
+    }
+
+    async fn time_pos(&self) -> (f64, f64) {
+        (-1.0, -1.0)
+    }
+
+    async fn is_alive(&self) -> bool {
+        self.controller.web_is_alive(self.screen)
+    }
+
+    /// WebView 窗口随应用退出而销毁，无需跨启动接管。
+    async fn shutdown(&self) {
+        let _ = self.controller.web_close(self.screen);
+    }
+}
+
+/// web 壁纸播放器工厂。
+pub struct WebPlayerFactory {
+    controller: Arc<InternalPlayerController>,
+}
+
+#[async_trait::async_trait]
+impl PlayerFactory for WebPlayerFactory {
+    fn kind(&self) -> &'static str {
+        WEB_KIND
+    }
+
+    /// web 壁纸按 `WallpaperType::Web` 由管理器按 kind 路由，不占用 VideoPlayer 设置值。
+    fn serves(&self) -> &'static [VideoPlayer] {
+        &[]
+    }
+
+    fn is_available(&self) -> bool {
+        true // 应用内 WebView，无外部依赖
+    }
+
+    async fn create(
+        &self,
+        source: &MediaSource,
+        config: &PlayerConfig,
+    ) -> anyhow::Result<Arc<dyn PlayerEngine>> {
+        let url = source
+            .url
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("web 播放器需要 URL"))?;
+        self.controller
+            .web_open(config.screen, &url)
+            .map_err(err_msg)?;
+        Ok(Arc::new(WebPlayer {
+            controller: self.controller.clone(),
+            screen: config.screen,
+            mouse_events: AtomicBool::new(config.mouse_events),
+        }))
+    }
+
+    async fn restore(
+        &self,
+        _data: &serde_json::Value,
+        _screen: u32,
+    ) -> anyhow::Result<Arc<dyn PlayerEngine>> {
+        Err(anyhow::anyhow!("web 播放器不支持跨启动接管"))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// EngineHost：资源路径 + 播放器工厂注入
 // ---------------------------------------------------------------------------
 
 impl EngineHost for InternalPlayerController {
     fn player_factories(&self) -> Vec<Arc<dyn PlayerFactory>> {
         self.factories.get().cloned().unwrap_or_default()
-    }
-
-    fn web_load(&self, screen: u32, url: &str, mouse_enabled: bool) -> Result<(), String> {
-        let label = Self::label_web(screen);
-        let parsed: tauri::Url = if url.starts_with("http://") || url.starts_with("https://") {
-            url.parse().map_err(|e| format!("bad url: {e}"))?
-        } else {
-            // 本地 media 协议地址，直接作为 External 传入会失败；
-            // media:// 已在 WebView2 注册为可导航 scheme，转 WebviewUrl::External 同样可行
-            url.parse().map_err(|e| format!("bad url: {e}"))?
-        };
-        let window = self.ensure_window(&label, WebviewUrl::External(parsed))?;
-        self.attach(&window, screen)?;
-        let _ = window.show();
-        if !mouse_enabled {
-            let _ = window.set_ignore_cursor_events(true);
-        }
-        Ok(())
-    }
-
-    fn web_is_alive(&self, screen: u32) -> bool {
-        self.app.get_webview_window(&Self::label_web(screen)).is_some()
-    }
-
-    fn web_close(&self, screen: u32) -> Result<(), String> {
-        let label = Self::label_web(screen);
-        if let Some(window) = self.app.get_webview_window(&label) {
-            let _ = window.destroy();
-        }
-        self.windows.lock().remove(&label);
-        Ok(())
     }
 
     fn mpv_path(&self) -> std::path::PathBuf {

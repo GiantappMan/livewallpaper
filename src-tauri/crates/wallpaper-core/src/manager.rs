@@ -3,19 +3,17 @@
 //! 管理器不感知具体视频引擎——一切控制走 [`player::PlayerEngine`]，
 //! 引擎选择走 [`player::PlayerRegistry`]。
 
-use crate::host::EngineHost;
 use crate::models::{
     ApiSettings, CoveredBehavior, TimePos, VideoPlayer, Wallpaper, WallpaperType,
 };
-use crate::player::{PlayerEngine, PlayerFactory, PlayerRegistry, PlayerSnapshot};
+use crate::player::{PlayerEngine, PlayerFactory, PlayerRegistry, PlayerSnapshot, WEB_KIND};
 use crate::system::syswallpaper;
 use std::sync::Arc;
 use std::time::Instant;
 
 pub(crate) enum Render {
-    /// 统一视频播放器引擎（mpv / 内嵌 WebView / 自定义播放器…）。
+    /// 统一播放器引擎（mpv / 内嵌 WebView / web 壁纸 / 自定义播放器…）。
     Video(Arc<dyn PlayerEngine>),
-    Web,
     /// 静态图（系统桌面壁纸；还原信息统一放在 img_restore）。
     Image,
 }
@@ -65,7 +63,6 @@ fn requested_engine(item: &Wallpaper, settings: &ApiSettings) -> VideoPlayer {
 
 pub(crate) struct ScreenManager {
     pub screen: u32,
-    host: Arc<dyn EngineHost>,
     players: Arc<PlayerRegistry>,
     /// 顶层壁纸（可能是播放列表）。
     pub wallpaper: Option<Wallpaper>,
@@ -86,14 +83,9 @@ pub(crate) struct ScreenManager {
 }
 
 impl ScreenManager {
-    pub fn new(
-        screen: u32,
-        host: Arc<dyn EngineHost>,
-        players: Arc<PlayerRegistry>,
-    ) -> Self {
+    pub fn new(screen: u32, players: Arc<PlayerRegistry>) -> Self {
         Self {
             screen,
-            host,
             players,
             wallpaper: None,
             item: None,
@@ -128,12 +120,17 @@ impl ScreenManager {
         };
         let item = wallpaper.current_item().clone();
 
-        // 视频项：解析目标引擎工厂（用户设置 -> 可用性兜底）
-        let video_factory = match item.meta.wallpaper_type {
+        // 引擎项：解析目标工厂（视频按用户设置 + 可用性兜底；web 按 kind 直取）
+        let engine_factory = match item.meta.wallpaper_type {
             WallpaperType::Video | WallpaperType::AnimatedImg => Some(
                 self.players
                     .resolve(requested_engine(&item, settings))
                     .ok_or_else(|| "无可用视频播放引擎".to_string())?,
+            ),
+            WallpaperType::Web => Some(
+                self.players
+                    .get(WEB_KIND)
+                    .ok_or_else(|| "无可用 web 播放器".to_string())?,
             ),
             _ => None,
         };
@@ -143,12 +140,9 @@ impl ScreenManager {
 
         // 同引擎无缝复用：旧实例仍归属同一工厂时直接换源，
         // （杀进程重启需要 2s+，换源近乎即时）
-        let reuse_video = matches!(item.meta.wallpaper_type, WallpaperType::Video | WallpaperType::AnimatedImg)
-            && matches!(
-                &old_render,
-                Some(Render::Video(p))
-                    if video_factory.as_ref().is_some_and(|f| f.kind() == p.kind())
-            );
+        let reuse_video = engine_factory.as_ref().is_some_and(|f| {
+            matches!(&old_render, Some(Render::Video(p)) if f.kind() == p.kind())
+        });
 
         self.item = Some(item.clone());
         self.item_started_at = Some(Instant::now());
@@ -161,18 +155,14 @@ impl ScreenManager {
                 self.cleanup_render(old_render).await;
                 r
             }
-            WallpaperType::AnimatedImg | WallpaperType::Video => {
+            WallpaperType::AnimatedImg | WallpaperType::Video | WallpaperType::Web => {
                 if reuse_video {
                     // 复用路径：旧实例放回 render，play_video 内部换源
                     self.render = old_render;
                 } else {
                     self.cleanup_render(old_render).await;
                 }
-                self.play_video(&item, settings, video_factory.unwrap()).await
-            }
-            WallpaperType::Web => {
-                self.cleanup_render(old_render).await;
-                self.play_web(&item).await
+                self.play_video(&item, settings, engine_factory.unwrap()).await
             }
             WallpaperType::Playlist => {
                 self.cleanup_render(old_render).await;
@@ -220,29 +210,33 @@ impl ScreenManager {
         settings: &ApiSettings,
         factory: Arc<dyn PlayerFactory>,
     ) -> Result<(), String> {
-        let path = item.file_path.clone().ok_or("缺少文件路径")?;
         let source = crate::player::MediaSource {
-            path,
+            path: item.file_path.clone().unwrap_or_default(),
             url: item.file_url.clone(),
         };
+        if source.path.as_os_str().is_empty() && source.url.is_none() {
+            return Err("缺少媒体源".into());
+        }
         let config = crate::player::PlayerConfig {
             screen: self.screen,
             volume: self.volume_for(settings),
             panscan: item.setting.is_pan_scan,
             hardware_decoding: item.setting.hardware_decoding,
+            mouse_events: item.setting.enable_mouse_event,
         };
         log::info!(
-            "play_video screen {} engine={} reuse_available={} file={}",
+            "play_video screen {} engine={} reuse_available={} file={} url={:?}",
             self.screen,
             factory.kind(),
             factory.is_available(),
-            source.path.display()
+            source.path.display(),
+            source.url
         );
 
         // 复用：旧实例原地换源（切换近乎即时）
         if let Some(Render::Video(old)) = self.render.take() {
             if old.kind() == factory.kind() {
-                match old.load(&source).await {
+                match old.load(&source, &config).await {
                     Ok(()) => {
                         let _ = old
                             .set_panscan(if config.panscan { 1.0 } else { 0.0 })
@@ -273,17 +267,6 @@ impl ScreenManager {
             return Err(format!("挂载到桌面失败: {e}"));
         }
         self.render = Some(Render::Video(player));
-        Ok(())
-    }
-
-    async fn play_web(&mut self, item: &Wallpaper) -> Result<(), String> {
-        let url = item
-            .file_url
-            .clone()
-            .ok_or("缺少 Web URL")?;
-        self.host
-            .web_load(self.screen, &url, item.setting.enable_mouse_event)?;
-        self.render = Some(Render::Web);
         Ok(())
     }
 
@@ -371,7 +354,7 @@ impl ScreenManager {
                 let (d, _) = p.time_pos().await;
                 (d > 0.0).then_some(d)
             }
-            Render::Web | Render::Image => None,
+            Render::Image => None,
         }
     }
 
@@ -477,15 +460,11 @@ impl ScreenManager {
         self.item_duration = None;
     }
 
-    /// 清理旧渲染（引擎实例退出 / web 窗口关闭）。图片渲染无资源需要清理，
+    /// 清理旧渲染（引擎实例退出）。图片渲染无资源需要清理，
     /// 且不做桌面还原——还原只在用户停止/退出时发生，避免切换时闪屏。
     async fn cleanup_render(&self, render: Option<Render>) {
-        match render {
-            Some(Render::Video(p)) => p.shutdown().await,
-            Some(Render::Web) => {
-                let _ = self.host.web_close(self.screen);
-            }
-            _ => {}
+        if let Some(Render::Video(p)) = render {
+            p.shutdown().await;
         }
     }
 
@@ -534,7 +513,6 @@ impl ScreenManager {
                     position: started.elapsed().as_secs_f64(),
                 })
             }
-            Render::Web => None,
         }
     }
 

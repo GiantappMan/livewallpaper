@@ -307,7 +307,7 @@ impl PlayerEngine for MpvPlayer {
     }
 
     /// 原地重写播放列表临时文件并 loadlist 换源（进程保持存活，切换近乎即时）。
-    async fn load(&self, source: &MediaSource) -> Result<()> {
+    async fn load(&self, source: &MediaSource, _config: &PlayerConfig) -> Result<()> {
         if self.playlist_file.as_os_str().is_empty() {
             // 接管的实例没有自己的临时文件，退回 loadfile 单文件直放
             return self.loadfile(&source.path).await;
@@ -408,6 +408,9 @@ impl PlayerFactory for MpvFactory {
         let mpv_exe = self.host.mpv_path();
         if !mpv_exe.exists() {
             return Err(anyhow!("mpv.exe 不存在"));
+        }
+        if source.path.as_os_str().is_empty() {
+            return Err(anyhow!("mpv 引擎需要本地文件路径"));
         }
         let list = self.dirs.playlist_tmp_file(config.screen);
         write_playlist_file(&list, source)?;
