@@ -16,6 +16,7 @@ import type {
   MpvStatus,
   PlayingStatus,
   Screen,
+  ScreenCoverage,
   SkinInfo,
   TimePos,
   Wallpaper,
@@ -88,6 +89,18 @@ class API {
     try {
       if (!this.isRunningInClient()) return noClient();
       const data = await invoke<Screen[]>("get_screens");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 实时遮挡检测：每屏覆盖率与遮挡判定（跳过引擎每秒 tick 缓存，立即枚举窗口判定） */
+  async getScreenCoverage(): Promise<ApiResult<ScreenCoverage[]>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<ScreenCoverage[]>("get_screen_coverage");
       return { error: null, data };
     } catch (e) {
       console.error(e);

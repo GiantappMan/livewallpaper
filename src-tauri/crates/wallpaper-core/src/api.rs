@@ -114,6 +114,25 @@ impl WallpaperApi {
         sys_screens::all_screens()
     }
 
+    /// 最近一次 tick 判定为被遮挡的屏幕索引（随每秒 tick 刷新）。
+    pub async fn covered_screens(&self) -> Vec<u32> {
+        let managers = self.managers.lock().await;
+        managers
+            .iter()
+            .filter(|m| m.is_covered())
+            .map(|m| m.screen)
+            .collect()
+    }
+
+    /// 立即执行一次遮挡检测，返回每屏覆盖率
+    /// （不经过 tick 缓存；供可视化测试 / 调试）。
+    pub async fn detect_screen_coverage(&self) -> Vec<crate::window_state::ScreenCoverage> {
+        let exclude = self.host.occlusion_exclusions();
+        tokio::task::spawn_blocking(move || crate::window_state::screen_coverage_excluding(&exclude))
+            .await
+            .unwrap_or_default()
+    }
+
     /// 屏幕集合变化时重建管理器（保留已有屏幕的状态）。
     pub async fn sync_screens(&self) {
         let count = sys_screens::all_screens().len() as u32;

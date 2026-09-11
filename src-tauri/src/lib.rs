@@ -93,6 +93,7 @@ pub fn run() {
             commands::set_volume,
             commands::get_wallpaper_time,
             commands::set_progress,
+            commands::get_screen_coverage,
             commands::get_version,
             commands::get_real_theme_mode,
             commands::upload_to_tmp,

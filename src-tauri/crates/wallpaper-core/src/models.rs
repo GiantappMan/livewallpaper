@@ -334,6 +334,8 @@ pub struct PlayingStatus {
     pub wallpapers: Vec<Wallpaper>,
     pub volume: u32,
     pub audio_screen_index: i32,
+    /// 当前被全屏窗口遮挡的屏幕索引（每秒 tick 更新）。
+    pub covered_screens: Vec<u32>,
 }
 
 #[cfg(test)]

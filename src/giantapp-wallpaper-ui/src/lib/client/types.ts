@@ -214,6 +214,15 @@ export type Screen = {
   workingArea: string;
 };
 
+/** 每屏遮挡覆盖率（实时检测结果） */
+export type ScreenCoverage = {
+  screenIndex: number;
+  /** 被顶层窗口覆盖的屏幕面积百分比（0-100，多窗口取矩形并集） */
+  percent: number;
+  /** 达到遮挡判定：有最大化窗口，或覆盖率 ≥ 90% */
+  covered: boolean;
+};
+
 export type TimePos = {
   duration: number;
   position: number;
@@ -224,6 +233,8 @@ export type PlayingStatus = {
   wallpapers: Wallpaper[];
   audioScreenIndex: number;
   volume: number;
+  /** 当前被全屏窗口遮挡的屏幕索引（引擎每秒 tick 更新） */
+  coveredScreens: number[];
 };
 
 export type DownloadItem = {

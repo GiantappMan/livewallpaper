@@ -491,6 +491,11 @@ impl ScreenManager {
 
     // ---------- 查询 ----------
 
+    /// 最近一次 tick 的遮挡判定结果。
+    pub fn is_covered(&self) -> bool {
+        self.covered
+    }
+
     pub fn running_info(&self) -> crate::models::RunningInfo {
         crate::models::RunningInfo {
             screen_indexes: vec![self.screen],

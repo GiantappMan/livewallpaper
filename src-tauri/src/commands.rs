@@ -188,6 +188,7 @@ pub(crate) async fn build_playing_status(app: &AppHandle) -> PlayingStatus {
     status.screens = st.api.screens();
     status.volume = st.api.settings.lock().volume;
     status.audio_screen_index = st.api.settings.lock().audio_source_index;
+    status.covered_screens = st.api.covered_screens().await;
     for mut w in st.api.running_wallpapers().await {
         fill_urls(&mut w);
         status.wallpapers.push(w);
@@ -198,6 +199,15 @@ pub(crate) async fn build_playing_status(app: &AppHandle) -> PlayingStatus {
 #[tauri::command]
 pub async fn get_playing_status(app: AppHandle) -> Result<PlayingStatus> {
     Ok(build_playing_status(&app).await)
+}
+
+/// 实时遮挡检测：返回每屏覆盖率与遮挡判定（跳过每秒 tick 缓存，
+/// 立即枚举窗口判定；dev 皮肤可视化测试 / 调试用）。
+#[tauri::command]
+pub async fn get_screen_coverage(
+    app: AppHandle,
+) -> Result<Vec<wallpaper_core::window_state::ScreenCoverage>> {
+    Ok(state(&app).api.detect_screen_coverage().await)
 }
 
 #[tauri::command]

@@ -172,6 +172,9 @@ async fn call(app: &tauri::AppHandle, method: &str, params: &Value) -> Result<Va
             Ok(serde_json::to_value(list).unwrap_or_default())
         }
         "get_screens" => Ok(serde_json::to_value(st.api.screens()).unwrap_or_default()),
+        "get_screen_coverage" => Ok(
+            serde_json::to_value(st.api.detect_screen_coverage().await).unwrap_or_default(),
+        ),
         "show_wallpaper" => {
             let mut wallpaper: wallpaper_core::models::Wallpaper = serde_json::from_value(
                 params
