@@ -41,7 +41,7 @@
           el("span", { class: "n" }, name),
           el("span", { style: { whiteSpace: "pre-wrap", wordBreak: "break-all" } },
             name === "playing-status-changed" && text === "null"
-              ? "(状态缓存已刷新，看「播放控制」面板)"
+              ? "(状态缓存已刷新，看「壁纸库」页播放控制条)"
               : text)
         )
       );
