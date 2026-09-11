@@ -31,6 +31,9 @@ pub struct WallpaperApi {
     on_change: StdMutexLike<Option<Box<dyn Fn() + Send + Sync>>>,
     /// Engine 内部修改（播放列表推进）后通知应用层。
     running: std::sync::atomic::AtomicBool,
+    /// 系统会话锁定（锁屏）。锁定期间全部屏幕视为被全屏遮挡，
+    /// 走与真实遮挡一致的暂停/冻结/停止逻辑。
+    session_locked: std::sync::atomic::AtomicBool,
 }
 
 impl WallpaperApi {
@@ -51,6 +54,7 @@ impl WallpaperApi {
             settings: StdMutexLike::new(ApiSettings::default()),
             on_change: StdMutexLike::new(None),
             running: std::sync::atomic::AtomicBool::new(true),
+            session_locked: std::sync::atomic::AtomicBool::new(false),
         });
         api.sync_screens().await;
         let weak = Arc::downgrade(&api);
@@ -83,16 +87,37 @@ impl WallpaperApi {
         });
     }
 
+    /// 当前应视为被遮挡的屏幕集合。
+    /// 会话锁定（锁屏）期间全部屏幕视为被全屏遮挡，否则按真实窗口检测。
+    async fn current_covered_screens(&self) -> Vec<u32> {
+        if self.session_locked.load(std::sync::atomic::Ordering::SeqCst) {
+            let managers = self.managers.lock().await;
+            return managers.iter().map(|m| m.screen).collect();
+        }
+        let exclude = self.host.occlusion_exclusions();
+        tokio::task::spawn_blocking(move || crate::window_state::covered_screens_excluding(&exclude))
+            .await
+            .unwrap_or_default()
+    }
+
+    /// 立即把当前锁定态/真实遮挡应用到各屏（锁屏/解锁时调用，
+    /// 不等下一秒的 tick，声音和画面即刻反应）。
+    async fn apply_session_covered(&self) {
+        let settings = self.settings.lock().clone();
+        let covered = self.current_covered_screens().await;
+        let mut managers = self.managers.lock().await;
+        for m in managers.iter_mut() {
+            m.latest_settings = settings.clone();
+            let _ = m.set_covered(covered.contains(&m.screen), &settings).await;
+        }
+    }
+
     /// 每秒：检测遮挡窗口 + 推进播放列表。内部发生可见状态变化
     /// （遮挡起停、播放列表推进）时对外广播 on_change。
     async fn tick_once(&self) {
         // 1) 遮挡检测（阻塞 Win32 调用放线程池；排除宿主声明的播放器窗口）
         let settings = self.settings.lock().clone();
-        let exclude = self.host.occlusion_exclusions();
-        let covered =
-            tokio::task::spawn_blocking(move || crate::window_state::covered_screens_excluding(&exclude))
-                .await
-                .unwrap_or_default();
+        let covered = self.current_covered_screens().await;
 
         let mut changed = false;
         let mut managers = self.managers.lock().await;
@@ -398,13 +423,26 @@ impl WallpaperApi {
 
     // ---------- 系统事件 ----------
 
+    /// 锁屏：全部屏幕视为被全屏遮挡，按遮挡行为设置执行
+    /// （暂停 -> web 壁纸定格+静音；停止 -> 卸载渲染）。不触碰手动暂停状态，
+    /// 解锁后按真实遮挡状态恢复。
     pub async fn handle_lock(&self) {
+        log::info!("session locked -> all screens covered");
+        self.session_locked
+            .store(true, std::sync::atomic::Ordering::SeqCst);
         self.save_snapshot().await;
-        self.pause_wallpaper(None).await;
+        self.apply_session_covered().await;
+        self.notify_change();
     }
 
+    /// 解锁：取消锁屏遮挡，按真实窗口遮挡状态恢复
+    /// （被遮挡则维持，未被遮挡则解除暂停 / 重放被停止的壁纸）。
     pub async fn handle_unlock(&self) {
-        self.resume_wallpaper(None).await;
+        log::info!("session unlocked -> occlusion cleared");
+        self.session_locked
+            .store(false, std::sync::atomic::Ordering::SeqCst);
+        self.apply_session_covered().await;
+        self.notify_change();
     }
 
     /// 显示器变化：重建管理器并恢复快照。
