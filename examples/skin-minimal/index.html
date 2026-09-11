@@ -120,6 +120,8 @@
         $("volume-label").textContent = String(res.data.volume ?? 0);
       }
     });
+    // 主窗口就绪：关闭启动屏并显示窗口（app 型皮肤契约）
+    window.WallpaperClient.shell.hideLoading();
     refresh();
   </script>
 </body>

@@ -187,6 +187,22 @@ pub(crate) fn build_main_window(
     for script in target.extra_init_scripts {
         builder = builder.initialization_script(script);
     }
+    // 启动屏兜底：app 型皮肤可能不调 hide_loading，页面加载完成后延时强制收尾，
+    // 避免启动屏/主窗口永远卡在隐藏状态。正常路径下启动屏早已关闭，这里是空操作。
+    let splash_fallback = app.clone();
+    builder = builder.on_page_load(move |_, payload| {
+        if payload.event() != tauri::webview::PageLoadEvent::Finished {
+            return;
+        }
+        let app = splash_fallback.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(5));
+            if app.get_webview_window("splashscreen").is_some() {
+                log::info!("splash fallback: hide_loading not called after main window load, closing");
+                finish_loading(&app);
+            }
+        });
+    });
     builder
         // 社区页卡片“打开”等 target=_blank 请求默认被 WebView 拒绝，
         // 在这里接管：Hub 详情页开应用内新窗口，其余交给系统浏览器
@@ -259,6 +275,24 @@ pub(crate) fn show_main_window(app: &tauri::AppHandle, route: Option<&str>) {
     let _ = window.set_focus();
     if let Some(route) = route {
         publish_event(app, "navigate", serde_json::json!({ "path": route }));
+    }
+}
+
+/// 主窗口就绪收尾：关闭启动屏；除非配置了启动时隐藏，否则显示主窗口。
+/// `hide_loading` 命令与 page load 兜底共用。
+pub(crate) fn finish_loading(app: &tauri::AppHandle) {
+    let hide = app
+        .try_state::<AppState>()
+        .map(|st| st.config.lock().general.hide_window)
+        .unwrap_or(false);
+    if let Some(splash) = app.get_webview_window("splashscreen") {
+        let _ = splash.close();
+    }
+    if !hide {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
     }
 }
 

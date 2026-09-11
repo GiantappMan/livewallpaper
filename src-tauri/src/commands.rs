@@ -796,21 +796,7 @@ pub fn show_shell(app: AppHandle, path: Option<String>) -> Result<()> {
 
 #[tauri::command]
 pub fn hide_loading(app: AppHandle) -> Result<()> {
-    // 主窗口就绪：关闭启动屏；除非配置了启动时隐藏，否则显示主窗口
-    let hide = {
-        let st = state(&app);
-        let guard = st.config.lock();
-        guard.general.hide_window
-    };
-    if let Some(splash) = app.get_webview_window("splashscreen") {
-        let _ = splash.close();
-    }
-    if !hide {
-        if let Some(window) = app.get_webview_window("main") {
-            let _ = window.show();
-            let _ = window.set_focus();
-        }
-    }
+    crate::finish_loading(&app);
     Ok(())
 }
 

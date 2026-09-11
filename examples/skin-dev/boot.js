@@ -77,6 +77,9 @@
     }
 
     show();
+
+    // 主窗口就绪：关闭启动屏并显示窗口（app 型皮肤契约，见 docs/3.皮肤系统.md）
+    if (client) client.shell.hideLoading();
   }
 
   if (!window.DevSkin || !window.DevSkin.client) {
