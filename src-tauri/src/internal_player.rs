@@ -368,7 +368,8 @@ impl InternalPlayerController {
         Ok(())
     }
 
-    /// web 窗口的交互转发目标：仅嵌入桌面且 WebView2 子窗口就绪时存在。
+    /// web 窗口的交互转发目标：仅嵌入桌面时存在。取 WebView2 输入子窗口
+    /// 的父链链顶为标记（子窗口异步创建，短暂等待）。
     #[cfg(windows)]
     fn web_hook_target(&self, screen: u32) -> Option<mouse_hook::MouseTarget> {
         let label = Self::label_web(screen);
@@ -381,14 +382,12 @@ impl InternalPlayerController {
             return None;
         }
         let window = self.app.get_webview_window(&label)?;
-        // WebView2 子窗口异步创建：短暂等待重试
         for _ in 0..20 {
             if let Ok(h) = window.hwnd() {
                 if let Some(child) = mouse_hook::find_webview_child(h.0 as isize) {
                     return Some(mouse_hook::MouseTarget {
                         screen,
-                        monitor: mouse_hook::monitor_of_window(h.0 as isize),
-                        hwnd: child,
+                        webview_top: mouse_hook::chain_top(child),
                     });
                 }
             }
@@ -450,7 +449,7 @@ impl InternalPlayerController {
             .app
             .try_state::<crate::state::AppState>()
             .map(|s| s.dirs.tmp_dir())
-            .unwrap_or_else(|| std::env::temp_dir());
+            .unwrap_or_else(std::env::temp_dir);
         let name = format!("freeze-web-{screen}.png");
         let png_path = tmp_dir.join(&name);
         // 缓存穿透：同屏重复冻结时保证 <img> 重新拉取新帧
@@ -558,7 +557,7 @@ fn capture_and_inject(
                 if std::fs::write(&png_path, &buf).is_err() {
                     return Ok(());
                 }
-                let _ = window.eval(&freeze_image_js(&media_url));
+                let _ = window.eval(freeze_image_js(&media_url).as_str());
                 Ok(())
             }));
         let _ = core.CapturePreview(

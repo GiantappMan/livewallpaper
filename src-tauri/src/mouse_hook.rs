@@ -1,35 +1,36 @@
 //! web 壁纸鼠标交互：全局低级鼠标钩子转发。
 //!
-//! 嵌入 WorkerW 的壁纸窗口位于桌面图标层（Progman → SHELLDLL_DefView →
-//! SysListView32）之下，Windows 把桌面上的鼠标输入全部交给图标层，
-//! 壁纸窗口收不到任何真实输入，`set_ignore_cursor_events` 也无济于事。
+//! 嵌入 WorkerW 的壁纸窗口位于桌面图标层之下，Windows 的真实输入
+//! 永远到不了壁纸窗口，`set_ignore_cursor_events` 也无济于事。
 //! 与 Wallpaper Engine / Lively 相同的思路：安装 WH_MOUSE_LL 全局钩子，
-//! 把"落在桌面上"的鼠标事件 PostMessage 给对应屏幕的 WebView2 子窗口
-//! （Chrome_WidgetWin_0），页面即获得移动 / 按键 / 滚轮 / 双击等完整交互。
+//! 把鼠标事件 PostMessage 给对应壁纸的 WebView2 窗口，页面即获得
+//! 移动 / 按键 / 滚轮 / 双击等完整交互。
 //!
-//! 钩子从不吞事件（恒 CallNextHookEx），桌面图标、任务栏等行为不受影响；
-//! 光标位于普通应用窗口之上时不转发，避免事件穿透到被遮挡的壁纸。
+//! 命中判定：`WindowFromPoint` 的根窗口（GA_ROOT，不跨进程，停在
+//! WebView2 的 Chrome_WidgetWin_1）与注册时记录的壁纸 webview 根
+//! 一致才转发——实测桌面上命中的就是壁纸自己的 webview（图标层对
+//! 空白区域放行），应用窗口 / 任务栏 / 桌面图标命中则根不同，自然
+//! 排除。转发目标是命中窗口本身（与真实输入的投递路径一致）。
+//!
+//! 钩子从不吞事件（恒 CallNextHookEx），桌面图标、任务栏等行为不受影响。
 
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::mpsc;
 use std::time::Duration;
 
 use parking_lot::Mutex;
 use windows::core::BOOL;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::{
-    MonitorFromPoint, MonitorFromWindow, MONITOR_DEFAULTTONEAREST,
-};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, GetDoubleClickTime, VK_CONTROL, VK_SHIFT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, EnumChildWindows, GetAncestor, GetClassNameW, GetMessageW, GetSystemMetrics,
-    GetWindowRect, PostMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
-    WindowFromPoint, GA_ROOT, MSG, MSLLHOOKSTRUCT, SM_CXDOUBLECLK, SM_CYDOUBLECLK, WH_MOUSE_LL,
-    WM_LBUTTONDBLCLK, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDBLCLK, WM_MBUTTONDOWN,
-    WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_QUIT, WM_RBUTTONDBLCLK,
-    WM_RBUTTONDOWN, WM_RBUTTONUP,
+    CallNextHookEx, EnumChildWindows, GetClassNameW, GetMessageW, GetSystemMetrics,
+    GetWindowRect, GetWindowThreadProcessId, GetParent, PostMessageW, PostThreadMessageW,
+    SetWindowsHookExW, UnhookWindowsHookEx, WindowFromPoint, MSG, MSLLHOOKSTRUCT, SM_CXDOUBLECLK,
+    SM_CYDOUBLECLK, WH_MOUSE_LL, WM_LBUTTONDBLCLK, WM_LBUTTONDOWN, WM_LBUTTONUP,
+    WM_MBUTTONDBLCLK, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL,
+    WM_QUIT, WM_RBUTTONDBLCLK, WM_RBUTTONDOWN, WM_RBUTTONUP,
 };
 use windows::Win32::System::Threading::GetCurrentThreadId;
 
@@ -44,16 +45,18 @@ const MK_MBUTTON: u32 = 0x0010;
 #[derive(Debug, Clone)]
 pub struct MouseTarget {
     pub screen: u32,
-    /// 壁纸窗口所在显示器（HMONITOR 原始值）。
-    pub monitor: isize,
-    /// WebView2 渲染子窗口（Chrome_WidgetWin_0）原始句柄。
-    pub hwnd: isize,
+    /// 壁纸 WebView2 窗口链的链顶（GetParent 走到头的 Chrome_WidgetWin_1，
+    /// 属 msedgewebview2.exe 进程）。命中侧用同一算法取链顶比对。
+    pub webview_top: isize,
 }
 
 static TARGETS: Mutex<Vec<MouseTarget>> = Mutex::new(Vec::new());
 
 /// 当前按下的鼠标键（MOVE / 滚轮消息的 wParam 需要）。
 static BUTTONS: AtomicU32 = AtomicU32::new(0);
+
+/// 首次成功转发时打一条 INFO 日志（测试时确认链路已通）。
+static FORWARDED_ONCE: AtomicBool = AtomicBool::new(false);
 
 struct LastClick {
     button: u32,
@@ -79,7 +82,7 @@ pub fn set_target(screen: u32, target: Option<MouseTarget>) {
         let mut targets = TARGETS.lock();
         targets.retain(|t| t.screen != screen);
         if let Some(t) = target {
-            log::info!("mouse hook target: screen {screen} hwnd={:#x}", t.hwnd);
+            log::info!("mouse hook target: screen {screen} webview_top={:#x}", t.webview_top);
             targets.push(t);
         }
         !targets.is_empty()
@@ -169,15 +172,16 @@ fn forward(msg: u32, info: &MSLLHOOKSTRUCT) {
     };
     let wflags = state | modifiers();
 
+    // 命中匹配：光标下窗口的根是注册的壁纸 webview 根才转发
+    // （应用窗口 / 任务栏 / 桌面图标命中的根不同，自动排除）
     let pt = info.pt;
-    // 光标在普通应用窗口上时不转发（壁纸被遮挡，转发只会造成幽灵点击）
-    if !cursor_on_desktop(pt) {
-        return;
-    }
-    let Some(target) = target_at(pt) else {
+    let Some(hwnd) = hit_target(pt) else {
         return;
     };
-    let hwnd = HWND(target.hwnd as *mut _);
+
+    if !FORWARDED_ONCE.swap(true, Ordering::SeqCst) {
+        log::info!("web 壁纸鼠标交互已生效（首次转发 msg={msg:#x}）");
+    }
 
     // WM_MOUSEWHEEL / WM_MOUSEHWHEEL 的 lParam 按约定为屏幕坐标
     if matches!(msg, WM_MOUSEWHEEL | WM_MOUSEHWHEEL) {
@@ -223,20 +227,88 @@ fn forward(msg: u32, info: &MSLLHOOKSTRUCT) {
     }
 }
 
-/// 光标下的根窗口是否为桌面（图标层 / WorkerW）。
-fn cursor_on_desktop(pt: POINT) -> bool {
+/// 光标下窗口属于哪个注册的壁纸：返回应投递的窗口（命中窗口本身，
+/// 与真实输入的投递路径一致）。判定方式：命中窗口沿 GetParent 链
+/// 走到链顶，与注册的 webview 链顶一致即命中。应用窗口 / 任务栏 /
+/// 桌面图标的链顶不同，自动排除。
+fn hit_target(pt: POINT) -> Option<HWND> {
     unsafe {
         let under = WindowFromPoint(pt);
-        let root = GetAncestor(under, GA_ROOT);
-        let root = if root.is_invalid() { under } else { root };
-        let cls = window_class(root);
-        cls.eq_ignore_ascii_case("Progman") || cls.eq_ignore_ascii_case("WorkerW")
+        let top = chain_top(under.0 as isize);
+        TARGETS
+            .lock()
+            .iter()
+            .find(|t| t.webview_top == top)
+            .map(|_| under)
     }
 }
 
-fn target_at(pt: POINT) -> Option<MouseTarget> {
-    let monitor = unsafe { MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST) }.0 as isize;
-    TARGETS.lock().iter().find(|t| t.monitor == monitor).cloned()
+/// GetParent 链顶端。实测 WebView2 的窗口链停在 Chrome_WidgetWin_1
+/// （父链不进入宿主进程），壁纸窗口与命中窗口走同一算法结果一致。
+pub fn chain_top(hwnd: isize) -> isize {
+    let mut cur = hwnd;
+    unsafe {
+        for _ in 0..16 {
+            let parent = match GetParent(HWND(cur as *mut _)) {
+                Ok(p) => p,
+                Err(_) => break,
+            };
+            if parent.is_invalid() || parent.0 as isize == cur {
+                break;
+            }
+            cur = parent.0 as isize;
+        }
+    }
+    cur
+}
+
+struct ChildCtx {
+    self_pid: u32,
+    webview: Option<isize>,
+}
+
+/// 找到壁纸窗口下的 WebView2 输入子窗口（优先 Chrome_RenderWidgetHostHWND，
+/// 退回第一个跨进程子窗口）——其链顶即注册用链顶。
+pub fn find_webview_child(top: isize) -> Option<isize> {
+    let top = HWND(top as *mut _);
+    let mut ctx = ChildCtx {
+        self_pid: unsafe { GetWindowThreadProcessId(top, None) },
+        webview: None,
+    };
+    unsafe {
+        let _ = EnumChildWindows(
+            Some(top),
+            Some(child_enum_proc),
+            LPARAM(&mut ctx as *mut ChildCtx as isize),
+        );
+    }
+    ctx.webview
+}
+
+unsafe extern "system" fn child_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+    let ctx = &mut *(lparam.0 as *mut ChildCtx);
+    let mut pid = 0u32;
+    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+    // WebView2 的 Chrome_* 窗口属于 msedgewebview2.exe 进程
+    if pid != ctx.self_pid {
+        let cls = window_class_of(hwnd);
+        let is_input = cls.eq_ignore_ascii_case("Chrome_RenderWidgetHostHWND");
+        // 优先输入窗口；其余跨进程子窗口仅在没有更优选择时使用
+        if is_input {
+            ctx.webview = Some(hwnd.0 as isize);
+            return false.into();
+        }
+        if ctx.webview.is_none() {
+            ctx.webview = Some(hwnd.0 as isize);
+        }
+    }
+    true.into()
+}
+
+fn window_class_of(hwnd: HWND) -> String {
+    let mut buf = [0u16; 256];
+    let len = unsafe { GetClassNameW(hwnd, &mut buf) };
+    String::from_utf16_lossy(&buf[..len.max(0) as usize])
 }
 
 fn modifiers() -> u32 {
@@ -271,48 +343,4 @@ fn is_double_click(button: u32, time: u32, cx: i32, cy: i32) -> bool {
 
 fn lparam_xy(x: i32, y: i32) -> LPARAM {
     LPARAM((((y as u16 as usize) << 16) | (x as u16 as usize)) as isize)
-}
-
-fn window_class(hwnd: HWND) -> String {
-    let mut buf = [0u16; 256];
-    let len = unsafe { GetClassNameW(hwnd, &mut buf) };
-    String::from_utf16_lossy(&buf[..len.max(0) as usize])
-}
-
-/// 窗口所在显示器（HMONITOR 原始值）。
-pub fn monitor_of_window(hwnd: isize) -> isize {
-    unsafe { MonitorFromWindow(HWND(hwnd as *mut _), MONITOR_DEFAULTTONEAREST) }.0 as isize
-}
-
-struct ChildSlots {
-    webview: Option<isize>,
-    first: Option<isize>,
-}
-
-unsafe extern "system" fn child_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
-    let slots = &mut *(lparam.0 as *mut ChildSlots);
-    if window_class(hwnd).eq_ignore_ascii_case("Chrome_WidgetWin_0") {
-        if slots.webview.is_none() {
-            slots.webview = Some(hwnd.0 as isize);
-        }
-    } else if slots.first.is_none() {
-        slots.first = Some(hwnd.0 as isize);
-    }
-    true.into()
-}
-
-/// 找到 WebView2 的输入子窗口（Chrome_WidgetWin_0；兜底取第一个子窗口）。
-pub fn find_webview_child(top: isize) -> Option<isize> {
-    let mut slots = ChildSlots {
-        webview: None,
-        first: None,
-    };
-    unsafe {
-        let _ = EnumChildWindows(
-            Some(HWND(top as *mut _)),
-            Some(child_enum_proc),
-            LPARAM(&mut slots as *mut ChildSlots as isize),
-        );
-    }
-    slots.webview.or(slots.first)
 }
