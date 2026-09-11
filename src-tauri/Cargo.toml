@@ -43,10 +43,18 @@ notify-debouncer-mini = "0.7"
 windows = { version = "0.62", features = [
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_System_Threading",
 ] }
 # 与 wry 依赖的 webview2-com 同大版本：直接操作 ICoreWebView2（IsMuted 静音等）
 webview2-com = "0.38"
 windows-core = "0.61"
+# webview2-com-sys 的 COM 绑定基于 windows 0.61（如 IStream），重命名引入避免与 0.62 冲突
+windows61 = { package = "windows", version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+] }
 
 [profile.release]
 opt-level = "s"

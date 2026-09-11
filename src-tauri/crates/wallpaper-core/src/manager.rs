@@ -403,6 +403,9 @@ impl ScreenManager {
     async fn apply_pause(&self, settings: &ApiSettings) {
         let paused = self.should_pause(settings);
         if let Some(Render::Video(p)) = self.render.as_ref() {
+            // 先解冻/冻结页面再处理媒体暂停：恢复时页面 JS 已运行，
+            // 注入的恢复脚本才能立即生效
+            let _ = p.set_frozen(paused && self.covered).await;
             let _ = p.set_paused(paused).await;
         }
     }

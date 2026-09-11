@@ -177,7 +177,7 @@ export function SettingDialog(props: SettingDialogProps) {
                             )}
                         />
                     </>}
-                    {wallpaperType === WallpaperType.Exe && <>
+                    {(wallpaperType === WallpaperType.Exe || wallpaperType === WallpaperType.Web) && <>
                         <FormField
                             control={form.control}
                             name="setting.enableMouseEvent"

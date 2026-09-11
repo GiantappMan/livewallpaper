@@ -87,6 +87,14 @@ pub trait PlayerEngine: Send + Sync {
     async fn set_paused(&self, paused: bool) -> Result<()>;
     async fn set_volume(&self, volume: u32) -> Result<()>;
 
+    /// 遮挡暂停的深度冻结：屏幕被完全遮挡、壁纸不可见时，引擎可以隐藏并
+    /// 挂起渲染（web 页面脚本/动画/计时器全停，释放 CPU）。手动暂停不调用——
+    /// 用户看得见壁纸时保持画面，只做 `set_paused` 的媒体级暂停。默认 no-op。
+    async fn set_frozen(&self, _frozen: bool) -> Result<()> {
+        let _ = _frozen;
+        Ok(())
+    }
+
     /// 铺满裁剪：1.0 开启，0.0 关闭。不支持的引擎默认 no-op。
     async fn set_panscan(&self, value: f64) -> Result<()> {
         let _ = value;

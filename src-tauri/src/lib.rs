@@ -11,6 +11,8 @@ mod commands;
 mod control;
 mod events;
 mod internal_player;
+#[cfg(windows)]
+mod mouse_hook;
 mod logger;
 mod media_protocol;
 mod mpv_download;

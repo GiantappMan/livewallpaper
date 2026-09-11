@@ -17,6 +17,9 @@ use wallpaper_core::models::{TimePos, VideoPlayer};
 use wallpaper_core::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory, WEB_KIND};
 use wallpaper_core::system::workerw;
 
+#[cfg(windows)]
+use crate::mouse_hook;
+
 const PLAYER_PREFIX: &str = "player-";
 const WEB_PREFIX: &str = "web-";
 
@@ -344,12 +347,55 @@ impl InternalPlayerController {
     }
 
     /// 设置鼠标事件：enabled = 页面接收鼠标（否则穿透到桌面）。
+    /// 独立窗口靠 `set_ignore_cursor_events` 原生收放输入；嵌入桌面的窗口
+    /// 位于图标层之下收不到任何真实输入，由全局鼠标钩子转发（见 mouse_hook）。
     fn web_set_mouse(&self, screen: u32, enabled: bool) -> Result<(), String> {
         let label = Self::label_web(screen);
         if let Some(window) = self.app.get_webview_window(&label) {
             let _ = window.set_ignore_cursor_events(!enabled);
         }
+        #[cfg(windows)]
+        {
+            let target = if enabled {
+                self.web_hook_target(screen)
+            } else {
+                None
+            };
+            mouse_hook::set_target(screen, target);
+        }
+        #[cfg(not(windows))]
+        let _ = (screen, enabled);
         Ok(())
+    }
+
+    /// web 窗口的交互转发目标：仅嵌入桌面且 WebView2 子窗口就绪时存在。
+    #[cfg(windows)]
+    fn web_hook_target(&self, screen: u32) -> Option<mouse_hook::MouseTarget> {
+        let label = Self::label_web(screen);
+        let embed = self
+            .info_of(&label)
+            .map(|i| i.embed.load(Ordering::SeqCst))
+            .unwrap_or(true);
+        if !embed {
+            // 独立窗口（调试/预览）自己就能收输入，走钩子反而重复投递
+            return None;
+        }
+        let window = self.app.get_webview_window(&label)?;
+        // WebView2 子窗口异步创建：短暂等待重试
+        for _ in 0..20 {
+            if let Ok(h) = window.hwnd() {
+                if let Some(child) = mouse_hook::find_webview_child(h.0 as isize) {
+                    return Some(mouse_hook::MouseTarget {
+                        screen,
+                        monitor: mouse_hook::monitor_of_window(h.0 as isize),
+                        hwnd: child,
+                    });
+                }
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        log::warn!("[player:{label}] 未找到 WebView2 子窗口，鼠标交互不可用");
+        None
     }
 
     /// 已存活的窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
@@ -389,12 +435,52 @@ impl InternalPlayerController {
         window.eval(js).map_err(|e| e.to_string())
     }
 
+    /// 冻结 / 解冻界面：截取当前画面写入 tmp，再以全屏 <img> 盖在页面上，
+    /// 界面"定格"在当前帧且仍然可见（不做隐藏、不销毁窗口）；解冻即移除图片。
+    /// 声音由 `set_paused` 的整体静音负责。
+    fn web_freeze_frame(&self, screen: u32, frozen: bool) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        let Some(window) = self.app.get_webview_window(&label) else {
+            return Err(format!("{label} 窗口不存在"));
+        };
+        if !frozen {
+            return window.eval(FREEZE_REMOVE_JS).map_err(|e| e.to_string());
+        }
+        let tmp_dir = self
+            .app
+            .try_state::<crate::state::AppState>()
+            .map(|s| s.dirs.tmp_dir())
+            .unwrap_or_else(|| std::env::temp_dir());
+        let name = format!("freeze-web-{screen}.png");
+        let png_path = tmp_dir.join(&name);
+        // 缓存穿透：同屏重复冻结时保证 <img> 重新拉取新帧
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let url = format!("{}?t={stamp}", crate::urls::tmp_name_to_media_url(&name));
+        #[cfg(windows)]
+        {
+            let win = window.clone();
+            window
+                .with_webview(move |wv| capture_and_inject(&wv, png_path, url, win))
+                .map_err(|e| e.to_string())
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = (png_path, url);
+            Ok(())
+        }
+    }
+
     fn web_is_alive(&self, screen: u32) -> bool {
         self.app.get_webview_window(&Self::label_web(screen)).is_some()
     }
 
     fn web_close(&self, screen: u32) -> Result<(), String> {
         let label = Self::label_web(screen);
+        #[cfg(windows)]
+        mouse_hook::set_target(screen, None);
         if let Some(window) = self.app.get_webview_window(&label) {
             let _ = window.destroy();
         }
@@ -422,6 +508,80 @@ fn set_platform_muted(wv: &tauri::webview::PlatformWebview, muted: bool) {
         }
     }
 }
+
+/// Windows：截取 WebView 当前画面（CapturePreview -> 内存流 -> tmp PNG），
+/// 完成回调里注入全屏定格 <img>。页面照常运行，视觉上停在截取的那一帧。
+#[cfg(windows)]
+fn capture_and_inject(
+    wv: &tauri::webview::PlatformWebview,
+    png_path: std::path::PathBuf,
+    media_url: String,
+    window: tauri::WebviewWindow,
+) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG, ICoreWebView2CapturePreviewCompletedHandler,
+    };
+    use webview2_com::CapturePreviewCompletedHandler;
+    use windows61::Win32::Foundation::HGLOBAL;
+    use windows61::Win32::System::Com::{STATSTG, STREAM_SEEK_SET, STATFLAG_NONAME};
+    use windows61::Win32::System::Com::StructuredStorage::CreateStreamOnHGlobal;
+
+    unsafe {
+        let Ok(core) = wv.controller().CoreWebView2() else {
+            return;
+        };
+        let Ok(mem) = CreateStreamOnHGlobal(HGLOBAL::default(), true) else {
+            return;
+        };
+        let mem_for_capture = mem.clone();
+        let handler: ICoreWebView2CapturePreviewCompletedHandler =
+            CapturePreviewCompletedHandler::create(Box::new(move |result| {
+                if result.is_err() {
+                    return Ok(());
+                }
+                // 注：闭包在 unsafe 上下文内定义，沿用其 unsafe 资格
+                let _ = mem_for_capture.Seek(0, STREAM_SEEK_SET, None);
+                let mut stat = STATSTG::default();
+                if mem_for_capture.Stat(&mut stat, STATFLAG_NONAME).is_err() {
+                    return Ok(());
+                }
+                let size = stat.cbSize as usize;
+                if size == 0 || size > 64 * 1024 * 1024 {
+                    return Ok(());
+                }
+                let mut buf = vec![0u8; size];
+                let mut read = 0u32;
+                let hr = mem_for_capture.Read(buf.as_mut_ptr().cast(), size as u32, Some(&mut read));
+                if hr.is_err() || read as usize != size {
+                    return Ok(());
+                }
+                if std::fs::write(&png_path, &buf).is_err() {
+                    return Ok(());
+                }
+                let _ = window.eval(&freeze_image_js(&media_url));
+                Ok(())
+            }));
+        let _ = core.CapturePreview(
+            COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG,
+            &mem,
+            &handler,
+        );
+    }
+}
+
+/// 全屏定格图：盖住整个页面（含视频/动画/时钟），样式内联防皮肤样式干扰。
+fn freeze_image_js(url: &str) -> String {
+    format!(
+        "(function(){{var d=document;if(!d.body)return;\
+         var o=d.getElementById('__wp_freeze_frame');if(o)o.remove();\
+         var i=d.createElement('img');i.id='__wp_freeze_frame';i.src='{url}';\
+         i.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;object-fit:cover;z-index:2147483647;pointer-events:none;border:0;margin:0;padding:0;';\
+         d.body.appendChild(i);}})()"
+    )
+}
+
+const FREEZE_REMOVE_JS: &str =
+    "(function(){var e=document.getElementById('__wp_freeze_frame');if(e)e.remove()})()";
 
 /// serde_json helper: merge two objects.
 trait MergeValue {
@@ -668,6 +828,14 @@ impl PlayerEngine for WebPlayer {
         let muted = volume == 0 || self.paused.load(Ordering::SeqCst);
         self.controller
             .web_set_muted(self.screen, muted)
+            .map_err(err_msg)
+    }
+
+    /// 遮挡冻结：截取当前帧注入为全屏定格图——界面停在截图瞬间且仍然可见，
+    /// 不隐藏窗口。只被遮挡暂停调用（手动暂停保持页面原样活跃）。
+    async fn set_frozen(&self, frozen: bool) -> anyhow::Result<()> {
+        self.controller
+            .web_freeze_frame(self.screen, frozen)
             .map_err(err_msg)
     }
 
