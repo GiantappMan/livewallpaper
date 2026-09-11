@@ -42,6 +42,16 @@ fn scan_directory(dir: &Path, out: &mut Vec<PathBuf>, depth: u8) {
     if depth > 3 {
         return; // 限制递归深度，避免大目录卡顿
     }
+    // 项目目录（Wallpaper Engine / v2）：整个目录是一个壁纸，
+    // 入口文件取 project.json 的 file 字段，不再递归内部资源。
+    // 入口缺失（已删除 / 拷贝中）时同样整体跳过，避免拆出一堆资源垃圾条目。
+    if let Some(file) = project_file_field(dir) {
+        let entry = dir.join(file);
+        if entry.is_file() {
+            out.push(entry);
+        }
+        return;
+    }
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -71,6 +81,18 @@ fn scan_directory(dir: &Path, out: &mut Vec<PathBuf>, depth: u8) {
             }
         }
     }
+}
+
+/// 项目目录（Wallpaper Engine workshop 内容 / v2 布局）标记：
+/// project.json 存在且 file 字段有效，返回该入口相对路径。
+fn project_file_field(dir: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(dir.join("project.json")).ok()?;
+    let v: Value = serde_json::from_str(&text).ok()?;
+    let file = v.get("file")?.as_str()?.trim();
+    if file.is_empty() || file.contains("..") {
+        return None;
+    }
+    Some(file.to_string())
 }
 
 fn creation_time(path: &Path) -> i64 {
@@ -151,6 +173,33 @@ pub fn load_wallpaper(file: &Path, mpv_exe: &Path, default_cover: &Path) -> Resu
     let setting: WallpaperSetting =
         load_json(&setting_path_of(&file)).unwrap_or_default();
 
+    // 项目目录（Wallpaper Engine / v2）：修正早前错误扫描留下的 meta——
+    // 占位默认封面让位给 project.json 的 preview，自动 id（等于入口文件名）让位给
+    // workshopid / 目录名；标题保留（用户可能已改名）。
+    let dir = file.parent().unwrap_or_else(|| Path::new("."));
+    let is_project_entry = project_file_field(dir)
+        .map(|f| dir.join(f) == file)
+        .unwrap_or(false);
+    if is_project_entry {
+        if let Some(p) = load_v2_project(&dir.join("project.json"), &file) {
+            let cover_is_placeholder = meta
+                .cover
+                .as_deref()
+                .map(|c| c.ends_with(".cover.default.webp"))
+                .unwrap_or(true);
+            if cover_is_placeholder && p.cover.is_some() {
+                meta.cover = p.cover.clone();
+            }
+            let auto_id = file
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_default();
+            if meta.id.as_deref().is_none_or(|id| id.is_empty() || id == auto_id) {
+                meta.id = p.id.clone();
+            }
+        }
+    }
+
     let wallpaper_type = wallpaper_type_of_file(&file);
     if meta.title.is_empty() {
         meta.title = file
@@ -162,7 +211,6 @@ pub fn load_wallpaper(file: &Path, mpv_exe: &Path, default_cover: &Path) -> Resu
     meta.ensure_id(&file);
 
     // 封面：meta.cover 是文件名，v3 一律存放在 .metadata 目录
-    let dir = file.parent().unwrap_or_else(|| Path::new("."));
     let mut cover_path = meta
         .cover
         .as_ref()
@@ -242,12 +290,16 @@ fn migrate_v30_sidecars(file: &Path) -> PathBuf {
     file.to_path_buf()
 }
 
-/// v2 project.json -> WallpaperMeta。
+/// v2 / Wallpaper Engine project.json -> WallpaperMeta。
 fn load_v2_project(project: &Path, file: &Path) -> Option<WallpaperMeta> {
     let text = std::fs::read_to_string(project).ok()?;
     let v: Value = serde_json::from_str(&text).ok()?;
     let mut meta = WallpaperMeta {
-        title: v.get("title")?.as_str().unwrap_or_default().to_string(),
+        title: v
+            .get("title")
+            .and_then(|t| t.as_str())
+            .unwrap_or_default()
+            .to_string(),
         description: v
             .get("description")
             .and_then(|d| d.as_str())
@@ -256,6 +308,24 @@ fn load_v2_project(project: &Path, file: &Path) -> Option<WallpaperMeta> {
         wallpaper_type: wallpaper_type_of_file(file),
         ..Default::default()
     };
+    // Wallpaper Engine：preview 即项目封面（位于项目目录内）
+    if let Some(preview) = v.get("preview").and_then(|p| p.as_str()).filter(|p| !p.is_empty()) {
+        meta.cover = Some(preview.to_string());
+    }
+    // 稳定 id：workshopid > 项目目录名（入口文件多为 index.html，不能作 id）
+    if let Some(id) = v
+        .get("workshopid")
+        .and_then(|w| w.as_str())
+        .filter(|w| !w.is_empty())
+        .map(|s| s.to_string())
+        .or_else(|| {
+            file.parent()?
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+        })
+    {
+        meta.id = Some(id);
+    }
     meta.ensure_id(file);
     Some(meta)
 }
@@ -461,4 +531,104 @@ pub fn meta_for_download(mut meta: WallpaperMeta, id: &str) -> WallpaperMeta {
         meta.id = Some(id.to_string());
     }
     meta
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::WallpaperType;
+
+    fn temp_root(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "gapp-lib-{}-{tag}",
+            uuid::Uuid::new_v4().simple()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// Wallpaper Engine 项目目录只产生一个 web 壁纸条目，
+    /// 内部资源（图标 / 预览图）不再被拆成独立条目。
+    #[test]
+    fn wallpaper_engine_project_scans_as_single_entry() {
+        let root = temp_root("we");
+        let project = root.join("2905017768");
+        std::fs::create_dir_all(project.join("assets/icons")).unwrap();
+        std::fs::write(
+            project.join("project.json"),
+            r#"{"title":"Bocchi the Rock!","type":"web","file":"index.html","preview":"preview.gif","workshopid":"2905017768"}"#,
+        )
+        .unwrap();
+        std::fs::write(project.join("index.html"), "<html></html>").unwrap();
+        std::fs::write(project.join("preview.gif"), "gif").unwrap();
+        std::fs::write(project.join("assets/icons/play.png"), "png").unwrap();
+
+        let list = scan_directories(&[root.clone()], Path::new("mpv"), Path::new("cover"));
+        assert_eq!(list.len(), 1, "内部资源不应成为独立条目: {list:?}");
+        let w = &list[0];
+        assert_eq!(w.file_path.as_deref(), Some(project.join("index.html").as_path()));
+        assert_eq!(w.meta.wallpaper_type, WallpaperType::Web);
+        assert_eq!(w.meta.title, "Bocchi the Rock!");
+        assert_eq!(w.meta.id.as_deref(), Some("2905017768"));
+        assert_eq!(w.cover_path.as_deref(), Some(project.join("preview.gif").as_path()));
+
+        // 项目目录本身作为媒体库根目录时同样只出一个条目
+        let list = scan_directories(&[project], Path::new("mpv"), Path::new("cover"));
+        assert_eq!(list.len(), 1);
+
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 普通目录（无 project.json）维持原有递归行为。
+    #[test]
+    fn plain_folders_still_recurse() {
+        let root = temp_root("plain");
+        std::fs::create_dir_all(root.join("sub")).unwrap();
+        std::fs::write(root.join("a.jpg"), "jpg").unwrap();
+        std::fs::write(root.join("sub/b.mp4"), "mp4").unwrap();
+
+        let list = scan_directories(&[root.clone()], Path::new("mpv"), Path::new("cover"));
+        let mut names: Vec<String> = list
+            .iter()
+            .map(|w| {
+                w.file_name
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_string()
+            })
+            .collect();
+        names.sort();
+        assert_eq!(names, vec!["a.jpg", "b.mp4"]);
+
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 早前错误扫描留下的 meta（占位封面 / 入口文件名 id）会被 project.json 修正。
+    #[test]
+    fn stale_meta_gets_repaired_from_project_json() {
+        let root = temp_root("stale");
+        let project = root.join("2905017768");
+        std::fs::create_dir_all(project.join(META_DIR)).unwrap();
+        std::fs::write(
+            project.join("project.json"),
+            r#"{"title":"Bocchi","type":"web","file":"index.html","preview":"preview.gif","workshopid":"2905017768"}"#,
+        )
+        .unwrap();
+        std::fs::write(project.join("index.html"), "<html></html>").unwrap();
+        std::fs::write(project.join("preview.gif"), "gif").unwrap();
+        std::fs::write(
+            project.join(META_DIR).join("index.meta.json"),
+            r#"{"id":"index","title":"Bocchi","cover":"index.cover.default.webp","type":4}"#,
+        )
+        .unwrap();
+        std::fs::write(project.join(META_DIR).join("index.cover.default.webp"), "webp").unwrap();
+
+        let list = scan_directories(&[root.clone()], Path::new("mpv"), Path::new("cover"));
+        assert_eq!(list.len(), 1);
+        let w = &list[0];
+        assert_eq!(w.meta.id.as_deref(), Some("2905017768"));
+        assert_eq!(w.cover_path.as_deref(), Some(project.join("preview.gif").as_path()));
+
+        std::fs::remove_dir_all(&root).ok();
+    }
 }

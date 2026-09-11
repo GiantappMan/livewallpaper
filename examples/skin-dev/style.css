@@ -143,6 +143,17 @@ td.mono, th.mono { font-family: var(--mono); }
 .toast.err { border-left-color: var(--err); }
 @keyframes fadein { from { opacity: 0; transform: translateY(6px); } }
 
+/* 右键菜单 */
+.ctx-menu {
+  position: fixed; z-index: 100; min-width: 160px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+.ctx-menu .ctx-item {
+  padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;
+}
+.ctx-menu .ctx-item:hover { background: var(--accent); color: #fff; }
+
 /* 载入失败横幅（浏览器直接打开 / SDK 缺失） */
 #nosdk {
   margin: 40px auto; max-width: 520px; text-align: center;

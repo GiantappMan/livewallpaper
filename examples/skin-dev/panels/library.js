@@ -41,6 +41,47 @@
     );
   }
 
+  // ---- 右键菜单（卡片右键：打开文件位置） ----
+  let ctxMenu = null;
+
+  function hideCtxMenu() {
+    if (!ctxMenu) return;
+    ctxMenu.remove();
+    ctxMenu = null;
+    // 菜单项自身 onclick 用冒泡阶段先于 window 监听执行，不会被提前移除
+    window.removeEventListener("click", hideCtxMenu);
+    window.removeEventListener("contextmenu", hideCtxMenu);
+    window.removeEventListener("blur", hideCtxMenu);
+    window.removeEventListener("keydown", hideCtxMenu);
+    window.removeEventListener("scroll", hideCtxMenu, true);
+  }
+
+  function showCtxMenu(x, y, items) {
+    hideCtxMenu();
+    ctxMenu = el("div", { class: "ctx-menu" },
+      items.map((it) => el("div", {
+        class: "ctx-item",
+        onclick: () => { hideCtxMenu(); it.onclick(); },
+      }, it.label))
+    );
+    document.body.append(ctxMenu);
+    const rect = ctxMenu.getBoundingClientRect();
+    ctxMenu.style.left = `${Math.max(4, Math.min(x, window.innerWidth - rect.width - 6))}px`;
+    ctxMenu.style.top = `${Math.max(4, Math.min(y, window.innerHeight - rect.height - 6))}px`;
+    window.addEventListener("click", hideCtxMenu);
+    window.addEventListener("contextmenu", hideCtxMenu);
+    window.addEventListener("blur", hideCtxMenu);
+    window.addEventListener("keydown", hideCtxMenu); // Escape / 任意按键收起
+    window.addEventListener("scroll", hideCtxMenu, true);
+  }
+
+  function revealInExplorer(w) {
+    if (!w.filePath) return window.DevSkin.toast("该壁纸没有本地文件路径", "err");
+    window.DevSkin.client.api.explore(w.filePath).then((res) => {
+      if (res?.error) window.DevSkin.toast(`打开失败: ${window.DevSkin.pretty(res.error)}`, "err");
+    });
+  }
+
   async function reload(root) {
     wallpapers = (await call(window.DevSkin.client.api.getWallpapers())) || [];
     screens = (await call(window.DevSkin.client.api.getScreens())) || [];
@@ -335,6 +376,13 @@
           class: `card ${isPlaying ? "playing" : ""} ${selected.has(w.filePath) ? "selected" : ""}`,
           title: `${w.meta?.title || ""}\n${w.filePath || ""}`,
           onclick: () => applyTo(JSON.parse(JSON.stringify(w))),
+          oncontextmenu: (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 不触发 window 级“收起菜单”
+            showCtxMenu(e.clientX, e.clientY, [
+              { label: "打开文件位置", onclick: () => revealInExplorer(w) },
+            ]);
+          },
         },
         checkbox,
         w.coverUrl ? el("img", { src: w.coverUrl, loading: "lazy" }) : null,
