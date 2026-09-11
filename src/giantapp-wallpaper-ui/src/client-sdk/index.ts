@@ -18,6 +18,7 @@ import api from "@/lib/client/api";
 import shellApi from "@/lib/client/shell";
 import * as types from "@/lib/client/types";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 /** 订阅应用事件（playing-status-changed / download-status-changed /
  *  appearance-changed / refresh-page / navigate / system-theme-changed /
@@ -26,11 +27,21 @@ function on(event: string, callback: (payload: any) => void) {
   return listen(event, (e: any) => callback(e.payload));
 }
 
+/** 当前窗口控件（皮肤自绘标题栏用；关闭会被后端转为隐藏到托盘）。 */
+const win = {
+  minimize: () => getCurrentWindow().minimize(),
+  toggleMaximize: () => getCurrentWindow().toggleMaximize(),
+  close: () => getCurrentWindow().close(),
+  startDragging: () => getCurrentWindow().startDragging(),
+};
+
 const WallpaperClient = {
   /** 应用命令 API（getWallpapers / showWallpaper / pauseWallpaper / setVolume / setConfig / ...） */
   api,
   /** 窗口外壳（showFolderDialog / hideLoading） */
   shell: shellApi,
+  /** 当前窗口控件（minimize / toggleMaximize / close / startDragging） */
+  win,
   /** 领域类型与工具（WallpaperType / isPlaylist / findPlayingWallpaper / ...） */
   types,
   on,

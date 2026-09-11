@@ -1,0 +1,10 @@
+{
+  "id": "dev",
+  "name": "Dev 开发皮肤",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "面向开发者的功能全集皮肤：所有功能一页直达 + 事件流 + 原始 JSON 视图。面板注册表架构，加功能只需在 panels/ 下新增一个文件。",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

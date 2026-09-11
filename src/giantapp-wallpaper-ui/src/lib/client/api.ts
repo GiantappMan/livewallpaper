@@ -428,6 +428,18 @@ class API {
     }
   }
 
+  /** 退出应用（按 KeepWallpaper 配置清理；窗口关闭是隐藏到托盘，退出用这个） */
+  async exitApp(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("exit_app");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   isRunningInClient(): boolean {
     return typeof window !== "undefined" && !!window.__TAURI_INTERNALS__;
   }

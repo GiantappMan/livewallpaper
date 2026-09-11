@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>GiantappWallpaper Dev</title>
+  <!-- 官方客户端 SDK：api / shell / win / types / on（_sdk 是协议根保留路径） -->
+  <script src="/_sdk/client.js"></script>
+  <!-- 注意：皮肤资源必须用"页面相对路径"（不能带前导 /）。
+       页面位于 http://skin.localhost/<id>/index.html，根相对路径会丢掉 <id> 段而 404。 -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 顶栏：窗口拖拽区 + 自绘标题栏（皮肤必须自绘，系统标题栏已去除） -->
+  <header id="topbar" data-tauri-drag-region>
+    <span class="logo">▶ GiantappWallpaper <b>DEV</b></span>
+    <span class="spacer" data-tauri-drag-region></span>
+    <span id="dl-badge" class="badge" hidden></span>
+    <button class="win-btn" id="btn-min" title="最小化">—</button>
+    <button class="win-btn" id="btn-max" title="最大化/还原">□</button>
+    <button class="win-btn close" id="btn-close" title="关闭（隐藏到托盘）">✕</button>
+  </header>
+
+  <div id="layout">
+    <nav id="nav"><!-- core.js 按 panels 注册顺序生成 --></nav>
+    <main id="panel-root"></main>
+  </div>
+
+  <div id="toasts"></div>
+
+  <!-- 核心与面板：加新功能 = panels/ 下加一个文件 + 这里加一行 -->
+  <script src="core.js"></script>
+  <script src="panels/library.js"></script>
+  <script src="panels/playback.js"></script>
+  <script src="panels/downloads.js"></script>
+  <script src="panels/hub.js"></script>
+  <script src="panels/settings.js"></script>
+  <script src="panels/events.js"></script>
+  <script src="panels/system.js"></script>
+  <script src="boot.js"></script>
+  <script>
+    // 自检：核心脚本没加载成功（资源 404 等）时给出可见提示
+    window.addEventListener("load", () => {
+      if (!window.DevSkin) {
+        document.body.insertAdjacentHTML("beforeend",
+          '<div id="nosdk"><b>皮肤资源加载失败</b><br/>style.css / core.js 未加载：请确认 index.html 里的资源引用是页面相对路径（不带前导 /）。</div>');
+      }
+    });
+  </script>
+</body>
+</html>
