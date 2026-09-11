@@ -16,6 +16,7 @@ mod media_protocol;
 mod mpv_download;
 mod paths;
 mod skin;
+mod skin_watch;
 mod state;
 mod system_events;
 mod tray;
@@ -296,28 +297,95 @@ pub(crate) fn finish_loading(app: &tauri::AppHandle) {
     }
 }
 
-/// 皮肤切换后重建主窗口（销毁旧的 -> 按新皮肤重新解析加载目标）。
+/// 皮肤切换后让主窗口加载新皮肤。
+///
+/// 优先 `navigate`：销毁重建主窗口在 Windows 上会连带崩掉整个事件循环——
+/// 切皮肤的 invoke 还挂在被销毁的 webview 上，进程秒死（日志止于
+/// "a webview with label `main` already exists"，无 panic 输出）。navigate
+/// 让同一个 webview 直接跳转到新皮肤 URL，无销毁、无闪烁、切换瞬时。
+///
+/// 仅当 navigate 不可用（style 型皮肤需要建窗时注入 init script、主窗口
+/// 不存在需按需创建）或 navigate 失败时，才走兜底的销毁重建；兜底也必须
+/// 在独立线程延后执行，给 IPC 收尾留时间，并在销毁后轮询等 label 真正注销。
 pub(crate) fn recreate_main_window(app: &tauri::AppHandle) {
-    crate::persist_window_state(app);
-    if let Some(w) = app.get_webview_window("main") {
-        let _ = w.destroy();
-    }
-    // 销毁在事件循环上异步收尾，偶尔需要重试
-    for attempt in 1..=3 {
-        match build_main_window(app) {
-            Ok(window) => {
-                attach_main_window_handlers(app);
-                let _ = window.show();
-                let _ = window.set_focus();
-                return;
-            }
-            Err(e) => {
-                log::warn!("recreate main window (attempt {attempt}) failed: {e}");
-                std::thread::sleep(std::time::Duration::from_millis(150));
+    let dirs = app
+        .try_state::<AppState>()
+        .map(|s| s.dirs.clone())
+        .unwrap_or_else(AppDirs::resolve);
+    let skin_id = skin::configured_skin_id(&dirs);
+    let target = skin::main_window_target(&dirs, &skin_id);
+    if let Some(window) = app.get_webview_window("main") {
+        if target.extra_init_scripts.is_empty() {
+            if let Some(url) = main_window_navigate_url(app, &target) {
+                match window.navigate(url) {
+                    Ok(()) => {
+                        log::info!("main window navigated: skin={skin_id:?}");
+                        return;
+                    }
+                    Err(e) => log::warn!("navigate main window failed, fallback to rebuild: {e}"),
+                }
             }
         }
     }
-    log::error!("recreate main window failed after retries");
+    rebuild_main_window_async(app.clone());
+}
+
+/// 由加载目标算出可导航的具体 URL（`WebviewUrl::App` 的解析 tauri 未公开，
+/// 按 devUrl / frontendDist / tauri 协议的形态自行推导）。
+fn main_window_navigate_url(
+    app: &tauri::AppHandle,
+    target: &skin::MainWindowTarget,
+) -> Option<tauri::Url> {
+    let path = match &target.url {
+        tauri::WebviewUrl::External(url) => return Some(url.clone()),
+        tauri::WebviewUrl::App(path) => path.to_string_lossy().into_owned(),
+        _ => return None,
+    };
+    let config = app.config();
+    let base = if let Some(dev_url) = &config.build.dev_url {
+        dev_url.clone()
+    } else {
+        match &config.build.frontend_dist {
+            Some(tauri::utils::config::FrontendDist::Url(url)) => url.clone(),
+            // frontendDist 为目录时走 tauri 协议（本项目未开 use_https_scheme）
+            _ if cfg!(windows) => tauri::Url::parse("http://tauri.localhost/").ok()?,
+            _ => tauri::Url::parse("tauri://localhost/").ok()?,
+        }
+    };
+    base.join(&path).ok()
+}
+
+/// 兜底的销毁重建：独立线程延后执行（等当前 invoke 收尾），销毁后轮询等
+/// 旧窗口真正注销（label 释放）再重建。
+fn rebuild_main_window_async(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        crate::persist_window_state(&app);
+        if let Some(w) = app.get_webview_window("main") {
+            let _ = w.destroy();
+        }
+        for _ in 0..30 {
+            if app.get_webview_window("main").is_none() {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        for attempt in 1..=5 {
+            match build_main_window(&app) {
+                Ok(window) => {
+                    attach_main_window_handlers(&app);
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                    return;
+                }
+                Err(e) => {
+                    log::warn!("recreate main window (attempt {attempt}) failed: {e}");
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                }
+            }
+        }
+        log::error!("recreate main window failed after retries");
+    });
 }
 
 fn build_splashscreen(app: &tauri::App) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
@@ -415,6 +483,9 @@ fn setup(
 
     // 系统事件
     system_events::start(hub.clone(), api.clone());
+
+    // 皮肤目录热监听：当前皮肤文件变化 -> refresh-page 整页刷新（热更新开发）
+    skin_watch::start(app.handle().clone());
 
     // 恢复快照（含 v3 导入）
     {

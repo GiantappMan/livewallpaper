@@ -17,6 +17,7 @@
     "system-theme-changed",
     "mpv-download-event",
     "hub-session-changed",
+    "skins-changed",
   ];
 
   function render(root) {

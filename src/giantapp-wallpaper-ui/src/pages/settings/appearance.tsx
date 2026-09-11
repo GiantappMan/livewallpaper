@@ -16,6 +16,7 @@ import {
     SunIcon
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
+import { listen } from "@tauri-apps/api/event";
 import { ConfigAppearance, SkinInfo } from "@/lib/client/types";
 import { langDictAtom } from "@/atoms/lang";
 import { useAtomValue } from "jotai";
@@ -42,6 +43,10 @@ const Page = () => {
     React.useEffect(() => {
         setMounted(true)
         fetchSkins()
+        // 皮肤目录有变化（如热更新开发时放入新皮肤）时自动刷新列表
+        let unlisten: (() => void) | undefined
+        listen("skins-changed", () => { fetchSkins() }).then((fn) => { unlisten = fn })
+        return () => { unlisten?.() }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
