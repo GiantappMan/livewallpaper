@@ -595,34 +595,14 @@ impl EngineHost for InternalPlayerController {
     }
 
     fn mpv_path(&self) -> std::path::PathBuf {
-        // 1) 可执行文件旁的 assets/players/mpv/mpv.exe（绿色版）
-        if let Ok(exe) = std::env::current_exe() {
-            let p = exe
-                .parent()
-                .unwrap()
-                .join("assets/players/mpv/mpv.exe");
-            if p.exists() {
-                return p;
-            }
-        }
-        // 2) 资源目录（安装版 resources）
+        // 资源目录优先（安装版 resources 可能与 exe 不同级），其余走通用探测
         if let Ok(dir) = self.app.path().resource_dir() {
             let p = dir.join("assets/players/mpv/mpv.exe");
             if p.exists() {
                 return p;
             }
         }
-        // 3) 开发模式：源码树 src-tauri/assets
-        let dev = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/players/mpv/mpv.exe");
-        if dev.exists() {
-            return dev;
-        }
-        // 4) 数据目录（应用内自动下载的 mpv）
-        let downloaded = crate::mpv_download::target_mpv_path(&wallpaper_core::AppDirs::resolve());
-        if downloaded.exists() {
-            return downloaded;
-        }
-        std::path::PathBuf::new()
+        crate::paths::resolve_mpv_path(&wallpaper_core::AppDirs::resolve())
     }
 
     fn default_cover(&self) -> std::path::PathBuf {
@@ -632,12 +612,6 @@ impl EngineHost for InternalPlayerController {
                 return p;
             }
         }
-        if let Ok(exe) = std::env::current_exe() {
-            let p = exe.parent().unwrap().join("assets/default_cover.webp");
-            if p.exists() {
-                return p;
-            }
-        }
-        std::path::PathBuf::new()
+        crate::paths::resolve_default_cover()
     }
 }

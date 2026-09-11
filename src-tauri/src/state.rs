@@ -50,6 +50,10 @@ pub struct AppState {
     pub downloads: Arc<DownloadManager>,
     pub player: Arc<InternalPlayerController>,
     pub window_restorer: Mutex<WindowRestore>,
+    /// 应用事件枢纽（Tauri emit + 控制管道广播共用）。
+    pub hub: crate::events::EventHub,
+    /// 本次进程是否以 `--headless` 启动（零窗口，按需唤起 UI）。
+    pub headless: bool,
 }
 
 impl AppState {

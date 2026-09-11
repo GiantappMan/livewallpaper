@@ -185,11 +185,15 @@ export enum WallpaperCoveredBehavior {
 export type ConfigAppearance = {
   theme: string;
   mode: "system" | "light" | "dark";
+  /** 生效皮肤 id；`default` 为内置界面 */
+  skin: string;
 };
 
 export type ConfigGeneral = {
   autoStart: boolean;
   hideWindow: boolean;
+  /** 开机自启时以 headless 模式（无窗口）运行 */
+  autoStartHeadless: boolean;
   currentLan: string;
 };
 
@@ -253,6 +257,22 @@ export type MpvDownloadEvent =
     }
   | { state: "done"; path: string }
   | { state: "error"; message: string };
+
+// ---------- 皮肤 ----------
+
+export type SkinInfo = {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  /** `app`（完整界面）| `style`（仅 CSS 覆盖） */
+  type: "app" | "style";
+  entry: string;
+  builtin: boolean;
+  valid: boolean;
+  invalidReason: string | null;
+};
 
 
 export type DownloadHistoryItem = {

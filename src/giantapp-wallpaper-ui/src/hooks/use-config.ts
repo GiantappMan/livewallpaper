@@ -7,6 +7,7 @@ import { useEffect } from "react";
 export const defaultConfig: ConfigAppearance = {
   theme: "zinc",
   mode: "system",
+  skin: "default",
 };
 
 const configAtom = atomWithStorage<ConfigAppearance>("config", defaultConfig);

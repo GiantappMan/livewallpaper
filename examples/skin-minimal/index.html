@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minimal 皮肤</title>
+  <!-- 官方客户端 SDK：应用命令 / 事件 / 类型工具都在这里 -->
+  <script src="/_sdk/client.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: #101014; color: #e7e7ea;
+      font: 14px/1.6 "Segoe UI", system-ui, sans-serif;
+      display: flex; flex-direction: column;
+    }
+    header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border-bottom: 1px solid #26262e;
+    }
+    header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    header .spacer { flex: 1; }
+    button {
+      background: #1d1d26; color: inherit; border: 1px solid #33333f;
+      border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px;
+    }
+    button:hover { border-color: #5b5bd6; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    main { flex: 1; overflow: auto; padding: 16px 20px; }
+    .status { color: #9b9ba7; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .card {
+      border: 1px solid #26262e; border-radius: 12px; overflow: hidden;
+      cursor: pointer; background: #17171e;
+    }
+    .card:hover { border-color: #5b5bd6; }
+    .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #0b0b0f; }
+    .card .name { padding: 8px 10px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .playing { border-color: #5b5bd6 !important; }
+    .empty { color: #6d6d7a; padding: 40px; text-align: center; }
+    footer {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; border-top: 1px solid #26262e; font-size: 13px;
+    }
+    input[type="range"] { accent-color: #5b5bd6; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Minimal 皮肤</h1>
+    <span class="status" id="status">加载中…</span>
+    <span class="spacer"></span>
+    <button id="btn-prev">上一项</button>
+    <button id="btn-pause">暂停</button>
+    <button id="btn-next">下一项</button>
+    <button id="btn-stop">停止</button>
+  </header>
+
+  <main><div class="grid" id="grid"></div><div class="empty" id="empty" hidden>壁纸库为空</div></main>
+
+  <footer>
+    <span>音量</span>
+    <input id="volume" type="range" min="0" max="100" value="0" />
+    <span id="volume-label">0</span>
+  </footer>
+
+  <script>
+    const { api } = window.WallpaperClient;
+    const $ = (id) => document.getElementById(id);
+    let wallpapers = [];
+    let playing = [];
+
+    async function refresh() {
+      const [wallpapersRes, statusRes] = await Promise.all([
+        api.getWallpapers(),
+        api.getPlayingStatus(),
+      ]);
+      wallpapers = wallpapersRes.data || [];
+      playing = statusRes.data?.wallpapers || [];
+
+      $("status").textContent = playing.length
+        ? `正在播放 ${playing.length} 个屏幕${playing.some((w) => w.runningInfo?.isPaused) ? "（已暂停）" : ""}`
+        : "未在播放";
+
+      const playingPaths = new Set(
+        playing.flatMap((w) => [w.filePath, ...(w.meta?.wallpapers || []).map((m) => m.filePath)].filter(Boolean))
+      );
+      $("empty").hidden = wallpapers.length > 0;
+      $("grid").innerHTML = wallpapers.map((w, i) => `
+        <div class="card ${playingPaths.has(w.filePath) ? "playing" : ""}" data-index="${i}">
+          ${w.coverUrl ? `<img src="${w.coverUrl}" loading="lazy" />` : ""}
+          <div class="name">${(w.meta?.title || "未命名").replace(/</g, "&lt;")}</div>
+        </div>`).join("");
+    }
+
+    $("grid").addEventListener("click", async (e) => {
+      const card = e.target.closest(".card");
+      if (!card) return;
+      await api.showWallpaper(wallpapers[Number(card.dataset.index)]);
+    });
+    $("btn-pause").addEventListener("click", async () => {
+      const anyPlaying = playing.length > 0;
+      const anyPaused = playing.some((w) => w.runningInfo?.isPaused);
+      if (anyPlaying && anyPaused) await api.resumeWallpaper();
+      else await api.pauseWallpaper();
+    });
+    $("btn-stop").addEventListener("click", () => api.stopWallpaper());
+    $("btn-next").addEventListener("click", () => api.playNextInPlaylist());
+    $("btn-prev").addEventListener("click", () => api.playPrevInPlaylist());
+    $("volume").addEventListener("input", (e) => {
+      $("volume-label").textContent = e.target.value;
+      api.setVolume(Number(e.target.value));
+    });
+
+    // 播放状态变化时刷新（引擎每秒 tick 会广播）
+    window.WallpaperClient.on("playing-status-changed", refresh);
+
+    api.getPlayingStatus().then((res) => {
+      if (res.data) {
+        $("volume").value = res.data.volume ?? 0;
+        $("volume-label").textContent = String(res.data.volume ?? 0);
+      }
+    });
+    refresh();
+  </script>
+</body>
+</html>

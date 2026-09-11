@@ -1,0 +1,10 @@
+{
+  "id": "minimal",
+  "name": "Minimal 示例皮肤",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "最小可用皮肤示例：纯 HTML + 官方 SDK，演示壁纸列表、播放控制与音量。复制到皮肤目录即可在 设置→外观→皮肤 中应用。",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

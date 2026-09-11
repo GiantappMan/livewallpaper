@@ -1,14 +1,13 @@
 //! mpv 播放器自动下载：发布包不内嵌 mpv，缺失时从 shinchiro/mpv-winbuild-cmake
 //! （mpv 官网推荐的 Windows 构建渠道）最新 release 下载 `mpv-x86_64-*.7z`，
 //! 解出 mpv.exe 放入数据目录 `players/mpv/`，供 `mpv_path` 兜底查找。
-//! 进度/结果经 `mpv-download-event` 事件广播给前端。
+//! 进度/结果经注入的 publish 回调广播（应用层统一接 Tauri emit + 控制管道）。
 
 use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
-use tauri::Emitter;
 use wallpaper_core::AppDirs;
 
 const RELEASE_API: &str =
@@ -44,7 +43,7 @@ pub enum MpvDownloadEvent {
 }
 
 /// 启动后台下载任务。已在进行中或已安装时返回错误。
-pub fn start(app: tauri::AppHandle, dirs: AppDirs) -> Result<(), String> {
+pub fn start(dirs: AppDirs, on_event: crate::events::EventHub) -> Result<(), String> {
     if IN_PROGRESS.swap(true, Ordering::SeqCst) {
         return Err("mpv 正在下载中".into());
     }
@@ -55,12 +54,12 @@ pub fn start(app: tauri::AppHandle, dirs: AppDirs) -> Result<(), String> {
     CANCEL.store(false, Ordering::SeqCst);
 
     tauri::async_runtime::spawn(async move {
-        let result = run(&app, &dirs).await;
+        let result = run(&on_event, &dirs).await;
         IN_PROGRESS.store(false, Ordering::SeqCst);
         match result {
             Ok(path) => {
                 log::info!("mpv downloaded to {}", path.display());
-                let _ = app.emit(
+                on_event.publish(
                     "mpv-download-event",
                     MpvDownloadEvent::Done {
                         path: path.to_string_lossy().into_owned(),
@@ -69,7 +68,7 @@ pub fn start(app: tauri::AppHandle, dirs: AppDirs) -> Result<(), String> {
             }
             Err(e) => {
                 log::error!("mpv download failed: {e:#}");
-                let _ = app.emit(
+                on_event.publish(
                     "mpv-download-event",
                     MpvDownloadEvent::Error {
                         message: e.to_string(),
@@ -85,7 +84,7 @@ pub fn cancel() {
     CANCEL.store(true, Ordering::SeqCst);
 }
 
-async fn run(app: &tauri::AppHandle, dirs: &AppDirs) -> Result<PathBuf> {
+async fn run(on_event: &crate::events::EventHub, dirs: &AppDirs) -> Result<PathBuf> {
     let client = reqwest::Client::builder()
         .user_agent("GiantappWallpaper/4")
         // 与 DownloadManager 一致：僵死连接不能让任务永远停在"下载中"
@@ -126,7 +125,7 @@ async fn run(app: &tauri::AppHandle, dirs: &AppDirs) -> Result<PathBuf> {
     // 2. 流式下载到 tmp
     std::fs::create_dir_all(dirs.tmp_dir())?;
     let archive = dirs.tmp_dir().join("mpv-player.7z");
-    download(app, &client, asset.1, &archive, asset.0).await?;
+    download(on_event, &client, asset.1, &archive, asset.0).await?;
 
     // 3. 解出 mpv.exe（纯 Rust LZMA 解码较吃 CPU，放阻塞线程池）
     if CANCEL.load(Ordering::SeqCst) {
@@ -162,7 +161,7 @@ where
 }
 
 async fn download(
-    app: &tauri::AppHandle,
+    on_event: &crate::events::EventHub,
     client: &reqwest::Client,
     url: &str,
     dest: &Path,
@@ -182,7 +181,7 @@ async fn download(
 
     let mut received: u64 = 0;
     let mut last_notify = Instant::now() - Duration::from_secs(1);
-    notify_progress(app, 0.0, received, total);
+    notify_progress(on_event, 0.0, received, total);
 
     while let Some(chunk) = resp.chunk().await? {
         if CANCEL.load(Ordering::SeqCst) {
@@ -195,13 +194,13 @@ async fn download(
         let now = Instant::now();
         if now.duration_since(last_notify) >= Duration::from_millis(200) {
             last_notify = now;
-            notify_progress(app, percent(received, total), received, total);
+            notify_progress(on_event, percent(received, total), received, total);
         }
     }
     std::io::Write::flush(&mut file)?;
     drop(file);
     std::fs::rename(&tmp, dest).with_context(|| format!("改名失败: {}", dest.display()))?;
-    notify_progress(app, 100.0, received, total);
+    notify_progress(on_event, 100.0, received, total);
     Ok(())
 }
 
@@ -213,8 +212,8 @@ fn percent(received: u64, total: u64) -> f64 {
     }
 }
 
-fn notify_progress(app: &tauri::AppHandle, percent: f64, received: u64, total: u64) {
-    let _ = app.emit(
+fn notify_progress(on_event: &crate::events::EventHub, percent: f64, received: u64, total: u64) {
+    on_event.publish(
         "mpv-download-event",
         MpvDownloadEvent::Progress {
             percent,

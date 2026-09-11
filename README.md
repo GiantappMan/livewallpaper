@@ -29,6 +29,8 @@ bun dev       # 根目录一键启动（Vite + Rust + 应用）
 - [x] 社区（Hub，iframe 接入 wallpaper.giantapp.cn）
 - [x] 多语言（简体中文 / English / Русский / Español）
 - [x] 开机自启 / 单实例 / 托盘 / livewallpaper4:// 深链
+- [x] Headless 模式（`--headless` 无窗口全功能运行 + CLI 控制管道，v4 新增）
+- [x] 皮肤系统（完全自定义界面包，任意前端技术栈，v4 新增，见 [docs/3.皮肤系统.md](./docs/3.皮肤系统.md)）
 
 ## 技术栈
 

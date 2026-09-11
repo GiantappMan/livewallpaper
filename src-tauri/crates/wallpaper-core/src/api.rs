@@ -83,7 +83,8 @@ impl WallpaperApi {
         });
     }
 
-    /// 每秒：检测遮挡窗口 + 推进播放列表。
+    /// 每秒：检测遮挡窗口 + 推进播放列表。内部发生可见状态变化
+    /// （遮挡起停、播放列表推进）时对外广播 on_change。
     async fn tick_once(&self) {
         // 1) 遮挡检测（阻塞 Win32 调用放线程池）
         let settings = self.settings.lock().clone();
@@ -91,13 +92,17 @@ impl WallpaperApi {
             .await
             .unwrap_or_default();
 
+        let mut changed = false;
         let mut managers = self.managers.lock().await;
         for m in managers.iter_mut() {
             m.latest_settings = settings.clone();
             let is_covered = covered.contains(&m.screen);
-            m.set_covered(is_covered, &settings).await;
-            m.tick(&settings).await;
+            changed |= m.set_covered(is_covered, &settings).await;
+            changed |= m.tick(&settings).await;
             m.reap_dead_render().await;
+        }
+        if changed {
+            self.notify_change();
         }
     }
 

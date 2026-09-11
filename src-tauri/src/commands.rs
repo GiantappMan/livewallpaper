@@ -4,7 +4,7 @@ use crate::state::AppState;
 use crate::urls::{path_to_media_url, resolve_media_url, tmp_name_to_media_url, ResolvedUrl};
 use base64::Engine;
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Manager, State};
 use wallpaper_core::library;
 use wallpaper_core::EngineHost;
 use wallpaper_core::models::{
@@ -29,28 +29,64 @@ pub async fn get_config(app: AppHandle, key: String) -> Result<serde_json::Value
 
 #[tauri::command]
 pub async fn set_config(app: AppHandle, key: String, value: serde_json::Value) -> Result<()> {
+    // 记录 Appearance 旧值：皮肤切换需要对比触发窗口重建
+    let previous_appearance = if key == "Appearance" {
+        let st = state(&app);
+        let appearance = st.config.lock().appearance.clone();
+        appearance
+    } else {
+        Default::default()
+    };
     {
         let st = state(&app);
         st.config.lock().save(&key, value)?;
     }
-    apply_config_side_effects(&app, &key).await
+    apply_config_side_effects(&app, &key, &previous_appearance).await
+}
+
+/// 管道共用的配置写入入口。
+pub(crate) async fn set_config_inner(
+    app: &AppHandle,
+    key: &str,
+    value: serde_json::Value,
+) -> Result<()> {
+    let previous_appearance = if key == "Appearance" {
+        let st = state(app);
+        let appearance = st.config.lock().appearance.clone();
+        appearance
+    } else {
+        Default::default()
+    };
+    {
+        let st = state(app);
+        st.config.lock().save(key, value)?;
+    }
+    apply_config_side_effects(app, key, &previous_appearance).await
 }
 
 /// 配置变更的联动逻辑（对应 v3 ConfigSetAfterEvent）。
-async fn apply_config_side_effects(app: &AppHandle, key: &str) -> Result<()> {
+async fn apply_config_side_effects(
+    app: &AppHandle,
+    key: &str,
+    previous_appearance: &wallpaper_core::config::ConfigAppearance,
+) -> Result<()> {
     let st = state(app);
     match key {
         "General" => {
-            // 自启注册 + 托盘文案
-            let (auto_start, _hide) = {
+            // 自启注册（可选 headless 启动）+ 托盘文案
+            let (auto_start, headless_flag) = {
                 let config = st.config.lock();
-                (config.general.auto_start, config.general.hide_window)
+                (config.general.auto_start, config.general.auto_start_headless)
             };
             if auto_start {
                 if let Ok(exe) = std::env::current_exe() {
+                    let mut command = format!("\"{}\"", exe.display());
+                    if headless_flag {
+                        command.push_str(" --headless");
+                    }
                     let _ = wallpaper_core::system::registry::set_autostart(
                         crate::tray::AUTOSTART_NAME,
-                        &format!("\"{}\"", exe.display()),
+                        &command,
                     );
                 }
             } else {
@@ -59,7 +95,24 @@ async fn apply_config_side_effects(app: &AppHandle, key: &str) -> Result<()> {
             let _ = crate::tray::create(app);
         }
         "Appearance" => {
-            let _ = app.emit("appearance-changed", ());
+            let (current, skin_changed) = {
+                let config = st.config.lock();
+                (
+                    config.appearance.clone(),
+                    config.appearance.skin != previous_appearance.skin,
+                )
+            };
+            st.hub.publish("appearance-changed", ());
+            if skin_changed {
+                log::info!(
+                    "skin changed: {} -> {}",
+                    previous_appearance.skin,
+                    current.skin
+                );
+                // 重建窗口（不持锁，销毁/创建会走事件循环）
+                drop(st);
+                crate::recreate_main_window(app);
+            }
         }
         "Wallpaper" => {
             let (behavior, player) = {
@@ -72,7 +125,7 @@ async fn apply_config_side_effects(app: &AppHandle, key: &str) -> Result<()> {
             st.api.set_covered_behavior(behavior);
             st.api.set_default_video_player(player).await;
             st.api.save_snapshot().await;
-            let _ = app.emit("refresh-page", ());
+            st.hub.publish("refresh-page", ());
         }
         _ => {}
     }
@@ -101,7 +154,12 @@ fn fill_urls(wallpaper: &mut Wallpaper) {
 
 #[tauri::command]
 pub async fn get_wallpapers(app: AppHandle) -> Result<Vec<Wallpaper>> {
-    let st = state(&app);
+    get_wallpapers_inner(&app).await
+}
+
+/// 管道共用：扫描壁纸库并填充展示 URL。
+pub(crate) async fn get_wallpapers_inner(app: &AppHandle) -> Result<Vec<Wallpaper>> {
+    let st = state(app);
     let (dirs, mpv, cover) = {
         let config = st.config.lock();
         let save_dirs = config.wallpaper.effective_directories();
@@ -124,7 +182,7 @@ pub async fn get_screens(app: AppHandle) -> Result<Vec<Screen>> {
 }
 
 /// 前端展示用的播放状态（含 URL 转换）。
-async fn build_playing_status(app: &AppHandle) -> PlayingStatus {
+pub(crate) async fn build_playing_status(app: &AppHandle) -> PlayingStatus {
     let st = state(app);
     let mut status = PlayingStatus::default();
     status.screens = st.api.screens();
@@ -157,7 +215,7 @@ pub async fn show_wallpaper(app: AppHandle, wallpaper: Wallpaper) -> Result<bool
 }
 
 /// 把壁纸中的 URL 字段解析回本地路径（tmp URL -> tmp 路径）。
-fn resolve_wallpaper_urls(dirs: &AppDirs, wallpaper: &mut Wallpaper) {
+pub(crate) fn resolve_wallpaper_urls(dirs: &AppDirs, wallpaper: &mut Wallpaper) {
     if let Some(url) = &wallpaper.file_url {
         if let Some(path) = resolve_media_url(url, &dirs.tmp_dir()).map(|r| r.into_path()) {
             wallpaper.file_path = Some(path);
@@ -718,13 +776,10 @@ pub async fn show_folder_dialog(app: AppHandle) -> Result<Option<String>> {
 
 #[tauri::command]
 pub fn show_shell(app: AppHandle, path: Option<String>) -> Result<()> {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
+    crate::show_main_window(&app, None);
     if let Some(path) = path {
-        let _ = app.emit("navigate", serde_json::json!({ "path": path }));
+        let st = state(&app);
+        st.hub.publish("navigate", serde_json::json!({ "path": path }));
     }
     Ok(())
 }
@@ -780,19 +835,24 @@ pub struct MpvStatus {
 #[tauri::command]
 pub fn get_mpv_status(app: AppHandle) -> Result<MpvStatus> {
     let st = state(&app);
+    Ok(mpv_status_inner(&st))
+}
+
+/// 管道共用。
+pub(crate) fn mpv_status_inner(st: &AppState) -> MpvStatus {
     let path = st.player.mpv_path();
-    Ok(MpvStatus {
+    MpvStatus {
         available: path.exists(),
         path: path.to_string_lossy().into_owned(),
         downloading: crate::mpv_download::in_progress(),
-    })
+    }
 }
 
 /// 后台启动 mpv 下载；进度/结果经 `mpv-download-event` 事件推送。
 #[tauri::command]
 pub fn download_mpv(app: AppHandle) -> Result<()> {
-    let dirs = state(&app).dirs.clone();
-    crate::mpv_download::start(app, dirs)
+    let st = state(&app);
+    crate::mpv_download::start(st.dirs.clone(), st.hub.clone())
 }
 
 #[tauri::command]
@@ -826,4 +886,48 @@ pub fn open_community_window(app: AppHandle, url: String) -> Result<()> {
     build_oauth_window(&app, &label, parsed)
         .map(|_| ())
         .map_err(|e| e.to_string())
+}
+
+// ---------- 皮肤 ----------
+
+#[tauri::command]
+pub fn list_skins(app: AppHandle) -> Result<Vec<crate::skin::SkinInfo>> {
+    let st = state(&app);
+    Ok(crate::skin::list_skins(&st.dirs))
+}
+
+/// 切换皮肤：写入 Appearance 配置后由联动逻辑重建主窗口。
+/// 非法 id 返回错误（不落盘）。
+#[tauri::command]
+pub async fn set_active_skin(app: AppHandle, id: String) -> Result<bool> {
+    if id != crate::skin::DEFAULT_SKIN_ID {
+        let st = state(&app);
+        let dir = crate::skin::skins_dir(&st.dirs).join(&id);
+        crate::skin::parse_manifest_pub(&dir)?;
+    }
+    let value = serde_json::json!({ "skin": id });
+    set_config_inner(&app, "Appearance", merge_appearance(&app, value)).await?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn open_skins_folder(app: AppHandle) -> Result<()> {
+    let st = state(&app);
+    let dir = crate::skin::skins_dir(&st.dirs);
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = wallpaper_core::system::reveal_in_explorer(&dir);
+    Ok(())
+}
+
+/// Appearance 配置按字段合并（保留 theme / mode，仅更新传入字段）。
+fn merge_appearance(app: &AppHandle, patch: serde_json::Value) -> serde_json::Value {
+    let st = state(app);
+    let current = st.config.lock().appearance.clone();
+    let mut value = serde_json::to_value(&current).unwrap_or_else(|_| serde_json::json!({}));
+    if let (Some(obj), Some(patch_obj)) = (value.as_object_mut(), patch.as_object()) {
+        for (k, v) in patch_obj {
+            obj.insert(k.clone(), v.clone());
+        }
+    }
+    value
 }

@@ -11,21 +11,7 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "label": "splashscreen",
-        "title": "GiantappWallpaper",
-        "url": "splash.html",
-        "width": 360,
-        "height": 240,
-        "resizable": false,
-        "decorations": false,
-        "transparent": false,
-        "center": true,
-        "skipTaskbar": true,
-        "visible": true
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }

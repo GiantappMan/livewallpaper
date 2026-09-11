@@ -150,6 +150,13 @@
       "you_can_create_wallpaper": "Puedes crear un fondo de pantalla o modificar el directorio de escaneo de fondos."
     },
     "settings": {
+      "auto_start_headless": "Iniciar en segundo plano al arrancar (sin ventana)",
+      "skin": "Skin",
+      "skin_hint": "Un skin es una carpeta con skin.json; colócala en la carpeta de skins para aplicarlo. El tipo app reemplaza toda la interfaz; el tipo style solo sobrescribe estilos.",
+      "skin_invalid": "(no válido)",
+      "skin_open_folder": "Carpeta de skins",
+      "skin_type_app": "UI completa",
+      "skin_type_style": "Estilo",
       "add_directory": "Agregar Directorio",
       "appearance": "Apariencia",
       "appearance_settings": "Configuración de Apariencia",

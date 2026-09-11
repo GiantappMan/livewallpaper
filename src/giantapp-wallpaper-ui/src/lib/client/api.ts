@@ -16,6 +16,7 @@ import type {
   MpvStatus,
   PlayingStatus,
   Screen,
+  SkinInfo,
   TimePos,
   Wallpaper,
   WallpaperMeta,
@@ -493,6 +494,42 @@ class API {
     listen<MpvDownloadEvent>("mpv-download-event", (e) =>
       callback(e.payload)
     ).then((un) => this.unlisteners.push(un));
+  }
+
+  // ---------- 皮肤 ----------
+
+  async listSkins(): Promise<ApiResult<SkinInfo[]>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<SkinInfo[]>("list_skins");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 切换皮肤（非法清单会返回错误；成功后后端重建主窗口） */
+  async setActiveSkin(id: string): Promise<ApiResult<boolean>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<boolean>("set_active_skin", { id });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: false };
+    }
+  }
+
+  async openSkinsFolder(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("open_skins_folder");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
   }
 }
 

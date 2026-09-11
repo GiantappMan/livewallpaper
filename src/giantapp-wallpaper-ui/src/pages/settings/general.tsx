@@ -75,6 +75,16 @@ const Page = () => {
                         />
                     </div>
                     <div className="flex items-center space-x-2">
+                        <Label htmlFor="autostart-headless">{dictionary['settings'].auto_start_headless}</Label>
+                        <Switch id="autostart-headless"
+                            checked={config.autoStartHeadless ?? false}
+                            disabled={!config.autoStart}
+                            onCheckedChange={async (e) => {
+                                saveConfig({ ...config, autoStartHeadless: e });
+                            }}
+                        />
+                    </div>
+                    <div className="flex items-center space-x-2">
                         <Label htmlFor="minimize-after-start">{dictionary['settings'].language}</Label>
                         <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger asChild>

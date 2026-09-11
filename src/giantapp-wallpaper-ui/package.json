@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && vite build --config vite.sdk.config.ts",
+    "build:sdk": "vite build --config vite.sdk.config.ts",
     "preview": "vite preview",
     "tauri": "tauri"
   },

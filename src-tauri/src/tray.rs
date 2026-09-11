@@ -2,7 +2,7 @@
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
 const ABOUT_URL: &str = "https://github.com/GiantappMan/livewallpaper";
 /// 注册表自启值名。
@@ -102,32 +102,30 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
 }
 
 fn show_main(app: &AppHandle, route: Option<&str>) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
-        if let Some(route) = route {
-            let _ = app.emit("navigate", serde_json::json!({ "path": route }));
-        }
-    }
+    // headless / 窗口已销毁时按需创建
+    crate::show_main_window(app, route);
 }
 
 /// 应用退出：按 KeepWallpaper 配置清理壁纸与快照。
 pub fn quit(app: AppHandle) {
     crate::persist_window_state(&app);
     let keep = {
-        
         let state: tauri::State<crate::state::AppState> = app.state();
         let guard = state.config.lock();
         guard.wallpaper.keep_wallpaper_field()
     };
     let api = {
-        
         let state: tauri::State<crate::state::AppState> = app.state();
         state.api.clone()
     };
-    tauri::async_runtime::block_on(async move {
-        api.dispose(keep).await;
+    // 退出可能来自 tokio 上下文（控制管道 app.quit）：block_on 不允许嵌套在
+    // 运行时线程内，放独立线程执行并等待完成。
+    std::thread::scope(|s| {
+        s.spawn(|| {
+            tauri::async_runtime::block_on(async move {
+                api.dispose(keep).await;
+            });
+        });
     });
     app.exit(0);
 }

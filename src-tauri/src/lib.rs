@@ -1,10 +1,21 @@
-//! 应用装配：插件、托盘、系统事件、媒体协议、状态初始化与命令注册。
+//! 应用装配：启动模式（GUI / headless）、按需主窗口、插件、托盘、系统事件、
+//! 媒体与皮肤协议、状态初始化与命令注册。
+//!
+//! 启动模式：
+//! - 默认：启动屏 + 主窗口（按皮肤解析加载目标），关闭仅隐藏到托盘。
+//! - `--headless`：零窗口全功能运行（壁纸/播放列表/下载/系统事件照常），
+//!   任意时刻经单实例回调、托盘、深链或控制管道 `ui.show` 按需创建主窗口。
 
+mod cli;
 mod commands;
+mod control;
+mod events;
 mod internal_player;
 mod logger;
 mod media_protocol;
 mod mpv_download;
+mod paths;
+mod skin;
 mod state;
 mod system_events;
 mod tray;
@@ -38,6 +49,14 @@ pub(crate) fn next_hub_window_seq() -> u32 {
 }
 
 pub fn run() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    // CLI 动词（status/play/volume/ui/...）：发给运行中的实例后即退出
+    if let cli::CliOutcome::Handled = cli::dispatch(&args) {
+        return;
+    }
+    let headless = cli::is_headless(&args);
+
     let dirs = AppDirs::resolve();
     if let Err(e) = dirs.ensure() {
         eprintln!("init data dir failed: {e}");
@@ -46,23 +65,19 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // 二次启动：深链参数转发 + 唤起主窗口
+            // 二次启动：深链参数转发 + 唤起主窗口（headless 实例则按需创建）
             log::info!("single-instance args: {args:?}");
             if let Some(target) = extract_deep_link(&args) {
-                use tauri::Emitter;
                 log::info!("deep link target: {target}");
-                let _ = app.emit("navigate", serde_json::json!({ "target": target }));
-            }
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.show();
-                let _ = window.set_focus();
+                show_main_window(app, None);
+                publish_event(app, "navigate", serde_json::json!({ "target": target }));
+            } else {
+                show_main_window(app, None);
             }
         }))
         .register_uri_scheme_protocol("media", |ctx, request| media_protocol::handle(ctx, request))
-        .setup(move |app| {
-            setup(app, dirs.clone())
-        })
+        .register_uri_scheme_protocol("skin", |ctx, request| skin::handle(ctx, request))
+        .setup(move |app| setup(app, dirs.clone(), headless))
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::set_config,
@@ -105,11 +120,22 @@ pub fn run() {
             commands::get_mpv_status,
             commands::download_mpv,
             commands::cancel_download_mpv,
+            commands::list_skins,
+            commands::set_active_skin,
+            commands::open_skins_folder,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|_app, _event| {});
+    app.run(move |_app, event| {
+        // headless 零窗口保活：窗口全部关闭触发的退出请求一律阻止
+        // （托盘退出走 app.exit(0)，code = Some，不受影响）
+        if let tauri::RunEvent::ExitRequested { code, api, .. } = event {
+            if headless && code.is_none() {
+                api.prevent_exit();
+            }
+        }
+    });
 }
 
 /// 从命令行参数中提取深链目标。
@@ -117,6 +143,282 @@ fn extract_deep_link(args: &[String]) -> Option<String> {
     args.iter()
         .find(|a| a.starts_with(&format!("{DEEP_LINK_SCHEME}://")))
         .map(|a| a.trim_start_matches(&format!("{DEEP_LINK_SCHEME}://")).to_string())
+}
+
+/// 经 EventHub 发布事件（state 未就绪时退化为直接 emit）。
+pub(crate) fn publish_event(
+    app: &tauri::AppHandle,
+    name: &str,
+    payload: impl serde::Serialize,
+) {
+    use tauri::Emitter;
+    let value = serde_json::to_value(&payload).unwrap_or(serde_json::Value::Null);
+    match app.try_state::<AppState>() {
+        Some(st) => st.hub.publish(name, value),
+        None => {
+            let _ = app.emit(name, value);
+        }
+    }
+}
+
+/// 创建主窗口（按当前皮肤解析加载目标）。可见性交由调用方控制。
+pub(crate) fn build_main_window(
+    app: &tauri::AppHandle,
+) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
+    let dirs = app
+        .try_state::<AppState>()
+        .map(|s| s.dirs.clone())
+        .unwrap_or_else(AppDirs::resolve);
+    let skin_id = skin::configured_skin_id(&dirs);
+    let target = skin::main_window_target(&dirs, &skin_id);
+    log::info!("main window target: skin={skin_id:?}");
+
+    let handle = app.clone();
+    let mut builder = tauri::WebviewWindowBuilder::new(app, "main", target.url)
+        .title("巨应壁纸")
+        .inner_size(1024.0, 680.0)
+        .min_inner_size(800.0, 482.0)
+        .center()
+        .visible(false)
+        // 去掉系统标题栏，由前端自绘（见 components/title-bar.tsx）
+        .decorations(false)
+        .initialization_script(HUB_COMPAT_SCRIPT);
+    for script in target.extra_init_scripts {
+        builder = builder.initialization_script(script);
+    }
+    builder
+        // 社区页卡片“打开”等 target=_blank 请求默认被 WebView 拒绝，
+        // 在这里接管：Hub 详情页开应用内新窗口，其余交给系统浏览器
+        .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
+        .build()
+}
+
+/// 主窗口公共行为：尺寸恢复 + 关闭隐藏到托盘 + 尺寸记录。
+pub(crate) fn attach_main_window_handlers(app: &tauri::AppHandle) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    {
+        let st: tauri::State<AppState> = app.state();
+        let restore = st.load_window_restore();
+        if restore.width >= 800.0 && restore.height >= 482.0 {
+            restore.apply(&window);
+        }
+    }
+    {
+        let handle = app.clone();
+        window.on_window_event(move |event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                // 点 X 只隐藏，留在托盘（与 v3 一致）
+                api.prevent_close();
+                if let Some(w) = handle.get_webview_window("main") {
+                    let _ = w.hide();
+                }
+            }
+            _ => {
+                // 尺寸/最大化变化时记录（退出时持久化）
+                if matches!(
+                    event,
+                    tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Focused(true)
+                ) {
+                    if let Some(w) = handle.get_webview_window("main") {
+                        let st: tauri::State<AppState> = handle.state();
+                        let mut restorer = st.window_restorer.lock();
+                        let captured = crate::state::WindowRestore::capture(&w);
+                        if captured.width > 0.0 {
+                            *restorer = captured;
+                        }
+                        if w.is_maximized().unwrap_or(false) {
+                            restorer.maximized = true;
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+/// 唤起主窗口：存在则显示聚焦，不存在（headless / 已销毁）则按需创建。
+pub(crate) fn show_main_window(app: &tauri::AppHandle, route: Option<&str>) {
+    let window = match app.get_webview_window("main") {
+        Some(window) => window,
+        None => match build_main_window(app) {
+            Ok(window) => {
+                attach_main_window_handlers(app);
+                window
+            }
+            Err(e) => {
+                log::error!("create main window failed: {e}");
+                return;
+            }
+        },
+    };
+    let _ = window.unminimize();
+    let _ = window.show();
+    let _ = window.set_focus();
+    if let Some(route) = route {
+        publish_event(app, "navigate", serde_json::json!({ "path": route }));
+    }
+}
+
+/// 皮肤切换后重建主窗口（销毁旧的 -> 按新皮肤重新解析加载目标）。
+pub(crate) fn recreate_main_window(app: &tauri::AppHandle) {
+    crate::persist_window_state(app);
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.destroy();
+    }
+    // 销毁在事件循环上异步收尾，偶尔需要重试
+    for attempt in 1..=3 {
+        match build_main_window(app) {
+            Ok(window) => {
+                attach_main_window_handlers(app);
+                let _ = window.show();
+                let _ = window.set_focus();
+                return;
+            }
+            Err(e) => {
+                log::warn!("recreate main window (attempt {attempt}) failed: {e}");
+                std::thread::sleep(std::time::Duration::from_millis(150));
+            }
+        }
+    }
+    log::error!("recreate main window failed after retries");
+}
+
+fn build_splashscreen(app: &tauri::App) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
+    tauri::WebviewWindowBuilder::new(
+        app,
+        "splashscreen",
+        tauri::WebviewUrl::App("splash.html".into()),
+    )
+    .title("GiantappWallpaper")
+    .inner_size(360.0, 240.0)
+    .resizable(false)
+    .decorations(false)
+    .center()
+    .skip_taskbar(true)
+    .build()
+}
+
+fn setup(
+    app: &mut tauri::App,
+    dirs: AppDirs,
+    headless: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    log::info!(
+        "GiantappWallpaper v{APP_VERSION} starting (mode: {})",
+        if headless { "headless" } else { "gui" }
+    );
+
+    // 事件枢纽：Tauri emit 与控制管道共用一条事件流
+    let hub = events::EventHub::new();
+    events::forward_to_tauri(&hub, app.handle().clone());
+
+    // 窗口（headless 零窗口；GUI 启动屏 + 隐藏主窗口，加载完成后 hide_loading 显示）
+    if !headless {
+        build_splashscreen(app)?;
+        build_main_window(app.handle())?;
+    }
+
+    // 注册深链协议（幂等）
+    if let Ok(exe) = std::env::current_exe() {
+        if let Err(e) = wallpaper_core::system::registry::register_uri_scheme(DEEP_LINK_SCHEME, &exe) {
+            log::warn!("register uri scheme failed: {e}");
+        }
+    }
+
+    // 配置
+    let config = Arc::new(Mutex::new(ConfigStore::load(dirs.clone())));
+
+    // 引擎宿主（内嵌播放器控制器；headless 下 webview 壁纸窗口仍按需隐藏创建）
+    let player = internal_player::InternalPlayerController::new(app.handle().clone());
+
+    // 引擎
+    let host: Arc<dyn wallpaper_core::EngineHost> = player.clone();
+    let api = {
+        let host = host.clone();
+        let dirs = dirs.clone();
+        tauri::async_runtime::block_on(async move { WallpaperApi::init(host, dirs).await })
+    };
+
+    // 应用状态
+    let downloads = {
+        let hub_for_downloads = hub.clone();
+        let emit: wallpaper_core::DownloadEventCallback = Arc::new(move |status| {
+            hub_for_downloads.publish("download-status-changed", &status);
+        });
+        let history_path = dirs.config_file("download-history");
+        Arc::new(DownloadManager::new(emit, Some(history_path)))
+    };
+
+    let launched_hidden = config.lock().general.hide_window;
+    app.manage(AppState {
+        api: api.clone(),
+        dirs: dirs.clone(),
+        config: config.clone(),
+        downloads,
+        player,
+        window_restorer: Mutex::new(state::WindowRestore::default()),
+        hub: hub.clone(),
+        headless,
+    });
+
+    // 引擎状态变化 -> 广播 + 快照
+    {
+        use std::sync::Weak;
+        let hub_for_change = hub.clone();
+        let api_weak: Weak<WallpaperApi> = Arc::downgrade(&api);
+        api.set_on_change(Box::new(move || {
+            hub_for_change.publish("playing-status-changed", ());
+            if let Some(api) = api_weak.upgrade() {
+                tauri::async_runtime::spawn(async move {
+                    api.save_snapshot().await;
+                });
+            }
+        }));
+    }
+
+    // 系统事件
+    system_events::start(hub.clone(), api.clone());
+
+    // 恢复快照（含 v3 导入）
+    {
+        let api = api.clone();
+        tauri::async_runtime::spawn(async move {
+            let legacy = api.import_v3_snapshot();
+            api.restore_from_snapshot(legacy).await;
+            api.notify_change();
+        });
+    }
+
+    // 主窗口行为（GUI 启动 / headless 按需创建时都要挂）
+    if !headless {
+        attach_main_window_handlers(app.handle());
+    }
+
+    // 首次启动的深链参数（livewallpaper4://...）：headless 下同时唤起界面
+    if let Some(target) = extract_deep_link(&std::env::args().collect::<Vec<_>>()) {
+        if headless {
+            show_main_window(app.handle(), None);
+        }
+        publish_event(app.handle(), "navigate", serde_json::json!({ "target": target }));
+    }
+
+    // 托盘（GUI / headless 均保留，提供退出与唤起入口）
+    tray::create(app.handle())?;
+
+    // 启动显示策略
+    if !headless && !launched_hidden {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.show();
+        }
+    }
+
+    // 本地控制管道：CLI / 外部脚本的控制面（所有模式）
+    control::start(app.handle().clone(), hub.clone());
+
+    log::info!("setup done");
+    Ok(())
 }
 
 pub(crate) fn is_hub_origin(url: &tauri::Url) -> bool {
@@ -291,8 +593,7 @@ pub(crate) fn build_oauth_window(
                 // 留给 eval 执行 / 回调页收尾跳转一点时间
                 std::thread::sleep(std::time::Duration::from_millis(800));
                 let _ = win.close();
-                use tauri::Emitter;
-                let _ = app.emit("hub-session-changed", ());
+                publish_event(&app, "hub-session-changed", ());
             });
         })
         .build()
@@ -351,161 +652,6 @@ fn http_date(dt: tauri::webview::cookie::time::OffsetDateTime) -> String {
         dt.minute(),
         dt.second()
     )
-}
-
-fn setup(app: &mut tauri::App, dirs: AppDirs) -> Result<(), Box<dyn std::error::Error>> {
-    log::info!("GiantappWallpaper v{APP_VERSION} starting");
-
-    // 创建主窗口（Rust 创建以便注入 Hub 兼容层初始化脚本）
-    {
-        use tauri::WebviewUrl;
-        let handle = app.handle().clone();
-        tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-            .title("巨应壁纸")
-            .inner_size(1024.0, 680.0)
-            .min_inner_size(800.0, 482.0)
-            .center()
-            .visible(false)
-            // 去掉系统标题栏，由前端自绘（见 components/title-bar.tsx）
-            .decorations(false)
-            .initialization_script(HUB_COMPAT_SCRIPT)
-            // 社区页卡片“打开”等 target=_blank 请求默认被 WebView 拒绝，
-            // 在这里接管：Hub 详情页开应用内新窗口，其余交给系统浏览器
-            .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
-            .build()?;
-    }
-
-    // 注册深链协议（幂等）
-    if let Ok(exe) = std::env::current_exe() {
-        if let Err(e) = wallpaper_core::system::registry::register_uri_scheme(DEEP_LINK_SCHEME, &exe) {
-            log::warn!("register uri scheme failed: {e}");
-        }
-    }
-
-    // 配置
-    let config = Arc::new(Mutex::new(ConfigStore::load(dirs.clone())));
-
-    // 引擎宿主（内嵌播放器控制器）
-    let player = internal_player::InternalPlayerController::new(app.handle().clone());
-
-    // 引擎
-    let host: Arc<dyn wallpaper_core::EngineHost> = player.clone();
-    let api = {
-        let host = host.clone();
-        let dirs = dirs.clone();
-        tauri::async_runtime::block_on(async move { WallpaperApi::init(host, dirs).await })
-    };
-
-    // 应用状态
-    let downloads = {
-        let handle = app.handle().clone();
-        let emit: wallpaper_core::DownloadEventCallback = Arc::new(move |status| {
-            use tauri::Emitter;
-            let _ = handle.emit("download-status-changed", &status);
-        });
-        let history_path = dirs.config_file("download-history");
-        Arc::new(DownloadManager::new(emit, Some(history_path)))
-    };
-
-    let launched_hidden = config.lock().general.hide_window;
-    app.manage(AppState {
-        api: api.clone(),
-        dirs: dirs.clone(),
-        config: config.clone(),
-        downloads,
-        player,
-        window_restorer: Mutex::new(state::WindowRestore::default()),
-    });
-
-    // 引擎状态变化 -> 通知前端 + 快照
-    {
-        use std::sync::Weak;
-        let handle = app.handle().clone();
-        let api_weak: Weak<WallpaperApi> = Arc::downgrade(&api);
-        api.set_on_change(Box::new(move || {
-            use tauri::Emitter;
-            let _ = handle.emit("playing-status-changed", ());
-            if let Some(api) = api_weak.upgrade() {
-                tauri::async_runtime::spawn(async move {
-                    api.save_snapshot().await;
-                });
-            }
-        }));
-    }
-
-    // 系统事件
-    system_events::start(app.handle().clone(), api.clone());
-
-    // 恢复快照（含 v3 导入）
-    {
-        let api = api.clone();
-        tauri::async_runtime::spawn(async move {
-            let legacy = api.import_v3_snapshot();
-            api.restore_from_snapshot(legacy).await;
-            api.notify_change();
-        });
-    }
-
-    // 主窗口尺寸恢复 + 关闭行为
-    if let Some(window) = app.get_webview_window("main") {
-        {
-            let st: tauri::State<AppState> = app.state();
-            let restore = st.load_window_restore();
-            if restore.width >= 800.0 && restore.height >= 482.0 {
-                restore.apply(&window);
-            }
-        }
-        {
-            let handle = app.handle().clone();
-            window.on_window_event(move |event| match event {
-                tauri::WindowEvent::CloseRequested { api, .. } => {
-                    // 点 X 只隐藏，留在托盘（与 v3 一致）
-                    api.prevent_close();
-                    if let Some(w) = handle.get_webview_window("main") {
-                        let _ = w.hide();
-                    }
-                }
-                _ => {
-                    // 尺寸/最大化变化时记录（退出时持久化）
-                    if matches!(
-                        event,
-                        tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Focused(true)
-                    ) {
-                        if let Some(w) = handle.get_webview_window("main") {
-                            let st: tauri::State<AppState> = handle.state();
-                            let mut restorer = st.window_restorer.lock();
-                            let captured = crate::state::WindowRestore::capture(&w);
-                            if captured.width > 0.0 {
-                                *restorer = captured;
-                            }
-                            if w.is_maximized().unwrap_or(false) {
-                                restorer.maximized = true;
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // 首次启动的深链参数（livewallpaper4://...）
-    if let Some(target) = extract_deep_link(&std::env::args().collect::<Vec<_>>()) {
-        use tauri::Emitter;
-        let _ = app.handle().emit("navigate", serde_json::json!({ "target": target }));
-    }
-
-    // 托盘
-    tray::create(app.handle())?;
-
-    // 启动显示策略
-    if !launched_hidden {
-        if let Some(window) = app.get_webview_window("main") {
-            let _ = window.show();
-        }
-    }
-
-    log::info!("setup done");
-    Ok(())
 }
 
 /// 退出前持久化窗口状态（在 quit 中调用）。

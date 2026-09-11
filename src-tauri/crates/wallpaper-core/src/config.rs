@@ -12,6 +12,8 @@ use std::path::{Path, PathBuf};
 pub struct ConfigGeneral {
     pub auto_start: bool,
     pub hide_window: bool,
+    /// 开机自启时以 headless 模式（无窗口）运行。
+    pub auto_start_headless: bool,
     /// zh / en / ru / es
     pub current_lan: String,
 }
@@ -22,6 +24,7 @@ impl Default for ConfigGeneral {
         Self {
             auto_start: false,
             hide_window: false,
+            auto_start_headless: false,
             current_lan: lan,
         }
     }
@@ -32,6 +35,8 @@ impl Default for ConfigGeneral {
 pub struct ConfigAppearance {
     pub theme: String,
     pub mode: String, // system | light | dark
+    /// 生效皮肤 id；`default` 为内置界面。
+    pub skin: String,
 }
 
 impl Default for ConfigAppearance {
@@ -39,6 +44,7 @@ impl Default for ConfigAppearance {
         Self {
             theme: "zinc".into(),
             mode: "dark".into(),
+            skin: "default".into(),
         }
     }
 }
