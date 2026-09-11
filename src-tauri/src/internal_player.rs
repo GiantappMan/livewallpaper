@@ -8,7 +8,7 @@
 //! - [`WebPlayerFactory`] / [`WebPlayer`]：web 壁纸播放器（kind `"web"`）
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::{Listener, Manager, WebviewUrl, WebviewWindowBuilder};
@@ -360,6 +360,35 @@ impl InternalPlayerController {
         window.navigate(parsed).map_err(|e| format!("导航失败: {e}"))
     }
 
+    /// WebView2 级整体静音（ICoreWebView2_8.IsMuted）：页面现有及之后动态创建的
+    /// 音频全部生效，且跨导航保持。多屏同放 web 壁纸时按音源屏设置消音。
+    fn web_set_muted(&self, screen: u32, muted: bool) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        let Some(window) = self.app.get_webview_window(&label) else {
+            return Err(format!("{label} 窗口不存在"));
+        };
+        #[cfg(windows)]
+        {
+            window
+                .with_webview(move |wv| set_platform_muted(&wv, muted))
+                .map_err(|e| e.to_string())
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = (window, muted);
+            Ok(())
+        }
+    }
+
+    /// 向 web 壁纸页面注入 JS（媒体元素暂停/恢复等 best-effort 控制）。
+    fn web_eval(&self, screen: u32, js: &str) -> Result<(), String> {
+        let label = Self::label_web(screen);
+        let Some(window) = self.app.get_webview_window(&label) else {
+            return Err(format!("{label} 窗口不存在"));
+        };
+        window.eval(js).map_err(|e| e.to_string())
+    }
+
     fn web_is_alive(&self, screen: u32) -> bool {
         self.app.get_webview_window(&Self::label_web(screen)).is_some()
     }
@@ -371,6 +400,26 @@ impl InternalPlayerController {
         }
         self.windows.lock().remove(&label);
         Ok(())
+    }
+}
+
+/// Windows：经 WebView2 COM 把整个 WebView 静音/取消静音。
+/// with_webview 的闭包在主线程执行，COM 调用安全。
+#[cfg(windows)]
+fn set_platform_muted(wv: &tauri::webview::PlatformWebview, muted: bool) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_8;
+    use windows_core::Interface as _;
+    unsafe {
+        let Ok(core) = wv.controller().CoreWebView2() else {
+            return;
+        };
+        let Ok(web) = core.cast::<ICoreWebView2_8>() else {
+            log::debug!("ICoreWebView2_8 不可用（WebView2 Runtime 过旧），无法静音");
+            return;
+        };
+        if let Err(e) = web.SetIsMuted(muted) {
+            log::warn!("SetIsMuted({muted}) 失败: {e}");
+        }
     }
 }
 
@@ -552,8 +601,17 @@ struct WebPlayer {
     screen: u32,
     /// 页面是否接收鼠标事件（换源导航时可能变化）。
     mouse_events: AtomicBool,
+    /// 引擎音量 0-100。web 只能整体静音，非 0 不分级。
+    volume: AtomicU32,
+    /// 是否处于暂停态（决定 set_volume 时是否保持静音）。
+    paused: AtomicBool,
     embed_desktop: bool,
 }
+
+/// 页面媒体控制（best-effort）：只覆盖 <video>/<audio> 元素；
+/// WebAudio 等页面内合成音频无法从外部暂停，由暂停时的整体静音兜底。
+const MEDIA_PAUSE_JS: &str = "try{document.querySelectorAll('video,audio').forEach(function(m){try{m.pause()}catch(e){}})}catch(e){}";
+const MEDIA_RESUME_JS: &str = "try{document.querySelectorAll('video,audio').forEach(function(m){try{var p=m.play();if(p&&p.catch){p.catch(function(){})}}catch(e){}})}catch(e){}";
 
 #[async_trait::async_trait]
 impl PlayerEngine for WebPlayer {
@@ -577,7 +635,9 @@ impl PlayerEngine for WebPlayer {
             .map_err(err_msg)?;
         self.controller
             .web_set_mouse(self.screen, config.mouse_events)
-            .map_err(err_msg)
+            .map_err(err_msg)?;
+        // 引擎音量跟随新配置；暂停态由管理器在播放后统一 apply_pause
+        self.set_volume(config.volume).await
     }
 
     async fn attach_to_desktop(&self) -> anyhow::Result<()> {
@@ -587,13 +647,28 @@ impl PlayerEngine for WebPlayer {
             .map_err(err_msg)
     }
 
-    /// 网页壁纸无暂停/音量/进度语义，保持 no-op（与旧 Render::Web 行为一致）。
-    async fn set_paused(&self, _paused: bool) -> anyhow::Result<()> {
+    /// 暂停 = 注入 JS 暂停页面媒体元素 + 整体静音兜底（WebAudio / 动态创建的
+    /// 音频）；恢复时按引擎音量还原静音态。遮挡暂停与手动暂停共用此路径。
+    async fn set_paused(&self, paused: bool) -> anyhow::Result<()> {
+        self.paused.store(paused, Ordering::SeqCst);
+        if paused {
+            let _ = self.controller.web_set_muted(self.screen, true);
+            let _ = self.controller.web_eval(self.screen, MEDIA_PAUSE_JS);
+        } else {
+            let muted = self.volume.load(Ordering::SeqCst) == 0;
+            let _ = self.controller.web_set_muted(self.screen, muted);
+            let _ = self.controller.web_eval(self.screen, MEDIA_RESUME_JS);
+        }
         Ok(())
     }
 
-    async fn set_volume(&self, _volume: u32) -> anyhow::Result<()> {
-        Ok(())
+    /// 音量只区分静音与否（音源屏出声 / 非音源屏静音）。
+    async fn set_volume(&self, volume: u32) -> anyhow::Result<()> {
+        self.volume.store(volume.min(100), Ordering::SeqCst);
+        let muted = volume == 0 || self.paused.load(Ordering::SeqCst);
+        self.controller
+            .web_set_muted(self.screen, muted)
+            .map_err(err_msg)
     }
 
     async fn seek_percent(&self, _percent: f64) -> anyhow::Result<()> {
@@ -646,12 +721,20 @@ impl PlayerFactory for WebPlayerFactory {
         self.controller
             .web_open(config.screen, &url, config.embed_desktop)
             .map_err(err_msg)?;
-        Ok(Arc::new(WebPlayer {
+        let player = Arc::new(WebPlayer {
             controller: self.controller.clone(),
             screen: config.screen,
             mouse_events: AtomicBool::new(config.mouse_events),
+            volume: AtomicU32::new(config.volume.min(100)),
+            paused: AtomicBool::new(false),
             embed_desktop: config.embed_desktop,
-        }))
+        });
+        // 新窗口默认出声：非音源屏 / 全局静音必须立刻静音（双屏同放防双音频）。
+        // best-effort：失败不阻断播放，随后的 apply_pause / apply_settings 会重试。
+        if let Err(e) = player.set_volume(config.volume).await {
+            log::warn!("screen {} web 初始静音设置失败: {e}", config.screen);
+        }
+        Ok(player)
     }
 
     async fn restore(

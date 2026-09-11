@@ -44,6 +44,9 @@ windows = { version = "0.62", features = [
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
 ] }
+# 与 wry 依赖的 webview2-com 同大版本：直接操作 ICoreWebView2（IsMuted 静音等）
+webview2-com = "0.38"
+windows-core = "0.61"
 
 [profile.release]
 opt-level = "s"
