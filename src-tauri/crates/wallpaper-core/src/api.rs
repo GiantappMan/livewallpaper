@@ -86,11 +86,13 @@ impl WallpaperApi {
     /// 每秒：检测遮挡窗口 + 推进播放列表。内部发生可见状态变化
     /// （遮挡起停、播放列表推进）时对外广播 on_change。
     async fn tick_once(&self) {
-        // 1) 遮挡检测（阻塞 Win32 调用放线程池）
+        // 1) 遮挡检测（阻塞 Win32 调用放线程池；排除宿主声明的播放器窗口）
         let settings = self.settings.lock().clone();
-        let covered = tokio::task::spawn_blocking(crate::window_state::covered_screens)
-            .await
-            .unwrap_or_default();
+        let exclude = self.host.occlusion_exclusions();
+        let covered =
+            tokio::task::spawn_blocking(move || crate::window_state::covered_screens_excluding(&exclude))
+                .await
+                .unwrap_or_default();
 
         let mut changed = false;
         let mut managers = self.managers.lock().await;

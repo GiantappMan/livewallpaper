@@ -256,6 +256,47 @@ async fn call(app: &tauri::AppHandle, method: &str, params: &Value) -> Result<Va
                 .await
                 .map(|_| Value::Bool(true))
         }
+        // ---- 壁纸管理 ----
+        "delete_wallpaper" => {
+            let mut wallpaper: wallpaper_core::models::Wallpaper = serde_json::from_value(
+                params.get("wallpaper").cloned().ok_or("缺少 wallpaper")?,
+            )
+            .map_err(|e| format!("bad wallpaper: {e}"))?;
+            crate::commands::resolve_wallpaper_urls(&st.dirs, &mut wallpaper);
+            let path = wallpaper
+                .file_path
+                .clone()
+                .or_else(|| wallpaper.file_url.as_deref().map(|u| std::path::PathBuf::from(u)))
+                .ok_or("缺少壁纸路径")?;
+
+            // 正在播放则先停止（匹配文件路径或播放列表成员）
+            let playing = st.api.running_wallpapers().await;
+            for w in playing {
+                let matches = w
+                    .file_path
+                    .as_ref()
+                    .map(|p| *p == path)
+                    .unwrap_or(false)
+                    || w.meta
+                        .wallpapers
+                        .iter()
+                        .any(|m| m.file_path.as_ref().map(|p| *p == path).unwrap_or(false));
+                if matches {
+                    for screen in &w.running_info.screen_indexes {
+                        st.api.stop_wallpaper(Some(*screen)).await;
+                    }
+                }
+            }
+
+            wallpaper_core::library::delete_wallpaper(&wallpaper_core::models::Wallpaper {
+                file_path: Some(path),
+                ..wallpaper
+            })
+            .map_err(|e| e.to_string())?;
+            st.api.save_snapshot().await;
+            st.api.notify_change();
+            Ok(Value::Bool(true))
+        }
         // ---- 配置 ----
         "get_config" => {
             let key = params

@@ -22,7 +22,6 @@ let currentUrl = "";
 // 最近一次的音量/铺满设置：换源 load 未携带时沿用，避免换源后闪断
 let lastVolume = 0;
 let lastPanscan = true;
-
 function fitClass(panscan: boolean) {
   return panscan ? "cover" : "contain";
 }
@@ -51,7 +50,14 @@ function load(payload: CmdPayload) {
   lastVolume = volume;
   lastPanscan = panscan;
 
-  const isVideo = /\.(mp4|webm|mkv|flv|blv|avi|mov|m4v)(\?|$)/i.test(src);
+  // 媒体 URL 是全量百分号编码的（.mp4 -> %2Emp4），判定前先解码
+  let decoded = src;
+  try {
+    decoded = decodeURIComponent(src);
+  } catch {
+    /* 保留原串 */
+  }
+  const isVideo = /\.(mp4|webm|mkv|flv|blv|avi|mov|m4v)(\?|$)/i.test(decoded);
   if (isVideo) {
     const video = document.createElement("video");
     video.id = "media";
@@ -64,10 +70,34 @@ function load(payload: CmdPayload) {
     video.addEventListener("timeupdate", () => {
       reportTime(video.duration || -1, video.currentTime || 0);
     });
-    video.addEventListener("error", () => reportTime(-1, -1));
+    // 页面刚就绪的瞬间 WebView 网络栈可能尚未就绪，首个媒体请求会失败：
+    // 自动重新加载源（退避重试），避免一次竞态就把壁纸卡成黑屏
+    let retries = 0;
+    video.addEventListener("error", () => {
+      reportTime(-1, -1);
+      if (media !== video || retries >= 5 || currentUrl !== src) return;
+      retries += 1;
+      const delay = 300 * retries;
+      setTimeout(() => {
+        if (media !== video || currentUrl !== src) return;
+        video.load();
+        video.play().catch(() => {});
+      }, delay);
+    });
     media = video;
     root.appendChild(video);
-    video.play().catch(() => {});
+    video.play().catch(() => {
+      // 非静音自动播放被策略拦截时：先静音起播，播起来后恢复目标音量
+      video.muted = true;
+      video.play().catch(() => {});
+      video.addEventListener(
+        "playing",
+        () => {
+          video.muted = volume === 0;
+        },
+        { once: true }
+      );
+    });
   } else {
     // 图片 / 动图（gif、webp）
     const img = document.createElement("img");
@@ -82,6 +112,8 @@ function load(payload: CmdPayload) {
   }
 }
 
+// 就绪握手：listen 注册完成可能晚于 Rust 侧的 load 命令（窗口 ready 即发送），
+// 上报 wp-ready 让宿主把当前加载命令重发一次，消除启动竞态。
 listen<CmdPayload>("wp-cmd", (event) => {
   const cmd = event.payload;
   switch (cmd.action) {
@@ -121,4 +153,4 @@ listen<CmdPayload>("wp-cmd", (event) => {
       break;
     }
   }
-});
+}).then(() => emit("wp-ready", { label })).catch(() => {});

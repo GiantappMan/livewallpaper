@@ -23,6 +23,13 @@ pub struct MpvSnapshot {
     pub ipc_server_name: String,
     pub pid: u32,
     pub process_name: String,
+    /// 旧快照缺省视为嵌入桌面（与历史行为一致）。
+    #[serde(default = "default_true")]
+    pub embed_desktop: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// mpv 窗口类名。
@@ -58,6 +65,8 @@ pub struct MpvPlayer {
     /// 接管实例时来自快照的 pid（子进程句柄为空，窗口查找用）。
     pid_hint: u32,
     pub screen: u32,
+    /// false = 独立窗口模式（attach 不嵌 WorkerW，启动即可见）。
+    embed_desktop: bool,
 }
 
 impl MpvPlayer {
@@ -69,7 +78,17 @@ impl MpvPlayer {
 
         let mut cmd = tokio::process::Command::new(mpv_exe);
         let log_file = playlist_file.with_extension("mpv.log");
-        let args: Vec<String> = vec![
+        // 嵌入桌面：离屏最小化启动，等 attach 后由 WorkerW 接管显示；
+        // 独立窗口：直接以带边框的可见窗口启动（屏幕 38% 大小、居中）。
+        let window_args: Vec<String> = if config.embed_desktop {
+            vec!["--window-minimized=yes".into(), "--geometry=-10000:-10000".into(), "--no-border".into()]
+        } else {
+            vec![
+                "--autofit=38%".into(),
+                "--title=GiantappWallpaper 播放器预览".into(),
+            ]
+        };
+        let mut args: Vec<String> = vec![
             playlist_arg,
             format!("--log-file={}", log_file.display()),
             "--stop-screensaver=no".into(),
@@ -88,14 +107,14 @@ impl MpvPlayer {
             // 单文件播放列表用文件循环：规避 mpv 在播放列表 EOF 时偶发退出的 bug
             "--loop-file=inf".into(),
             "--loop-playlist=inf".into(),
-            "--window-minimized=yes".into(),
+        ];
+        args.extend(window_args);
+        args.extend([
             "--no-osc".into(),
-            "--geometry=-10000:-10000".into(),
-            "--no-border".into(),
             format!("--volume={}", config.volume),
             "--no-input-default-bindings".into(),
             "--no-terminal".into(),
-        ];
+        ]);
         cmd.args(&args)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -116,9 +135,10 @@ impl MpvPlayer {
             playlist_file,
             pid_hint: 0,
             screen: config.screen,
+            embed_desktop: config.embed_desktop,
         };
 
-        log::info!("mpv[{}] launched, pid={pid}", config.screen);
+        log::info!("mpv[{}] launched, pid={pid}, embed={}", config.screen, config.embed_desktop);
         Ok(player)
     }
 
@@ -138,6 +158,7 @@ impl MpvPlayer {
             playlist_file: PathBuf::new(),
             pid_hint: snapshot.pid,
             screen,
+            embed_desktop: snapshot.embed_desktop,
         };
         log::info!("mpv[{screen}] adopted, pid={}", snapshot.pid);
         Ok(player)
@@ -306,6 +327,10 @@ impl PlayerEngine for MpvPlayer {
         MPV_KIND
     }
 
+    fn embed_desktop(&self) -> bool {
+        self.embed_desktop
+    }
+
     /// 原地重写播放列表临时文件并 loadlist 换源（进程保持存活，切换近乎即时）。
     async fn load(&self, source: &MediaSource, _config: &PlayerConfig) -> Result<()> {
         if self.playlist_file.as_os_str().is_empty() {
@@ -316,8 +341,12 @@ impl PlayerEngine for MpvPlayer {
         self.loadlist(&self.playlist_file).await
     }
 
-    /// 等待 mpv 主窗口出现并 SetParent 到桌面 WorkerW 层。
+    /// 嵌入模式：等待 mpv 主窗口出现并 SetParent 到桌面 WorkerW 层；
+    /// 独立窗口模式：启动参数已让它可见，无需附加。
     async fn attach_to_desktop(&self) -> Result<()> {
+        if !self.embed_desktop {
+            return Ok(());
+        }
         let pid = self.pid().await;
         let hwnd_raw = wait_window(pid).await?;
         // HWND 非 Send，跨线程只传原始句柄值
@@ -369,6 +398,7 @@ impl PlayerEngine for MpvPlayer {
             ipc_server_name: self.pipe_full_name.clone(),
             pid,
             process_name: "mpv".into(),
+            embed_desktop: self.embed_desktop,
         };
         serde_json::to_value(snap).ok()
     }

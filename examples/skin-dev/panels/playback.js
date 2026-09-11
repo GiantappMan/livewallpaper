@@ -70,6 +70,54 @@
     }
     setInterval(pollTime, 1000);
 
+    // ---- 播放器实验台 ----
+    // 临时覆盖引擎与嵌入模式播放（不写入壁纸的 setting.json），
+    // 用于调试 mpv / 内嵌 WebView 播放器在「嵌入桌面 / 独立窗口」下的表现。
+    const labWallpaper = el("select", { style: { maxWidth: "280px" } }, el("option", { value: "" }, "加载壁纸库…"));
+    const labEngine = el("select", {},
+      el("option", { value: "0" }, "引擎：跟随壁纸设置"),
+      el("option", { value: "1" }, "引擎：mpv"),
+      el("option", { value: "2" }, "引擎：内嵌 WebView"),
+    );
+    const labMode = el("select", {},
+      el("option", { value: "embed" }, "模式：嵌入桌面（WorkerW）"),
+      el("option", { value: "window" }, "模式：独立窗口"),
+    );
+    client.api.getWallpapers().then((res) => {
+      labWallpaper.innerHTML = "";
+      for (const [i, w] of (res.data || []).entries()) {
+        labWallpaper.append(el("option", { value: String(i) },
+          `[${window.DevSkin.typeName(w.meta?.type)}] ${w.meta?.title || w.fileName || i}`));
+      }
+      if (!(res.data || []).length) {
+        labWallpaper.append(el("option", { value: "" }, "(壁纸库为空)"));
+      }
+    });
+    async function labPlay() {
+      if (labWallpaper.value === "") return window.DevSkin.toast("先选择一个壁纸", "err");
+      const res = await client.api.getWallpapers();
+      const w = JSON.parse(JSON.stringify((res.data || [])[Number(labWallpaper.value)]));
+      if (!w) return window.DevSkin.toast("壁纸不存在", "err");
+      // Img 类型走系统壁纸，引擎/嵌入选项对它无效（其余类型生效）
+      w.setting = {
+        ...w.setting,
+        videoPlayer: Number(labEngine.value),
+        embedDesktop: labMode.value === "embed",
+      };
+      w.runningInfo = { screenIndexes: [], isPaused: false };
+      await window.DevSkin.call(client.api.showWallpaper(w), `已播放（${labMode.selectedOptions[0].text}）`);
+      window.DevSkin.refreshStatus();
+    }
+
+    root.append(
+      el("h2", {}, "播放器实验台 ",
+        el("span", { class: "hint" }, "临时覆盖引擎与嵌入模式（不落盘）；图片壁纸走系统层，选项对它无效")
+      ),
+      el("div", { class: "row" }, labWallpaper, labEngine, labMode,
+        el("button", { class: "primary", onclick: labPlay }, "播放"),
+      ),
+    );
+
     // ---- 逐屏状态 ----
     const statusBox = el("div", {});
 

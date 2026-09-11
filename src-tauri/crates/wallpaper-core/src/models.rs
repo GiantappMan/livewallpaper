@@ -186,6 +186,8 @@ pub struct WallpaperSetting {
     pub fit: Fit,
     /// 静态图：退出时恢复原桌面壁纸。
     pub keep_wallpaper: bool,
+    /// 播放器窗口是否嵌入桌面（WorkerW）。false = 独立可见窗口（调试 / 预览用）。
+    pub embed_desktop: bool,
 }
 
 impl Default for WallpaperSetting {
@@ -199,6 +201,7 @@ impl Default for WallpaperSetting {
             play_mode: PlayMode::Order,
             fit: Fit::Fill,
             keep_wallpaper: true,
+            embed_desktop: true,
         }
     }
 }

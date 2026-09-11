@@ -13,6 +13,9 @@ fn ok_response(status: tauri::http::StatusCode, builder: tauri::http::response::
     builder
         .status(status)
         .header(tauri::http::header::CONTENT_LENGTH, body.len())
+        // 播放器窗口 / 皮肤页面（tauri.localhost、localhost:5173、skin.localhost）
+        // 与 media.localhost 跨源：<video>/<audio> 受 CORS 约束，必须放行
+        .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .body(body)
         .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!(e)))
 }
@@ -20,6 +23,7 @@ fn ok_response(status: tauri::http::StatusCode, builder: tauri::http::response::
 fn err_response(status: tauri::http::StatusCode) -> Result<tauri::http::Response<Vec<u8>>, tauri::Error> {
     tauri::http::Response::builder()
         .status(status)
+        .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .body(b"error".to_vec())
         .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!(e)))
 }
@@ -73,12 +77,23 @@ fn respond<R: tauri::Runtime>(
         .and_then(|v| v.to_str().ok())
         .and_then(parse_range);
 
+    // 开放式 / 大范围 Range 请求限幅：本协议处理器是同步的、跑在 UI 线程上，
+    // 全量缓冲大文件会阻塞事件循环并饿死媒体栈的后续 Range 请求（视频表现为
+    // DEMUXER_ERROR_COULD_NOT_OPEN）。限幅为固定窗口，Chromium 会自动跟进请求。
+    const MAX_RANGE_CHUNK: u64 = 4 * 1024 * 1024;
+
+    if let Some((start, _)) = range {
+        if start >= total {
+            return err_response(StatusCode::RANGE_NOT_SATISFIABLE);
+        }
+    }
+
     let (status, start, end) = match range {
-        Some((start, end)) => (
-            StatusCode::PARTIAL_CONTENT,
-            start,
-            end.unwrap_or(total.saturating_sub(1)).min(total.saturating_sub(1)),
-        ),
+        Some((start, end)) => {
+            let req_end = end.unwrap_or(total.saturating_sub(1)).min(total.saturating_sub(1));
+            let capped_end = req_end.min(start.saturating_add(MAX_RANGE_CHUNK - 1));
+            (StatusCode::PARTIAL_CONTENT, start, capped_end)
+        }
         None => (StatusCode::OK, 0u64, total.saturating_sub(1)),
     };
 

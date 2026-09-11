@@ -140,6 +140,19 @@
           card.classList.toggle("selected", e.target.checked);
         },
       });
+      const delBtn = el("button", {
+        class: "mini danger",
+        title: "删除该壁纸",
+        onclick: async (e) => {
+          e.stopPropagation();
+          if (!confirm(`删除「${w.meta?.title || w.fileName}」？正在播放会先停止。`)) return;
+          const res = await window.DevSkin.client.api.deleteWallpaper(JSON.parse(JSON.stringify(w)));
+          if (res.error) return window.DevSkin.toast(`删除失败: ${window.DevSkin.pretty(res.error)}`, "err");
+          selected.delete(w.filePath);
+          window.DevSkin.toast("已删除", "ok");
+          reload(root);
+        },
+      }, "删除");
       const card = el(
         "div",
         {
@@ -149,9 +162,12 @@
         },
         checkbox,
         w.coverUrl ? el("img", { src: w.coverUrl, loading: "lazy" }) : null,
-        el("div", { class: "name" },
-          el("span", { class: "type" }, window.DevSkin.typeName(w.meta?.type)),
-          w.meta?.title || "(无标题)"
+        el("div", { class: "name", style: { display: "flex", alignItems: "center", gap: "6px" } },
+          el("span", { style: { flex: "1", overflow: "hidden", textOverflow: "ellipsis" } },
+            el("span", { class: "type" }, window.DevSkin.typeName(w.meta?.type)),
+            w.meta?.title || "(无标题)"
+          ),
+          delBtn,
         )
       );
       grid.append(card);

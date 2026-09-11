@@ -51,6 +51,8 @@ pub struct PlayerConfig {
     pub hardware_decoding: bool,
     /// 页面是否接收鼠标事件（web 类引擎使用；视频引擎可忽略）。
     pub mouse_events: bool,
+    /// 窗口是否嵌入桌面（WorkerW）。false = 独立可见窗口（调试 / 预览）。
+    pub embed_desktop: bool,
 }
 
 /// 播放器实例的可序列化恢复信息（写入屏幕快照，崩溃后供 `restore` 接管）。
@@ -67,6 +69,12 @@ pub struct PlayerSnapshot {
 pub trait PlayerEngine: Send + Sync {
     /// 引擎标识（快照序列化 / 工厂匹配 / 日志），如 "mpv"、"webview"。
     fn kind(&self) -> &'static str;
+
+    /// 该实例是否（请求）嵌入桌面。管理器据此判断切换嵌入模式时
+    /// 不能复用旧实例（必须重启窗口重新附加）。
+    fn embed_desktop(&self) -> bool {
+        true
+    }
 
     /// 在仍存活的实例上换源播放（同引擎切换壁纸的复用路径）。
     /// `config` 为本次播放的参数（换源时音量/鼠标等设置可能已变化）。

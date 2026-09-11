@@ -14,6 +14,13 @@ const IGNORED_CLASSES: &[&str] = &["WorkerW", "Progman", "CEF-OSC-WIDGET", "mpv"
 
 /// 返回被遮挡的屏幕索引集合。
 pub fn covered_screens() -> Vec<u32> {
+    covered_screens_excluding(&[])
+}
+
+/// 返回被遮挡的屏幕索引集合，跳过 `exclude` 中的窗口句柄
+/// （原始 HWND 值）。独立窗口模式的播放器窗口由宿主传入排除，
+/// 避免播放器自己触发"遮挡智能暂停"。
+pub fn covered_screens_excluding(exclude: &[isize]) -> Vec<u32> {
     let screens = all_screens();
     if screens.is_empty() {
         return Vec::new();
@@ -21,6 +28,9 @@ pub fn covered_screens() -> Vec<u32> {
     let mut covered: HashSet<u32> = HashSet::new();
 
     for hwnd in top_level_windows() {
+        if exclude.contains(&(hwnd.0 as isize)) {
+            continue;
+        }
         unsafe {
             if !IsWindowVisible(hwnd).as_bool() || IsIconic(hwnd).as_bool() {
                 continue;

@@ -138,10 +138,11 @@ impl ScreenManager {
         // 取出旧渲染（新渲染就位后再按类型清理，避免切换闪屏）
         let old_render = self.render.take();
 
-        // 同引擎无缝复用：旧实例仍归属同一工厂时直接换源，
-        // （杀进程重启需要 2s+，换源近乎即时）
+        // 同引擎无缝复用：旧实例归属同一工厂且嵌入模式一致时直接换源，
+        // （杀进程重启需要 2s+，换源近乎即时）；嵌入模式变化必须重启重附加
         let reuse_video = engine_factory.as_ref().is_some_and(|f| {
-            matches!(&old_render, Some(Render::Video(p)) if f.kind() == p.kind())
+            matches!(&old_render, Some(Render::Video(p))
+                if f.kind() == p.kind() && p.embed_desktop() == item.setting.embed_desktop)
         });
 
         self.item = Some(item.clone());
@@ -223,6 +224,7 @@ impl ScreenManager {
             panscan: item.setting.is_pan_scan,
             hardware_decoding: item.setting.hardware_decoding,
             mouse_events: item.setting.enable_mouse_event,
+            embed_desktop: item.setting.embed_desktop,
         };
         log::info!(
             "play_video screen {} engine={} reuse_available={} file={} url={:?}",

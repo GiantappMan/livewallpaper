@@ -27,6 +27,10 @@ pub const WEBVIEW_KIND: &str = "webview";
 struct WindowInfo {
     ready: Arc<AtomicBool>,
     time: parking_lot::Mutex<Option<TimePos>>,
+    /// false = 独立窗口模式（显示为普通窗口，不嵌 WorkerW）。
+    embed: AtomicBool,
+    /// 最近一次 load 命令载荷（页面 wp-ready 握手时重发，消除启动竞态）。
+    last_load: parking_lot::Mutex<Option<serde_json::Value>>,
 }
 
 pub struct InternalPlayerController {
@@ -76,6 +80,31 @@ impl InternalPlayerController {
                 }
             }
         });
+
+        // wp-ready 握手：页面的 listen 注册完成可能晚于 load 命令（窗口 ready
+        // 即发送），页面上报就绪后把当前 load 命令重发一次。
+        let app = self.app.clone();
+        tauri::async_runtime::spawn(async move {
+            let mut rx = subscribe_to(&app, "wp-ready");
+            while let Some(payload) = rx.recv().await {
+                if let Some(label) = payload.get("label").and_then(|v| v.as_str()) {
+                    if let Some(controller) = INSTANCE.get() {
+                        if let Some(info) = controller.info_of(label) {
+                            let cmd = info.last_load.lock().clone();
+                            if let Some(cmd) = cmd {
+                                use tauri::Emitter;
+                                let _ = app.emit_to(
+                                    tauri::EventTarget::labeled(label),
+                                    "wp-cmd",
+                                    cmd,
+                                );
+                                log::info!("[player:{label}] replayed load on wp-ready");
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     fn label_player(screen: u32) -> String {
@@ -99,6 +128,8 @@ impl InternalPlayerController {
                     Arc::new(WindowInfo {
                         ready: Arc::new(AtomicBool::new(false)),
                         time: parking_lot::Mutex::new(None),
+                        embed: AtomicBool::new(true),
+                        last_load: parking_lot::Mutex::new(None),
                     })
                 })
                 .clone()
@@ -118,6 +149,12 @@ impl InternalPlayerController {
             .resizable(false)
             .skip_taskbar(true)
             .shadow(false)
+            // 壁纸视频自动播放是核心语义：解除"非用户手势不得出声播放"限制
+            // （含 wry 默认追加的 disable-features，设置 additional args 会整组替换）
+            .additional_browser_args(
+                "--autoplay-policy=no-user-gesture-required \
+                 --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
+            )
             .on_page_load(move |_window, payload| {
                 if matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
                     ready_flag.store(true, Ordering::SeqCst);
@@ -175,12 +212,18 @@ impl InternalPlayerController {
 
     /// 打开（或复用）播放器窗口并加载媒体。不挂载不显示——
     /// 由引擎的 attach_to_desktop 统一处理；复用窗口时保持原状实现无缝换源。
-    fn player_open(&self, screen: u32, url: &str, volume: u32, panscan: bool) -> Result<(), String> {
+    fn player_open(&self, screen: u32, url: &str, volume: u32, panscan: bool, embed: bool) -> Result<(), String> {
         let label = Self::label_player(screen);
-        log::info!("player_open: screen {screen} url={url} volume={volume} panscan={panscan}");
+        log::info!("player_open: screen {screen} url={url} volume={volume} panscan={panscan} embed={embed}");
         // 窗口本身以不可见方式创建：复用时保持原状（已挂载可见则无缝换源），
         // 全新窗口则等 attach_to_desktop 挂载成功后再显示
         self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
+        if let Some(info) = self.info_of(&label) {
+            info.embed.store(embed, Ordering::SeqCst);
+            *info.last_load.lock() = Some(
+                serde_json::json!({ "action": "load", "src": url, "volume": volume, "panscan": panscan }),
+            );
+        }
         self.emit_cmd(
             &label,
             "load",
@@ -189,14 +232,24 @@ impl InternalPlayerController {
         Ok(())
     }
 
-    /// 把播放器窗口挂载到桌面并显示。
+    /// 把播放器窗口挂载到桌面并显示。独立窗口模式不嵌 WorkerW，
+    /// 改为常规尺寸居中显示。
     fn player_attach(&self, screen: u32) -> Result<(), String> {
         let label = Self::label_player(screen);
         let window = self
             .app
             .get_webview_window(&label)
             .ok_or("播放器窗口不存在")?;
-        self.attach(&window, screen)?;
+        let embed = self
+            .info_of(&label)
+            .map(|i| i.embed.load(Ordering::SeqCst))
+            .unwrap_or(true);
+        if embed {
+            self.attach(&window, screen)?;
+        } else {
+            let _ = window.set_size(tauri::LogicalSize::new(960.0, 540.0));
+            let _ = window.center();
+        }
         let _ = window.show();
         Ok(())
     }
@@ -260,20 +313,32 @@ impl InternalPlayerController {
 
     /// 打开（或复用）web 壁纸窗口并加载 URL。不挂载不显示——
     /// 由引擎的 attach_to_desktop 统一处理。
-    fn web_open(&self, screen: u32, url: &str) -> Result<(), String> {
+    fn web_open(&self, screen: u32, url: &str, embed: bool) -> Result<(), String> {
         let label = Self::label_web(screen);
-        log::info!("web_open: screen {screen} url={url}");
+        log::info!("web_open: screen {screen} url={url} embed={embed}");
         // 本地 media 协议地址已注册为可导航 scheme，与 http(s) 一样直接解析
         let parsed: tauri::Url = url.parse().map_err(|e| format!("bad url: {e}"))?;
         self.ensure_window(&label, WebviewUrl::External(parsed))?;
+        if let Some(info) = self.info_of(&label) {
+            info.embed.store(embed, Ordering::SeqCst);
+        }
         Ok(())
     }
 
-    /// 把 web 窗口挂载到桌面并显示。
+    /// 把 web 窗口挂载到桌面并显示。独立窗口模式不嵌 WorkerW。
     fn web_attach(&self, screen: u32) -> Result<(), String> {
         let label = Self::label_web(screen);
         let window = self.app.get_webview_window(&label).ok_or("web 窗口不存在")?;
-        self.attach(&window, screen)?;
+        let embed = self
+            .info_of(&label)
+            .map(|i| i.embed.load(Ordering::SeqCst))
+            .unwrap_or(true);
+        if embed {
+            self.attach(&window, screen)?;
+        } else {
+            let _ = window.set_size(tauri::LogicalSize::new(960.0, 540.0));
+            let _ = window.center();
+        }
         let _ = window.show();
         Ok(())
     }
@@ -351,6 +416,7 @@ fn subscribe_to(
 struct WebViewPlayer {
     controller: Arc<InternalPlayerController>,
     screen: u32,
+    embed_desktop: bool,
 }
 
 fn err_msg(e: String) -> anyhow::Error {
@@ -361,6 +427,10 @@ fn err_msg(e: String) -> anyhow::Error {
 impl PlayerEngine for WebViewPlayer {
     fn kind(&self) -> &'static str {
         WEBVIEW_KIND
+    }
+
+    fn embed_desktop(&self) -> bool {
+        self.embed_desktop
     }
 
     /// 复用窗口换源：重发 load 命令（参数随 config 下发，避免换源闪断）。
@@ -375,6 +445,7 @@ impl PlayerEngine for WebViewPlayer {
                 &url,
                 config.volume,
                 config.panscan,
+                self.embed_desktop,
             )
             .map_err(err_msg)
     }
@@ -453,11 +524,12 @@ impl PlayerFactory for WebViewPlayerFactory {
             .clone()
             .ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
         self.controller
-            .player_open(config.screen, &url, config.volume, config.panscan)
+            .player_open(config.screen, &url, config.volume, config.panscan, config.embed_desktop)
             .map_err(err_msg)?;
         Ok(Arc::new(WebViewPlayer {
             controller: self.controller.clone(),
             screen: config.screen,
+            embed_desktop: config.embed_desktop,
         }))
     }
 
@@ -480,12 +552,17 @@ struct WebPlayer {
     screen: u32,
     /// 页面是否接收鼠标事件（换源导航时可能变化）。
     mouse_events: AtomicBool,
+    embed_desktop: bool,
 }
 
 #[async_trait::async_trait]
 impl PlayerEngine for WebPlayer {
     fn kind(&self) -> &'static str {
         WEB_KIND
+    }
+
+    fn embed_desktop(&self) -> bool {
+        self.embed_desktop
     }
 
     /// 复用窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
@@ -567,12 +644,13 @@ impl PlayerFactory for WebPlayerFactory {
             .clone()
             .ok_or_else(|| anyhow::anyhow!("web 播放器需要 URL"))?;
         self.controller
-            .web_open(config.screen, &url)
+            .web_open(config.screen, &url, config.embed_desktop)
             .map_err(err_msg)?;
         Ok(Arc::new(WebPlayer {
             controller: self.controller.clone(),
             screen: config.screen,
             mouse_events: AtomicBool::new(config.mouse_events),
+            embed_desktop: config.embed_desktop,
         }))
     }
 
@@ -592,6 +670,21 @@ impl PlayerFactory for WebPlayerFactory {
 impl EngineHost for InternalPlayerController {
     fn player_factories(&self) -> Vec<Arc<dyn PlayerFactory>> {
         self.factories.get().cloned().unwrap_or_default()
+    }
+
+    /// 独立窗口模式的播放器窗口不参与遮挡检测（否则最大化播放器
+    /// 会触发"遮挡智能暂停"把自己停住）。
+    fn occlusion_exclusions(&self) -> Vec<isize> {
+        let labels: Vec<String> = self.windows.lock().keys().cloned().collect();
+        let mut out = Vec::new();
+        for label in labels {
+            if let Some(window) = self.app.get_webview_window(&label) {
+                if let Ok(h) = window.hwnd() {
+                    out.push(h.0 as isize);
+                }
+            }
+        }
+        out
     }
 
     fn mpv_path(&self) -> std::path::PathBuf {

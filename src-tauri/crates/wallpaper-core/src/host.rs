@@ -23,6 +23,12 @@ pub trait EngineHost: Send + Sync {
     fn player_factories(&self) -> Vec<Arc<dyn PlayerFactory>> {
         Vec::new()
     }
+
+    /// 遮挡检测时排除的顶层窗口句柄（原始 HWND 值）。
+    /// 独立窗口模式的播放器窗口不应触发"遮挡智能暂停"。
+    fn occlusion_exclusions(&self) -> Vec<isize> {
+        Vec::new()
+    }
 }
 
 /// 无操作宿主（测试用）。
