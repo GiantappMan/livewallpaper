@@ -21,6 +21,7 @@ use std::time::Duration;
 use parking_lot::Mutex;
 use windows::core::BOOL;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
+use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MonitorFromWindow, MONITOR_DEFAULTTONEAREST};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, GetDoubleClickTime, VK_CONTROL, VK_SHIFT,
 };
@@ -42,12 +43,17 @@ const MK_CONTROL: u32 = 0x0008;
 const MK_MBUTTON: u32 = 0x0010;
 
 /// 一个可交互 web 壁纸窗口的转发目标（按屏幕注册）。
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MouseTarget {
     pub screen: u32,
+    /// 壁纸窗口所在显示器（HMONITOR 原始值）；光标命中图标层时按显示器路由。
+    pub monitor: isize,
     /// 壁纸 WebView2 窗口链的链顶（GetParent 走到头的 Chrome_WidgetWin_1，
     /// 属 msedgewebview2.exe 进程）。命中侧用同一算法取链顶比对。
     pub webview_top: isize,
+    /// WebView2 输入子窗口（Chrome_RenderWidgetHostHWND），图标层拦截
+    /// 真实输入时的投递目标。
+    pub input: isize,
 }
 
 static TARGETS: Mutex<Vec<MouseTarget>> = Mutex::new(Vec::new());
@@ -77,16 +83,28 @@ struct Running {
 static HOOK_THREAD: Mutex<Option<Running>> = Mutex::new(None);
 
 /// 更新某屏幕的转发目标；存在目标时确保钩子已安装，全部移除后自动卸载。
+/// 目标未变化时是 no-op（刷新线程会周期性重算，避免日志/钩子抖动）。
 pub fn set_target(screen: u32, target: Option<MouseTarget>) {
-    let need = {
+    let changed = {
         let mut targets = TARGETS.lock();
-        targets.retain(|t| t.screen != screen);
-        if let Some(t) = target {
-            log::info!("mouse hook target: screen {screen} webview_top={:#x}", t.webview_top);
-            targets.push(t);
+        if targets.iter().find(|t| t.screen == screen) == target.as_ref() {
+            false
+        } else {
+            targets.retain(|t| t.screen != screen);
+            if let Some(t) = target {
+                log::info!(
+                    "mouse hook target: screen {screen} monitor={:#x} webview_top={:#x} input={:#x}",
+                    t.monitor, t.webview_top, t.input
+                );
+                targets.push(t);
+            }
+            true
         }
-        !targets.is_empty()
     };
+    if !changed {
+        return;
+    }
+    let need = !TARGETS.lock().is_empty();
     sync_hook(need);
 }
 
@@ -175,7 +193,7 @@ fn forward(msg: u32, info: &MSLLHOOKSTRUCT) {
     // 命中匹配：光标下窗口的根是注册的壁纸 webview 根才转发
     // （应用窗口 / 任务栏 / 桌面图标命中的根不同，自动排除）
     let pt = info.pt;
-    let Some(hwnd) = hit_target(pt) else {
+    let Some(hwnd) = resolve_target(pt) else {
         return;
     };
 
@@ -231,22 +249,34 @@ fn forward(msg: u32, info: &MSLLHOOKSTRUCT) {
 /// 与真实输入的投递路径一致）。判定方式：命中窗口沿 GetParent 链
 /// 走到链顶，与注册的 webview 链顶一致即命中。应用窗口 / 任务栏 /
 /// 桌面图标的链顶不同，自动排除。
-fn hit_target(pt: POINT) -> Option<HWND> {
+/// 解析光标处应投递的壁纸输入窗口。两种桌面形态都覆盖：
+/// - 图标层对空白区放行 / 图标隐藏时，命中窗口就是壁纸 webview 自己
+///   （链顶 == 注册的 webview_top），直接投递命中窗口（与真实输入同路）；
+/// - 图标层拦截输入时命中 SysListView32 → 链顶 Progman/WorkerW，
+///   按显示器路由到该屏壁纸的输入窗口主动投递。
+/// 其他应用 / 任务栏 / 锁屏 / 主窗口的链顶不同，自动排除。
+fn resolve_target(pt: POINT) -> Option<HWND> {
     unsafe {
         let under = WindowFromPoint(pt);
         let top = chain_top(under.0 as isize);
-        TARGETS
-            .lock()
-            .iter()
-            .find(|t| t.webview_top == top)
-            .map(|_| under)
+        let targets = TARGETS.lock();
+        if targets.iter().any(|t| t.webview_top == top) {
+            return Some(under);
+        }
+        let top_cls = window_class_of(HWND(top as *mut _));
+        if top_cls.eq_ignore_ascii_case("Progman") || top_cls.eq_ignore_ascii_case("WorkerW") {
+            let mon = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST).0 as isize;
+            if let Some(t) = targets.iter().find(|t| t.monitor == mon) {
+                return Some(HWND(t.input as *mut _));
+            }
+        }
+        None
     }
 }
 
 /// GetParent 链顶端。实测 WebView2 的窗口链停在 Chrome_WidgetWin_1
 /// （父链不进入宿主进程），壁纸窗口与命中窗口走同一算法结果一致。
-pub fn chain_top(hwnd: isize) -> isize {
-    let mut cur = hwnd;
+pub fn chain_top(hwnd: isize) -> isize {    let mut cur = hwnd;
     unsafe {
         for _ in 0..16 {
             let parent = match GetParent(HWND(cur as *mut _)) {
@@ -262,13 +292,20 @@ pub fn chain_top(hwnd: isize) -> isize {
     cur
 }
 
+/// 窗口所在显示器（HMONITOR 原始值）。
+pub fn monitor_of_window(hwnd: isize) -> isize {
+    unsafe { MonitorFromWindow(HWND(hwnd as *mut _), MONITOR_DEFAULTTONEAREST) }.0 as isize
+}
+
 struct ChildCtx {
     self_pid: u32,
     webview: Option<isize>,
 }
 
-/// 找到壁纸窗口下的 WebView2 输入子窗口（优先 Chrome_RenderWidgetHostHWND，
-/// 退回第一个跨进程子窗口）——其链顶即注册用链顶。
+/// 找到壁纸窗口下的 WebView2 输入子窗口——优先 Chrome_RenderWidgetHostHWND
+/// （输入窗口），退回 Chrome_WidgetWin_1，再次退回任意跨进程子窗口；
+/// 其链顶即注册用链顶。子窗口句柄会被 WebView2 周期性重建，调用方需
+/// 周期性重取（见 InternalPlayerController 的刷新线程）。
 pub fn find_webview_child(top: isize) -> Option<isize> {
     let top = HWND(top as *mut _);
     let mut ctx = ChildCtx {
@@ -293,12 +330,13 @@ unsafe extern "system" fn child_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
     if pid != ctx.self_pid {
         let cls = window_class_of(hwnd);
         let is_input = cls.eq_ignore_ascii_case("Chrome_RenderWidgetHostHWND");
-        // 优先输入窗口；其余跨进程子窗口仅在没有更优选择时使用
+        let is_root = cls.eq_ignore_ascii_case("Chrome_WidgetWin_1");
         if is_input {
+            // 输入窗口是最优选择，直接定稿并停止枚举
             ctx.webview = Some(hwnd.0 as isize);
             return false.into();
         }
-        if ctx.webview.is_none() {
+        if ctx.webview.is_none() || is_root {
             ctx.webview = Some(hwnd.0 as isize);
         }
     }

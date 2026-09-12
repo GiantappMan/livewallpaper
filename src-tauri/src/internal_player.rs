@@ -32,6 +32,8 @@ struct WindowInfo {
     time: parking_lot::Mutex<Option<TimePos>>,
     /// false = 独立窗口模式（显示为普通窗口，不嵌 WorkerW）。
     embed: AtomicBool,
+    /// 当前是否允许鼠标交互（web 窗口；刷新线程据此维护钩子目标）。
+    mouse_enabled: AtomicBool,
     /// 最近一次 load 命令载荷（页面 wp-ready 握手时重发，消除启动竞态）。
     last_load: parking_lot::Mutex<Option<serde_json::Value>>,
 }
@@ -62,7 +64,43 @@ impl InternalPlayerController {
         ]);
         let _ = INSTANCE.set(controller.clone());
         controller.listen_time_events();
+        controller.spawn_mouse_hook_refresher();
         controller
+    }
+
+    /// WebView2 会不定期重建自己的子窗口（渲染器/合成器初始化时），
+    /// 注册用的链顶句柄随之失效——周期性重算并把新链顶喂给钩子，
+    /// 保证交互在窗口树变化后最多一个周期内自愈。
+    fn spawn_mouse_hook_refresher(self: &Arc<Self>) {
+        #[cfg(windows)]
+        {
+            let controller = self.clone();
+            let _ = std::thread::Builder::new()
+                .name("mouse-hook-refresh".into())
+                .spawn(move || loop {
+                    std::thread::sleep(Duration::from_secs(2));
+                    controller.refresh_mouse_hook_targets();
+                });
+        }
+    }
+
+    /// 重算所有 web 窗口的钩子转发目标（`set_target` 对未变化的值是 no-op）。
+    #[cfg(windows)]
+    fn refresh_mouse_hook_targets(&self) {
+        let labels: Vec<String> = self.windows.lock().keys().cloned().collect();
+        for label in labels {
+            let Some(screen) = label.strip_prefix(WEB_PREFIX).and_then(|s| s.parse().ok()) else {
+                continue;
+            };
+            let Some(info) = self.info_of(&label) else {
+                continue;
+            };
+            if !info.mouse_enabled.load(Ordering::SeqCst) || !info.embed.load(Ordering::SeqCst) {
+                continue;
+            }
+            let target = self.web_hook_target(screen);
+            mouse_hook::set_target(screen, target);
+        }
     }
 
     fn listen_time_events(self: &Arc<Self>) {
@@ -132,6 +170,7 @@ impl InternalPlayerController {
                         ready: Arc::new(AtomicBool::new(false)),
                         time: parking_lot::Mutex::new(None),
                         embed: AtomicBool::new(true),
+                        mouse_enabled: AtomicBool::new(false),
                         last_load: parking_lot::Mutex::new(None),
                     })
                 })
@@ -351,6 +390,9 @@ impl InternalPlayerController {
     /// 位于图标层之下收不到任何真实输入，由全局鼠标钩子转发（见 mouse_hook）。
     fn web_set_mouse(&self, screen: u32, enabled: bool) -> Result<(), String> {
         let label = Self::label_web(screen);
+        if let Some(info) = self.info_of(&label) {
+            info.mouse_enabled.store(enabled, Ordering::SeqCst);
+        }
         if let Some(window) = self.app.get_webview_window(&label) {
             let _ = window.set_ignore_cursor_events(!enabled);
         }
@@ -368,8 +410,9 @@ impl InternalPlayerController {
         Ok(())
     }
 
-    /// web 窗口的交互转发目标：仅嵌入桌面时存在。取 WebView2 输入子窗口
-    /// 的父链链顶为标记（子窗口异步创建，短暂等待）。
+    /// web 窗口的交互转发目标：仅嵌入桌面且 WebView2 子窗口已创建时存在。
+    /// 子窗口可能尚未创建（返回 None）或随后被 WebView2 重建（句柄失效），
+    /// 两者都由刷新线程周期性自愈。
     #[cfg(windows)]
     fn web_hook_target(&self, screen: u32) -> Option<mouse_hook::MouseTarget> {
         let label = Self::label_web(screen);
@@ -382,19 +425,14 @@ impl InternalPlayerController {
             return None;
         }
         let window = self.app.get_webview_window(&label)?;
-        for _ in 0..20 {
-            if let Ok(h) = window.hwnd() {
-                if let Some(child) = mouse_hook::find_webview_child(h.0 as isize) {
-                    return Some(mouse_hook::MouseTarget {
-                        screen,
-                        webview_top: mouse_hook::chain_top(child),
-                    });
-                }
-            }
-            std::thread::sleep(Duration::from_millis(100));
-        }
-        log::warn!("[player:{label}] 未找到 WebView2 子窗口，鼠标交互不可用");
-        None
+        let h = window.hwnd().ok()?;
+        let child = mouse_hook::find_webview_child(h.0 as isize)?;
+        Some(mouse_hook::MouseTarget {
+            screen,
+            monitor: mouse_hook::monitor_of_window(h.0 as isize),
+            webview_top: mouse_hook::chain_top(child),
+            input: child,
+        })
     }
 
     /// 已存活的窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
