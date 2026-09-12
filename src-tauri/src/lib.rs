@@ -648,9 +648,11 @@ fn build_hub_popup(
 /// OAuth 登录窗口：顶层直接加载授权页（GitHub/微信）或 about:blank 空白页
 /// （弹窗式授权，由站点脚本导航），顶层导航不受 X-Frame-Options 限制，登录
 /// 产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐。
-/// 跳去授权域后又回到社区域名视为登录完成：先把站点 Cookie 重写为
-/// SameSite=None（否则跨站 iframe 请求不携带 Lax Cookie，社区页看不到登录态），
-/// 再自动关窗并广播 hub-session-changed，主窗口收到后重载社区页 iframe。
+/// 跳去授权域后又回到社区域名视为登录完成，稍候自动关窗。无论哪种登录方式
+/// （密码 / GitHub / 微信弹窗 / 扫码内嵌），会话同步统一在窗口销毁时做：
+/// 先把站点 Cookie 原地改写为 SameSite=None（否则跨站 iframe 请求不携带
+/// Lax Cookie，社区页看不到登录态），再广播 hub-session-changed，主窗口
+/// 收到后重载社区页 iframe。
 pub(crate) fn build_oauth_window(
     app: &tauri::AppHandle,
     label: &str,
@@ -661,7 +663,8 @@ pub(crate) fn build_oauth_window(
     let went_external = Arc::new(AtomicBool::new(false));
     let flag = went_external.clone();
 
-    tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::External(url))
+    log::info!("oauth window building: label={label} url={url}");
+    let build_result = tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::External(url))
         .title("账号登录")
         .inner_size(1024.0, 720.0)
         .min_inner_size(420.0, 480.0)
@@ -672,6 +675,7 @@ pub(crate) fn build_oauth_window(
             if payload.event() != tauri::webview::PageLoadEvent::Finished {
                 return;
             }
+            log::info!("oauth window page load finished: {}", payload.url());
             let on_hub = window.url().map(|u| is_hub_origin(&u)).unwrap_or(false);
             if !on_hub {
                 flag.store(true, Ordering::Relaxed);
@@ -680,87 +684,37 @@ pub(crate) fn build_oauth_window(
             if !flag.swap(false, Ordering::Relaxed) {
                 return;
             }
-            let app = window.app_handle().clone();
+            // 授权后回到社区：稍候关窗。Cookie 改写与广播统一在 Destroyed 里做。
+            // 延迟要给站点客户端侧的会话建立留足时间（如微信登录信号回到主
+            // 窗口后还要发 signIn/update 请求），关早了会话 Cookie 尚未落盘。
             let win = window.clone();
             std::thread::spawn(move || {
-                // 会话 Cookie 回灌：默认 SameSite=Lax 的 Cookie 不会随跨站
-                // iframe 请求携带，社区页（跨站 iframe）重载后依然看不到登录态。
-                // 趁回调页还是社区域名的顶层第一方文档，把站点 Cookie 重写为
-                // SameSite=None; Secure 写回 Cookie 罐，iframe 即可携带。
-                if let Ok(page_url) = win.url() {
-                    match win.cookies_for_url(page_url.clone()) {
-                        Ok(cookies) => {
-                            let js = cookie_rewrite_script(&cookies);
-                            if let Err(e) = win.eval(&js) {
-                                log::warn!("eval cookie rewrite failed: {e}");
-                            }
-                        }
-                        Err(e) => log::warn!("read session cookies failed: {e}"),
-                    }
-                }
-                // 留给 eval 执行 / 回调页收尾跳转一点时间
-                std::thread::sleep(std::time::Duration::from_millis(800));
+                std::thread::sleep(std::time::Duration::from_millis(2000));
                 let _ = win.close();
-                publish_event(&app, "hub-session-changed", ());
             });
         })
-        .build()
-}
-
-/// 把站点 Cookie 以 `SameSite=None; Secure` 重写的 JS，需在社区域名的顶层
-/// 第一方文档里执行。HttpOnly 的值站点脚本拿不到，但从 Rust 侧
-/// `cookies_for_url` 能拿到，重写后 Cookie 罐里的同名条目即被替换。
-fn cookie_rewrite_script(cookies: &[tauri::webview::Cookie<'static>]) -> String {
-    use std::fmt::Write;
-    let mut js = String::from("(function(){");
-    for c in cookies {
-        let mut attrs = format!("path={}", c.path().unwrap_or("/"));
-        attrs.push_str("; SameSite=None; Secure");
-        if let Some(tauri::webview::cookie::Expiration::DateTime(dt)) = c.expires() {
-            let _ = write!(attrs, "; Expires={}", http_date(dt));
-        }
-        let _ = write!(
-            js,
-            "document.cookie='{}={}; {};';",
-            js_escape(c.name()),
-            js_escape(c.value()),
-            attrs
-        );
+        .build();
+    if let Err(e) = &build_result {
+        log::warn!("oauth window build failed: {e}");
     }
-    js.push_str("})();");
-    js
+    let window = build_result?;
+
+    // 窗口销毁时广播：服务端会话 Cookie 为 SameSite=None 后，跨站 iframe
+    // 可直接携带会话，重载社区页即可看到最新登录态（覆盖密码/微信/GitHub
+    // 登录以及手动关窗；自动关窗路径同样由 Destroyed 触发，无需重复广播）。
+    let app_handle = window.app_handle().clone();
+    window.on_window_event(move |event| {
+        if matches!(event, tauri::WindowEvent::Destroyed) {
+            let app = app_handle.clone();
+            std::thread::spawn(move || {
+                publish_event(&app, "hub-session-changed", ());
+            });
+        }
+    });
+
+    Ok(window)
 }
 
-fn js_escape(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('\'', "\\'")
-}
-
-/// RFC 1123 / HTTP 日期格式（Expires 属性要求），如 `Wed, 09 Sep 2026 00:00:00 GMT`。
-fn http_date(dt: tauri::webview::cookie::time::OffsetDateTime) -> String {
-    use tauri::webview::cookie::time::Weekday;
-    let weekday = match dt.weekday() {
-        Weekday::Monday => "Mon",
-        Weekday::Tuesday => "Tue",
-        Weekday::Wednesday => "Wed",
-        Weekday::Thursday => "Thu",
-        Weekday::Friday => "Fri",
-        Weekday::Saturday => "Sat",
-        Weekday::Sunday => "Sun",
-    };
-    let month = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ][(u8::from(dt.month()) - 1) as usize];
-    format!(
-        "{}, {:02} {} {:04} {:02}:{:02}:{:02} GMT",
-        weekday,
-        dt.day(),
-        month,
-        dt.year(),
-        dt.hour(),
-        dt.minute(),
-        dt.second()
-    )
-}
 
 /// 退出前持久化窗口状态（在 quit 中调用）。
 pub fn persist_window_state(app: &tauri::AppHandle) {

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# pre-commit：扫描暂存区新增行中的疑似敏感信息，命中则阻止提交。
+# 确认误报时可在该行末尾加注释标记 secret-scan:allow，或用 git commit --no-verify 跳过。
+
+set -euo pipefail
+
+PATTERNS=(
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  'AKIA[0-9A-Z]{16}'
+  'AIza[0-9A-Za-z_-]{35}'
+  'gh[pousr]_[A-Za-z0-9]{36,}'
+  'xox[baprs]-[A-Za-z0-9-]{10,}'
+  'hooks\.slack\.com/services/'
+  'Bearer [A-Za-z0-9._~+/=-]{20,}'
+  'eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{5,}'
+  '(api[_-]?key|apikey|secret|access[_-]?token|auth[_-]?token|passwd|password|pwd)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9+/_=-]{16,}'
+)
+
+violations=0
+while IFS= read -r file; do
+  added="$(git diff --cached --unified=0 --no-color -- "$file" | grep '^+' | grep -v '^+++' | grep -v 'secret-scan:allow' || true)"
+  [ -z "$added" ] && continue
+  for pattern in "${PATTERNS[@]}"; do
+    hits="$(printf '%s\n' "$added" | grep -Ein -e "$pattern" || true)"
+    if [ -n "$hits" ]; then
+      echo "疑似敏感信息: $file"
+      printf '%s\n' "$hits" | sed 's/^/    /'
+      violations=1
+    fi
+  done
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+if [ "$violations" -ne 0 ]; then
+  cat <<'EOF'
+
+提交已被 pre-commit 钩子阻止：检测到疑似敏感信息（密钥/令牌/密码等）。
+- 请移除敏感内容，或改为环境变量/外部配置并加入 .gitignore。
+- 确认是误报时：在该行末尾加标记 secret-scan:allow，或 git commit --no-verify 跳过本次检查。
+EOF
+  exit 1
+fi
+
+exit 0

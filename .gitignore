@@ -10,6 +10,13 @@ node_modules
 /src-tauri/assets/players/mpv/*
 !/src-tauri/assets/players/mpv/.gitkeep
 
+# secrets / local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
 # logs / local
 *.log
 .DS_Store

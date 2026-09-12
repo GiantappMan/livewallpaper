@@ -863,8 +863,9 @@ pub fn cancel_download_mpv(_app: AppHandle) -> Result<()> {
 /// （hub iframe 是跨站上下文，授权页拒绝被嵌套，会话 Cookie 也受第三方限制）。
 /// 已有社区/登录窗口时直接聚焦。
 #[tauri::command]
-pub fn open_community_window(app: AppHandle, url: String) -> Result<()> {
+pub async fn open_community_window(app: AppHandle, url: String) -> Result<()> {
     use crate::{build_oauth_window, is_hub_origin, next_hub_window_seq};
+    log::info!("open_community_window invoked: {url}");
 
     if let Some((_, win)) = app
         .webview_windows()
@@ -879,9 +880,19 @@ pub fn open_community_window(app: AppHandle, url: String) -> Result<()> {
         return Err("origin not allowed".to_string());
     }
     let label = format!("oauth-{}", next_hub_window_seq());
-    build_oauth_window(&app, &label, parsed)
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+
+    // WebView2 控制器创建依赖创建线程的消息泵；在主线程 / 命令线程上同步
+    // build 会与其消息处理互堵，表现为窗口壳已显示但 WebView 永不初始化
+    //（永久黑屏的登录窗口）。放到专用阻塞线程创建（官方多窗口模式），
+    // 由该线程自己的消息泵等待创建完成。
+    log::info!("open_community_window: creating {label} on worker thread");
+    tauri::async_runtime::spawn_blocking(move || {
+        build_oauth_window(&app, &label, parsed)
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 // ---------- 皮肤 ----------
