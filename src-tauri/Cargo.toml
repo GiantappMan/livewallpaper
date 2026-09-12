@@ -1,6 +1,6 @@
 [package]
 name = "giantapp-wallpaper"
-version = "4.0.0"
+version = "4.0.1-alpha.1"
 edition = "2021"
 description = "Giantapp Wallpaper IV - Tauri client"
 license = "LGPL-3.0"
