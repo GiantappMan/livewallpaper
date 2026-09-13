@@ -117,6 +117,7 @@ pub fn run() {
             commands::open_log_folder,
             commands::show_folder_dialog,
             commands::show_shell,
+            commands::close_window,
             commands::hide_loading,
             commands::set_window_state,
             commands::set_community_webview,
@@ -214,8 +215,10 @@ pub(crate) fn build_main_window(
 }
 
 /// 主窗口公共行为：尺寸恢复 + 关闭隐藏到托盘 + 尺寸记录。
+/// 一律经 `get_window` 取窗口（见 show_main_window 注释：挂载社区 WebView 后
+/// `get_webview_window("main")` 恒为 None，事件闭包在挂载后才触发）。
 pub(crate) fn attach_main_window_handlers(app: &tauri::AppHandle) {
-    let Some(window) = app.get_webview_window("main") else {
+    let Some(window) = app.get_window("main") else {
         return;
     };
     {
@@ -231,7 +234,7 @@ pub(crate) fn attach_main_window_handlers(app: &tauri::AppHandle) {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 // 点 X 只隐藏，留在托盘（与 v3 一致）
                 api.prevent_close();
-                if let Some(w) = handle.get_webview_window("main") {
+                if let Some(w) = handle.get_window("main") {
                     let _ = w.hide();
                 }
             }
@@ -241,7 +244,7 @@ pub(crate) fn attach_main_window_handlers(app: &tauri::AppHandle) {
                     event,
                     tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Focused(true)
                 ) {
-                    if let Some(w) = handle.get_webview_window("main") {
+                    if let Some(w) = handle.get_window("main") {
                         let st: tauri::State<AppState> = handle.state();
                         let mut restorer = st.window_restorer.lock();
                         let captured = crate::state::WindowRestore::capture(&w);
@@ -259,19 +262,24 @@ pub(crate) fn attach_main_window_handlers(app: &tauri::AppHandle) {
 }
 
 /// 唤起主窗口：存在则显示聚焦，不存在（headless / 已销毁）则按需创建。
+///
+/// 注意必须用 `get_window` 而不是 `get_webview_window`：后者要求窗口内所有
+/// webview 的 label 与窗口一致，挂载社区 WebView（label=community）后主窗口
+/// 变成多 webview 窗口，`get_webview_window("main")` 永远返回 None，导致
+/// 走进重建分支报 "a webview with label `main` already exists"，导航事件
+/// 根本发不出去（社区页“去本地壁纸查看”无反应的根因）。
 pub(crate) fn show_main_window(app: &tauri::AppHandle, route: Option<&str>) {
-    let window = match app.get_webview_window("main") {
-        Some(window) => window,
-        None => match build_main_window(app) {
-            Ok(window) => {
-                attach_main_window_handlers(app);
-                window
-            }
+    if app.get_window("main").is_none() {
+        match build_main_window(app) {
+            Ok(_) => attach_main_window_handlers(app),
             Err(e) => {
                 log::error!("create main window failed: {e}");
                 return;
             }
-        },
+        }
+    }
+    let Some(window) = app.get_window("main") else {
+        return;
     };
     let _ = window.unminimize();
     let _ = window.show();
@@ -292,7 +300,7 @@ pub(crate) fn finish_loading(app: &tauri::AppHandle) {
         let _ = splash.close();
     }
     if !hide {
-        if let Some(window) = app.get_webview_window("main") {
+        if let Some(window) = app.get_window("main") {
             let _ = window.show();
             let _ = window.set_focus();
         }
@@ -316,10 +324,12 @@ pub(crate) fn recreate_main_window(app: &tauri::AppHandle) {
         .unwrap_or_else(AppDirs::resolve);
     let skin_id = skin::configured_skin_id(&dirs);
     let target = skin::main_window_target(&dirs, &skin_id);
-    if let Some(window) = app.get_webview_window("main") {
+    // 主窗口是挂了社区 WebView 的多 webview 窗口，只能经 get_webview 取
+    // webview 本体（get_webview_window 对多 webview 窗口恒为 None）
+    if let Some(webview) = app.get_webview("main") {
         if target.extra_init_scripts.is_empty() {
             if let Some(url) = main_window_navigate_url(app, &target) {
-                match window.navigate(url) {
+                match webview.navigate(url) {
                     Ok(()) => {
                         log::info!("main window navigated: skin={skin_id:?}");
                         return;
@@ -363,11 +373,12 @@ fn rebuild_main_window_async(app: tauri::AppHandle) {
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(500));
         crate::persist_window_state(&app);
-        if let Some(w) = app.get_webview_window("main") {
+        if let Some(w) = app.get_window("main") {
             let _ = w.destroy();
         }
+        // label 冲突发生在 webview 注册表，等 webview 真正注销
         for _ in 0..30 {
-            if app.get_webview_window("main").is_none() {
+            if app.get_webview("main").is_none() {
                 break;
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -517,7 +528,7 @@ fn setup(
 
     // 启动显示策略
     if !headless && !launched_hidden {
-        if let Some(window) = app.get_webview_window("main") {
+        if let Some(window) = app.get_window("main") {
             let _ = window.show();
         }
     }
@@ -748,7 +759,7 @@ pub(crate) fn create_community_webview(
 
 /// 退出前持久化窗口状态（在 quit 中调用）。
 pub fn persist_window_state(app: &tauri::AppHandle) {
-    if let Some(w) = app.get_webview_window("main") {
+    if let Some(w) = app.get_window("main") {
         let st: tauri::State<AppState> = app.state();
         let mut restorer = st.window_restorer.lock();
         let captured = state::WindowRestore::capture(&w);

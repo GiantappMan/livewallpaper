@@ -92,7 +92,7 @@
       ShowShell: { cmd: 'show_shell', args: function (a) { return { path: s(a[0]) }; } },
       ShowFolderDialog: { cmd: 'show_folder_dialog' },
       HideLoading: { cmd: 'hide_loading' },
-      CloseWindow: { cmd: 'hide_loading' },
+      CloseWindow: { cmd: 'close_window' },
     };
     return table;
   })();
@@ -113,7 +113,14 @@
       setTimeout(installReceiver, 100);
       return;
     }
-    window.__WP_RECEIVER__ = true;
+    // 社区内嵌 WebView 自身不安装转发接收器：引擎事件由主窗口统一接收并
+    // 经 __wp_forward 转发到它，自建转发会造成同一事件多重投递（站点进度
+    // 条反复重置、闪烁）。它只保留 installShim 里的结果/转发监听。
+    var selfLabel = '';
+    try {
+      selfLabel = (window.__TAURI_INTERNALS__.metadata.currentWebview || {}).label || '';
+    } catch (err) {}
+    if (selfLabel === 'community') return;
 
     // 执行中继请求
     window.addEventListener('message', function (e) {
@@ -149,12 +156,15 @@
       if (window.__TAURI__ && window.__TAURI__.event && window.__TAURI__.event.listen) {
         window.__TAURI__.event.listen(name, function (e) { cb(e.payload); });
       } else if (window.__TAURI_INTERNALS__) {
-        // 兜底：直接用内部 API
+        // 兜底：直接用内部 API。注意 handler 必须是 transformCallback 返回的
+        // 回调 ID（数字）——直接传函数会被 JSON 序列化丢弃，事件永远收不到。
         try {
           window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
             event: name,
             target: { kind: 'Any' },
-            handler: cb,
+            handler: window.__TAURI_INTERNALS__.transformCallback(function (e) {
+              cb(e && e.payload !== undefined ? e.payload : e);
+            }),
           });
         } catch (err) {}
       }
@@ -163,29 +173,43 @@
     listen('download-status-changed', function (status) { forward('download-status-changed', 'DownloadStatusChangedEvent', status); });
 
     // 事件回路：顶层远程帧（社区内嵌 WebView）的桥调用经事件转发到这里，
-    // 由主窗口（本地上下文，ACL 放行）代为执行后把结果发回社区 WebView
-    try {
-      window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
-        event: '__wp_bridge_call',
-        target: { kind: 'Any' },
-        handler: function (e) {
-          var d = e && (e.payload !== undefined ? e.payload : e);
-          if (!d || !d.method) return;
-          var reply = function (ok, data, error) {
-            try {
-              window.__TAURI_INTERNALS__.invoke('plugin:event|emit_to', {
-                target: { kind: 'Webview', label: 'community' },
-                event: '__wp_bridge_result',
-                payload: { id: d.id, ok: ok, data: data, error: error },
-              });
-            } catch (err) {}
-          };
-          invoke(d.method, d.args)
-            .then(function (res) { reply(true, res); })
-            .catch(function (err) { reply(false, undefined, String(err)); });
-        },
-      });
-    } catch (err) {}
+    // 由主窗口（本地上下文，ACL 放行）代为执行后把结果发回社区 WebView。
+    // 执行端必须只在主 WebView 注册：emit_to(Webview main) 会投递到所有注册了
+    // Any target 监听器的 WebView（tauri match_any_or_filter 对 Any 恒命中），
+    // 而装了本接收器的 WebView 不止主窗口一个，不设防会让同一桥调用执行 N 次
+    // （ShowShell 连导航两次，DownloadWallpaper 重复下载）。
+    var CURRENT_WEBVIEW_LABEL = (function () {
+      try {
+        var m = window.__TAURI_INTERNALS__.metadata || {};
+        return (m.currentWebview && m.currentWebview.label) || (m.currentWindow && m.currentWindow.label) || '';
+      } catch (err) {
+        return '';
+      }
+    })();
+    if (CURRENT_WEBVIEW_LABEL === 'main') {
+      try {
+        window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
+          event: '__wp_bridge_call',
+          target: { kind: 'Any' },
+          handler: window.__TAURI_INTERNALS__.transformCallback(function (e) {
+            var d = e && (e.payload !== undefined ? e.payload : e);
+            if (!d || !d.method) return;
+            var reply = function (ok, data, error) {
+              try {
+                window.__TAURI_INTERNALS__.invoke('plugin:event|emit_to', {
+                  target: { kind: 'Webview', label: 'community' },
+                  event: '__wp_bridge_result',
+                  payload: { id: d.id, ok: ok, data: data, error: error },
+                });
+              } catch (err) {}
+            };
+            invoke(d.method, d.args)
+              .then(function (res) { reply(true, res); })
+              .catch(function (err) { reply(false, undefined, String(err)); });
+          }),
+        });
+      } catch (err) {}
+    }
   }
 
   // ---------- 任意 frame：chrome.webview 垫片 ----------
@@ -204,6 +228,7 @@
         var id = ++seq;
         pending[id] = { resolve: resolve, reject: reject };
         if (window.parent === window && window.__TAURI_INTERNALS__) {
+          installTopLevelEventBridge();
           // 顶层远程帧（社区内嵌 WebView）：无父窗口可中继，改走应用事件回路——
           // core:event 已对远程源授权；命令由主窗口代为执行（本地上下文不受 ACL 限制）
           try {
@@ -251,35 +276,45 @@
       }
     });
 
-    // 顶层远程帧（社区内嵌 WebView）：经应用事件回路接收桥调用结果与引擎事件转发
-    if (window.parent === window && window.__TAURI_INTERNALS__) {
+    // 顶层远程帧（社区内嵌 WebView）：经应用事件回路接收桥调用结果与引擎事件
+    // 转发。初始化脚本可能早于 Tauri 内核注入执行，必须重试等待内核可用，
+    // 否则监听器注册被跳过，结果/进度事件永远收不到（表现为"一直显示下载中"）。
+    function installTopLevelEventBridge() {
+      if (window.__WP_TOP_BRIDGE__) return;
+      if (!window.__TAURI_INTERNALS__) {
+        setTimeout(installTopLevelEventBridge, 100);
+        return;
+      }
+      window.__WP_TOP_BRIDGE__ = true;
+      var tc = window.__TAURI_INTERNALS__.transformCallback;
       try {
         window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
           event: '__wp_bridge_result',
           target: { kind: 'Any' },
-          handler: function (e) {
+          handler: tc(function (e) {
             var d = e && (e.payload !== undefined ? e.payload : e);
             if (!d || !pending[d.id]) return;
             var p = pending[d.id];
             delete pending[d.id];
             if (d.ok) p.resolve(d.data);
             else p.reject(new Error(d.error || 'relay error'));
-          },
+          }),
         });
         window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
           event: '__wp_forward',
           target: { kind: 'Any' },
-          handler: function (e) {
+          handler: tc(function (e) {
             var d = e && (e.payload !== undefined ? e.payload : e);
             if (!d || !d.name) return;
             var cbs = (listeners[d.name] || []).slice();
             for (var i = 0; i < cbs.length; i++) {
               try { cbs[i]({ detail: d.detail, data: d.detail }); } catch (err) {}
             }
-          },
+          }),
         });
       } catch (err) {}
     }
+    installTopLevelEventBridge();
 
     function makeBridge() {
       var handler = {

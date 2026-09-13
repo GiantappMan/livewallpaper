@@ -15,7 +15,7 @@ pub struct WindowRestore {
 }
 
 impl WindowRestore {
-    pub fn apply(&self, window: &tauri::WebviewWindow) {
+    pub fn apply(&self, window: &tauri::Window<tauri::Wry>) {
         if self.width >= 800.0 && self.height >= 482.0 {
             let _ = window.set_size(tauri::LogicalSize::new(self.width, self.height));
         }
@@ -25,7 +25,7 @@ impl WindowRestore {
     }
 
     /// 从主窗口读取当前状态。
-    pub fn capture(window: &tauri::WebviewWindow) -> Self {
+    pub fn capture(window: &tauri::Window<tauri::Wry>) -> Self {
         let maximized = window.is_maximized().unwrap_or(false);
         if maximized {
             // 最大化时保留上次的常规尺寸（由调用方合并）

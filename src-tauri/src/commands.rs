@@ -590,6 +590,7 @@ pub async fn download_wallpaper(
     wallpaper_url: String,
     meta: WallpaperMeta,
 ) -> Result<bool> {
+    log::info!("download_wallpaper invoked: url={wallpaper_url}");
     let st = state(&app);
     let id = meta
         .id
@@ -771,9 +772,8 @@ pub fn open_log_folder(app: AppHandle) -> Result<()> {
 
 #[tauri::command]
 pub async fn show_folder_dialog(app: AppHandle) -> Result<Option<String>> {
-    let _window = app
-        .get_webview_window("main")
-        .ok_or("no main window")?;
+    // 多 webview 窗口（挂了社区 WebView）下 get_webview_window 恒为 None，用 get_window
+    let _window = app.get_window("main").ok_or("no main window")?;
     tokio::task::spawn_blocking(move || {
         let folder = rfd::FileDialog::new()
             .set_title("Select Folder")
@@ -786,11 +786,29 @@ pub async fn show_folder_dialog(app: AppHandle) -> Result<Option<String>> {
 
 #[tauri::command]
 pub fn show_shell(app: AppHandle, path: Option<String>) -> Result<()> {
-    crate::show_main_window(&app, None);
-    if let Some(path) = path {
-        let st = state(&app);
-        st.hub.publish("navigate", serde_json::json!({ "path": path }));
+    // v3 语义：唤起主界面并按 path 导航。社区站“去本地壁纸查看”传的是空路径，
+    // 空串经 JSON 仍是 Some("")，此前直接透传给前端后因空串为 falsy 被忽略，
+    // 表现为点击无反应；空路径视为回到本地壁纸首页。
+    let route = path
+        .map(|p| p.trim().to_owned())
+        .filter(|p| !p.is_empty())
+        .unwrap_or_else(|| "/".to_owned());
+    crate::show_main_window(&app, Some(route.as_str()));
+    Ok(())
+}
+
+/// v3 `shell.CloseWindow`：关闭承载站内页面的宿主窗口（详情弹窗）。
+/// 社区 WebView 的速览弹层没有独立窗口可关（关主窗口是灾难），退化为
+/// 启动屏收尾的空操作。
+#[tauri::command]
+pub fn close_window(webview: tauri::Webview<tauri::Wry>) -> Result<()> {
+    if webview.label().starts_with("hub-detail-") {
+        if let Some(w) = webview.app_handle().get_webview_window(webview.label()) {
+            let _ = w.close();
+            return Ok(());
+        }
     }
+    crate::finish_loading(webview.app_handle());
     Ok(())
 }
 
