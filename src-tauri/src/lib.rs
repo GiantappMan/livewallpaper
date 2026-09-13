@@ -554,13 +554,40 @@ fn is_oauth_url(url: &tauri::Url) -> bool {
     }
 }
 
+/// Hub 的 OAuth 入口端点（如社区站 GitHub 按钮打开的
+/// `https://wallpaper.giantapp.cn/api/oauth/github/authorize`）。这类 URL
+/// 虽属 hub origin，但服务端会 302 到 github.com 授权页，绝不能进 hub 详情
+/// 弹窗的 iframe 外壳——授权页禁止嵌套（X-Frame-Options），WebView2 呈现的
+/// 正是“github.com 拒绝连接”错误页（网络本身是通的）。
+fn is_hub_oauth_entry(url: &tauri::Url) -> bool {
+    is_hub_origin(url) && url.path().starts_with("/api/oauth/")
+}
+
 /// 新窗口请求入口（社区页“打开”即 target=_blank / window.open）。
-/// Hub 页面 -> 应用内新窗口；其余 http(s) -> 系统浏览器；其他一律拒绝。
+/// Hub OAuth 入口 -> 应用内顶层 OAuth 窗口（不能进 iframe 外壳，见
+/// [`is_hub_oauth_entry`]）；Hub 页面 -> 应用内新窗口；其余 http(s) ->
+/// 系统浏览器；其他一律拒绝。
 fn handle_new_window_request(
     app: &tauri::AppHandle,
     url: tauri::Url,
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::webview::NewWindowResponse<tauri::Wry> {
+    // 必须先于 is_hub_origin 分支：OAuth 入口同属 hub origin。
+    // 成功时返回 Create 而不是 Deny：WebView2 会把我们创建的窗口交给站点
+    // 的 window.open() 返回值，弹窗内 window.opener 成立，回调页的
+    // postMessage/localStorage 中继与真实浏览器行为一致（Deny 会让
+    // window.open 返回 null，opener 断链）。
+    if is_hub_oauth_entry(&url) {
+        let label = format!("oauth-{}", next_hub_window_seq());
+        return match build_oauth_window(app, &label, url) {
+            Ok(window) => tauri::webview::NewWindowResponse::Create { window },
+            Err(e) => {
+                log::warn!("create oauth window failed: {e}");
+                tauri::webview::NewWindowResponse::Deny
+            }
+        };
+    }
+
     if is_hub_origin(&url) {
         let label = format!("hub-detail-{}", next_hub_window_seq());
         match build_hub_popup(app, &label, url, features) {
@@ -576,12 +603,16 @@ fn handle_new_window_request(
     // GitHub / 微信授权页：改用应用内顶层窗口承载。授权页禁止被 iframe 嵌套，
     // 转系统浏览器又会把登录会话留在浏览器的 Cookie 罐里；顶层窗口里完成的
     // 登录会话以第一方身份写入应用共享的 WebView2 Cookie 罐，社区页可直接复用。
+    // 返回 Create 使 window.open() 拿到真窗口（opener 不断链，见上）。
     if is_oauth_url(&url) {
         let label = format!("oauth-{}", next_hub_window_seq());
-        if let Err(e) = build_oauth_window(app, &label, url) {
-            log::warn!("create oauth window failed: {e}");
-        }
-        return tauri::webview::NewWindowResponse::Deny;
+        return match build_oauth_window(app, &label, url) {
+            Ok(window) => tauri::webview::NewWindowResponse::Create { window },
+            Err(e) => {
+                log::warn!("create oauth window failed: {e}");
+                tauri::webview::NewWindowResponse::Deny
+            }
+        };
     }
 
     // window.open('about:blank') 先占位、再由站点脚本设置地址的弹窗式授权
@@ -656,11 +687,12 @@ fn build_hub_popup(
     }
 }
 
-/// OAuth 弹窗窗口：顶层直接加载授权页（GitHub/微信）或 about:blank 空白页
-/// （弹窗式授权，由站点脚本导航），顶层导航不受 X-Frame-Options 限制，登录
-/// 产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐，社区
-/// 窗口（同为第一方）随后即可使用。跳去授权域后又回到社区域名视为登录完成，
-/// 稍候自动关窗并刷新社区窗口。
+/// OAuth 弹窗窗口：顶层直接加载授权页（GitHub/微信）、hub 的 OAuth 入口
+/// 端点（服务端 302 到授权页，见 [`is_hub_oauth_entry`]）或 about:blank
+/// 空白页（弹窗式授权，由站点脚本导航），顶层导航不受 X-Frame-Options 限制，
+/// 登录产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐，
+/// 社区窗口（同为第一方）随后即可使用。跳去授权域后又回到社区域名、或落回
+/// hub 的 OAuth 回调端点，视为登录完成，稍候自动关窗并刷新社区窗口。
 pub(crate) fn build_oauth_window(
     app: &tauri::AppHandle,
     label: &str,
@@ -684,6 +716,23 @@ pub(crate) fn build_oauth_window(
                 return;
             }
             log::info!("oauth window page load finished: {}", payload.url());
+            // Hub 的 OAuth 落点：/api/oauth/* 回调端点，或站点的回调页
+            // （如 /zh-CN/callback/github，/api 回调 302 后的最终页面）。
+            // 已授权用户的整条跳转可能全部在服务端 302 内完成（github 页面
+            // 从不真正加载，went_external 不会置位），所以见到这些落点即视为
+            // 登录完成，稍候关窗。
+            let on_hub_oauth_landing = is_hub_oauth_entry(payload.url())
+                || (is_hub_origin(payload.url()) && payload.url().path().contains("/callback/"));
+            if on_hub_oauth_landing {
+                let win = window.clone();
+                std::thread::spawn(move || {
+                    // 延迟要给站点客户端侧的会话建立（code 换 session、Cookie
+                    // 落盘）留足时间，关早了社区窗口重载后仍是未登录态。
+                    std::thread::sleep(std::time::Duration::from_millis(5000));
+                    let _ = win.close();
+                });
+                return;
+            }
             let on_hub = window.url().map(|u| is_hub_origin(&u)).unwrap_or(false);
             if !on_hub {
                 flag.store(true, Ordering::Relaxed);
@@ -697,7 +746,7 @@ pub(crate) fn build_oauth_window(
             // 关早了会话 Cookie 尚未落盘。
             let win = window.clone();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(2000));
+                std::thread::sleep(std::time::Duration::from_millis(5000));
                 let _ = win.close();
             });
         })
