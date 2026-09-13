@@ -10,7 +10,8 @@
       "http://localhost:3000/*"
     ]
   },
-  "windows": ["main", "hub-detail-*"],
+  "windows": ["main", "community", "hub-detail-*"],
+  "webviews": ["community"],
   "permissions": [
     "core:event:default"
   ]

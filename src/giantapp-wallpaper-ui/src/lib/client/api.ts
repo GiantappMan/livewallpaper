@@ -473,11 +473,31 @@ class API {
     }
   }
 
-  /** 登录窗口完成 OAuth 回调后广播，收到后应重载社区页 iframe 以携带新会话 */
-  onHubSessionChanged(callback: () => void) {
-    listen("hub-session-changed", callback).then((un) =>
-      this.unlisteners.push(un)
-    );
+  /** 在主窗口内挂载/定位/显隐社区 WebView（顶层文档即社区站，第一方上下文）。
+   *  url 仅首次挂载时需要；后续只传矩形与 visible（保留页面状态不重载） */
+  async setCommunityWebview(params: {
+    visible: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    url?: string;
+  }): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return { error: null, data: null };
+      await invoke("set_community_webview", {
+        visible: params.visible,
+        x: params.x,
+        y: params.y,
+        width: params.width,
+        height: params.height,
+        url: params.url ?? null,
+      });
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
   }
 
   async getMpvStatus(): Promise<ApiResult<MpvStatus>> {

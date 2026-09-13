@@ -136,6 +136,14 @@
       for (var i = 0; i < window.frames.length; i++) {
         try { window.frames[i].postMessage(msg, '*'); } catch (err) {}
       }
+      // 社区内嵌 WebView 是独立顶层 WebView（不在 window.frames 里），经事件转发
+      try {
+        window.__TAURI_INTERNALS__.invoke('plugin:event|emit_to', {
+          target: { kind: 'Webview', label: 'community' },
+          event: '__wp_forward',
+          payload: { name: v3Name, detail: msg.detail },
+        });
+      } catch (err) {}
     };
     var listen = function (name, cb) {
       if (window.__TAURI__ && window.__TAURI__.event && window.__TAURI__.event.listen) {
@@ -153,6 +161,31 @@
     };
     listen('refresh-page', function () { forward('refresh-page', 'RefreshPageEvent'); });
     listen('download-status-changed', function (status) { forward('download-status-changed', 'DownloadStatusChangedEvent', status); });
+
+    // 事件回路：顶层远程帧（社区内嵌 WebView）的桥调用经事件转发到这里，
+    // 由主窗口（本地上下文，ACL 放行）代为执行后把结果发回社区 WebView
+    try {
+      window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
+        event: '__wp_bridge_call',
+        target: { kind: 'Any' },
+        handler: function (e) {
+          var d = e && (e.payload !== undefined ? e.payload : e);
+          if (!d || !d.method) return;
+          var reply = function (ok, data, error) {
+            try {
+              window.__TAURI_INTERNALS__.invoke('plugin:event|emit_to', {
+                target: { kind: 'Webview', label: 'community' },
+                event: '__wp_bridge_result',
+                payload: { id: d.id, ok: ok, data: data, error: error },
+              });
+            } catch (err) {}
+          };
+          invoke(d.method, d.args)
+            .then(function (res) { reply(true, res); })
+            .catch(function (err) { reply(false, undefined, String(err)); });
+        },
+      });
+    } catch (err) {}
   }
 
   // ---------- 任意 frame：chrome.webview 垫片 ----------
@@ -170,7 +203,27 @@
       return new Promise(function (resolve, reject) {
         var id = ++seq;
         pending[id] = { resolve: resolve, reject: reject };
-        window.parent.postMessage({ __wpRelay: 1, id: id, method: method, args: args }, '*');
+        if (window.parent === window && window.__TAURI_INTERNALS__) {
+          // 顶层远程帧（社区内嵌 WebView）：无父窗口可中继，改走应用事件回路——
+          // core:event 已对远程源授权；命令由主窗口代为执行（本地上下文不受 ACL 限制）
+          try {
+            window.__TAURI_INTERNALS__.invoke('plugin:event|emit_to', {
+              target: { kind: 'Webview', label: 'main' },
+              event: '__wp_bridge_call',
+              payload: { id: id, method: method, args: args },
+            }).catch(function (err) {
+              if (pending[id]) {
+                delete pending[id];
+                reject(err);
+              }
+            });
+          } catch (err) {
+            delete pending[id];
+            reject(err);
+          }
+        } else {
+          window.parent.postMessage({ __wpRelay: 1, id: id, method: method, args: args }, '*');
+        }
         setTimeout(function () {
           if (pending[id]) {
             delete pending[id];
@@ -197,6 +250,36 @@
         }
       }
     });
+
+    // 顶层远程帧（社区内嵌 WebView）：经应用事件回路接收桥调用结果与引擎事件转发
+    if (window.parent === window && window.__TAURI_INTERNALS__) {
+      try {
+        window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
+          event: '__wp_bridge_result',
+          target: { kind: 'Any' },
+          handler: function (e) {
+            var d = e && (e.payload !== undefined ? e.payload : e);
+            if (!d || !pending[d.id]) return;
+            var p = pending[d.id];
+            delete pending[d.id];
+            if (d.ok) p.resolve(d.data);
+            else p.reject(new Error(d.error || 'relay error'));
+          },
+        });
+        window.__TAURI_INTERNALS__.invoke('plugin:event|listen', {
+          event: '__wp_forward',
+          target: { kind: 'Any' },
+          handler: function (e) {
+            var d = e && (e.payload !== undefined ? e.payload : e);
+            if (!d || !d.name) return;
+            var cbs = (listeners[d.name] || []).slice();
+            for (var i = 0; i < cbs.length; i++) {
+              try { cbs[i]({ detail: d.detail, data: d.detail }); } catch (err) {}
+            }
+          },
+        });
+      } catch (err) {}
+    }
 
     function makeBridge() {
       var handler = {

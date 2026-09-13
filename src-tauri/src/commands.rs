@@ -863,33 +863,51 @@ pub fn cancel_download_mpv(_app: AppHandle) -> Result<()> {
 /// （hub iframe 是跨站上下文，授权页拒绝被嵌套，会话 Cookie 也受第三方限制）。
 /// 已有社区/登录窗口时直接聚焦。
 #[tauri::command]
-pub async fn open_community_window(app: AppHandle, url: String) -> Result<()> {
-    use crate::{build_oauth_window, is_hub_origin, next_hub_window_seq};
-    log::info!("open_community_window invoked: {url}");
+pub async fn set_community_webview(
+    app: AppHandle,
+    visible: bool,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    url: Option<String>,
+) -> Result<()> {
+    use crate::{create_community_webview, is_hub_origin, COMMUNITY_WEBVIEW_LABEL};
 
-    if let Some((_, win)) = app
-        .webview_windows()
-        .into_iter()
-        .find(|(label, _)| label.starts_with("oauth-"))
-    {
-        let _ = win.set_focus();
+    let Some(win) = app.get_window("main") else {
+        return Err("main window not found".to_string());
+    };
+
+    // 已挂载：更新矩形与显隐（保留页面状态，切回社区 tab 不重载）
+    if let Some(existing) = app.get_webview(COMMUNITY_WEBVIEW_LABEL) {
+        let rect = tauri::Rect {
+            position: tauri::LogicalPosition::new(x, y).into(),
+            size: tauri::LogicalSize::new(width.max(1.0), height.max(1.0)).into(),
+        };
+        existing.set_bounds(rect).map_err(|e| e.to_string())?;
+        if visible {
+            existing.show().map_err(|e| e.to_string())?;
+        } else {
+            existing.hide().map_err(|e| e.to_string())?;
+        }
         return Ok(());
     }
-    let parsed = tauri::Url::parse(&url).map_err(|e| e.to_string())?;
+    if !visible {
+        return Ok(());
+    }
+
+    // 首次挂载：校验来源并在专用线程创建（WebView2 控制器创建依赖消息泵，
+    // 在命令上下文同步创建会死锁，见与登录窗口相同的处理）。
+    let Some(u) = url else {
+        return Err("url required on first mount".to_string());
+    };
+    let parsed = tauri::Url::parse(&u).map_err(|e| e.to_string())?;
     if !is_hub_origin(&parsed) {
         return Err("origin not allowed".to_string());
     }
-    let label = format!("oauth-{}", next_hub_window_seq());
-
-    // WebView2 控制器创建依赖创建线程的消息泵；在主线程 / 命令线程上同步
-    // build 会与其消息处理互堵，表现为窗口壳已显示但 WebView 永不初始化
-    //（永久黑屏的登录窗口）。放到专用阻塞线程创建（官方多窗口模式），
-    // 由该线程自己的消息泵等待创建完成。
-    log::info!("open_community_window: creating {label} on worker thread");
+    log::info!("mounting community webview on worker thread: {parsed}");
     tauri::async_runtime::spawn_blocking(move || {
-        build_oauth_window(&app, &label, parsed)
-            .map(|_| ())
-            .map_err(|e| e.to_string())
+        create_community_webview(&win, parsed, x, y, width, height).map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| e.to_string())?

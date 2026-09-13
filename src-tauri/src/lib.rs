@@ -119,7 +119,7 @@ pub fn run() {
             commands::show_shell,
             commands::hide_loading,
             commands::set_window_state,
-            commands::open_community_window,
+            commands::set_community_webview,
             commands::exit_app,
             commands::get_mpv_status,
             commands::download_mpv,
@@ -645,14 +645,11 @@ fn build_hub_popup(
     }
 }
 
-/// OAuth 登录窗口：顶层直接加载授权页（GitHub/微信）或 about:blank 空白页
+/// OAuth 弹窗窗口：顶层直接加载授权页（GitHub/微信）或 about:blank 空白页
 /// （弹窗式授权，由站点脚本导航），顶层导航不受 X-Frame-Options 限制，登录
-/// 产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐。
-/// 跳去授权域后又回到社区域名视为登录完成，稍候自动关窗。无论哪种登录方式
-/// （密码 / GitHub / 微信弹窗 / 扫码内嵌），会话同步统一在窗口销毁时做：
-/// 先把站点 Cookie 原地改写为 SameSite=None（否则跨站 iframe 请求不携带
-/// Lax Cookie，社区页看不到登录态），再广播 hub-session-changed，主窗口
-/// 收到后重载社区页 iframe。
+/// 产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐，社区
+/// 窗口（同为第一方）随后即可使用。跳去授权域后又回到社区域名视为登录完成，
+/// 稍候自动关窗并刷新社区窗口。
 pub(crate) fn build_oauth_window(
     app: &tauri::AppHandle,
     label: &str,
@@ -684,9 +681,9 @@ pub(crate) fn build_oauth_window(
             if !flag.swap(false, Ordering::Relaxed) {
                 return;
             }
-            // 授权后回到社区：稍候关窗。Cookie 改写与广播统一在 Destroyed 里做。
-            // 延迟要给站点客户端侧的会话建立留足时间（如微信登录信号回到主
-            // 窗口后还要发 signIn/update 请求），关早了会话 Cookie 尚未落盘。
+            // 授权后回到社区：稍候关窗。延迟要给站点客户端侧的会话建立留足
+            // 时间（如微信登录信号回到主窗口后还要发 signIn/update 请求），
+            // 关早了会话 Cookie 尚未落盘。
             let win = window.clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(2000));
@@ -699,20 +696,53 @@ pub(crate) fn build_oauth_window(
     }
     let window = build_result?;
 
-    // 窗口销毁时广播：服务端会话 Cookie 为 SameSite=None 后，跨站 iframe
-    // 可直接携带会话，重载社区页即可看到最新登录态（覆盖密码/微信/GitHub
-    // 登录以及手动关窗；自动关窗路径同样由 Destroyed 触发，无需重复广播）。
+    // 弹窗销毁后刷新社区窗口：登录/退出产生的新会话 Cookie 已在共享 Cookie
+    // 罐里（社区窗口同为第一方，直接可用），重载后立即可见。
     let app_handle = window.app_handle().clone();
     window.on_window_event(move |event| {
         if matches!(event, tauri::WindowEvent::Destroyed) {
-            let app = app_handle.clone();
-            std::thread::spawn(move || {
-                publish_event(&app, "hub-session-changed", ());
-            });
+            if let Some(community) = app_handle.get_webview(COMMUNITY_WEBVIEW_LABEL) {
+                let _ = community.eval("location.reload();");
+            }
         }
     });
 
     Ok(window)
+}
+
+/// 社区内嵌 WebView 的 label（主窗口内的独立子 WebView）。
+pub(crate) const COMMUNITY_WEBVIEW_LABEL: &str = "community";
+
+/// 在主窗口内挂载社区 WebView：它自身的顶层文档就是社区站（第一方上下文），
+/// 登录/退出/换号与普通浏览器行为完全一致，且不破坏应用布局（左侧应用 UI、
+/// 右侧社区内容）。必须在工作线程调用（WebView2 控制器创建依赖消息泵，
+/// 见 open_community_window 注释）。站内“打开”详情/授权弹窗仍经
+/// handle_new_window_request 路由到应用内弹窗。
+pub(crate) fn create_community_webview(
+    main: &tauri::window::Window<tauri::Wry>,
+    url: tauri::Url,
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+) -> tauri::Result<()> {
+    let handle = main.app_handle().clone();
+    let builder = tauri::webview::WebviewBuilder::new(
+        COMMUNITY_WEBVIEW_LABEL,
+        tauri::WebviewUrl::External(url),
+    )
+    .on_new_window(move |url, features| handle_new_window_request(&handle, url, features))
+    .on_document_title_changed(|webview, title| {
+        let _ = webview.window().set_title(&title);
+    })
+    // v3 COM 桥垫片：站内“下载/设为壁纸”等经事件回路由主窗口代执行
+    .initialization_script(HUB_COMPAT_SCRIPT);
+    main.add_child(
+        builder,
+        tauri::LogicalPosition::new(x, y),
+        tauri::LogicalSize::new(w.max(1.0), h.max(1.0)),
+    )?;
+    Ok(())
 }
 
 
