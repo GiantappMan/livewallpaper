@@ -534,6 +534,18 @@ class API {
     }
   }
 
+  /** 用资源管理器打开 mpv 所在目录（缺失时为自动下载目标目录） */
+  async openMpvFolder(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("open_mpv_folder");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   /** mpv 下载进度/结果事件 */
   onMpvDownloadEvent(callback: (event: MpvDownloadEvent) => void) {
     listen<MpvDownloadEvent>("mpv-download-event", (e) =>

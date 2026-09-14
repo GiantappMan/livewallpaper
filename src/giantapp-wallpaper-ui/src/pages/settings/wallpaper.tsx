@@ -32,6 +32,9 @@ const FormSchema = z.object({
     defaultVideoPlayer: z.nativeEnum(VideoPlayer),
 })
 
+// mpv 官网安装指引（与自动下载同为 Windows 构建，手动放置 mpv.exe 也会被探测到）
+const MPV_INSTALL_URL = "https://mpv.io/installation/"
+
 export default function Page() {
     const dictionary = useAtomValue(langDictAtom);
     const [mounted, setMounted] = useState(false)
@@ -89,6 +92,11 @@ export default function Page() {
             return;
         }
         setMpvProgress(0);
+    };
+
+    const openMpvFolder = async () => {
+        const res = await api.openMpvFolder();
+        if (res.error) toast.error(String(res.error));
     };
 
     //读取配置
@@ -249,28 +257,61 @@ export default function Page() {
                                         </FormItem>
                                     )}
                                 />
-                                {mpvStatus && !mpvStatus.available && (
-                                    <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
-                                        <span>{dictionary['settings'].mpv_missing_hint}</span>
-                                        {mpvProgress === null ? (
-                                            <Button type="button" size="sm" onClick={downloadMpv}>
-                                                {dictionary['settings'].download_mpv}
-                                            </Button>
-                                        ) : (
+                                {mpvStatus && (
+                                    <div className="mt-1 space-y-2">
+                                        {!mpvStatus.available && (
                                             <>
-                                                <span className="whitespace-nowrap tabular-nums">
-                                                    {dictionary['settings'].downloading_mpv} {mpvProgress.toFixed(0)}%
-                                                </span>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => api.cancelDownloadMpv()}
-                                                >
-                                                    {dictionary['local'].cancel}
-                                                </Button>
+                                                <p className="text-sm leading-6 text-muted-foreground">
+                                                    {dictionary['settings'].mpv_missing_hint}
+                                                </p>
+                                                <p className="text-sm leading-6 text-muted-foreground">
+                                                    {dictionary['settings'].mpv_manual_hint}
+                                                    <Button
+                                                        type="button"
+                                                        variant="link"
+                                                        size="sm"
+                                                        className="h-auto px-1 text-sm"
+                                                        onClick={() => api.openUrl(MPV_INSTALL_URL)}
+                                                    >
+                                                        {dictionary['settings'].mpv_manual_download}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="link"
+                                                        size="sm"
+                                                        className="h-auto px-1 text-sm"
+                                                        onClick={refreshMpvStatus}
+                                                    >
+                                                        {dictionary['settings'].recheck_mpv}
+                                                    </Button>
+                                                </p>
                                             </>
                                         )}
+                                        <div className="flex items-center gap-2">
+                                            {!mpvStatus.available && mpvProgress === null && (
+                                                <Button type="button" size="sm" onClick={downloadMpv}>
+                                                    {dictionary['settings'].download_mpv}
+                                                </Button>
+                                            )}
+                                            {mpvProgress !== null && (
+                                                <>
+                                                    <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+                                                        {dictionary['settings'].downloading_mpv} {mpvProgress.toFixed(0)}%
+                                                    </span>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => api.cancelDownloadMpv()}
+                                                    >
+                                                        {dictionary['local'].cancel}
+                                                    </Button>
+                                                </>
+                                            )}
+                                            <Button type="button" size="sm" variant="outline" onClick={openMpvFolder}>
+                                                {dictionary['settings'].open_mpv_folder}
+                                            </Button>
+                                        </div>
                                     </div>
                                 )}
                             </FormItem>

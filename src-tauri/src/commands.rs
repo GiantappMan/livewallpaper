@@ -875,6 +875,25 @@ pub fn cancel_download_mpv(_app: AppHandle) -> Result<()> {
     Ok(())
 }
 
+/// 打开 mpv 所在目录：已安装时在资源管理器中选中 mpv.exe，
+/// 缺失时打开自动下载目标目录（该路径也在手动探测顺序内，可直接放入 mpv.exe）。
+#[tauri::command]
+pub fn open_mpv_folder(app: AppHandle) -> Result<()> {
+    let st = state(&app);
+    let mpv = st.player.mpv_path();
+    log::info!("open_mpv_folder: resolved mpv_path={mpv:?} exists={}", mpv.is_file());
+    if mpv.is_file() {
+        return wallpaper_core::system::reveal_in_explorer(&mpv);
+    }
+    let dir = crate::mpv_download::target_mpv_path(&st.dirs)
+        .parent()
+        .ok_or("no mpv dir")?
+        .to_path_buf();
+    log::info!("open_mpv_folder: mpv missing, fallback dir={dir:?}");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    wallpaper_core::system::reveal_in_explorer(&dir)
+}
+
 // ---------- 社区登录 ----------
 
 /// 在独立顶层窗口打开社区页：用于账号登录等依赖第一方 Cookie 的场景

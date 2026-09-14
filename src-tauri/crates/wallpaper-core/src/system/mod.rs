@@ -26,9 +26,20 @@ pub fn rect_string(x: i32, y: i32, w: i32, h: i32) -> String {
 /// 以 Explorer 打开文件所在目录并选中。
 pub fn reveal_in_explorer(path: &std::path::Path) -> Result<(), String> {
     use std::process::Command;
-    Command::new("explorer.exe")
-        .arg(format!("/select,{}", path.display()))
-        .spawn()
+    // explorer 的 /select 解析器不接受正斜杠（混用时会静默失败并回退到桌面），
+    // 也不能把 "/select,路径" 整体加引号；统一原生分隔符并只给路径部分加引号。
+    let native = path.to_string_lossy().replace('/', "\\");
+    let mut cmd = Command::new("explorer.exe");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.raw_arg(format!("/select,\"{native}\""));
+    }
+    #[cfg(not(windows))]
+    {
+        cmd.arg(format!("/select,{native}"));
+    }
+    cmd.spawn()
         .map(|_| ())
         .map_err(|e| e.to_string())
 }

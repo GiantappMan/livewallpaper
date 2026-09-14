@@ -125,6 +125,7 @@ pub fn run() {
             commands::get_mpv_status,
             commands::download_mpv,
             commands::cancel_download_mpv,
+            commands::open_mpv_folder,
             commands::list_skins,
             commands::set_active_skin,
             commands::open_skins_folder,
