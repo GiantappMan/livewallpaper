@@ -1,0 +1,10 @@
+{
+  "id": "term",
+  "name": "终端 Term",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "单色 HUD 极客终端 —— 荧光绿等宽界面、tmux 状态栏、命令面板与键盘驱动",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

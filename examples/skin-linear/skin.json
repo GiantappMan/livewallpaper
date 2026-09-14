@@ -1,0 +1,10 @@
+{
+  "id": "linear",
+  "name": "曜石 Linear",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "科技新贵 SaaS 风 —— 曜黑发丝线界面、靛紫渐变点缀与键盘驱动效率流",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

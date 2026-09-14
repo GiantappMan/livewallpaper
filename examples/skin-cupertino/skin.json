@@ -1,0 +1,10 @@
+{
+  "id": "cupertino",
+  "name": "月霜 Cupertino",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "苹果 macOS 风 —— 半透明菜单栏、红绿灯窗口键、底部程序坞与克制阴影",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

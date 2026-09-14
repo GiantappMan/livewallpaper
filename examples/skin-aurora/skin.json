@@ -1,0 +1,10 @@
+{
+  "id": "aurora",
+  "name": "璃光 Aurora",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "玻璃拟态 · 暗夜极光 —— 毛玻璃面板、流动极光背景与渐变光效",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

@@ -1,0 +1,10 @@
+{
+  "id": "paper",
+  "name": "素笺 Paper Ink",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "纸感编辑部极简 —— 暖纸底色、衬线标题、朱砂印章点睛",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

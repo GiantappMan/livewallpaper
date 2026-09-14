@@ -1,0 +1,10 @@
+{
+  "id": "material",
+  "name": "拾色 Material",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "谷歌 Material Design 3 风 —— 色调表面、大圆角卡片、药丸导航与扩展 FAB",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}
