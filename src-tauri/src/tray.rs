@@ -12,6 +12,7 @@ struct TrayTexts {
     about: &'static str,
     open: &'static str,
     settings: &'static str,
+    github_logout: &'static str,
     exit: &'static str,
 }
 
@@ -21,24 +22,28 @@ fn texts(lang: &str) -> TrayTexts {
             about: "关于",
             open: "打开主面板",
             settings: "设置",
+            github_logout: "退出 GitHub 登录",
             exit: "退出",
         },
         "ru" => TrayTexts {
             about: "О программе",
             open: "Открыть панель",
             settings: "Настройки",
+            github_logout: "Выйти из GitHub",
             exit: "Выход",
         },
         "es" => TrayTexts {
             about: "Acerca de",
             open: "Abrir panel",
             settings: "Ajustes",
+            github_logout: "Cerrar sesión de GitHub",
             exit: "Salir",
         },
         _ => TrayTexts {
             about: "About",
             open: "Open main panel",
             settings: "Settings",
+            github_logout: "Sign out of GitHub",
             exit: "Exit",
         },
     }
@@ -57,8 +62,14 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let about = MenuItem::with_id(app, "about", t.about, true, None::<&str>)?;
     let open = MenuItem::with_id(app, "open", t.open, true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", t.settings, true, None::<&str>)?;
+    let github_logout =
+        MenuItem::with_id(app, "github-logout", t.github_logout, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", t.exit, true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&about, &open, &settings, &quit])?;
+    let separator = tauri::menu::PredefinedMenuItem::separator(app)?;
+    let menu = Menu::with_items(
+        app,
+        &[&about, &open, &settings, &github_logout, &separator, &quit],
+    )?;
 
     let icon = app
         .default_window_icon()
@@ -81,6 +92,17 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
             }
             "open" => show_main(app, None),
             "settings" => show_main(app, Some("settings")),
+            // 切换 GitHub 账号用：清 github.com 会话 Cookie 后唤起主窗口，
+            // 用户再点社区页“GitHub 登录”即出现 GitHub 登录页。
+            // Cookie 操作必须放独立线程（主线程调用会死锁，见
+            // clear_github_session 注释），清完再唤窗避免用户抢先点登录。
+            "github-logout" => {
+                let app = app.clone();
+                std::thread::spawn(move || {
+                    crate::clear_github_session(&app);
+                    show_main(&app, None);
+                });
+            }
             "quit" => {
                 crate::tray::quit(app.clone());
             }

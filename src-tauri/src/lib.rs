@@ -563,6 +563,99 @@ fn is_hub_oauth_entry(url: &tauri::Url) -> bool {
     is_hub_origin(url) && url.path().starts_with("/api/oauth/")
 }
 
+/// 清除 WebView2 Cookie 罐里 github.com 的全部 Cookie（含 httpOnly 会话），
+/// 用于“切换 GitHub 账号”：清掉后再次发起 GitHub 授权会重新出现登录页，
+/// 否则 GitHub 对已登录且已授权的用户直接静默 302（SSO 标准行为）。
+///
+/// 注意：Windows 上 `cookies()`/`delete_cookie()` 在主线程或同步事件处理器
+/// 里调用会死锁（tauri 文档明确要求），调用方必须在独立线程执行本函数。
+///
+/// WebView2 的 DeleteCookie 按 name+domain+path 精确匹配，域 Cookie 的
+/// 前导点（`.github.com` vs `github.com`）在 GetDomain/CreateCookie 往返中
+/// 不保证一致，实测会静默失配（返回 Ok 但删不掉）。因此每个 Cookie 都用
+/// 带点/不带点两种域形态各删一次，最后复读 Cookie 罐验证清零。
+pub(crate) fn clear_github_session(app: &tauri::AppHandle) -> usize {
+    // 同环境下任意 webview 拿到的都是同一个 Cookie 管理器；社区 WebView
+    // 优先（登录发起点），不存在时退回主 WebView。
+    let Some(webview) = app
+        .get_webview(COMMUNITY_WEBVIEW_LABEL)
+        .or_else(|| app.get_webview("main"))
+    else {
+        log::warn!("clear github session: no webview available");
+        return 0;
+    };
+    let is_github = |domain: Option<&str>| domain.is_some_and(|d| d.ends_with("github.com"));
+
+    let list_github_cookies = || {
+        webview
+            .cookies()
+            .ok()
+            .map(|all| {
+                all.into_iter()
+                    .filter(|c| is_github(c.domain()))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    };
+
+    let first = list_github_cookies();
+    if first.is_empty() {
+        return 0;
+    }
+
+    // 删除在 WebView2 网络服务里异步生效，立即复读会把已删的误报为残留；
+    // 每轮删除后稍候再复读，仍有残留才补删。
+    let mut removed_names: Vec<String> = Vec::new();
+    for round in 0..3 {
+        let pending = if round == 0 {
+            first.clone()
+        } else {
+            std::thread::sleep(std::time::Duration::from_millis(800));
+            let rest = list_github_cookies();
+            if rest.is_empty() {
+                break;
+            }
+            rest
+        };
+        for c in &pending {
+            let domain = c.domain().unwrap_or_default().to_string();
+            let mut variants = vec![c.clone()];
+            let mut stripped = c.clone();
+            stripped.set_domain(domain.trim_start_matches('.').to_string());
+            variants.push(stripped);
+            let mut dotted = c.clone();
+            dotted.set_domain(format!(".{domain}"));
+            variants.push(dotted);
+            for probe in variants {
+                let _ = webview.delete_cookie(probe);
+            }
+            removed_names.push(c.name().to_string());
+        }
+    }
+
+    let remaining: Vec<String> = list_github_cookies()
+        .into_iter()
+        .map(|c| format!("{}|{}", c.name(), c.domain().unwrap_or_default()))
+        .collect();
+    if remaining.is_empty() {
+        log::info!(
+            "clear github session: removed {} cookies {:?}",
+            removed_names.len(),
+            removed_names
+        );
+    } else {
+        // 实测 `_octo`/`logged_in`/`dotcom_user` 等会因 DeleteCookie 静默失配
+        // 而残留，但它们不承载登录态，不影响“重新出现登录页”。
+        log::warn!(
+            "clear github session: {} removed, {} residual (non-fatal): {:?}",
+            removed_names.len(),
+            remaining.len(),
+            remaining
+        );
+    }
+    removed_names.len()
+}
+
 /// 新窗口请求入口（社区页“打开”即 target=_blank / window.open）。
 /// Hub OAuth 入口 -> 应用内顶层 OAuth 窗口（不能进 iframe 外壳，见
 /// [`is_hub_oauth_entry`]）；Hub 页面 -> 应用内新窗口；其余 http(s) ->
@@ -573,12 +666,32 @@ fn handle_new_window_request(
     features: tauri::webview::NewWindowFeatures,
 ) -> tauri::webview::NewWindowResponse<tauri::Wry> {
     // 必须先于 is_hub_origin 分支：OAuth 入口同属 hub origin。
-    // 成功时返回 Create 而不是 Deny：WebView2 会把我们创建的窗口交给站点
-    // 的 window.open() 返回值，弹窗内 window.opener 成立，回调页的
-    // postMessage/localStorage 中继与真实浏览器行为一致（Deny 会让
-    // window.open 返回 null，opener 断链）。
+    // GitHub 登录（type=login）一律先清 github.com 会话 Cookie 再开授权窗：
+    // 否则 GitHub 对已登录且已授权的用户静默 302，用户“没登录就通过了”。
+    // Cookie 操作不能在主线程做，放独立线程完成后再建窗；此路径返回
+    // Deny（窗口稍后才建，无法回 Create），回调页对 window.open 为 null
+    // （无 opener）已兼容——手动完整登录走的就是这条路径，会话正常建立。
+    // switch_account=1 是站点“使用其他账号”入口的等效约定。
     if is_hub_oauth_entry(&url) {
         let label = format!("oauth-{}", next_hub_window_seq());
+        let force_github_login = url.path().contains("/github/")
+            && url
+                .query_pairs()
+                .any(|(k, v)| k == "type" && v == "login");
+        let switch_account = url
+            .query_pairs()
+            .any(|(k, v)| k == "switch_account" && v == "1");
+        if force_github_login || switch_account {
+            let app = app.clone();
+            std::thread::spawn(move || {
+                clear_github_session(&app);
+                if let Err(e) = build_oauth_window(&app, &label, url) {
+                    log::warn!("create oauth window failed: {e}");
+                }
+            });
+            return tauri::webview::NewWindowResponse::Deny;
+        }
+
         return match build_oauth_window(app, &label, url) {
             Ok(window) => tauri::webview::NewWindowResponse::Create { window },
             Err(e) => {

@@ -144,6 +144,17 @@ async fn call(app: &tauri::AppHandle, method: &str, params: &Value) -> Result<Va
             crate::show_main_window(app, None);
             return Ok(Value::Bool(true));
         }
+        // 清 github.com 会话 Cookie（切换 GitHub 账号用），返回删除数量。
+        // cookies() 不能在主线程调（会死锁），丢进阻塞线程池执行。
+        "clear_github_session" => {
+            let app2 = app.clone();
+            let removed = tauri::async_runtime::spawn_blocking(move || {
+                crate::clear_github_session(&app2)
+            })
+            .await
+            .map_err(|e| format!("join failed: {e}"))?;
+            return Ok(json!(removed));
+        }
         "app.quit" => {
             // 先让响应写回，再走正常退出清理
             let app = app.clone();
