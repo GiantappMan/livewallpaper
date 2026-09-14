@@ -48,6 +48,8 @@ export default function Page() {
         },
     })
     const { control } = form
+    // 当前选中的默认播放器：mpv 相关设置/提示仅在选择 MPV 时展示
+    const defaultVideoPlayer = form.watch("defaultVideoPlayer")
     const { fields, append, remove } = useFieldArray({
         control,
         name: "directories",
@@ -257,7 +259,7 @@ export default function Page() {
                                         </FormItem>
                                     )}
                                 />
-                                {mpvStatus && (
+                                {defaultVideoPlayer === VideoPlayer.MPV_Player && mpvStatus && (
                                     <div className="mt-1 space-y-2">
                                         {!mpvStatus.available && (
                                             <>
