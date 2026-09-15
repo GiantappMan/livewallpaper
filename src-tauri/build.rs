@@ -8,6 +8,7 @@ const OFFICIAL_SKIN_DIRS: &[&str] = &[
     "skin-brutal",
     "skin-bento",
     "skin-cupertino",
+    "skin-fluent",
     "skin-linear",
     "skin-liquid",
     "skin-material",

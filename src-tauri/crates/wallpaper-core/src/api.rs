@@ -100,9 +100,12 @@ impl WallpaperApi {
             .unwrap_or_default()
     }
 
-    /// 立即把当前锁定态/真实遮挡应用到各屏（锁屏/解锁时调用，
-    /// 不等下一秒的 tick，声音和画面即刻反应）。
-    async fn apply_session_covered(&self) {
+    /// 立即把当前遮挡判定应用到各屏（不等下一秒 tick）。
+    /// 锁屏/解锁时调用保证声音和画面即刻反应；启动播放的路径
+    /// （应用壁纸 / 恢复快照 / 恢复播放 / 切换播放列表）前也要调用：
+    /// 否则 manager 用的是上一秒 tick 的旧遮挡值，屏幕已被遮挡时
+    /// 新壁纸会带着声音先播起来，直到下一秒才被暂停。
+    async fn apply_current_covered(&self) {
         let settings = self.settings.lock().clone();
         let covered = self.current_covered_screens().await;
         let mut managers = self.managers.lock().await;
@@ -125,6 +128,9 @@ impl WallpaperApi {
             m.latest_settings = settings.clone();
             let is_covered = covered.contains(&m.screen);
             changed |= m.set_covered(is_covered, &settings).await;
+            // 遮挡/暂停态下重申暂停：即使 set_covered 因状态未变而跳过，
+            // 也能自愈引擎侧丢失的暂停指令（webview 一次性事件的兜底）
+            m.reassert_pause(&settings).await;
             changed |= m.tick(&settings).await;
             m.reap_dead_render().await;
         }
@@ -184,6 +190,9 @@ impl WallpaperApi {
         } else {
             screen_indexes
         };
+        // 先刷新遮挡状态：屏幕已被全屏遮挡时，下面的播放启动会立即
+        // 暂停/停渲染，而不是带着声音播到下一秒 tick
+        self.apply_current_covered().await;
         let settings = self.settings.lock().clone();
 
         let mut errors = Vec::new();
@@ -216,6 +225,8 @@ impl WallpaperApi {
     }
 
     pub async fn resume_wallpaper(&self, screen_index: Option<u32>) {
+        // 刷新遮挡：被遮挡时 resume 仍保持暂停/停渲染，不漏音
+        self.apply_current_covered().await;
         let settings = self.settings.lock().clone();
         let mut managers = self.managers.lock().await;
         for m in managers.iter_mut() {
@@ -236,6 +247,8 @@ impl WallpaperApi {
 
     /// 播放列表切换（±1）。
     pub async fn advance_playlist(&self, delta: i32, screen_index: Option<u32>) {
+        // UI 触发的切换不在 tick 内，先刷新遮挡再启动新项
+        self.apply_current_covered().await;
         let settings = self.settings.lock().clone();
         let mut managers = self.managers.lock().await;
         for m in managers.iter_mut() {
@@ -348,6 +361,9 @@ impl WallpaperApi {
 
     /// 从快照恢复；`legacy_wallpapers` 为从 v3 导入的条目（无 mpv 信息）。
     pub async fn restore_from_snapshot(&self, legacy: Vec<ScreenSnapshot>) {
+        // 启动/显示器变化后的恢复也要用当前遮挡状态：全屏应用运行中
+        // 开机自启时，恢复的壁纸应立即暂停/停渲染而非先播一秒
+        self.apply_current_covered().await;
         let file = std::fs::read_to_string(self.dirs.snapshot_file()).ok();
         let parsed: Option<SnapshotFile> =
             file.and_then(|text| serde_json::from_str(&text).ok());
@@ -431,7 +447,7 @@ impl WallpaperApi {
         self.session_locked
             .store(true, std::sync::atomic::Ordering::SeqCst);
         self.save_snapshot().await;
-        self.apply_session_covered().await;
+        self.apply_current_covered().await;
         self.notify_change();
     }
 
@@ -441,7 +457,7 @@ impl WallpaperApi {
         log::info!("session unlocked -> occlusion cleared");
         self.session_locked
             .store(false, std::sync::atomic::Ordering::SeqCst);
-        self.apply_session_covered().await;
+        self.apply_current_covered().await;
         self.notify_change();
     }
 

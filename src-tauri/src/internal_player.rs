@@ -36,6 +36,10 @@ struct WindowInfo {
     mouse_enabled: AtomicBool,
     /// 最近一次 load 命令载荷（页面 wp-ready 握手时重发，消除启动竞态）。
     last_load: parking_lot::Mutex<Option<serde_json::Value>>,
+    /// 期望暂停态。暂停经 wp-cmd 事件下发是"发射后不管"：页面监听器
+    /// 未就绪或媒体元素尚未创建时会丢，且无人重发——这里持久化意图，
+    /// load 命令携带它 + wp-ready 重放时重发，页面侧据此恢复。
+    paused: AtomicBool,
 }
 
 pub struct InternalPlayerController {
@@ -122,8 +126,23 @@ impl InternalPlayerController {
             }
         });
 
+        // 页面诊断日志（临时）：媒体加载失败 / 重试过程
+        let app = self.app.clone();
+        tauri::async_runtime::spawn(async move {
+            let mut rx = subscribe_to(&app, "wp-log");
+            while let Some(payload) = rx.recv().await {
+                if let (Some(label), Some(msg)) = (
+                    payload.get("label").and_then(|v| v.as_str()),
+                    payload.get("msg").and_then(|v| v.as_str()),
+                ) {
+                    log::info!("[{label}] page: {msg}");
+                }
+            }
+        });
+
         // wp-ready 握手：页面的 listen 注册完成可能晚于 load 命令（窗口 ready
-        // 即发送），页面上报就绪后把当前 load 命令重发一次。
+        // 即发送），页面上报就绪后把当前 load 命令重发一次；暂停态同理重发，
+        // 消除"paused 早于监听注册/媒体元素创建而丢失"的竞态。
         let app = self.app.clone();
         tauri::async_runtime::spawn(async move {
             let mut rx = subscribe_to(&app, "wp-ready");
@@ -139,7 +158,15 @@ impl InternalPlayerController {
                                     "wp-cmd",
                                     cmd,
                                 );
-                                log::info!("[player:{label}] replayed load on wp-ready");
+                                let paused = info.paused.load(Ordering::SeqCst);
+                                if paused {
+                                    let _ = app.emit_to(
+                                        tauri::EventTarget::labeled(label),
+                                        "wp-cmd",
+                                        serde_json::json!({ "action": "paused", "paused": true }),
+                                    );
+                                }
+                                log::info!("[{label}] replayed load on wp-ready (paused={paused})");
                             }
                         }
                     }
@@ -172,6 +199,7 @@ impl InternalPlayerController {
                         embed: AtomicBool::new(true),
                         mouse_enabled: AtomicBool::new(false),
                         last_load: parking_lot::Mutex::new(None),
+                        paused: AtomicBool::new(false),
                     })
                 })
                 .clone()
@@ -260,16 +288,22 @@ impl InternalPlayerController {
         // 窗口本身以不可见方式创建：复用时保持原状（已挂载可见则无缝换源），
         // 全新窗口则等 attach_to_desktop 挂载成功后再显示
         self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
+        // 暂停意图随 load 下发：页面在创建媒体元素时就遵守，消除
+        // "load 先建元素自动播放、paused 后到才刹住"之间的漏播窗口
+        let paused = self
+            .info_of(&label)
+            .map(|i| i.paused.load(Ordering::SeqCst))
+            .unwrap_or(false);
         if let Some(info) = self.info_of(&label) {
             info.embed.store(embed, Ordering::SeqCst);
             *info.last_load.lock() = Some(
-                serde_json::json!({ "action": "load", "src": url, "volume": volume, "panscan": panscan }),
+                serde_json::json!({ "action": "load", "src": url, "volume": volume, "panscan": panscan, "paused": paused }),
             );
         }
         self.emit_cmd(
             &label,
             "load",
-            serde_json::json!({ "src": url, "volume": volume, "panscan": panscan }),
+            serde_json::json!({ "src": url, "volume": volume, "panscan": panscan, "paused": paused }),
         );
         Ok(())
     }
@@ -297,6 +331,10 @@ impl InternalPlayerController {
     }
 
     fn player_set_paused(&self, screen: u32, paused: bool) -> Result<(), String> {
+        // 先持久化意图再下发：wp-ready 重放 / 下次 load 都以此为准
+        if let Some(info) = self.info_of(&Self::label_player(screen)) {
+            info.paused.store(paused, Ordering::SeqCst);
+        }
         self.emit_cmd(
             &Self::label_player(screen),
             "paused",

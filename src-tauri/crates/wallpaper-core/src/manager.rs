@@ -135,6 +135,17 @@ impl ScreenManager {
             _ => None,
         };
 
+        // 屏幕已被遮挡且行为为“停止”：不启动渲染，仅登记待播项并收掉旧渲染，
+        // 取消遮挡时由 set_covered 重放（否则会带声音/画面播满一整个 tick 周期）
+        if self.covered && settings.covered_behavior == CoveredBehavior::Stop {
+            let old = self.render.take();
+            self.cleanup_render(old).await;
+            self.item = Some(item.clone());
+            self.item_started_at = None;
+            self.item_duration = None;
+            return Ok(());
+        }
+
         // 取出旧渲染（新渲染就位后再按类型清理，避免切换闪屏）
         let old_render = self.render.take();
 
@@ -185,10 +196,16 @@ impl ScreenManager {
         }
         self.death_streak = 0;
 
+        // 暂停态先落地再探测时长：时长探测最长轮询 ~2s，若放在探测之后，
+        // 遮挡/手动暂停下新项会多播 2s（静音但仍在推进画面）
+        self.apply_pause(settings).await;
+        // 静音起步后恢复真实音量：此刻已按需暂停，恢复音量不会漏音
+        if let Some(Render::Video(p)) = self.render.as_ref() {
+            let _ = p.set_volume(self.volume_for(settings)).await;
+        }
+
         // 探测时长（用于播放列表推进），失败回退 1 小时
         self.item_duration = self.resolve_item_duration().await;
-
-        self.apply_pause(settings).await;
         Ok(())
     }
 
@@ -218,9 +235,17 @@ impl ScreenManager {
         if source.path.as_os_str().is_empty() && source.url.is_none() {
             return Err("缺少媒体源".into());
         }
+        // 遮挡/手动暂停态下静音起步：引擎从启动到收到暂停指令之间存在窗口期
+        // （引擎还需先加载媒体），静音起步确保这段窗口不漏音；
+        // 暂停落地后由 play_current_item 恢复真实音量
+        let volume = if self.should_pause(settings) {
+            0
+        } else {
+            self.volume_for(settings)
+        };
         let config = crate::player::PlayerConfig {
             screen: self.screen,
-            volume: self.volume_for(settings),
+            volume,
             panscan: item.setting.is_pan_scan,
             hardware_decoding: item.setting.hardware_decoding,
             mouse_events: item.setting.enable_mouse_event,
@@ -415,6 +440,19 @@ impl ScreenManager {
         self.apply_pause(settings).await;
     }
 
+    /// tick 调用：期望暂停时周期性重申暂停指令。webview 引擎的暂停是
+    /// 一次性事件（页面监听器未就绪/媒体元素未创建时会丢），而遮挡态
+    /// 稳定后 set_covered 不再触发，丢一次就永久失同步——重申保证
+    /// 最多一个 tick 周期内自愈；对已暂停的引擎是幂等操作，代价可忽略。
+    pub async fn reassert_pause(&mut self, settings: &ApiSettings) {
+        if !self.should_pause(settings) {
+            return;
+        }
+        if let Some(Render::Video(p)) = self.render.as_ref() {
+            let _ = p.set_paused(true).await;
+        }
+    }
+
     pub async fn set_covered(&mut self, covered: bool, settings: &ApiSettings) -> bool {
         let changed = self.covered != covered;
         self.covered = covered;
@@ -589,6 +627,13 @@ impl ScreenManager {
                         self.wallpaper = Some(snapshot.wallpaper.clone());
                         self.item = Some(snapshot.wallpaper.current_item().clone());
                         self.render = Some(Render::Video(player));
+                        // 接管的是仍在运行的实例：遮挡/暂停态先静音再暂停，
+                        // 避免接管瞬间到暂停指令落地之间漏音（随后 apply_settings 恢复音量）
+                        if self.should_pause(settings) {
+                            if let Some(Render::Video(p)) = self.render.as_ref() {
+                                let _ = p.set_volume(0).await;
+                            }
+                        }
                         self.apply_pause(settings).await;
                         self.apply_settings(settings).await;
                         return Ok(());
