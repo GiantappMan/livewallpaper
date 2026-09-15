@@ -172,7 +172,11 @@ img { display: block; }
   border-radius: 8px; background: var(--accent); color: var(--on-accent);
   font-size: 10.5px; font-weight: 600; display: grid; place-items: center;
 }
-.pane-foot { padding: 8px 12px 0; }
+.pane-foot {
+  margin: 6px 12px 0; padding-top: 6px;
+  border-top: 1px solid var(--divider);
+  display: flex; flex-direction: column; gap: 3px;
+}
 .nav-mode { width: 100%; }
 .demo-flag {
   position: fixed; right: 16px; bottom: 16px; z-index: 55;
@@ -667,7 +671,6 @@ button.card-row:hover { background: var(--subtle); }
   .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
   .pane-brand-name, .pane-searchbox, .nav-item-label, .nav-badge { display: none; }
   .nav-item { justify-content: center; padding: 0; }
-  .nav-mode { justify-content: center; }
   .view { margin-left: 64px; width: calc(100% - 64px); padding: 16px 20px 140px; }
   .dock { width: calc(100vw - 40px); }
   .dock-meta { width: 110px; }

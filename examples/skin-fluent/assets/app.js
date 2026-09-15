@@ -101,11 +101,27 @@
     { id: "library", icon: "home", label: "nav.library" },
     { id: "hub", icon: "globe", label: "nav.hub" },
     { id: "downloads", icon: "download", label: "nav.downloads", badge: true },
-    { id: "settings", icon: "gear", label: "nav.settings" },
-    { id: "about", icon: "info", label: "nav.about" },
+    // Win11 惯例：低频项（设置 / 关于）沉到窗格底部 FooterMenuItems 区
+    { id: "settings", icon: "gear", label: "nav.settings", foot: true },
+    { id: "about", icon: "info", label: "nav.about", foot: true },
   ];
 
   let dlBadge = null;
+  function navItem(item) {
+    const btn = el("button", {
+      class: "nav-item",
+      dataset: { view: item.id },
+      title: SC.t(item.label),
+      onclick: () => go(item.id),
+    });
+    btn.innerHTML = `<span class="nav-item-pill"></span><span class="nav-item-ico">${icon(item.icon, 17)}</span>`;
+    btn.append(el("span", { class: "nav-item-label" }, SC.t(item.label)));
+    if (item.badge) {
+      dlBadge = el("span", { class: "nav-badge", hidden: true });
+      btn.append(dlBadge);
+    }
+    return btn;
+  }
   function buildPane() {
     paneEl.innerHTML = "";
     paneEl.append(el("div", { class: "pane-brand" },
@@ -125,25 +141,10 @@
       (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), paneSearch));
 
     const nav = el("nav", { class: "pane-nav" });
-    for (const item of NAV) {
-      const btn = el("button", {
-        class: "nav-item",
-        dataset: { view: item.id },
-        title: SC.t(item.label),
-        onclick: () => go(item.id),
-      });
-      btn.innerHTML = `<span class="nav-item-pill"></span><span class="nav-item-ico">${icon(item.icon, 17)}</span>`;
-      btn.append(el("span", { class: "nav-item-label" }, SC.t(item.label)));
-      if (item.badge) {
-        dlBadge = el("span", { class: "nav-badge", hidden: true });
-        btn.append(dlBadge);
-      }
-      nav.append(btn);
-    }
+    const foot = el("div", { class: "pane-foot" });
+    for (const item of NAV) (item.foot ? foot : nav).append(navItem(item));
     paneEl.append(nav);
-
-    const modeBtn = el("button", { class: "nav-item nav-mode", title: SC.t("cfg.mode"), onclick: cycleMode });
-    paneEl.append(el("div", { class: "pane-foot" }, modeBtn));
+    paneEl.append(foot);
     if (SC.demo) {
       // 挂到 body：pane 的 backdrop-filter 会把 fixed 子元素变成相对自身定位
       let flag = document.querySelector(".demo-flag");
@@ -152,25 +153,9 @@
       flag.title = SC.t("common.demoHint");
     }
     updatePane();
-    updateModeIcon();
   }
   function updatePane() {
     paneEl.querySelectorAll(".nav-item[data-view]").forEach((n) => n.classList.toggle("is-active", n.dataset.view === currentView));
-  }
-  function updateModeIcon() {
-    const btn = paneEl.querySelector(".nav-mode");
-    if (!btn) return;
-    const mode = document.documentElement.dataset.mode;
-    const using = (SC.state.cfg && SC.state.cfg.Appearance.mode) || "system";
-    btn.innerHTML = `<span class="nav-item-pill"></span><span class="nav-item-ico">${icon(using === "system" ? "monitor" : using === "light" ? "sun" : "moon", 17)}</span><span class="nav-item-label">${SC.t(using === "system" ? "cfg.modeSys" : using === "light" ? "cfg.modeLight" : "cfg.modeDark")}</span>`;
-    btn.title = `${SC.t("cfg.mode")} · ${SC.t(using === "system" ? "cfg.modeSys" : using === "light" ? "cfg.modeLight" : "cfg.modeDark")}`;
-    btn.dataset.mode = mode;
-  }
-  async function cycleMode() {
-    const order = ["system", "light", "dark"];
-    const cur = (SC.state.cfg && SC.state.cfg.Appearance.mode) || "system";
-    await SC.setMode(order[(order.indexOf(cur) + 1) % order.length]);
-    updateModeIcon();
   }
 
   function go(view) {
@@ -956,7 +941,7 @@
       modeWrap.innerHTML = "";
       const cur = a.mode || "system";
       for (const [val, key, ic] of modes) {
-        const b = el("button", { class: `seg-item ${cur === val ? "is-active" : ""}`, onclick: async () => { await SC.setMode(val); a.mode = val; renderModes(); updateModeIcon(); } });
+        const b = el("button", { class: `seg-item ${cur === val ? "is-active" : ""}`, onclick: async () => { await SC.setMode(val); a.mode = val; renderModes(); } });
         b.innerHTML = `${icon(ic, 14)}<span>${SC.t(key)}</span>`;
         modeWrap.append(b);
       }
@@ -1143,7 +1128,6 @@
     else if (currentView === "settings") renderSettings();
     else if (currentView === "about") renderAbout();
     renderDock();
-    updateModeIcon();
   }
 
   // 事件 → 视图刷新
@@ -1165,7 +1149,7 @@
   });
   SC.on("history", () => { if (currentView === "downloads") renderView(); });
   SC.on("lang", () => { buildPane(); renderView(); });
-  SC.on("mode", () => { updateModeIcon(); renderDock(); });
+  SC.on("mode", () => { renderDock(); });
   SC.on("nav", (p) => { if (p && p.view) go(p.view); });
   SC.on("hub-session", () => { if (currentView === "hub") renderHub(); });
   SC.on("skins", () => { if (currentView === "settings" && settingsTab === "appearance") renderSettings(); });
