@@ -106,8 +106,14 @@
     const modeBtn = el("button", { class: "rail-item rail-mode", title: SC.t("cfg.mode"), onclick: cycleMode });
     modeBtn.innerHTML = icon("moon", 18);
     railEl.append(el("div", { class: "rail-foot" }, modeBtn));
-    if (SC.demo) railEl.append(el("div", { class: "demo-flag", title: SC.t("common.demoHint") }, SC.t("common.demo")));
-    updateRail();
+  if (SC.demo) {
+    // 挂到 body：rail 有 transform/backdrop-filter，会把 fixed 子元素变成相对自身定位
+    let flag = document.querySelector(".demo-flag");
+    if (!flag) { flag = el("div", { class: "demo-flag" }); document.body.append(flag); }
+    flag.textContent = SC.t("common.demo");
+    flag.title = SC.t("common.demoHint");
+  }
+  updateRail();
   }
   function updateRail() {
     railEl.querySelectorAll(".rail-item[data-view]").forEach((n) => n.classList.toggle("is-active", n.dataset.view === currentView));

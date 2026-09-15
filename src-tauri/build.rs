@@ -5,8 +5,11 @@ use std::path::{Path, PathBuf};
 /// 只是开发示例，不内置分发。
 const OFFICIAL_SKIN_DIRS: &[&str] = &[
     "skin-aurora",
+    "skin-brutal",
+    "skin-bento",
     "skin-cupertino",
     "skin-linear",
+    "skin-liquid",
     "skin-material",
     "skin-paper",
     "skin-term",
