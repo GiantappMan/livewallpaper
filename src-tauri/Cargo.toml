@@ -15,6 +15,7 @@ members = ["crates/wallpaper-core"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+serde_json = "1"
 
 [dependencies]
 wallpaper-core = { path = "crates/wallpaper-core" }

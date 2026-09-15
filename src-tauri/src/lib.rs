@@ -16,6 +16,7 @@ mod mouse_hook;
 mod logger;
 mod media_protocol;
 mod mpv_download;
+mod official_skins;
 mod paths;
 mod skin;
 mod skin_watch;
@@ -343,6 +344,43 @@ pub(crate) fn recreate_main_window(app: &tauri::AppHandle) {
     rebuild_main_window_async(app.clone());
 }
 
+/// 皮肤热加载的后端兜底：无论皮肤页面是否监听 `refresh-page`（不含 SDK /
+/// 未调 initEvents 的皮肤收不到事件），直接让主窗口 webview 整页重载。
+/// `skin://` 协议每次请求实时读盘，重载即最新内容。
+pub(crate) fn eval_reload_main_webview(app: &tauri::AppHandle) {
+    // 主窗口是挂了社区 WebView 的多 webview 窗口，只能经 get_webview 取
+    // webview 本体（get_webview_window 对多 webview 窗口恒为 None）
+    if let Some(webview) = app.get_webview("main") {
+        if let Err(e) = webview.eval("location.reload();") {
+            log::warn!("skin hot reload: eval failed: {e}");
+        }
+    }
+}
+
+/// `skin.json` 变更后的重新应用：重解析当前皮肤的加载目标并与主窗口当前
+/// URL 比较——目标变了（type/entry 变更或清单失效回退 default）走
+/// recreate_main_window（优先原地 navigate，无闪烁）；目标没变（仅改
+/// name/version 等）退回普通整页 reload，避免无谓的窗口重建。
+pub(crate) fn reapply_main_window(app: &tauri::AppHandle) {
+    let dirs = app
+        .try_state::<AppState>()
+        .map(|s| s.dirs.clone())
+        .unwrap_or_else(AppDirs::resolve);
+    let skin_id = skin::configured_skin_id(&dirs);
+    let target = skin::main_window_target(&dirs, &skin_id);
+    if let Some(webview) = app.get_webview("main") {
+        if let (Some(wanted), Ok(current)) =
+            (main_window_navigate_url(app, &target), webview.url())
+        {
+            if wanted == current {
+                eval_reload_main_webview(app);
+                return;
+            }
+        }
+    }
+    recreate_main_window(app);
+}
+
 /// 由加载目标算出可导航的具体 URL（`WebviewUrl::App` 的解析 tauri 未公开，
 /// 按 devUrl / frontendDist / tauri 协议的形态自行推导）。
 fn main_window_navigate_url(
@@ -497,6 +535,10 @@ fn setup(
 
     // 系统事件
     system_events::start(hub.clone(), api.clone());
+
+    // 官方皮肤随安装包内置：解包 / 升级到 skins/（开发联接目录不动）。
+    // 须在皮肤目录监听启动前完成，避免监听到自己的解包事件。
+    official_skins::sync(&dirs);
 
     // 皮肤目录热监听：当前皮肤文件变化 -> refresh-page 整页刷新（热更新开发）
     skin_watch::start(app.handle().clone());

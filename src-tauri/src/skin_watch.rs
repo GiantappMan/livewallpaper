@@ -1,6 +1,10 @@
 //! 皮肤目录热监听：`skins/` 下任何文件变化 ->
-//! - 当前生效皮肤变化：发布 `refresh-page`（前端 / 皮肤 SDK 内置监听并整页刷新，
-//!   `skin://` 协议每次请求实时读盘且 no-cache，刷新即最新内容）；
+//! - 当前生效皮肤变化：后端直接整页刷新主窗口（eval reload，皮肤不含 SDK /
+//!   未订阅事件也生效），并广播 `refresh-page` 供皮肤 / hub 兼容桥响应；
+//!   `skin://` 协议每次请求实时读盘且 no-cache，刷新即最新内容；
+//! - 当前皮肤的 `skin.json` 变更（或皮肤目录被删）：加载目标（type/entry）
+//!   可能变化或清单失效，重新解析并应用（见 `lib.rs::reapply_main_window`，
+//!   优先原地 navigate，无闪烁）；
 //! - 任何变化：发布 `skins-changed`，设置页据此刷新皮肤列表。
 //!
 //! 配合目录联接（junction / symlink）把 `skins/<id>` 指到仓库里的皮肤源码，
@@ -85,9 +89,21 @@ fn handle_events(app: &tauri::AppHandle, dirs: &AppDirs, events: &[DebouncedEven
     crate::publish_event(app, "skins-changed", ());
     // 当前生效皮肤的文件变了 -> 整页刷新，reload 后 skin:// 重新读盘
     let current = crate::skin::configured_skin_id(dirs);
-    if current_skin_affected(&current, &changed) {
-        log::info!("skin watch: skin {:?} changed, refresh page", current);
-        crate::publish_event(app, "refresh-page", ());
+    if !current_skin_affected(&current, &changed) {
+        return;
+    }
+    log::info!("skin watch: skin {:?} changed, refresh page", current);
+    crate::publish_event(app, "refresh-page", ());
+    // 后端兜底刷新：不含 SDK / 未调 initEvents 的皮肤收不到上面的事件，
+    // 直接让主窗口 webview 重载。
+    let skins_root = crate::skin::skins_dir(dirs);
+    if touches_manifest(&skins_root, &current, events) || !skins_root.join(&current).is_dir() {
+        // skin.json 变了（或皮肤目录整个没了）：加载目标（type/entry）可能
+        // 变化或清单失效，页面 reload 只会停留在旧 URL，需重新解析并应用。
+        log::info!("skin watch: skin {:?} manifest changed, reapply", current);
+        crate::reapply_main_window(app);
+    } else {
+        crate::eval_reload_main_webview(app);
     }
 }
 
@@ -158,10 +174,24 @@ fn current_skin_affected(current: &str, changed: &BTreeSet<String>) -> bool {
     current != crate::skin::DEFAULT_SKIN_ID && changed.contains(current)
 }
 
+/// 一批事件是否涉及 `skins/<id>/skin.json`（任何事件类型，含删除）。
+/// 只认皮肤目录直下的清单，嵌套的同名文件（如素材）不触发窗口重新应用。
+fn touches_manifest(skins_root: &Path, skin_id: &str, events: &[DebouncedEvent]) -> bool {
+    use std::ffi::OsStr;
+    events.iter().any(|ev| {
+        let Ok(rel) = ev.path.strip_prefix(skins_root) else {
+            return false;
+        };
+        let mut comps = rel.components();
+        matches!(comps.next(), Some(c) if c.as_os_str() == OsStr::new(skin_id))
+            && matches!(comps.next(), Some(c) if c.as_os_str() == OsStr::new("skin.json"))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use notify_debouncer_mini::{notify as notify_crate, DebouncedEventKind};
+    use notify_debouncer_mini::DebouncedEventKind;
     use std::fs;
     use std::path::PathBuf;
 
@@ -215,6 +245,30 @@ mod tests {
         assert!(!current_skin_affected("other", &changed));
         // 默认皮肤不热刷新
         assert!(!current_skin_affected("default", &changed));
+    }
+
+    #[test]
+    fn detects_active_skin_manifest_changes() {
+        let (dirs, root) = temp_dirs("manifest");
+        let skins = crate::skin::skins_dir(&dirs);
+        fs::create_dir_all(skins.join("dev/assets")).unwrap();
+
+        // 皮肤目录直下的 skin.json（含删除事件）算清单变更
+        assert!(touches_manifest(&skins, "dev", &[ev(skins.join("dev/skin.json"))]));
+        // 嵌套的同名文件不算
+        assert!(!touches_manifest(
+            &skins,
+            "dev",
+            &[ev(skins.join("dev/assets/skin.json"))]
+        ));
+        // 其他皮肤 / skins 之外的路径不算
+        assert!(!touches_manifest(
+            &skins,
+            "dev",
+            &[ev(skins.join("other/skin.json"))]
+        ));
+        assert!(!touches_manifest(&skins, "dev", &[ev(root.join("logs/skin.json"))]));
+        let _ = fs::remove_dir_all(root);
     }
 
     /// 关键链路端到端：逐目录监听经 junction 指入的皮肤源码目录，

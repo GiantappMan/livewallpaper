@@ -13,6 +13,9 @@
  * await api.showWallpaper(res.data[0]);
  * on("playing-status-changed", () => refresh());
  * ```
+ *
+ * 引入即自动热加载：`refresh-page` 事件由 SDK 内置订阅并整页刷新
+ * （皮肤文件变化时后端也会直接刷新主窗口兜底），皮肤无需为此写任何代码。
  */
 import api from "@/lib/client/api";
 import shellApi from "@/lib/client/shell";
@@ -48,5 +51,12 @@ const WallpaperClient = {
 };
 
 (window as any).WallpaperClient = WallpaperClient;
+
+// 热加载兜底：皮肤文件变化 / 壁纸配置变更等场景后端会广播 `refresh-page`，
+// SDK 内置整页刷新订阅，皮肤无需显式调用 api.initEvents() 即自动热更新
+// （与 initEvents 重复注册无副作用；浏览器直开无 Tauri IPC 时静默跳过）。
+if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+  listen("refresh-page", () => window.location.reload()).catch(() => {});
+}
 
 export default WallpaperClient;
