@@ -126,19 +126,7 @@
     paneEl.innerHTML = "";
     paneEl.append(el("div", { class: "pane-brand" },
       (() => { const s = el("span"); s.innerHTML = winLogo(); return s; })(),
-      el("span", { class: "pane-brand-name" }, SC.meta.brand.split(" ")[0])));
-    const paneSearch = el("input", {
-      class: "pane-search", type: "search", placeholder: SC.t("lib.search"), value: searchQuery,
-      oninput: (e) => {
-        searchQuery = e.target.value;
-        const bar = viewEl.querySelector(".cmdbar input[type=search]");
-        if (bar) bar.value = searchQuery;
-        if (currentView !== "library") go("library");
-        else renderGridOnly();
-      },
-    });
-    paneEl.append(el("div", { class: "pane-searchbox" },
-      (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), paneSearch));
+      el("span", { class: "pane-brand-name" }, SC.meta.brand)));
 
     const nav = el("nav", { class: "pane-nav" });
     const foot = el("div", { class: "pane-foot" });
@@ -317,8 +305,6 @@
         type: "search", placeholder: SC.t("lib.search"), value: searchQuery,
         oninput: (e) => {
           searchQuery = e.target.value;
-          const pane = paneEl.querySelector(".pane-search");
-          if (pane && pane.value !== searchQuery) pane.value = searchQuery;
           renderGridOnly();
         },
       }));

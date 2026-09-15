@@ -119,7 +119,7 @@ img { display: block; }
 .drag-strip { position: fixed; top: 0; left: 0; right: 0; height: 40px; z-index: 60; -webkit-app-region: drag; }
 .win-ctrl { position: fixed; top: 0; right: 0; z-index: 61; display: flex; -webkit-app-region: no-drag; }
 .win-btn {
-  width: 46px; height: 32px; border-radius: 0; color: var(--ink);
+  width: 46px; height: 40px; border-radius: 0; color: var(--ink);
   display: grid; place-items: center; transition: background var(--speed);
 }
 .win-btn:hover { background: var(--subtle); }
@@ -131,25 +131,21 @@ img { display: block; }
 .pane {
   position: fixed; left: 0; top: 0; bottom: 0; width: 264px; z-index: 30;
   display: flex; flex-direction: column;
-  padding: 46px 0 12px;
+  padding: 0 0 12px;
 }
-.pane-brand { display: flex; align-items: center; gap: 10px; padding: 0 20px 14px 20px; }
+/* 标题块 = 40px 标题栏带：与右侧内容图层顶边同线，发丝线收边，
+   左缩进 24px 与导航图标列对齐 */
+.pane-brand {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  height: 40px; padding: 0 12px 0 24px;
+  border-bottom: 1px solid var(--divider);
+}
 .pane-brand-name { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
-.brand-logo { display: block; width: 24px; height: 24px; object-fit: contain; -webkit-user-drag: none; }
+.brand-logo { display: block; width: 22px; height: 22px; object-fit: contain; -webkit-user-drag: none; }
 .brand-logo.win-logo-lg { width: 72px; height: 72px; }
 
-.pane-searchbox {
-  display: flex; align-items: center; gap: 8px; margin: 0 12px 10px;
-  height: 32px; padding: 0 10px; border-radius: var(--r-ctl);
-  background: var(--card); border: 1px solid var(--ctl-stroke);
-  color: var(--ink-3); transition: border-color var(--speed);
-}
-.pane-searchbox:focus-within { border-color: var(--accent); }
-.pane-search { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); }
-.pane-search::-webkit-search-cancel-button { -webkit-appearance: none; }
-.pane-search::placeholder { color: var(--ink-3); }
-
-.pane-nav { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 0 12px; overflow-y: auto; }
+/* 导航在标题带之下留出呼吸位 */
+.pane-nav { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 0 12px; margin-top: 10px; overflow-y: auto; }
 .nav-item {
   position: relative; display: flex; align-items: center; gap: 14px;
   height: 36px; padding: 0 12px; border-radius: var(--r-ctl);
@@ -669,7 +665,7 @@ button.card-row:hover { background: var(--subtle); }
 @media (max-width: 900px) {
   .pane { width: 64px; }
   .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
-  .pane-brand-name, .pane-searchbox, .nav-item-label, .nav-badge { display: none; }
+  .pane-brand-name, .nav-item-label, .nav-badge { display: none; }
   .nav-item { justify-content: center; padding: 0; }
   .view { margin-left: 64px; width: calc(100% - 64px); padding: 16px 20px 140px; }
   .dock { width: calc(100vw - 40px); }
