@@ -71,6 +71,9 @@
   --focus: #ffffff;
 }
 
+html { color-scheme: light; }
+html[data-mode="dark"] { color-scheme: dark; }
+
 html, body { height: 100%; }
 body {
   font-family: var(--font);
@@ -81,9 +84,8 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 6px; border: 3px solid transparent; background-clip: content-box; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-2); border: 2px solid transparent; background-clip: content-box; }
+/* 滚动条：不自定义（自定义会失去原生渲染），按 color-scheme 交给
+   WebView2 绘制原生滚动条——与社区站做法一致 */
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 input, select { font: inherit; color: inherit; }
 img { display: block; }
@@ -129,7 +131,7 @@ img { display: block; }
 
 /* ---------------- 左侧导航窗格 ---------------- */
 .pane {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 264px; z-index: 30;
+  position: fixed; left: 0; top: 0; bottom: 0; width: 232px; z-index: 30;
   display: flex; flex-direction: column;
   padding: 0 0 12px;
 }
@@ -168,6 +170,7 @@ img { display: block; }
   border-radius: 8px; background: var(--accent); color: var(--on-accent);
   font-size: 10.5px; font-weight: 600; display: grid; place-items: center;
 }
+.nav-badge[hidden] { display: none; }
 .pane-foot {
   margin: 6px 12px 0; padding-top: 6px;
   border-top: 1px solid var(--divider);
@@ -183,7 +186,7 @@ img { display: block; }
 /* ---------------- 内容区图层（左上圆角，Win11 Settings 招牌布局） ---------------- */
 .view {
   position: relative; z-index: 10;
-  margin: 40px 0 0 264px; width: calc(100% - 264px); height: 100vh;
+  margin: 40px 0 0 232px; width: calc(100% - 232px); height: 100vh;
   background: var(--layer);
   border: 1px solid var(--stroke); border-bottom: 0; border-right: 0;
   border-radius: var(--r-lg) 0 0 0;
@@ -194,6 +197,11 @@ img { display: block; }
 .page-title { font-size: 28px; font-weight: 600; letter-spacing: -.01em; }
 .page-sub { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
 .page-actions { display: flex; align-items: center; gap: 8px; }
+/* 单行头部：标题 · 计数 · 右侧命令 */
+.head-row { align-items: center; margin-bottom: 18px; }
+.head-row .page-title { font-size: 24px; line-height: 1.2; }
+.head-row .page-actions { margin-left: auto; }
+.title-count { color: var(--ink-3); font-size: 13px; margin-left: 12px; }
 .dim-label { color: var(--ink-3); font-size: 12px; }
 .sec-title { font-size: 16px; font-weight: 600; margin: 24px 0 10px; display: flex; align-items: center; gap: 10px; }
 .sec-count { font-size: 12px; color: var(--ink-2); background: var(--card); border: 1px solid var(--stroke); padding: 1px 9px; border-radius: 10px; font-weight: 600; }
@@ -201,7 +209,6 @@ img { display: block; }
 /* 命令栏（Explorer 式） */
 .cmdbar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 .cmdbar-field { display: flex; align-items: center; gap: 8px; }
-.cmdbar .search { margin-left: auto; }
 
 /* ---------------- 按钮 ---------------- */
 .btn {
@@ -228,15 +235,21 @@ img { display: block; }
 .icon-ghost { width: 32px; height: 32px; display: inline-block; }
 
 /* 搜索 / 输入 */
-.search {
-  display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 32px;
-  background: var(--card); border: 1px solid var(--ctl-stroke); border-radius: var(--r-ctl);
-  color: var(--ink-3); transition: border-color var(--speed);
+/* 标题栏居中搜索（全窗口唯一搜索入口；置于拖拽带之上，自身不可拖拽） */
+.title-search {
+  position: fixed; top: 5px; left: 50%; transform: translateX(-50%); z-index: 62;
+  display: flex; align-items: center; gap: 8px; width: min(420px, 34vw); height: 30px;
+  padding: 0 10px; border-radius: var(--r-ctl);
+  background: var(--card); border: 1px solid var(--ctl-stroke); color: var(--ink-3);
+  -webkit-app-region: no-drag;
+  transition: border-color var(--speed), background var(--speed);
 }
-.search:focus-within { border-color: var(--accent); }
-.search input { background: none; border: 0; outline: 0; width: 190px; color: var(--ink); }
-.search input::-webkit-search-cancel-button { -webkit-appearance: none; }
-.search input::placeholder { color: var(--ink-3); }
+.title-search:focus-within { border-color: var(--accent); background: var(--card-solid); }
+.title-search input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font-size: 13px;
+}
+.title-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.title-search input::placeholder { color: var(--ink-3); }
 .input {
   width: 100%; height: 32px; padding: 0 10px; border-radius: var(--r-ctl);
   background: var(--card); border: 1px solid var(--ctl-stroke); outline: 0;
@@ -456,6 +469,8 @@ img { display: block; }
 
 /* ---------------- 下载页 ---------------- */
 .dl-list { display: flex; flex-direction: column; gap: 8px; }
+.dl-hint { color: var(--ink-3); font-size: 12.5px; padding: 4px 2px; }
+.page-empty { padding: 80px 20px 40px; }
 .dl-item {
   display: flex; align-items: center; gap: 14px; padding: 12px 16px;
   background: var(--card); border: 1px solid var(--stroke); border-radius: var(--r-md);
@@ -480,10 +495,26 @@ img { display: block; }
 .his-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .his-sub { font-size: 11.5px; color: var(--ink-3); }
 
-/* ---------------- 社区 ---------------- */
-.hub-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.hub-wrap { height: calc(100vh - 280px); min-height: 380px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--stroke); background: #fff; box-shadow: var(--shadow-card); }
+/* ---------------- 社区（整幅嵌入，仅右下浮标） ---------------- */
+.hub-wrap {
+  /* 负边距抵消 .view 内边距，高度 = 图层可视高度：
+     外层不再产生滚动条，滚动完全交给社区站自身 */
+  position: relative;
+  margin: -20px -36px -150px;
+  height: calc(100vh - 40px);
+  overflow: hidden;
+  border-top-left-radius: var(--r-lg);
+  background: transparent;
+}
 .hub-frame { width: 100%; height: 100%; border: 0; }
+/* 社区页外层不滚动（滚动条由社区站自身展示） */
+.view:has(.hub-wrap) { overflow: hidden; }
+.hub-float {
+  position: absolute; right: 12px; bottom: 12px;
+  background: rgba(249, 249, 249, .82); backdrop-filter: blur(24px) saturate(125%); -webkit-backdrop-filter: blur(24px) saturate(125%);
+  border: 1px solid var(--stroke); border-radius: var(--r-ctl); box-shadow: var(--shadow-fly);
+}
+[data-mode="dark"] .hub-float { background: rgba(44, 44, 44, .82); }
 
 /* ---------------- 设置（Win11 Settings：Pivot + 卡片分组） ---------------- */
 .pivot { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--divider); }
@@ -662,12 +693,14 @@ button.card-row:hover { background: var(--subtle); }
 .sc-btn.is-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #000); }
 
 /* 窄窗口：导航窗格折叠为图标栏 */
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .pane { width: 64px; }
   .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
   .pane-brand-name, .nav-item-label, .nav-badge { display: none; }
   .nav-item { justify-content: center; padding: 0; }
+  .title-search { width: 200px; }
   .view { margin-left: 64px; width: calc(100% - 64px); padding: 16px 20px 140px; }
+  .hub-wrap { margin: -16px -20px -140px; }
   .dock { width: calc(100vw - 40px); }
   .dock-meta { width: 110px; }
   .dock-seek { min-width: 60px; }

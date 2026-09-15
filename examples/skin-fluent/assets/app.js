@@ -82,6 +82,7 @@
   let currentView = "library";
   let searchQuery = "";
   let applyTarget = -1; // -1 = 全部屏幕
+  let refreshGrid = null; // 库视图挂载的网格刷新函数（仅库视图存在，切视图置空）
   const paneEl = el("aside", { class: "pane" });
   const viewEl = el("main", { class: "view" });
   const dockEl = el("div", { class: "dock-wrap", id: "dock" });
@@ -100,8 +101,8 @@
   const NAV = [
     { id: "library", icon: "home", label: "nav.library" },
     { id: "hub", icon: "globe", label: "nav.hub" },
-    { id: "downloads", icon: "download", label: "nav.downloads", badge: true },
-    // Win11 惯例：低频项（设置 / 关于）沉到窗格底部 FooterMenuItems 区
+    // Win11 惯例：低频项（下载 / 设置 / 关于）沉到窗格底部 FooterMenuItems 区
+    { id: "downloads", icon: "download", label: "nav.downloads", badge: true, foot: true },
     { id: "settings", icon: "gear", label: "nav.settings", foot: true },
     { id: "about", icon: "info", label: "nav.about", foot: true },
   ];
@@ -299,22 +300,13 @@
         (() => { const s = el("span", { class: "pop-ico" }); s.innerHTML = icon("listplus", 15); return s; })(), SC.t("create.playlist")),
     ), "left");
 
-    const searchBox = el("label", { class: "search" },
-      (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(),
-      el("input", {
-        type: "search", placeholder: SC.t("lib.search"), value: searchQuery,
-        oninput: (e) => {
-          searchQuery = e.target.value;
-          renderGridOnly();
-        },
-      }));
-
-    viewEl.append(pageHead(SC.t("lib.title"), SC.t("lib.count", all.length)));
-    viewEl.append(el("div", { class: "cmdbar" },
-      createPop,
-      el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("lib.target")), targetSel),
-      el("span", { style: { flex: 1 } }),
-      searchBox));
+    // 单行头部：标题 + 计数居左，命令右对齐（替代原先松散的两行结构）
+    viewEl.append(el("header", { class: "page-head head-row" },
+      el("h1", { class: "page-title" }, SC.t("lib.title")),
+      el("span", { class: "title-count" }, SC.t("lib.count", all.length)),
+      el("div", { class: "page-actions" },
+        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("lib.target")), targetSel),
+        createPop)));
 
     const grid = el("div", { class: "wall-grid", id: "wall-grid" });
     viewEl.append(grid);
@@ -338,6 +330,7 @@
       }
       for (const w of items) grid.append(cardOf(w, playing));
     }
+    refreshGrid = renderGridOnly;
 
     function cardOf(w, playingSet) {
       const isPlaying = playingSet.has(w.filePath);
@@ -737,9 +730,22 @@
           onclick: () => SC.confirm({ title: SC.t("dl.clear"), body: SC.t("dl.clearConfirm"), danger: true }).then(async (ok) => { if (ok && await SC.clearHistory()) renderView(); }),
         }, SC.t("dl.clear"))) : null));
 
+    // 全空：单一空态，不再摆两组"0 + 暂无"的空架子
+    if (!active.length && !his.length) {
+      viewEl.append(el("div", { class: "empty page-empty" },
+        el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("download", 34); return s; })()),
+        el("h3", {}, SC.t("dl.activeEmpty")),
+        el("p", {}, SC.t("dl.emptyHint")),
+        el("div", { class: "empty-actions" },
+          el("button", { class: "btn btn-accent", onclick: () => go("hub") },
+            (() => { const s = el("span"); s.innerHTML = icon("globe", 14); return s; })(), SC.t("hub.title")))));
+      return;
+    }
+
     // 进行中
+    viewEl.append(el("h3", { class: "sec-title" }, SC.t("dl.active"), el("span", { class: "sec-count" }, String(active.length))));
     const actBox = el("div", { class: "dl-list" });
-    if (!active.length) actBox.append(el("div", { class: "empty empty-sm" }, el("p", {}, SC.t("dl.activeEmpty"))));
+    if (!active.length) actBox.append(el("p", { class: "dl-hint" }, SC.t("dl.activeEmpty")));
     for (const d of active) {
       const bar = el("div", { class: "progress" }, el("div", { class: "progress-bar", style: { width: `${Math.round(d.percent || 0)}%` } }));
       actBox.append(el("div", { class: "dl-item" },
@@ -752,10 +758,12 @@
           el("div", { class: "dl-bytes" }, `${SC.fmtBytes(d.receivedBytes)} / ${SC.fmtBytes(d.totalBytes)}`)),
         el("button", { class: "btn btn-sm", onclick: () => SC.cancelDownload(d.id) }, SC.t("dl.cancel"))));
     }
+    viewEl.append(actBox);
 
     // 历史
+    viewEl.append(el("h3", { class: "sec-title" }, SC.t("dl.history"), el("span", { class: "sec-count" }, String(his.length))));
     const hisBox = el("div", { class: "his-list" });
-    if (!his.length) hisBox.append(el("div", { class: "empty empty-sm" }, el("p", {}, SC.t("dl.historyEmpty"))));
+    if (!his.length) hisBox.append(el("p", { class: "dl-hint" }, SC.t("dl.historyEmpty")));
     for (const h of his) {
       hisBox.append(el("div", { class: "his-item" },
         el("div", { class: "his-cover" }, h.coverUrl ? el("img", { src: h.coverUrl, loading: "lazy" }) : null),
@@ -767,31 +775,19 @@
         el("button", { class: "icon-btn", title: SC.t("common.delete"), onclick: async () => { await SC.removeHistory(h.id); renderView(); } },
           (() => { const s = el("span"); s.innerHTML = icon("trash", 15); return s; })())));
     }
-
-    viewEl.append(
-      el("h3", { class: "sec-title" }, SC.t("dl.active"), el("span", { class: "sec-count" }, String(active.length))),
-      actBox,
-      el("h3", { class: "sec-title" }, SC.t("dl.history"), el("span", { class: "sec-count" }, String(his.length))),
-      hisBox);
+    viewEl.append(hisBox);
   }
 
   // ---------------------------------------------------------------- 社区视图
   function renderHub() {
     viewEl.innerHTML = "";
     const url = SC.hubUrl(SC.state.hubTarget);
-    const bar = el("div", { class: "hub-bar cmdbar" },
-      el("button", { class: "btn btn-sm", onclick: () => SC.communityLogin() },
-        (() => { const s = el("span"); s.innerHTML = icon("user", 14); return s; })(), SC.t("hub.login")),
-      el("span", { class: "dim-label" }, SC.t("hub.loginHint")),
-      el("span", { style: { flex: 1 } }),
-      el("button", {
-        class: "icon-btn", title: SC.t("hub.reload"),
-        onclick: () => { const f = viewEl.querySelector("iframe"); if (f) f.src = f.src; },
-      }, (() => { const s = el("span"); s.innerHTML = icon("refresh", 14); return s; })()),
-      el("button", { class: "icon-btn", title: SC.t("hub.browser"), onclick: () => SC.openUrl(url) },
-        (() => { const s = el("span"); s.innerHTML = icon("external", 14); return s; })()));
+    // 社区站即完整界面，不再叠加标题行；仅右下角浮标保留浏览器打开入口
     const frame = el("iframe", { src: url, class: "hub-frame", allow: "clipboard-write" });
-    viewEl.append(pageHead(SC.t("hub.title"), ""), bar, el("div", { class: "hub-wrap" }, frame));
+    viewEl.append(el("div", { class: "hub-wrap" },
+      frame,
+      el("button", { class: "hub-float icon-btn", title: SC.t("hub.browser"), onclick: () => SC.openUrl(url) },
+        (() => { const s = el("span"); s.innerHTML = icon("external", 16); return s; })())));
   }
 
   // ---------------------------------------------------------------- 设置视图
@@ -1108,6 +1104,7 @@
   // ---------------------------------------------------------------- 视图调度
   function renderView() {
     closeCtx();
+    refreshGrid = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "downloads") renderDownloads();
     else if (currentView === "hub") renderHub();
@@ -1141,7 +1138,20 @@
   SC.on("skins", () => { if (currentView === "settings" && settingsTab === "appearance") renderSettings(); });
 
   // ---------------------------------------------------------------- 启动
-  document.body.append(bgEl, dragStrip, paneEl, viewEl, dockEl, winCtrl);
+  // 标题栏居中搜索：全局唯一入口，输入即跳转壁纸库并过滤
+  const titleSearchInput = el("input", {
+    type: "search", placeholder: SC.t("lib.search"),
+    oninput: (e) => {
+      searchQuery = e.target.value;
+      if (currentView !== "library") go("library");
+      else if (refreshGrid) refreshGrid();
+    },
+  });
+  const titleSearch = el("label", { class: "title-search", title: SC.t("lib.search") },
+    (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), titleSearchInput);
+  SC.on("lang", () => { titleSearchInput.placeholder = SC.t("lib.search"); });
+
+  document.body.append(bgEl, dragStrip, paneEl, viewEl, dockEl, winCtrl, titleSearch);
   // 标题栏键字形
   winCtrl.querySelectorAll(".win-btn").forEach((b) => { b.innerHTML = winGlyph(b.title); });
   buildPane();
