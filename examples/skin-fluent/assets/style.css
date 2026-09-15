@@ -130,8 +130,11 @@ img { display: block; }
 .win-btn.is-close:active { background: #b3261e; color: rgba(255, 255, 255, .7); }
 
 /* ---------------- 左侧导航窗格 ---------------- */
+/* 左侧窗格 + 内容区的 flex 行：窗格 fit-content 按文字自适应收缩 */
+.shell { position: relative; z-index: 10; display: flex; height: 100vh; }
 .pane {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 232px; z-index: 30;
+  position: relative; flex: 0 0 auto;
+  width: auto; min-width: 148px; max-width: 224px;
   display: flex; flex-direction: column;
   padding: 0 0 12px;
 }
@@ -185,8 +188,8 @@ img { display: block; }
 
 /* ---------------- 内容区图层（左上圆角，Win11 Settings 招牌布局） ---------------- */
 .view {
-  position: relative; z-index: 10;
-  margin: 40px 0 0 232px; width: calc(100% - 232px); height: 100vh;
+  position: relative; flex: 1; min-width: 0;
+  margin-top: 40px; height: auto;
   background: var(--layer);
   border: 1px solid var(--stroke); border-bottom: 0; border-right: 0;
   border-radius: var(--r-lg) 0 0 0;
@@ -692,14 +695,23 @@ button.card-row:hover { background: var(--subtle); }
 .sc-btn.is-danger { background: var(--danger); color: #fff; }
 .sc-btn.is-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #000); }
 
-/* 窄窗口：导航窗格折叠为图标栏 */
-@media (max-width: 760px) {
-  .pane { width: 64px; }
-  .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
-  .pane-brand-name, .nav-item-label, .nav-badge { display: none; }
-  .nav-item { justify-content: center; padding: 0; }
+/* 窗格折叠（.is-compact：点击标题栏汉堡按钮切换；≤860px 且未手动选择时自动折叠） */
+.pane.is-compact { min-width: 64px; max-width: 64px; }
+.pane.is-compact .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
+.pane.is-compact .pane-brand-logo, .pane.is-compact .pane-brand-name, .pane.is-compact .nav-item-label, .pane.is-compact .nav-badge { display: none; }
+.pane.is-compact .nav-item { justify-content: center; padding: 0; }
+/* 折叠按钮固定在标题栏左上角（拖拽带之上，no-drag 可点）；折叠时居中到 64px 栏 */
+.pane-toggle {
+  position: fixed; top: 4px; left: 8px; z-index: 62;
+  -webkit-app-region: no-drag; color: var(--ink);
+}
+body.pane-compact .pane-toggle { left: 16px; }
+.pane-brand { padding-left: 48px; }
+
+/* 窄窗口自动收窄搜索框等（窗格折叠由 .is-compact 控制，不随宽度强改） */
+@media (max-width: 860px) {
   .title-search { width: 200px; }
-  .view { margin-left: 64px; width: calc(100% - 64px); padding: 16px 20px 140px; }
+  .view { padding: 16px 20px 140px; }
   .hub-wrap { margin: -16px -20px -140px; }
   .dock { width: calc(100vw - 40px); }
   .dock-meta { width: 110px; }

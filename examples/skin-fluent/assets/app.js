@@ -57,6 +57,7 @@
     star: '<polygon points="12 2.5 15 9 22 9.8 17 14.6 18.2 21.5 12 18 5.8 21.5 7 14.6 2 9.8 9 9"/>',
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
     bug: '<rect x="8" y="6" width="8" height="14" rx="4"/><path d="M19 7l-3 2M5 7l3 2M19 19l-3-2M5 19l3-2M12 20v-14M2 12h20"/>',
+    menu: '<line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/>',
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
     clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
     info2: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/>',
@@ -108,6 +109,14 @@
   ];
 
   let dlBadge = null;
+  // 窗格折叠：用户手动选择（localStorage）优先；未选择时 ≤860px 自动折叠
+  const PANE_KEY = "fluent.paneCompact";
+  let panePref = localStorage.getItem(PANE_KEY); // null = 未手动选择
+  function applyPaneCompact() {
+    const compact = panePref !== null ? panePref === "1" : window.innerWidth <= 860;
+    paneEl.classList.toggle("is-compact", compact);
+    document.body.classList.toggle("pane-compact", compact);
+  }
   function navItem(item) {
     const btn = el("button", {
       class: "nav-item",
@@ -126,7 +135,7 @@
   function buildPane() {
     paneEl.innerHTML = "";
     paneEl.append(el("div", { class: "pane-brand" },
-      (() => { const s = el("span"); s.innerHTML = winLogo(); return s; })(),
+      (() => { const s = el("span", { class: "pane-brand-logo" }); s.innerHTML = winLogo(); return s; })(),
       el("span", { class: "pane-brand-name" }, SC.meta.brand)));
 
     const nav = el("nav", { class: "pane-nav" });
@@ -142,6 +151,7 @@
       flag.title = SC.t("common.demoHint");
     }
     updatePane();
+    applyPaneCompact();
   }
   function updatePane() {
     paneEl.querySelectorAll(".nav-item[data-view]").forEach((n) => n.classList.toggle("is-active", n.dataset.view === currentView));
@@ -1151,7 +1161,22 @@
     (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), titleSearchInput);
   SC.on("lang", () => { titleSearchInput.placeholder = SC.t("lib.search"); });
 
-  document.body.append(bgEl, dragStrip, paneEl, viewEl, dockEl, winCtrl, titleSearch);
+  // 左侧窗格 + 内容区组成 flex 行：窗格按文字宽度自适应收缩
+  const shell = el("div", { class: "shell" }, paneEl, viewEl);
+  // 窗格折叠按钮：固定于标题栏左上角（拖拽带之上，no-drag 可点）
+  const paneToggle = el("button", {
+    class: "pane-toggle icon-btn", title: "切换导航窗格",
+    onclick: () => {
+      panePref = paneEl.classList.contains("is-compact") ? "0" : "1";
+      localStorage.setItem(PANE_KEY, panePref);
+      applyPaneCompact();
+    },
+  });
+  paneToggle.innerHTML = icon("menu", 17);
+  document.body.append(bgEl, dragStrip, shell, dockEl, winCtrl, titleSearch, paneToggle);
+  document.body.append(paneToggle);
+  window.addEventListener("resize", applyPaneCompact);
+  applyPaneCompact();
   // 标题栏键字形
   winCtrl.querySelectorAll(".win-btn").forEach((b) => { b.innerHTML = winGlyph(b.title); });
   buildPane();
