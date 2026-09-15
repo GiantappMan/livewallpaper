@@ -13,14 +13,16 @@
 //! 监听结构（Windows 实测：对父目录递归监听收不到经 junction 的变化）：
 //! - `skins/` 本体非递归监听 -> 感知皮肤文件夹的新增 / 删除；
 //! - 每个皮肤子目录单独递归监听 -> 打开句柄时穿过 junction，事件可达；
-//! - 每批事件后重新同步监听集合，新放入的皮肤目录立即纳入监听。
+//! - 每批事件后重新同步监听集合，新放入的皮肤目录立即纳入监听；目录被
+//!   原地替换（如安装副本换成 junction）时旧句柄已死但路径未变，按目录
+//!   身份（创建时间）识别并重建监听。
 //!
 //! 监听失败只损失热更新体验，不影响功能，一律 log::warn 降级。
 
 use notify_debouncer_mini::{new_debouncer, DebouncedEvent};
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tauri::Manager;
 use wallpaper_core::AppDirs;
 
@@ -62,8 +64,8 @@ fn run(app: tauri::AppHandle, dirs: AppDirs) {
     }
     log::info!("skin watch: watching {:?}", skins_dir);
 
-    // 已递归监听的皮肤子目录（skins/<id>）
-    let mut watched: HashMap<PathBuf, ()> = HashMap::new();
+    // 已递归监听的皮肤子目录（skins/<id>）-> 建立监听时的目录身份
+    let mut watched: HashMap<PathBuf, Option<SystemTime>> = HashMap::new();
     sync_skin_watches(debouncer.watcher(), &skins_dir, &mut watched);
 
     // debouncer 保活即监听保活，本线程常驻
@@ -108,16 +110,17 @@ fn handle_events(app: &tauri::AppHandle, dirs: &AppDirs, events: &[DebouncedEven
 }
 
 /// 把 skins 下的每个皮肤子目录纳入递归监听（逐目录打开句柄，
-/// junction / symlink 指向的源码目录因此可达）；已消失的目录移除监听。
+/// junction / symlink 指向的源码目录因此可达）；已消失的目录移除监听；
+/// 目录被原地替换（身份变化，旧句柄已随删除失效但路径未变）时重建监听。
 fn sync_skin_watches(
     watcher: &mut dyn notify_debouncer_mini::notify::Watcher,
     skins_dir: &Path,
-    watched: &mut HashMap<PathBuf, ()>,
+    watched: &mut HashMap<PathBuf, Option<SystemTime>>,
 ) {
     use notify_debouncer_mini::notify::RecursiveMode;
-    use std::collections::hash_map::Entry;
+    use std::fs;
 
-    let Ok(entries) = std::fs::read_dir(skins_dir) else {
+    let Ok(entries) = fs::read_dir(skins_dir) else {
         return;
     };
     for entry in entries.flatten() {
@@ -125,12 +128,21 @@ fn sync_skin_watches(
         if !path.is_dir() {
             continue;
         }
-        if let Entry::Vacant(e) = watched.entry(path.clone()) {
-            match watcher.watch(&path, RecursiveMode::Recursive) {
-                Ok(()) => {
-                    e.insert(());
-                }
-                Err(err) => log::warn!("skin watch: watch {:?} failed: {err}", path),
+        let identity = dir_identity(&path);
+        if let Some(old) = watched.get(&path) {
+            if *old == identity {
+                continue;
+            }
+            // 同路径的新目录：旧监听句柄已失效，先注销再重建
+            let _ = watcher.unwatch(&path);
+        }
+        match watcher.watch(&path, RecursiveMode::Recursive) {
+            Ok(()) => {
+                watched.insert(path.clone(), identity);
+            }
+            Err(err) => {
+                watched.remove(&path);
+                log::warn!("skin watch: watch {:?} failed: {err}", path);
             }
         }
     }
@@ -142,6 +154,13 @@ fn sync_skin_watches(
         let _ = watcher.unwatch(path);
         false
     });
+}
+
+/// 目录身份：自身的创建时间（symlink_metadata 取链接本体的元数据，
+/// 不跟随 junction / symlink；同一路径被重建时创建时间必然变化）。
+/// 平台不支持创建时间时返回 None（退化为"从不重建"，仅损失自愈能力）。
+fn dir_identity(path: &Path) -> Option<SystemTime> {
+    std::fs::symlink_metadata(path).ok()?.created().ok()
 }
 
 /// 从事件路径提取涉及的皮肤 id（`skins/<id>/...` 的第一段；越界路径忽略）。
@@ -322,6 +341,66 @@ mod tests {
             }
         }
         assert!(hit, "no event observed through junction within 5s");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    /// 回归：运行中把皮肤目录原地替换成 junction（如 link-skin.sh 覆盖安装
+    /// 副本）后，旧监听句柄失效但路径未变 —— 重新同步必须按目录身份变化
+    /// 重建监听，此后改 junction 目标侧文件仍能收到事件。
+    #[cfg(windows)]
+    #[test]
+    fn resyncs_watch_after_dir_replaced_in_place() {
+        use notify_debouncer_mini::notify::RecursiveMode;
+
+        let (dirs, root) = temp_dirs("resync");
+        let skins = crate::skin::skins_dir(&dirs);
+        fs::create_dir_all(&skins).unwrap();
+        let real = root.join("real-skin-src");
+        fs::create_dir_all(&real).unwrap();
+        let dev = skins.join("dev");
+        fs::create_dir_all(&dev).unwrap();
+
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut debouncer = new_debouncer(DEBOUNCE, tx).unwrap();
+        debouncer
+            .watcher()
+            .watch(&skins, RecursiveMode::NonRecursive)
+            .unwrap();
+
+        // 第一阶段：真实目录纳入监听
+        let mut watched: HashMap<PathBuf, Option<SystemTime>> = HashMap::new();
+        sync_skin_watches(debouncer.watcher(), &skins, &mut watched);
+        assert!(watched.contains_key(&dev));
+
+        // 第二阶段：原地删除并换成 junction（路径不变，旧句柄随之失效）
+        fs::remove_dir_all(&dev).unwrap();
+        let status = std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(&dev)
+            .arg(&real)
+            .status()
+            .expect("run mklink");
+        assert!(status.success(), "mklink /J failed");
+
+        // 第三阶段：重新同步后，改 junction 目标侧文件必须可达
+        sync_skin_watches(debouncer.watcher(), &skins, &mut watched);
+        // 等 phase-2 目录增删的防抖事件全部到达并清空，避免误判
+        std::thread::sleep(DEBOUNCE * 3);
+        while rx.try_recv().is_ok() {}
+
+        fs::write(real.join("style.css"), "body{}").unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        let mut hit = false;
+        while std::time::Instant::now() < deadline && !hit {
+            match rx.recv_timeout(deadline.saturating_duration_since(std::time::Instant::now())) {
+                Ok(Ok(events)) => hit = changed_skin_ids(&dirs, &events).contains("dev"),
+                Ok(Err(e)) => panic!("watch error: {e}"),
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => break,
+                Err(e) => panic!("channel error: {e}"),
+            }
+        }
+        assert!(hit, "no event observed after in-place junction replacement");
 
         let _ = fs::remove_dir_all(root);
     }

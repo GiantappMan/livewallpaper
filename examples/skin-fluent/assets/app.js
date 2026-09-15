@@ -73,9 +73,9 @@
     };
     return `<svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">${paths[type] || ""}</svg>`;
   }
-  /** Win11 四色块窗口徽标（深浅模式同色，浅蓝→深蓝） */
+  /** 巨应产品 logo（assets/logo.png，与默认 UI 同源） */
   function winLogo(cls) {
-    return `<span class="win-logo ${cls || ""}" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+    return `<img class="brand-logo ${cls || ""}" src="assets/logo.png" alt="" draggable="false"/>`;
   }
 
   // ---------------------------------------------------------------- 全局壳

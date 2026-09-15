@@ -134,12 +134,9 @@ img { display: block; }
   padding: 46px 0 12px;
 }
 .pane-brand { display: flex; align-items: center; gap: 10px; padding: 0 20px 14px 20px; }
-.pane-brand-name { font-size: 14px; font-weight: 600; letter-spacing: .01em; color: var(--accent); }
-.win-logo { display: inline-grid; grid-template-columns: repeat(2, 1fr); gap: 2.5px; width: 22px; height: 22px; }
-.win-logo i { background: linear-gradient(135deg, #47b1e8, #0067c0); border-radius: 1px; }
-[data-mode="dark"] .win-logo i { background: linear-gradient(135deg, #7fd0ff, #2f8fe0); }
-.win-logo-lg { width: 64px; height: 64px; gap: 5px; }
-.win-logo-lg i { border-radius: 2px; }
+.pane-brand-name { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.brand-logo { display: block; width: 24px; height: 24px; object-fit: contain; -webkit-user-drag: none; }
+.brand-logo.win-logo-lg { width: 72px; height: 72px; }
 
 .pane-searchbox {
   display: flex; align-items: center; gap: 8px; margin: 0 12px 10px;
