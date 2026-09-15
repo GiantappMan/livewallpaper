@@ -1,0 +1,10 @@
+{
+  "id": "liquid",
+  "name": "流光 Liquid",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "Liquid Glass · 液态玻璃 —— iOS 26 式悬浮胶囊与镜面高光，流动幻彩 mesh 背景",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

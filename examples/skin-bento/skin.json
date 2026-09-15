@@ -1,0 +1,10 @@
+{
+  "id": "bento",
+  "name": "便当 Bento",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "Bento Grid · 暖白画布 —— 苹果发布会式模块卡片网格，正在播放的壁纸自动放大为主格",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}

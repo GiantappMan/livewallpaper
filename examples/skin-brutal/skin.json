@@ -1,0 +1,10 @@
+{
+  "id": "brutal",
+  "name": "新粗野 Brutal",
+  "version": "1.0.0",
+  "author": "GiantappMan",
+  "description": "Neo-Brutalism · 硬边框硬阴影 —— 奶油底、粗黑描边、高饱和撞色与贴纸质感",
+  "type": "app",
+  "entry": "index.html",
+  "compat": 4
+}
