@@ -271,6 +271,48 @@ class API {
     }
   }
 
+  /** 列出壁纸库子文件夹；dir 为空串时返回库根目录列表 */
+  async listFolders(dir: string): Promise<ApiResult<string[]>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string[]>("list_folders", { dir });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: [] };
+    }
+  }
+
+  /** 在 parent 下新建文件夹，返回完整路径 */
+  async createFolder(parent: string, name: string): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("create_folder", { parent, name });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 移动壁纸（媒体 + 同名元数据）到 targetDir，返回新文件路径 */
+  async moveWallpaper(
+    filePath: string,
+    targetDir: string
+  ): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("move_wallpaper", {
+        filePath,
+        targetDir,
+      });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   async explore(path: string): Promise<ApiResult<null>> {
     try {
       if (!this.isRunningInClient()) return noClient();

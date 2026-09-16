@@ -38,6 +38,8 @@
     pencil: '<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
     trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
     folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    folderplus: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="10.5" x2="12" y2="16.5"/><line x1="9" y1="13.5" x2="15" y2="13.5"/>',
+    move: '<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>',
     search: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>',
     monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19.1" y2="4.9"/>',
@@ -731,17 +733,25 @@
 
   // ---------------------------------------------------------------- 本地库视图
   // 自包含实现：独立状态 / i18n（local.*）/ 样式（.loc-*），规划中替代壁纸库。
-  // 数据源暂用 SC.state.wallpapers（后端即目录扫描结果），日后可换真正的目录枚举接口。
+  // 数据源 SC.state.wallpapers（后端目录扫描），文件夹结构经 SC.listFolders 实时读盘。
   let localSort = localStorage.getItem("fluent.localSort") || "name";
   let localType = localStorage.getItem("fluent.localType") || "all";
+  let localDir = localStorage.getItem("fluent.localDir") || ""; // 当前所在文件夹（"" = 根层级）
   let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
+  let localSeq = 0;        // 异步渲染序号：快速切换文件夹时丢弃过期结果
+  let dragSrc = null;      // 拖拽摆放：正在拖动的壁纸
 
   function renderLocal() {
     viewEl.innerHTML = "";
     const all = SC.state.wallpapers;
     const playing = SC.playingSet();
     const screens = SC.state.screens;
+    const roots = ((SC.state.cfg && SC.state.cfg.Wallpaper && SC.state.cfg.Wallpaper.directories) || []).filter(Boolean);
     const nameOf = (w) => (w.meta && w.meta.title) || w.fileName || "—";
+    const dirName = (p) => (p || "").split(/[\\/]/).filter(Boolean).pop() || "";
+    const normWin = (p) => String(p || "").toLowerCase().replace(/\//g, "\\").replace(/\\+$/, "");
+    const samePath = (a, b) => !!String(a || "") && normWin(a) === normWin(b);
+    const underDir = (p, base) => normWin(p).startsWith(`${normWin(base)}\\`);
 
     const targetSel = selectEl(
       [{ value: -1, label: SC.t("common.allScreens") }].concat(screens.map((s) => ({ value: s.index, label: SC.t("common.screen", s.deviceName || s.index) }))),
@@ -760,11 +770,20 @@
     );
 
     function openDirs() {
-      const dirs = (SC.state.cfg && SC.state.cfg.Wallpaper && SC.state.cfg.Wallpaper.directories) || [];
-      if (!dirs[0]) { SC.toast(SC.t("cfg.dirsHint"), "err"); return; }
+      if (!roots[0]) { SC.toast(SC.t("cfg.dirsHint"), "err"); return; }
       if (SC.demo) { SC.toast(`${SC.t("common.demo")} · ${SC.t("local.openDirs")}`, "ok"); return; }
-      SC.client.api.explore(dirs[0]);
+      SC.client.api.explore(roots[0]);
     }
+
+    const newFolderBtnEl = () => {
+      const b = el("button", { class: "btn btn-sm" });
+      b.innerHTML = `${icon("folderplus", 14)}<span>${SC.t("local.newFolder")}</span>`;
+      b.addEventListener("click", () => openNewFolderDialog());
+      return b;
+    };
+    // 新建文件夹仅在库内子文件夹层级可用（根层级由 设置 → 壁纸目录 管理）；搜索时隐藏
+    const newFolderBtn = newFolderBtnEl();
+    newFolderBtn.hidden = !localDir;
 
     viewEl.append(el("header", { class: "page-head head-row" },
       el("h1", { class: "page-title" }, SC.t("local.title")),
@@ -773,15 +792,87 @@
         el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.target")), targetSel),
         el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.filter")), typeSel),
         el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.sort")), sortSel),
+        newFolderBtn,
         el("button", { class: "icon-btn", title: SC.t("common.refresh"), onclick: () => SC.refreshAll() }, (() => { const s = el("span"); s.innerHTML = icon("refresh", 15); return s; })()),
         el("button", { class: "icon-btn", title: SC.t("local.openDirs"), onclick: openDirs }, (() => { const s = el("span"); s.innerHTML = icon("folder", 15); return s; })()))));
 
+    const crumb = el("nav", { class: "loc-crumb", "aria-label": "folder" });
+    const foldersEl = el("div", { class: "loc-folders" });
     const grid = el("div", { class: "loc-grid" });
-    viewEl.append(grid);
+    viewEl.append(crumb, foldersEl, grid);
 
-    function filtered() {
+    function enterDir(dir) {
+      localDir = dir || "";
+      localStorage.setItem("fluent.localDir", localDir);
+      renderView();
+    }
+
+    // 拖拽摆放：把任意元素变成可投放的文件夹（面包屑段 / 文件夹卡片共用）
+    function attachDrop(target, dir) {
+      target.addEventListener("dragover", (e) => {
+        if (!dragSrc || samePath(dragSrc.dir, dir)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        target.classList.add("is-over");
+      });
+      target.addEventListener("dragleave", () => target.classList.remove("is-over"));
+      target.addEventListener("drop", (e) => {
+        e.preventDefault();
+        target.classList.remove("is-over");
+        const w = dragSrc;
+        dragSrc = null;
+        if (w && !samePath(w.dir, dir)) moveTo(w, dir);
+      });
+    }
+
+    async function moveTo(w, dir) {
+      if (!w || samePath(w.dir, dir)) return;
+      const oldPath = w.filePath;
+      const newPath = await SC.moveWallpaper(w, dir);
+      if (!newPath) return;
+      // 引用该文件的播放列表成员同步改路径（成员只是引用，不随文件移动）
+      for (const pl of SC.state.wallpapers) {
+        if (!(pl.meta && pl.meta.type === 6)) continue;
+        if (!(pl.meta.wallpapers || []).some((m) => m.filePath === oldPath)) continue;
+        const updated = JSON.parse(JSON.stringify(pl));
+        for (const m of updated.meta.wallpapers) {
+          if (m.filePath === oldPath) { m.filePath = newPath; m.dir = dir; }
+        }
+        await SC.updateWallpaper(updated);
+      }
+      SC.toast(SC.t("local.moved", dirName(dir)), "ok");
+      await SC.refreshAll();
+      if (localRefresh) localRefresh();
+    }
+
+    function crumbs() {
+      const segs = [{ label: SC.t("local.title"), dir: "" }];
+      if (localDir) {
+        const hit = roots.find((r) => samePath(localDir, r) || underDir(localDir, r));
+        if (hit) {
+          segs.push({ label: dirName(hit) || hit, dir: hit });
+          let acc = hit;
+          for (const part of localDir.slice(hit.length).split(/[\\/]/).filter(Boolean)) {
+            acc = `${acc}\\${part}`;
+            segs.push({ label: part, dir: acc });
+          }
+        } else {
+          segs.push({ label: dirName(localDir) || localDir, dir: localDir });
+        }
+      }
+      crumb.innerHTML = "";
+      segs.forEach((s, i) => {
+        const cur = i === segs.length - 1;
+        if (i) crumb.append(el("span", { class: "loc-crumb-sep" }, (() => { const s2 = el("span"); s2.innerHTML = icon("chevr", 12); return s2; })()));
+        const b = el("button", { class: `loc-crumb-seg ${cur ? "is-current" : ""}`, onclick: () => { if (!cur) enterDir(s.dir); } }, s.label);
+        crumb.append(b);
+        if (!cur) attachDrop(b, s.dir);
+      });
+    }
+
+    function filtered(list) {
       const q = searchQuery.trim().toLowerCase();
-      return all.filter((w) => {
+      return list.filter((w) => {
         if (localType !== "all" && String((w.meta && w.meta.type) || 0) !== localType) return false;
         if (!q) return true;
         return nameOf(w).toLowerCase().includes(q) || (w.fileName || "").toLowerCase().includes(q);
@@ -793,22 +884,48 @@
         ? [...list].sort((a, b) => ((a.meta && a.meta.type) || 0) - ((b.meta && b.meta.type) || 0) || byName(a, b))
         : [...list].sort(byName);
     }
-    function renderGrid() {
-      grid.innerHTML = "";
-      const items = sorted(filtered());
+
+    async function renderGrid() {
+      const seq = ++localSeq;
+      const searching = !!searchQuery.trim();
+      if (newFolderBtn) newFolderBtn.hidden = searching || !localDir;
+      const folders = searching ? [] : await SC.listFolders(localDir);
+      if (seq !== localSeq) return;
+      const scope = searching ? all : all.filter((w) => samePath(w.dir, localDir));
+      const files = sorted(filtered(scope));
       const countEl = viewEl.querySelector("[data-count]");
-      if (countEl) countEl.textContent = SC.t("local.count", items.length);
-      if (!items.length) {
-        grid.append(el("div", { class: "empty" },
-          el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
-          el("h3", {}, SC.t("local.empty")),
-          el("p", {}, SC.t("local.emptyHint")),
-          el("div", { class: "empty-actions" },
-            el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
-            el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title")))));
+      if (countEl) countEl.textContent = SC.t("local.count", files.length + folders.length);
+      crumbs();
+
+      folders.sort((a, b) => dirName(a).localeCompare(dirName(b), undefined, { numeric: true, sensitivity: "base" }));
+      foldersEl.innerHTML = "";
+      foldersEl.hidden = !folders.length;
+      for (const f of folders) foldersEl.append(folderCard(f));
+
+      grid.innerHTML = "";
+      if (!files.length && !folders.length) {
+        if (searching) {
+          grid.append(el("div", { class: "empty" },
+            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("search", 34); return s; })()),
+            el("h3", {}, SC.t("local.searchEmpty"))));
+        } else if (localDir) {
+          grid.append(el("div", { class: "empty" },
+            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
+            el("h3", {}, SC.t("local.folderEmpty")),
+            el("p", {}, SC.t("local.folderEmptyHint")),
+            el("div", { class: "empty-actions" }, newFolderBtnEl())));
+        } else {
+          grid.append(el("div", { class: "empty" },
+            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
+            el("h3", {}, SC.t("local.empty")),
+            el("p", {}, SC.t("local.emptyHint")),
+            el("div", { class: "empty-actions" },
+              el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
+              el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title")))));
+        }
         return;
       }
-      for (const w of items) grid.append(cardOf(w));
+      for (const w of files) grid.append(cardOf(w));
     }
     localRefresh = renderGrid;
 
@@ -847,15 +964,42 @@
         typeBadge);
 
       card.append(cover, playDot, screenChips || "", acts, meta);
+      // 拖拽摆放：拖起壁纸，投放到文件夹卡片 / 面包屑
+      card.draggable = true;
+      card.addEventListener("dragstart", (e) => {
+        dragSrc = w;
+        card.classList.add("is-dragging");
+        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+      });
+      card.addEventListener("dragend", () => { dragSrc = null; card.classList.remove("is-dragging"); });
       card.addEventListener("click", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
         ctxMenu(e.clientX, e.clientY, [
           { label: SC.t("common.apply"), ico: "play", act: () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]) },
+          { label: SC.t("local.moveTo"), ico: "move", act: () => openMoveDialog(w) },
           { label: SC.t("set.title"), ico: "gear", act: () => openSettingDialog(w) },
           { label: SC.t("common.location"), ico: "folder", act: () => SC.reveal(w) },
           { label: SC.t("common.delete"), ico: "trash", act: () => removeWallpaper(w), danger: true },
+        ]);
+      });
+      return card;
+    }
+
+    function folderCard(path) {
+      const deep = all.filter((w) => samePath(w.dir, path) || underDir(w.dir, path)).length;
+      const card = el("button", { class: "loc-folder" },
+        el("span", { class: "loc-folder-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 22); return s; })()),
+        el("span", { class: "loc-folder-name", title: path }, dirName(path)),
+        el("span", { class: "loc-folder-count" }, SC.t("local.count", deep)));
+      card.addEventListener("click", () => enterDir(path));
+      attachDrop(card, path);
+      card.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("common.location"), ico: "folder", act: () => { if (SC.demo || !SC.client) SC.toast(`${SC.t("common.demo")} · ${SC.t("common.location")}`, "ok"); else SC.client.api.explore(path); } },
         ]);
       });
       return card;
@@ -867,14 +1011,90 @@
       return b;
     }
 
+    function openNewFolderDialog() {
+      if (!localDir) return;
+      let name = "";
+      openDialog((sheet, close) => {
+        const input = el("input", { class: "input", type: "text", placeholder: SC.t("local.folderNamePh") });
+        input.addEventListener("input", () => { name = input.value; });
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
+        function ok() {
+          if (!name.trim()) return;
+          close(true);
+          SC.createFolder(localDir, name.trim()).then((p) => {
+            if (!p) return;
+            SC.toast(SC.t("local.folderCreated"), "ok");
+            if (localRefresh) localRefresh();
+          });
+        }
+        sheet.append(
+          dialogHead(SC.t("local.newFolder"), dirName(localDir), close),
+          el("div", { class: "dialog-body" }, el("div", { class: "field-col" }, el("label", { class: "field-label" }, SC.t("local.folderNamePh")), input)),
+          el("div", { class: "dialog-foot" },
+            el("button", { class: "btn", onclick: () => close() }, SC.t("common.cancel")),
+            el("button", { class: "btn btn-accent", onclick: () => ok() }, SC.t("common.ok"))));
+        setTimeout(() => input.focus(), 60);
+      });
+    }
+
+    function openMoveDialog(w) {
+      const root = roots.find((r) => samePath(w.dir, r) || underDir(w.dir, r));
+      openDialog((sheet, close) => {
+        const tree = el("div", { class: "loc-move-tree" });
+        let picked = "";
+        const okBtn = el("button", { class: "btn btn-accent", disabled: true });
+        okBtn.textContent = SC.t("common.ok");
+        okBtn.addEventListener("click", () => { if (!picked) return; close(true); moveTo(w, picked); });
+        tree.append(el("p", { class: "dim-label" }, "…"));
+        sheet.append(
+          dialogHead(SC.t("local.moveTitle"), nameOf(w), close),
+          el("div", { class: "dialog-body" }, tree),
+          el("div", { class: "dialog-foot" },
+            el("span", { class: "dim-label" }, `${SC.t("local.moveCurrent")}：${dirName(w.dir) || "—"}`),
+            okBtn));
+        // 展开该根下的整棵文件夹树（扫描深度 ≤ 3 层，与后端一致）；根目录本身也是可选目标
+        (async () => {
+          const list = root ? [{ path: root, depth: 0 }] : [];
+          const walk = async (dir, depth) => {
+            for (const kid of await SC.listFolders(dir)) {
+              list.push({ path: kid, depth });
+              if (depth < 3) await walk(kid, depth + 1);
+            }
+          };
+          if (root) await walk(root, 1);
+          tree.innerHTML = "";
+          for (const { path, depth } of list) {
+            const isCur = samePath(path, w.dir);
+            const b = el("button", {
+              class: `loc-move-item ${isCur ? "is-current" : ""}`,
+              style: { paddingLeft: `${10 + depth * 18}px` },
+            },
+              (() => { const s = el("span"); s.innerHTML = icon("folder", 15); return s; })(),
+              dirName(path),
+              isCur ? el("span", { class: "dim-label" }, `· ${SC.t("local.moveCurrent")}`) : null);
+            b.addEventListener("click", () => {
+              if (isCur) return;
+              picked = path;
+              okBtn.disabled = false;
+              tree.querySelectorAll(".loc-move-item").forEach((n) => n.classList.remove("is-active"));
+              b.classList.add("is-active");
+            });
+            tree.append(b);
+          }
+          if (!list.length) tree.append(el("p", { class: "dim-label" }, SC.t("local.folderEmpty")));
+        })();
+      });
+    }
+
     renderGrid();
 
-    // 空白处右键：刷新 / 打开目录
+    // 空白处右键：刷新 / 新建文件夹 / 打开目录
     grid.addEventListener("contextmenu", (e) => {
       if (e.target.closest(".loc-card")) return;
       e.preventDefault();
       ctxMenu(e.clientX, e.clientY, [
         { label: SC.t("common.refresh"), ico: "refresh", act: () => SC.refreshAll() },
+        ...(localDir && !searchQuery.trim() ? [{ label: SC.t("local.newFolder"), ico: "folderplus", act: () => openNewFolderDialog() }] : []),
         { label: SC.t("local.openDirs"), ico: "folder", act: openDirs },
       ]);
     });

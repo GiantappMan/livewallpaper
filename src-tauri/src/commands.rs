@@ -3,7 +3,7 @@
 use crate::state::AppState;
 use crate::urls::{path_to_media_url, resolve_media_url, tmp_name_to_media_url, ResolvedUrl};
 use base64::Engine;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager, State};
 use wallpaper_core::library;
 use wallpaper_core::EngineHost;
@@ -541,6 +541,74 @@ pub async fn delete_wallpaper(app: AppHandle, wallpaper: Wallpaper) -> Result<bo
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(true)
+}
+
+// ---------- 文件夹整理 ----------
+
+/// 当前配置的壁纸库根目录（第一个为保存目录，其余为读取目录）。
+fn library_roots(app: &AppHandle) -> Vec<PathBuf> {
+    let st = state(app);
+    let config = st.config.lock();
+    config.wallpaper.effective_directories()
+}
+
+/// 列出 dir 的直接子文件夹；dir 为空串时返回库根目录列表。
+#[tauri::command]
+pub async fn list_folders(app: AppHandle, dir: String) -> Result<Vec<String>> {
+    let roots = library_roots(&app);
+    library::list_folders(&roots, Path::new(&dir))
+        .map(|list| {
+            list.iter()
+                .map(|p| p.to_string_lossy().to_string())
+                .collect()
+        })
+        .map_err(|e| e.to_string())
+}
+
+/// 在 parent 下新建文件夹（层级与命名由 library 层校验），返回完整路径。
+#[tauri::command]
+pub async fn create_folder(app: AppHandle, parent: String, name: String) -> Result<String> {
+    let roots = library_roots(&app);
+    library::create_folder(&roots, Path::new(&parent), &name)
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| e.to_string())
+}
+
+/// 移动壁纸（媒体 + 同名元数据）到 target_dir；正在播放则先停止。返回新路径。
+#[tauri::command]
+pub async fn move_wallpaper(
+    app: AppHandle,
+    file_path: String,
+    target_dir: String,
+) -> Result<String> {
+    let st = state(&app);
+    let roots = library_roots(&app);
+    let path = PathBuf::from(&file_path);
+
+    // 正在播放则先停止（匹配文件路径或播放列表成员），与删除行为一致
+    let playing = st.api.running_wallpapers().await;
+    for w in playing {
+        let matches = w
+            .file_path
+            .as_ref()
+            .map(|p| *p == path)
+            .unwrap_or(false)
+            || w.meta
+                .wallpapers
+                .iter()
+                .any(|m| m.file_path.as_ref().map(|p| *p == path).unwrap_or(false));
+        if matches {
+            for screen in &w.running_info.screen_indexes {
+                st.api.stop_wallpaper(Some(*screen)).await;
+            }
+        }
+    }
+
+    let new_path = library::move_wallpaper(&roots, &path, Path::new(&target_dir))
+        .map_err(|e| e.to_string())?;
+    st.api.save_snapshot().await;
+    st.api.notify_change();
+    Ok(new_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]

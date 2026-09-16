@@ -533,6 +533,215 @@ pub fn meta_for_download(mut meta: WallpaperMeta, id: &str) -> WallpaperMeta {
     meta
 }
 
+// ---------- 文件夹整理 ----------
+
+/// 扫描递归深度上限：根目录为 0 层，最多进入 3 层子文件夹（见 scan_directory）。
+/// 新建/移动目标超出该层级会落进扫描盲区，因此命令层一律拒绝。
+pub const MAX_FOLDER_DEPTH: usize = 3;
+
+/// 规范化路径字符串用于前缀比较（小写、统一反斜杠、去尾部分隔符）。
+fn norm_path_str(path: &Path) -> String {
+    let s = path.to_string_lossy().to_lowercase().replace('/', "\\");
+    let trimmed = s.trim_end_matches('\\');
+    if trimmed.is_empty() {
+        s
+    } else {
+        trimmed.to_string()
+    }
+}
+
+/// 找到 path 所属的库根目录，返回 (根, 相对深度；根本身为 0)。不在任何根内则 None。
+pub fn locate_root<'a>(roots: &'a [PathBuf], path: &Path) -> Option<(&'a Path, usize)> {
+    let p = norm_path_str(path);
+    for root in roots {
+        let r = norm_path_str(root);
+        if r.is_empty() {
+            continue;
+        }
+        if p == r {
+            return Some((root.as_path(), 0));
+        }
+        let with_sep = format!("{r}\\");
+        if p.starts_with(&with_sep) {
+            let depth = p[with_sep.len()..]
+                .split('\\')
+                .filter(|s| !s.is_empty())
+                .count();
+            return Some((root.as_path(), depth));
+        }
+    }
+    None
+}
+
+/// Windows 保留设备名（不含扩展名形式同样保留）。
+fn is_reserved_name(name: &str) -> bool {
+    let stem = name.split('.').next().unwrap_or("").to_ascii_uppercase();
+    matches!(
+        stem.as_str(),
+        "CON" | "PRN" | "AUX" | "NUL"
+            | "COM1" | "COM2" | "COM3" | "COM4" | "COM5" | "COM6" | "COM7" | "COM8" | "COM9"
+            | "LPT1" | "LPT2" | "LPT3" | "LPT4" | "LPT5" | "LPT6" | "LPT7" | "LPT8" | "LPT9"
+    )
+}
+
+fn sanitize_folder_name(name: &str) -> Result<String> {
+    let name = name.trim();
+    if name.is_empty() || name == "." || name == ".." {
+        return Err(anyhow!("文件夹名称不能为空"));
+    }
+    if name.contains('/') || name.contains('\\') || name.contains(':') || name.contains("..") {
+        return Err(anyhow!("文件夹名称不能包含路径分隔符"));
+    }
+    if name.starts_with('.') {
+        return Err(anyhow!("文件夹名称不能以 . 开头"));
+    }
+    if is_reserved_name(name) {
+        return Err(anyhow!("文件夹名称为 Windows 保留名"));
+    }
+    Ok(name.to_string())
+}
+
+/// 在 parent（须位于库根内、层级合规）下新建文件夹，返回完整路径。
+pub fn create_folder(roots: &[PathBuf], parent: &Path, name: &str) -> Result<PathBuf> {
+    let name = sanitize_folder_name(name)?;
+    let (_, depth) = locate_root(roots, parent).context("目标位置不在壁纸库目录内")?;
+    if depth + 1 > MAX_FOLDER_DEPTH {
+        return Err(anyhow!("文件夹最多支持 {MAX_FOLDER_DEPTH} 层"));
+    }
+    let target = parent.join(&name);
+    if target.exists() {
+        return Err(anyhow!("同名文件或文件夹已存在"));
+    }
+    std::fs::create_dir_all(&target)?;
+    Ok(target)
+}
+
+/// 列出 dir 的直接子文件夹（跳过 `.` 开头与 `.metadata`）；dir 为空时返回库根目录列表。
+pub fn list_folders(roots: &[PathBuf], dir: &Path) -> Result<Vec<PathBuf>> {
+    if dir.as_os_str().is_empty() {
+        let mut list: Vec<PathBuf> = roots.iter().filter(|r| r.is_dir()).cloned().collect();
+        list.sort();
+        return Ok(list);
+    }
+    locate_root(roots, dir).context("目录不在壁纸库内")?;
+    let mut list = Vec::new();
+    for entry in std::fs::read_dir(dir)?.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+        if path.is_dir() && !name.starts_with('.') {
+            list.push(path);
+        }
+    }
+    list.sort();
+    Ok(list)
+}
+
+/// 移动壁纸到 target_dir：媒体文件 + 同名元数据（.metadata 下的 meta/setting/cover）。
+/// 整目录型壁纸（Wallpaper Engine / v2，目录内有 project.json）移动整个目录。
+/// 正在播放中的壁纸由命令层先停止。返回新的媒体文件路径。
+pub fn move_wallpaper(roots: &[PathBuf], file: &Path, target_dir: &Path) -> Result<PathBuf> {
+    if !file.is_file() {
+        return Err(anyhow!("文件不存在: {}", file.display()));
+    }
+    if !target_dir.is_dir() {
+        return Err(anyhow!("目标文件夹不存在: {}", target_dir.display()));
+    }
+    let source_dir = file.parent().ok_or_else(|| anyhow!("no parent"))?.to_path_buf();
+    let (_, parent_depth) = locate_root(roots, &source_dir).context("壁纸不在壁纸库目录内")?;
+    let (_, dst_depth) = locate_root(roots, target_dir).context("目标文件夹不在壁纸库内")?;
+    if source_dir == target_dir {
+        return Ok(file.to_path_buf());
+    }
+
+    let project = source_dir.join("project.json");
+    if project.exists() && parent_depth > 0 {
+        // 整目录壁纸：目标层级 +1（项目目录本身）不得超过扫描深度；
+        // 也不能移进自己或自己的子目录里
+        if dst_depth + 1 > MAX_FOLDER_DEPTH {
+            return Err(anyhow!("文件夹最多支持 {MAX_FOLDER_DEPTH} 层"));
+        }
+        let s = norm_path_str(&source_dir);
+        if norm_path_str(target_dir).starts_with(&format!("{s}\\")) {
+            return Err(anyhow!("不能移动到它自己的子文件夹里"));
+        }
+        let dir_name = source_dir
+            .file_name()
+            .ok_or_else(|| anyhow!("no dir name"))?
+            .to_os_string();
+        let dest = target_dir.join(dir_name);
+        if dest.exists() {
+            return Err(anyhow!("目标已存在同名文件夹"));
+        }
+        std::fs::rename(&source_dir, &dest)
+            .with_context(|| format!("移动目录 {} -> {}", source_dir.display(), dest.display()))?;
+        let entry = file
+            .file_name()
+            .map(|n| dest.join(n))
+            .unwrap_or_else(|| dest.clone());
+        return Ok(entry);
+    }
+
+    if dst_depth > MAX_FOLDER_DEPTH {
+        return Err(anyhow!("目标文件夹层级超出扫描范围（最多 {MAX_FOLDER_DEPTH} 层）"));
+    }
+    let name = file.file_name().ok_or_else(|| anyhow!("no file name"))?;
+    let dest = target_dir.join(name);
+    if dest.exists() {
+        return Err(anyhow!("目标文件夹已有同名文件"));
+    }
+    move_file(file, &dest)?;
+    move_sidecars(&source_dir, target_dir, name);
+    Ok(dest)
+}
+
+fn move_file(from: &Path, to: &Path) -> Result<()> {
+    if std::fs::rename(from, to).is_ok() {
+        return Ok(());
+    }
+    // 跨盘符：rename 会失败，退回复制 + 删除
+    std::fs::copy(from, to).with_context(|| format!("copy {}", from.display()))?;
+    std::fs::remove_file(from).with_context(|| format!("remove {}", from.display()))?;
+    Ok(())
+}
+
+/// 迁移与媒体同名的 sidecar（元数据 / 设置 / 封面）到目标目录的 .metadata。
+/// 兼容 v3.1 按主名与 v4 早期按完整文件名两种命名。
+fn move_sidecars(src_dir: &Path, dst_dir: &Path, media_name: &std::ffi::OsStr) {
+    let src_meta = src_dir.join(META_DIR);
+    if !src_meta.is_dir() {
+        return;
+    }
+    let name = media_name.to_string_lossy().to_string();
+    let stem = Path::new(media_name)
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let mut names = vec![
+        format!("{stem}.meta.json"),
+        format!("{stem}.setting.json"),
+        format!("{name}.meta.json"),
+        format!("{name}.setting.json"),
+    ];
+    if let Ok(entries) = std::fs::read_dir(&src_meta) {
+        for entry in entries.flatten() {
+            let n = entry.file_name().to_string_lossy().to_string();
+            if n.starts_with(&format!("{stem}.cover")) {
+                names.push(n);
+            }
+        }
+    }
+    let dst_meta = dst_dir.join(META_DIR);
+    if std::fs::create_dir_all(&dst_meta).is_err() {
+        return;
+    }
+    for n in names {
+        let from = src_meta.join(&n);
+        if from.exists() {
+            let _ = std::fs::rename(&from, dst_meta.join(&n));
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -629,6 +838,128 @@ mod tests {
         assert_eq!(w.meta.id.as_deref(), Some("2905017768"));
         assert_eq!(w.cover_path.as_deref(), Some(project.join("preview.gif").as_path()));
 
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 文件夹整理：根目录定位与相对层级。
+    #[test]
+    fn locate_root_computes_depth() {
+        let roots = vec![PathBuf::from("D:\\Lib")];
+        assert!(matches!(locate_root(&roots, Path::new("D:\\Lib")), Some((_, 0))));
+        assert!(matches!(locate_root(&roots, Path::new("D:\\Lib\\a")), Some((_, 1))));
+        assert!(matches!(
+            locate_root(&roots, Path::new("D:\\Lib\\a\\b\\c")),
+            Some((_, 3))
+        ));
+        assert!(locate_root(&roots, Path::new("D:\\Other")).is_none());
+        // 前缀同名目录不算根内（D:\LibX ≠ D:\Lib）
+        assert!(locate_root(&roots, Path::new("D:\\LibX")).is_none());
+    }
+
+    /// 文件夹整理：新建文件夹的命名校验、层级上限与重名拦截。
+    #[test]
+    fn create_folder_validates_and_creates() {
+        let root = temp_root("mkdir");
+        let roots = vec![root.clone()];
+        assert!(create_folder(&roots, &root, " a/b ").is_err());
+        assert!(create_folder(&roots, &root, "..").is_err());
+        assert!(create_folder(&roots, &root, "CON").is_err());
+        assert!(create_folder(&roots, Path::new("C:\\elsewhere"), "x").is_err());
+
+        let l1 = create_folder(&roots, &root, "l1").unwrap();
+        let l2 = create_folder(&roots, &l1, "l2").unwrap();
+        let l3 = create_folder(&roots, &l2, "l3").unwrap();
+        assert!(l3.is_dir());
+        // 第 3 层还可以建，第 4 层超出扫描深度
+        assert!(create_folder(&roots, &l3, "l4").is_err());
+        // 重名
+        assert!(create_folder(&roots, &root, "l1").is_err());
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 文件夹整理：列子目录跳过 `.metadata` 与文件；空串返回存在的根目录。
+    #[test]
+    fn list_folders_lists_children_and_roots() {
+        let root = temp_root("ls");
+        std::fs::create_dir_all(root.join("sub")).unwrap();
+        std::fs::create_dir_all(root.join(META_DIR)).unwrap();
+        std::fs::write(root.join("f.mp4"), "x").unwrap();
+        let roots = vec![root.clone(), PathBuf::from("Z:\\missing")];
+
+        let tops = list_folders(&roots, Path::new("")).unwrap();
+        assert_eq!(tops, vec![root.clone()]);
+
+        let kids = list_folders(&roots, &root).unwrap();
+        assert_eq!(kids, vec![root.join("sub")]);
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 文件夹整理：普通壁纸移动媒体 + sidecar（meta / setting / cover）。
+    #[test]
+    fn move_wallpaper_moves_media_and_sidecars() {
+        let root = temp_root("mv");
+        std::fs::create_dir_all(root.join(META_DIR)).unwrap();
+        std::fs::create_dir_all(root.join("dst")).unwrap();
+        let media = root.join("a.mp4");
+        std::fs::write(&media, "mp4").unwrap();
+        std::fs::write(root.join(META_DIR).join("a.meta.json"), "{}").unwrap();
+        std::fs::write(root.join(META_DIR).join("a.setting.json"), "{}").unwrap();
+        std::fs::write(root.join(META_DIR).join("a.cover.jpg"), "jpg").unwrap();
+
+        let roots = vec![root.clone()];
+        let dest = move_wallpaper(&roots, &media, &root.join("dst")).unwrap();
+        assert_eq!(dest, root.join("dst").join("a.mp4"));
+        assert!(dest.is_file());
+        assert!(!media.exists());
+        let meta_dir = root.join("dst").join(META_DIR);
+        assert!(meta_dir.join("a.meta.json").is_file());
+        assert!(meta_dir.join("a.setting.json").is_file());
+        assert!(meta_dir.join("a.cover.jpg").is_file());
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 文件夹整理：非法目标（目标是文件 / 库外 / 层级超限）一律拒绝。
+    #[test]
+    fn move_wallpaper_rejects_bad_targets() {
+        let root = temp_root("mv-bad");
+        std::fs::write(root.join("a.mp4"), "x").unwrap();
+        std::fs::write(root.join("b.mp4"), "x").unwrap();
+        let roots = vec![root.clone()];
+
+        assert!(move_wallpaper(&roots, &root.join("a.mp4"), &root.join("a.mp4")).is_err());
+        assert!(move_wallpaper(&roots, &root.join("a.mp4"), Path::new("C:\\elsewhere")).is_err());
+
+        // 第 3 层允许，第 4 层超出扫描深度
+        let l3 = root.join("l1").join("l2").join("l3");
+        let l4 = l3.join("l4");
+        std::fs::create_dir_all(&l4).unwrap();
+        assert!(move_wallpaper(&roots, &root.join("a.mp4"), &l3).is_ok());
+        assert!(move_wallpaper(&roots, &root.join("b.mp4"), &l4).is_err());
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// 文件夹整理：整目录型壁纸（project.json）移动整个项目目录，且拒绝移进自身子目录。
+    #[test]
+    fn move_wallpaper_moves_project_directory_whole() {
+        let root = temp_root("mv-proj");
+        let project = root.join("2905017768");
+        std::fs::create_dir_all(&project).unwrap();
+        std::fs::write(project.join("project.json"), r#"{"file":"index.html"}"#).unwrap();
+        std::fs::write(project.join("index.html"), "<html></html>").unwrap();
+        std::fs::create_dir_all(root.join("dst")).unwrap();
+
+        let roots = vec![root.clone()];
+        let dest = move_wallpaper(&roots, &project.join("index.html"), &root.join("dst")).unwrap();
+        assert_eq!(dest, root.join("dst").join("2905017768").join("index.html"));
+        assert!(dest.is_file());
+        assert!(!project.exists());
+
+        // 项目目录在 1 层，移进自己的子目录（层级合规）→ 拒绝
+        let p2 = root.join("p2");
+        std::fs::create_dir_all(p2.join("sub")).unwrap();
+        std::fs::write(p2.join("project.json"), r#"{"file":"index.html"}"#).unwrap();
+        std::fs::write(p2.join("index.html"), "x").unwrap();
+        assert!(move_wallpaper(&roots, &p2.join("index.html"), &p2.join("sub")).is_err());
         std::fs::remove_dir_all(&root).ok();
     }
 }

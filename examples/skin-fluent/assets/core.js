@@ -43,9 +43,15 @@
       "lib.title": "壁纸库", "lib.count": "{0} 个壁纸", "lib.search": "搜索壁纸…", "lib.empty": "还没有壁纸",
       "lib.emptyHint": "点击右上角「创建」导入本地视频或图片，或从社区下载",
       "lib.target": "应用到", "lib.playingBadge": "正在播放",
-      "local.title": "本地库", "local.count": "{0} 个文件", "local.target": "应用到",
+      "local.title": "本地库", "local.count": "{0} 项", "local.target": "应用到",
       "local.filter": "类型", "local.filterAll": "全部类型", "local.sort": "排序",
       "local.sortName": "按名称", "local.sortType": "按类型", "local.openDirs": "打开目录",
+      "local.newFolder": "新建文件夹", "local.folderNamePh": "文件夹名称",
+      "local.moveTo": "移动到…", "local.moveTitle": "移动到文件夹", "local.moveCurrent": "当前位置",
+      "local.moved": "已移动到「{0}」", "local.folderCreated": "文件夹已创建",
+      "local.folderEmpty": "这个文件夹是空的",
+      "local.folderEmptyHint": "右键壁纸选择「移动到…」，或直接把壁纸拖到文件夹卡片上",
+      "local.searchEmpty": "没有匹配的壁纸",
       "local.empty": "目录里还没有壁纸文件",
       "local.emptyHint": "把视频或图片放进壁纸目录就会出现在这里；也可到 设置 → 壁纸 检查目录配置",
       "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
@@ -114,6 +120,12 @@
       "local.title": "Local library", "local.count": "{0} items", "local.target": "Apply to",
       "local.filter": "Type", "local.filterAll": "All types", "local.sort": "Sort",
       "local.sortName": "By name", "local.sortType": "By type", "local.openDirs": "Open folder",
+      "local.newFolder": "New folder", "local.folderNamePh": "Folder name",
+      "local.moveTo": "Move to…", "local.moveTitle": "Move to folder", "local.moveCurrent": "Current location",
+      "local.moved": "Moved to “{0}”", "local.folderCreated": "Folder created",
+      "local.folderEmpty": "This folder is empty",
+      "local.folderEmptyHint": "Right-click a wallpaper and choose “Move to…”, or drag it onto a folder card",
+      "local.searchEmpty": "No matching wallpapers",
       "local.empty": "No wallpaper files in your folders yet",
       "local.emptyHint": "Drop videos or images into a wallpaper folder and they show up here; check Settings → Wallpaper for folders",
       "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
@@ -630,6 +642,28 @@
     await refreshHistory();
   }
 
+  // ---------------------------------------------------------------- 文件夹整理
+  /** 列出子文件夹；dir 为空串时返回库根目录。失败静默返回空数组（浏览场景不弹错误）。 */
+  async function listFolders(dir) {
+    if (demo) return mockListFolders(dir);
+    const res = await client.api.listFolders(dir);
+    return res.error ? [] : res.data || [];
+  }
+  /** 新建文件夹，返回完整路径；失败 toast 并返回 null。 */
+  async function createFolder(parent, name) {
+    if (demo) return mockCreateFolder(parent, name);
+    const res = await client.api.createFolder(parent, name);
+    if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+    return res.data;
+  }
+  /** 移动壁纸到目标文件夹，返回新文件路径；失败 toast 并返回 null。 */
+  async function moveWallpaper(wallpaper, targetDir) {
+    if (demo) return mockMoveWallpaper(wallpaper, targetDir);
+    const res = await client.api.moveWallpaper(wallpaper.filePath, targetDir);
+    if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+    return res.data;
+  }
+
   // ---------------------------------------------------------------- mpv / 皮肤 / 系统
   async function mpvStatus() {
     if (demo) return { available: true, path: "C:\\demo\\mpv\\mpv.exe", downloading: false };
@@ -734,17 +768,20 @@
   }
 
   function mockData() {
-    const mk = (i, title, type, kind) => ({
-      dir: "D:\\LiveWallpaper", fileName: `${title}.mp4`, filePath: `D:\\LiveWallpaper\\${title}.mp4`,
-      fileUrl: demo ? mockCoverDataURL(600, 400, kind, i + 3) : "",
-      coverUrl: mockCoverDataURL(500, 280, kind, i + 3), coverPath: "",
-      meta: { id: `mock-${i}`, title, description: "", type, playIndex: 0, wallpapers: [] },
-      setting: defaultSetting(),
-      runningInfo: { screenIndexes: [], isPaused: false },
-    });
+    const mk = (i, title, type, kind, sub = "") => {
+      const base = sub ? `D:\\LiveWallpaper\\${sub}` : "D:\\LiveWallpaper";
+      return {
+        dir: base, fileName: `${title}.mp4`, filePath: `${base}\\${title}.mp4`,
+        fileUrl: demo ? mockCoverDataURL(600, 400, kind, i + 3) : "",
+        coverUrl: mockCoverDataURL(500, 280, kind, i + 3), coverPath: "",
+        meta: { id: `mock-${i}`, title, description: "", type, playIndex: 0, wallpapers: [] },
+        setting: defaultSetting(),
+        runningInfo: { screenIndexes: [], isPaused: false },
+      };
+    };
     const list = [
-      mk(0, "霓虹雨夜 · Neon Rain", 3, 0), mk(1, "Aurora Falls", 3, 1), mk(2, "森林晨雾 Forest Mist", 1, 2),
-      mk(3, "赛博都市 Cyber City", 3, 3), mk(4, "海浪白噪 Ocean Waves", 2, 1), mk(5, "水墨山川 Ink Mountains", 1, 2),
+      mk(0, "霓虹雨夜 · Neon Rain", 3, 0), mk(1, "Aurora Falls", 3, 1), mk(2, "森林晨雾 Forest Mist", 1, 2, "风景"),
+      mk(3, "赛博都市 Cyber City", 3, 3, "赛博"), mk(4, "海浪白噪 Ocean Waves", 2, 1), mk(5, "水墨山川 Ink Mountains", 1, 2, "风景"),
       mk(6, "流光星轨 Star Trails", 3, 0), mk(7, "粉黛晚霞 Sunset Glow", 1, 1),
     ];
     const playlist = {
@@ -816,6 +853,48 @@
     state.status.wallpapers = state.status.wallpapers.filter((w) => w.filePath !== wallpaper.filePath);
     emit("wallpapers", state.wallpapers);
     emit("status", state.status);
+  }
+
+  // ---------- 文件夹整理（演示） ----------
+  let demoEmptyFolders = [];
+  const normWin = (p) => String(p || "").toLowerCase().replace(/\//g, "\\").replace(/\\+$/, "");
+  function mockChildFolders(dir) {
+    const root = normWin(dir);
+    const set = new Set();
+    for (const w of state.wallpapers) {
+      const d = normWin(w.dir);
+      if (d.startsWith(`${root}\\`) && !d.slice(root.length + 1).includes("\\")) set.add(w.dir);
+    }
+    for (const d of demoEmptyFolders) {
+      const n = normWin(d);
+      if (n.startsWith(`${root}\\`) && !n.slice(root.length + 1).includes("\\")) set.add(d);
+    }
+    return [...set];
+  }
+  function mockListFolders(dir) {
+    if (!dir) return (mockConfig().Wallpaper.directories || []).filter(Boolean);
+    return mockChildFolders(dir);
+  }
+  function mockCreateFolder(parent, name) {
+    const p = `${parent}\\${name.trim()}`;
+    demoEmptyFolders.push(p);
+    return p;
+  }
+  function mockMoveWallpaper(wallpaper, targetDir) {
+    const oldPath = wallpaper.filePath;
+    const item = state.wallpapers.find((x) => x.filePath === oldPath);
+    if (!item) return null;
+    item.dir = targetDir;
+    item.filePath = `${targetDir}\\${item.fileName}`;
+    demoEmptyFolders = demoEmptyFolders.filter((d) => normWin(d) !== normWin(targetDir));
+    for (const pl of state.wallpapers) {
+      if (!(pl.meta && pl.meta.type === 6)) continue;
+      for (const m of pl.meta.wallpapers || []) {
+        if (m.filePath === oldPath) { m.filePath = item.filePath; m.dir = targetDir; }
+      }
+    }
+    emit("wallpapers", state.wallpapers);
+    return item.filePath;
   }
 
   function mockInit() {
@@ -896,6 +975,8 @@
     createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
     // 下载
     cancelDownload, clearHistory, removeHistory,
+    // 文件夹整理
+    listFolders, createFolder, moveWallpaper,
     // mpv
     mpvStatus, mpvDownload, mpvCancel, mpvFolder, onMpvEvent,
     // 皮肤

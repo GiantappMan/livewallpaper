@@ -756,3 +756,47 @@ button.card-row:hover { background: var(--subtle); }
 .loc-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-file { font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-type { font-size: 11px; color: var(--ink-3); flex-shrink: 0; }
+.loc-card.is-dragging { opacity: .5; }
+
+/* 文件夹浏览：面包屑（各层级段都是拖拽投放目标） */
+.btn[hidden], .icon-btn[hidden] { display: none; }
+.loc-crumb { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; margin-bottom: 12px; }
+.loc-crumb-seg {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 9px;
+  border-radius: var(--r-ctl); font-size: 13px; color: var(--ink-2);
+  transition: background var(--speed), color var(--speed);
+}
+.loc-crumb-seg:hover { background: var(--subtle); color: var(--ink); }
+.loc-crumb-seg.is-current { color: var(--ink); font-weight: 600; }
+.loc-crumb-seg.is-over { background: color-mix(in srgb, var(--accent) 16%, transparent); outline: 1px dashed var(--accent); }
+.loc-crumb-sep { display: inline-flex; color: var(--ink-3); }
+
+/* 文件夹卡片行（位于壁纸网格上方） */
+.loc-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.loc-folders[hidden] { display: none; }
+.loc-folder {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 110px;
+  padding: 13px 14px; border-radius: var(--r-md); text-align: left;
+  background: var(--card); border: 1px solid var(--stroke);
+  transition: border-color var(--speed), box-shadow var(--speed);
+}
+.loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
+.loc-folder:active { opacity: .92; }
+.loc-folder.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+.loc-folder-ico { color: var(--accent); margin-bottom: auto; }
+.loc-folder-name { max-width: 100%; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-folder-count { font-size: 11px; color: var(--ink-3); }
+
+/* 「移动到」对话框：文件夹树 */
+.loc-move-tree { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
+.loc-move-item {
+  display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 10px;
+  border-radius: var(--r-ctl); font-size: 13px; text-align: left; color: var(--ink);
+  transition: background var(--speed);
+}
+.loc-move-item svg { color: var(--ink-2); flex-shrink: 0; }
+.loc-move-item:hover { background: var(--subtle); }
+.loc-move-item.is-active { background: var(--ctl-press); color: var(--accent); font-weight: 600; }
+.loc-move-item.is-active svg { color: var(--accent); }
+.loc-move-item.is-current { color: var(--ink-3); }
+.loc-move-item.is-current:hover { background: none; }
