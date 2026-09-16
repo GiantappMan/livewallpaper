@@ -32,7 +32,7 @@
   // ---------------------------------------------------------------- i18n
   const DICTS = {
     zh: {
-      "nav.library": "壁纸库", "nav.downloads": "下载", "nav.hub": "社区", "nav.settings": "设置", "nav.about": "关于",
+      "nav.library": "壁纸库", "nav.local": "本地库", "nav.downloads": "下载", "nav.hub": "社区", "nav.settings": "设置", "nav.about": "关于",
       "common.apply": "应用", "common.allScreens": "全部屏幕", "common.screen": "屏幕 {0}", "common.primary": "主屏",
       "common.cancel": "取消", "common.ok": "确定", "common.delete": "删除", "common.save": "保存", "common.saving": "保存中…",
       "common.close": "关闭", "common.edit": "编辑", "common.create": "创建", "common.location": "打开位置", "common.refresh": "刷新",
@@ -43,6 +43,11 @@
       "lib.title": "壁纸库", "lib.count": "{0} 个壁纸", "lib.search": "搜索壁纸…", "lib.empty": "还没有壁纸",
       "lib.emptyHint": "点击右上角「创建」导入本地视频或图片，或从社区下载",
       "lib.target": "应用到", "lib.playingBadge": "正在播放",
+      "local.title": "本地库", "local.count": "{0} 个文件", "local.target": "应用到",
+      "local.filter": "类型", "local.filterAll": "全部类型", "local.sort": "排序",
+      "local.sortName": "按名称", "local.sortType": "按类型", "local.openDirs": "打开目录",
+      "local.empty": "目录里还没有壁纸文件",
+      "local.emptyHint": "把视频或图片放进壁纸目录就会出现在这里；也可到 设置 → 壁纸 检查目录配置",
       "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
       "create.titleField": "标题", "create.titlePh": "给{0}起个名字", "create.type": "类型",
       "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频（≤ 500MB）",
@@ -95,7 +100,7 @@
       "about.exited": "已退出", "about.skinBy": "本皮肤由巨应壁纸皮肤系统驱动",
     },
     en: {
-      "nav.library": "Library", "nav.downloads": "Downloads", "nav.hub": "Hub", "nav.settings": "Settings", "nav.about": "About",
+      "nav.library": "Library", "nav.local": "Local", "nav.downloads": "Downloads", "nav.hub": "Hub", "nav.settings": "Settings", "nav.about": "About",
       "common.apply": "Apply", "common.allScreens": "All screens", "common.screen": "Screen {0}", "common.primary": "Primary",
       "common.cancel": "Cancel", "common.ok": "OK", "common.delete": "Delete", "common.save": "Save", "common.saving": "Saving…",
       "common.close": "Close", "common.edit": "Edit", "common.create": "Create", "common.location": "Reveal", "common.refresh": "Refresh",
@@ -106,6 +111,11 @@
       "lib.title": "Library", "lib.count": "{0} wallpapers", "lib.search": "Search wallpapers…", "lib.empty": "No wallpapers yet",
       "lib.emptyHint": "Hit Create to import a local video or image, or grab one from the Hub",
       "lib.target": "Apply to", "lib.playingBadge": "Now playing",
+      "local.title": "Local library", "local.count": "{0} items", "local.target": "Apply to",
+      "local.filter": "Type", "local.filterAll": "All types", "local.sort": "Sort",
+      "local.sortName": "By name", "local.sortType": "By type", "local.openDirs": "Open folder",
+      "local.empty": "No wallpaper files in your folders yet",
+      "local.emptyHint": "Drop videos or images into a wallpaper folder and they show up here; check Settings → Wallpaper for folders",
       "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
       "create.titleField": "Title", "create.titlePh": "Name your {0}", "create.type": "Type",
       "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / Video up to 500MB",

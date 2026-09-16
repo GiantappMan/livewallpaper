@@ -136,14 +136,13 @@ img { display: block; }
   position: relative; flex: 0 0 auto;
   width: auto; min-width: 148px; max-width: 224px;
   display: flex; flex-direction: column;
-  padding: 0 0 12px;
+  padding: 40px 0 12px;
 }
-/* 标题块 = 40px 标题栏带：与右侧内容图层顶边同线，发丝线收边，
-   左缩进 24px 与导航图标列对齐 */
+/* 标题栏品牌行：窗口级固定元素，展开/折叠位置恒定（不随窗格宽度变化、不抖动） */
 .pane-brand {
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-  height: 40px; padding: 0 12px 0 24px;
-  border-bottom: 1px solid var(--divider);
+  position: fixed; top: 0; left: 0; z-index: 15;
+  display: flex; align-items: center; gap: 10px;
+  height: 40px; padding: 0 12px 0 48px;
 }
 .pane-brand-name { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
 .brand-logo { display: block; width: 22px; height: 22px; object-fit: contain; -webkit-user-drag: none; }
@@ -695,18 +694,17 @@ button.card-row:hover { background: var(--subtle); }
 .sc-btn.is-danger { background: var(--danger); color: #fff; }
 .sc-btn.is-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #000); }
 
-/* 窗格折叠（.is-compact：点击标题栏汉堡按钮切换；≤860px 且未手动选择时自动折叠） */
+/* 窗格折叠（.is-compact：点击标题栏汉堡按钮切换；≤860px 且未手动选择时自动折叠）。
+   标题栏（☰ + logo + 名称）保持原样，仅导航列表收起文字变图标 */
 .pane.is-compact { min-width: 64px; max-width: 64px; }
-.pane.is-compact .pane-brand { justify-content: center; padding-left: 0; padding-right: 0; }
-.pane.is-compact .pane-brand-logo, .pane.is-compact .pane-brand-name, .pane.is-compact .nav-item-label, .pane.is-compact .nav-badge { display: none; }
-.pane.is-compact .nav-item { justify-content: center; padding: 0; }
-/* 折叠按钮固定在标题栏左上角（拖拽带之上，no-drag 可点）；折叠时居中到 64px 栏 */
+.pane.is-compact .nav-item-label, .pane.is-compact .nav-badge, .pane.is-compact .nav-item-pill { display: none; }
+/* 折叠态选中/悬停色块收缩为图标周围的小方块（WinUI 紧凑样式），不再全宽铺开 */
+.pane.is-compact .nav-item { width: 40px; margin: 0 auto; padding: 0; justify-content: center; }
+/* 折叠按钮固定在标题栏左上角（拖拽带之上，no-drag 可点），展开/折叠位置一致 */
 .pane-toggle {
   position: fixed; top: 4px; left: 8px; z-index: 62;
   -webkit-app-region: no-drag; color: var(--ink);
 }
-body.pane-compact .pane-toggle { left: 16px; }
-.pane-brand { padding-left: 48px; }
 
 /* 窄窗口自动收窄搜索框等（窗格折叠由 .is-compact 控制，不随宽度强改） */
 @media (max-width: 860px) {
@@ -717,3 +715,44 @@ body.pane-compact .pane-toggle { left: 16px; }
   .dock-meta { width: 110px; }
   .dock-seek { min-width: 60px; }
 }
+
+/* ---------------- 本地库（自包含视图，规划替代壁纸库；样式不依赖 .wall-*，便于日后整体替换） ---------------- */
+.loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 10px; min-height: 240px; }
+.loc-card {
+  position: relative; border-radius: var(--r-md); overflow: hidden; cursor: pointer;
+  background: var(--card); border: 1px solid var(--stroke);
+  display: flex; flex-direction: column; aspect-ratio: 16 / 10.4;
+  transition: box-shadow var(--speed), border-color var(--speed);
+}
+.loc-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
+.loc-card:active { opacity: .92; }
+.loc-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
+.loc-cover { flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
+.loc-cover img { width: 100%; height: 100%; object-fit: cover; }
+.loc-cover.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 12px, var(--ctl-press) 12px, var(--ctl-press) 24px); }
+.loc-live {
+  position: absolute; top: 10px; left: 10px; display: none; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: var(--r-ctl); font-size: 11px; font-weight: 600; color: var(--on-accent);
+  background: var(--accent); box-shadow: var(--shadow-fly);
+}
+.loc-card.is-playing .loc-live { display: inline-flex; }
+.loc-acts {
+  position: absolute; top: 10px; right: 10px; display: flex; gap: 2px; padding: 2px;
+  background: rgba(249, 249, 249, .82); backdrop-filter: blur(24px) saturate(125%); -webkit-backdrop-filter: blur(24px) saturate(125%);
+  border: 1px solid var(--stroke); border-radius: var(--r-ctl);
+  opacity: 0; transform: translateY(-4px); transition: all var(--speed);
+  color: var(--ink);
+}
+[data-mode="dark"] .loc-acts { background: rgba(44, 44, 44, .82); }
+.loc-acts .icon-btn { width: 28px; height: 28px; }
+.loc-card:hover .loc-acts { opacity: 1; transform: none; }
+.loc-screens {
+  position: absolute; bottom: 56px; left: 10px; display: flex; gap: 4px;
+  opacity: 0; transform: translateY(4px); transition: all var(--speed);
+}
+.loc-card:hover .loc-screens { opacity: 1; transform: none; }
+.loc-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; background: var(--card-solid); border-top: 1px solid var(--stroke); }
+.loc-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.loc-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-file { font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-type { font-size: 11px; color: var(--ink-3); flex-shrink: 0; }

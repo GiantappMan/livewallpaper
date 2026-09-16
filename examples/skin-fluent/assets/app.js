@@ -101,6 +101,7 @@
 
   const NAV = [
     { id: "library", icon: "home", label: "nav.library" },
+    { id: "local", icon: "folder", label: "nav.local" },
     { id: "hub", icon: "globe", label: "nav.hub" },
     // Win11 惯例：低频项（下载 / 设置 / 关于）沉到窗格底部 FooterMenuItems 区
     { id: "downloads", icon: "download", label: "nav.downloads", badge: true, foot: true },
@@ -132,11 +133,13 @@
     }
     return btn;
   }
+  const brandEl = el("div", { class: "pane-brand" });
   function buildPane() {
     paneEl.innerHTML = "";
-    paneEl.append(el("div", { class: "pane-brand" },
+    brandEl.innerHTML = "";
+    brandEl.append(
       (() => { const s = el("span", { class: "pane-brand-logo" }); s.innerHTML = winLogo(); return s; })(),
-      el("span", { class: "pane-brand-name" }, SC.meta.brand)));
+      el("span", { class: "pane-brand-name" }, SC.meta.brand));
 
     const nav = el("nav", { class: "pane-nav" });
     const foot = el("div", { class: "pane-foot" });
@@ -726,6 +729,165 @@
     }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
   }
 
+  // ---------------------------------------------------------------- 本地库视图
+  // 自包含实现：独立状态 / i18n（local.*）/ 样式（.loc-*），规划中替代壁纸库。
+  // 数据源暂用 SC.state.wallpapers（后端即目录扫描结果），日后可换真正的目录枚举接口。
+  let localSort = localStorage.getItem("fluent.localSort") || "name";
+  let localType = localStorage.getItem("fluent.localType") || "all";
+  let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
+
+  function renderLocal() {
+    viewEl.innerHTML = "";
+    const all = SC.state.wallpapers;
+    const playing = SC.playingSet();
+    const screens = SC.state.screens;
+    const nameOf = (w) => (w.meta && w.meta.title) || w.fileName || "—";
+
+    const targetSel = selectEl(
+      [{ value: -1, label: SC.t("common.allScreens") }].concat(screens.map((s) => ({ value: s.index, label: SC.t("common.screen", s.deviceName || s.index) }))),
+      applyTarget,
+      (v) => { applyTarget = Number(v); },
+    );
+    const typeSel = selectEl(
+      [{ value: "all", label: SC.t("local.filterAll") }].concat([1, 2, 3, 4, 5, 6].map((tp) => ({ value: String(tp), label: SC.typeName(tp) }))),
+      localType,
+      (v) => { localType = String(v); localStorage.setItem("fluent.localType", localType); if (localRefresh) localRefresh(); },
+    );
+    const sortSel = selectEl(
+      [{ value: "name", label: SC.t("local.sortName") }, { value: "type", label: SC.t("local.sortType") }],
+      localSort,
+      (v) => { localSort = String(v); localStorage.setItem("fluent.localSort", localSort); if (localRefresh) localRefresh(); },
+    );
+
+    function openDirs() {
+      const dirs = (SC.state.cfg && SC.state.cfg.Wallpaper && SC.state.cfg.Wallpaper.directories) || [];
+      if (!dirs[0]) { SC.toast(SC.t("cfg.dirsHint"), "err"); return; }
+      if (SC.demo) { SC.toast(`${SC.t("common.demo")} · ${SC.t("local.openDirs")}`, "ok"); return; }
+      SC.client.api.explore(dirs[0]);
+    }
+
+    viewEl.append(el("header", { class: "page-head head-row" },
+      el("h1", { class: "page-title" }, SC.t("local.title")),
+      el("span", { class: "title-count", dataset: { count: "" } }, SC.t("local.count", all.length)),
+      el("div", { class: "page-actions" },
+        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.target")), targetSel),
+        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.filter")), typeSel),
+        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.sort")), sortSel),
+        el("button", { class: "icon-btn", title: SC.t("common.refresh"), onclick: () => SC.refreshAll() }, (() => { const s = el("span"); s.innerHTML = icon("refresh", 15); return s; })()),
+        el("button", { class: "icon-btn", title: SC.t("local.openDirs"), onclick: openDirs }, (() => { const s = el("span"); s.innerHTML = icon("folder", 15); return s; })()))));
+
+    const grid = el("div", { class: "loc-grid" });
+    viewEl.append(grid);
+
+    function filtered() {
+      const q = searchQuery.trim().toLowerCase();
+      return all.filter((w) => {
+        if (localType !== "all" && String((w.meta && w.meta.type) || 0) !== localType) return false;
+        if (!q) return true;
+        return nameOf(w).toLowerCase().includes(q) || (w.fileName || "").toLowerCase().includes(q);
+      });
+    }
+    function sorted(list) {
+      const byName = (a, b) => nameOf(a).localeCompare(nameOf(b), undefined, { numeric: true, sensitivity: "base" });
+      return localSort === "type"
+        ? [...list].sort((a, b) => ((a.meta && a.meta.type) || 0) - ((b.meta && b.meta.type) || 0) || byName(a, b))
+        : [...list].sort(byName);
+    }
+    function renderGrid() {
+      grid.innerHTML = "";
+      const items = sorted(filtered());
+      const countEl = viewEl.querySelector("[data-count]");
+      if (countEl) countEl.textContent = SC.t("local.count", items.length);
+      if (!items.length) {
+        grid.append(el("div", { class: "empty" },
+          el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
+          el("h3", {}, SC.t("local.empty")),
+          el("p", {}, SC.t("local.emptyHint")),
+          el("div", { class: "empty-actions" },
+            el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
+            el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title")))));
+        return;
+      }
+      for (const w of items) grid.append(cardOf(w));
+    }
+    localRefresh = renderGrid;
+
+    function cardOf(w) {
+      const isPlaying = playing.has(w.filePath);
+      const card = el("article", { class: `loc-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
+      const cover = el("div", { class: "loc-cover" });
+      if (w.coverUrl || w.fileUrl) {
+        const img = el("img", { src: bust(w.coverUrl || w.fileUrl), loading: "lazy", alt: "" });
+        img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
+        cover.append(img);
+      } else cover.classList.add("is-fallback");
+
+      const playDot = el("span", { class: "loc-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 10); return s; })(), SC.t("common.playing"));
+      const typeBadge = el("span", { class: "loc-type" }, SC.typeName(w.meta && w.meta.type));
+      const acts = el("div", { class: "loc-acts" },
+        actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
+        actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
+        actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w)));
+
+      // 多屏：顶部逐屏应用
+      let screenChips = null;
+      if (screens.length > 1) {
+        screenChips = el("div", { class: "loc-screens" },
+          el("button", { class: "chip", title: SC.t("common.allScreens"), onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, []); } }, SC.t("common.allScreens")),
+          screens.map((s) => el("button", {
+            class: "chip",
+            title: SC.t("common.screen", s.deviceName || s.index),
+            onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, [s.index]); },
+          }, String(s.index + 1))));
+      }
+      const meta = el("div", { class: "loc-meta" },
+        el("div", { class: "loc-text" },
+          el("span", { class: "loc-name", title: nameOf(w) }, nameOf(w)),
+          el("span", { class: "loc-file", title: w.fileName || "" }, w.fileName || "")),
+        typeBadge);
+
+      card.append(cover, playDot, screenChips || "", acts, meta);
+      card.addEventListener("click", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
+      card.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("common.apply"), ico: "play", act: () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]) },
+          { label: SC.t("set.title"), ico: "gear", act: () => openSettingDialog(w) },
+          { label: SC.t("common.location"), ico: "folder", act: () => SC.reveal(w) },
+          { label: SC.t("common.delete"), ico: "trash", act: () => removeWallpaper(w), danger: true },
+        ]);
+      });
+      return card;
+    }
+
+    function actBtn(ic, title, onclick) {
+      const b = el("button", { class: "icon-btn", title, onclick: (e) => { e.stopPropagation(); onclick(); } });
+      b.innerHTML = icon(ic, 15);
+      return b;
+    }
+
+    renderGrid();
+
+    // 空白处右键：刷新 / 打开目录
+    grid.addEventListener("contextmenu", (e) => {
+      if (e.target.closest(".loc-card")) return;
+      e.preventDefault();
+      ctxMenu(e.clientX, e.clientY, [
+        { label: SC.t("common.refresh"), ico: "refresh", act: () => SC.refreshAll() },
+        { label: SC.t("local.openDirs"), ico: "folder", act: openDirs },
+      ]);
+    });
+
+    // 拖拽导入：复用创建对话框直接落库
+    viewEl.addEventListener("dragover", (e) => e.preventDefault());
+    viewEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) openWallpaperDialog(null, f);
+    });
+  }
+
   // ---------------------------------------------------------------- 下载视图
   function renderDownloads() {
     viewEl.innerHTML = "";
@@ -1115,7 +1277,9 @@
   function renderView() {
     closeCtx();
     refreshGrid = null;
+    localRefresh = null;
     if (currentView === "library") renderLibrary();
+    else if (currentView === "local") renderLocal();
     else if (currentView === "downloads") renderDownloads();
     else if (currentView === "hub") renderHub();
     else if (currentView === "settings") renderSettings();
@@ -1124,11 +1288,14 @@
   }
 
   // 事件 → 视图刷新
-  SC.on("wallpapers", () => { if (["library"].includes(currentView)) renderView(); });
+  SC.on("wallpapers", () => { if (["library", "local"].includes(currentView)) renderView(); });
   SC.on("status", () => {
+    const playing = SC.playingSet();
     if (currentView === "library") {
-      const playing = SC.playingSet();
       viewEl.querySelectorAll(".wall-card").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
+    }
+    if (currentView === "local") {
+      viewEl.querySelectorAll(".loc-card").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
     }
     renderDock();
   });
@@ -1153,7 +1320,8 @@
     type: "search", placeholder: SC.t("lib.search"),
     oninput: (e) => {
       searchQuery = e.target.value;
-      if (currentView !== "library") go("library");
+      if (currentView === "local") { if (localRefresh) localRefresh(); }
+      else if (currentView !== "library") go("library");
       else if (refreshGrid) refreshGrid();
     },
   });
@@ -1173,7 +1341,7 @@
     },
   });
   paneToggle.innerHTML = icon("menu", 17);
-  document.body.append(bgEl, dragStrip, shell, dockEl, winCtrl, titleSearch, paneToggle);
+  document.body.append(bgEl, dragStrip, shell, brandEl, dockEl, winCtrl, titleSearch, paneToggle);
   document.body.append(paneToggle);
   window.addEventListener("resize", applyPaneCompact);
   applyPaneCompact();
