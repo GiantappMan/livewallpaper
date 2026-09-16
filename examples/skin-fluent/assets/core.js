@@ -52,6 +52,7 @@
       "local.folderEmpty": "这个文件夹是空的",
       "local.folderEmptyHint": "右键壁纸选择「移动到…」，或直接把壁纸拖到文件夹卡片上",
       "local.searchEmpty": "没有匹配的壁纸",
+      "local.needUpdate": "文件夹整理需要先更新巨应壁纸到新版本",
       "local.empty": "目录里还没有壁纸文件",
       "local.emptyHint": "把视频或图片放进壁纸目录就会出现在这里；也可到 设置 → 壁纸 检查目录配置",
       "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
@@ -126,6 +127,7 @@
       "local.folderEmpty": "This folder is empty",
       "local.folderEmptyHint": "Right-click a wallpaper and choose “Move to…”, or drag it onto a folder card",
       "local.searchEmpty": "No matching wallpapers",
+      "local.needUpdate": "Folder organizing needs a newer version of Giantapp Wallpaper",
       "local.empty": "No wallpaper files in your folders yet",
       "local.emptyHint": "Drop videos or images into a wallpaper folder and they show up here; check Settings → Wallpaper for folders",
       "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
@@ -643,25 +645,47 @@
   }
 
   // ---------------------------------------------------------------- 文件夹整理
-  /** 列出子文件夹；dir 为空串时返回库根目录。失败静默返回空数组（浏览场景不弹错误）。 */
+  /** 旧版应用 SDK 没有目录接口时，从壁纸数据推导子文件夹（根层级返回库根目录；空文件夹不可见）。 */
+  function legacyFolders(dir) {
+    const roots = ((state.cfg && state.cfg.Wallpaper && state.cfg.Wallpaper.directories) || []).filter(Boolean);
+    if (!dir) return roots;
+    const root = String(dir).toLowerCase().replace(/\//g, "\\").replace(/\\+$/, "");
+    const set = new Set();
+    for (const w of state.wallpapers) {
+      const d = String(w.dir || "").toLowerCase().replace(/\//g, "\\").replace(/\\+$/, "");
+      if (d.startsWith(`${root}\\`) && !d.slice(root.length + 1).includes("\\")) set.add(w.dir);
+    }
+    return [...set];
+  }
+  /** 列出子文件夹；dir 为空串时返回库根目录。接口缺失或失败时退化为按壁纸数据推导。 */
   async function listFolders(dir) {
     if (demo) return mockListFolders(dir);
-    const res = await client.api.listFolders(dir);
-    return res.error ? [] : res.data || [];
+    if (typeof client.api.listFolders !== "function") return legacyFolders(dir);
+    try {
+      const res = await client.api.listFolders(dir);
+      if (res.error) return legacyFolders(dir);
+      return res.data || [];
+    } catch (e) { return legacyFolders(dir); }
   }
   /** 新建文件夹，返回完整路径；失败 toast 并返回 null。 */
   async function createFolder(parent, name) {
     if (demo) return mockCreateFolder(parent, name);
-    const res = await client.api.createFolder(parent, name);
-    if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
-    return res.data;
+    if (typeof client.api.createFolder !== "function") { toast(t("local.needUpdate"), "err"); return null; }
+    try {
+      const res = await client.api.createFolder(parent, name);
+      if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+      return res.data;
+    } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
   }
   /** 移动壁纸到目标文件夹，返回新文件路径；失败 toast 并返回 null。 */
   async function moveWallpaper(wallpaper, targetDir) {
     if (demo) return mockMoveWallpaper(wallpaper, targetDir);
-    const res = await client.api.moveWallpaper(wallpaper.filePath, targetDir);
-    if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
-    return res.data;
+    if (typeof client.api.moveWallpaper !== "function") { toast(t("local.needUpdate"), "err"); return null; }
+    try {
+      const res = await client.api.moveWallpaper(wallpaper.filePath, targetDir);
+      if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+      return res.data;
+    } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
   }
 
   // ---------------------------------------------------------------- mpv / 皮肤 / 系统
