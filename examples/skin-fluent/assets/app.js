@@ -162,15 +162,25 @@
     paneEl.querySelectorAll(".nav-item[data-view]").forEach((n) => n.classList.toggle("is-active", n.dataset.view === currentView));
   }
 
-  function go(view) {
+  // hash 形如 #/<view> 或 #/settings/<tab>：页签编进 hash，整页刷新（如保存目录触发的
+  // refresh-page）后能回到原页签
+  function parseHash() {
+    const segs = location.hash.replace(/^#\//, "").split("/");
+    return { view: segs[0] || "library", sub: segs[1] };
+  }
+  function go(view, sub) {
     currentView = view;
-    location.hash = `#/${view}`;
+    if (view === "settings" && SETTINGS_TAB_IDS.includes(sub)) settingsTab = sub;
+    location.hash = view === "settings" ? `#/settings/${settingsTab}` : `#/${view}`;
     updatePane();
     renderView();
   }
   window.addEventListener("hashchange", () => {
-    const id = location.hash.replace(/^#\//, "") || "library";
-    if (id !== currentView && NAV.some((n) => n.id === id)) { currentView = id; updatePane(); renderView(); }
+    const { view, sub } = parseHash();
+    const tabChanged = view === "settings" && SETTINGS_TAB_IDS.includes(sub) && sub !== settingsTab;
+    if (tabChanged) settingsTab = sub;
+    if (view !== currentView && NAV.some((n) => n.id === view)) { currentView = view; updatePane(); renderView(); }
+    else if (tabChanged && currentView === "settings") renderSettings();
   });
 
   // ---------------------------------------------------------------- 通用小部件
@@ -340,7 +350,7 @@
           el("p", {}, SC.t("lib.emptyHint")),
           el("div", { class: "empty-actions" },
             el("button", { class: "btn btn-accent", onclick: () => openWallpaperDialog(null) }, SC.t("create.wallpaper")),
-            el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")))));
+            el("button", { class: "btn", onclick: () => go("settings", "wallpaper") }, SC.t("cfg.dirs")))));
         return;
       }
       for (const w of items) grid.append(cardOf(w, playing));
@@ -974,7 +984,7 @@
         el("h3", {}, SC.t("local.empty")),
         el("p", {}, SC.t("local.emptyHint")),
         el("div", { class: "empty-actions" },
-          el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
+          el("button", { class: "btn", onclick: () => go("settings", "wallpaper") }, SC.t("cfg.dirs")),
           el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title"))));
     }
 
@@ -992,6 +1002,7 @@
 
       folders.sort((a, b) => dirName(a).localeCompare(dirName(b), undefined, { numeric: true, sensitivity: "base" }));
       selected = null;
+      if (drag) cancelDrag(); // 重渲染会替换磁贴，进行中的拖拽直接作废，避免脱管磁贴吃掉本次操作
 
       // 根层级（库根目录列表）与搜索态沿用流式网格；子文件夹层级用桌面画布
       const flowMode = searching || !localDir;
@@ -1144,14 +1155,28 @@
     let hint = null;          // 目标槽位虚线框
     let suppressClick = false; // 拖拽结束后的那次 click 不当作选中
 
+    // 清理一次按压/拖拽的全部痕迹（pointercancel、pointerup 丢失、重渲染打断等场景自愈）
+    function cancelDrag() {
+      window.removeEventListener("pointermove", pressMove);
+      window.removeEventListener("pointerup", pressUp);
+      window.removeEventListener("pointercancel", pressCancel);
+      if (ghost) { ghost.remove(); ghost = null; }
+      if (hint) { hint.remove(); hint = null; }
+      if (drag) drag.tile.classList.remove("is-dragging");
+      drag = null;
+      clearOver();
+    }
+
     function pressStart(e, item, tile) {
-      if (e.button !== 0 || drag) return;
+      if (e.button !== 0) return;
       if (e.target.closest(".icon-btn, .chip")) return; // 悬浮操作钮不触发拖拽/选中
+      if (drag) cancelDrag(); // 上次按压状态残留时先自愈，避免本次点击拖不动
       const rect = tile.getBoundingClientRect();
       drag = { item, tile, x: e.clientX, y: e.clientY, moved: false, grabX: e.clientX - rect.left, grabY: e.clientY - rect.top, target: null };
       try { tile.setPointerCapture(e.pointerId); } catch (_) { /* 指针已释放等场景忽略 */ }
       window.addEventListener("pointermove", pressMove);
-      window.addEventListener("pointerup", pressUp, { once: true });
+      window.addEventListener("pointerup", pressUp);
+      window.addEventListener("pointercancel", pressCancel);
     }
     function pressMove(e) {
       if (!drag) return;
@@ -1173,14 +1198,9 @@
       updateDropTarget(e);
     }
     function pressUp() {
-      window.removeEventListener("pointermove", pressMove);
       const d = drag;
-      drag = null;
-      if (ghost) { ghost.remove(); ghost = null; }
-      if (hint) { hint.remove(); hint = null; }
+      cancelDrag();
       if (!d) return;
-      d.tile.classList.remove("is-dragging");
-      clearOver();
       if (!d.moved) return; // 原地松手：交给 click / dblclick
       suppressClick = true;
       setTimeout(() => { suppressClick = false; }, 0);
@@ -1192,6 +1212,7 @@
         else moveTo(d.item.w, t.dir);
       } else if (t.type === "slot") dropOnSlot(d.item, t.c, t.r);
     }
+    function pressCancel() { cancelDrag(); }
     // 命中检测：面包屑段 → 文件夹磁贴 → 空槽位
     function updateDropTarget(e) {
       clearOver();
@@ -1492,11 +1513,12 @@
 
   // ---------------------------------------------------------------- 设置视图
   let settingsTab = "general";
+  const SETTINGS_TAB_IDS = ["general", "wallpaper", "appearance"];
   function renderSettings() {
     viewEl.innerHTML = "";
     const tabs = [["general", SC.t("cfg.general")], ["wallpaper", SC.t("cfg.wallpaper")], ["appearance", SC.t("cfg.appearance")]];
     const tabbar = el("div", { class: "pivot" }, tabs.map(([id, label]) =>
-      el("button", { class: `pivot-item ${settingsTab === id ? "is-active" : ""}`, onclick: () => { settingsTab = id; renderSettings(); } }, label)));
+      el("button", { class: `pivot-item ${settingsTab === id ? "is-active" : ""}`, onclick: () => { settingsTab = id; location.hash = `#/settings/${id}`; renderSettings(); } }, label)));
     viewEl.append(pageHead(SC.t("nav.settings"), SC.t("cfg.reloadHint")));
     viewEl.append(tabbar);
     const panel = el("div", { class: "cfg-panel" });
@@ -1877,8 +1899,11 @@
   // 标题栏键字形
   winCtrl.querySelectorAll(".win-btn").forEach((b) => { b.innerHTML = winGlyph(b.title); });
   buildPane();
-  const initial = location.hash.replace(/^#\//, "");
-  if (NAV.some((n) => n.id === initial)) currentView = initial;
+  const { view: initial, sub: initialTab } = parseHash();
+  if (NAV.some((n) => n.id === initial)) {
+    currentView = initial;
+    if (initial === "settings") settingsTab = SETTINGS_TAB_IDS.includes(initialTab) ? initialTab : "general";
+  }
   SC.boot(() => {
     wallpapersCache = SC.state.wallpapers;
     SC.on("wallpapers", (list) => { wallpapersCache = list || SC.state.wallpapers; });
