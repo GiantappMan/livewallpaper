@@ -787,6 +787,59 @@ button.card-row:hover { background: var(--subtle); }
 .loc-folder-name { max-width: 100%; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-folder-count { font-size: 11px; color: var(--ink-3); }
 
+/* 桌面画布：子文件夹层级自由摆放（Windows 桌面式，位置记忆于 .metadata/layout.json） */
+.loc-canvas { position: relative; min-height: 240px; user-select: none; -webkit-user-select: none; }
+.loc-canvas[hidden], .loc-grid[hidden] { display: none; }
+.loc-canvas.is-empty { display: grid; place-items: center; }
+.loc-tile {
+  position: absolute; width: 100px; height: 124px; margin: 4px; /* 槽位步距 108×132 = app.js CELL_W/CELL_H */
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 6px 4px 4px; border-radius: var(--r-md); cursor: pointer;
+  border: 1px solid transparent; touch-action: none;
+  transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
+}
+.loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
+.loc-tile.is-selected { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.loc-tile.is-over { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.loc-tile.is-dragging { opacity: .45; }
+.loc-tile-thumb { position: relative; width: 88px; height: 52px; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
+.loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
+.loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
+.loc-tile-live {
+  position: absolute; top: 4px; left: 4px; display: none; align-items: center; justify-content: center;
+  width: 17px; height: 17px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
+  box-shadow: var(--shadow-fly);
+}
+.loc-tile.is-playing .loc-tile-live { display: inline-flex; }
+.loc-tile-type {
+  position: absolute; right: 3px; bottom: 3px; font-size: 10px; line-height: 1; padding: 2px 4px;
+  border-radius: 3px; color: var(--ink-2); background: rgba(249, 249, 249, .82);
+}
+[data-mode="dark"] .loc-tile-type { background: rgba(44, 44, 44, .82); }
+.loc-tile-count {
+  position: absolute; right: 3px; bottom: 3px; min-width: 16px; height: 15px; padding: 0 4px;
+  border-radius: 8px; font-size: 10px; line-height: 13px; text-align: center;
+  color: var(--ink-2); background: var(--card-solid); border: 1px solid var(--stroke);
+}
+.loc-tile-name {
+  max-width: 100%; font-size: 12px; line-height: 1.25; text-align: center; color: var(--ink);
+  overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; word-break: break-all;
+}
+.loc-tile .loc-acts { top: 3px; right: 3px; padding: 1px; gap: 1px; }
+.loc-tile .loc-acts .icon-btn { width: 22px; height: 22px; }
+/* 拖拽幻影（跟随光标）与目标槽位提示框 */
+.loc-ghost {
+  position: fixed; z-index: 400; margin: 0; pointer-events: none; opacity: .85;
+  background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
+}
+.loc-slot-hint {
+  position: absolute; width: 100px; height: 124px; margin: 4px; border-radius: var(--r-md);
+  border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
+  pointer-events: none;
+}
+.loc-slot-hint[hidden] { display: none; }
+
 /* 「移动到」对话框：文件夹树 */
 .loc-move-tree { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
 .loc-move-item {

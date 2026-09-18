@@ -313,6 +313,48 @@ class API {
     }
   }
 
+  /** 读取文件夹的桌面式布局（条目名 → 槽位）；缺失返回空对象 */
+  async getFolderLayout(dir: string): Promise<ApiResult<Record<string, { c: number; r: number }>>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<Record<string, { c: number; r: number }>>(
+        "get_folder_layout",
+        { dir }
+      );
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: {} };
+    }
+  }
+
+  /** 保存文件夹的桌面式布局（仅位置记忆，不触发壁纸刷新广播） */
+  async saveFolderLayout(
+    dir: string,
+    layout: Record<string, { c: number; r: number }>
+  ): Promise<ApiResult<boolean>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<boolean>("save_folder_layout", { dir, layout });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: false };
+    }
+  }
+
+  /** 移动子文件夹到 targetDir 下，返回新文件夹路径 */
+  async moveFolder(source: string, targetDir: string): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("move_folder", { source, targetDir });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   async explore(path: string): Promise<ApiResult<null>> {
     try {
       if (!this.isRunningInClient()) return noClient();

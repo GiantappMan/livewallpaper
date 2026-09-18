@@ -6,6 +6,8 @@ use crate::models::{
     extension_of, file_types, wallpaper_type_of_file, Wallpaper, WallpaperMeta, WallpaperSetting,
 };
 use anyhow::{anyhow, Context, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 pub const META_DIR: &str = ".metadata";
@@ -740,6 +742,94 @@ fn move_sidecars(src_dir: &Path, dst_dir: &Path, media_name: &std::ffi::OsStr) {
             let _ = std::fs::rename(&from, dst_meta.join(&n));
         }
     }
+}
+
+// ---------- 桌面式布局（文件夹内条目位置记忆） ----------
+
+/// 桌面模式槽位：列 c / 行 r（0 起），皮肤侧按隐形网格摆放条目。
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Debug)]
+pub struct LayoutSlot {
+    pub c: u32,
+    pub r: u32,
+}
+
+/// 条目名 → 槽位。名字在目录内唯一，条目被移走/删除后残留键无副作用。
+pub type FolderLayout = BTreeMap<String, LayoutSlot>;
+
+fn layout_path(dir: &Path) -> PathBuf {
+    dir.join(META_DIR).join("layout.json")
+}
+
+/// 读取 dir 的条目位置表；文件缺失或损坏返回空表（条目按默认流式排列）。
+pub fn get_layout(dir: &Path) -> FolderLayout {
+    std::fs::read_to_string(layout_path(dir))
+        .ok()
+        .and_then(|text| serde_json::from_str(&text).ok())
+        .unwrap_or_default()
+}
+
+/// 保存 dir 的条目位置表（须位于库内；.tmp + rename 原子写）。
+pub fn save_layout(roots: &[PathBuf], dir: &Path, layout: &FolderLayout) -> Result<()> {
+    locate_root(roots, dir).context("目录不在壁纸库内")?;
+    let meta = dir.join(META_DIR);
+    std::fs::create_dir_all(&meta)?;
+    let tmp = meta.join("layout.json.tmp");
+    std::fs::write(&tmp, serde_json::to_string(layout)?)?;
+    std::fs::rename(&tmp, layout_path(dir))?;
+    Ok(())
+}
+
+/// 把子文件夹 src 移动到 target_parent 下（桌面模式拖拽整理），返回新路径。
+/// 文件夹自身的布局表存于其内部 .metadata，随目录一起移动，无需迁移。
+pub fn move_folder(roots: &[PathBuf], src: &Path, target_parent: &Path) -> Result<PathBuf> {
+    if !src.is_dir() {
+        return Err(anyhow!("文件夹不存在: {}", src.display()));
+    }
+    if !target_parent.is_dir() {
+        return Err(anyhow!("目标文件夹不存在: {}", target_parent.display()));
+    }
+    let (_, src_depth) = locate_root(roots, src).context("文件夹不在壁纸库内")?;
+    if src_depth == 0 {
+        return Err(anyhow!("库根目录不能被移动"));
+    }
+    if src == target_parent {
+        return Ok(src.to_path_buf());
+    }
+    let (_, dst_depth) = locate_root(roots, target_parent).context("目标文件夹不在壁纸库内")?;
+    let s = norm_path_str(src);
+    if norm_path_str(target_parent).starts_with(&format!("{s}\\")) {
+        return Err(anyhow!("不能移动到它自己的子文件夹里"));
+    }
+    if dst_depth + 1 > MAX_FOLDER_DEPTH {
+        return Err(anyhow!("文件夹最多支持 {MAX_FOLDER_DEPTH} 层"));
+    }
+    let name = src.file_name().ok_or_else(|| anyhow!("no dir name"))?;
+    let dest = target_parent.join(name);
+    if dest.exists() {
+        return Err(anyhow!("目标已存在同名文件夹"));
+    }
+    if std::fs::rename(src, &dest).is_err() {
+        // 跨盘符：rename 会失败，退回复制 + 删除（失败时源目录保持完整）
+        copy_dir_recursive(src, &dest)?;
+        std::fs::remove_dir_all(src)
+            .with_context(|| format!("remove {}", src.display()))?;
+    }
+    Ok(dest)
+}
+
+/// 递归复制目录（跨盘符移动文件夹的回退路径）。
+fn copy_dir_recursive(from: &Path, to: &Path) -> Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)?.flatten() {
+        let dest = to.join(entry.file_name());
+        let path = entry.path();
+        if path.is_dir() {
+            copy_dir_recursive(&path, &dest)?;
+        } else {
+            std::fs::copy(&path, &dest).with_context(|| format!("copy {}", path.display()))?;
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

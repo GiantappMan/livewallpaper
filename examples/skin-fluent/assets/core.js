@@ -49,6 +49,7 @@
       "local.newFolder": "新建文件夹", "local.folderNamePh": "文件夹名称",
       "local.moveTo": "移动到…", "local.moveTitle": "移动到文件夹", "local.moveCurrent": "当前位置",
       "local.moved": "已移动到「{0}」", "local.folderCreated": "文件夹已创建",
+      "local.open": "打开", "local.rearrange": "自动整理",
       "local.folderEmpty": "这个文件夹是空的",
       "local.folderEmptyHint": "右键壁纸选择「移动到…」，或直接把壁纸拖到文件夹卡片上",
       "local.searchEmpty": "没有匹配的壁纸",
@@ -124,6 +125,7 @@
       "local.newFolder": "New folder", "local.folderNamePh": "Folder name",
       "local.moveTo": "Move to…", "local.moveTitle": "Move to folder", "local.moveCurrent": "Current location",
       "local.moved": "Moved to “{0}”", "local.folderCreated": "Folder created",
+      "local.open": "Open", "local.rearrange": "Auto arrange",
       "local.folderEmpty": "This folder is empty",
       "local.folderEmptyHint": "Right-click a wallpaper and choose “Move to…”, or drag it onto a folder card",
       "local.searchEmpty": "No matching wallpapers",
@@ -687,6 +689,31 @@
       return res.data;
     } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
   }
+  /** 读取文件夹的桌面式布局（条目名 → {c,r} 槽位）；接口缺失或失败返回空表。 */
+  async function getFolderLayout(dir) {
+    if (demo) return mockGetLayout(dir);
+    if (typeof client.api.getFolderLayout !== "function") return {};
+    try {
+      const res = await client.api.getFolderLayout(dir);
+      return res.error ? {} : (res.data || {});
+    } catch (e) { return {}; }
+  }
+  /** 保存文件夹的桌面式布局；接口缺失或失败静默跳过（旧版仅本次会话内存生效）。 */
+  async function saveFolderLayout(dir, layout) {
+    if (demo) { mockSaveLayout(dir, layout); return; }
+    if (typeof client.api.saveFolderLayout !== "function") return;
+    try { await client.api.saveFolderLayout(dir, layout); } catch (e) { /* 位置记忆失败可忽略 */ }
+  }
+  /** 移动子文件夹到目标文件夹，返回新路径；失败 toast 并返回 null。 */
+  async function moveFolder(source, targetDir) {
+    if (demo) return mockMoveFolder(source, targetDir);
+    if (typeof client.api.moveFolder !== "function") { toast(t("local.needUpdate"), "err"); return null; }
+    try {
+      const res = await client.api.moveFolder(source, targetDir);
+      if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+      return res.data;
+    } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
+  }
 
   // ---------------------------------------------------------------- mpv / 皮肤 / 系统
   async function mpvStatus() {
@@ -920,6 +947,15 @@
     emit("wallpapers", state.wallpapers);
     return item.filePath;
   }
+  const demoLayouts = {}; // 演示模式的布局表（按目录记忆，仅本次会话）
+  function mockGetLayout(dir) { return demoLayouts[normWin(dir)] || {}; }
+  function mockSaveLayout(dir, layout) { demoLayouts[normWin(dir)] = layout || {}; }
+  function mockMoveFolder(source, targetDir) {
+    const name = String(source).split(/[\\/]/).filter(Boolean).pop() || "";
+    demoEmptyFolders = demoEmptyFolders.filter((d) => normWin(d) !== normWin(source));
+    demoEmptyFolders.push(`${targetDir}\\${name}`);
+    return `${targetDir}\\${name}`;
+  }
 
   function mockInit() {
     state.cfg = mockConfig();
@@ -1000,7 +1036,7 @@
     // 下载
     cancelDownload, clearHistory, removeHistory,
     // 文件夹整理
-    listFolders, createFolder, moveWallpaper,
+    listFolders, createFolder, moveWallpaper, getFolderLayout, saveFolderLayout, moveFolder,
     // mpv
     mpvStatus, mpvDownload, mpvCancel, mpvFolder, onMpvEvent,
     // 皮肤

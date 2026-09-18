@@ -3,6 +3,7 @@
 use crate::state::AppState;
 use crate::urls::{path_to_media_url, resolve_media_url, tmp_name_to_media_url, ResolvedUrl};
 use base64::Engine;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager, State};
 use wallpaper_core::library;
@@ -605,6 +606,60 @@ pub async fn move_wallpaper(
     }
 
     let new_path = library::move_wallpaper(&roots, &path, Path::new(&target_dir))
+        .map_err(|e| e.to_string())?;
+    st.api.save_snapshot().await;
+    st.api.notify_change();
+    Ok(new_path.to_string_lossy().to_string())
+}
+
+/// 读取 dir 的桌面式布局（条目名 → 槽位）；缺失返回空表。
+#[tauri::command]
+pub async fn get_folder_layout(
+    _app: AppHandle,
+    dir: String,
+) -> Result<BTreeMap<String, library::LayoutSlot>> {
+    Ok(library::get_layout(Path::new(&dir)))
+}
+
+/// 保存 dir 的桌面式布局。仅位置记忆，不触发壁纸刷新广播。
+#[tauri::command]
+pub async fn save_folder_layout(
+    app: AppHandle,
+    dir: String,
+    layout: BTreeMap<String, library::LayoutSlot>,
+) -> Result<bool> {
+    let roots = library_roots(&app);
+    library::save_layout(&roots, Path::new(&dir), &layout).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+/// 移动子文件夹到 target_dir 下；内部正在播放的壁纸先停止。返回新路径。
+#[tauri::command]
+pub async fn move_folder(app: AppHandle, source: String, target_dir: String) -> Result<String> {
+    let st = state(&app);
+    let roots = library_roots(&app);
+    let src = PathBuf::from(&source);
+
+    // 前缀匹配：源文件夹下（含子层级）正在播放的壁纸逐屏停止
+    let prefix = {
+        let p = source.to_lowercase().replace('/', "\\");
+        p.trim_end_matches('\\').to_string() + "\\"
+    };
+    let playing = st.api.running_wallpapers().await;
+    for w in playing {
+        let under = w
+            .file_path
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_lowercase().replace('/', "\\").starts_with(&prefix))
+            .unwrap_or(false);
+        if under {
+            for screen in &w.running_info.screen_indexes {
+                st.api.stop_wallpaper(Some(*screen)).await;
+            }
+        }
+    }
+
+    let new_path = library::move_folder(&roots, &src, Path::new(&target_dir))
         .map_err(|e| e.to_string())?;
     st.api.save_snapshot().await;
     st.api.notify_change();

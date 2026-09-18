@@ -738,8 +738,9 @@
   let localType = localStorage.getItem("fluent.localType") || "all";
   let localDir = localStorage.getItem("fluent.localDir") || ""; // 当前所在文件夹（"" = 根层级）
   let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
+  let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
+  let localResizeHooked = false;
   let localSeq = 0;        // 异步渲染序号：快速切换文件夹时丢弃过期结果
-  let dragSrc = null;      // 拖拽摆放：正在拖动的壁纸
 
   function renderLocal() {
     viewEl.innerHTML = "";
@@ -797,9 +798,24 @@
         el("button", { class: "icon-btn", title: SC.t("local.openDirs"), onclick: openDirs }, (() => { const s = el("span"); s.innerHTML = icon("folder", 15); return s; })()))));
 
     const crumb = el("nav", { class: "loc-crumb", "aria-label": "folder" });
-    const foldersEl = el("div", { class: "loc-folders" });
-    const grid = el("div", { class: "loc-grid" });
-    viewEl.append(crumb, foldersEl, grid);
+    const flowFolders = el("div", { class: "loc-folders" }); // 根层级 / 搜索态：流式文件夹卡
+    const flowGrid = el("div", { class: "loc-grid" });       // 根层级 / 搜索态：流式网格
+    const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
+    viewEl.append(crumb, flowFolders, flowGrid, canvas);
+
+    // ===== 桌面画布：隐形槽位网格，位置记忆（Windows 桌面式） =====
+    // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
+    // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
+    const CELL_W = 108, CELL_H = 132; // 槽位步距（磁贴 100×124 + 8px 间隙，与 .loc-tile 联动）
+    let layout = {};             // 当前文件夹布局表 { 名称: {c,r} }
+    let layoutDir = null;        // layout 对应的文件夹；切换文件夹时才从磁盘重新加载
+    let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
+    let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
+    let slotIndex = new Map();   // "c,r" → key（占用表）
+    let cols = 1;                // 当前列数（随窗口宽度变化）
+    const tiles = new Map();     // key → 磁贴元素（换位/重排就地移动）
+    let selected = null;         // 单击选中的 {key, tile}
+    let saveTimer = 0;           // 布局落盘防抖
 
     function enterDir(dir) {
       localDir = dir || "";
@@ -807,22 +823,15 @@
       renderView();
     }
 
-    // 拖拽摆放：把任意元素变成可投放的文件夹（面包屑段 / 文件夹卡片共用）
-    function attachDrop(target, dir) {
-      target.addEventListener("dragover", (e) => {
-        if (!dragSrc || samePath(dragSrc.dir, dir)) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        target.classList.add("is-over");
-      });
-      target.addEventListener("dragleave", () => target.classList.remove("is-over"));
-      target.addEventListener("drop", (e) => {
-        e.preventDefault();
-        target.classList.remove("is-over");
-        const w = dragSrc;
-        dragSrc = null;
-        if (w && !samePath(w.dir, dir)) moveTo(w, dir);
-      });
+    // 布局防抖落盘：快照在调度时取，避免实例切换后写脏数据
+    function scheduleSave() {
+      const dir = localDir;
+      const snapshot = { ...layout };
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => SC.saveFolderLayout(dir, snapshot), 400);
+    }
+    function forgetKey(key) {
+      if (layout[key]) { delete layout[key]; scheduleSave(); }
     }
 
     async function moveTo(w, dir) {
@@ -845,6 +854,53 @@
       if (localRefresh) localRefresh();
     }
 
+    // 移动子文件夹到目标文件夹（桌面拖拽整理）；自身/自身子孙由后端再兜底校验
+    async function moveFolderTo(item, dir) {
+      if (!item || samePath(item.path, dir) || underDir(dir, item.path)) return;
+      const newPath = await SC.moveFolder(item.path, dir);
+      if (!newPath) return;
+      forgetKey(item.key);
+      SC.toast(SC.t("local.moved", dirName(dir)), "ok");
+      await SC.refreshAll();
+      if (localRefresh) localRefresh();
+    }
+
+    // 投放到文件夹磁贴 / 面包屑段：移出当前目录（先清位置记忆再移动）
+    async function dropIntoFolder(item, dir) {
+      forgetKey(item.key);
+      if (item.kind === "folder") await moveFolderTo(item, dir);
+      else await moveTo(item.w, dir);
+    }
+
+    // 投放到空槽位：换位置；目标已被占用则与对方交换（Windows 桌面行为）
+    function dropOnSlot(item, c, r) {
+      const pos = positions.get(item.key);
+      if (!pos || (pos.c === c && pos.r === r)) return;
+      const otherKey = slotIndex.get(`${c},${r}`);
+      positions.set(item.key, { c, r });
+      layout[item.key] = { c, r };
+      slotIndex.delete(`${pos.c},${pos.r}`);
+      slotIndex.set(`${c},${r}`, item.key);
+      const tile = tiles.get(item.key);
+      if (tile) place(tile, { c, r });
+      if (otherKey && otherKey !== item.key) {
+        positions.set(otherKey, pos);
+        layout[otherKey] = { c: pos.c, r: pos.r };
+        slotIndex.set(`${pos.c},${pos.r}`, otherKey);
+        const otherTile = tiles.get(otherKey);
+        if (otherTile) place(otherTile, pos);
+      }
+      scheduleSave();
+    }
+
+    // 自动整理：清空当前文件夹的位置记忆，恢复按排序流式排列（就地重排，避免回读竞态）
+    function rearrange() {
+      layout = {};
+      scheduleSave();
+      if (!canvas.hidden && items.length) reflow();
+      else if (localRefresh) localRefresh();
+    }
+
     function crumbs() {
       const segs = [{ label: SC.t("local.title"), dir: "" }];
       if (localDir) {
@@ -864,9 +920,8 @@
       segs.forEach((s, i) => {
         const cur = i === segs.length - 1;
         if (i) crumb.append(el("span", { class: "loc-crumb-sep" }, (() => { const s2 = el("span"); s2.innerHTML = icon("chevr", 12); return s2; })()));
-        const b = el("button", { class: `loc-crumb-seg ${cur ? "is-current" : ""}`, onclick: () => { if (!cur) enterDir(s.dir); } }, s.label);
+        const b = el("button", { class: `loc-crumb-seg ${cur ? "is-current" : ""}`, dataset: { dir: s.dir || "" }, onclick: () => { if (!cur) enterDir(s.dir); } }, s.label);
         crumb.append(b);
-        if (!cur) attachDrop(b, s.dir);
       });
     }
 
@@ -885,6 +940,28 @@
         : [...list].sort(byName);
     }
 
+    function emptyNode(searching) {
+      if (searching) {
+        return el("div", { class: "empty" },
+          el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("search", 34); return s; })()),
+          el("h3", {}, SC.t("local.searchEmpty")));
+      }
+      if (localDir) {
+        return el("div", { class: "empty" },
+          el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
+          el("h3", {}, SC.t("local.folderEmpty")),
+          el("p", {}, SC.t("local.folderEmptyHint")),
+          el("div", { class: "empty-actions" }, newFolderBtnEl()));
+      }
+      return el("div", { class: "empty" },
+        el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
+        el("h3", {}, SC.t("local.empty")),
+        el("p", {}, SC.t("local.emptyHint")),
+        el("div", { class: "empty-actions" },
+          el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
+          el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title"))));
+    }
+
     async function renderGrid() {
       const seq = ++localSeq;
       const searching = !!searchQuery.trim();
@@ -898,36 +975,94 @@
       crumbs();
 
       folders.sort((a, b) => dirName(a).localeCompare(dirName(b), undefined, { numeric: true, sensitivity: "base" }));
-      foldersEl.innerHTML = "";
-      foldersEl.hidden = !folders.length;
-      for (const f of folders) foldersEl.append(folderCard(f));
+      selected = null;
 
-      grid.innerHTML = "";
-      if (!files.length && !folders.length) {
-        if (searching) {
-          grid.append(el("div", { class: "empty" },
-            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("search", 34); return s; })()),
-            el("h3", {}, SC.t("local.searchEmpty"))));
-        } else if (localDir) {
-          grid.append(el("div", { class: "empty" },
-            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
-            el("h3", {}, SC.t("local.folderEmpty")),
-            el("p", {}, SC.t("local.folderEmptyHint")),
-            el("div", { class: "empty-actions" }, newFolderBtnEl())));
-        } else {
-          grid.append(el("div", { class: "empty" },
-            el("div", { class: "empty-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 34); return s; })()),
-            el("h3", {}, SC.t("local.empty")),
-            el("p", {}, SC.t("local.emptyHint")),
-            el("div", { class: "empty-actions" },
-              el("button", { class: "btn", onclick: () => go("settings") }, SC.t("cfg.dirs")),
-              el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title")))));
-        }
+      // 根层级（库根目录列表）与搜索态沿用流式网格；子文件夹层级用桌面画布
+      const flowMode = searching || !localDir;
+      canvas.hidden = flowMode;
+      flowGrid.hidden = flowMode;
+      if (flowMode) {
+        localReflow = null;
+        flowFolders.innerHTML = "";
+        flowFolders.hidden = !folders.length;
+        for (const f of folders) flowFolders.append(folderCard(f));
+        flowGrid.innerHTML = "";
+        if (!files.length && !folders.length) flowGrid.append(emptyNode(searching));
+        for (const w of files) flowGrid.append(cardOf(w));
         return;
       }
-      for (const w of files) grid.append(cardOf(w));
+      flowFolders.hidden = true;
+      flowGrid.hidden = true;
+
+      // 布局表仅在新文件夹时读盘一次；之后以内存为准（防抖落盘 + 回读会竞态覆盖会话内修改）
+      if (layoutDir !== localDir) {
+        const table = await SC.getFolderLayout(localDir);
+        if (seq !== localSeq) return;
+        layout = table && typeof table === "object" ? table : {};
+        layoutDir = localDir;
+      }
+      items = [
+        ...folders.map((f) => ({ kind: "folder", key: dirName(f), path: f })),
+        ...files.map((w) => ({ kind: "file", key: w.fileName || nameOf(w), w })),
+      ];
+      canvas.innerHTML = "";
+      canvas.classList.remove("is-empty");
+      tiles.clear();
+      if (!items.length) {
+        canvas.classList.add("is-empty");
+        canvas.append(emptyNode(false));
+        return;
+      }
+      computePositions();
+      for (const it of items) {
+        const tile = tileOf(it);
+        canvas.append(tile);
+        tiles.set(it.key, tile);
+        place(tile, positions.get(it.key));
+      }
+      localReflow = reflow;
     }
     localRefresh = renderGrid;
+
+    // ---- 桌面画布：槽位计算与就地摆放 ----
+    function computePositions() {
+      cols = Math.max(1, Math.floor((canvas.clientWidth || viewEl.clientWidth || CELL_W) / CELL_W));
+      positions = new Map();
+      slotIndex = new Map();
+      const firstFree = () => {
+        for (let r = 0; ; r++) for (let c = 0; c < cols; c++) if (!slotIndex.has(`${c},${r}`)) return { c, r };
+      };
+      for (const it of items) {
+        let p = layout[it.key];
+        if (p) {
+          p = { c: Math.min(Math.max(0, p.c | 0), cols - 1), r: Math.max(0, p.r | 0) };
+          if (slotIndex.has(`${p.c},${p.r}`)) p = null; // 槽位被占（如换位后残留），退回流式找空位
+        }
+        if (!p) p = firstFree();
+        positions.set(it.key, p);
+        slotIndex.set(`${p.c},${p.r}`, it.key);
+      }
+      const rows = items.length ? Math.max(...[...positions.values()].map((p) => p.r)) + 1 : 1;
+      // 画布至少撑满可视区剩余高度，否则拖到下方空白会落在 .view 上而无法换位
+      const fill = Math.max(0, viewEl.clientHeight - canvas.offsetTop - 150); // 150 = .view 底部留白
+      canvas.style.minHeight = `${Math.max(rows * CELL_H + 20, fill)}px`;
+    }
+    function place(tile, p) {
+      if (!p) return;
+      tile.style.left = `${p.c * CELL_W}px`;
+      tile.style.top = `${p.r * CELL_H}px`;
+    }
+    function reflow() {
+      if (!canvas.isConnected || canvas.hidden) return;
+      computePositions();
+      for (const [key, tile] of tiles) place(tile, positions.get(key));
+    }
+    if (!localResizeHooked) {
+      localResizeHooked = true;
+      window.addEventListener("resize", () => { if (localReflow) localReflow(); });
+      // 侧栏折叠等容器宽度变化不触发 window resize，用 ResizeObserver 兜底
+      if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => { if (localReflow) localReflow(); }).observe(viewEl);
+    }
 
     function cardOf(w) {
       const isPlaying = playing.has(w.filePath);
@@ -964,14 +1099,6 @@
         typeBadge);
 
       card.append(cover, playDot, screenChips || "", acts, meta);
-      // 拖拽摆放：拖起壁纸，投放到文件夹卡片 / 面包屑
-      card.draggable = true;
-      card.addEventListener("dragstart", (e) => {
-        dragSrc = w;
-        card.classList.add("is-dragging");
-        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
-      });
-      card.addEventListener("dragend", () => { dragSrc = null; card.classList.remove("is-dragging"); });
       card.addEventListener("click", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
@@ -987,6 +1114,166 @@
       return card;
     }
 
+    // ---- 桌面画布磁贴：单击选中、双击应用/进入、指针拖拽 ----
+    function selectTile(item, tile) {
+      if (selected && selected.tile) selected.tile.classList.remove("is-selected");
+      selected = item && tile ? { key: item.key, tile } : null;
+      if (selected) selected.tile.classList.add("is-selected");
+    }
+    // 点画布空白取消选中
+    canvas.addEventListener("click", (e) => { if (e.target === canvas) selectTile(null, null); });
+
+    let drag = null;          // {item, tile, x, y, moved, grabX, grabY, target}
+    let ghost = null;         // 跟随光标的半透明磁贴
+    let hint = null;          // 目标槽位虚线框
+    let suppressClick = false; // 拖拽结束后的那次 click 不当作选中
+
+    function pressStart(e, item, tile) {
+      if (e.button !== 0 || drag) return;
+      if (e.target.closest(".icon-btn, .chip")) return; // 悬浮操作钮不触发拖拽/选中
+      const rect = tile.getBoundingClientRect();
+      drag = { item, tile, x: e.clientX, y: e.clientY, moved: false, grabX: e.clientX - rect.left, grabY: e.clientY - rect.top, target: null };
+      try { tile.setPointerCapture(e.pointerId); } catch (_) { /* 指针已释放等场景忽略 */ }
+      window.addEventListener("pointermove", pressMove);
+      window.addEventListener("pointerup", pressUp, { once: true });
+    }
+    function pressMove(e) {
+      if (!drag) return;
+      if (!drag.moved) {
+        if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 5) return;
+        drag.moved = true;
+        ghost = drag.tile.cloneNode(true);
+        ghost.classList.remove("is-selected");
+        ghost.classList.add("loc-ghost");
+        document.body.append(ghost);
+        hint = el("div", { class: "loc-slot-hint" });
+        hint.hidden = true;
+        canvas.append(hint);
+        drag.tile.classList.add("is-dragging");
+      }
+      e.preventDefault();
+      ghost.style.left = `${e.clientX - drag.grabX}px`;
+      ghost.style.top = `${e.clientY - drag.grabY}px`;
+      updateDropTarget(e);
+    }
+    function pressUp() {
+      window.removeEventListener("pointermove", pressMove);
+      const d = drag;
+      drag = null;
+      if (ghost) { ghost.remove(); ghost = null; }
+      if (hint) { hint.remove(); hint = null; }
+      if (!d) return;
+      d.tile.classList.remove("is-dragging");
+      clearOver();
+      if (!d.moved) return; // 原地松手：交给 click / dblclick
+      suppressClick = true;
+      setTimeout(() => { suppressClick = false; }, 0);
+      const t = d.target;
+      if (!t) return;
+      if (t.type === "folder") dropIntoFolder(d.item, t.dir);
+      else if (t.type === "crumb") {
+        if (d.item.kind === "folder") moveFolderTo(d.item, t.dir);
+        else moveTo(d.item.w, t.dir);
+      } else if (t.type === "slot") dropOnSlot(d.item, t.c, t.r);
+    }
+    // 命中检测：面包屑段 → 文件夹磁贴 → 空槽位
+    function updateDropTarget(e) {
+      clearOver();
+      hint.hidden = true;
+      drag.target = null;
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      if (!under) return;
+      const seg = under.closest(".loc-crumb-seg");
+      if (seg && !seg.classList.contains("is-current") && seg.dataset.dir) {
+        seg.classList.add("is-over");
+        drag.target = { type: "crumb", dir: seg.dataset.dir };
+        return;
+      }
+      const folderTile = under.closest(".loc-tile.is-folder");
+      if (folderTile && folderTile !== drag.tile) {
+        const dir = folderTile.dataset.folder;
+        if (!(drag.item.kind === "folder" && (samePath(dir, drag.item.path) || underDir(dir, drag.item.path)))) {
+          folderTile.classList.add("is-over");
+          drag.target = { type: "folder", dir };
+          return;
+        }
+      }
+      if (under.closest(".loc-canvas") === canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left) / CELL_W)));
+        const r = Math.max(0, Math.floor((e.clientY - rect.top) / CELL_H));
+        hint.hidden = false;
+        hint.style.left = `${c * CELL_W}px`;
+        hint.style.top = `${r * CELL_H}px`;
+        drag.target = { type: "slot", c, r };
+      }
+    }
+    function clearOver() {
+      viewEl.querySelectorAll(".loc-tile.is-over, .loc-crumb-seg.is-over").forEach((n) => n.classList.remove("is-over"));
+    }
+
+    function tileOf(it) {
+      const tile = it.kind === "folder" ? tileFolder(it) : tileFile(it);
+      tile.addEventListener("pointerdown", (e) => pressStart(e, it, tile));
+      tile.addEventListener("click", () => {
+        if (suppressClick) { suppressClick = false; return; }
+        selectTile(it, tile);
+      });
+      return tile;
+    }
+
+    function tileFile(it) {
+      const w = it.w;
+      const isPlaying = playing.has(w.filePath);
+      const tile = el("article", { class: `loc-tile is-file ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
+      const thumb = el("span", { class: "loc-tile-thumb" });
+      if (w.coverUrl || w.fileUrl) {
+        const img = el("img", { src: bust(w.coverUrl || w.fileUrl), loading: "lazy", alt: "", draggable: "false" });
+        img.addEventListener("error", () => { img.remove(); thumb.classList.add("is-fallback"); });
+        thumb.append(img);
+      } else thumb.classList.add("is-fallback");
+      thumb.append(
+        el("span", { class: "loc-tile-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 9); return s; })()),
+        el("span", { class: "loc-tile-type" }, SC.typeName(w.meta && w.meta.type)),
+        el("span", { class: "loc-acts" },
+          actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
+          actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w))));
+      tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
+      tile.addEventListener("dblclick", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
+      tile.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("common.apply"), ico: "play", act: () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]) },
+          { label: SC.t("local.moveTo"), ico: "move", act: () => openMoveDialog(w) },
+          { label: SC.t("set.title"), ico: "gear", act: () => openSettingDialog(w) },
+          { label: SC.t("common.location"), ico: "folder", act: () => SC.reveal(w) },
+          { label: SC.t("common.delete"), ico: "trash", act: () => removeWallpaper(w), danger: true },
+        ]);
+      });
+      return tile;
+    }
+
+    function tileFolder(it) {
+      const deep = all.filter((w) => samePath(w.dir, it.path) || underDir(w.dir, it.path)).length;
+      const tile = el("article", { class: "loc-tile is-folder", dataset: { folder: it.path } },
+        el("span", { class: "loc-tile-thumb is-folder" },
+          (() => { const s = el("span"); s.innerHTML = icon("folder", 40); return s; })(),
+          el("span", { class: "loc-tile-count" }, String(deep))),
+        el("span", { class: "loc-tile-name", title: it.path }, it.key));
+      tile.addEventListener("dblclick", () => enterDir(it.path));
+      tile.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("local.open"), ico: "folder", act: () => enterDir(it.path) },
+          { label: SC.t("common.location"), ico: "external", act: () => { if (SC.demo || !SC.client) SC.toast(`${SC.t("common.demo")} · ${SC.t("common.location")}`, "ok"); else SC.client.api.explore(it.path); } },
+        ]);
+      });
+      return tile;
+    }
+
+    // 根层级的库根目录卡（流式区）：点击进入
     function folderCard(path) {
       const deep = all.filter((w) => samePath(w.dir, path) || underDir(w.dir, path)).length;
       const card = el("button", { class: "loc-folder" },
@@ -994,7 +1281,6 @@
         el("span", { class: "loc-folder-name", title: path }, dirName(path)),
         el("span", { class: "loc-folder-count" }, SC.t("local.count", deep)));
       card.addEventListener("click", () => enterDir(path));
-      attachDrop(card, path);
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1088,16 +1374,21 @@
 
     renderGrid();
 
-    // 空白处右键：刷新 / 新建文件夹 / 打开目录
-    grid.addEventListener("contextmenu", (e) => {
-      if (e.target.closest(".loc-card")) return;
-      e.preventDefault();
-      ctxMenu(e.clientX, e.clientY, [
-        { label: SC.t("common.refresh"), ico: "refresh", act: () => SC.refreshAll() },
-        ...(localDir && !searchQuery.trim() ? [{ label: SC.t("local.newFolder"), ico: "folderplus", act: () => openNewFolderDialog() }] : []),
-        { label: SC.t("local.openDirs"), ico: "folder", act: openDirs },
-      ]);
-    });
+    // 空白处右键：刷新 / 新建文件夹 / 自动整理 / 打开目录（流式区与画布共用）
+    for (const zone of [flowGrid, canvas]) {
+      zone.addEventListener("contextmenu", (e) => {
+        if (e.target.closest(".loc-card, .loc-tile")) return;
+        e.preventDefault();
+        ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("common.refresh"), ico: "refresh", act: () => SC.refreshAll() },
+          ...(localDir && !searchQuery.trim() ? [
+            { label: SC.t("local.newFolder"), ico: "folderplus", act: () => openNewFolderDialog() },
+            { label: SC.t("local.rearrange"), ico: "move", act: rearrange },
+          ] : []),
+          { label: SC.t("local.openDirs"), ico: "folder", act: openDirs },
+        ]);
+      });
+    }
 
     // 拖拽导入：复用创建对话框直接落库
     viewEl.addEventListener("dragover", (e) => e.preventDefault());
@@ -1498,6 +1789,7 @@
     closeCtx();
     refreshGrid = null;
     localRefresh = null;
+    localReflow = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "local") renderLocal();
     else if (currentView === "downloads") renderDownloads();
@@ -1515,7 +1807,7 @@
       viewEl.querySelectorAll(".wall-card").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
     }
     if (currentView === "local") {
-      viewEl.querySelectorAll(".loc-card").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
+      viewEl.querySelectorAll(".loc-card, .loc-tile[data-path]").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
     }
     renderDock();
   });
