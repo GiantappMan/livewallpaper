@@ -826,7 +826,6 @@
     let cols = 1;                // 当前列数（随窗口宽度变化）
     const tiles = new Map();     // key → 磁贴元素（换位/重排就地移动）
     let selected = null;         // 单击选中的 {key, tile}
-    let saveTimer = 0;           // 布局落盘防抖
 
     function enterDir(dir) {
       localDir = dir || "";
@@ -1022,12 +1021,12 @@
       flowFolders.hidden = true;
       flowGrid.hidden = true;
 
-      // 布局表仅在新文件夹时读盘一次；之后以内存为准（防抖落盘 + 回读会竞态覆盖会话内修改）
-      if (layoutDir !== localDir) {
+      // 布局表仅在切换文件夹时读盘一次；之后以内存为准（防抖落盘 + 回读会竞态覆盖会话内修改）
+      if (localLayoutDir !== localDir) {
         const table = await SC.getFolderLayout(localDir);
         if (seq !== localSeq) return;
-        layout = table && typeof table === "object" ? table : {};
-        layoutDir = localDir;
+        localLayout = table && typeof table === "object" ? table : {};
+        localLayoutDir = localDir;
       }
       items = [
         ...folders.map((f) => ({ kind: "folder", key: dirName(f), path: f })),
@@ -1061,7 +1060,7 @@
         for (let r = 0; ; r++) for (let c = 0; c < cols; c++) if (!slotIndex.has(`${c},${r}`)) return { c, r };
       };
       for (const it of items) {
-        let p = layout[it.key];
+        let p = localLayout[it.key];
         if (p) {
           p = { c: Math.min(Math.max(0, p.c | 0), cols - 1), r: Math.max(0, p.r | 0) };
           if (slotIndex.has(`${p.c},${p.r}`)) p = null; // 槽位被占（如换位后残留），退回流式找空位
