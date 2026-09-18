@@ -8,6 +8,9 @@
   <script>
     // 皮肤元信息（core.js 读取）
     window.SKIN_META = { id: "fluent", brand: "巨应壁纸Ⅳ", version: "1.0.1", mode: "light" };
+    // 关闭 SDK 内置的 refresh-page 整页 reload：core.js 自己订阅该事件，
+    // 壁纸配置/库数据变化原地软刷新，皮肤文件热更才整页 reload
+    window.WallpaperClientConfig = { skipAutoRefresh: true };
   </script>
 </head>
 <body>

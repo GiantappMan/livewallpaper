@@ -126,7 +126,10 @@ async fn apply_config_side_effects(
             st.api.set_covered_behavior(behavior);
             st.api.set_default_video_player(player).await;
             st.api.save_snapshot().await;
-            st.hub.publish("refresh-page", ());
+            // reason 供接管 refresh-page 的皮肤区分：配置/库数据变化原地软刷新
+            // 即可，无需整页 reload（旧监听者忽略 payload，行为不变）
+            st.hub
+                .publish("refresh-page", serde_json::json!({ "reason": "wallpaper-config" }));
         }
         _ => {}
     }

@@ -388,6 +388,9 @@
     const res = await client.api.getDownloadHistory();
     if (!res.error) { state.history = res.data || []; emit("history", state.history); }
   }
+  async function refreshAll() {
+    await Promise.all([refreshWallpapers(), refreshStatus(), refreshDownloads(), refreshHistory(), loadConfig()]);
+  }
 
   // ---------------------------------------------------------------- 播放控制
   /** 播放中文件集合（含播放列表成员展开）——判断某壁纸是否在播 */
@@ -1027,6 +1030,17 @@
       }
     });
     client.on("mpv-download-event", () => emit("mpv"));
+    // 接管 refresh-page（index.html 已设 skipAutoRefresh 关闭 SDK 内置整页
+    // reload）：壁纸配置/库数据变化原地软刷新避免闪屏；皮肤文件热更等其余
+    // 来源（payload 无 reason）仍整页 reload，skin:// 重新读盘
+    client.on("refresh-page", async (p) => {
+      if (p && p.reason === "wallpaper-config") {
+        await refreshAll();
+        emit("config", "Wallpaper");
+        return;
+      }
+      window.location.reload();
+    });
 
     await loadConfig();
     applyLang(state.cfg.General && state.cfg.General.currentLan);
@@ -1049,7 +1063,7 @@
     // DOM / 工具
     el, toast, call, confirm: confirmDlg, debounce, fmtBytes, fmtTime, typeName, errText, pretty,
     // 数据刷新
-    refreshAll: () => Promise.all([refreshWallpapers(), refreshStatus(), refreshDownloads(), refreshHistory(), loadConfig()]),
+    refreshAll,
     // 播放
     playingSet, screenIndexOf, canPause, findPlayingWallpaper,
     applyWallpaper, pause, resume, stop, prevIn, nextIn, setVolume,

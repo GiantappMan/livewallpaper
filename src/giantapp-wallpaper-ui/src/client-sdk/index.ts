@@ -16,8 +16,11 @@
  *
  * 引入即自动热加载：`refresh-page` 事件由 SDK 内置订阅并整页刷新
  * （皮肤文件变化时后端也会直接刷新主窗口兜底），皮肤无需为此写任何代码。
+ * 皮肤若要接管该事件（如按 `payload.reason` 区分软刷新/整页刷新），可在
+ * 引入 SDK 前设置 `window.WallpaperClientConfig = { skipAutoRefresh: true }`
+ * 关闭内置订阅，自行 `on("refresh-page", ...)` 处理。
  */
-import api from "@/lib/client/api";
+import api, { autoRefreshDisabled } from "@/lib/client/api";
 import shellApi from "@/lib/client/shell";
 import * as types from "@/lib/client/types";
 import { listen } from "@tauri-apps/api/event";
@@ -55,7 +58,12 @@ const WallpaperClient = {
 // 热加载兜底：皮肤文件变化 / 壁纸配置变更等场景后端会广播 `refresh-page`，
 // SDK 内置整页刷新订阅，皮肤无需显式调用 api.initEvents() 即自动热更新
 // （与 initEvents 重复注册无副作用；浏览器直开无 Tauri IPC 时静默跳过）。
-if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+// 皮肤可在引入本 SDK 前设置 WallpaperClientConfig.skipAutoRefresh 接管该事件。
+if (
+  typeof window !== "undefined" &&
+  (window as any).__TAURI_INTERNALS__ &&
+  !autoRefreshDisabled()
+) {
   listen("refresh-page", () => window.location.reload()).catch(() => {});
 }
 

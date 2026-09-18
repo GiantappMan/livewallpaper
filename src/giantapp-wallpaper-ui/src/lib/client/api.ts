@@ -36,12 +36,20 @@ const noClient = <T,>(): ApiResult<T> => ({
   data: null,
 });
 
+/** 皮肤接管 refresh-page 的开关：引入 SDK 前设置
+ *  `window.WallpaperClientConfig = { skipAutoRefresh: true }`，SDK 与
+ *  initEvents 均不再内置整页刷新，由皮肤自行订阅并按事件来源处理。 */
+export function autoRefreshDisabled(): boolean {
+  return !!(globalThis as any).WallpaperClientConfig?.skipAutoRefresh;
+}
+
 class API {
   private unlisteners: UnlistenFn[] = [];
 
   /** 注册事件转发（构造后调用一次） */
   async initEvents() {
     if (!this.isRunningInClient()) return;
+    if (autoRefreshDisabled()) return;
     this.unlisteners.push(
       await listen("refresh-page", () => window.location.reload())
     );

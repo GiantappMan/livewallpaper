@@ -747,6 +747,9 @@
   let localSort = localStorage.getItem("fluent.localSort") || "name";
   let localType = localStorage.getItem("fluent.localType") || "all";
   let localDir = localStorage.getItem("fluent.localDir") || ""; // 当前所在文件夹（"" = 根层级）
+  let localLayout = {};      // 桌面画布布局表（跨渲染保持：落盘有防抖，重渲染若回读旧值会丢条目）
+  let localLayoutDir = null; // localLayout 对应的文件夹；切换文件夹时才重新读盘
+  let localSaveTimer = 0;    // 布局落盘防抖
   let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
   let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
   let localResizeHooked = false;
@@ -817,8 +820,6 @@
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
     // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
     const CELL_W = 108, CELL_H = 132; // 槽位步距（磁贴 100×124 + 8px 间隙，与 .loc-tile 联动）
-    let layout = {};             // 当前文件夹布局表 { 名称: {c,r} }
-    let layoutDir = null;        // layout 对应的文件夹；切换文件夹时才从磁盘重新加载
     let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
     let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
     let slotIndex = new Map();   // "c,r" → key（占用表）
@@ -835,13 +836,13 @@
 
     // 布局防抖落盘：快照在调度时取，避免实例切换后写脏数据
     function scheduleSave() {
-      const dir = localDir;
-      const snapshot = { ...layout };
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => SC.saveFolderLayout(dir, snapshot), 400);
+      const dir = localLayoutDir;
+      const snapshot = { ...localLayout };
+      clearTimeout(localSaveTimer);
+      localSaveTimer = setTimeout(() => SC.saveFolderLayout(dir, snapshot), 400);
     }
     function forgetKey(key) {
-      if (layout[key]) { delete layout[key]; scheduleSave(); }
+      if (localLayout[key]) { delete localLayout[key]; scheduleSave(); }
     }
 
     async function moveTo(w, dir) {
@@ -888,14 +889,14 @@
       if (!pos || (pos.c === c && pos.r === r)) return;
       const otherKey = slotIndex.get(`${c},${r}`);
       positions.set(item.key, { c, r });
-      layout[item.key] = { c, r };
+      localLayout[item.key] = { c, r };
       slotIndex.delete(`${pos.c},${pos.r}`);
       slotIndex.set(`${c},${r}`, item.key);
       const tile = tiles.get(item.key);
       if (tile) place(tile, { c, r });
       if (otherKey && otherKey !== item.key) {
         positions.set(otherKey, pos);
-        layout[otherKey] = { c: pos.c, r: pos.r };
+        localLayout[otherKey] = { c: pos.c, r: pos.r };
         slotIndex.set(`${pos.c},${pos.r}`, otherKey);
         const otherTile = tiles.get(otherKey);
         if (otherTile) place(otherTile, pos);
@@ -905,7 +906,7 @@
 
     // 自动整理：清空当前文件夹的位置记忆，恢复按排序流式排列（就地重排，避免回读竞态）
     function rearrange() {
-      layout = {};
+      localLayout = {};
       scheduleSave();
       if (!canvas.hidden && items.length) reflow();
       else if (localRefresh) localRefresh();
@@ -1864,6 +1865,8 @@
   SC.on("nav", (p) => { if (p && p.view) go(p.view); });
   SC.on("hub-session", () => { if (currentView === "hub") renderHub(); });
   SC.on("skins", () => { if (currentView === "settings" && settingsTab === "appearance") renderSettings(); });
+  // 配置变化（本页保存 / refresh-page 软刷新）→ 设置页原地重渲染
+  SC.on("config", (group) => { if (group === "Wallpaper" && currentView === "settings") renderSettings(); });
 
   // ---------------------------------------------------------------- 启动
   // 标题栏居中搜索：全局唯一入口，输入即跳转壁纸库并过滤
