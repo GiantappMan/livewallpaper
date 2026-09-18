@@ -817,6 +817,19 @@ pub fn move_folder(roots: &[PathBuf], src: &Path, target_parent: &Path) -> Resul
     Ok(dest)
 }
 
+/// 递归删除库内子文件夹（根目录不可删；正在播放的壁纸由命令层先停止）。
+pub fn delete_folder(roots: &[PathBuf], dir: &Path) -> Result<()> {
+    if !dir.is_dir() {
+        return Err(anyhow!("文件夹不存在: {}", dir.display()));
+    }
+    let (_, depth) = locate_root(roots, dir).context("文件夹不在壁纸库内")?;
+    if depth == 0 {
+        return Err(anyhow!("库根目录不能在这里删除"));
+    }
+    std::fs::remove_dir_all(dir).with_context(|| format!("删除文件夹 {}", dir.display()))?;
+    Ok(())
+}
+
 /// 递归复制目录（跨盘符移动文件夹的回退路径）。
 fn copy_dir_recursive(from: &Path, to: &Path) -> Result<()> {
     std::fs::create_dir_all(to)?;

@@ -553,6 +553,28 @@ fn library_roots(app: &AppHandle) -> Vec<PathBuf> {
     config.wallpaper.effective_directories()
 }
 
+/// 逐屏停止 dir 目录（含子层级）下正在播放的壁纸（前缀匹配，与删除行为一致）。
+async fn stop_playing_under(app: &AppHandle, dir: &str) {
+    let st = state(app);
+    let prefix = {
+        let p = dir.to_lowercase().replace('/', "\\");
+        format!("{}\\", p.trim_end_matches('\\'))
+    };
+    let playing = st.api.running_wallpapers().await;
+    for w in playing {
+        let under = w
+            .file_path
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_lowercase().replace('/', "\\").starts_with(&prefix))
+            .unwrap_or(false);
+        if under {
+            for screen in &w.running_info.screen_indexes {
+                st.api.stop_wallpaper(Some(*screen)).await;
+            }
+        }
+    }
+}
+
 /// 列出 dir 的直接子文件夹；dir 为空串时返回库根目录列表。
 #[tauri::command]
 pub async fn list_folders(app: AppHandle, dir: String) -> Result<Vec<String>> {
@@ -638,32 +660,26 @@ pub async fn save_folder_layout(
 pub async fn move_folder(app: AppHandle, source: String, target_dir: String) -> Result<String> {
     let st = state(&app);
     let roots = library_roots(&app);
-    let src = PathBuf::from(&source);
+    stop_playing_under(&app, &source).await;
 
-    // 前缀匹配：源文件夹下（含子层级）正在播放的壁纸逐屏停止
-    let prefix = {
-        let p = source.to_lowercase().replace('/', "\\");
-        p.trim_end_matches('\\').to_string() + "\\"
-    };
-    let playing = st.api.running_wallpapers().await;
-    for w in playing {
-        let under = w
-            .file_path
-            .as_ref()
-            .map(|p| p.to_string_lossy().to_lowercase().replace('/', "\\").starts_with(&prefix))
-            .unwrap_or(false);
-        if under {
-            for screen in &w.running_info.screen_indexes {
-                st.api.stop_wallpaper(Some(*screen)).await;
-            }
-        }
-    }
-
-    let new_path = library::move_folder(&roots, &src, Path::new(&target_dir))
+    let new_path = library::move_folder(&roots, &PathBuf::from(&source), Path::new(&target_dir))
         .map_err(|e| e.to_string())?;
     st.api.save_snapshot().await;
     st.api.notify_change();
     Ok(new_path.to_string_lossy().to_string())
+}
+
+/// 递归删除库内子文件夹（根目录不可删）；内部正在播放的壁纸先停止。
+#[tauri::command]
+pub async fn delete_folder(app: AppHandle, dir: String) -> Result<bool> {
+    let st = state(&app);
+    let roots = library_roots(&app);
+    stop_playing_under(&app, &dir).await;
+
+    library::delete_folder(&roots, Path::new(&dir)).map_err(|e| e.to_string())?;
+    st.api.save_snapshot().await;
+    st.api.notify_change();
+    Ok(true)
 }
 
 #[tauri::command]

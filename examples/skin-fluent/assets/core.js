@@ -50,6 +50,9 @@
       "local.moveTo": "移动到…", "local.moveTitle": "移动到文件夹", "local.moveCurrent": "当前位置",
       "local.moved": "已移动到「{0}」", "local.folderCreated": "文件夹已创建",
       "local.open": "打开", "local.rearrange": "自动整理",
+      "local.delFolder": "删除文件夹",
+      "local.delFolderBody": "「{0}」和其中的全部内容将被永久删除，此操作无法撤销。",
+      "local.delFolderCount": "其中包含 {0} 个壁纸",
       "local.folderEmpty": "这个文件夹是空的",
       "local.folderEmptyHint": "右键壁纸选择「移动到…」，或直接把壁纸拖到文件夹卡片上",
       "local.searchEmpty": "没有匹配的壁纸",
@@ -126,6 +129,9 @@
       "local.moveTo": "Move to…", "local.moveTitle": "Move to folder", "local.moveCurrent": "Current location",
       "local.moved": "Moved to “{0}”", "local.folderCreated": "Folder created",
       "local.open": "Open", "local.rearrange": "Auto arrange",
+      "local.delFolder": "Delete folder",
+      "local.delFolderBody": "“{0}” and everything inside will be permanently deleted. This cannot be undone.",
+      "local.delFolderCount": "It contains {0} wallpaper(s)",
       "local.folderEmpty": "This folder is empty",
       "local.folderEmptyHint": "Right-click a wallpaper and choose “Move to…”, or drag it onto a folder card",
       "local.searchEmpty": "No matching wallpapers",
@@ -714,6 +720,16 @@
       return res.data;
     } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
   }
+  /** 删除库内子文件夹（递归；确认由界面层负责），返回是否成功。 */
+  async function deleteFolder(dir) {
+    if (demo) return mockDeleteFolder(dir);
+    if (typeof client.api.deleteFolder !== "function") { toast(t("local.needUpdate"), "err"); return false; }
+    try {
+      const res = await client.api.deleteFolder(dir);
+      if (res.error) { toast(t("common.opFailed", errText(res.error)), "err"); return false; }
+      return res.data === true;
+    } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return false; }
+  }
 
   // ---------------------------------------------------------------- mpv / 皮肤 / 系统
   async function mpvStatus() {
@@ -956,6 +972,14 @@
     demoEmptyFolders.push(`${targetDir}\\${name}`);
     return `${targetDir}\\${name}`;
   }
+  function mockDeleteFolder(dir) {
+    const n = normWin(dir);
+    demoEmptyFolders = demoEmptyFolders.filter((d) => !normWin(d).startsWith(n));
+    state.wallpapers = state.wallpapers.filter((w) => !normWin(w.dir).startsWith(n));
+    delete demoLayouts[n];
+    emit("wallpapers", state.wallpapers);
+    return true;
+  }
 
   function mockInit() {
     state.cfg = mockConfig();
@@ -1036,7 +1060,7 @@
     // 下载
     cancelDownload, clearHistory, removeHistory,
     // 文件夹整理
-    listFolders, createFolder, moveWallpaper, getFolderLayout, saveFolderLayout, moveFolder,
+    listFolders, createFolder, moveWallpaper, getFolderLayout, saveFolderLayout, moveFolder, deleteFolder,
     // mpv
     mpvStatus, mpvDownload, mpvCancel, mpvFolder, onMpvEvent,
     // 皮肤

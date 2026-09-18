@@ -110,6 +110,7 @@ pub fn run() {
             commands::get_folder_layout,
             commands::save_folder_layout,
             commands::move_folder,
+            commands::delete_folder,
             commands::set_wallpaper_setting,
             commands::download_wallpaper,
             commands::cancel_download_wallpaper,

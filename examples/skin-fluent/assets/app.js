@@ -901,6 +901,22 @@
       else if (localRefresh) localRefresh();
     }
 
+    // 删除文件夹（递归，界面先确认；正在播放的由后端先停止）
+    function removeFolder(item, deep) {
+      SC.confirm({
+        title: SC.t("local.delFolder"),
+        body: SC.t("local.delFolderBody", item.key) + (deep > 0 ? `\n${SC.t("local.delFolderCount", deep)}` : ""),
+        okText: SC.t("common.delete"),
+        danger: true,
+      }).then(async (ok) => {
+        if (!ok) return;
+        if (!await SC.deleteFolder(item.path)) return;
+        forgetKey(item.key);
+        await SC.refreshAll();
+        if (localRefresh) localRefresh();
+      });
+    }
+
     function crumbs() {
       const segs = [{ label: SC.t("local.title"), dir: "" }];
       if (localDir) {
@@ -1268,6 +1284,7 @@
         ctxMenu(e.clientX, e.clientY, [
           { label: SC.t("local.open"), ico: "folder", act: () => enterDir(it.path) },
           { label: SC.t("common.location"), ico: "external", act: () => { if (SC.demo || !SC.client) SC.toast(`${SC.t("common.demo")} · ${SC.t("common.location")}`, "ok"); else SC.client.api.explore(it.path); } },
+          { label: SC.t("common.delete"), ico: "trash", danger: true, act: () => removeFolder(it, deep) },
         ]);
       });
       return tile;

@@ -355,6 +355,18 @@ class API {
     }
   }
 
+  /** 递归删除库内子文件夹（根目录不可删；确认由界面层负责） */
+  async deleteFolder(dir: string): Promise<ApiResult<boolean>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<boolean>("delete_folder", { dir });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: false };
+    }
+  }
+
   async explore(path: string): Promise<ApiResult<null>> {
     try {
       if (!this.isRunningInClient()) return noClient();
