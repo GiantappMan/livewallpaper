@@ -115,6 +115,7 @@
     menu: '<line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/>',
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
     clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
+    more: '<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
     info2: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/>',
   };
   function icon(name, size) {
@@ -305,7 +306,8 @@
     return wrap;
   }
 
-  const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]; // 封面缩放常用档位
+  const ZOOM_MIN = 0.5, ZOOM_MAX = 4; // 封面缩放边界（网格缩略图源 ≤1280px，400% 下仍清晰）
+  const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4]; // 封面缩放常用档位
   /** 缩放下拉选项：常用档位 + 当前非档位值的临时项（滚轮步进产生），按百分比升序 */
   function zoomPresetOpts(v) {
     const list = ZOOM_PRESETS.map((z) => ({ value: z, label: `${Math.round(z * 100)}%` }));
@@ -820,7 +822,7 @@
   let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
   let localResizeHooked = false;
   let localSeq = 0;        // 异步渲染序号：快速切换文件夹时丢弃过期结果
-  let localZoom = Math.min(2, Math.max(0.5, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 封面缩放（持久化；仅作用于封面尺寸，文字与画布布局不受影响）
+  let localZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 封面缩放（持久化；仅作用于封面尺寸，文字与画布布局不受影响）
   let localZoomKeys = null; // 本地库缩放快捷键入口（仅本视图存在，切视图置空）
   let zoomCtl = null;      // 右下角缩放控件（挂 body，仅本地库视图存在，切视图移除）
 
@@ -834,6 +836,23 @@
     e.preventDefault(); // 拦截 WebView 自身的 Ctrl+± 页面缩放
     localZoomKeys(step);
   });
+
+  // 本地库头部「滚出后再浮入」：标题区静态跟随内容滚走，完全离开视口后才以吸附态
+  // 浮到顶部（.is-float）。粘性定位本身会提前钉住，未滚出阶段用位移补偿让它继续跟走。
+  let locHeadEl = null, locHeadTop = 0, locHeadBottom = 0;
+  function syncLocHead() {
+    if (!locHeadEl || !locHeadEl.isConnected) return;
+    const st = viewEl.scrollTop;
+    if (st >= locHeadBottom) {
+      locHeadEl.classList.add("is-float");
+      locHeadEl.style.transform = "";
+    } else {
+      locHeadEl.classList.remove("is-float");
+      const shift = locHeadTop - st; // ≤0：钉住位置上移回自然位置，视觉上随内容滚走
+      locHeadEl.style.transform = shift < 0 ? `translateY(${shift}px)` : "";
+    }
+  }
+  viewEl.addEventListener("scroll", syncLocHead, { passive: true });
 
   function renderLocal() {
     viewEl.innerHTML = "";
@@ -873,27 +892,68 @@
       return out;
     }
 
-    const targetSel = selectEl(
-      [{ value: -1, label: SC.t("common.allScreens") }].concat(screens.map((s) => ({ value: s.index, label: SC.t("common.screen", s.deviceName || s.index) }))),
-      applyTarget,
-      (v) => { applyTarget = Number(v); },
-    );
-    const typeSel = selectEl(
-      [{ value: "all", label: SC.t("local.filterAll") }].concat([1, 2, 3, 4, 5, 6].map((tp) => ({ value: String(tp), label: SC.typeName(tp) }))),
-      localType,
-      (v) => { localType = String(v); localStorage.setItem("fluent.localType", localType); if (localRefresh) localRefresh(); },
-    );
-    const sortSel = selectEl(
-      [{ value: "name", label: SC.t("local.sortName") }, { value: "type", label: SC.t("local.sortType") }],
-      localSort,
-      (v) => { localSort = String(v); localStorage.setItem("fluent.localSort", localSort); if (localRefresh) localRefresh(); },
-    );
-
     function openDirs() {
       if (!roots[0]) { SC.toast(SC.t("cfg.dirsHint"), "err"); return; }
       if (SC.demo) { SC.toast(`${SC.t("common.demo")} · ${SC.t("local.openDirs")}`, "ok"); return; }
       SC.client.api.explore(roots[0]);
     }
+
+    // 低频命令全部收进「更多」二级菜单（Win11「查看更多」模式）：筛选项为就地生效的单选组，命令执行后收起
+    function moreMenu() {
+      const searching = !!searchQuery.trim();
+      const menu = el("div", { class: "pop-menu is-tall" });
+      const sec = (label) => el("div", { class: "pop-title" }, label);
+      const line = () => el("div", { class: "pop-line" });
+      const pick = (label, on, act) => {
+        const b = el("button", { class: `pop-item ${on ? "is-active" : ""}`, onclick: () => { closePops(); act(); } }, el("span", {}, label));
+        if (on) { const c = el("span", { class: "pop-check" }); c.innerHTML = icon("check", 13); b.append(c); }
+        return b;
+      };
+      const cmd = (ic, label, act) => {
+        const i = el("span", { class: "pop-ico" }); i.innerHTML = icon(ic, 15);
+        return el("button", { class: "pop-item", onclick: () => { closePops(); act(); } }, i, label);
+      };
+      const setType = (v) => { localType = v; localStorage.setItem("fluent.localType", v); if (localRefresh) localRefresh(); };
+      const setSort = (v) => { localSort = v; localStorage.setItem("fluent.localSort", v); if (localRefresh) localRefresh(); };
+
+      menu.append(sec(SC.t("local.target")),
+        pick(SC.t("common.allScreens"), applyTarget === -1, () => { applyTarget = -1; }));
+      for (const s of screens) menu.append(pick(SC.t("common.screen", s.deviceName || s.index), applyTarget === s.index, () => { applyTarget = s.index; }));
+      menu.append(line(), sec(SC.t("local.filter")),
+        pick(SC.t("local.filterAll"), localType === "all", () => setType("all")));
+      for (let tp = 1; tp <= 6; tp++) menu.append(pick(SC.typeName(tp), localType === String(tp), () => setType(String(tp))));
+      menu.append(line(), sec(SC.t("local.sort")),
+        pick(SC.t("local.sortName"), localSort === "name", () => setSort("name")),
+        pick(SC.t("local.sortType"), localSort === "type", () => setSort("type")),
+        line());
+      // 新建文件夹仅在库内子文件夹层级可用（根层级由 设置 → 壁纸目录 管理）；搜索时隐藏
+      if (!searching && localDir) menu.append(cmd("folderplus", SC.t("local.newFolder"), () => openNewFolderDialog()));
+      menu.append(cmd("refresh", SC.t("common.refresh"), () => SC.refreshAll()),
+        cmd("folder", SC.t("local.openDirs"), openDirs));
+      return menu;
+    }
+    const moreBtn = el("button", { class: "icon-btn", title: SC.t("local.more") });
+    moreBtn.innerHTML = icon("more", 16);
+    const morePop = pop(moreBtn, moreMenu, "right");
+
+    const crumb = el("nav", { class: "loc-crumb", "aria-label": "folder" });
+    const flowFolders = el("div", { class: "loc-folders" }); // 根层级 / 搜索态：流式文件夹卡
+    const flowGrid = el("div", { class: "loc-grid" });       // 根层级 / 搜索态：流式网格
+    const flowGroups = el("div", { class: "loc-groups" });   // 根层级：按文件夹分组平铺各文件夹内壁纸
+    const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
+
+    // 单行头部：面包屑 + 计数 + ⋯（不再重复「本地库」大标题，压低头部高度）。
+    // 静态跟随滚动，完全滚出视口后才浮入顶部吸附态（低频命令在 ⋯ 菜单里随时可用）
+    const headEl = el("div", { class: "loc-head" },
+      el("div", { class: "loc-head-row" },
+        crumb,
+        el("span", { class: "title-count", dataset: { count: "" } }, SC.t("local.count", all.length)),
+        el("div", { class: "page-actions" }, morePop)));
+    viewEl.append(headEl);
+    locHeadEl = headEl;
+    locHeadTop = headEl.offsetTop;
+    locHeadBottom = locHeadTop + headEl.offsetHeight;
+    syncLocHead();
 
     const newFolderBtnEl = () => {
       const b = el("button", { class: "btn btn-sm" });
@@ -901,28 +961,9 @@
       b.addEventListener("click", () => openNewFolderDialog());
       return b;
     };
-    // 新建文件夹仅在库内子文件夹层级可用（根层级由 设置 → 壁纸目录 管理）；搜索时隐藏
-    const newFolderBtn = newFolderBtnEl();
-    newFolderBtn.hidden = !localDir;
 
-    viewEl.append(el("header", { class: "page-head head-row" },
-      el("h1", { class: "page-title" }, SC.t("local.title")),
-      el("span", { class: "title-count", dataset: { count: "" } }, SC.t("local.count", all.length)),
-      el("div", { class: "page-actions" },
-        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.target")), targetSel),
-        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.filter")), typeSel),
-        el("div", { class: "cmdbar-field" }, el("span", { class: "dim-label" }, SC.t("local.sort")), sortSel),
-        newFolderBtn,
-        el("button", { class: "icon-btn", title: SC.t("common.refresh"), onclick: () => SC.refreshAll() }, (() => { const s = el("span"); s.innerHTML = icon("refresh", 15); return s; })()),
-        el("button", { class: "icon-btn", title: SC.t("local.openDirs"), onclick: openDirs }, (() => { const s = el("span"); s.innerHTML = icon("folder", 15); return s; })()))));
-
-    const crumb = el("nav", { class: "loc-crumb", "aria-label": "folder" });
-    const flowFolders = el("div", { class: "loc-folders" }); // 根层级 / 搜索态：流式文件夹卡
-    const flowGrid = el("div", { class: "loc-grid" });       // 根层级 / 搜索态：流式网格
-    const flowGroups = el("div", { class: "loc-groups" });   // 根层级：按文件夹分组平铺各文件夹内壁纸
-    const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
     // 缩放以 --loc-zoom 变量下发，仅封面尺寸消费（网格列宽 / 文件夹缩略图高度），文字与画布槽位不受影响
-    const locBody = el("div", { class: "loc-body" }, crumb, flowFolders, flowGrid, flowGroups, canvas);
+    const locBody = el("div", { class: "loc-body" }, flowFolders, flowGrid, flowGroups, canvas);
     locBody.style.setProperty("--loc-zoom", localZoom);
     viewEl.append(locBody);
 
@@ -1109,7 +1150,6 @@
       const seq = ++localSeq;
       pathIdx = null; // 壁纸/目录可能已变化，路径索引按本轮渲染重建
       const searching = !!searchQuery.trim();
-      if (newFolderBtn) newFolderBtn.hidden = searching || !localDir;
       const folders = searching ? [] : await SC.listFolders(localDir);
       if (seq !== localSeq) return;
       const idx = pathIndex();
@@ -1196,7 +1236,7 @@
     localRefresh = renderGrid;
 
     // ---- 封面缩放：右下角放大镜控件，平时收起为小图标（悬停展开 − / 百分比 / +）；
-    // Ctrl+滚轮 / Ctrl+= / Ctrl+- 步进，Ctrl+0 复位，范围 50%–200% ----
+    // Ctrl+滚轮 / Ctrl+= / Ctrl+- 步进，Ctrl+0 复位，范围 50%–400% ----
     if (zoomCtl) zoomCtl.remove(); // 重渲染防重复挂载
     zoomCtl = el("div", { class: "loc-zoom-ctl", title: SC.t("local.zoomHint") });
     const zoomToggle = el("div", { class: "loc-zoom-toggle" });
@@ -1220,7 +1260,7 @@
       zoomPeekTimer = setTimeout(() => zoomCtl && zoomCtl.classList.remove("is-open"), 1800);
     }
     function setZoom(v) {
-      v = Math.min(2, Math.max(0.5, Math.round(v * 100) / 100));
+      v = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(v * 100) / 100));
       if (v === localZoom) return;
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));

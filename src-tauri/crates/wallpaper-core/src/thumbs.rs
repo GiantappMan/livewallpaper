@@ -1,5 +1,6 @@
-//! 封面缩略图：为封面生成最长边 ≤[`THUMB_MAX_DIM`] 的 JPEG 边车文件
-//! （与封面同目录、`<封面主名>.thumb.jpg`）。
+//! 封面缩略图：为超过[`THUMB_MAX_DIM`]的大封面生成 JPEG 边车文件
+//! （与封面同目录、`<封面主名>.thumb.jpg`）；尺寸已达上限的小封面不出边车，
+//! `?thumb=1` 持续回退原图——浏览器解码这种图毫无压力。
 //!
 //! 背景：视频封面是 mpv 原分辨率截帧、图片壁纸封面是原图复制，网格里每滚进
 //! 一屏就要解码数张 4K 图，是封面滚动掉帧的主因；缩略图把解码成本降一个量级。
@@ -88,9 +89,10 @@ fn worker_loop() {
         if thumb.is_file() {
             continue;
         }
-        if let Err(e) = generate(&cover, &thumb) {
-            log::debug!("cover thumb skipped for {}: {e:#}", cover.display());
-        }
+        // 失败静默跳过（模块约定）：失败封面（AVIF 数据、v3 遗留 ?t= 路径）是
+        // 永久性失败且每次扫描都会重新入队，打日志只会每轮刷屏；
+        // ?thumb=1 请求在边车缺失时自动回退原图，功能不受影响
+        let _ = generate(&cover, &thumb);
     }
 }
 
@@ -98,25 +100,29 @@ fn generate(cover: &Path, thumb: &Path) -> anyhow::Result<()> {
     if !sidecar_allowed(cover) {
         anyhow::bail!("cover outside .metadata");
     }
-    let reader = image::ImageReader::open(cover)?.with_guessed_format()?;
-    if reader.format().is_none() {
-        anyhow::bail!("unknown image format");
+    // 先只读头部拿尺寸：小封面不出边车（无需缩小），AVIF 等不支持的格式也在
+    // 这一步廉价失败跳过，都避免了全量解码 + 重编码的浪费
+    let (w, h) = image::ImageReader::open(cover)?
+        .with_guessed_format()?
+        .into_dimensions()?;
+    if w.max(h) <= THUMB_MAX_DIM {
+        return Ok(());
     }
+
     // 尊重 EXIF 旋转（手机照片类封面），与浏览器显示原图的行为一致
-    let mut decoder = reader.into_decoder()?;
+    let mut decoder = image::ImageReader::open(cover)?
+        .with_guessed_format()?
+        .into_decoder()?;
     let orientation = decoder
         .orientation()
         .unwrap_or(image::metadata::Orientation::NoTransforms);
     let mut img = DynamicImage::from_decoder(decoder)?;
     img.apply_orientation(orientation);
 
+    // 走到这里必然超过上限，等比缩到最长边 = THUMB_MAX_DIM
     let (w, h) = (img.width(), img.height());
-    let img = if w.max(h) > THUMB_MAX_DIM {
-        let (tw, th) = fit_within(w, h, THUMB_MAX_DIM);
-        img.resize_exact(tw, th, image::imageops::FilterType::Triangle)
-    } else {
-        img
-    };
+    let (tw, th) = fit_within(w, h, THUMB_MAX_DIM);
+    let img = img.resize_exact(tw, th, image::imageops::FilterType::Triangle);
     // JPEG 无 alpha；封面是照片类内容，直接丢 alpha 即可
     let rgb = img.to_rgb8();
 
@@ -197,17 +203,13 @@ mod tests {
     }
 
     #[test]
-    fn small_cover_keeps_dimensions() {
+    fn small_cover_gets_no_sidecar() {
         let meta = meta_dir("small");
         let cover = meta.join("small.cover.webp");
         write_test_image(&cover, 400, 300, image::ImageFormat::WebP);
         let thumb = thumb_path_for(&cover);
         generate(&cover, &thumb).unwrap();
-        let dims = image::ImageReader::open(&thumb)
-            .unwrap()
-            .into_dimensions()
-            .unwrap();
-        assert_eq!(dims, (400, 300));
+        assert!(!thumb.exists());
         let _ = std::fs::remove_dir_all(meta.parent().unwrap());
     }
 }
