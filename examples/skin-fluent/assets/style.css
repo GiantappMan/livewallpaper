@@ -760,6 +760,8 @@ button.card-row:hover { background: var(--subtle); }
 
 /* 文件夹浏览：面包屑（各层级段都是拖拽投放目标） */
 .btn[hidden], .icon-btn[hidden] { display: none; }
+/* 本地库内容区包裹层：Ctrl+滚轮 / Ctrl+± 缩放施加于此；relative 使画布 offsetTop 与其同坐标系 */
+.loc-body { position: relative; }
 .loc-crumb { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; margin-bottom: 12px; }
 .loc-crumb-seg {
   display: inline-flex; align-items: center; height: 28px; padding: 0 9px;
@@ -784,10 +786,22 @@ button.card-row:hover { background: var(--subtle); }
 .loc-folder:active { opacity: .92; }
 .loc-folder.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
 .loc-folder-thumb { position: relative; width: 100%; height: 64px; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); }
-.loc-folder-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-folder-thumb.is-empty { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
+/* 文件夹多图拼贴：1 张全幅、2 张两列、3-4 张 2×2 */
+.loc-thumb-grid { position: absolute; inset: 0; display: grid; gap: 1px; }
+.loc-thumb-grid img { width: 100%; height: 100%; object-fit: cover; display: block; min-width: 0; min-height: 0; }
+.loc-thumb-grid.is-n2 { grid-template-columns: 1fr 1fr; }
+.loc-thumb-grid.is-n3, .loc-thumb-grid.is-n4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
 .loc-folder-name { max-width: 100%; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-folder-count { font-size: 11px; color: var(--ink-3); }
+
+/* 根层级：按文件夹分组平铺各库根目录的壁纸 */
+.loc-groups { display: flex; flex-direction: column; gap: 20px; margin-bottom: 14px; }
+.loc-groups[hidden] { display: none; }
+.loc-group-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.loc-group-name { font-size: 13px; font-weight: 600; }
+.loc-group-count { font-size: 11px; color: var(--ink-3); }
+.loc-group .loc-grid { min-height: 0; }
 
 /* 桌面画布：子文件夹层级自由摆放（Windows 桌面式，位置记忆于 .metadata/layout.json） */
 .loc-canvas { position: relative; min-height: 240px; user-select: none; -webkit-user-select: none; }
@@ -808,7 +822,6 @@ button.card-row:hover { background: var(--subtle); }
 .loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
 .loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
-.loc-tile-thumb.is-folder img { position: absolute; inset: 0; }
 .loc-tile-live {
   position: absolute; top: 4px; left: 4px; display: none; align-items: center; justify-content: center;
   width: 17px; height: 17px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
@@ -842,6 +855,19 @@ button.card-row:hover { background: var(--subtle); }
   pointer-events: none;
 }
 .loc-slot-hint[hidden] { display: none; }
+
+/* 缩放 HUD：Ctrl+滚轮 / Ctrl+± 调整时短暂显示当前百分比（挂在 body，固定于 dock 上方居中） */
+.loc-zoom-hud {
+  position: fixed; left: 50%; bottom: 96px; z-index: 110;
+  transform: translateX(-50%) translateY(6px);
+  padding: 5px 14px; border-radius: var(--r-lg); font-size: 13px; font-weight: 600; color: var(--ink);
+  background: rgba(249, 249, 249, .85); backdrop-filter: blur(24px) saturate(125%); -webkit-backdrop-filter: blur(24px) saturate(125%);
+  border: 1px solid var(--stroke); box-shadow: var(--shadow-fly);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--speed), transform var(--speed);
+}
+.loc-zoom-hud.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+[data-mode="dark"] .loc-zoom-hud { background: rgba(44, 44, 44, .85); }
 
 /* 「移动到」对话框：文件夹树 */
 .loc-move-tree { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
