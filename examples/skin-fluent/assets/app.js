@@ -837,22 +837,14 @@
     localZoomKeys(step);
   });
 
-  // 本地库头部「滚出后再浮入」：标题区静态跟随内容滚走，完全离开视口后才以吸附态
-  // 浮到顶部（.is-float）。粘性定位本身会提前钉住，未滚出阶段用位移补偿让它继续跟走。
-  let locHeadEl = null, locHeadTop = 0, locHeadBottom = 0;
-  function syncLocHead() {
-    if (!locHeadEl || !locHeadEl.isConnected) return;
-    const st = viewEl.scrollTop;
-    if (st >= locHeadBottom) {
-      locHeadEl.classList.add("is-float");
-      locHeadEl.style.transform = "";
-    } else {
-      locHeadEl.classList.remove("is-float");
-      const shift = locHeadTop - st; // ≤0：钉住位置上移回自然位置，视觉上随内容滚走
-      locHeadEl.style.transform = shift < 0 ? `translateY(${shift}px)` : "";
-    }
-  }
-  viewEl.addEventListener("scroll", syncLocHead, { passive: true });
+  // 本地库头部：滚动贴顶常驻（sticky），滚过之后加亚克力底与底缘描边和内容分层
+  let locStuck = false;
+  viewEl.addEventListener("scroll", () => {
+    const stuck = viewEl.scrollTop > 0;
+    if (stuck === locStuck) return;
+    locStuck = stuck;
+    viewEl.classList.toggle("loc-stuck", stuck);
+  }, { passive: true });
 
   function renderLocal() {
     viewEl.innerHTML = "";
@@ -943,17 +935,12 @@
     const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
 
     // 单行头部：面包屑 + 计数 + ⋯（不再重复「本地库」大标题，压低头部高度）。
-    // 静态跟随滚动，完全滚出视口后才浮入顶部吸附态（低频命令在 ⋯ 菜单里随时可用）
-    const headEl = el("div", { class: "loc-head" },
+    // 滚动贴顶常驻，低频命令在 ⋯ 菜单里随时可用
+    viewEl.append(el("div", { class: "loc-head" },
       el("div", { class: "loc-head-row" },
         crumb,
         el("span", { class: "title-count", dataset: { count: "" } }, SC.t("local.count", all.length)),
-        el("div", { class: "page-actions" }, morePop)));
-    viewEl.append(headEl);
-    locHeadEl = headEl;
-    locHeadTop = headEl.offsetTop;
-    locHeadBottom = locHeadTop + headEl.offsetHeight;
-    syncLocHead();
+        el("div", { class: "page-actions" }, morePop))));
 
     const newFolderBtnEl = () => {
       const b = el("button", { class: "btn btn-sm" });
@@ -974,8 +961,8 @@
     // 磁贴高度贴合内容不放大余量，步距按两行名称的兜底高度算；布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
     let CELL_W = 108 * localZoom, CELL_H = 68 * localZoom + 46;
     let pitch = CELL_W;          // 实际列距（当前固定 = CELL_W，即磁贴 100z + 间隙 8z，均不随窗口变）
-    const CANVAS_PAD = 10;       // 画布左侧固定留白：边缘磁贴的选中描边/槽位提示不贴边（不随缩放）；
-                                 // 右侧无对称留白——按约定末列可越过右留白，以视口裁剪边为界
+    const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距（与壁纸库网格同边距）；磁贴选中描边/槽位提示
+                                 // 不贴边由 36px 页边距兜底。右侧无留白——按约定末列可越过右缘，以视口裁剪边为界
     let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
     let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
     let slotIndex = new Map();   // "c,r" → key（占用表）
@@ -1287,7 +1274,7 @@
       const viewRect = viewEl.getBoundingClientRect();
       const canvasRect = canvas.getBoundingClientRect();
       const clipLocal = viewRect.right - canvasRect.left - 2; // .view 裁剪边换算到画布坐标系
-      cols = Math.max(1, Math.floor((clipLocal - CANVAS_PAD - 4 * localZoom - 100 * localZoom) / CELL_W) + 1);
+      cols = Math.max(1, Math.floor((clipLocal - CANVAS_PAD - 100 * localZoom) / CELL_W) + 1);
       pitch = CELL_W;
       positions = new Map();
       slotIndex = new Map();
@@ -1327,6 +1314,17 @@
       if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => { if (localReflow) localReflow(); }).observe(viewEl);
     }
 
+    // 多屏：悬停显示逐屏应用 chips（与壁纸库卡片同款），流式卡片与画布磁贴共用
+    function screenChipsOf(w) {
+      return el("div", { class: "loc-screens" },
+        el("button", { class: "chip", title: SC.t("common.allScreens"), onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, []); } }, SC.t("common.allScreens")),
+        screens.map((s) => el("button", {
+          class: "chip",
+          title: SC.t("common.screen", s.deviceName || s.index),
+          onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, [s.index]); },
+        }, String(s.index + 1))));
+    }
+
     function cardOf(w) {
       const isPlaying = playing.has(w.filePath);
       const card = el("article", { class: `loc-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
@@ -1345,17 +1343,8 @@
         actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
         actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w)));
 
-      // 多屏：顶部逐屏应用
-      let screenChips = null;
-      if (screens.length > 1) {
-        screenChips = el("div", { class: "loc-screens" },
-          el("button", { class: "chip", title: SC.t("common.allScreens"), onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, []); } }, SC.t("common.allScreens")),
-          screens.map((s) => el("button", {
-            class: "chip",
-            title: SC.t("common.screen", s.deviceName || s.index),
-            onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, [s.index]); },
-          }, String(s.index + 1))));
-      }
+      // 多屏：悬停逐屏应用
+      const screenChips = screens.length > 1 ? screenChipsOf(w) : null;
       const meta = el("div", { class: "loc-meta" },
         el("div", { class: "loc-text" },
           el("span", { class: "loc-name", title: nameOf(w) }, nameOf(w)),
@@ -1511,8 +1500,10 @@
       thumb.append(
         el("span", { class: "loc-tile-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 9); return s; })()),
         el("span", { class: "loc-tile-type" }, SC.typeName(w.meta && w.meta.type)),
+        screens.length > 1 ? screenChipsOf(w) : null, // 悬停逐屏应用，同壁纸库卡片
         el("span", { class: "loc-acts" },
           actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
+          actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
           actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w))));
       tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
       tile.addEventListener("dblclick", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));

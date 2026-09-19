@@ -250,8 +250,18 @@ pub fn load_wallpaper(file: &Path, mpv_exe: &Path, default_cover: &Path) -> Resu
             .map(|t| t.with_timezone(&chrono::Local))
     });
 
+    // 整目录壁纸的归属目录取项目目录的父级：项目内部结构对浏览不可见，
+    // 磁贴直接出现在所在文件夹层级（与扫描的单条目语义、文件夹列表口径一致）
+    let browse_dir = if is_project_entry {
+        dir.parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| dir.to_path_buf())
+    } else {
+        dir.to_path_buf()
+    };
+
     Ok(Wallpaper {
-        dir: Some(dir.to_path_buf()),
+        dir: Some(browse_dir),
         file_name: Some(
             file.file_name()
                 .map(|s| s.to_string_lossy().to_string())
@@ -630,7 +640,8 @@ pub fn list_folders(roots: &[PathBuf], dir: &Path) -> Result<Vec<PathBuf>> {
     for entry in std::fs::read_dir(dir)?.flatten() {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
-        if path.is_dir() && !name.starts_with('.') {
+        // 含有效 project.json 的整目录壁纸按单条目扫描，不作为文件夹展示
+        if path.is_dir() && !name.starts_with('.') && project_file_field(&path).is_none() {
             list.push(path);
         }
     }
@@ -883,6 +894,8 @@ mod tests {
         assert_eq!(w.meta.title, "Bocchi the Rock!");
         assert_eq!(w.meta.id.as_deref(), Some("2905017768"));
         assert_eq!(w.cover_path.as_deref(), Some(project.join("preview.gif").as_path()));
+        // 归属目录是项目目录的父级：磁贴出现在所在文件夹层级，项目内部不可导航
+        assert_eq!(w.dir.as_deref(), Some(root.as_path()));
 
         // 项目目录本身作为媒体库根目录时同样只出一个条目
         let list = scan_directories(&[project], Path::new("mpv"), Path::new("cover"));
@@ -980,13 +993,21 @@ mod tests {
         std::fs::remove_dir_all(&root).ok();
     }
 
-    /// 文件夹整理：列子目录跳过 `.metadata` 与文件；空串返回存在的根目录。
+    /// 文件夹整理：列子目录跳过 `.metadata`、文件与整目录壁纸（project.json）；空串返回存在的根目录。
     #[test]
     fn list_folders_lists_children_and_roots() {
         let root = temp_root("ls");
         std::fs::create_dir_all(root.join("sub")).unwrap();
         std::fs::create_dir_all(root.join(META_DIR)).unwrap();
         std::fs::write(root.join("f.mp4"), "x").unwrap();
+        // Wallpaper Engine 项目目录不算文件夹
+        let project = root.join("2905017768");
+        std::fs::create_dir_all(&project).unwrap();
+        std::fs::write(
+            project.join("project.json"),
+            r#"{"type":"web","file":"index.html"}"#,
+        )
+        .unwrap();
         let roots = vec![root.clone(), PathBuf::from("Z:\\missing")];
 
         let tops = list_folders(&roots, Path::new("")).unwrap();
