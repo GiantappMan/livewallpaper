@@ -1291,6 +1291,15 @@
       return tile;
     }
 
+    // 文件夹缩略图：优先直接子壁纸封面，其次后代封面，再退回视频/图片文件本身
+    function folderCoverUrl(path) {
+      const direct = all.filter((w) => samePath(w.dir, path));
+      const deeper = all.filter((w) => underDir(w.dir, path));
+      const hit = direct.find((w) => w.coverUrl) || deeper.find((w) => w.coverUrl)
+        || direct.find((w) => w.fileUrl) || deeper.find((w) => w.fileUrl);
+      return hit ? (hit.coverUrl || hit.fileUrl) : "";
+    }
+
     function tileFolder(it) {
       const deep = all.filter((w) => samePath(w.dir, it.path) || underDir(w.dir, it.path)).length;
       const tile = el("article", { class: "loc-tile is-folder", dataset: { folder: it.path } },
@@ -1298,6 +1307,13 @@
           (() => { const s = el("span"); s.innerHTML = icon("folder", 40); return s; })(),
           el("span", { class: "loc-tile-count" }, String(deep))),
         el("span", { class: "loc-tile-name", title: it.path }, it.key));
+      const cover = folderCoverUrl(it.path);
+      if (cover) {
+        // 覆盖在文件夹图标之上，加载失败时移除即露出图标兜底
+        const img = el("img", { src: bust(cover), loading: "lazy", alt: "" });
+        img.addEventListener("error", () => img.remove());
+        tile.querySelector(".loc-tile-thumb").prepend(img);
+      }
       tile.addEventListener("dblclick", () => enterDir(it.path));
       tile.addEventListener("contextmenu", (e) => {
         e.preventDefault();
@@ -1311,11 +1327,22 @@
       return tile;
     }
 
-    // 根层级的库根目录卡（流式区）：点击进入
+    // 根层级的库根目录卡（流式区）：点击进入；缩略图取文件夹内壁纸封面
     function folderCard(path) {
       const deep = all.filter((w) => samePath(w.dir, path) || underDir(w.dir, path)).length;
+      const folderIco = () => { const s = el("span"); s.innerHTML = icon("folder", 22); return s; };
+      const thumb = el("span", { class: "loc-folder-thumb" });
+      const cover = folderCoverUrl(path);
+      if (cover) {
+        const img = el("img", { src: bust(cover), loading: "lazy", alt: "" });
+        img.addEventListener("error", () => { img.remove(); thumb.classList.add("is-empty"); thumb.append(folderIco()); });
+        thumb.append(img);
+      } else {
+        thumb.classList.add("is-empty");
+        thumb.append(folderIco());
+      }
       const card = el("button", { class: "loc-folder" },
-        el("span", { class: "loc-folder-ico" }, (() => { const s = el("span"); s.innerHTML = icon("folder", 22); return s; })()),
+        thumb,
         el("span", { class: "loc-folder-name", title: path }, dirName(path)),
         el("span", { class: "loc-folder-count" }, SC.t("local.count", deep)));
       card.addEventListener("click", () => enterDir(path));

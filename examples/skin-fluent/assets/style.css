@@ -783,7 +783,9 @@ button.card-row:hover { background: var(--subtle); }
 .loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .loc-folder:active { opacity: .92; }
 .loc-folder.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
-.loc-folder-ico { color: var(--accent); margin-bottom: auto; }
+.loc-folder-thumb { position: relative; width: 100%; height: 64px; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); }
+.loc-folder-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.loc-folder-thumb.is-empty { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
 .loc-folder-name { max-width: 100%; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-folder-count { font-size: 11px; color: var(--ink-3); }
 
@@ -806,6 +808,7 @@ button.card-row:hover { background: var(--subtle); }
 .loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
 .loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
+.loc-tile-thumb.is-folder img { position: absolute; inset: 0; }
 .loc-tile-live {
   position: absolute; top: 4px; left: 4px; display: none; align-items: center; justify-content: center;
   width: 17px; height: 17px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
