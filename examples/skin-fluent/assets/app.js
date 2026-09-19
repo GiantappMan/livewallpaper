@@ -10,11 +10,55 @@
   const SC = window.SC;
   const { el } = SC;
 
-  // 媒体 URL 防缓存（data: URI 不能带查询串）
+  // 媒体 URL 防缓存（data: URI 不能带查询串）。令牌按会话固定而非每次渲染取当前时间：
+  // 几千个封面时每次重渲染都换 URL 会让 HTTP 缓存全失效、可见封面反复重新下载解码；
+  // 封面内容变化时上传走的是新文件名（cover-<时间戳>），URL 天然更新
+  const BUST_TOKEN = `t=${Date.now()}`;
   function bust(url) {
     if (!url || url.startsWith("data:")) return url;
-    return url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+    return url + (url.includes("?") ? "&" : "?") + BUST_TOKEN;
   }
+
+  // 大库分帧渲染：首屏先插一批，其余每帧补一批，避免一次性构建数千节点长时间占住主线程；
+  // isStale() 为真（重渲染 / 切换文件夹）或容器脱离文档时停止补插。返回取消函数。
+  // rAF 之外挂 60ms 定时兜底：窗口隐藏时 rAF 整体暂停，定时器让补插仍能缓慢推进
+  function appendChunked(container, list, build, isStale, firstBatch = 120, batch = 80) {
+    if (!list.length) return () => {};
+    let i = 0;
+    let alive = true;
+    const stop = () => { alive = false; };
+    const frag = document.createDocumentFragment();
+    const end = Math.min(list.length, firstBatch);
+    for (; i < end; i++) frag.append(build(list[i]));
+    container.append(frag);
+    if (i < list.length) schedule();
+    function schedule() {
+      let fired = false;
+      const run = () => { if (fired) return; fired = true; next(); };
+      requestAnimationFrame(run);
+      setTimeout(run, 60);
+    }
+    function next() {
+      if (!alive || (isStale && isStale()) || !container.isConnected) return;
+      const f = document.createDocumentFragment();
+      const e = Math.min(list.length, i + batch);
+      for (; i < e; i++) f.append(build(list[i]));
+      container.append(f);
+      if (i < list.length) schedule();
+    }
+    return stop;
+  }
+
+  // 封面地址：优先 coverUrl；缺失时仅对图片文件回退 fileUrl。
+  // 视频拿原始文件当 <img> 缩略图只会整段拉流后加载失败，.playlist 是文本占位，都纯浪费请求
+  function coverSrcOf(w) {
+    if (w.coverUrl) return w.coverUrl;
+    const name = w.fileName || "";
+    return !isVideoName(name) && /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(name) ? (w.fileUrl || "") : "";
+  }
+
+  // 名称排序统一走共享 Collator：比每对比较各调一次 localeCompare 快一个量级（几千项排序明显）
+  const NAME_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
   // ---------------------------------------------------------------- 图标
   const I = {
@@ -254,6 +298,14 @@
     return wrap;
   }
 
+  const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]; // 封面缩放常用档位
+  /** 缩放下拉选项：常用档位 + 当前非档位值的临时项（滚轮步进产生），按百分比升序 */
+  function zoomPresetOpts(v) {
+    const list = ZOOM_PRESETS.map((z) => ({ value: z, label: `${Math.round(z * 100)}%` }));
+    if (!list.some((o) => o.value === v)) list.push({ value: v, label: `${Math.round(v * 100)}%` });
+    return list.sort((a, b) => a.value - b.value);
+  }
+
   function fieldRow(label, control, hint) {
     return el("div", { class: "field" },
       el("div", { class: "field-head" }, el("span", { class: "field-label" }, label), control),
@@ -305,6 +357,7 @@
 
   // ---------------------------------------------------------------- 库视图
   let wallpapersCache = [];
+  let libSeq = 0; // 壁纸库网格分帧渲染序号：重渲染后旧补插任务作废
   function renderLibrary() {
     viewEl.innerHTML = "";
     const all = wallpapersCache;
@@ -343,6 +396,7 @@
       return q ? all.filter((w) => ((w.meta && w.meta.title) || "").toLowerCase().includes(q) || (w.fileName || "").toLowerCase().includes(q)) : all;
     }
     function renderGridOnly() {
+      const seq = ++libSeq;
       grid.innerHTML = "";
       const items = filtered();
       if (!items.length) {
@@ -355,7 +409,7 @@
             el("button", { class: "btn", onclick: () => go("settings", "wallpaper") }, SC.t("cfg.dirs")))));
         return;
       }
-      for (const w of items) grid.append(cardOf(w, playing));
+      appendChunked(grid, items, (w) => cardOf(w, playing), () => seq !== libSeq);
     }
     refreshGrid = renderGridOnly;
 
@@ -363,8 +417,9 @@
       const isPlaying = playingSet.has(w.filePath);
       const card = el("article", { class: `wall-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
       const cover = el("div", { class: "wall-cover" });
-      if (w.coverUrl || w.fileUrl) {
-        const img = el("img", { src: bust(w.coverUrl || w.fileUrl), loading: "lazy", alt: "" });
+      const src = coverSrcOf(w);
+      if (src) {
+        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -667,14 +722,16 @@
         else candidates.forEach((c) => picked.delete(c.filePath));
         renderGrid();
       });
+      let pickSeq = 0;
       function renderGrid() {
+        const seq = ++pickSeq;
         grid.innerHTML = "";
-        for (const w of candidates) {
+        appendChunked(grid, candidates, (w) => {
           const on = picked.has(w.filePath);
-          grid.append(el("button", { class: `pick ${on ? "is-on" : ""}`, onclick: () => { on ? picked.delete(w.filePath) : picked.add(w.filePath); renderGrid(); syncAll(); } },
-            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: w.coverUrl, loading: "lazy" }) : null, on ? el("span", { class: "pick-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 12); return s; })()) : null),
-            el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—")));
-        }
+          return el("button", { class: `pick ${on ? "is-on" : ""}`, onclick: () => { on ? picked.delete(w.filePath) : picked.add(w.filePath); renderGrid(); syncAll(); } },
+            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: w.coverUrl, loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 12); return s; })()) : null),
+            el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
+        }, () => seq !== pickSeq);
       }
       renderGrid(); syncAll();
       sheet.append(
@@ -759,7 +816,6 @@
   let localZoom = Math.min(2, Math.max(0.5, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 封面缩放（持久化；仅作用于封面尺寸，文字与画布布局不受影响）
   let localZoomKeys = null; // 本地库缩放快捷键入口（仅本视图存在，切视图置空）
   let zoomCtl = null;      // 右下角缩放控件（挂 body，仅本地库视图存在，切视图移除）
-  let zoomValEl = null;    // 控件中间的百分比按钮（点击复位，setZoom 时同步文案）
 
   // 缩放快捷键：Ctrl+= / Ctrl+- 步进，Ctrl+0 复位（滚轮在 .loc-body 上单独监听）
   window.addEventListener("keydown", (e) => {
@@ -783,6 +839,32 @@
     const normWin = (p) => String(p || "").toLowerCase().replace(/\//g, "\\").replace(/\\+$/, "");
     const samePath = (a, b) => !!String(a || "") && normWin(a) === normWin(b);
     const underDir = (p, base) => normWin(p).startsWith(`${normWin(base)}\\`);
+    // 路径索引：每张壁纸的规范目录只算一次（O(N)），供范围过滤与文件夹递归查询复用。
+    // 不建索引时文件夹计数 / 拼贴 / 分组各自对全部壁纸做正则规范化，几千壁纸 × 多文件夹是平方级开销
+    let pathIdx = null;
+    function pathIndex() {
+      if (pathIdx) return pathIdx;
+      const cache = new Map();
+      const norm = (p) => {
+        let n = cache.get(p);
+        if (n === undefined) { n = normWin(p); cache.set(p, n); }
+        return n;
+      };
+      pathIdx = { norm, dirs: all.map((w) => norm(w.dir)) };
+      return pathIdx;
+    }
+    // 某文件夹下的全部壁纸（含子文件夹；口径与 samePath || underDir 一致）
+    function kidsUnder(path) {
+      const idx = pathIndex();
+      const base = idx.norm(path);
+      const withSep = `${base}\\`;
+      const out = [];
+      for (let i = 0; i < all.length; i++) {
+        const d = idx.dirs[i];
+        if (d === base || d.startsWith(withSep)) out.push(all[i]);
+      }
+      return out;
+    }
 
     const targetSel = selectEl(
       [{ value: -1, label: SC.t("common.allScreens") }].concat(screens.map((s) => ({ value: s.index, label: SC.t("common.screen", s.deviceName || s.index) }))),
@@ -843,7 +925,9 @@
     // 槽位步距与 .loc-tile 联动：宽 = 磁贴 100z + 8z 间隙；高 = 磁贴内容高（缩略图 52z + 边距间隙 16z + 名称两行 30px）+ 16px 行距。
     // 磁贴高度贴合内容不放大余量，步距按两行名称的兜底高度算；布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
     let CELL_W = 108 * localZoom, CELL_H = 68 * localZoom + 46;
-    const CANVAS_PAD = 10; // 画布四周固定留白：边缘磁贴的选中描边/槽位提示不贴边（不随缩放）
+    let pitch = CELL_W;          // 实际列距（当前固定 = CELL_W，即磁贴 100z + 间隙 8z，均不随窗口变）
+    const CANVAS_PAD = 10;       // 画布左侧固定留白：边缘磁贴的选中描边/槽位提示不贴边（不随缩放）；
+                                 // 右侧无对称留白——按约定末列可越过右留白，以视口裁剪边为界
     let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
     let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
     let slotIndex = new Map();   // "c,r" → key（占用表）
@@ -983,11 +1067,13 @@
         return nameOf(w).toLowerCase().includes(q) || (w.fileName || "").toLowerCase().includes(q);
       });
     }
+    // 预取名称后用共享 Collator 排序：避免几千项时每对比较重复取值 + localeCompare
     function sorted(list) {
-      const byName = (a, b) => nameOf(a).localeCompare(nameOf(b), undefined, { numeric: true, sensitivity: "base" });
-      return localSort === "type"
-        ? [...list].sort((a, b) => ((a.meta && a.meta.type) || 0) - ((b.meta && b.meta.type) || 0) || byName(a, b))
-        : [...list].sort(byName);
+      const cmp = NAME_COLLATOR.compare.bind(NAME_COLLATOR);
+      const keyed = list.map((w) => [w, nameOf(w)]);
+      if (localSort === "type") keyed.sort((a, b) => ((a[0].meta && a[0].meta.type) || 0) - ((b[0].meta && b[0].meta.type) || 0) || cmp(a[1], b[1]));
+      else keyed.sort((a, b) => cmp(a[1], b[1]));
+      return keyed.map((p) => p[0]);
     }
 
     function emptyNode(searching) {
@@ -1014,11 +1100,14 @@
 
     async function renderGrid() {
       const seq = ++localSeq;
+      pathIdx = null; // 壁纸/目录可能已变化，路径索引按本轮渲染重建
       const searching = !!searchQuery.trim();
       if (newFolderBtn) newFolderBtn.hidden = searching || !localDir;
       const folders = searching ? [] : await SC.listFolders(localDir);
       if (seq !== localSeq) return;
-      const scope = searching ? all : all.filter((w) => samePath(w.dir, localDir));
+      const idx = pathIndex();
+      const curDir = idx.norm(localDir);
+      const scope = searching ? all : all.filter((_, i) => idx.dirs[i] === curDir);
       const files = sorted(filtered(scope));
       const countEl = viewEl.querySelector("[data-count]");
       if (countEl) countEl.textContent = SC.t("local.count", files.length + folders.length);
@@ -1041,8 +1130,8 @@
         if (!files.length && !folders.length) flowGrid.append(emptyNode(searching));
         // 有文件夹时根层级网格必然为空，收起让位给分组平铺（避免 .loc-grid 的 min-height 留大空白）
         flowGrid.hidden = !files.length && !!folders.length;
-        for (const w of files) flowGrid.append(cardOf(w));
-        renderGroups(folders);
+        appendChunked(flowGrid, files, cardOf, () => seq !== localSeq);
+        renderGroups(folders, () => seq !== localSeq);
         return;
       }
       flowFolders.hidden = true;
@@ -1069,26 +1158,26 @@
         return;
       }
       computePositions();
-      for (const it of items) {
+      appendChunked(canvas, items, (it) => {
         const tile = tileOf(it);
-        canvas.append(tile);
         tiles.set(it.key, tile);
         place(tile, positions.get(it.key));
-      }
+        return tile;
+      }, () => seq !== localSeq);
       localReflow = reflow;
     }
 
     // 根层级：每个库根目录一组，平铺其下所有壁纸（含子文件夹，与卡片计数口径一致）
-    function renderGroups(folders) {
+    function renderGroups(folders, isStale) {
       flowGroups.innerHTML = "";
       const show = !localDir && !searchQuery.trim() && folders.length > 0;
       flowGroups.hidden = !show;
       if (!show) return;
       for (const f of folders) {
-        const kids = sorted(filtered(all.filter((w) => samePath(w.dir, f) || underDir(w.dir, f))));
+        const kids = sorted(filtered(kidsUnder(f)));
         if (!kids.length) continue;
         const grid = el("div", { class: "loc-grid" });
-        for (const w of kids) grid.append(cardOf(w));
+        appendChunked(grid, kids, cardOf, isStale);
         flowGroups.append(el("section", { class: "loc-group" },
           el("div", { class: "loc-group-head" },
             el("span", { class: "loc-group-name" }, dirName(f)),
@@ -1108,13 +1197,21 @@
     const zoomLess = el("button", { class: "icon-btn", title: SC.t("local.zoomOut") });
     zoomLess.innerHTML = icon("zoomout", 15);
     zoomLess.addEventListener("click", () => setZoom(localZoom - 0.1));
-    zoomValEl = el("button", { class: "loc-zoom-val", title: SC.t("local.zoomReset") }, `${Math.round(localZoom * 100)}%`);
-    zoomValEl.addEventListener("click", () => setZoom(1));
+    // 百分比下拉（复用 .select 组件的紧凑变体）：内置常用档位，选中即应用
+    const zoomOpts = zoomPresetOpts(localZoom);
+    const zoomSel = selectEl(zoomOpts, localZoom, (v) => setZoom(Number(v)));
+    zoomSel.classList.add("loc-zoom-dd");
     const zoomMore = el("button", { class: "icon-btn", title: SC.t("local.zoomIn") });
     zoomMore.innerHTML = icon("zoomin", 15);
     zoomMore.addEventListener("click", () => setZoom(localZoom + 0.1));
-    zoomCtl.append(zoomToggle, zoomLess, zoomValEl, zoomMore);
+    zoomCtl.append(zoomToggle, zoomLess, zoomSel, zoomMore);
     document.body.append(zoomCtl);
+    let zoomPeekTimer = 0;
+    function peekZoomCtl() { // 缩放时自动展开片刻再收起（悬停/焦点时由 CSS 常开）
+      zoomCtl.classList.add("is-open");
+      clearTimeout(zoomPeekTimer);
+      zoomPeekTimer = setTimeout(() => zoomCtl && zoomCtl.classList.remove("is-open"), 1800);
+    }
     function setZoom(v) {
       v = Math.min(2, Math.max(0.5, Math.round(v * 100) / 100));
       if (v === localZoom) return;
@@ -1123,7 +1220,11 @@
       locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
       CELL_W = 108 * v; CELL_H = 68 * v + 46; // 步距随缩放同步，列数变化需重排（槽位索引不变）
       if (localReflow) localReflow();
-      if (zoomValEl) zoomValEl.textContent = `${Math.round(v * 100)}%`;
+      const next = zoomPresetOpts(v); // 同步下拉：替换选项内容并选中当前值
+      zoomOpts.length = 0;
+      zoomOpts.push(...next);
+      zoomSel.setValue(v);
+      peekZoomCtl();
     }
     localZoomKeys = (d) => setZoom(d === 0 ? 1 : localZoom + d); // d=0 表示复位
     locBody.addEventListener("wheel", (e) => {
@@ -1134,7 +1235,13 @@
 
     // ---- 桌面画布：槽位计算与就地摆放 ----
     function computePositions() {
-      cols = Math.max(1, Math.floor(((canvas.clientWidth || viewEl.clientWidth || CELL_W) - CANVAS_PAD * 2) / CELL_W));
+      // 磁贴 100z、间隙 8z 全部固定不变。按约定，右侧 PAD/EDGE 不限制排列：末列允许越入
+      // 视口右留白，只要最后一枚磁贴的可见缩略图不越过 .view 裁剪边即算一列
+      const viewRect = viewEl.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const clipLocal = viewRect.right - canvasRect.left - 2; // .view 裁剪边换算到画布坐标系
+      cols = Math.max(1, Math.floor((clipLocal - CANVAS_PAD - 4 * localZoom - 100 * localZoom) / CELL_W) + 1);
+      pitch = CELL_W;
       positions = new Map();
       slotIndex = new Map();
       const firstFree = () => {
@@ -1158,7 +1265,7 @@
     }
     function place(tile, p) {
       if (!p) return;
-      tile.style.left = `${p.c * CELL_W + CANVAS_PAD}px`;
+      tile.style.left = `${p.c * pitch + CANVAS_PAD}px`;
       tile.style.top = `${p.r * CELL_H + CANVAS_PAD}px`;
     }
     function reflow() {
@@ -1177,8 +1284,9 @@
       const isPlaying = playing.has(w.filePath);
       const card = el("article", { class: `loc-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
       const cover = el("div", { class: "loc-cover" });
-      if (w.coverUrl || w.fileUrl) {
-        const img = el("img", { src: bust(w.coverUrl || w.fileUrl), loading: "lazy", alt: "" });
+      const src = coverSrcOf(w);
+      if (src) {
+        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -1320,10 +1428,10 @@
       }
       if (under.closest(".loc-canvas") === canvas) {
         const rect = canvas.getBoundingClientRect();
-        const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left - CANVAS_PAD) / CELL_W)));
+        const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left - CANVAS_PAD) / pitch)));
         const r = Math.max(0, Math.floor((e.clientY - rect.top - CANVAS_PAD) / CELL_H));
         hint.hidden = false;
-        hint.style.left = `${c * CELL_W + CANVAS_PAD}px`;
+        hint.style.left = `${c * pitch + CANVAS_PAD}px`;
         hint.style.top = `${r * CELL_H + CANVAS_PAD}px`;
         drag.target = { type: "slot", c, r };
       }
@@ -1347,8 +1455,9 @@
       const isPlaying = playing.has(w.filePath);
       const tile = el("article", { class: `loc-tile is-file ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
       const thumb = el("span", { class: "loc-tile-thumb" });
-      if (w.coverUrl || w.fileUrl) {
-        const img = el("img", { src: bust(w.coverUrl || w.fileUrl), loading: "lazy", alt: "", draggable: "false" });
+      const src = coverSrcOf(w);
+      if (src) {
+        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" });
         img.addEventListener("error", () => { img.remove(); thumb.classList.add("is-fallback"); });
         thumb.append(img);
       } else thumb.classList.add("is-fallback");
@@ -1376,11 +1485,7 @@
 
     // 文件夹缩略图集：递归取文件夹内前 max 张壁纸封面（含子文件夹），无则返回空数组
     function folderCovers(path, max) {
-      return all
-        .filter((w) => samePath(w.dir, path) || underDir(w.dir, path))
-        .map((w) => w.coverUrl || w.fileUrl || "")
-        .filter(Boolean)
-        .slice(0, max);
+      return kidsUnder(path).map((w) => coverSrcOf(w)).filter(Boolean).slice(0, max);
     }
 
     // 在缩略图容器内铺多张封面拼贴（1 张全幅、2 张两列、3-4 张 2×2）；失败逐张移除，全失败露出文件夹图标
@@ -1403,7 +1508,7 @@
     }
 
     function tileFolder(it) {
-      const deep = all.filter((w) => samePath(w.dir, it.path) || underDir(w.dir, it.path)).length;
+      const deep = kidsUnder(it.path).length;
       const tile = el("article", { class: "loc-tile is-folder", dataset: { folder: it.path } },
         el("span", { class: "loc-tile-thumb is-folder" },
           (() => { const s = el("span"); s.innerHTML = icon("folder", 40); return s; })(),
@@ -1425,7 +1530,7 @@
 
     // 根层级的库根目录卡（流式区）：点击进入；缩略图取文件夹内壁纸封面
     function folderCard(path) {
-      const deep = all.filter((w) => samePath(w.dir, path) || underDir(w.dir, path)).length;
+      const deep = kidsUnder(path).length;
       const folderIco = () => { const s = el("span"); s.innerHTML = icon("folder", 28); return s; };
       const thumb = el("span", { class: "loc-folder-thumb" });
       thumb.append(folderIco());
@@ -1946,7 +2051,7 @@
     refreshGrid = null;
     localRefresh = null;
     localReflow = null;
-    if (zoomCtl) { zoomCtl.remove(); zoomCtl = null; zoomValEl = null; } // 缩放控件仅本地库视图存在
+    if (zoomCtl) { zoomCtl.remove(); zoomCtl = null; } // 缩放控件仅本地库视图存在
     localZoomKeys = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "local") renderLocal();
@@ -1990,12 +2095,13 @@
   // 标题栏居中搜索：全局唯一入口，输入即跳转壁纸库并过滤
   const titleSearchInput = el("input", {
     type: "search", placeholder: SC.t("lib.search"),
-    oninput: (e) => {
+    // 输入防抖：每次击键都全量重建网格在几千壁纸时是持续卡顿源
+    oninput: SC.debounce((e) => {
       searchQuery = e.target.value;
       if (currentView === "local") { if (localRefresh) localRefresh(); }
       else if (currentView !== "library") go("library");
       else if (refreshGrid) refreshGrid();
-    },
+    }, 180),
   });
   const titleSearch = el("label", { class: "title-search", title: SC.t("lib.search") },
     (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), titleSearchInput);

@@ -347,6 +347,9 @@ img { display: block; }
   position: relative; border-radius: var(--r-md); overflow: hidden; cursor: pointer;
   background: var(--card); border: 1px solid var(--stroke);
   display: flex; flex-direction: column; aspect-ratio: 16 / 10.4;
+  /* 大库优化：视口外卡片跳过布局与绘制（几千张时首屏与滚动不再全量布局）；
+     auto 前缀让浏览器记住实际渲染尺寸，占位值只兜底首帧的滚动条估算 */
+  content-visibility: auto; contain-intrinsic-size: auto 240px;
   transition: box-shadow var(--speed), border-color var(--speed);
 }
 .wall-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
@@ -458,7 +461,7 @@ img { display: block; }
 .member-name { display: block; padding: 7px 9px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .member-x { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: var(--r-ctl); background: var(--card-solid); color: var(--ink); box-shadow: var(--shadow-card); }
 .member-empty { grid-column: 1/-1; text-align: center; padding: 26px 0; }
-.pick { position: relative; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--ctl-stroke); cursor: pointer; text-align: left; background: var(--card); transition: all var(--speed); }
+.pick { position: relative; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--ctl-stroke); cursor: pointer; text-align: left; background: var(--card); transition: all var(--speed); content-visibility: auto; contain-intrinsic-size: auto 200px; }
 .pick:hover { border-color: var(--ink-3); }
 .pick.is-on { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
 .pick-check {
@@ -723,6 +726,7 @@ button.card-row:hover { background: var(--subtle); }
   position: relative; border-radius: var(--r-md); overflow: hidden; cursor: pointer;
   background: var(--card); border: 1px solid var(--stroke);
   display: flex; flex-direction: column; aspect-ratio: 16 / 10.4;
+  content-visibility: auto; contain-intrinsic-size: auto 240px; /* 大库优化，同 .wall-card */
   transition: box-shadow var(--speed), border-color var(--speed);
 }
 .loc-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
@@ -781,6 +785,7 @@ button.card-row:hover { background: var(--subtle); }
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: calc(110px * var(--loc-zoom, 1));
   padding: 13px 14px; border-radius: var(--r-md); text-align: left;
   background: var(--card); border: 1px solid var(--stroke);
+  content-visibility: auto; contain-intrinsic-size: auto calc(110px * var(--loc-zoom, 1)); /* 大库优化，同 .wall-card */
   transition: border-color var(--speed), box-shadow var(--speed);
 }
 .loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
@@ -805,6 +810,7 @@ button.card-row:hover { background: var(--subtle); }
 .loc-group-name { font-size: 13px; font-weight: 600; }
 .loc-group-count { font-size: 11px; color: var(--ink-3); }
 .loc-group .loc-grid { min-height: 0; }
+.loc-group { content-visibility: auto; contain-intrinsic-size: auto 480px; } /* 大库优化：整组滚出视口即跳过子树布局 */
 
 /* 桌面画布：子文件夹层级自由摆放（Windows 桌面式，位置记忆于 .metadata/layout.json） */
 .loc-canvas { position: relative; min-height: 240px; user-select: none; -webkit-user-select: none; }
@@ -817,6 +823,9 @@ button.card-row:hover { background: var(--subtle); }
   display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--loc-zoom, 1));
   padding: calc(6px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)); border-radius: var(--r-md); cursor: pointer;
   border: 1px solid transparent; touch-action: none;
+  /* 大库优化：视口外磁贴跳过布局；占位尺寸与 app.js 的 CELL_W/CELL_H 步距口径一致 */
+  content-visibility: auto;
+  contain-intrinsic-size: calc(100px * var(--loc-zoom, 1)) calc(68px * var(--loc-zoom, 1) + 46px);
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
 .loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
@@ -877,13 +886,22 @@ button.card-row:hover { background: var(--subtle); }
 .loc-zoom-ctl:hover > :not(.loc-zoom-toggle) { display: inline-flex; }
 .loc-zoom-ctl:hover .loc-zoom-toggle { display: none; }
 .loc-zoom-ctl .icon-btn { width: 28px; height: 28px; }
-.loc-zoom-val {
-  min-width: 46px; height: 28px; padding: 0 6px; border: 0; border-radius: var(--r-ctl);
-  display: inline-flex; align-items: center; justify-content: center;
+/* 缩放时自动展开（滚轮/按钮/快捷键触发，片刻后收起）；悬停与焦点内保持常开 */
+.loc-zoom-ctl.is-open, .loc-zoom-ctl:focus-within { opacity: 1; }
+.loc-zoom-ctl.is-open > :not(.loc-zoom-toggle), .loc-zoom-ctl:focus-within > :not(.loc-zoom-toggle) { display: inline-flex; }
+.loc-zoom-ctl.is-open .loc-zoom-toggle, .loc-zoom-ctl:focus-within .loc-zoom-toggle { display: none; }
+/* 百分比下拉：复用 .select 组件的紧凑变体，菜单向左展开（控件贴屏幕右缘） */
+.loc-zoom-dd { min-width: 0; }
+.loc-zoom-dd .select-btn {
+  height: 28px; min-width: 0; gap: 4px; padding: 0 6px;
+  background: transparent; border: 0; border-radius: var(--r-ctl);
   font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink);
-  background: transparent; cursor: pointer; transition: background var(--speed);
+  transition: background var(--speed);
 }
-.loc-zoom-val:hover { background: var(--subtle); }
+.loc-zoom-dd .select-btn:hover { background: var(--subtle); }
+.loc-zoom-dd .select-btn svg { color: var(--ink-3); }
+.loc-zoom-dd .select-menu { top: auto; bottom: calc(100% + 6px); left: auto; right: 0; min-width: 88px; }
+.loc-zoom-dd .select-item { height: 28px; font-size: 12px; gap: 10px; }
 
 /* 「移动到」对话框：文件夹树 */
 .loc-move-tree { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
