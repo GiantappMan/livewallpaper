@@ -177,6 +177,17 @@ pub(crate) async fn get_wallpapers_inner(app: &AppHandle) -> Result<Vec<Wallpape
     for w in list.iter_mut() {
         fill_urls(w);
     }
+    // 已有封面但缺缩略图的（老库 / 新生成封面）交给后台线程补齐，不阻塞本次响应
+    for w in list.iter() {
+        if let Some(cover) = &w.cover_path {
+            wallpaper_core::thumbs::enqueue_missing(cover);
+        }
+        for member in &w.meta.wallpapers {
+            if let Some(cover) = &member.cover_path {
+                wallpaper_core::thumbs::enqueue_missing(cover);
+            }
+        }
+    }
     Ok(list)
 }
 

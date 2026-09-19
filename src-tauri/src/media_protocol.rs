@@ -64,11 +64,29 @@ fn respond<R: tauri::Runtime>(
         return err_response(StatusCode::NOT_FOUND);
     };
 
-    let Ok(meta) = std::fs::metadata(&file) else {
+    // 缩略图请求（`?thumb=1`，仅图片类文件）：命中边车缩略图则改发缩略图；
+    // 未命中则回退原图并后台补生成，之后的新请求 / 下次会话即拿到小图。
+    let wants_thumb = request
+        .uri()
+        .query()
+        .map(|q| q.split('&').any(|kv| kv == "thumb=1"))
+        .unwrap_or(false);
+    let mut serve_path = file.clone();
+    let mut mime = mime_of(&file).to_string();
+    if wants_thumb && mime.starts_with("image/") {
+        let thumb = wallpaper_core::thumbs::thumb_path_for(&file);
+        if thumb.is_file() {
+            serve_path = thumb.clone();
+            mime = "image/jpeg".into();
+        } else {
+            wallpaper_core::thumbs::enqueue_missing(&file);
+        }
+    }
+
+    let Ok(meta) = std::fs::metadata(&serve_path) else {
         return err_response(StatusCode::NOT_FOUND);
     };
     let total = meta.len();
-    let mime = mime_of(&file).to_string();
 
     // Range 请求
     let range = request
@@ -98,7 +116,9 @@ fn respond<R: tauri::Runtime>(
     };
 
     use std::io::{Read, Seek, SeekFrom};
-    let mut f = match std::fs::File::open(&file) {
+    // 封面缩略图异步生成：生成完成后新到的请求会命中边车文件，本会话已加载
+    // 的 <img> 沿用浏览器缓存的原图，无需失效
+    let mut f = match std::fs::File::open(&serve_path) {
         Ok(f) => f,
         Err(_) => return err_response(StatusCode::NOT_FOUND),
     };

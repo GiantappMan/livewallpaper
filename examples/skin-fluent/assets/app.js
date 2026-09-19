@@ -18,6 +18,13 @@
     if (!url || url.startsWith("data:")) return url;
     return url + (url.includes("?") ? "&" : "?") + BUST_TOKEN;
   }
+  // 网格封面走缩略图：后端 media 协议对 `?thumb=1` 的图片请求改发 ≤1280px 边车
+  // 缩略图（缺失时回退原图并后台补生成）。网格只按卡片尺寸显示，4K 原图解码是
+  // 滚动掉帧主因；详情弹层仍用原图。bust 后必带 ?t=，直接以 & 追加
+  function thumbSrc(url) {
+    const u = bust(url);
+    return u && !u.startsWith("data:") ? `${u}&thumb=1` : u;
+  }
 
   // 大库分帧渲染：首屏先插一批，其余每帧补一批，避免一次性构建数千节点长时间占住主线程；
   // isStale() 为真（重渲染 / 切换文件夹）或容器脱离文档时停止补插。返回取消函数。
@@ -419,7 +426,7 @@
       const cover = el("div", { class: "wall-cover" });
       const src = coverSrcOf(w);
       if (src) {
-        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "" });
+        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -729,7 +736,7 @@
         appendChunked(grid, candidates, (w) => {
           const on = picked.has(w.filePath);
           return el("button", { class: `pick ${on ? "is-on" : ""}`, onclick: () => { on ? picked.delete(w.filePath) : picked.add(w.filePath); renderGrid(); syncAll(); } },
-            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: w.coverUrl, loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 12); return s; })()) : null),
+            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 12); return s; })()) : null),
             el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
         }, () => seq !== pickSeq);
       }
@@ -1286,7 +1293,7 @@
       const cover = el("div", { class: "loc-cover" });
       const src = coverSrcOf(w);
       if (src) {
-        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "" });
+        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -1457,7 +1464,7 @@
       const thumb = el("span", { class: "loc-tile-thumb" });
       const src = coverSrcOf(w);
       if (src) {
-        const img = el("img", { src: bust(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" });
+        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" });
         img.addEventListener("error", () => { img.remove(); thumb.classList.add("is-fallback"); });
         thumb.append(img);
       } else thumb.classList.add("is-fallback");
@@ -1494,7 +1501,7 @@
       if (!covers.length) return;
       const grid = el("span", { class: `loc-thumb-grid is-n${covers.length}` });
       for (const url of covers) {
-        const img = el("img", { src: bust(url), loading: "lazy", alt: "" });
+        const img = el("img", { src: thumbSrc(url), loading: "lazy", alt: "" });
         img.addEventListener("error", () => {
           img.remove();
           if (!grid.firstChild) {
@@ -1962,7 +1969,7 @@
 
     // 封面 + 标题
     const thumb = el("button", { class: "dock-thumb", title: pl ? SC.t("dock.focus") : "", onclick: () => { focusIdx = (focusIdx + 1) % playing.length; renderDock(); } },
-      w.coverUrl ? el("img", { src: bust(w.coverUrl) }) : null);
+      w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl) }) : null);
     const meta = el("div", { class: "dock-meta" },
       el("span", { class: "dock-name" }, (w.meta && w.meta.title) || "—"),
       el("span", { class: "dock-sub" },

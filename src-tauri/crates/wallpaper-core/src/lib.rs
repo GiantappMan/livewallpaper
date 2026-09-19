@@ -12,6 +12,7 @@ pub mod manager;
 pub mod models;
 pub mod player;
 pub mod system;
+pub mod thumbs;
 pub mod window_state;
 
 #[cfg(windows)]
