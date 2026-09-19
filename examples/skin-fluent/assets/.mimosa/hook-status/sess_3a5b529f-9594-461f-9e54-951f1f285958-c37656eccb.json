@@ -1,14 +1,14 @@
 {
   "schemaVersion": "mimosa-hook-status/v1",
-  "recordedAt": "2026-09-19T09:46:01.532Z",
-  "sessionId": "sess_c837ebec-a905-4cd3-9fa2-2923b4818f12",
+  "recordedAt": "2026-09-19T07:14:43.078Z",
+  "sessionId": "sess_3a5b529f-9594-461f-9e54-951f1f285958",
   "event": "PostToolUse",
   "toolName": "Edit",
-  "file": "examples/skin-fluent/assets/app.js",
+  "file": "app.js",
   "outcome": "clear",
   "coverage": "complete",
   "findingCount": 0,
-  "durationMs": 20,
+  "durationMs": 18,
   "hostState": "hook_complete",
   "reportHint": ".mimosa/reports/"
 }

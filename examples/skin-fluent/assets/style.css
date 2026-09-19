@@ -717,7 +717,8 @@ button.card-row:hover { background: var(--subtle); }
 }
 
 /* ---------------- 本地库（自包含视图，规划替代壁纸库；样式不依赖 .wall-*，便于日后整体替换） ---------------- */
-.loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 10px; min-height: 240px; }
+/* 封面缩放（--loc-zoom）：只改变列宽使封面随缩放变大/变小并自动重排列数，文字字号与画布槽位不受影响 */
+.loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(228px * var(--loc-zoom, 1)), 1fr)); gap: 10px; min-height: 240px; }
 .loc-card {
   position: relative; border-radius: var(--r-md); overflow: hidden; cursor: pointer;
   background: var(--card); border: 1px solid var(--stroke);
@@ -760,7 +761,7 @@ button.card-row:hover { background: var(--subtle); }
 
 /* 文件夹浏览：面包屑（各层级段都是拖拽投放目标） */
 .btn[hidden], .icon-btn[hidden] { display: none; }
-/* 本地库内容区包裹层：Ctrl+滚轮 / Ctrl+± 缩放施加于此；relative 使画布 offsetTop 与其同坐标系 */
+/* 本地库内容区包裹层：封面缩放变量（--loc-zoom）在此下发，仅封面尺寸规则消费；relative 使画布 offsetTop 与其同坐标系 */
 .loc-body { position: relative; }
 .loc-crumb { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; margin-bottom: 12px; }
 .loc-crumb-seg {
@@ -774,10 +775,10 @@ button.card-row:hover { background: var(--subtle); }
 .loc-crumb-sep { display: inline-flex; color: var(--ink-3); }
 
 /* 文件夹卡片行（位于壁纸网格上方） */
-.loc-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.loc-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(170px * var(--loc-zoom, 1)), 1fr)); gap: 10px; margin-bottom: 14px; }
 .loc-folders[hidden] { display: none; }
 .loc-folder {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 110px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: calc(110px * var(--loc-zoom, 1));
   padding: 13px 14px; border-radius: var(--r-md); text-align: left;
   background: var(--card); border: 1px solid var(--stroke);
   transition: border-color var(--speed), box-shadow var(--speed);
@@ -785,8 +786,8 @@ button.card-row:hover { background: var(--subtle); }
 .loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .loc-folder:active { opacity: .92; }
 .loc-folder.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
-.loc-folder-thumb { position: relative; width: 100%; height: 64px; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); }
-.loc-folder-thumb.is-empty { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
+.loc-folder-thumb { position: relative; width: 100%; height: calc(64px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); }
+.loc-folder-thumb.is-empty { display: flex; align-items: center; justify-content: center; color: var(--accent); }
 /* 文件夹多图拼贴：1 张全幅、2 张两列、3 张左一大右两小、4 张 2×2；底色遮住后方图标 */
 .loc-thumb-grid { position: absolute; inset: 0; display: grid; gap: 1px; background: var(--ctl-hover); }
 .loc-thumb-grid img { width: 100%; height: 100%; object-fit: cover; display: block; min-width: 0; min-height: 0; }
@@ -810,9 +811,11 @@ button.card-row:hover { background: var(--subtle); }
 .loc-canvas[hidden], .loc-grid[hidden] { display: none; }
 .loc-canvas.is-empty { display: grid; place-items: center; }
 .loc-tile {
-  position: absolute; width: 100px; height: 124px; margin: 4px; /* 槽位步距 108×132 = app.js CELL_W/CELL_H */
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 6px 4px 4px; border-radius: var(--r-md); cursor: pointer;
+  /* 宽度/缩略图随封面缩放（--loc-zoom，步距 = app.js CELL_W/CELL_H）；高度贴合内容，
+     名称与操作钮字号不缩放，避免等比放大后框内下方留大片空白 */
+  position: absolute; width: calc(100px * var(--loc-zoom, 1)); margin: calc(4px * var(--loc-zoom, 1));
+  display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--loc-zoom, 1));
+  padding: calc(6px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)); border-radius: var(--r-md); cursor: pointer;
   border: 1px solid transparent; touch-action: none;
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
@@ -820,10 +823,10 @@ button.card-row:hover { background: var(--subtle); }
 .loc-tile.is-selected { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .loc-tile.is-over { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .loc-tile.is-dragging { opacity: .45; }
-.loc-tile-thumb { position: relative; width: 88px; height: 52px; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
+.loc-tile-thumb { position: relative; width: calc(88px * var(--loc-zoom, 1)); height: calc(52px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
 .loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
-.loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: none; color: var(--accent); }
+.loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: var(--ctl-hover); color: var(--accent); }
 .loc-tile-live {
   position: absolute; top: 4px; left: 4px; display: none; align-items: center; justify-content: center;
   width: 17px; height: 17px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
@@ -852,24 +855,35 @@ button.card-row:hover { background: var(--subtle); }
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
 .loc-slot-hint {
-  position: absolute; width: 100px; height: 124px; margin: 4px; border-radius: var(--r-md);
+  position: absolute; width: calc(100px * var(--loc-zoom, 1)); height: calc(68px * var(--loc-zoom, 1) + 30px); margin: calc(4px * var(--loc-zoom, 1)); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }
 .loc-slot-hint[hidden] { display: none; }
 
-/* 缩放 HUD：Ctrl+滚轮 / Ctrl+± 调整时短暂显示当前百分比（挂在 body，固定于 dock 上方居中） */
-.loc-zoom-hud {
-  position: fixed; left: 50%; bottom: 96px; z-index: 110;
-  transform: translateX(-50%) translateY(6px);
-  padding: 5px 14px; border-radius: var(--r-lg); font-size: 13px; font-weight: 600; color: var(--ink);
+/* 右下角缩放控件：平时收起为单个小放大镜（低透明度、悬停提亮），移入展开 − / 百分比（点击复位）/ +；
+   收起态的 title 提示快捷键用法（挂 body，仅本地库视图挂载，置于 dock 之上） */
+.loc-zoom-ctl {
+  position: fixed; right: 16px; bottom: 16px; z-index: 60;
+  display: flex; align-items: center; gap: 2px; padding: 3px;
   background: rgba(249, 249, 249, .85); backdrop-filter: blur(24px) saturate(125%); -webkit-backdrop-filter: blur(24px) saturate(125%);
-  border: 1px solid var(--stroke); box-shadow: var(--shadow-fly);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--speed), transform var(--speed);
+  border: 1px solid var(--stroke); border-radius: var(--r-lg); box-shadow: var(--shadow-fly);
+  opacity: .55; transition: opacity var(--speed);
 }
-.loc-zoom-hud.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
-[data-mode="dark"] .loc-zoom-hud { background: rgba(44, 44, 44, .85); }
+.loc-zoom-ctl:hover { opacity: 1; }
+[data-mode="dark"] .loc-zoom-ctl { background: rgba(44, 44, 44, .85); }
+.loc-zoom-toggle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--ink); }
+.loc-zoom-ctl > :not(.loc-zoom-toggle) { display: none; }
+.loc-zoom-ctl:hover > :not(.loc-zoom-toggle) { display: inline-flex; }
+.loc-zoom-ctl:hover .loc-zoom-toggle { display: none; }
+.loc-zoom-ctl .icon-btn { width: 28px; height: 28px; }
+.loc-zoom-val {
+  min-width: 46px; height: 28px; padding: 0 6px; border: 0; border-radius: var(--r-ctl);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink);
+  background: transparent; cursor: pointer; transition: background var(--speed);
+}
+.loc-zoom-val:hover { background: var(--subtle); }
 
 /* 「移动到」对话框：文件夹树 */
 .loc-move-tree { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }

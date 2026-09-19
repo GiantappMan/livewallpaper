@@ -41,6 +41,8 @@
     folderplus: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="10.5" x2="12" y2="16.5"/><line x1="9" y1="13.5" x2="15" y2="13.5"/>',
     move: '<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>',
     search: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>',
+    zoomin: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
+    zoomout: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/>',
     monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
     sun: '<circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19.1" y2="4.9"/>',
     moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
@@ -754,10 +756,10 @@
   let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
   let localResizeHooked = false;
   let localSeq = 0;        // 异步渲染序号：快速切换文件夹时丢弃过期结果
-  let localZoom = Math.min(2, Math.max(0.5, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 内容缩放（持久化）
-  let localZoomKeys = null; // 本地库缩放入口（仅本视图存在，切视图置空）
-  let zoomHudEl = null;     // 缩放百分比 HUD（body 单例，避免重渲染反复挂载）
-  let zoomHudTimer = 0;
+  let localZoom = Math.min(2, Math.max(0.5, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 封面缩放（持久化；仅作用于封面尺寸，文字与画布布局不受影响）
+  let localZoomKeys = null; // 本地库缩放快捷键入口（仅本视图存在，切视图置空）
+  let zoomCtl = null;      // 右下角缩放控件（挂 body，仅本地库视图存在，切视图移除）
+  let zoomValEl = null;    // 控件中间的百分比按钮（点击复位，setZoom 时同步文案）
 
   // 缩放快捷键：Ctrl+= / Ctrl+- 步进，Ctrl+0 复位（滚轮在 .loc-body 上单独监听）
   window.addEventListener("keydown", (e) => {
@@ -830,15 +832,18 @@
     const flowGrid = el("div", { class: "loc-grid" });       // 根层级 / 搜索态：流式网格
     const flowGroups = el("div", { class: "loc-groups" });   // 根层级：按文件夹分组平铺各文件夹内壁纸
     const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
-    // 内容区统一包裹：Ctrl+滚轮 / Ctrl+± 的缩放施加于此（position:relative 使画布 offsetTop 与其同坐标系）
+    // 缩放以 --loc-zoom 变量下发，仅封面尺寸消费（网格列宽 / 文件夹缩略图高度），文字与画布槽位不受影响
     const locBody = el("div", { class: "loc-body" }, crumb, flowFolders, flowGrid, flowGroups, canvas);
-    locBody.style.zoom = localZoom;
+    locBody.style.setProperty("--loc-zoom", localZoom);
     viewEl.append(locBody);
 
     // ===== 桌面画布：隐形槽位网格，位置记忆（Windows 桌面式） =====
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
     // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
-    const CELL_W = 108, CELL_H = 132; // 槽位步距（磁贴 100×124 + 8px 间隙，与 .loc-tile 联动）
+    // 槽位步距与 .loc-tile 联动：宽 = 磁贴 100z + 8z 间隙；高 = 磁贴内容高（缩略图 52z + 边距间隙 16z + 名称两行 30px）+ 16px 行距。
+    // 磁贴高度贴合内容不放大余量，步距按两行名称的兜底高度算；布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
+    let CELL_W = 108 * localZoom, CELL_H = 68 * localZoom + 46;
+    const CANVAS_PAD = 10; // 画布四周固定留白：边缘磁贴的选中描边/槽位提示不贴边（不随缩放）
     let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
     let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
     let slotIndex = new Map();   // "c,r" → key（占用表）
@@ -1094,22 +1099,31 @@
     }
     localRefresh = renderGrid;
 
-    // ---- 动态缩放：Ctrl+滚轮 / Ctrl+= / Ctrl+- 步进，Ctrl+0 复位，范围 50%–200% ----
-    function showZoomHud() {
-      if (!zoomHudEl || !zoomHudEl.isConnected) { zoomHudEl = el("div", { class: "loc-zoom-hud" }); document.body.append(zoomHudEl); }
-      zoomHudEl.textContent = SC.t("local.zoom", Math.round(localZoom * 100));
-      zoomHudEl.classList.add("is-show");
-      clearTimeout(zoomHudTimer);
-      zoomHudTimer = setTimeout(() => zoomHudEl.classList.remove("is-show"), 900);
-    }
+    // ---- 封面缩放：右下角放大镜控件，平时收起为小图标（悬停展开 − / 百分比 / +）；
+    // Ctrl+滚轮 / Ctrl+= / Ctrl+- 步进，Ctrl+0 复位，范围 50%–200% ----
+    if (zoomCtl) zoomCtl.remove(); // 重渲染防重复挂载
+    zoomCtl = el("div", { class: "loc-zoom-ctl", title: SC.t("local.zoomHint") });
+    const zoomToggle = el("div", { class: "loc-zoom-toggle" });
+    zoomToggle.innerHTML = icon("zoomin", 15);
+    const zoomLess = el("button", { class: "icon-btn", title: SC.t("local.zoomOut") });
+    zoomLess.innerHTML = icon("zoomout", 15);
+    zoomLess.addEventListener("click", () => setZoom(localZoom - 0.1));
+    zoomValEl = el("button", { class: "loc-zoom-val", title: SC.t("local.zoomReset") }, `${Math.round(localZoom * 100)}%`);
+    zoomValEl.addEventListener("click", () => setZoom(1));
+    const zoomMore = el("button", { class: "icon-btn", title: SC.t("local.zoomIn") });
+    zoomMore.innerHTML = icon("zoomin", 15);
+    zoomMore.addEventListener("click", () => setZoom(localZoom + 0.1));
+    zoomCtl.append(zoomToggle, zoomLess, zoomValEl, zoomMore);
+    document.body.append(zoomCtl);
     function setZoom(v) {
       v = Math.min(2, Math.max(0.5, Math.round(v * 100) / 100));
       if (v === localZoom) return;
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));
-      locBody.style.zoom = v;
-      if (localReflow) localReflow(); // 画布每行列数随缩放变化，槽位需重算（流式网格由 CSS 自动重排）
-      showZoomHud();
+      locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
+      CELL_W = 108 * v; CELL_H = 68 * v + 46; // 步距随缩放同步，列数变化需重排（槽位索引不变）
+      if (localReflow) localReflow();
+      if (zoomValEl) zoomValEl.textContent = `${Math.round(v * 100)}%`;
     }
     localZoomKeys = (d) => setZoom(d === 0 ? 1 : localZoom + d); // d=0 表示复位
     locBody.addEventListener("wheel", (e) => {
@@ -1120,7 +1134,7 @@
 
     // ---- 桌面画布：槽位计算与就地摆放 ----
     function computePositions() {
-      cols = Math.max(1, Math.floor((canvas.clientWidth || viewEl.clientWidth || CELL_W) / CELL_W));
+      cols = Math.max(1, Math.floor(((canvas.clientWidth || viewEl.clientWidth || CELL_W) - CANVAS_PAD * 2) / CELL_W));
       positions = new Map();
       slotIndex = new Map();
       const firstFree = () => {
@@ -1137,15 +1151,15 @@
         slotIndex.set(`${p.c},${p.r}`, it.key);
       }
       const rows = items.length ? Math.max(...[...positions.values()].map((p) => p.r)) + 1 : 1;
-      // 画布至少撑满可视区剩余高度，否则拖到下方空白会落在 .view 上而无法换位
-      // 缩放后 canvas.offsetTop 是内容坐标、viewEl.clientHeight 是视觉坐标，先统一到内容坐标再相减
-      const fill = Math.max(0, (viewEl.clientHeight - 150) / (localZoom || 1) - canvas.offsetTop); // 150 = .view 底部留白
-      canvas.style.minHeight = `${Math.max(rows * CELL_H + 20, fill)}px`;
+      // 画布至少撑满可视区剩余高度，否则拖到下方空白会落在 .view 上而无法换位；
+      // 末尾再留 ~90px（≈播放条高度），滚到底时最后一行不被悬浮播放条遮住
+      const fill = Math.max(0, viewEl.clientHeight - 150 - canvas.offsetTop); // 150 = .view 底部留白
+      canvas.style.minHeight = `${Math.max(CANVAS_PAD * 2 + rows * CELL_H + 90, fill)}px`;
     }
     function place(tile, p) {
       if (!p) return;
-      tile.style.left = `${p.c * CELL_W}px`;
-      tile.style.top = `${p.r * CELL_H}px`;
+      tile.style.left = `${p.c * CELL_W + CANVAS_PAD}px`;
+      tile.style.top = `${p.r * CELL_H + CANVAS_PAD}px`;
     }
     function reflow() {
       if (!canvas.isConnected || canvas.hidden) return;
@@ -1254,7 +1268,7 @@
         ghost = drag.tile.cloneNode(true);
         ghost.classList.remove("is-selected");
         ghost.classList.add("loc-ghost");
-        ghost.style.zoom = localZoom; // 挂到未缩放的 body 上需同倍率，视觉尺寸才与原磁贴一致
+        ghost.style.setProperty("--loc-zoom", localZoom); // 幻影挂到 body 脱离变量作用域，需自带倍率，尺寸才与原磁贴一致
         document.body.append(ghost);
         hint = el("div", { class: "loc-slot-hint" });
         hint.hidden = true;
@@ -1306,12 +1320,11 @@
       }
       if (under.closest(".loc-canvas") === canvas) {
         const rect = canvas.getBoundingClientRect();
-        const z = localZoom || 1; // 缩放后 rect 为视觉坐标，换算槽位先除回去
-        const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left) / z / CELL_W)));
-        const r = Math.max(0, Math.floor((e.clientY - rect.top) / z / CELL_H));
+        const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left - CANVAS_PAD) / CELL_W)));
+        const r = Math.max(0, Math.floor((e.clientY - rect.top - CANVAS_PAD) / CELL_H));
         hint.hidden = false;
-        hint.style.left = `${c * CELL_W}px`;
-        hint.style.top = `${r * CELL_H}px`;
+        hint.style.left = `${c * CELL_W + CANVAS_PAD}px`;
+        hint.style.top = `${r * CELL_H + CANVAS_PAD}px`;
         drag.target = { type: "slot", c, r };
       }
     }
@@ -1413,7 +1426,7 @@
     // 根层级的库根目录卡（流式区）：点击进入；缩略图取文件夹内壁纸封面
     function folderCard(path) {
       const deep = all.filter((w) => samePath(w.dir, path) || underDir(w.dir, path)).length;
-      const folderIco = () => { const s = el("span"); s.innerHTML = icon("folder", 22); return s; };
+      const folderIco = () => { const s = el("span"); s.innerHTML = icon("folder", 28); return s; };
       const thumb = el("span", { class: "loc-folder-thumb" });
       thumb.append(folderIco());
       appendFolderCollage(thumb, path);
@@ -1933,6 +1946,7 @@
     refreshGrid = null;
     localRefresh = null;
     localReflow = null;
+    if (zoomCtl) { zoomCtl.remove(); zoomCtl = null; zoomValEl = null; } // 缩放控件仅本地库视图存在
     localZoomKeys = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "local") renderLocal();
