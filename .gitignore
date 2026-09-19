@@ -24,3 +24,8 @@ node_modules
 # 本地临时产物
 .tmp-shots/
 .tmp-chrome-profile/
+
+# AI 工具本地状态（mimosa 扫描状态、会话计划、本机插件路径）
+.mimosa/
+.zcode/plans/
+.video_agent/
