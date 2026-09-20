@@ -917,6 +917,7 @@
       menu.append(line(), sec(SC.t("local.sort")),
         pick(SC.t("local.sortName"), localSort === "name", () => setSort("name")),
         pick(SC.t("local.sortType"), localSort === "type", () => setSort("type")),
+        pick(SC.t("local.sortTime"), localSort === "time", () => setSort("time")),
         line());
       // 新建文件夹仅在库内子文件夹层级可用（根层级由 设置 → 壁纸目录 管理）；搜索时隐藏
       if (!searching && localDir) menu.append(cmd("folderplus", SC.t("local.newFolder"), () => openNewFolderDialog()));
@@ -1106,7 +1107,9 @@
     function sorted(list) {
       const cmp = NAME_COLLATOR.compare.bind(NAME_COLLATOR);
       const keyed = list.map((w) => [w, nameOf(w)]);
+      const created = (w) => { const t = Date.parse((w.meta && w.meta.createTime) || ""); return Number.isNaN(t) ? 0 : t; };
       if (localSort === "type") keyed.sort((a, b) => ((a[0].meta && a[0].meta.type) || 0) - ((b[0].meta && b[0].meta.type) || 0) || cmp(a[1], b[1]));
+      else if (localSort === "time") keyed.sort((a, b) => created(b[0]) - created(a[0]) || cmp(a[1], b[1])); // 新创建的在前，同时刻按名称
       else keyed.sort((a, b) => cmp(a[1], b[1]));
       return keyed.map((p) => p[0]);
     }

@@ -102,7 +102,7 @@ fn creation_time(path: &Path) -> i64 {
         .and_then(|m| m.created())
         .ok()
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_millis() as i64)
+        .map(|d| d.as_secs() as i64)
         .unwrap_or(0)
 }
 
@@ -896,6 +896,12 @@ mod tests {
         assert_eq!(w.cover_path.as_deref(), Some(project.join("preview.gif").as_path()));
         // 归属目录是项目目录的父级：磁贴出现在所在文件夹层级，项目内部不可导航
         assert_eq!(w.dir.as_deref(), Some(root.as_path()));
+        // meta 无 createTime 时回退到文件创建时间（秒级）；此前误传毫秒产生远未来时间
+        let ts = w.meta.create_time.as_ref().map(|t| t.timestamp()).unwrap_or(0);
+        assert!(
+            ts > chrono::Utc::now().timestamp() - 600,
+            "create_time 应接近当前时间: {ts}"
+        );
 
         // 项目目录本身作为媒体库根目录时同样只出一个条目
         let list = scan_directories(&[project], Path::new("mpv"), Path::new("cover"));
