@@ -185,15 +185,18 @@ img { display: block; }
   padding: 5px 12px; border-radius: var(--r-ctl); cursor: help; box-shadow: var(--shadow-card);
 }
 
-/* ---------------- 内容区图层（左上圆角，Win11 Settings 招牌布局） ---------------- */
+/* ---------------- 内容区图层（左上圆角，Win11 Settings 招牌布局） ----------------
+   页边距变量：本地库贴顶条（.loc-head）与社区整幅（.hub-wrap）用负边距满幅铺开，
+   必须与 .view 内边距同源，窄窗口断点才不会漂移 */
 .view {
+  --view-pt: 20px; --view-px: 36px; --view-pb: 150px;
   position: relative; flex: 1; min-width: 0;
   margin-top: 40px; height: auto;
   background: var(--layer);
   border: 1px solid var(--stroke); border-bottom: 0; border-right: 0;
   border-radius: var(--r-lg) 0 0 0;
   overflow-y: auto; overflow-x: hidden;
-  padding: 20px 36px 150px;
+  padding: var(--view-pt) var(--view-px) var(--view-pb);
 }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
 .page-title { font-size: 28px; font-weight: 600; letter-spacing: -.01em; }
@@ -510,7 +513,7 @@ img { display: block; }
   /* 负边距抵消 .view 内边距，高度 = 图层可视高度：
      外层不再产生滚动条，滚动完全交给社区站自身 */
   position: relative;
-  margin: -20px -36px -150px;
+  margin: calc(0px - var(--view-pt)) calc(0px - var(--view-px)) calc(0px - var(--view-pb));
   height: calc(100vh - 40px);
   overflow: hidden;
   border-top-left-radius: var(--r-lg);
@@ -717,8 +720,7 @@ button.card-row:hover { background: var(--subtle); }
 /* 窄窗口自动收窄搜索框等（窗格折叠由 .is-compact 控制，不随宽度强改） */
 @media (max-width: 860px) {
   .title-search { width: 200px; }
-  .view { padding: 16px 20px 140px; }
-  .hub-wrap { margin: -16px -20px -140px; }
+  .view { --view-pt: 16px; --view-px: 20px; --view-pb: 140px; }
   .dock { width: calc(100vw - 40px); }
   .dock-meta { width: 110px; }
   .dock-seek { min-width: 60px; }
@@ -776,8 +778,10 @@ button.card-row:hover { background: var(--subtle); }
    视图顶垫归零、顶距由条自带（否则 sticky 基准下移，吸附时顶部会漏出一条滚过内容）；
    滚动后 .loc-stuck 加亚克力底 + 底缘描边，滚过的内容被虚化分层 */
 .view:has(> .loc-head) { padding-top: 0; }
-.loc-head { position: sticky; top: 0; z-index: 30; margin: 0 -36px; padding: 12px 36px; }
-.loc-head-row { display: flex; align-items: center; gap: 12px; }
+/* 顶垫/侧垫与 .view 页边距同源（变量），底垫 = 壁纸库 .head-row 的 margin-bottom（18px），
+   行高对齐 .head-row（按钮 32px）→ 面包屑起始纵坐标、网格起始纵坐标都与壁纸库逐像素一致 */
+.loc-head { position: sticky; top: 0; z-index: 30; margin: 0 calc(0px - var(--view-px)); padding: var(--view-pt) var(--view-px) 18px; }
+.loc-head-row { display: flex; align-items: center; gap: 12px; min-height: 32px; }
 .loc-head-row .loc-crumb { margin-bottom: 0; }
 .loc-head-row .title-count { margin-left: 0; flex: none; }
 .loc-head-row .page-actions { margin-left: auto; }
@@ -836,23 +840,25 @@ button.card-row:hover { background: var(--subtle); }
 .loc-canvas[hidden], .loc-grid[hidden] { display: none; }
 .loc-canvas.is-empty { display: grid; place-items: center; }
 .loc-tile {
-  /* 宽度/缩略图随封面缩放（--loc-zoom，步距 = app.js CELL_W/CELL_H）；高度贴合内容，
-     名称与操作钮字号不缩放，避免等比放大后框内下方留大片空白。
-     无外边距：磁贴框直接对齐 .view 页边距（与壁纸库网格同边距），间隙由 8z 步距步出 */
-  position: absolute; width: calc(100px * var(--loc-zoom, 1));
+  /* 宽度随画布列宽拉伸（--loc-cellw 由 app.js 按内容宽均摊回填，等价壁纸库 1fr 列；
+     回退值为缩放基准宽 100z）；名称与操作钮字号不缩放。
+     无内边距、缩略图撑满磁贴宽：可见边即磁贴框，上缘与左右缘都精确落在 .view 页边距上，
+     与壁纸库网格同边距；列间隙固定 10px、行距 10px（名称盒固定两行高），与壁纸库网格一致 */
+  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1)));
   display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--loc-zoom, 1));
-  padding: calc(6px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)) calc(4px * var(--loc-zoom, 1)); border-radius: var(--r-md); cursor: pointer;
+  padding: 0; border-radius: var(--r-md); cursor: pointer;
   border: 1px solid transparent; touch-action: none;
-  /* 大库优化：视口外磁贴跳过布局；占位尺寸与 app.js 的 CELL_W/CELL_H 步距口径一致 */
+  /* 大库优化：视口外磁贴跳过布局。占位高必须与真实内容高完全一致（名称盒固定两行后高度确定：58z+30，
+     占位是内容盒口径不含边框）——绝对定位的 c-v:auto 元素在屏上也可能按占位值布局，占位不准会直接变成可见的多余空隙 */
   content-visibility: auto;
-  contain-intrinsic-size: calc(100px * var(--loc-zoom, 1)) calc(68px * var(--loc-zoom, 1) + 46px);
+  contain-intrinsic-size: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) calc(58px * var(--loc-zoom, 1) + 30px);
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
 .loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
 .loc-tile.is-selected { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .loc-tile.is-over { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .loc-tile.is-dragging { opacity: .45; }
-.loc-tile-thumb { position: relative; width: calc(88px * var(--loc-zoom, 1)); height: calc(52px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
+.loc-tile-thumb { position: relative; width: 100%; height: calc(52px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
 .loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
 .loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: var(--ctl-hover); color: var(--accent); }
@@ -873,6 +879,8 @@ button.card-row:hover { background: var(--subtle); }
   color: var(--ink-2); background: var(--card-solid); border: 1px solid var(--stroke);
 }
 .loc-tile-name {
+  /* 固定两行高度：单行名称的磁贴与两行同高，行距恒为 10px（与壁纸库网格一致） */
+  height: calc(1.25em * 2);
   max-width: 100%; font-size: 12px; line-height: 1.25; text-align: center; color: var(--ink);
   overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; word-break: break-all;
 }
@@ -888,7 +896,7 @@ button.card-row:hover { background: var(--subtle); }
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
 .loc-slot-hint {
-  position: absolute; width: calc(100px * var(--loc-zoom, 1)); height: calc(68px * var(--loc-zoom, 1) + 30px); border-radius: var(--r-md);
+  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))); height: calc(58px * var(--loc-zoom, 1) + 32px); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }

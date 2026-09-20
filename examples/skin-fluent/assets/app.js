@@ -958,12 +958,15 @@
     // ===== 桌面画布：隐形槽位网格，位置记忆（Windows 桌面式） =====
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
     // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
-    // 槽位步距与 .loc-tile 联动：宽 = 磁贴 100z + 8z 间隙；高 = 磁贴内容高（缩略图 52z + 边距间隙 16z + 名称两行 30px）+ 16px 行距。
-    // 磁贴高度贴合内容不放大余量，步距按两行名称的兜底高度算；布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
-    let CELL_W = 108 * localZoom, CELL_H = 68 * localZoom + 46;
-    let pitch = CELL_W;          // 实际列距（当前固定 = CELL_W，即磁贴 100z + 间隙 8z，均不随窗口变）
-    const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距（与壁纸库网格同边距）；磁贴选中描边/槽位提示
-                                 // 不贴边由 36px 页边距兜底。右侧无留白——按约定末列可越过右缘，以视口裁剪边为界
+    // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 100z + 间隙 10px（与壁纸库网格 gap 一致），用于数列；
+    // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥100z）回填 --loc-cellw；
+    // CELL_H = 磁贴高（缩略图 52z + 名称间隙 6z + 名称盒固定两行 30px = 58z+30，无内边距，另含上下 1px 边框）
+    // + 10px 行距（与壁纸库一致）。
+    // 布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
+    let CELL_W = 100 * localZoom + 10, CELL_H = 58 * localZoom + 42;
+    let pitch = CELL_W;          // 实际列距：computePositions 把内容宽剩余量均摊进列间隙后回填（首末列贴页边距）
+    const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距，与壁纸库网格完全同边距（磁贴可见边即磁贴框，
+                                 // 精确落在 36px 页边距上）；列数按 .view 内容宽计，不越入页边距
     let items = [];              // 画布条目：{kind:"folder",key,path} | {kind:"file",key,w}
     let positions = new Map();   // key → {c,r} 本次渲染的实际槽位
     let slotIndex = new Map();   // "c,r" → key（占用表）
@@ -1255,7 +1258,7 @@
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));
       locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
-      CELL_W = 108 * v; CELL_H = 68 * v + 46; // 步距随缩放同步，列数变化需重排（槽位索引不变）
+      CELL_W = 100 * v + 10; CELL_H = 58 * v + 42; // 步距随缩放同步，列数变化需重排（槽位索引不变）
       if (localReflow) localReflow();
       const next = zoomPresetOpts(v); // 同步下拉：替换选项内容并选中当前值
       zoomOpts.length = 0;
@@ -1272,13 +1275,14 @@
 
     // ---- 桌面画布：槽位计算与就地摆放 ----
     function computePositions() {
-      // 磁贴 100z、间隙 8z 全部固定不变。按约定，右侧 PAD/EDGE 不限制排列：末列允许越入
-      // 视口右留白，只要最后一枚磁贴的可见缩略图不越过 .view 裁剪边即算一列
-      const viewRect = viewEl.getBoundingClientRect();
-      const canvasRect = canvas.getBoundingClientRect();
-      const clipLocal = viewRect.right - canvasRect.left - 2; // .view 裁剪边换算到画布坐标系
-      cols = Math.max(1, Math.floor((clipLocal - CANVAS_PAD - 100 * localZoom) / CELL_W) + 1);
-      pitch = CELL_W;
+      // 与壁纸库网格同一条铺排规则（minmax(100z, 1fr) · gap 10px 的画布版）：
+      // 可用宽 = .view 内容宽（canvas 与壁纸库网格同一内容盒），列数按「磁贴基准宽 100z + 间隙 10px」
+      // 能容纳的列数计；磁贴宽度拉伸到均分剩余空间（1fr），间隙恒为 10px，首末列精确贴左右页边距
+      const avail = Math.max(0, canvas.clientWidth - CANVAS_PAD * 2);
+      cols = Math.max(1, Math.floor((avail + 10) / CELL_W));
+      const tileW = (avail - (cols - 1) * 10) / cols;
+      pitch = tileW + 10;
+      canvas.style.setProperty("--loc-cellw", `${tileW}px`); // 磁贴/槽位提示按列宽拉伸（CSS 消费）
       positions = new Map();
       slotIndex = new Map();
       const firstFree = () => {
@@ -1296,8 +1300,9 @@
       }
       const rows = items.length ? Math.max(...[...positions.values()].map((p) => p.r)) + 1 : 1;
       // 画布至少撑满可视区剩余高度，否则拖到下方空白会落在 .view 上而无法换位；
-      // 末尾再留 ~90px（≈播放条高度），滚到底时最后一行不被悬浮播放条遮住
-      const fill = Math.max(0, viewEl.clientHeight - 150 - canvas.offsetTop); // 150 = .view 底部留白
+      // 底部留白取 .view 实际 padding-bottom（窄窗口断点为 140px），滚到底时最后一行不被悬浮播放条遮住（再留 ~90px ≈ 播放条高度）
+      const padBottom = parseFloat(getComputedStyle(viewEl).paddingBottom) || 150;
+      const fill = Math.max(0, viewEl.clientHeight - padBottom - canvas.offsetTop);
       canvas.style.minHeight = `${Math.max(CANVAS_PAD * 2 + rows * CELL_H + 90, fill)}px`;
     }
     function place(tile, p) {
@@ -1416,6 +1421,7 @@
         ghost.classList.remove("is-selected");
         ghost.classList.add("loc-ghost");
         ghost.style.setProperty("--loc-zoom", localZoom); // 幻影挂到 body 脱离变量作用域，需自带倍率，尺寸才与原磁贴一致
+        ghost.style.width = `${drag.tile.offsetWidth}px`; // 列宽拉伸值是画布作用域的变量，body 上取不到，显式带上
         document.body.append(ghost);
         hint = el("div", { class: "loc-slot-hint" });
         hint.hidden = true;
