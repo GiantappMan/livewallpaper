@@ -428,7 +428,7 @@
       const cover = el("div", { class: "wall-cover" });
       const src = coverSrcOf(w);
       if (src) {
-        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "" });
+        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -818,6 +818,7 @@
   let localLayout = {};      // 桌面画布布局表（跨渲染保持：落盘有防抖，重渲染若回读旧值会丢条目）
   let localLayoutDir = null; // localLayout 对应的文件夹；切换文件夹时才重新读盘
   let localSaveTimer = 0;    // 布局落盘防抖
+  let localPendingSave = null; // 防抖期内未落盘的 {dir, snapshot}；页面卸载时补写，否则刷新会丢最后一次拖动
   let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
   let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
   let localResizeHooked = false;
@@ -825,6 +826,21 @@
   let localZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, parseFloat(localStorage.getItem("fluent.localZoom")) || 1)); // 封面缩放（持久化；仅作用于封面尺寸，文字与画布布局不受影响）
   let localZoomKeys = null; // 本地库缩放快捷键入口（仅本视图存在，切视图置空）
   let zoomCtl = null;      // 右下角缩放控件（挂 body，仅本地库视图存在，切视图移除）
+
+  // 布局防抖落盘的补写：刷新 / 关窗 / 隐藏时立即落盘。不补写的话，最后一次拖动没进 layout.json，
+  // 重开后该条目按流式落回第一个空位，表现为刚拖出的空位被"自动补位"
+  function flushLayoutSave() {
+    if (!localPendingSave) return;
+    const p = localPendingSave;
+    localPendingSave = null;
+    clearTimeout(localSaveTimer);
+    localSaveTimer = 0;
+    SC.saveFolderLayout(p.dir, p.snapshot);
+  }
+  window.addEventListener("pagehide", flushLayoutSave);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushLayoutSave();
+  });
 
   // 缩放快捷键：Ctrl+= / Ctrl+- 步进，Ctrl+0 复位（滚轮在 .loc-body 上单独监听）
   window.addEventListener("keydown", (e) => {
@@ -931,8 +947,7 @@
 
     const crumb = el("nav", { class: "loc-crumb", "aria-label": "folder" });
     const flowFolders = el("div", { class: "loc-folders" }); // 根层级 / 搜索态：流式文件夹卡
-    const flowGrid = el("div", { class: "loc-grid" });       // 根层级 / 搜索态：流式网格
-    const flowGroups = el("div", { class: "loc-groups" });   // 根层级：按文件夹分组平铺各文件夹内壁纸
+    const flowGrid = el("div", { class: "loc-grid" });       // 搜索态：流式网格
     const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
 
     // 单行头部：面包屑 + 计数 + ⋯（不再重复「本地库」大标题，压低头部高度）。
@@ -951,13 +966,14 @@
     };
 
     // 缩放以 --loc-zoom 变量下发，仅封面尺寸消费（网格列宽 / 文件夹缩略图高度），文字与画布槽位不受影响
-    const locBody = el("div", { class: "loc-body" }, flowFolders, flowGrid, flowGroups, canvas);
+    const locBody = el("div", { class: "loc-body" }, flowFolders, flowGrid, canvas);
     locBody.style.setProperty("--loc-zoom", localZoom);
     viewEl.append(locBody);
 
     // ===== 桌面画布：隐形槽位网格，位置记忆（Windows 桌面式） =====
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
-    // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
+    // 显式拖动与流式落位都记录：条目位置一经呈现即固定，空槽位不会被刷新/增删后的重排补位；
+    // 新条目按流式顺序落第一个空位并同样记入。
     // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 100z + 间隙 10px（与壁纸库网格 gap 一致），用于数列；
     // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥100z）回填 --loc-cellw；
     // CELL_H = 磁贴高（缩略图 16:9 由列宽推出，与 CSS aspect-ratio 同式，缩放/改窗口时封面始终等比
@@ -981,12 +997,12 @@
       renderView();
     }
 
-    // 布局防抖落盘：快照在调度时取，避免实例切换后写脏数据
+    // 布局防抖落盘：快照在调度时取，避免实例切换后写脏数据（防抖期内的补写时机见 flushLayoutSave）
     function scheduleSave() {
-      const dir = localLayoutDir;
-      const snapshot = { ...localLayout };
+      if (localPendingSave && localPendingSave.dir !== localLayoutDir) flushLayoutSave(); // 换文件夹前先落上一份
+      localPendingSave = { dir: localLayoutDir, snapshot: { ...localLayout } };
       clearTimeout(localSaveTimer);
-      localSaveTimer = setTimeout(() => SC.saveFolderLayout(dir, snapshot), 400);
+      localSaveTimer = setTimeout(flushLayoutSave, 400);
     }
     function forgetKey(key) {
       if (localLayout[key]) { delete localLayout[key]; scheduleSave(); }
@@ -1148,17 +1164,19 @@
       if (seq !== localSeq) return;
       const idx = pathIndex();
       const curDir = idx.norm(localDir);
-      const scope = searching ? all : all.filter((_, i) => idx.dirs[i] === curDir);
+      // 根层级只陈列库根目录卡，不再平铺壁纸项（散落在根目录的壁纸可经搜索定位）；
+      // 搜索态搜全库、子文件夹只看当前层
+      const scope = searching ? all : localDir ? all.filter((_, i) => idx.dirs[i] === curDir) : [];
       const files = sorted(filtered(scope));
       const countEl = viewEl.querySelector("[data-count]");
-      if (countEl) countEl.textContent = SC.t("local.count", files.length + folders.length);
+      if (countEl) countEl.textContent = SC.t("local.count", searching || localDir ? files.length + folders.length : folders.length);
       crumbs();
 
       folders.sort((a, b) => dirName(a).localeCompare(dirName(b), undefined, { numeric: true, sensitivity: "base" }));
       selected = null;
       if (drag) cancelDrag(); // 重渲染会替换磁贴，进行中的拖拽直接作废，避免脱管磁贴吃掉本次操作
 
-      // 根层级（库根目录列表）与搜索态沿用流式网格；子文件夹层级用桌面画布
+      // 根层级只显示文件夹卡（不铺壁纸项）；搜索态沿用流式网格；子文件夹层级用桌面画布
       const flowMode = searching || !localDir;
       canvas.hidden = flowMode;
       flowGrid.hidden = flowMode;
@@ -1168,16 +1186,18 @@
         flowFolders.hidden = !folders.length;
         for (const f of folders) flowFolders.append(folderCard(f));
         flowGrid.innerHTML = "";
-        if (!files.length && !folders.length) flowGrid.append(emptyNode(searching));
-        // 有文件夹时根层级网格必然为空，收起让位给分组平铺（避免 .loc-grid 的 min-height 留大空白）
-        flowGrid.hidden = !files.length && !!folders.length;
-        appendChunked(flowGrid, files, cardOf, () => seq !== localSeq);
-        renderGroups(folders, () => seq !== localSeq);
+        if (searching) {
+          if (!files.length) flowGrid.append(emptyNode(true));
+          appendChunked(flowGrid, files, cardOf, () => seq !== localSeq);
+        } else if (!folders.length) {
+          flowGrid.append(emptyNode(false)); // 根层级没有任何文件夹时给出目录配置引导
+        } else {
+          flowGrid.hidden = true;
+        }
         return;
       }
       flowFolders.hidden = true;
       flowGrid.hidden = true;
-      flowGroups.hidden = true;
 
       // 布局表仅在切换文件夹时读盘一次；之后以内存为准（防抖落盘 + 回读会竞态覆盖会话内修改）
       if (localLayoutDir !== localDir) {
@@ -1208,25 +1228,6 @@
       localReflow = reflow;
     }
 
-    // 根层级：每个库根目录一组，平铺其下所有壁纸（含子文件夹，与卡片计数口径一致）
-    function renderGroups(folders, isStale) {
-      flowGroups.innerHTML = "";
-      const show = !localDir && !searchQuery.trim() && folders.length > 0;
-      flowGroups.hidden = !show;
-      if (!show) return;
-      for (const f of folders) {
-        const kids = sorted(filtered(kidsUnder(f)));
-        if (!kids.length) continue;
-        const grid = el("div", { class: "loc-grid" });
-        appendChunked(grid, kids, cardOf, isStale);
-        flowGroups.append(el("section", { class: "loc-group" },
-          el("div", { class: "loc-group-head" },
-            el("span", { class: "loc-group-name" }, dirName(f)),
-            el("span", { class: "loc-group-count" }, SC.t("local.count", kids.length))),
-          grid));
-      }
-      flowGroups.hidden = !flowGroups.firstChild;
-    }
     localRefresh = renderGrid;
 
     // ---- 封面缩放：右下角放大镜控件，平时收起为小图标（悬停展开 − / 百分比 / +）；
@@ -1292,16 +1293,24 @@
       const firstFree = () => {
         for (let r = 0; ; r++) for (let c = 0; c < cols; c++) if (!slotIndex.has(`${c},${r}`)) return { c, r };
       };
+      let streamed = false;
       for (const it of items) {
         let p = localLayout[it.key];
         if (p) {
           p = { c: Math.min(Math.max(0, p.c | 0), cols - 1), r: Math.max(0, p.r | 0) };
           if (slotIndex.has(`${p.c},${p.r}`)) p = null; // 槽位被占（如换位后残留），退回流式找空位
         }
-        if (!p) p = firstFree();
+        if (!p) {
+          p = firstFree();
+          if (!localLayout[it.key]) { // 流式落位同样记入布局表：条目位置一经呈现即固定，
+            localLayout[it.key] = p;  // 刷新后不会重新扫描空位而挤进前面的空隙（空槽位保持空着）
+            streamed = true;
+          }
+        }
         positions.set(it.key, p);
         slotIndex.set(`${p.c},${p.r}`, it.key);
       }
+      if (streamed) scheduleSave();
       const rows = items.length ? Math.max(...[...positions.values()].map((p) => p.r)) + 1 : 1;
       // 画布至少撑满可视区剩余高度，否则拖到下方空白会落在 .view 上而无法换位；
       // 底部留白取 .view 实际 padding-bottom（窄窗口断点为 140px），滚到底时最后一行不被悬浮播放条遮住（再留 ~90px ≈ 播放条高度）
@@ -1343,7 +1352,7 @@
       const cover = el("div", { class: "loc-cover" });
       const src = coverSrcOf(w);
       if (src) {
-        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "" });
+        const img = el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" });
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
@@ -1545,7 +1554,7 @@
       if (!covers.length) return;
       const grid = el("span", { class: `loc-thumb-grid is-n${covers.length}` });
       for (const url of covers) {
-        const img = el("img", { src: thumbSrc(url), loading: "lazy", alt: "" });
+        const img = el("img", { src: thumbSrc(url), loading: "lazy", alt: "", draggable: "false" }); // 原生图片拖拽会吞掉指针事件，磁贴拖不动
         img.addEventListener("error", () => {
           img.remove();
           if (!grid.firstChild) {
