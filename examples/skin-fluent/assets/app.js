@@ -960,10 +960,11 @@
     // 只记录用户显式拖动过的条目，新条目按流式顺序落第一个空位。
     // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 100z + 间隙 10px（与壁纸库网格 gap 一致），用于数列；
     // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥100z）回填 --loc-cellw；
-    // CELL_H = 磁贴高（缩略图 52z + 名称间隙 6z + 名称盒固定两行 30px = 58z+30，无内边距，另含上下 1px 边框）
-    // + 10px 行距（与壁纸库一致）。
+    // CELL_H = 磁贴高（缩略图 16:9 由列宽推出，与 CSS aspect-ratio 同式，缩放/改窗口时封面始终等比
+    // + 名称间隙 6z + 名称盒固定两行 30px = 缩略图高+6z+30，无内边距，另含上下 1px 边框）+ 10px 行距（与壁纸库一致），
+    // 在 computePositions 算出实际列宽后回填（初值为基准宽 100z 口径的估算）。
     // 布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
-    let CELL_W = 100 * localZoom + 10, CELL_H = 58 * localZoom + 42;
+    let CELL_W = 100 * localZoom + 10, CELL_H = 100 * localZoom * 9 / 16 + 6 * localZoom + 42;
     let pitch = CELL_W;          // 实际列距：computePositions 把内容宽剩余量均摊进列间隙后回填（首末列贴页边距）
     const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距，与壁纸库网格完全同边距（磁贴可见边即磁贴框，
                                  // 精确落在 36px 页边距上）；列数按 .view 内容宽计，不越入页边距
@@ -1258,7 +1259,7 @@
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));
       locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
-      CELL_W = 100 * v + 10; CELL_H = 58 * v + 42; // 步距随缩放同步，列数变化需重排（槽位索引不变）
+      CELL_W = 100 * v + 10; // 列数口径随缩放同步；CELL_H 由 localReflow→computePositions 按新列宽回填
       if (localReflow) localReflow();
       const next = zoomPresetOpts(v); // 同步下拉：替换选项内容并选中当前值
       zoomOpts.length = 0;
@@ -1282,6 +1283,9 @@
       cols = Math.max(1, Math.floor((avail + 10) / CELL_W));
       const tileW = (avail - (cols - 1) * 10) / cols;
       pitch = tileW + 10;
+      // 行高随列宽：封面 16:9（与 .loc-tile-thumb 的 aspect-ratio 同式，缩放/改窗口封面始终等比）
+      // + 名称间隙 6z + 名称盒两行 30px + 行距 10px + 上下边框 2px
+      CELL_H = tileW * 9 / 16 + 6 * localZoom + 42;
       canvas.style.setProperty("--loc-cellw", `${tileW}px`); // 磁贴/槽位提示按列宽拉伸（CSS 消费）
       positions = new Map();
       slotIndex = new Map();

@@ -808,13 +808,13 @@ button.card-row:hover { background: var(--subtle); }
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: calc(110px * var(--loc-zoom, 1));
   padding: 13px 14px; border-radius: var(--r-md); text-align: left;
   background: var(--card); border: 1px solid var(--stroke);
-  content-visibility: auto; contain-intrinsic-size: auto calc(110px * var(--loc-zoom, 1)); /* 大库优化，同 .wall-card */
+  content-visibility: auto; contain-intrinsic-size: auto calc(calc(170px * var(--loc-zoom, 1)) * 9 / 16 + 60px); /* 大库优化，同 .wall-card；高≈缩略图 16:9 + 内边距 26 + 名称/计数 ~34 */
   transition: border-color var(--speed), box-shadow var(--speed);
 }
 .loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .loc-folder:active { opacity: .92; }
 .loc-folder.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
-.loc-folder-thumb { position: relative; width: 100%; height: calc(64px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); }
+.loc-folder-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); } /* 同磁贴缩略图等比，不随列宽漂移 */
 .loc-folder-thumb.is-empty { display: flex; align-items: center; justify-content: center; color: var(--accent); }
 /* 文件夹多图拼贴：1 张全幅、2 张两列、3 张左一大右两小、4 张 2×2；底色遮住后方图标 */
 .loc-thumb-grid { position: absolute; inset: 0; display: grid; gap: 1px; background: var(--ctl-hover); }
@@ -851,14 +851,15 @@ button.card-row:hover { background: var(--subtle); }
   /* 大库优化：视口外磁贴跳过布局。占位高必须与真实内容高完全一致（名称盒固定两行后高度确定：58z+30，
      占位是内容盒口径不含边框）——绝对定位的 c-v:auto 元素在屏上也可能按占位值布局，占位不准会直接变成可见的多余空隙 */
   content-visibility: auto;
-  contain-intrinsic-size: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) calc(58px * var(--loc-zoom, 1) + 30px);
+  contain-intrinsic-size: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) calc(var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 30px);
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
 .loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
 .loc-tile.is-selected { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .loc-tile.is-over { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .loc-tile.is-dragging { opacity: .45; }
-.loc-tile-thumb { position: relative; width: 100%; height: calc(52px * var(--loc-zoom, 1)); border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
+/* 缩略图锁定 16:9 由列宽推出高度（与 app.js CELL_H 同式）：缩放/改窗口时封面始终等比，不再越放大越扁 */
+.loc-tile-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r-ctl); overflow: hidden; background: var(--ctl-hover); flex-shrink: 0; }
 .loc-tile-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loc-tile-thumb.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 10px, var(--ctl-press) 10px, var(--ctl-press) 20px); }
 .loc-tile-thumb.is-folder { display: flex; align-items: center; justify-content: center; background: var(--ctl-hover); color: var(--accent); }
@@ -896,7 +897,7 @@ button.card-row:hover { background: var(--subtle); }
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
 .loc-slot-hint {
-  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))); height: calc(58px * var(--loc-zoom, 1) + 32px); border-radius: var(--r-md);
+  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }
