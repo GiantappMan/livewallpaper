@@ -137,7 +137,7 @@
       "upload_failed": "Archivo no cargado",
       "upload_size_limit_exceeded": "El archivo es demasiado grande. Por favor, copia los archivos grandes directamente al directorio de fondos de pantalla.",
       "video_player": "Reproductor de video",
-      "video_player_description": "Se recomienda usar el reproductor Mpv para soportar más formatos de video. Pero si sientes que se traba, puedes intentar cambiar al reproductor del sistema.",
+      "video_player_description": "El reproductor web se usa de forma predeterminada y cubre la mayoría de los vídeos. El reproductor Mpv admite más formatos de video con mejor rendimiento y se puede descargar automáticamente.",
       "volume": "Volumen",
       "wallpaper_type": "Tipo de fondo de pantalla",
       "wallpaper_type_animated_img": "Imagen Animada",

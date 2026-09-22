@@ -70,7 +70,7 @@ impl Default for ConfigWallpaper {
         Self {
             directories: Vec::new(),
             covered_behavior: CoveredBehavior::Pause,
-            default_video_player: VideoPlayer::Mpv,
+            default_video_player: VideoPlayer::System,
             keep_wallpaper: false,
         }
     }

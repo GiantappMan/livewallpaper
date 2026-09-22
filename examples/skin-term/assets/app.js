@@ -497,7 +497,7 @@
           bodyEl.append(tfield(SC.t("set.mouse"), checkboxEl(cur.enableMouseEvent, (v) => { cur.enableMouseEvent = v; }), SC.t("set.mouseHint")));
         }
         if (type === 3) {
-          bodyEl.append(tfield(SC.t("set.player"), selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 1, label: SC.t("set.engine1") }, { value: 2, label: SC.t("set.engine2") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
+          bodyEl.append(tfield(SC.t("set.player"), selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
           bodyEl.append(tfield(SC.t("set.hwdec"), checkboxEl(cur.hardwareDecoding, (v) => { cur.hardwareDecoding = v; }), SC.t("set.hwdecHint")));
           bodyEl.append(tfield(SC.t("set.panscan"), checkboxEl(cur.isPanScan, (v) => { cur.isPanScan = v; }), SC.t("set.panscanHint")));
         }
@@ -632,7 +632,7 @@
         el("button", { class: "tbtn", onclick: () => { dirs.push(""); renderDirs(); } }, `[+] ${SC.t("cfg.addDir")}`)),
       el("div", { class: "tcfg-block" },
         cfgLine(SC.t("cfg.covered"), selectEl([{ value: 0, label: SC.t("cfg.covered0") }, { value: 1, label: SC.t("cfg.covered1") }, { value: 2, label: SC.t("cfg.covered2") }], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })),
-        cfgLine(SC.t("cfg.player"), selectEl([{ value: 1, label: SC.t("set.engine1") }, { value: 2, label: SC.t("set.engine2") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); }))),
+        cfgLine(SC.t("cfg.player"), selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); }))),
       mpvBlock());
   }
   function cfgLine(label, control) {

@@ -219,9 +219,10 @@ export function SettingDialog(props: SettingDialogProps) {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {Object.entries(VideoPlayer).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
-                                                <SelectItem key={key.toString()} value={value.toString()}>
-                                                    {dictionary['local'][key.toLowerCase()]}
+                                            {/* Web 播放器是默认引擎，排在 MPV 之前 */}
+                                            {[VideoPlayer.Default_Player, VideoPlayer.System_Player, VideoPlayer.MPV_Player].map((value) => (
+                                                <SelectItem key={value.toString()} value={value.toString()}>
+                                                    {dictionary['local'][VideoPlayer[value].toLowerCase()]}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

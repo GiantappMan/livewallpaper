@@ -664,7 +664,7 @@
         }
         if (type === 3) {
           box.append(fieldRow(SC.t("set.player"),
-            selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 1, label: SC.t("set.engine1") }, { value: 2, label: SC.t("set.engine2") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
+            selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
           box.append(fieldRow(SC.t("set.hwdec"), switchEl(cur.hardwareDecoding, (v) => { cur.hardwareDecoding = v; }), SC.t("set.hwdecHint")));
           box.append(fieldRow(SC.t("set.panscan"), switchEl(cur.isPanScan, (v) => { cur.isPanScan = v; }), SC.t("set.panscanHint")));
         }
@@ -841,7 +841,7 @@
         ], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })),
         el("div", { class: "cfg-gap" }),
         fieldRow(SC.t("cfg.player"), selectEl([
-          { value: 1, label: SC.t("set.engine1") }, { value: 2, label: SC.t("set.engine2") },
+          { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
         ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); }))),
       mpvBlock());
   }

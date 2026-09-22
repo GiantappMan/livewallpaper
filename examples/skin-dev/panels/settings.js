@@ -14,7 +14,7 @@
   const LANGS = { zh: "简体中文", en: "English", ru: "Русский", es: "Español" };
   const THEMES = ["zinc", "slate", "stone", "gray", "neutral", "red", "rose", "orange", "green", "blue", "yellow", "violet"];
   const COVERED = { 0: "无操作", 1: "暂停", 2: "停止" };
-  const PLAYERS = { 0: "系统默认(mpv 优先)", 1: "mpv", 2: "内嵌 WebView" };
+  const PLAYERS = { 0: "默认(跟随全局)", 1: "MPV", 2: "Web 播放器" };
 
   function render(root) {
     root.innerHTML = "";

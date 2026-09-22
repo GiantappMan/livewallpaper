@@ -321,7 +321,8 @@ impl Default for ApiSettings {
             audio_source_index: 0,
             volume: 0,
             covered_behavior: CoveredBehavior::Pause,
-            default_video_player: VideoPlayer::Mpv,
+            // 默认走内嵌 WebView 播放器（无外部依赖）；MPV 由用户在设置里主动启用
+            default_video_player: VideoPlayer::System,
         }
     }
 }

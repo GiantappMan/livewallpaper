@@ -137,7 +137,7 @@
     "upload_failed": "文件未上传",
     "upload_size_limit_exceeded": "文件过大，请直接拷贝到壁纸保存目录",
     "video_player": "视频播放器",
-    "video_player_description": "推荐使用Mpv播放器，以支持更多的视频格式。但如果你觉得卡顿可以尝试切换到系统播放器。",
+    "video_player_description": "默认使用 Web 播放器，满足大部分视频场景；MPV 播放器支持更多视频格式且性能更好，可自动下载启用。",
     "volume": "音量",
     "wallpaper_type": "壁纸类型",
     "wallpaper_type_animated_img": "动图",
