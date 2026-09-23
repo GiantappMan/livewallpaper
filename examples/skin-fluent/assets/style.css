@@ -423,6 +423,10 @@ body.is-target-all .loc-tile.is-file:hover .loc-tile-thumb::after {
   opacity: 1; animation: apply-ring-spin 2.2s linear infinite;
 }
 
+/* 悬停即播：封面区域直接铺静音循环视频（object-fit 与封面图同款，插在封面图之后、
+   操作条 / 徽标之前由 DOM 顺序保持其上）；pointer-events 放行，不挡悬停与点击 */
+.cover-live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
 /* 空态 */
 .empty { grid-column: 1 / -1; text-align: center; padding: 64px 20px; align-self: center; }
 .empty-ico {
@@ -779,7 +783,7 @@ button.card-row:hover { background: var(--subtle); }
 .loc-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .loc-card:active { opacity: .92; }
 .loc-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
-.loc-cover { flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
+.loc-cover { position: relative; flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
 .loc-cover img { width: 100%; height: 100%; object-fit: cover; }
 .loc-cover.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 12px, var(--ctl-press) 12px, var(--ctl-press) 24px); }
 .loc-live {
@@ -872,17 +876,18 @@ button.card-row:hover { background: var(--subtle); }
 .loc-canvas.is-empty { display: grid; place-items: center; }
 .loc-tile {
   /* 宽度随画布列宽拉伸（--loc-cellw 由 app.js 按内容宽均摊回填，等价壁纸库 1fr 列；
-     回退值为缩放基准宽 100z）；名称与操作钮字号不缩放。
+     回退值为缩放基准宽 170z，与根目录文件夹卡 minmax(170z,1fr) 同基准，同档位下封面一样大）；
+     名称与操作钮字号不缩放。
      无内边距、缩略图撑满磁贴宽：可见边即磁贴框，上缘与左右缘都精确落在 .view 页边距上，
      与壁纸库网格同边距；列间隙固定 10px、行距 10px（名称盒固定两行高），与壁纸库网格一致 */
-  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1)));
+  position: absolute; width: var(--loc-cellw, calc(170px * var(--loc-zoom, 1)));
   display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--loc-zoom, 1));
   padding: 0; border-radius: var(--r-md); cursor: pointer;
   border: 1px solid transparent; touch-action: none;
   /* 大库优化：视口外磁贴跳过布局。占位高必须与真实内容高完全一致（名称盒固定两行后高度确定：58z+30，
      占位是内容盒口径不含边框）——绝对定位的 c-v:auto 元素在屏上也可能按占位值布局，占位不准会直接变成可见的多余空隙 */
   content-visibility: auto;
-  contain-intrinsic-size: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) calc(var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 30px);
+  contain-intrinsic-size: var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) calc(var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 30px);
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
 .loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
@@ -931,7 +936,7 @@ button.card-row:hover { background: var(--subtle); }
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
 .loc-slot-hint {
-  position: absolute; width: var(--loc-cellw, calc(100px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(100px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
+  position: absolute; width: var(--loc-cellw, calc(170px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }

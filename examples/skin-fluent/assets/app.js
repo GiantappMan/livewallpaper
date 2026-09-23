@@ -64,6 +64,40 @@
     return !isVideoName(name) && /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(name) ? (w.fileUrl || "") : "";
   }
 
+  // 悬停即播的目标视频：视频 = 本体；播放列表 = 当前项（仅视频）。其余类型不处理
+  function hoverVideoUrlOf(w) {
+    let target = w;
+    if ((w.meta && w.meta.type) === 6) { // 播放列表：解析当前播放项
+      const list = w.meta.wallpapers || [];
+      target = list.length ? list[(w.meta.playIndex || 0) % list.length] : null;
+    }
+    return target && target.fileUrl && previewKind(target) === "video" ? target.fileUrl : null;
+  }
+
+  // 悬停即播：进入卡片 150ms 后才拉流（快速划过网格不反复起停），移开即卸载；
+  // 解码失败等错误静默回退静态封面。视频插在封面图之后，操作条 / 徽标仍在视频之上
+  function attachHoverPlay(card, cover, w) {
+    const url = hoverVideoUrlOf(w);
+    if (!url) return;
+    let video = null;
+    let timer = 0;
+    const stop = () => {
+      if (timer) { clearTimeout(timer); timer = 0; }
+      if (video) { video.remove(); video = null; }
+    };
+    card.addEventListener("mouseenter", () => {
+      if (video || timer) return;
+      timer = setTimeout(() => {
+        timer = 0;
+        video = el("video", { class: "cover-live", src: url, autoplay: true, loop: true, muted: true, playsinline: true });
+        video.addEventListener("error", stop);
+        const img = cover.querySelector("img");
+        if (img) img.after(video); else cover.prepend(video);
+      }, 150);
+    });
+    card.addEventListener("mouseleave", stop);
+  }
+
   // 名称排序统一走共享 Collator：比每对比较各调一次 localeCompare 快一个量级（几千项排序明显）
   const NAME_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
@@ -485,6 +519,7 @@
         typeBadge);
 
       card.append(cover, playDot, screenChips || "", acts, title);
+      attachHoverPlay(card, cover, w);
       card.addEventListener("click", () => {
         const target = applyTarget < 0 ? [] : [applyTarget];
         SC.applyWallpaper(w, target);
@@ -1262,13 +1297,14 @@
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
     // 显式拖动与流式落位都记录：条目位置一经呈现即固定，空槽位不会被刷新/增删后的重排补位；
     // 新条目按流式顺序落第一个空位并同样记入。
-    // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 100z + 间隙 10px（与壁纸库网格 gap 一致），用于数列；
-    // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥100z）回填 --loc-cellw；
+    // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 170z + 间隙 10px（基准与根目录文件夹卡 minmax(170z,1fr) 一致，
+    // 同一缩放档位下两处封面一样大），用于数列；
+    // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥170z）回填 --loc-cellw；
     // CELL_H = 磁贴高（缩略图 16:9 由列宽推出，与 CSS aspect-ratio 同式，缩放/改窗口时封面始终等比
     // + 名称间隙 6z + 名称盒固定两行 30px = 缩略图高+6z+30，无内边距，另含上下 1px 边框）+ 10px 行距（与壁纸库一致），
-    // 在 computePositions 算出实际列宽后回填（初值为基准宽 100z 口径的估算）。
+    // 在 computePositions 算出实际列宽后回填（初值为基准宽 170z 口径的估算）。
     // 布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
-    let CELL_W = 100 * localZoom + 10, CELL_H = 100 * localZoom * 9 / 16 + 6 * localZoom + 42;
+    let CELL_W = 170 * localZoom + 10, CELL_H = 170 * localZoom * 9 / 16 + 6 * localZoom + 42;
     let pitch = CELL_W;          // 实际列距：computePositions 把内容宽剩余量均摊进列间隙后回填（首末列贴页边距）
     const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距，与壁纸库网格完全同边距（磁贴可见边即磁贴框，
                                  // 精确落在 36px 页边距上）；列数按 .view 内容宽计，不越入页边距
@@ -1548,7 +1584,7 @@
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));
       locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
-      CELL_W = 100 * v + 10; // 列数口径随缩放同步；CELL_H 由 localReflow→computePositions 按新列宽回填
+      CELL_W = 170 * v + 10; // 列数口径随缩放同步；CELL_H 由 localReflow→computePositions 按新列宽回填
       if (localReflow) localReflow();
       const next = zoomPresetOpts(v); // 同步下拉：替换选项内容并选中当前值
       zoomOpts.length = 0;
@@ -1565,8 +1601,8 @@
 
     // ---- 桌面画布：槽位计算与就地摆放 ----
     function computePositions() {
-      // 与壁纸库网格同一条铺排规则（minmax(100z, 1fr) · gap 10px 的画布版）：
-      // 可用宽 = .view 内容宽（canvas 与壁纸库网格同一内容盒），列数按「磁贴基准宽 100z + 间隙 10px」
+      // 与根目录文件夹卡同一条铺排规则（minmax(170z, 1fr) · gap 10px 的画布版，同一缩放档位下封面一样大）：
+      // 可用宽 = .view 内容宽（canvas 与壁纸库网格同一内容盒），列数按「磁贴基准宽 170z + 间隙 10px」
       // 能容纳的列数计；磁贴宽度拉伸到均分剩余空间（1fr），间隙恒为 10px，首末列精确贴左右页边距
       const avail = Math.max(0, canvas.clientWidth - CANVAS_PAD * 2);
       cols = Math.max(1, Math.floor((avail + 10) / CELL_W));
@@ -1660,6 +1696,7 @@
         typeBadge);
 
       card.append(cover, playDot, screenChips || "", acts, meta);
+      attachHoverPlay(card, cover, w);
       card.addEventListener("click", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
       // 拖到 Dock 屏幕块直接在该屏播放（同壁纸库卡片）
       card.draggable = true;
@@ -1835,6 +1872,7 @@
         el("span", { class: "loc-acts" },
           actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w))));
       tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
+      attachHoverPlay(tile, thumb, w);
       tile.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
