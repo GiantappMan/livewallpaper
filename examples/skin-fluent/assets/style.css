@@ -363,7 +363,7 @@ img { display: block; }
 .wall-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .wall-card:active { opacity: .92; }
 .wall-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
-.wall-cover { flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
+.wall-cover { position: relative; flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
 .wall-cover img { width: 100%; height: 100%; object-fit: cover; }
 .wall-cover.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 12px, var(--ctl-press) 12px, var(--ctl-press) 24px); }
 .wall-live {
@@ -398,6 +398,29 @@ img { display: block; }
 }
 [data-mode="dark"] .chip { background: rgba(44, 44, 44, .82); }
 .chip:hover { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+
+/* 应用目标提示：目标为「全部屏幕」时，悬停封面播一圈流光边框 + tooltip —— 单击卡片即应用到全部屏幕；
+   选定具体屏幕后提示消失（此时单击只作用于该屏）。环用 conic-gradient 旋转 + mask 抠出 2px 描边，
+   仅悬停的单张卡片播放动画，常驻不耗绘制 */
+@property --apply-ring { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes apply-ring-spin { to { --apply-ring: 360deg; } }
+.wall-cover::after, .loc-cover::after, .loc-tile-thumb::after {
+  content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  padding: 2px; border-radius: inherit;
+  background: conic-gradient(from var(--apply-ring),
+    transparent 0turn .52turn,
+    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
+    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
+    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity var(--speed);
+}
+body.is-target-all .wall-card:hover .wall-cover::after,
+body.is-target-all .loc-card:hover .loc-cover::after,
+body.is-target-all .loc-tile.is-file:hover .loc-tile-thumb::after {
+  opacity: 1; animation: apply-ring-spin 2.2s linear infinite;
+}
 
 /* 空态 */
 .empty { grid-column: 1 / -1; text-align: center; padding: 64px 20px; align-self: center; }
@@ -651,16 +674,32 @@ button.card-row:hover { background: var(--subtle); }
 .dock-line { position: absolute; top: 0; left: 0; height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
 .dock-line.is-idle { opacity: .25; }
 .dock-empty { gap: 10px; width: auto; color: var(--ink-2); font-size: 12.5px; padding: 8px 18px; }
-.dock-empty svg { opacity: .7; }
-.dock-thumb { width: 40px; height: 40px; border-radius: var(--r-ctl); overflow: hidden; flex-shrink: 0; background: var(--ctl-hover); border: 1px solid var(--stroke); }
-.dock-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .dock-meta { display: flex; flex-direction: column; gap: 1px; width: 170px; min-width: 120px; flex-shrink: 0; }
 .dock-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dock-sub { font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dock-ctrl { display: flex; align-items: center; gap: 2px; }
+.dock-ctrl { display: flex; align-items: center; gap: 2px; margin-left: auto; }
 .dock-btn { width: 34px; height: 34px; }
 .dock-time { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dock-seek { flex: 1; min-width: 90px; accent-color: var(--accent); height: 4px; cursor: pointer; }
+/* 屏幕选择条：各屏幕迷你块（宽度按分辨率等比、在播屏以对应壁纸封面为底、暂停叠斜纹）。
+   点击选中/取消（未选 = 操作作用于全部屏幕）；壁纸可拖到屏块上直接在该屏播放 */
+.dock-screens { display: flex; align-items: center; gap: 5px; flex-shrink: 1; min-width: 0; padding: 0 2px; overflow-x: auto; scrollbar-width: none; }
+.dock-screens::-webkit-scrollbar { display: none; }
+.dock-screen {
+  position: relative; flex-shrink: 0; padding: 0; cursor: pointer; overflow: hidden;
+  border: 1px solid var(--stroke); border-radius: 4px; background: var(--ctl-hover); color: var(--ink-3);
+  transition: border-color var(--speed), box-shadow var(--speed), color var(--speed);
+}
+.dock-screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dock-screen-num {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-size: 10px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.dock-screen.is-live .dock-screen-num { color: #fff; background: rgba(0, 0, 0, .42); padding: 2px 3px; border-radius: 3px; }
+.dock-screen.is-paused::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, rgba(0, 0, 0, .34) 0 4px, transparent 4px 8px); }
+.dock-screen:hover { border-color: var(--divider); }
+.dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.dock-screen.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 12px color-mix(in srgb, var(--accent) 22%, transparent); }
 
 /* ---------------- Toast（Win11 通知） ---------------- */
 .sc-toasts { position: fixed; right: 20px; bottom: 20px; z-index: 120; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
@@ -882,6 +921,9 @@ button.card-row:hover { background: var(--subtle); }
 .loc-tile-thumb .loc-screens { bottom: 3px; left: 3px; }
 .loc-tile:hover .loc-screens { opacity: 1; transform: none; }
 .loc-tile.is-dragging .loc-screens { opacity: 0; }
+/* 磁贴悬停操作条（在常驻预览钮左侧展开）；拖拽幻影中隐藏 */
+.loc-tile:hover .loc-acts { opacity: 1; transform: none; }
+.loc-tile.is-dragging .loc-acts { opacity: 0; }
 /* 拖拽幻影（跟随光标）与目标槽位提示框 */
 .loc-ghost {
   position: fixed; z-index: 400; margin: 0; pointer-events: none; opacity: .85;
@@ -940,3 +982,48 @@ button.card-row:hover { background: var(--subtle); }
 .loc-move-item.is-active svg { color: var(--accent); }
 .loc-move-item.is-current { color: var(--ink-3); }
 .loc-move-item.is-current:hover { background: none; }
+
+/* ---------------- 预览（本地库：主窗口内直接渲染播放，不应用到桌面） ---------------- */
+.dialog.is-preview { width: min(960px, 94vw); }
+.dialog-head-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+/* 预览放大：窗口撑满视口，舞台随之变高（标题栏「放大/还原」切换） */
+.dialog.is-preview.is-max { width: 97vw; max-height: 94vh; }
+.dialog.is-preview.is-max .pv-stage { height: calc(94vh - 170px); min-height: 300px; }
+.pv-stage {
+  position: relative; height: min(56vh, 540px); min-height: 220px;
+  margin: 16px 24px 0; border-radius: var(--r-md);
+  background: #000; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.pv-media { max-width: 100%; max-height: 100%; }
+.pv-cover { width: 100%; height: 100%; object-fit: cover; }
+.pv-contain { width: 100%; height: 100%; object-fit: contain; }
+.pv-fill { width: 100%; height: 100%; object-fit: fill; }
+.pv-tile { width: 100%; height: 100%; background-repeat: repeat; background-position: center; }
+.pv-stage video { cursor: default; } /* 点击画面切换播放/暂停 */
+.pv-iframe { width: 100%; height: 100%; border: 0; background: #000; }
+.pv-nopoint { pointer-events: none; } /* 鼠标交互关闭：同桌面行为，预览不响应指针 */
+.pv-failed { color: rgba(255, 255, 255, .72); font-size: 13px; padding: 0 24px; text-align: center; }
+.pv-bar { display: flex; align-items: center; gap: 8px; padding: 12px 24px 18px; }
+.pv-bar:empty { display: none; }
+.pv-time, .pv-count { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.pv-count { margin-left: auto; } /* 序号靠右（左右切换已移到媒体区域边缘） */
+.pv-seek { flex: 1; min-width: 80px; accent-color: var(--accent); height: 4px; cursor: pointer; }
+.pv-vol { width: 90px; flex-shrink: 0; accent-color: var(--accent); height: 4px; cursor: pointer; }
+.pv-volnum { font-size: 12px; color: var(--ink-2); width: 24px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+/* 左右切换按钮：悬浮于媒体区域左右边缘（垂直居中），鼠标移入显示、静止 1.6s / 移出隐藏
+   （显隐由 stage 上的 .is-nav-on 类驱动，JS 在 mousemove / mouseleave 时维护） */
+.pv-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+  width: 38px; height: 56px; border-radius: var(--r-ctl);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, .92); background: rgba(0, 0, 0, .38);
+  border: 1px solid rgba(255, 255, 255, .16);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--speed), background var(--speed);
+}
+.pv-stage.is-nav-on .pv-nav { opacity: 1; pointer-events: auto; }
+.pv-nav:hover { background: rgba(0, 0, 0, .62); }
+.pv-nav:active { opacity: .8; }
+.pv-nav.is-prev { left: 10px; }
+.pv-nav.is-next { right: 10px; }

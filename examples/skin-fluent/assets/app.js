@@ -116,6 +116,9 @@
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
     clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
     more: '<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+    eye: '<path d="M2 12s3.5-6.8 10-6.8S22 12 22 12s-3.5 6.8-10 6.8S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/>',
+    maxw: '<rect x="4" y="4" width="16" height="16" rx="1.5"/>',
+    restore: '<rect x="4.5" y="8" width="11.5" height="11.5" rx="1.5"/><path d="M8 4.5h9A2.5 2.5 0 0 1 19.5 8v9"/>',
     info2: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/>',
   };
   function icon(name, size) {
@@ -139,6 +142,20 @@
   let currentView = "library";
   let searchQuery = "";
   let applyTarget = -1; // -1 = 全部屏幕
+  // 卡片悬停 tooltip：说明单击生效的作用范围（跟随当前应用目标）
+  function applyHint() {
+    if (applyTarget < 0) return SC.t("card.clickApplyAll");
+    const s = (SC.state.screens || []).find((x) => x.index === applyTarget);
+    return SC.t("card.clickApplyScreen", SC.t("common.screen", (s && (s.deviceName || s.index)) || applyTarget));
+  }
+  // 目标屏幕统一入口：为「全部屏幕」时在 body 挂标记类，封面流光边框据此提示「单击卡片 = 应用到全部屏幕」
+  function setApplyTarget(v) {
+    applyTarget = v;
+    document.body.classList.toggle("is-target-all", v < 0);
+    // 已渲染卡片的 tooltip 与目标同步（切换目标不重渲染网格）
+    document.querySelectorAll(".wall-card, .loc-card, .loc-tile.is-file").forEach((c) => { c.title = applyHint(); });
+  }
+  setApplyTarget(applyTarget);
   let refreshGrid = null; // 库视图挂载的网格刷新函数（仅库视图存在，切视图置空）
   const paneEl = el("aside", { class: "pane" });
   const viewEl = el("main", { class: "view" });
@@ -353,6 +370,7 @@
       if (closed) return;
       if (!force && opts.beforeClose) { const ok = await opts.beforeClose(); if (!ok) return; }
       closed = true;
+      if (opts.onClose) { try { opts.onClose(); } catch (e) { /* 收尾失败可忽略 */ } }
       overlay.classList.add("is-out");
       setTimeout(() => overlay.remove(), 180);
     }
@@ -384,7 +402,7 @@
     const targetSel = selectEl(
       [{ value: -1, label: SC.t("common.allScreens") }].concat(screens.map((s) => ({ value: s.index, label: SC.t("common.screen", s.deviceName || s.index) }))),
       applyTarget,
-      (v) => { applyTarget = Number(v); },
+      (v) => { setApplyTarget(Number(v)); },
     );
 
     // Win11 命令栏：主命令（创建，带下拉）+ 应用到 + 搜索
@@ -433,6 +451,7 @@
     function cardOf(w, playingSet) {
       const isPlaying = playingSet.has(w.filePath);
       const card = el("article", { class: `wall-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
+      card.title = applyHint(); // 悬停提示：单击即按当前目标生效
       const cover = el("div", { class: "wall-cover" });
       const src = coverSrcOf(w);
       if (src) {
@@ -451,11 +470,10 @@
         actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
         actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w)),
       );
-      // 多屏：顶部逐屏应用按钮
+      // 多屏：顶部逐屏应用按钮（「全部屏幕」不再单独给按钮：目标为全部时，悬停封面的流光边框提示点击卡片即全部生效）
       let screenChips = null;
       if (screens.length > 1) {
         screenChips = el("div", { class: "wall-screens" },
-          el("button", { class: "chip", title: SC.t("common.allScreens"), onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, []); } }, SC.t("common.allScreens")),
           screens.map((s) => el("button", {
             class: "chip",
             title: SC.t("common.screen", s.deviceName || s.index),
@@ -471,6 +489,13 @@
         const target = applyTarget < 0 ? [] : [applyTarget];
         SC.applyWallpaper(w, target);
       });
+      // 拖到 Dock 屏幕块直接在该屏播放（落点处理见 dockScreensStrip）
+      card.draggable = true;
+      card.addEventListener("dragstart", (e) => {
+        dndWallpaper = w;
+        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+      });
+      card.addEventListener("dragend", () => { dndWallpaper = null; });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -817,6 +842,256 @@
     }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
   }
 
+  // ---------------------------------------------------------------- 预览（本地库）
+  // 在主窗口内直接渲染播放壁纸内容，与「应用到桌面」是并列的两个功能：
+  // 预览只动本对话框内的媒体元素，关闭即停，不触碰桌面壁纸与播放状态。
+  // 渲染与 Web 播放器同源（webview 里的 <video>/<img>/<iframe>）；MPV 是独立
+  // 原生窗口进程无法嵌入界面，视频预览一律走内置渲染，所选引擎仅作展示与提示。
+  function resolvedEngine(w) {
+    const setting = w.setting || SC.defaultSetting();
+    // 0 = 默认：解析到全局默认视频引擎（后端默认 System = 2）
+    return setting.videoPlayer === 0
+      ? ((SC.state.cfg && SC.state.cfg.Wallpaper && SC.state.cfg.Wallpaper.defaultVideoPlayer) || 0)
+      : setting.videoPlayer; // 1 = MPV，2 = Web
+  }
+
+  // 预览渲染方式：meta.type 优先、URL 兜底（演示模式 mock 的 fileUrl 是 SVG data URI）
+  function previewKind(w) {
+    const type = w.meta && w.meta.type;
+    if (type === 5 || type === 0 || type === 6) return null; // Exe / 未识别 / 嵌套列表
+    let url = w.fileUrl || "";
+    try { url = decodeURIComponent(url); } catch (_) { /* 保留原串 */ }
+    if (type === 4 || /\.html?$/i.test(w.fileName || "") || /\.html?($|\?)/i.test(url)) return "web";
+    if (url.startsWith("data:image") || /\.(png|jpe?g|gif|webp|bmp|avif|svg)$/i.test(url)) return "img";
+    if (type === 3 || isVideoName(w.fileName) || isVideoName(url)) return "video";
+    if (type === 1 || type === 2) return "img";
+    return null;
+  }
+
+  function openPreviewDialog(wallpaper) {
+    const meta = wallpaper.meta || {};
+    const type = meta.type;
+    // 浏览范围：播放列表 = 其成员；单个壁纸 = 全库可预览项（滚轮 / 翻页连续浏览，循环）
+    const pool = type === 6
+      ? (meta.wallpapers || [])
+      : (SC.state.wallpapers && SC.state.wallpapers.length ? SC.state.wallpapers : [wallpaper]);
+    const members = pool.filter((m) => m && m.fileUrl && previewKind(m));
+    if (!members.length) { SC.toast(SC.t("pv.noPreview"), "err"); return; }
+    // 起始项：播放列表从当前项开始，单个壁纸从被预览的那张开始（按引用找回下标）
+    let idx = 0;
+    {
+      let cur = wallpaper;
+      if (type === 6) {
+        const list = meta.wallpapers || [];
+        cur = list.length ? list[(meta.playIndex || 0) % list.length] : null;
+      }
+      const at = cur ? members.indexOf(cur) : -1;
+      idx = at >= 0 ? at : 0;
+    }
+    const multi = members.length > 1; // 多于一项：显示翻页 / 序号，滚轮可切换
+
+    // 预览起始音量与桌面全局音量一致，但只作用于本对话框内的媒体元素
+    const st = SC.state.status;
+    let volume = st && typeof st.volume === "number" ? Math.min(100, Math.max(0, st.volume)) : 70;
+
+    let spaceKey = null; // 空格 播放/暂停（随成员重建，关闭时解绑）
+    let stage = null;    // 媒体舞台（build 内赋值）
+    let cleanup = null;  // 换成员 / 关闭时调用：停住媒体 + 解绑键盘（脱管 <video> 在 Chromium 里会继续出声，必须显式停）
+    openDialog((sheet, close) => {
+      sheet.classList.add("is-preview");
+      const titleEl = el("h2", { class: "dialog-title" });
+      const subEl = el("p", { class: "dialog-sub" });
+      // 放大 / 还原：窗口级放大（舞台随 .is-max 撑大），状态跨成员切换保持
+      let maxed = false;
+      const maxBtn = el("button", { class: "icon-btn", title: SC.t("pv.max") });
+      maxBtn.innerHTML = icon("maxw", 14);
+      maxBtn.addEventListener("click", () => {
+        maxed = !maxed;
+        sheet.classList.toggle("is-max", maxed);
+        maxBtn.innerHTML = icon(maxed ? "restore" : "maxw", 14);
+        maxBtn.title = SC.t(maxed ? "pv.restore" : "pv.max");
+      });
+      const closeBtn = el("button", { class: "icon-btn", onclick: () => close() }, (() => { const s = el("span"); s.innerHTML = icon("x", 15); return s; })());
+      const head = el("div", { class: "dialog-head" },
+        el("div", {}, titleEl, subEl),
+        el("div", { class: "dialog-head-btns" }, maxBtn, closeBtn));
+      stage = el("div", { class: "pv-stage" });
+      const bar = el("div", { class: "pv-bar" });
+      if (multi) stage.title = SC.t("pv.wheelHint");
+      sheet.append(head, stage, bar);
+
+      let video = null;    // 当前成员为视频时的 <video>
+      let scrubbing = false;
+      let scrubPos = 0;
+
+      // 鼠标滚轮切换上一个 / 下一个（下滚 = 下一个，循环）；节流防一次滚动手势连跳多项
+      let wheelAt = 0;
+      const onWheel = (e) => {
+        e.preventDefault();
+        if (!multi || Date.now() - wheelAt < 180 || Math.abs(e.deltaY) < 10) return;
+        wheelAt = Date.now();
+        show(idx + (e.deltaY > 0 ? 1 : -1));
+      };
+      sheet.addEventListener("wheel", onWheel, { passive: false });
+
+      // 左右切换按钮：悬浮在媒体区域左右边缘；鼠标移入显示，静止 1.6s 或移出隐藏（.is-nav-on）
+      const navPrev = el("button", { class: "pv-nav is-prev", title: SC.t("dock.prev"), onclick: (e) => { e.stopPropagation(); show(idx - 1); } });
+      navPrev.innerHTML = icon("prev", 18);
+      const navNext = el("button", { class: "pv-nav is-next", title: SC.t("dock.next"), onclick: (e) => { e.stopPropagation(); show(idx + 1); } });
+      navNext.innerHTML = icon("next", 18);
+      let navTimer = 0;
+      const showNav = () => {
+        if (!multi) return;
+        stage.classList.add("is-nav-on");
+        clearTimeout(navTimer);
+        navTimer = setTimeout(() => stage.classList.remove("is-nav-on"), 1600);
+      };
+      const hideNav = () => { clearTimeout(navTimer); stage.classList.remove("is-nav-on"); };
+      stage.addEventListener("mouseenter", showNav);
+      stage.addEventListener("mousemove", showNav);
+      stage.addEventListener("mouseleave", hideNav);
+
+      cleanup = () => {
+        if (spaceKey) { window.removeEventListener("keydown", spaceKey); spaceKey = null; }
+        if (video) {
+          try { video.pause(); video.removeAttribute("src"); video.load(); } catch (_) { /* 已释放等场景忽略 */ }
+          video = null;
+        }
+        stage.innerHTML = "";
+      };
+
+      // 内置渲染失败（webview 不支持的格式，选 MPV 引擎的文件常见）：清空舞台给出提示
+      function showFailed() {
+        cleanup();
+        stage.append(el("p", { class: "pv-failed" }, SC.t("pv.loadFailed")));
+        if (multi) stage.append(navPrev, navNext);
+      }
+
+      function show(i) {
+        idx = ((i % members.length) + members.length) % members.length;
+        const m = members[idx];
+        cleanup();
+        scrubbing = false;
+        bar.innerHTML = "";
+
+        const kind = previewKind(m);
+        titleEl.textContent = (m.meta && m.meta.title) || m.fileName || "—";
+        const parts = [SC.typeName(m.meta && m.meta.type)];
+        if (multi) parts.push(`${idx + 1} / ${members.length}`);
+        if (kind === "video") {
+          const eng = resolvedEngine(m);
+          parts.push(SC.t("pv.engine", SC.t(eng === 1 ? "set.engine1" : eng === 2 ? "set.engine2" : "set.engine0")));
+          if (eng === 1) parts.push(SC.t("pv.engineNote"));
+        }
+        if (kind === "web" && m.setting && m.setting.enableMouseEvent === false) parts.push(SC.t("pv.mouseOff"));
+        subEl.textContent = parts.join(" · ");
+
+        if (kind === "web") {
+          const frame = el("iframe", { class: "pv-iframe", src: m.fileUrl, allow: "autoplay; fullscreen" });
+          if (m.setting && m.setting.enableMouseEvent === false) frame.classList.add("pv-nopoint"); // 同桌面：关鼠标交互即不响应
+          stage.append(frame);
+        } else if (kind === "video") {
+          const s = m.setting || SC.defaultSetting();
+          video = el("video", {
+            class: `pv-media ${s.isPanScan === false ? "pv-contain" : "pv-cover"}`,
+            src: m.fileUrl, autoplay: true, loop: true, playsinline: true,
+          });
+          video.volume = volume / 100;
+          video.muted = volume === 0;
+          video.addEventListener("click", () => { if (video.paused) video.play().catch(() => {}); else video.pause(); });
+          video.addEventListener("error", showFailed);
+          stage.append(video);
+        } else {
+          // 图片 / 动图：契合度映射（平铺走背景重复，其余 object-fit 近似）
+          const s = m.setting || SC.defaultSetting();
+          if (s.fit === 1) {
+            const tile = el("div", { class: "pv-media pv-tile" });
+            tile.style.backgroundImage = `url("${m.fileUrl}")`;
+            const probe = el("img", { src: m.fileUrl, hidden: true });
+            probe.addEventListener("error", showFailed); // 背景图没有 error 事件，用探针元素兜底
+            stage.append(tile, probe);
+          } else {
+            const cls = s.fit === 2 ? "pv-fill" : (s.fit === 4 || s.fit === 5) ? "pv-cover" : "pv-contain";
+            const img = el("img", { class: `pv-media ${cls}`, src: m.fileUrl, alt: "", draggable: "false" });
+            img.addEventListener("error", showFailed);
+            stage.append(img);
+          }
+        }
+        buildBar(kind);
+        if (multi) stage.append(navPrev, navNext); // 每次换内容重挂（stage 会被清空）；显隐由 stage 的 is-nav-on 类控制
+
+        spaceKey = (e) => {
+          if (e.code !== "Space" || !video) return;
+          const t = e.target;
+          if (t && t.closest && t.closest("input, textarea, select, button")) return;
+          e.preventDefault();
+          video.paused ? video.play().catch(() => {}) : video.pause();
+        };
+        window.addEventListener("keydown", spaceKey);
+      }
+
+      // 控制条：视频播放/暂停、进度、音量 + 序号（左右切换在媒体区域边缘，见 .pv-nav）；
+      // 无控件时整条收起（.pv-bar:empty）
+      function buildBar(kind) {
+        if (kind === "video") {
+          const playBtn = el("button", {
+            class: "icon-btn", title: SC.t("dock.pause"),
+            onclick: () => { if (!video) return; video.paused ? video.play().catch(() => {}) : video.pause(); },
+          });
+          playBtn.innerHTML = icon("pause", 16);
+          const syncPlay = () => { if (!video) return; playBtn.innerHTML = icon(video.paused ? "play" : "pause", 16); playBtn.title = SC.t(video.paused ? "dock.resume" : "dock.pause"); };
+          video.addEventListener("play", syncPlay);
+          video.addEventListener("pause", syncPlay);
+
+          const timeEl = el("span", { class: "pv-time" }, "00:00 / 00:00");
+          const syncTime = () => {
+            if (!video || !video.duration) return;
+            timeEl.textContent = `${SC.fmtTime(scrubbing ? scrubPos : video.currentTime)} / ${SC.fmtTime(video.duration)}`;
+            if (!scrubbing) seekEl.value = String(Math.round((video.currentTime / video.duration) * 1000));
+          };
+          const seekEl = el("input", { class: "pv-seek", type: "range", min: 0, max: 1000, value: 0 });
+          seekEl.addEventListener("input", () => {
+            if (!video || !video.duration) return;
+            scrubbing = true;
+            scrubPos = video.duration * (Number(seekEl.value) / 1000);
+            timeEl.textContent = `${SC.fmtTime(scrubPos)} / ${SC.fmtTime(video.duration)}`;
+          });
+          seekEl.addEventListener("change", () => {
+            if (video && video.duration) video.currentTime = video.duration * (Number(seekEl.value) / 1000);
+            scrubbing = false;
+          });
+          video.addEventListener("timeupdate", syncTime);
+          video.addEventListener("loadedmetadata", syncTime);
+
+          const volIcon = el("button", { class: "icon-btn", title: SC.t("dock.volume") });
+          const volNum = el("span", { class: "pv-volnum" }, String(volume));
+          const volSlider = el("input", { class: "pv-vol", type: "range", min: 0, max: 100, value: volume });
+          const setVolume = (v) => {
+            volume = Math.min(100, Math.max(0, Math.round(v)));
+            if (video) { video.volume = volume / 100; video.muted = volume === 0; }
+            volNum.textContent = String(volume);
+            volSlider.value = String(volume);
+            volIcon.innerHTML = icon(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16);
+          };
+          volIcon.addEventListener("click", () => setVolume(volume === 0 ? 70 : 0));
+          volSlider.addEventListener("input", () => setVolume(Number(volSlider.value)));
+          setVolume(volume);
+
+          bar.append(playBtn, timeEl, seekEl, volIcon, volSlider, volNum);
+        }
+
+        if (multi) bar.append(el("span", { class: "pv-count" }, `${idx + 1} / ${members.length}`));
+      }
+
+      show(idx);
+    }, {
+      onClose: () => {
+        sheet.removeEventListener("wheel", onWheel);
+        if (cleanup) cleanup(); // 立即停住媒体（淡出动画期间不出声）
+      },
+    });
+  }
+
   // ---------------------------------------------------------------- 本地库视图
   // 自包含实现：独立状态 / i18n（local.*）/ 样式（.loc-*），规划中替代壁纸库。
   // 数据源 SC.state.wallpapers（后端目录扫描），文件夹结构经 SC.listFolders 实时读盘。
@@ -933,8 +1208,8 @@
       const setSort = (v) => { localSort = v; localStorage.setItem("fluent.localSort", v); if (localRefresh) localRefresh(); };
 
       menu.append(sec(SC.t("local.target")),
-        pick(SC.t("common.allScreens"), applyTarget === -1, () => { applyTarget = -1; }));
-      for (const s of screens) menu.append(pick(SC.t("common.screen", s.deviceName || s.index), applyTarget === s.index, () => { applyTarget = s.index; }));
+        pick(SC.t("common.allScreens"), applyTarget === -1, () => { setApplyTarget(-1); }));
+      for (const s of screens) menu.append(pick(SC.t("common.screen", s.deviceName || s.index), applyTarget === s.index, () => { setApplyTarget(s.index); }));
       menu.append(line(), sec(SC.t("local.filter")),
         pick(SC.t("local.filterAll"), localType === "all", () => setType("all")));
       for (let tp = 1; tp <= 6; tp++) menu.append(pick(SC.typeName(tp), localType === String(tp), () => setType(String(tp))));
@@ -1187,7 +1462,7 @@
       // 根层级只显示文件夹卡（不铺壁纸项）；搜索态沿用流式网格；子文件夹层级用桌面画布
       const flowMode = searching || !localDir;
       canvas.hidden = flowMode;
-      flowGrid.hidden = flowMode;
+      flowGrid.hidden = !flowMode; // 流式网格仅在画布模式隐藏；搜索结果 / 根层级空态都靠它展示
       if (flowMode) {
         localReflow = null;
         flowFolders.innerHTML = "";
@@ -1343,10 +1618,9 @@
       if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => { if (localReflow) localReflow(); }).observe(viewEl);
     }
 
-    // 多屏：悬停显示逐屏应用 chips（与壁纸库卡片同款），流式卡片与画布磁贴共用
+    // 多屏：悬停显示逐屏应用 chips（与壁纸库卡片同款，不含「全部屏幕」——点击/双击卡片本身即全部生效），流式卡片与画布磁贴共用
     function screenChipsOf(w) {
       return el("div", { class: "loc-screens" },
-        el("button", { class: "chip", title: SC.t("common.allScreens"), onclick: (e) => { e.stopPropagation(); SC.applyWallpaper(w, []); } }, SC.t("common.allScreens")),
         screens.map((s) => el("button", {
           class: "chip",
           title: SC.t("common.screen", s.deviceName || s.index),
@@ -1357,6 +1631,7 @@
     function cardOf(w) {
       const isPlaying = playing.has(w.filePath);
       const card = el("article", { class: `loc-card ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
+      card.title = applyHint(); // 悬停提示：单击即按当前目标生效
       const cover = el("div", { class: "loc-cover" });
       const src = coverSrcOf(w);
       if (src) {
@@ -1368,6 +1643,7 @@
       const playDot = el("span", { class: "loc-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 10); return s; })(), SC.t("common.playing"));
       const typeBadge = el("span", { class: "loc-type" }, SC.typeName(w.meta && w.meta.type));
       const acts = el("div", { class: "loc-acts" },
+        actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w)),
         actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
         actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
         actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w)));
@@ -1382,11 +1658,19 @@
 
       card.append(cover, playDot, screenChips || "", acts, meta);
       card.addEventListener("click", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
+      // 拖到 Dock 屏幕块直接在该屏播放（同壁纸库卡片）
+      card.draggable = true;
+      card.addEventListener("dragstart", (e) => {
+        dndWallpaper = w;
+        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+      });
+      card.addEventListener("dragend", () => { dndWallpaper = null; });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
         ctxMenu(e.clientX, e.clientY, [
           { label: SC.t("common.apply"), ico: "play", act: () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]) },
+          { label: SC.t("pv.title"), ico: "eye", act: () => openPreviewDialog(w) },
           { label: SC.t("local.moveTo"), ico: "move", act: () => openMoveDialog(w) },
           { label: SC.t("set.title"), ico: "gear", act: () => openSettingDialog(w) },
           { label: SC.t("common.location"), ico: "folder", act: () => SC.reveal(w) },
@@ -1396,7 +1680,7 @@
       return card;
     }
 
-    // ---- 桌面画布磁贴：单击选中、双击应用/进入、指针拖拽 ----
+    // ---- 桌面画布磁贴：文件磁贴单击即应用（兼选中反馈）、文件夹双击进入、指针拖拽 ----
     function selectTile(item, tile) {
       if (selected && selected.tile) selected.tile.classList.remove("is-selected");
       selected = item && tile ? { key: item.key, tile } : null;
@@ -1458,7 +1742,7 @@
       const d = drag;
       cancelDrag();
       if (!d) return;
-      if (!d.moved) return; // 原地松手：交给 click / dblclick
+      if (!d.moved) return; // 原地松手：交给 click（单击选中/应用）
       suppressClick = true;
       setTimeout(() => { suppressClick = false; }, 0);
       const t = d.target;
@@ -1468,9 +1752,13 @@
         if (d.item.kind === "folder") moveFolderTo(d.item, t.dir);
         else moveTo(d.item.w, t.dir);
       } else if (t.type === "slot") dropOnSlot(d.item, t.c, t.r);
+      else if (t.type === "screen") {
+        // 拖到 Dock 屏幕块直接在该屏播放（-1 = 「全部」块）
+        if (d.item.kind === "file") SC.applyWallpaper(d.item.w, t.idx >= 0 ? [t.idx] : []);
+      }
     }
     function pressCancel() { cancelDrag(); }
-    // 命中检测：面包屑段 → 文件夹磁贴 → 空槽位
+    // 命中检测：面包屑段 → 文件夹磁贴 → Dock 屏幕块 → 空槽位
     function updateDropTarget(e) {
       clearOver();
       hint.hidden = true;
@@ -1492,6 +1780,12 @@
           return;
         }
       }
+      const dockScreen = under.closest(".dock-screen[data-screen]");
+      if (dockScreen) { // 拖出画布到播放条屏幕块：直接在该屏播放
+        dockScreen.classList.add("is-over");
+        drag.target = { type: "screen", idx: Number(dockScreen.dataset.screen) };
+        return;
+      }
       if (under.closest(".loc-canvas") === canvas) {
         const rect = canvas.getBoundingClientRect();
         const c = Math.min(cols - 1, Math.max(0, Math.floor((e.clientX - rect.left - CANVAS_PAD) / pitch)));
@@ -1504,6 +1798,7 @@
     }
     function clearOver() {
       viewEl.querySelectorAll(".loc-tile.is-over, .loc-crumb-seg.is-over").forEach((n) => n.classList.remove("is-over"));
+      document.querySelectorAll(".dock-screen.is-over").forEach((n) => n.classList.remove("is-over")); // 画布拖拽可落到 Dock 屏幕块
     }
 
     function tileOf(it) {
@@ -1512,6 +1807,8 @@
       tile.addEventListener("click", () => {
         if (suppressClick) { suppressClick = false; return; }
         selectTile(it, tile);
+        // 文件磁贴单击即应用（与壁纸库卡片一致）；选中态保留作落点反馈
+        if (it.kind === "file") SC.applyWallpaper(it.w, applyTarget < 0 ? [] : [applyTarget]);
       });
       return tile;
     }
@@ -1520,6 +1817,7 @@
       const w = it.w;
       const isPlaying = playing.has(w.filePath);
       const tile = el("article", { class: `loc-tile is-file ${isPlaying ? "is-playing" : ""}`, dataset: { path: w.filePath || "" } });
+      tile.title = applyHint(); // 悬停提示：单击即按当前目标生效
       const thumb = el("span", { class: "loc-tile-thumb" });
       const src = coverSrcOf(w);
       if (src) {
@@ -1532,16 +1830,17 @@
         el("span", { class: "loc-tile-type" }, SC.typeName(w.meta && w.meta.type)),
         screens.length > 1 ? screenChipsOf(w) : null, // 悬停逐屏应用，同壁纸库卡片
         el("span", { class: "loc-acts" },
+          actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w)),
           actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
           actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
           actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w))));
       tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
-      tile.addEventListener("dblclick", () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]));
       tile.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
         ctxMenu(e.clientX, e.clientY, [
           { label: SC.t("common.apply"), ico: "play", act: () => SC.applyWallpaper(w, applyTarget < 0 ? [] : [applyTarget]) },
+          { label: SC.t("pv.title"), ico: "eye", act: () => openPreviewDialog(w) },
           { label: SC.t("local.moveTo"), ico: "move", act: () => openMoveDialog(w) },
           { label: SC.t("set.title"), ico: "gear", act: () => openSettingDialog(w) },
           { label: SC.t("common.location"), ico: "folder", act: () => SC.reveal(w) },
@@ -2012,31 +2311,118 @@
   let dragging = false;
   let dragPos = 0;
   let lastTime = { position: 0, duration: 0 };
+  let dockSelScreen = -1;   // 选中的屏幕：-1 = 未选（操作作用于全部屏幕）
+  let dndWallpaper = null;  // HTML5 拖拽中的壁纸（库/搜索卡片 → Dock 屏幕块）
+  let offDockTime = null;   // 进度轮询订阅（showProgress 时挂，其余时刻注销省请求）
+
+  function screenLabel(s) { return s.deviceName || String((s.index || 0) + 1); }
+  // 屏块宽高比按 bounds（"x, y, w, h"）等比推出，解析失败回退 16:9
+  function boundsRatio(s) {
+    const m = /(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/.exec(s.bounds || "");
+    const w = m ? parseFloat(m[1]) : 0, h = m ? parseFloat(m[2]) : 0;
+    return w > 0 && h > 0 ? w / h : 16 / 9;
+  }
+
+  // 选择/取消屏幕并重渲染 Dock；换目标时清掉上一屏的进度残值，避免闪现旧时间
+  function pickScreen(idx) {
+    dockSelScreen = idx;
+    lastTime = { position: 0, duration: 0 };
+    dragging = false;
+    renderDock();
+  }
+
+  // 屏幕选择条：各屏幕迷你编号块（比例随分辨率）。
+  // 点击选中/取消（取消 = 恢复作用于全部屏幕）；壁纸可拖到屏块上直接在该屏播放（库卡片走 HTML5
+  // 拖拽，本地画布磁贴走指针拖拽，其 is-over 高亮由画布的 updateDropTarget 负责）
+  function dockScreensStrip(screens, playing) {
+    const onScreen = new Map(); // screenIndex → 在播壁纸
+    for (const w of playing) {
+      for (const si of (w.runningInfo && w.runningInfo.screenIndexes) || []) {
+        if (!onScreen.has(si)) onScreen.set(si, w);
+      }
+    }
+    const wrap = el("div", { class: "dock-screens", title: SC.t("dock.screensHint") });
+
+    function acceptDrop(btn, indexes) {
+      btn.addEventListener("dragover", (e) => {
+        if (!dndWallpaper) return; // 外部文件拖拽不接管，仍走原导入逻辑
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        btn.classList.add("is-over");
+      });
+      btn.addEventListener("dragleave", () => btn.classList.remove("is-over"));
+      btn.addEventListener("drop", (e) => {
+        e.preventDefault();
+        btn.classList.remove("is-over");
+        const w = dndWallpaper;
+        dndWallpaper = null;
+        if (w) SC.applyWallpaper(w, indexes);
+      });
+    }
+
+    const H = 40; // 屏块显示高度：宽度按分辨率等比并夹在 28–72px
+    for (const s of screens) {
+      const pw = onScreen.get(s.index);
+      const paused = !!(pw && pw.runningInfo && pw.runningInfo.isPaused);
+      const btn = el("button", {
+        class: `dock-screen ${pw ? "is-live" : ""} ${paused ? "is-paused" : ""} ${pw && pw.coverUrl ? "" : "is-nocover"} ${dockSelScreen === s.index ? "is-selected" : ""}`,
+        // 空屏块在悬停时就给出指路提示，点击再补一次 toast
+        title: `${SC.t("common.screen", screenLabel(s))}${s.primary ? ` · ${SC.t("common.primary")}` : ""}${pw
+          ? ` · ${(pw.meta && pw.meta.title) || "—"}${paused ? ` · ${SC.t("common.paused")}` : ""}`
+          : ` · ${SC.t("dock.blankTitle")}`}`,
+        dataset: { screen: String(s.index) },
+        style: { width: `${Math.round(Math.min(72, Math.max(28, H * boundsRatio(s))))}px`, height: `${H}px` },
+        onclick: () => {
+          const wasSelected = dockSelScreen === s.index;
+          pickScreen(wasSelected ? -1 : s.index);
+          if (!wasSelected && !pw) SC.toast(SC.t("dock.blankHint"), "ok");
+        },
+      });
+      if (pw && pw.coverUrl) btn.append(el("img", { src: thumbSrc(pw.coverUrl), alt: "", draggable: "false" }));
+      btn.append(el("span", { class: "dock-screen-num" }, String(s.index + 1)));
+      acceptDrop(btn, [s.index]);
+      wrap.append(btn);
+    }
+    return wrap;
+  }
 
   function renderDock() {
     const st = SC.state.status;
     const playing = st ? st.wallpapers : [];
+    const screens = SC.state.screens || [];
+    if (dockSelScreen >= 0 && !screens.some((s) => s.index === dockSelScreen)) dockSelScreen = -1; // 屏幕被拔出等场景
+    SC.setTimeScreen(dockSelScreen);
     dockEl.innerHTML = "";
+
+    const strip = dockScreensStrip(screens, playing);
     if (!playing.length) {
-      dockEl.append(el("div", { class: "dock dock-empty" },
-        (() => { const s = el("span"); s.innerHTML = icon("moon", 15); return s; })(),
-        el("span", {}, SC.t("dock.nothing")), el("span", { class: "dim-label" }, SC.t("dock.nothingHint"))));
+      if (offDockTime) { offDockTime(); offDockTime = null; }
+      // 空闲时只留屏块条（可拖壁纸到指定屏播放）
+      dockEl.append(el("div", { class: "dock dock-empty" }, strip));
       return;
+    }
+
+    // 选中屏幕时聚焦该屏在播壁纸：右侧操作与进度都针对它；未选时维持封面点击循环聚焦
+    if (dockSelScreen >= 0) {
+      const at = playing.findIndex((w) => ((w.runningInfo && w.runningInfo.screenIndexes) || []).includes(dockSelScreen));
+      if (at >= 0) focusIdx = at;
     }
     if (focusIdx >= playing.length) focusIdx = 0;
     const w = playing[focusIdx];
     const paused = !!(w.runningInfo && w.runningInfo.isPaused);
     const pl = playing.length > 1;
+    const target = dockSelScreen; // -1 = 全部屏幕（后端把 <0 视为全部）
 
-    // 封面 + 标题
-    const thumb = el("button", { class: "dock-thumb", title: pl ? SC.t("dock.focus") : "", onclick: () => { focusIdx = (focusIdx + 1) % playing.length; renderDock(); } },
-      w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl) }) : null);
+    // 标题（各屏画面由屏块封面展示，不再放整条封面）
     const meta = el("div", { class: "dock-meta" },
       el("span", { class: "dock-name" }, (w.meta && w.meta.title) || "—"),
       el("span", { class: "dock-sub" },
-        `${SC.typeName(w.meta && w.meta.type)}${pl ? ` · ${focusIdx + 1}/${playing.length}` : ""} · ${paused ? SC.t("common.paused") : SC.t("common.playing")}`));
+        `${SC.typeName(w.meta && w.meta.type)}`
+        + `${pl && dockSelScreen < 0 ? ` · ${focusIdx + 1}/${playing.length}` : ""}`
+        + `${dockSelScreen >= 0 ? ` · ${SC.t("common.screen", screenLabel(screens.find((s) => s.index === dockSelScreen) || { index: dockSelScreen }))}` : ""}`
+        + ` · ${paused ? SC.t("common.paused") : SC.t("common.playing")}`));
 
-    // 控制
+    // 控制：作用于选中屏幕，未选 = 全部屏幕
     const isList = w.meta && w.meta.type === 6;
     const ctrl = el("div", { class: "dock-ctrl" });
     if (isList) {
@@ -2044,20 +2430,19 @@
     }
     if (SC.canPause(w)) {
       ctrl.append(ctlBtn(paused ? "play" : "pause", paused ? SC.t("dock.resume") : SC.t("dock.pause"), () => {
-        const idx = SC.screenIndexOf(w);
-        paused ? SC.resume(idx) : SC.pause(idx);
+        paused ? SC.resume(target) : SC.pause(target);
       }));
     }
     ctrl.append(ctlBtn("stop", SC.t("dock.stop"), async () => {
-      await SC.stop(SC.screenIndexOf(w));
+      await SC.stop(target);
       focusIdx = 0;
     }));
     if (isList) {
       ctrl.append(ctlBtn("next", SC.t("dock.next"), () => SC.nextIn(w)));
     }
 
-    // 进度
-    const showProgress = w.meta && (w.meta.type === 3 || w.meta.type === 6);
+    // 进度：只在选中屏幕（且聚焦壁纸为视频/列表）时显示，按屏轮询
+    const showProgress = dockSelScreen >= 0 && !!(w.meta && (w.meta.type === 3 || w.meta.type === 6));
     const cur = dragging ? dragPos : lastTime.position;
     const dur = lastTime.duration || 0;
     const time = el("span", { class: "dock-time" }, showProgress ? `${SC.fmtTime(cur)} / ${SC.fmtTime(dur)}` : "");
@@ -2065,16 +2450,20 @@
     seekEl.addEventListener("input", () => { dragging = true; dragPos = dur * (Number(seekEl.value) / 1000); renderDockTime(); });
     seekEl.addEventListener("change", () => {
       dragging = false;
-      if (dur > 0) SC.seek(dur * (Number(seekEl.value) / 1000));
+      if (dur > 0) SC.seek(dur * (Number(seekEl.value) / 1000), dockSelScreen);
     });
     function renderDockTime() {
       time.textContent = `${SC.fmtTime(dragging ? dragPos : lastTime.position)} / ${SC.fmtTime(lastTime.duration || 0)}`;
       if (!dragging && lastTime.duration > 0) seekEl.value = String(Math.round((lastTime.position / lastTime.duration) * 1000));
     }
-    SC.onTime((tp) => {
-      if (tp) { lastTime = tp; renderDockTime(); }
-      else { lastTime = { position: 0, duration: 0 }; renderDockTime(); }
-    });
+    // 全局只挂一个轮询订阅，renderDock 只换绑回调（旧实现每次渲染新增一个监听且不注销）
+    if (offDockTime) { offDockTime(); offDockTime = null; }
+    if (showProgress) {
+      offDockTime = SC.onTime((tp) => {
+        lastTime = tp || { position: 0, duration: 0 };
+        renderDockTime();
+      });
+    }
 
     // 音量 + 音源
     const volume = st.volume || 0;
@@ -2090,10 +2479,10 @@
     const audioBtn = el("button", { class: "icon-btn", title: SC.t("dock.audio") });
     audioBtn.innerHTML = icon(st.audioScreenIndex < 0 ? "volx" : "music", 16);
     const audioPop = pop(audioBtn, () => el("div", { class: "pop-menu" },
-      SC.state.screens.map((s) => el("button", {
+      screens.map((s) => el("button", {
         class: `pop-item ${st.audioScreenIndex === s.index ? "is-active" : ""}`,
         onclick: () => { closePops(); SC.setVolume(Math.max(volume, 30), s.index); },
-      }, SC.t("common.screen", s.deviceName || s.index))),
+      }, SC.t("common.screen", screenLabel(s)))),
       el("button", {
         class: `pop-item ${st.audioScreenIndex < 0 ? "is-active" : ""}`,
         onclick: () => { closePops(); SC.setVolume(0, -1); },
@@ -2104,7 +2493,8 @@
     else line.style.width = paused ? "0%" : "100%";
     line.classList.toggle("is-idle", !showProgress || !dur);
 
-    dockEl.append(el("div", { class: "dock" }, line, thumb, meta, ctrl, time, seekEl, volPop, audioPop));
+    dockEl.append(el("div", { class: "dock" }, line, strip, meta, ctrl,
+      ...(showProgress ? [time, seekEl] : []), volPop, audioPop));
   }
 
   function ctlBtn(ic, title, onclick) {

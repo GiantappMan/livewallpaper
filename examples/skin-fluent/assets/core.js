@@ -39,6 +39,7 @@
       "common.playing": "播放中", "common.paused": "已暂停", "common.idle": "空闲", "common.demo": "演示模式",
       "common.demoHint": "未检测到应用环境，正在展示模拟数据", "common.add": "添加", "common.remove": "移除",
       "common.saved": "已保存", "common.opFailed": "操作失败：{0}", "common.done": "完成", "common.back": "返回",
+      "card.clickApplyAll": "单击应用到全部屏幕", "card.clickApplyScreen": "单击应用到{0}",
       "type.1": "图片", "type.2": "动图", "type.3": "视频", "type.4": "Web", "type.5": "Exe", "type.6": "列表", "type.0": "自动检测",
       "lib.title": "壁纸库", "lib.count": "{0} 个壁纸", "lib.search": "搜索壁纸…", "lib.empty": "还没有壁纸",
       "lib.emptyHint": "点击右上角「创建」导入本地视频或图片，或从社区下载",
@@ -61,6 +62,11 @@
       "local.needUpdate": "文件夹整理需要先更新巨应壁纸到新版本",
       "local.empty": "目录里还没有壁纸文件",
       "local.emptyHint": "把视频或图片放进壁纸目录就会出现在这里；也可到 设置 → 壁纸 检查目录配置",
+      "pv.title": "预览", "pv.noPreview": "该类型不支持预览",
+      "pv.engine": "视频引擎：{0}", "pv.engineNote": "MPV 引擎无法内嵌预览，已改用内置 Web 播放器渲染",
+      "pv.mouseOff": "鼠标交互已关闭",
+      "pv.loadFailed": "加载失败：当前格式可能不被内置播放器支持",
+      "pv.max": "放大", "pv.restore": "还原", "pv.wheelHint": "滚轮上下切换上一个 / 下一个",
       "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
       "create.titleField": "标题", "create.titlePh": "给{0}起个名字", "create.type": "类型",
       "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频（≤ 500MB）",
@@ -84,6 +90,9 @@
       "dock.stop": "停止", "dock.pause": "暂停", "dock.resume": "继续播放", "dock.prev": "上一项", "dock.next": "下一项",
       "dock.volume": "音量", "dock.audio": "音源", "dock.mute": "静音", "dock.nothing": "桌面正在休息",
       "dock.nothingHint": "点击任意壁纸即可应用", "dock.focus": "正在控制",
+      "dock.screensHint": "点击选择要操作的屏幕（再点取消）；未选屏幕时操作作用于全部屏幕；把壁纸拖到屏幕块上即可在该屏播放",
+      "dock.blankTitle": "点击壁纸生效，或拖壁纸到此块播放",
+      "dock.blankHint": "点击库中壁纸即可生效；也可把壁纸拖到此屏块上，直接在该屏播放",
       "dl.title": "下载", "dl.sub": "下载任务与历史记录", "dl.active": "进行中", "dl.activeEmpty": "暂无下载任务",
       "dl.emptyHint": "从社区发现喜欢的壁纸，下载记录会显示在这里",
       "dl.history": "历史记录", "dl.historyEmpty": "暂无下载记录", "dl.clear": "清空记录",
@@ -120,6 +129,7 @@
       "common.playing": "Playing", "common.paused": "Paused", "common.idle": "Idle", "common.demo": "Demo mode",
       "common.demoHint": "App not detected — showing sample data", "common.add": "Add", "common.remove": "Remove",
       "common.saved": "Saved", "common.opFailed": "Failed: {0}", "common.done": "Done", "common.back": "Back",
+      "card.clickApplyAll": "Click to apply to all screens", "card.clickApplyScreen": "Click to apply to {0}",
       "type.1": "Image", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.6": "Playlist", "type.0": "Auto",
       "lib.title": "Library", "lib.count": "{0} wallpapers", "lib.search": "Search wallpapers…", "lib.empty": "No wallpapers yet",
       "lib.emptyHint": "Hit Create to import a local video or image, or grab one from the Hub",
@@ -142,6 +152,11 @@
       "local.needUpdate": "Folder organizing needs a newer version of Giantapp Wallpaper",
       "local.empty": "No wallpaper files in your folders yet",
       "local.emptyHint": "Drop videos or images into a wallpaper folder and they show up here; check Settings → Wallpaper for folders",
+      "pv.title": "Preview", "pv.noPreview": "This type can't be previewed",
+      "pv.engine": "Video engine: {0}", "pv.engineNote": "MPV can't render inline — previewing with the built-in Web player",
+      "pv.mouseOff": "Mouse interaction off",
+      "pv.loadFailed": "Failed to load — the format may not be supported by the built-in player",
+      "pv.max": "Maximize", "pv.restore": "Restore", "pv.wheelHint": "Scroll to switch previous / next",
       "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
       "create.titleField": "Title", "create.titlePh": "Name your {0}", "create.type": "Type",
       "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / Video up to 500MB",
@@ -165,6 +180,9 @@
       "dock.stop": "Stop", "dock.pause": "Pause", "dock.resume": "Resume", "dock.prev": "Previous", "dock.next": "Next",
       "dock.volume": "Volume", "dock.audio": "Audio from", "dock.mute": "Mute", "dock.nothing": "The desktop is resting",
       "dock.nothingHint": "Click any wallpaper to apply it", "dock.focus": "Controlling",
+      "dock.screensHint": "Click a screen to target it (click again to clear); with no screen picked, controls apply to all screens. Drag a wallpaper onto a screen to play it there.",
+      "dock.blankTitle": "Click a wallpaper to apply it, or drag one onto this block",
+      "dock.blankHint": "Click a wallpaper to apply it; or drag one onto a screen block to play it on that screen",
       "dl.title": "Downloads", "dl.sub": "Active tasks and history", "dl.active": "Active", "dl.activeEmpty": "No active downloads",
       "dl.emptyHint": "Grab wallpapers from the Hub — downloads will show up here",
       "dl.history": "History", "dl.historyEmpty": "No download history", "dl.clear": "Clear history",
@@ -443,30 +461,34 @@
     refreshStatus();
   }
 
-  // 进度轮询：遵守「设置后 2 秒不回读 / 暂停冻结 / -1 无效」规则
+  // 进度轮询：遵守「设置后 2 秒不回读 / 暂停冻结 / -1 无效」规则。
+  // timeScreen 指定轮询目标屏（Dock 选中屏幕时按屏取进度）；-1 = 不指定，由后端取播放中壁纸
   let lastSeekAt = 0;
   let tickerTimer = null;
   const tickerCbs = new Set();
+  let timeScreen = -1;
+  function setTimeScreen(i) { timeScreen = typeof i === "number" ? i : -1; }
   function startTicker() {
     if (tickerTimer) return;
     tickerTimer = setInterval(async () => {
       if (document.hidden || (document).shell_hidden) return;
+      if (!tickerCbs.size) return; // 没有订阅者（如进度未显示）就不发轮询请求
       if (demo) { mockTick(); const payload = mockTime(); tickerCbs.forEach((fn) => fn(payload)); return; }
       if (!state.status || !state.status.wallpapers.length) { tickerCbs.forEach((fn) => fn(null)); return; }
       if (Date.now() - lastSeekAt < 2000) return;
       const allPaused = state.status.wallpapers.every((w) => w.runningInfo && w.runningInfo.isPaused);
       if (allPaused) return;
-      const res = await client.api.getWallpaperTime();
+      const res = await client.api.getWallpaperTime(timeScreen >= 0 ? timeScreen : undefined);
       const tp = res && res.data ? res.data : null;
       if (!tp || tp.position < 0 || tp.duration <= 0) { tickerCbs.forEach((fn) => fn(null)); return; }
       tickerCbs.forEach((fn) => fn(tp));
     }, 1000);
   }
   function onTime(fn) { tickerCbs.add(fn); return () => tickerCbs.delete(fn); }
-  async function seek(seconds) {
+  async function seek(seconds, screenIndex) {
     lastSeekAt = Date.now();
     if (demo) { mockSeek(seconds); return; }
-    await client.api.setProgress(seconds);
+    await client.api.setProgress(seconds, typeof screenIndex === "number" && screenIndex >= 0 ? screenIndex : undefined);
   }
 
   // ---------------------------------------------------------------- 上传 / 封面 / 创建
@@ -992,6 +1014,7 @@
     state.cfg = mockConfig();
     state.wallpapers = mockData();
     state.status = mockStatus();
+    state.screens = state.status.screens || []; // 与 refreshStatus 的口径一致（此前演示模式拿不到屏幕列表）
     state.status.wallpapers = state.wallpapers.filter((w) => (w.runningInfo.screenIndexes || []).length);
     state.downloads = [
       { id: "dl-1", desc: "赛博朋克 2077 主题包.mp4", percent: 42, totalBytes: 892344832, receivedBytes: 374784829, isDownloading: true, isDownloadCompleted: false, IsCanceled: false },
@@ -1071,7 +1094,7 @@
     // 播放
     playingSet, screenIndexOf, canPause, findPlayingWallpaper,
     applyWallpaper, pause, resume, stop, prevIn, nextIn, setVolume,
-    onTime, seek,
+    onTime, seek, setTimeScreen,
     // 创建 / 编辑
     defaultSetting, uploadFile, captureCover, uploadCover, generatePlaylistCover,
     createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
