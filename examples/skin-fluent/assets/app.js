@@ -260,9 +260,17 @@
     });
     return wrap;
   }
-  function closePops() { document.querySelectorAll(".pop-anchor.is-open").forEach((n) => n.classList.remove("is-open")); }
+  // 一并收起打开的下拉选择框：缩放 +/− 等控件自身不冒泡到菜单逻辑，依赖此外点统一收起
+  function closePops() { document.querySelectorAll(".pop-anchor.is-open, .select.is-open").forEach((n) => n.classList.remove("is-open")); }
+  // pointerdown 走捕获阶段：点在会 stopPropagation 的控件（卡片操作钮、chip 等）上也能收起；
+  // 点在已展开的下拉内部则放行，让按钮/菜单项自己的 click 正常切换
+  window.addEventListener("pointerdown", (e) => {
+    if (e.target instanceof Element && e.target.closest(".select.is-open, .pop-anchor.is-open")) return;
+    closePops();
+  }, true);
   window.addEventListener("click", closePops);
   window.addEventListener("blur", closePops);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePops(); });
 
   function switchEl(checked, onchange) {
     const input = el("input", { type: "checkbox" });
