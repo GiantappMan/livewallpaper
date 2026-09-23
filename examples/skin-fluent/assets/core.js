@@ -836,7 +836,7 @@
   function mockConfig() {
     return {
       General: { autoStart: false, hideWindow: false, autoStartHeadless: false, currentLan: navigator.language && navigator.language.startsWith("zh") ? "zh" : "en" },
-      Wallpaper: { directories: ["D:\\LiveWallpaper", "E:\\壁纸库"], coveredBehavior: 1, defaultVideoPlayer: 1, keepWallpaper: false },
+      Wallpaper: { directories: ["D:\\LiveWallpaper", "E:\\壁纸库"], coveredBehavior: 1, defaultVideoPlayer: 2, keepWallpaper: false },
       Appearance: { theme: "zinc", mode: (window.SKIN_META && window.SKIN_META.mode) || "dark", skin: (window.SKIN_META && window.SKIN_META.id) || "fluent" },
     };
   }
