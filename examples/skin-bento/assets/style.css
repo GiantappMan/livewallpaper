@@ -207,6 +207,7 @@ img { display: block; }
 .select-item {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 8px 11px; border-radius: 10px; font-size: 13px; text-align: left; color: var(--ink-2);
+  white-space: nowrap;
 }
 .select-item:hover { background: var(--hover); color: var(--ink); }
 .select-item.is-active { color: var(--ink); font-weight: 700; background: var(--card-2); }

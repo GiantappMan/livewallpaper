@@ -890,9 +890,12 @@
     }
     const multi = members.length > 1; // 多于一项：显示翻页 / 序号，滚轮可切换
 
-    // 预览起始音量与桌面全局音量一致，但只作用于本对话框内的媒体元素
+    // 预览起始音量：优先用上次记住的预览音量（fluent.pvVolume，用户调整时落盘），
+    // 首次预览则跟随桌面全局音量；只作用于本对话框内的媒体元素
     const st = SC.state.status;
-    let volume = st && typeof st.volume === "number" ? Math.min(100, Math.max(0, st.volume)) : 70;
+    const savedVolume = parseInt(localStorage.getItem("fluent.pvVolume"), 10);
+    let volume = Number.isFinite(savedVolume) ? Math.min(100, Math.max(0, savedVolume))
+      : st && typeof st.volume === "number" ? Math.min(100, Math.max(0, st.volume)) : 70;
 
     let spaceKey = null; // 空格 播放/暂停（随成员重建，关闭时解绑）
     let stage = null;    // 媒体舞台（build 内赋值）
@@ -1073,8 +1076,10 @@
             volSlider.value = String(volume);
             volIcon.innerHTML = icon(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16);
           };
-          volIcon.addEventListener("click", () => setVolume(volume === 0 ? 70 : 0));
-          volSlider.addEventListener("input", () => setVolume(Number(volSlider.value)));
+          // 用户调整音量即记住，下次预览沿用（初始渲染不写，未动过时继续跟随桌面音量）
+          const saveVolume = () => { try { localStorage.setItem("fluent.pvVolume", String(volume)); } catch (_) { /* 存储不可用则忽略 */ } };
+          volIcon.addEventListener("click", () => { setVolume(volume === 0 ? 70 : 0); saveVolume(); });
+          volSlider.addEventListener("input", () => { setVolume(Number(volSlider.value)); saveVolume(); });
           setVolume(volume);
 
           bar.append(playBtn, timeEl, seekEl, volIcon, volSlider, volNum);
@@ -2183,9 +2188,13 @@
       ["play", SC.t("cfg.player"), "",
         selectEl([
           { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
-        ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); })],
+        ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })],
     ]));
-    panel.append(mpvBlock());
+    // MPV 下载提示仅在默认引擎选中 MPV 时展示
+    const mpvBox = mpvBlock();
+    function syncMpv() { mpvBox.style.display = c.defaultVideoPlayer === 1 ? "" : "none"; }
+    panel.append(mpvBox);
+    syncMpv();
   }
 
   /** MPV 状态行（Win11 InfoBar：缺失 / 下载中才亮提示条，就绪时素净一行） */

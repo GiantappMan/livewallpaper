@@ -632,8 +632,12 @@
         el("button", { class: "tbtn", onclick: () => { dirs.push(""); renderDirs(); } }, `[+] ${SC.t("cfg.addDir")}`)),
       el("div", { class: "tcfg-block" },
         cfgLine(SC.t("cfg.covered"), selectEl([{ value: 0, label: SC.t("cfg.covered0") }, { value: 1, label: SC.t("cfg.covered1") }, { value: 2, label: SC.t("cfg.covered2") }], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })),
-        cfgLine(SC.t("cfg.player"), selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); }))),
-      mpvBlock());
+        cfgLine(SC.t("cfg.player"), selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); }))));
+    // MPV 下载提示仅在默认引擎选中 MPV 时展示
+    const mpvBox = mpvBlock();
+    function syncMpv() { mpvBox.style.display = c.defaultVideoPlayer === 1 ? "" : "none"; }
+    panel.append(mpvBox);
+    syncMpv();
   }
   function cfgLine(label, control) {
     return el("div", { class: "tcfg-row" }, el("span", { class: "tcfg-label" }, `» ${label}`), control);

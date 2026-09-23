@@ -166,7 +166,7 @@ img { display: block; }
   padding: 4px; display: none;
 }
 .mc-pulldown.is-open .mc-menu { display: block; animation: mcpop .14s var(--ease); }
-.mc-menu-item-d { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; text-align: left; padding: 5px 10px; border-radius: 5px; font-size: 12.5px; }
+.mc-menu-item-d { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; text-align: left; padding: 5px 10px; border-radius: 5px; font-size: 12.5px; white-space: nowrap; }
 .mc-menu-item-d:hover { background: var(--blue); color: #fff; }
 .mc-menu-check { display: inline-flex; }
 @keyframes mcpop { from { opacity: 0; transform: translateY(-3px) scale(.99); } }

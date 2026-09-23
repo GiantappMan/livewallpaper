@@ -299,7 +299,7 @@ img { display: block; }
   box-shadow: var(--shadow); padding: 5px; display: none;
 }
 .psel.is-open .psel-menu { display: block; animation: rise .14s ease; }
-.psel-item { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 12.5px; color: var(--ink-2); }
+.psel-item { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
 .psel-item:hover { background: var(--hover); color: var(--ink); }
 .psel-item.is-active { color: var(--seal); font-weight: 700; }
 

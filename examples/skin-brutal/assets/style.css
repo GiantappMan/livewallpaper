@@ -219,7 +219,7 @@ img { display: block; }
 .select-item {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 8px 11px; border-radius: var(--r-sm); font-size: 13px; text-align: left; color: var(--ink-2);
-  font-weight: 600;
+  font-weight: 600; white-space: nowrap;
 }
 .select-item:hover { background: var(--hover); color: var(--ink); }
 .select-item.is-active { color: var(--ink); font-weight: 800; background: var(--accent); }

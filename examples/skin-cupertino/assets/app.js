@@ -687,6 +687,10 @@
       });
     }
     renderDirs();
+    // MPV 下载提示仅在默认引擎选中 MPV 时展示
+    const mpvRow = el("div", { class: "mc-group-row" }, mpvBlock());
+    function syncMpv() { mpvRow.style.display = c.defaultVideoPlayer === 1 ? "" : "none"; }
+    syncMpv();
     panel.append(
       grouped([
         groupRow(SC.t("cfg.dirs"), SC.t("cfg.dirsHint"), el("button", { class: "mc-btn mc-btn-sm", onclick: () => { dirs.push(""); renderDirs(); } }, ico("plus", 12), SC.t("cfg.addDir"))),
@@ -694,8 +698,8 @@
       ]),
       grouped([
         groupRow(SC.t("cfg.covered"), "", selectEl([{ value: 0, label: SC.t("cfg.covered0") }, { value: 1, label: SC.t("cfg.covered1") }, { value: 2, label: SC.t("cfg.covered2") }], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })),
-        groupRow(SC.t("cfg.player"), "", selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); })),
-        el("div", { class: "mc-group-row" }, mpvBlock()),
+        groupRow(SC.t("cfg.player"), "", selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })),
+        mpvRow,
       ]));
   }
 

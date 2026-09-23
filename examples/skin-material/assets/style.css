@@ -178,6 +178,7 @@ img { display: block; }
 .m3-menu-item {
   display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%;
   padding: 9px 13px; border-radius: 9px; font-size: 13px; color: var(--ink); text-align: left;
+  white-space: nowrap;
 }
 .m3-menu-item:hover { background: var(--state); }
 .m3-menu-item.is-danger { color: var(--err); }

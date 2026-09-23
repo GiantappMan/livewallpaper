@@ -284,6 +284,7 @@ img { display: block; }
 .select-item {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 0 10px; height: 32px; border-radius: var(--r-ctl); font-size: 14px; text-align: left; color: var(--ink);
+  white-space: nowrap;
 }
 .select-item:hover { background: var(--subtle); }
 .select-item.is-active { color: var(--accent); font-weight: 600; }
@@ -984,13 +985,13 @@ button.card-row:hover { background: var(--subtle); }
 .loc-move-item.is-current:hover { background: none; }
 
 /* ---------------- 预览（本地库：主窗口内直接渲染播放，不应用到桌面） ---------------- */
-.dialog.is-preview { width: min(960px, 94vw); }
+.dialog.is-preview { width: min(1400px, 96vw); max-height: 94vh; }
 .dialog-head-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 /* 预览放大：窗口撑满视口，舞台随之变高（标题栏「放大/还原」切换） */
 .dialog.is-preview.is-max { width: 97vw; max-height: 94vh; }
 .dialog.is-preview.is-max .pv-stage { height: calc(94vh - 170px); min-height: 300px; }
 .pv-stage {
-  position: relative; height: min(56vh, 540px); min-height: 220px;
+  position: relative; height: min(76vh, 900px); min-height: 220px;
   margin: 16px 24px 0; border-radius: var(--r-md);
   background: #000; overflow: hidden;
   display: flex; align-items: center; justify-content: center;

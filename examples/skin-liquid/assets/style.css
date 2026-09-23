@@ -247,6 +247,7 @@ img { display: block; }
 .select-item {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 8px 12px; border-radius: 999px; font-size: 13px; text-align: left; color: var(--ink-2);
+  white-space: nowrap;
 }
 .select-item:hover { background: var(--glass-hover); color: var(--ink); }
 .select-item.is-active { color: var(--ink); font-weight: 700; }
