@@ -1642,11 +1642,9 @@
 
       const playDot = el("span", { class: "loc-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 10); return s; })(), SC.t("common.playing"));
       const typeBadge = el("span", { class: "loc-type" }, SC.typeName(w.meta && w.meta.type));
+      // 悬停操作条只留预览；设置 / 打开位置 / 删除收进右键菜单
       const acts = el("div", { class: "loc-acts" },
-        actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w)),
-        actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
-        actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
-        actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w)));
+        actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w)));
 
       // 多屏：悬停逐屏应用
       const screenChips = screens.length > 1 ? screenChipsOf(w) : null;
@@ -1830,10 +1828,7 @@
         el("span", { class: "loc-tile-type" }, SC.typeName(w.meta && w.meta.type)),
         screens.length > 1 ? screenChipsOf(w) : null, // 悬停逐屏应用，同壁纸库卡片
         el("span", { class: "loc-acts" },
-          actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w)),
-          actBtn("gear", SC.t("set.title"), () => openSettingDialog(w)),
-          actBtn("folder", SC.t("common.location"), () => SC.reveal(w)),
-          actBtn("trash", SC.t("common.delete"), () => removeWallpaper(w))));
+          actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w))));
       tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
       tile.addEventListener("contextmenu", (e) => {
         e.preventDefault();
