@@ -668,7 +668,7 @@ button.card-row:hover { background: var(--subtle); }
 /* ---------------- 播放 Dock（Win11 媒体浮层） ---------------- */
 .dock-wrap { position: fixed; left: 0; right: 0; bottom: 16px; z-index: 55; display: flex; justify-content: center; pointer-events: none; }
 .dock {
-  pointer-events: auto; position: relative; overflow: hidden;
+  pointer-events: auto; position: relative; overflow: visible;
   display: flex; align-items: center; gap: 12px;
   width: min(820px, calc(100vw - 56px)); padding: 10px 14px;
   background: rgba(249, 249, 249, .8); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%);
@@ -676,9 +676,20 @@ button.card-row:hover { background: var(--subtle); }
   box-shadow: var(--shadow-fly); color: var(--ink);
 }
 [data-mode="dark"] .dock { background: rgba(43, 43, 43, .8); }
-.dock-line { position: absolute; top: 0; left: 0; height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
+.dock-line { position: absolute; top: 0; left: 5px; max-width: calc(100% - 10px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
 .dock-line.is-idle { opacity: .25; }
-.dock-empty { gap: 10px; width: auto; color: var(--ink-2); font-size: 12.5px; padding: 8px 18px; }
+/* 音量/音源弹层贴着 Dock 右端，向下弹会被视口底边裁掉：改为向上弹、右缘对齐按钮 */
+.dock .pop { top: auto; bottom: calc(100% + 8px); }
+/* 空闲 Dock 中央的休息提示：绝对定位居中于整条 Dock（不随屏块条宽度偏移），
+   max-width 预留左侧屏块条空间，过窄时提示省略号截断；svg 转 block 消除基线空隙保证垂直居中 */
+.dock-empty-hint {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 8px; max-width: calc(100% - 200px);
+  color: var(--ink-2); font-size: 12.5px; white-space: nowrap;
+}
+.dock-empty-hint svg { display: block; }
+.dock-empty-hint .dim-label { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 620px) { .dock-empty-hint { display: none; } } /* 过窄时与屏块条重叠，直接隐藏 */
 .dock-meta { display: flex; flex-direction: column; gap: 1px; width: 170px; min-width: 120px; flex-shrink: 0; }
 .dock-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dock-sub { font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -846,13 +857,13 @@ button.card-row:hover { background: var(--subtle); }
 .loc-crumb-sep { display: inline-flex; color: var(--ink-3); }
 
 /* 文件夹卡片行（位于壁纸网格上方） */
-.loc-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(170px * var(--loc-zoom, 1)), 1fr)); gap: 10px; margin-bottom: 14px; }
+.loc-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(228px * var(--loc-zoom, 1)), 1fr)); gap: 10px; margin-bottom: 14px; }
 .loc-folders[hidden] { display: none; }
 .loc-folder {
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: calc(110px * var(--loc-zoom, 1));
   padding: 13px 14px; border-radius: var(--r-md); text-align: left;
   background: var(--card); border: 1px solid var(--stroke);
-  content-visibility: auto; contain-intrinsic-size: auto calc(calc(170px * var(--loc-zoom, 1)) * 9 / 16 + 60px); /* 大库优化，同 .wall-card；高≈缩略图 16:9 + 内边距 26 + 名称/计数 ~34 */
+  content-visibility: auto; contain-intrinsic-size: auto calc(calc(228px * var(--loc-zoom, 1)) * 9 / 16 + 60px); /* 大库优化，同 .wall-card；高≈缩略图 16:9 + 内边距 26 + 名称/计数 ~34 */
   transition: border-color var(--speed), box-shadow var(--speed);
 }
 .loc-folder:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
@@ -876,18 +887,18 @@ button.card-row:hover { background: var(--subtle); }
 .loc-canvas.is-empty { display: grid; place-items: center; }
 .loc-tile {
   /* 宽度随画布列宽拉伸（--loc-cellw 由 app.js 按内容宽均摊回填，等价壁纸库 1fr 列；
-     回退值为缩放基准宽 170z，与根目录文件夹卡 minmax(170z,1fr) 同基准，同档位下封面一样大）；
-     名称与操作钮字号不缩放。
+     回退值为缩放基准宽 228z，与根目录文件夹卡、搜索网格（228z）同基准，
+     100% 时封面与壁纸库卡片一样大；名称与操作钮字号不缩放。
      无内边距、缩略图撑满磁贴宽：可见边即磁贴框，上缘与左右缘都精确落在 .view 页边距上，
      与壁纸库网格同边距；列间隙固定 10px、行距 10px（名称盒固定两行高），与壁纸库网格一致 */
-  position: absolute; width: var(--loc-cellw, calc(170px * var(--loc-zoom, 1)));
+  position: absolute; width: var(--loc-cellw, calc(228px * var(--loc-zoom, 1)));
   display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--loc-zoom, 1));
   padding: 0; border-radius: var(--r-md); cursor: pointer;
   border: 1px solid transparent; touch-action: none;
-  /* 大库优化：视口外磁贴跳过布局。占位高必须与真实内容高完全一致（名称盒固定两行后高度确定：58z+30，
-     占位是内容盒口径不含边框）——绝对定位的 c-v:auto 元素在屏上也可能按占位值布局，占位不准会直接变成可见的多余空隙 */
+  /* 大库优化：视口外磁贴跳过布局。占位高必须与真实内容高完全一致（名称盒固定两行后高度确定：
+     封面 228z*9/16 + 间隙 6z + 名称盒 30，占位是内容盒口径不含边框）——绝对定位的 c-v:auto 元素在屏上也可能按占位值布局，占位不准会直接变成可见的多余空隙 */
   content-visibility: auto;
-  contain-intrinsic-size: var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) calc(var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 30px);
+  contain-intrinsic-size: var(--loc-cellw, calc(228px * var(--loc-zoom, 1))) calc(var(--loc-cellw, calc(228px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 30px);
   transition: background var(--speed), border-color var(--speed), box-shadow var(--speed);
 }
 .loc-tile:hover { background: color-mix(in srgb, var(--ctl-hover) 72%, transparent); border-color: var(--stroke); }
@@ -936,7 +947,7 @@ button.card-row:hover { background: var(--subtle); }
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
 .loc-slot-hint {
-  position: absolute; width: var(--loc-cellw, calc(170px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(170px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
+  position: absolute; width: var(--loc-cellw, calc(228px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(228px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }

@@ -74,7 +74,15 @@
     return target && target.fileUrl && previewKind(target) === "video" ? target.fileUrl : null;
   }
 
-  // 悬停即播：进入卡片 150ms 后才拉流（快速划过网格不反复起停），移开即卸载；
+  // 静音视频：muted 内容属性对 JS 动态创建的元素在 Chromium 下不生效（只影响"默认静音态"，
+  // 编程起播仍可能出声），必须直接设 IDL 属性
+  function mutedVideo(url, cls) {
+    const v = el("video", { class: cls, src: url, autoplay: true, loop: true, muted: true, playsinline: true });
+    v.muted = true;
+    return v;
+  }
+
+  // 悬停即播：进入卡片 150ms 后才拉流（快速划过网格不反复起停），移开即卸载且始终无声；
   // 解码失败等错误静默回退静态封面。视频插在封面图之后，操作条 / 徽标仍在视频之上
   function attachHoverPlay(card, cover, w) {
     const url = hoverVideoUrlOf(w);
@@ -83,13 +91,16 @@
     let timer = 0;
     const stop = () => {
       if (timer) { clearTimeout(timer); timer = 0; }
-      if (video) { video.remove(); video = null; }
+      if (video) {
+        try { video.pause(); } catch (_) { /* 已释放等场景忽略 */ }
+        video.remove(); video = null;
+      }
     };
     card.addEventListener("mouseenter", () => {
       if (video || timer) return;
       timer = setTimeout(() => {
         timer = 0;
-        video = el("video", { class: "cover-live", src: url, autoplay: true, loop: true, muted: true, playsinline: true });
+        video = mutedVideo(url, "cover-live");
         video.addEventListener("error", stop);
         const img = cover.querySelector("img");
         if (img) img.after(video); else cover.prepend(video);
@@ -669,7 +680,7 @@
         function renderZone() {
           zone.innerHTML = "";
           if (previewEl || (fileUrl && !file)) {
-            const media = previewEl || (isVideoName(fileUrl) ? el("video", { src: fileUrl, autoplay: true, loop: true, muted: true, playsinline: true }) : el("img", { src: fileUrl }));
+            const media = previewEl || (isVideoName(fileUrl) ? mutedVideo(fileUrl) : el("img", { src: fileUrl }));
             if (!previewEl) {
               media.addEventListener("loadeddata", () => { previewEl = media; });
               media.addEventListener("error", () => { zone.innerHTML = ""; zone.append(el("p", { class: "dim-label" }, "load failed")); });
@@ -698,7 +709,7 @@
           if (f.size > 500 * 1024 * 1024) { SC.toast(SC.t("create.fileHint"), "err"); return; }
           file = f; previewEl = null; fileUrl = "";
           const url = URL.createObjectURL(f);
-          const media = isVideoName(f.name) ? el("video", { src: url, autoplay: true, loop: true, muted: true, playsinline: true }) : el("img", { src: url });
+          const media = isVideoName(f.name) ? mutedVideo(url) : el("img", { src: url });
           media.addEventListener("loadeddata", () => { previewEl = media; renderZone(); });
           media.addEventListener("load", () => { previewEl = media; renderZone(); });
           previewEl = media;
@@ -1297,14 +1308,14 @@
     // 布局表存于该文件夹的 .metadata/layout.json（条目名 → 槽位），
     // 显式拖动与流式落位都记录：条目位置一经呈现即固定，空槽位不会被刷新/增删后的重排补位；
     // 新条目按流式顺序落第一个空位并同样记入。
-    // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 170z + 间隙 10px（基准与根目录文件夹卡 minmax(170z,1fr) 一致，
-    // 同一缩放档位下两处封面一样大），用于数列；
-    // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥170z）回填 --loc-cellw；
+    // 槽位步距与 .loc-tile 联动：CELL_W = 磁贴基准宽 228z + 间隙 10px（基准与根目录文件夹卡、搜索网格一致，
+    // 100% 时封面与壁纸库卡片一样大），用于数列；
+    // 实际磁贴宽由 computePositions 按 1fr 拉伸（≥228z）回填 --loc-cellw；
     // CELL_H = 磁贴高（缩略图 16:9 由列宽推出，与 CSS aspect-ratio 同式，缩放/改窗口时封面始终等比
     // + 名称间隙 6z + 名称盒固定两行 30px = 缩略图高+6z+30，无内边距，另含上下 1px 边框）+ 10px 行距（与壁纸库一致），
-    // 在 computePositions 算出实际列宽后回填（初值为基准宽 170z 口径的估算）。
+    // 在 computePositions 算出实际列宽后回填（初值为基准宽 228z 口径的估算）。
     // 布局表存 {c,r} 槽位索引，缩放只改步距、不改槽位占用关系
-    let CELL_W = 170 * localZoom + 10, CELL_H = 170 * localZoom * 9 / 16 + 6 * localZoom + 42;
+    let CELL_W = 228 * localZoom + 10, CELL_H = 228 * localZoom * 9 / 16 + 6 * localZoom + 42;
     let pitch = CELL_W;          // 实际列距：computePositions 把内容宽剩余量均摊进列间隙后回填（首末列贴页边距）
     const CANVAS_PAD = 0;        // 画布原点对齐 .view 页边距，与壁纸库网格完全同边距（磁贴可见边即磁贴框，
                                  // 精确落在 36px 页边距上）；列数按 .view 内容宽计，不越入页边距
@@ -1584,7 +1595,7 @@
       localZoom = v;
       localStorage.setItem("fluent.localZoom", String(v));
       locBody.style.setProperty("--loc-zoom", v); // 封面尺寸随变量由 CSS 重排，文字字号不变
-      CELL_W = 170 * v + 10; // 列数口径随缩放同步；CELL_H 由 localReflow→computePositions 按新列宽回填
+      CELL_W = 228 * v + 10; // 列数口径随缩放同步；CELL_H 由 localReflow→computePositions 按新列宽回填
       if (localReflow) localReflow();
       const next = zoomPresetOpts(v); // 同步下拉：替换选项内容并选中当前值
       zoomOpts.length = 0;
@@ -1601,8 +1612,9 @@
 
     // ---- 桌面画布：槽位计算与就地摆放 ----
     function computePositions() {
-      // 与根目录文件夹卡同一条铺排规则（minmax(170z, 1fr) · gap 10px 的画布版，同一缩放档位下封面一样大）：
-      // 可用宽 = .view 内容宽（canvas 与壁纸库网格同一内容盒），列数按「磁贴基准宽 170z + 间隙 10px」
+      // 与根目录文件夹卡、搜索网格同一条铺排规则（minmax(228z, 1fr) · gap 10px 的画布版，
+      // 100% 时封面与壁纸库卡片一样大）：
+      // 可用宽 = .view 内容宽（canvas 与壁纸库网格同一内容盒），列数按「磁贴基准宽 228z + 间隙 10px」
       // 能容纳的列数计；磁贴宽度拉伸到均分剩余空间（1fr），间隙恒为 10px，首末列精确贴左右页边距
       const avail = Math.max(0, canvas.clientWidth - CANVAS_PAD * 2);
       cols = Math.max(1, Math.floor((avail + 10) / CELL_W));
@@ -2439,8 +2451,13 @@
     const strip = dockScreensStrip(screens, playing);
     if (!playing.length) {
       if (offDockTime) { offDockTime(); offDockTime = null; }
-      // 空闲时只留屏块条（可拖壁纸到指定屏播放）
-      dockEl.append(el("div", { class: "dock dock-empty" }, strip));
+      // 空闲时沿用完整宽度 Dock 外壳（与播放态同宽同高，避免状态切换时跳动）：
+      // 左侧屏块条（可拖壁纸到指定屏播放），右侧补休息提示避免空旷
+      dockEl.append(el("div", { class: "dock dock-empty" }, strip,
+        el("div", { class: "dock-empty-hint" },
+          (() => { const s = el("span"); s.innerHTML = icon("moon", 15); return s; })(),
+          el("span", {}, SC.t("dock.nothing")),
+          el("span", { class: "dim-label" }, SC.t("dock.nothingHint")))));
       return;
     }
 
@@ -2478,6 +2495,7 @@
     ctrl.append(ctlBtn("stop", SC.t("dock.stop"), async () => {
       await SC.stop(target);
       focusIdx = 0;
+      pickScreen(-1); // 关闭后取消屏幕选中，避免空态 Dock 仍高亮已关屏
     }));
     if (isList) {
       ctrl.append(ctlBtn("next", SC.t("dock.next"), () => SC.nextIn(w)));
@@ -2515,7 +2533,8 @@
     const volNum = el("span", { class: "dock-volnum" }, String(volume));
     const doSetVol = SC.debounce((v) => SC.setVolume(v, st.audioScreenIndex < 0 ? -1 : st.audioScreenIndex), 250);
     volSlider.addEventListener("input", () => { volNum.textContent = volSlider.value; doSetVol(Number(volSlider.value)); });
-    const volPop = pop(volBtn, () => el("div", { class: "pop-menu pop-vol" }, volSlider, volNum), "center");
+    // 两个弹层都贴着 Dock 右端：右对齐向上弹（见 .dock .pop），居中会伸出条外/被视口裁剪
+    const volPop = pop(volBtn, () => el("div", { class: "pop-menu pop-vol" }, volSlider, volNum), "right");
 
     // 音源选择
     const audioBtn = el("button", { class: "icon-btn", title: SC.t("dock.audio") });
@@ -2528,15 +2547,16 @@
       el("button", {
         class: `pop-item ${st.audioScreenIndex < 0 ? "is-active" : ""}`,
         onclick: () => { closePops(); SC.setVolume(0, -1); },
-      }, SC.t("dock.mute"))), "center");
+      }, SC.t("dock.mute"))), "right");
 
     const line = el("div", { class: "dock-line" });
     if (showProgress && dur > 0) line.style.width = `${Math.min(100, (cur / dur) * 100)}%`;
     else line.style.width = paused ? "0%" : "100%";
     line.classList.toggle("is-idle", !showProgress || !dur);
 
-    dockEl.append(el("div", { class: "dock" }, line, strip, meta, ctrl,
-      ...(showProgress ? [time, seekEl] : []), volPop, audioPop));
+    // 播放/暂停等控制钮靠右，与音量、音源聚成一排；进度条（flex:1）占据中间空档
+    dockEl.append(el("div", { class: "dock" }, line, strip, meta,
+      ...(showProgress ? [time, seekEl] : []), ctrl, volPop, audioPop));
   }
 
   function ctlBtn(ic, title, onclick) {
