@@ -667,6 +667,7 @@ button.card-row:hover { background: var(--subtle); }
 
 /* ---------------- 播放 Dock（Win11 媒体浮层） ---------------- */
 .dock-wrap { position: fixed; left: 0; right: 0; bottom: 16px; z-index: 55; display: flex; justify-content: center; pointer-events: none; }
+.dock-wrap[hidden] { display: none; } /* flex 会盖过 hidden 属性的 UA 样式，非壁纸视图空态下靠它整条隐藏 */
 .dock {
   pointer-events: auto; position: relative; overflow: visible;
   display: flex; align-items: center; gap: 12px;

@@ -184,7 +184,8 @@
   }
 
   // ---------------------------------------------------------------- 全局壳
-  let currentView = "library";
+  // 壁纸库（library）视图已废弃：入口已从导航屏蔽，默认视图为本地库（见 NAV 与 renderLibrary 注释）
+  let currentView = "local";
   let searchQuery = "";
   let applyTarget = -1; // -1 = 全部屏幕
   // 卡片悬停 tooltip：说明单击生效的作用范围（跟随当前应用目标）
@@ -218,7 +219,7 @@
     el("button", { class: "win-btn is-close", title: "close", tabindex: "-1", onclick: () => { if (SC.client) SC.client.win.close(); } }));
 
   const NAV = [
-    { id: "library", icon: "home", label: "nav.library" },
+    // library（壁纸库）已废弃，入口屏蔽不再下发；视图代码保留（见 renderLibrary @deprecated）
     { id: "local", icon: "folder", label: "nav.local" },
     { id: "hub", icon: "globe", label: "nav.hub" },
     // Win11 惯例：低频项（下载 / 设置 / 关于）沉到窗格底部 FooterMenuItems 区
@@ -282,9 +283,10 @@
   // refresh-page）后能回到原页签
   function parseHash() {
     const segs = location.hash.replace(/^#\//, "").split("/");
-    return { view: segs[0] || "library", sub: segs[1] };
+    return { view: segs[0] || "local", sub: segs[1] }; // library 已废弃，无 hash 时落在本地库
   }
   function go(view, sub) {
+    if (view === "library") view = "local"; // 废弃视图一律重定向：外部 nav 事件 / 旧调用点统一落到本地库
     currentView = view;
     if (view === "settings" && SETTINGS_TAB_IDS.includes(sub)) settingsTab = sub;
     location.hash = view === "settings" ? `#/settings/${settingsTab}` : `#/${view}`;
@@ -293,6 +295,7 @@
   }
   window.addEventListener("hashchange", () => {
     const { view, sub } = parseHash();
+    if (view === "library") { location.hash = "#/local"; return; } // 废弃视图：前进/后退/手输旧 hash 一律归一
     const tabChanged = view === "settings" && SETTINGS_TAB_IDS.includes(sub) && sub !== settingsTab;
     if (tabChanged) settingsTab = sub;
     if (view !== currentView && NAV.some((n) => n.id === view)) { currentView = view; updatePane(); renderView(); }
@@ -435,7 +438,9 @@
       el("button", { class: "icon-btn", onclick: () => close() }, (() => { const s = el("span"); s.innerHTML = icon("x", 15); return s; })()));
   }
 
-  // ---------------------------------------------------------------- 库视图
+  // ---------------------------------------------------------------- 库视图（已废弃）
+  /** @deprecated 壁纸库视图已废弃：导航入口已屏蔽（见 NAV），go("library") 一律重定向本地库。
+   *  代码暂时保留供回滚参考，请使用 renderLocal（本地库）；确认不再恢复后可整体移除。 */
   let wallpapersCache = [];
   let libSeq = 0; // 壁纸库网格分帧渲染序号：重渲染后旧补插任务作废
   function renderLibrary() {
@@ -2498,11 +2503,21 @@
     return wrap;
   }
 
+  // 空态 Dock（屏块拖拽落点 + 休息提示）只对壁纸视图有意义；设置等其余视图不播就整个隐藏，
+  // 播放中才在所有视图显示（状态/切视图都会走到这里，显隐随之收敛）
+  const IDLE_DOCK_VIEWS = new Set(["local", "library"]);
+
   function renderDock() {
     const st = SC.state.status;
     const playing = st ? st.wallpapers : [];
     const screens = SC.state.screens || [];
     if (dockSelScreen >= 0 && !screens.some((s) => s.index === dockSelScreen)) dockSelScreen = -1; // 屏幕被拔出等场景
+    if (!playing.length && !IDLE_DOCK_VIEWS.has(currentView)) {
+      if (offDockTime) { offDockTime(); offDockTime = null; }
+      dockEl.hidden = true;
+      return;
+    }
+    dockEl.hidden = false;
     SC.setTimeScreen(dockSelScreen);
     dockEl.innerHTML = "";
 
@@ -2670,15 +2685,14 @@
   SC.on("config", (group) => { if (group === "Wallpaper" && currentView === "settings") renderSettings(); });
 
   // ---------------------------------------------------------------- 启动
-  // 标题栏居中搜索：全局唯一入口，输入即跳转壁纸库并过滤
+  // 标题栏居中搜索：全局唯一搜索入口，输入即跳转本地库并过滤
   const titleSearchInput = el("input", {
     type: "search", placeholder: SC.t("lib.search"),
     // 输入防抖：每次击键都全量重建网格在几千壁纸时是持续卡顿源
     oninput: SC.debounce((e) => {
       searchQuery = e.target.value;
       if (currentView === "local") { if (localRefresh) localRefresh(); }
-      else if (currentView !== "library") go("library");
-      else if (refreshGrid) refreshGrid();
+      else go("local");
     }, 180),
   });
   const titleSearch = el("label", { class: "title-search", title: SC.t("lib.search") },
@@ -2705,6 +2719,7 @@
   winCtrl.querySelectorAll(".win-btn").forEach((b) => { b.innerHTML = winGlyph(b.title); });
   buildPane();
   const { view: initial, sub: initialTab } = parseHash();
+  if (initial === "library") location.hash = "#/local"; // 废弃视图的旧链接 / 旧 hash 归一到本地库
   if (NAV.some((n) => n.id === initial)) {
     currentView = initial;
     if (initial === "settings") settingsTab = SETTINGS_TAB_IDS.includes(initialTab) ? initialTab : "general";
