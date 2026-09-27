@@ -403,6 +403,72 @@ pub async fn copy_to_tmp(app: AppHandle, src_path: String) -> Result<String> {
     Ok(tmp_name_to_media_url(&dest_name))
 }
 
+/// Web 壁纸文件夹统计：总体积、文件数、入口 html 相对路径
+/// （根级 index.html 优先，否则取层级最浅、同层字典序最小的 html，与网页端导入逻辑一致）。
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebFolderStat {
+    pub total_size: u64,
+    pub file_count: u32,
+    pub entry_rel: Option<String>,
+}
+
+fn walk_web_folder(dir: &Path, rel: &str, stat: &mut WebFolderStat, htmls: &mut Vec<(usize, String)>) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(dir)?.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        let child_rel = if rel.is_empty() { name.clone() } else { format!("{rel}/{name}") };
+        if entry.file_type()?.is_dir() {
+            walk_web_folder(&entry.path(), &child_rel, stat, htmls)?;
+        } else {
+            stat.total_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
+            stat.file_count += 1;
+            let lower = name.to_lowercase();
+            if lower.ends_with(".html") || lower.ends_with(".htm") {
+                htmls.push((child_rel.matches('/').count(), child_rel));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn web_folder_stat(app: AppHandle, src_dir: String) -> Result<WebFolderStat> {
+    let _ = &app;
+    let src = std::path::PathBuf::from(&src_dir);
+    if !src.is_dir() {
+        return Err(format!("folder not found: {src_dir}"));
+    }
+    let mut stat = WebFolderStat { total_size: 0, file_count: 0, entry_rel: None };
+    let mut htmls: Vec<(usize, String)> = Vec::new();
+    walk_web_folder(&src, "", &mut stat, &mut htmls).map_err(|e| format!("walk failed: {e}"))?;
+    if !htmls.is_empty() {
+        htmls.sort();
+        stat.entry_rel = htmls
+            .iter()
+            .find(|(_, rel)| rel.eq_ignore_ascii_case("index.html"))
+            .or_else(|| htmls.first())
+            .map(|(_, rel)| rel.clone());
+    }
+    Ok(stat)
+}
+
+/// 本地 Web 壁纸文件夹后端整包复制进 tmp 的 prefix 子目录（不经前端逐文件 base64），
+/// 返回 prefix；随后走 create_web_wallpaper_folder 落库（落库时会清掉这份 tmp 副本）。
+#[tauri::command]
+pub async fn copy_web_folder_to_tmp(app: AppHandle, src_dir: String) -> Result<String> {
+    let st = state(&app);
+    let src = std::path::PathBuf::from(&src_dir);
+    if !src.is_dir() {
+        return Err(format!("folder not found: {src_dir}"));
+    }
+    let prefix = format!("web-{}", uuid::Uuid::new_v4());
+    let tmp_dir = st.dirs.tmp_dir();
+    std::fs::create_dir_all(&tmp_dir).map_err(|e| e.to_string())?;
+    let dest = tmp_dir.join(&prefix);
+    copy_dir_recursive(&src, &dest).map_err(|e| format!("copy folder failed: {e}"))?;
+    Ok(prefix)
+}
+
 #[tauri::command]
 pub async fn create_wallpaper_new(app: AppHandle, mut wallpaper: Wallpaper) -> Result<bool> {
     let st = state(&app);

@@ -697,10 +697,10 @@
               zone.append(
                 el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("globe", 26); return s; })()),
                 el("p", { class: "drop-text" }, folderPack.name),
-                el("p", { class: "dim-label" }, SC.t("create.webPack", folderPack.files.length, SC.fmtBytes(folderPack.total))),
+                el("p", { class: "dim-label" }, SC.t("create.webPack", folderPack.fileCount ?? folderPack.files.length, SC.fmtBytes(folderPack.total))),
                 el("button", {
                   class: "btn btn-sm drop-re",
-                  onclick: () => { folderPack = null; progress = -1; folderPicker.click(); },
+                  onclick: (e) => { e.stopPropagation(); folderPack = null; progress = -1; startFolderPick(); },
                 }, SC.t("create.reselect")));
             } else if (isWebSel()) {
               // 单个 Web 壁纸没有可内嵌预览的媒体元素，展示文件占位即可
@@ -709,7 +709,7 @@
                 el("p", { class: "drop-text" }, (file && file.name) || existing.fileName || "Web"),
                 el("button", {
                   class: "btn btn-sm drop-re",
-                  onclick: () => { file = null; previewEl = null; fileUrl = ""; picker.click(); },
+                  onclick: (e) => { e.stopPropagation(); file = null; previewEl = null; fileUrl = ""; startPick(); },
                 }, SC.t("create.reselect")));
             } else if (previewEl || (fileUrl && (!file || file.isLocal))) {
               const media = previewEl || (isVideoName(fileUrl) ? mutedVideo(fileUrl) : el("img", { src: fileUrl, crossorigin: "anonymous" }));
@@ -725,7 +725,7 @@
               previewEl = previewEl || media;
               zone.append(media, el("button", {
                 class: "btn btn-sm drop-re",
-                onclick: () => { file = null; previewEl = null; fileUrl = ""; startPick(); },
+                onclick: (e) => { e.stopPropagation(); file = null; previewEl = null; fileUrl = ""; startPick(); },
               }, SC.t("create.reselect")));
             } else {
               zone.append(
@@ -735,7 +735,7 @@
                 !isEdit ? el("div", { class: "drop-actions" },
                   el("button", {
                     class: "btn btn-sm",
-                    onclick: (e) => { e.stopPropagation(); folderPicker.click(); },
+                    onclick: (e) => { e.stopPropagation(); startFolderPick(); },
                   }, SC.t("create.pickFolder"))) : null);
             }
             zone.classList.toggle("is-filled", !!(previewEl || fileUrl || isWebSel()));
@@ -746,14 +746,25 @@
           renderZone();
           const picker = el("input", { type: "file", accept: "image/*,video/*,.html,.htm", hidden: true });
           // 客户端内走原生对话框 + 后端直接复制进 tmp（HTML input 沙盒拿不到真实路径，
-          // base64 中转大文件既慢又占内存）；demo 无后端，仍用网页选文件
+          // base64 中转大文件既慢又占内存）；demo 无后端，仍用网页选文件。
+          // 媒体文件与单 html 走 startPick，Web 文件夹走 startFolderPick（见空态的选文件夹按钮）
           async function startPick() {
             if (SC.demo) { picker.click(); return; }
             const picked = await SC.pickLocalMedia(["mp4", "m4v", "webm", "mkv", "mov", "avi", "flv",
-              "jpg", "jpeg", "png", "bmp", "gif", "webp", "avif"]);
+              "jpg", "jpeg", "png", "bmp", "gif", "webp", "avif", "html", "htm"]);
             if (!picked) return;
             file = { name: picked.name, isLocal: true, tmpUrl: picked.tmpUrl };
             previewEl = null; fileUrl = picked.tmpUrl; folderPack = null;
+            renderZone();
+          }
+          // Web 壁纸文件夹：客户端走原生选文件夹 + 后端统计体积（>100MB 二次确认）；
+          // demo 用 webkitdirectory 网页选择
+          async function startFolderPick() {
+            if (SC.demo) { folderPicker.click(); return; }
+            const picked = await SC.pickWebFolder();
+            if (!picked) return;
+            folderPack = { name: picked.name, entry: picked.entry, total: picked.total, fileCount: picked.fileCount, dir: picked.dir };
+            file = null; previewEl = null; fileUrl = ""; progress = -1;
             renderZone();
           }
           picker.addEventListener("change", () => {
@@ -840,20 +851,26 @@
         if (!name) { SC.toast(SC.t("create.titleEmpty"), "err"); return; }
         if (mode === "wall") {
           if (folderPack) {
-            // Web 壁纸文件夹整包导入：逐文件上传到 tmp 临时子目录 → 后端落库为整目录型壁纸
+            // Web 壁纸文件夹整包导入：客户端 = 后端整包复制源目录 → 落库；
+            // demo = 逐文件 base64 上传到 tmp 临时子目录 → 后端落库为整目录型壁纸
             const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
             saveBtn.classList.add("is-loading");
             saveBtn.textContent = SC.t("create.creating");
-            const prefix = `web-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-            const packed = await SC.uploadWebFolder(folderPack.files, prefix, (p) => {
-              progress = p;
-              saveBtn.textContent = SC.t("create.importing", p);
-              renderZone();
-            });
             let ok = false;
-            if (packed) {
-              ok = await SC.createWebWallpaperFolder({ entry: `${packed}/${folderPack.entry}`, title: name });
+            if (folderPack.dir) {
+              ok = await SC.importWebFolder({ dir: folderPack.dir, entry: folderPack.entry, title: name });
               if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+            } else {
+              const prefix = `web-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+              const packed = await SC.uploadWebFolder(folderPack.files, prefix, (p) => {
+                progress = p;
+                saveBtn.textContent = SC.t("create.importing", p);
+                renderZone();
+              });
+              if (packed) {
+                ok = await SC.createWebWallpaperFolder({ entry: `${packed}/${folderPack.entry}`, title: name });
+                if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+              }
             }
             if (!ok) {
               saveBtn.classList.remove("is-loading");

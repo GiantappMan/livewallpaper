@@ -252,6 +252,30 @@ class API {
     }
   }
 
+  /** 统计本地 Web 壁纸文件夹：总体积 / 文件数 / 入口 html 相对路径（根级 index.html 优先）。 */
+  async webFolderStat(srcPath: string): Promise<ApiResult<{ totalSize: number; fileCount: number; entryRel: string | null }>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<{ totalSize: number; fileCount: number; entryRel: string | null }>("web_folder_stat", { srcPath });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 本地 Web 壁纸文件夹后端整包复制进 tmp，返回 prefix（配合 createWallpaperFolder 落库）。 */
+  async copyWebFolderToTmp(srcPath: string): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("copy_web_folder_to_tmp", { srcPath });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   async createWallpaperNew(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
     try {
       if (!this.isRunningInClient()) return { error: null, data: true };

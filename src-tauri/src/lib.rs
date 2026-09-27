@@ -102,6 +102,8 @@ pub fn run() {
             commands::get_real_theme_mode,
             commands::upload_to_tmp,
             commands::copy_to_tmp,
+            commands::web_folder_stat,
+            commands::copy_web_folder_to_tmp,
             commands::create_wallpaper_new,
             commands::create_web_wallpaper_folder,
             commands::update_wallpaper_new,

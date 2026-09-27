@@ -571,6 +571,36 @@
     return true;
   }
 
+  /** 异常大文件夹阈值：超过需用户二次确认 */
+  const WEB_FOLDER_LARGE = 100 * 1024 * 1024;
+
+  /** 原生选 Web 壁纸文件夹：后端统计体积与入口 html，异常大（>100MB）需二次确认。
+   *  返回 { name, dir, entry, total, fileCount }；取消 / 失败 / 没有网页文件返回 null。demo 返回 null。 */
+  async function pickWebFolder() {
+    if (demo) return null;
+    const picked = await client.shell.showFolderDialog();
+    if (picked.error || !picked.data) return null;
+    const dir = picked.data;
+    const res = await client.api.webFolderStat(dir);
+    if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+    const stat = res.data;
+    if (!stat.entryRel) { toast(t("create.webNeedHtml"), "err"); return null; }
+    if (stat.totalSize > WEB_FOLDER_LARGE) {
+      const ok = await confirm({ title: t("create.webBigTitle"), body: t("create.webBigBody", fmtBytes(stat.totalSize)) });
+      if (!ok) return null;
+    }
+    const name = dir.split(/[\\/]/).filter(Boolean).pop() || "web";
+    return { name, dir, entry: stat.entryRel, total: stat.totalSize, fileCount: stat.fileCount };
+  }
+
+  /** 把本地 Web 壁纸文件夹直接导入：后端整包复制进 tmp → 落库（不经前端逐文件 base64 上传）。 */
+  async function importWebFolder({ dir, entry, title }) {
+    if (demo) { toast(`${t("common.demo")} · ${t("create.wallpaper")}`, "ok"); return true; }
+    const copied = await client.api.copyWebFolderToTmp(dir);
+    if (copied.error || !copied.data) { toast(t("common.opFailed", errText(copied.error)), "err"); return false; }
+    return await createWebWallpaperFolder({ entry: `${copied.data}/${entry}`, title });
+  }
+
   /** 从预览元素（video/img）截 500px 宽 JPEG 封面，返回 base64（不含前缀）或 null */
   function captureCover(elm) {
     try {
@@ -1151,7 +1181,7 @@
     // 创建 / 编辑
     defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover, generatePlaylistCover,
     createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
-    pickLocalMedia, demo,
+    pickLocalMedia, pickWebFolder, importWebFolder, demo,
     // 下载
     cancelDownload, clearHistory, removeHistory,
     // 文件夹整理
