@@ -2504,7 +2504,7 @@
   }
 
   // 空态 Dock（屏块拖拽落点 + 休息提示）只对壁纸视图有意义；设置等其余视图不播就整个隐藏，
-  // 播放中才在所有视图显示（状态/切视图都会走到这里，显隐随之收敛）
+  // 库为空时没有壁纸可拖可点，同样隐藏；播放中才在所有视图显示（状态/切视图都会走到这里，显隐随之收敛）
   const IDLE_DOCK_VIEWS = new Set(["local", "library"]);
 
   function renderDock() {
@@ -2512,7 +2512,7 @@
     const playing = st ? st.wallpapers : [];
     const screens = SC.state.screens || [];
     if (dockSelScreen >= 0 && !screens.some((s) => s.index === dockSelScreen)) dockSelScreen = -1; // 屏幕被拔出等场景
-    if (!playing.length && !IDLE_DOCK_VIEWS.has(currentView)) {
+    if (!playing.length && (!IDLE_DOCK_VIEWS.has(currentView) || !SC.state.wallpapers.length)) {
       if (offDockTime) { offDockTime(); offDockTime = null; }
       dockEl.hidden = true;
       return;
@@ -2656,7 +2656,7 @@
   }
 
   // 事件 → 视图刷新
-  SC.on("wallpapers", () => { if (["library", "local"].includes(currentView)) renderView(); });
+  SC.on("wallpapers", () => { if (["library", "local"].includes(currentView)) renderView(); renderDock(); }); // 库从空变非空（或反向）时同步 Dock 显隐
   SC.on("status", () => {
     const playing = SC.playingSet();
     if (currentView === "library") {
