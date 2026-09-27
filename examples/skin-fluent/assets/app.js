@@ -540,8 +540,13 @@
       card.addEventListener("dragstart", (e) => {
         dndWallpaper = w;
         if (e.dataTransfer) { e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+        cardDndStart(card, e);
       });
-      card.addEventListener("dragend", () => { dndWallpaper = null; });
+      card.addEventListener("dragend", () => {
+        dndWallpaper = null;
+        card.classList.remove("is-dragging");
+        cardDndEnd();
+      });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1715,8 +1720,13 @@
       card.addEventListener("dragstart", (e) => {
         dndWallpaper = w;
         if (e.dataTransfer) { e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+        cardDndStart(card, e);
       });
-      card.addEventListener("dragend", () => { dndWallpaper = null; });
+      card.addEventListener("dragend", () => {
+        dndWallpaper = null;
+        card.classList.remove("is-dragging");
+        cardDndEnd();
+      });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1836,6 +1846,7 @@
       if (dockScreen) { // 拖出画布到播放条屏幕块：直接在该屏播放
         dockScreen.classList.add("is-over");
         drag.target = { type: "screen", idx: Number(dockScreen.dataset.screen) };
+        if (ghost) ghost.classList.add("is-over-dock"); // 压暗幻影，突出块上的落点高亮
         return;
       }
       if (under.closest(".loc-canvas") === canvas) {
@@ -1851,6 +1862,7 @@
     function clearOver() {
       viewEl.querySelectorAll(".loc-tile.is-over, .loc-crumb-seg.is-over").forEach((n) => n.classList.remove("is-over"));
       document.querySelectorAll(".dock-screen.is-over").forEach((n) => n.classList.remove("is-over")); // 画布拖拽可落到 Dock 屏幕块
+      if (ghost) ghost.classList.remove("is-over-dock");
     }
 
     function tileOf(it) {
@@ -2369,6 +2381,50 @@
   let dndWallpaper = null;  // HTML5 拖拽中的壁纸（库/搜索卡片 → Dock 屏幕块）
   let offDockTime = null;   // 进度轮询订阅（showProgress 时挂，其余时刻注销省请求）
 
+  // HTML5 卡片拖拽（库/本地流式卡片）的统一幻影：原生拖拽影像由系统合成、无法调透明度，
+  // 拖到播放 Dock 屏幕块上会死死挡住落点。这里用 1x1 透明画布隐藏原生影像，改用跟随
+  // dragover 的 DOM 幻影（复用 .loc-ghost 样式，保持最上层），悬于屏幕块上时由
+  // dndGhostFade 降低透明度露出落点
+  let dndGhostEl = null;
+  let dndGhostMove = null;
+  let dndGrab = { x: 0, y: 0 };
+  function cardDndStart(card, e) {
+    cardDndEnd(); // 上次拖拽收尾残留时先自愈
+    const r = card.getBoundingClientRect();
+    dndGrab = { x: e.clientX - r.left, y: e.clientY - r.top };
+    dndGhostEl = card.cloneNode(true);
+    dndGhostEl.classList.add("loc-ghost");
+    dndGhostEl.classList.remove("is-selected", "is-playing", "is-dragging");
+    dndGhostEl.style.width = `${r.width}px`; // 克隆脱离网格后宽度丢失，按原卡片定宽
+    dndGhostEl.style.left = `${r.left}px`;
+    dndGhostEl.style.top = `${r.top}px`;
+    dndGhostEl.querySelectorAll("video").forEach((v) => v.remove()); // 悬停预览视频不进幻影
+    document.body.append(dndGhostEl);
+    card.classList.add("is-dragging");
+    if (e.dataTransfer) {
+      const hole = document.createElement("canvas");
+      hole.width = hole.height = 1;
+      try { e.dataTransfer.setDragImage(hole, 0, 0); } catch (_) { /* 不支持时保留原生影像 */ }
+    }
+    dndGhostMove = (ev) => {
+      if (!dndGhostEl) return;
+      dndGhostEl.style.left = `${ev.clientX - dndGrab.x}px`;
+      dndGhostEl.style.top = `${ev.clientY - dndGrab.y}px`;
+    };
+    window.addEventListener("dragover", dndGhostMove);
+    window.addEventListener("drop", cardDndEnd); // 源卡片被重渲染移除时 dragend 可能不来，drop 兜底
+  }
+  function cardDndEnd() {
+    window.removeEventListener("dragover", dndGhostMove);
+    window.removeEventListener("drop", cardDndEnd);
+    dndGhostMove = null;
+    if (dndGhostEl) { dndGhostEl.remove(); dndGhostEl = null; }
+  }
+  // 拖到屏幕块上时压暗幻影，突出块上的落点高亮（画布磁贴与 HTML5 卡片两种幻影通用）
+  function dndGhostFade(on) {
+    document.querySelectorAll(".loc-ghost").forEach((g) => g.classList.toggle("is-over-dock", on));
+  }
+
   function screenLabel(s) { return s.deviceName || String((s.index || 0) + 1); }
   // 屏块宽高比按 bounds（"x, y, w, h"）等比推出，解析失败回退 16:9
   function boundsRatio(s) {
@@ -2403,11 +2459,13 @@
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
         btn.classList.add("is-over");
+        dndGhostFade(true);
       });
-      btn.addEventListener("dragleave", () => btn.classList.remove("is-over"));
+      btn.addEventListener("dragleave", () => { btn.classList.remove("is-over"); dndGhostFade(false); });
       btn.addEventListener("drop", (e) => {
         e.preventDefault();
         btn.classList.remove("is-over");
+        dndGhostFade(false);
         const w = dndWallpaper;
         dndWallpaper = null;
         if (w) SC.applyWallpaper(w, indexes);

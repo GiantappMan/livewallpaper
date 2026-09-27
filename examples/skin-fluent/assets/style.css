@@ -946,6 +946,10 @@ button.card-row:hover { background: var(--subtle); }
   position: fixed; z-index: 400; margin: 0; pointer-events: none; opacity: .85;
   background: var(--card-solid); border-color: var(--accent); box-shadow: var(--shadow-fly);
 }
+/* 幻影始终在最上层；悬于播放 Dock 屏幕块（视频区域）上时降低透明度，露出块上的落点高亮 */
+.loc-ghost.is-over-dock { opacity: .3; }
+/* HTML5 卡片拖拽中原卡片压暗（与画布磁贴 .loc-tile.is-dragging 同语义） */
+.wall-card.is-dragging, .loc-card.is-dragging { opacity: .45; }
 .loc-slot-hint {
   position: absolute; width: var(--loc-cellw, calc(228px * var(--loc-zoom, 1))); height: calc(var(--loc-cellw, calc(228px * var(--loc-zoom, 1))) * 9 / 16 + calc(6px * var(--loc-zoom, 1)) + 32px); border-radius: var(--r-md);
   border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
