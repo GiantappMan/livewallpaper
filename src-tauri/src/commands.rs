@@ -9,7 +9,8 @@ use tauri::{AppHandle, Manager, State};
 use wallpaper_core::library;
 use wallpaper_core::EngineHost;
 use wallpaper_core::models::{
-    PlayingStatus, Screen, TimePos, Wallpaper, WallpaperMeta, WallpaperSetting,
+    PlayingStatus, Screen, TimePos, Wallpaper, WallpaperMeta, WallpaperSetting, WallpaperType,
+    extension_of, file_types,
 };
 use wallpaper_core::AppDirs;
 
@@ -355,17 +356,51 @@ pub async fn upload_to_tmp(
     content: String,
 ) -> Result<String> {
     let st = state(&app);
-    let safe_name: String = file_name
-        .chars()
-        .map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
-        .collect();
-    let dest = st.dirs.tmp_dir().join(&safe_name);
-    std::fs::create_dir_all(&st.dirs.tmp_dir()).map_err(|e| e.to_string())?;
+    let safe_name = safe_tmp_rel_path(&file_name).ok_or("invalid file name")?;
+    let tmp_dir = st.dirs.tmp_dir();
+    let dest = tmp_dir.join(&safe_name);
+    std::fs::create_dir_all(dest.parent().unwrap_or(&tmp_dir)).map_err(|e| e.to_string())?;
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(&content)
         .map_err(|e| format!("bad base64: {e}"))?;
     std::fs::write(&dest, bytes).map_err(|e| e.to_string())?;
     Ok(tmp_name_to_media_url(&safe_name))
+}
+
+/// 临时区相对路径清洗：允许 `/` 分隔的多级路径（Web 壁纸整包上传用），
+/// 每段仅保留字母数字与 `.` `-` `_`（其余替换为 `_`），空段 / `.` / `..` 直接拒绝，防止越界写盘。
+fn safe_tmp_rel_path(name: &str) -> Option<String> {
+    let mut parts: Vec<String> = Vec::new();
+    for seg in name.split(['/', '\\']) {
+        if seg.is_empty() || seg == "." || seg == ".." {
+            return None;
+        }
+        parts.push(
+            seg.chars()
+                .map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+                .collect(),
+        );
+    }
+    if parts.is_empty() { None } else { Some(parts.join("/")) }
+}
+
+/// 本地文件后端直接复制进 tmp（前端只传路径，不经 base64 逐块中转），返回 media URL。
+/// 大文件导入走这里：一次磁盘复制替代 N 次 IPC 覆盖写。
+#[tauri::command]
+pub async fn copy_to_tmp(app: AppHandle, src_path: String) -> Result<String> {
+    let st = state(&app);
+    let src = std::path::PathBuf::from(&src_path);
+    if !src.is_file() {
+        return Err(format!("file not found: {src_path}"));
+    }
+    let src_name = src.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    let safe_name = safe_tmp_rel_path(&src_name).ok_or("invalid file name")?;
+    let dest_name = format!("{}-{}", chrono::Local::now().timestamp_millis(), safe_name);
+    let tmp_dir = st.dirs.tmp_dir();
+    std::fs::create_dir_all(&tmp_dir).map_err(|e| e.to_string())?;
+    let dest = tmp_dir.join(&dest_name);
+    std::fs::copy(&src, &dest).map_err(|e| format!("copy failed: {e}"))?;
+    Ok(tmp_name_to_media_url(&dest_name))
 }
 
 #[tauri::command]
@@ -424,6 +459,86 @@ pub async fn create_wallpaper_new(app: AppHandle, mut wallpaper: Wallpaper) -> R
 
     st.api.notify_change();
     Ok(true)
+}
+
+/// 整包导入 Web 壁纸文件夹：入口 html 及其资源已按相对路径预先上传到 tmp，
+/// 落库为 project.json 标记的整目录型壁纸（扫描 / 移动 / 删除均按单条目处理）。
+#[tauri::command]
+pub async fn create_web_wallpaper_folder(
+    app: AppHandle,
+    entry: String,
+    title: String,
+    setting: Option<WallpaperSetting>,
+) -> Result<bool> {
+    let st = state(&app);
+    let library_dir = {
+        let config = st.config.lock();
+        config.wallpaper.effective_directories()[0].clone()
+    };
+
+    let entry_rel = safe_tmp_rel_path(&entry).ok_or("invalid entry path")?;
+    let tmp_dir = st.dirs.tmp_dir();
+    let entry_path = tmp_dir.join(&entry_rel);
+    if !entry_path.is_file() {
+        return Err("入口网页不存在".into());
+    }
+    if !file_types::WEB.contains(&extension_of(&entry_path).as_str()) {
+        return Err("入口文件不是网页".into());
+    }
+    let src_root = entry_path.parent().ok_or("invalid entry path")?.to_path_buf();
+
+    let id = uuid::Uuid::new_v4().to_string();
+    let dest_root = library_dir.join(&id);
+    copy_dir_recursive(&src_root, &dest_root).map_err(|e| e.to_string())?;
+
+    let entry_name = entry_path
+        .file_name()
+        .map(|s| s.to_string_lossy().to_string())
+        .ok_or("invalid entry path")?;
+    let dest_entry = dest_root.join(&entry_name);
+
+    // project.json：整目录型壁纸标记，file 字段 = 入口文件相对本目录的路径
+    let project = serde_json::json!({ "file": entry_name });
+    std::fs::write(dest_root.join("project.json"), project.to_string())
+        .map_err(|e| e.to_string())?;
+
+    let now = chrono::Local::now();
+    let mut meta = WallpaperMeta {
+        title: title.trim().to_string(),
+        wallpaper_type: WallpaperType::Web,
+        id: Some(id),
+        create_time: Some(now),
+        update_time: Some(now),
+        ..Default::default()
+    };
+    if meta.title.is_empty() {
+        meta.title = dest_entry
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_default();
+    }
+    library::write_meta(&dest_entry, &meta).map_err(|e| e.to_string())?;
+    library::write_setting(&dest_entry, &setting.unwrap_or_default())
+        .map_err(|e| e.to_string())?;
+
+    // tmp 内的整包资源落库即清（尽力而为）
+    let _ = std::fs::remove_dir_all(&src_root);
+
+    st.api.notify_change();
+    Ok(true)
+}
+
+fn copy_dir_recursive(src: &Path, dest: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dest)?;
+    for entry in std::fs::read_dir(src)?.flatten() {
+        let target = dest.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_recursive(&entry.path(), &target)?;
+        } else {
+            std::fs::copy(entry.path(), &target)?;
+        }
+    }
+    Ok(())
 }
 
 fn generate_cover_background(mpv: PathBuf, file: PathBuf, library_dir: PathBuf, default_cover: PathBuf) {
@@ -932,6 +1047,36 @@ pub async fn show_folder_dialog(app: AppHandle) -> Result<Option<String>> {
             .set_title("Select Folder")
             .pick_folder();
         Ok(folder.map(|p| p.to_string_lossy().to_string()))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// 原生选文件对话框，返回绝对路径（HTML input 沙盒拿不到真实路径，后端复制
+/// 依赖它）。filters 为扩展名白名单（如 ["mp4","jpg"]，带不带点均可），空/缺省不过滤。
+#[tauri::command]
+pub async fn show_file_dialog(
+    app: AppHandle,
+    title: Option<String>,
+    filters: Option<Vec<String>>,
+) -> Result<Option<String>> {
+    let _window = app.get_window("main").ok_or("no main window")?;
+    tokio::task::spawn_blocking(move || {
+        let mut dialog = rfd::FileDialog::new();
+        if let Some(t) = title {
+            dialog = dialog.set_title(&t);
+        }
+        if let Some(list) = filters {
+            let exts: Vec<String> = list
+                .iter()
+                .map(|e| e.trim_start_matches('.').to_lowercase())
+                .filter(|e| !e.is_empty())
+                .collect();
+            if !exts.is_empty() {
+                dialog = dialog.add_filter("Media", &exts);
+            }
+        }
+        Ok(dialog.pick_file().map(|p| p.to_string_lossy().to_string()))
     })
     .await
     .map_err(|e| e.to_string())?

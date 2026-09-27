@@ -75,9 +75,10 @@
   }
 
   // 静音视频：muted 内容属性对 JS 动态创建的元素在 Chromium 下不生效（只影响"默认静音态"，
-  // 编程起播仍可能出声），必须直接设 IDL 属性
+  // 编程起播仍可能出声），必须直接设 IDL 属性。crossorigin 匿名 CORS：media.localhost
+  // 响应带 ACAO:*，不加的话视频进 canvas 会污染，captureCover 截封面必然失败
   function mutedVideo(url, cls) {
-    const v = el("video", { class: cls, src: url, autoplay: true, loop: true, muted: true, playsinline: true });
+    const v = el("video", { class: cls, src: url, autoplay: true, loop: true, muted: true, playsinline: true, crossorigin: "anonymous" });
     v.muted = true;
     return v;
   }
@@ -644,10 +645,13 @@
     let previewEl = null;
     let members = isEdit && playlistMode ? [...(existing.meta.wallpapers || [])] : [];
     let progress = -1;
-    let type = 0;
+    // Web 壁纸文件夹整包导入：{ name, entry, files: [{ rel, f }], total }
+    let folderPack = null;
+    // 当前选中的是否为 Web 壁纸（.html 文件、文件夹整包，或编辑中的 type 4 壁纸）
+    const isWebSel = () => !!folderPack || (file ? isWebName(file.name) : (isEdit && existing.meta.type === 4));
 
     const dirty = () => {
-      if (!isEdit) return !!(title || file || members.length);
+      if (!isEdit) return !!(title || file || members.length || folderPack);
       if (playlistMode) return JSON.stringify(members.map((m) => m.filePath)) !== JSON.stringify((existing.meta.wallpapers || []).map((m) => m.filePath)) || title !== (existing.meta.title || "");
       return title !== (existing.meta.title || "") || !!file;
     };
@@ -661,149 +665,256 @@
         body(),
         foot(),
       );
-    }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
 
-    function body() {
-      const box = el("div", { class: "dialog-body" });
-      render(box);
-      return box;
-    }
-    function foot() {
-      const saveBtn = el("button", { class: "btn btn-accent" }, isEdit ? SC.t("common.save") : SC.t("common.create"));
-      const bar = el("div", { class: "dialog-foot" });
-      if (mode === "wall") bar.append(el("span", { class: "dim-label" }, file ? `${SC.t("create.imported")} · ${file.name || ""}` : ""));
-      bar.append(saveBtn);
-      saveBtn.addEventListener("click", submit);
-      return bar;
-    }
-
-    function render(box) {
-      box.innerHTML = "";
-      // 标题
-      const titleInput = el("input", { class: "input", type: "text", placeholder: SC.t("create.titlePh", playlistMode ? SC.t("create.playlist") : SC.t("create.wallpaper")), value: title });
-      titleInput.addEventListener("input", () => { title = titleInput.value; });
-      box.append(el("div", { class: "field-col" }, el("label", { class: "field-label" }, SC.t("create.titleField")), titleInput));
-
-      if (mode === "wall") {
-        // 文件区
-        const zone = el("div", { class: "drop" });
-        function renderZone() {
-          zone.innerHTML = "";
-          if (previewEl || (fileUrl && !file)) {
-            const media = previewEl || (isVideoName(fileUrl) ? mutedVideo(fileUrl) : el("img", { src: fileUrl }));
-            if (!previewEl) {
-              media.addEventListener("loadeddata", () => { previewEl = media; });
-              media.addEventListener("error", () => { zone.innerHTML = ""; zone.append(el("p", { class: "dim-label" }, "load failed")); });
-            }
-            previewEl = previewEl || media;
-            zone.append(media, el("button", {
-              class: "btn btn-sm drop-re",
-              onclick: () => { file = null; previewEl = null; fileUrl = ""; picker.click(); },
-            }, SC.t("create.reselect")));
-          } else {
-            zone.append(
-              el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("image", 26); return s; })()),
-              el("p", { class: "drop-text" }, SC.t("create.file")),
-              el("p", { class: "dim-label" }, SC.t("create.fileHint")));
-          }
-          zone.classList.toggle("is-filled", !!(previewEl || fileUrl));
-          if (progress >= 0 && progress < 100) {
-            zone.append(el("div", { class: "progress" }, el("div", { class: "progress-bar", style: { width: `${progress}%` } })));
-          }
-        }
-        renderZone();
-        const picker = el("input", { type: "file", accept: "image/*,video/*", hidden: true });
-        picker.addEventListener("change", () => {
-          const f = picker.files[0];
-          if (!f) return;
-          if (f.size > 500 * 1024 * 1024) { SC.toast(SC.t("create.fileHint"), "err"); return; }
-          file = f; previewEl = null; fileUrl = "";
-          const url = URL.createObjectURL(f);
-          const media = isVideoName(f.name) ? mutedVideo(url) : el("img", { src: url });
-          media.addEventListener("loadeddata", () => { previewEl = media; renderZone(); });
-          media.addEventListener("load", () => { previewEl = media; renderZone(); });
-          previewEl = media;
-          renderZone();
-        });
-        zone.addEventListener("click", () => picker.click());
-        zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("is-over"); });
-        zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
-        zone.addEventListener("drop", (e) => {
-          e.preventDefault(); zone.classList.remove("is-over");
-          const f = e.dataTransfer.files[0];
-          if (f) { picker.files = e.dataTransfer.files; picker.dispatchEvent(new Event("change")); }
-        });
-        box.append(zone, picker);
-      } else {
-        // 成员网格
-        const grid = el("div", { class: "member-grid" });
-        function renderMembers() {
-          grid.innerHTML = "";
-          if (!members.length) { grid.append(el("p", { class: "dim-label member-empty" }, SC.t("create.membersEmpty"))); return; }
-          members.forEach((m, i) => {
-            const cover = el("div", { class: "member-cover" }, m.coverUrl ? el("img", { src: m.coverUrl, loading: "lazy" }) : null);
-            grid.append(el("div", { class: "member" },
-              cover,
-              el("div", { class: "member-name", title: m.meta && m.meta.title }, (m.meta && m.meta.title) || "—"),
-              el("button", { class: "icon-btn member-x", title: SC.t("common.remove"), onclick: () => { members.splice(i, 1); renderMembers(); renderCount(); } },
-                (() => { const s = el("span"); s.innerHTML = icon("x", 12); return s; })())));
-          });
-        }
-        function renderCount() { headSub.textContent = SC.t("create.members", members.length); }
-        const headSub = sheet.querySelector(".dialog-sub");
-        const addBtn = el("button", { class: "btn" });
-        addBtn.innerHTML = `${icon("listplus", 15)}<span>${SC.t("create.addMembers")}</span>`;
-        addBtn.addEventListener("click", () => openMemberPicker(members, () => { renderMembers(); renderCount(); }));
-        renderMembers();
-        box.append(el("div", { class: "field-row" }, el("label", { class: "field-label" }, SC.t("create.members", members.length)), addBtn), grid);
+      function body() {
+        const box = el("div", { class: "dialog-body" });
+        render(box);
+        return box;
       }
-    }
+      function foot() {
+        const saveBtn = el("button", { class: "btn btn-accent" }, isEdit ? SC.t("common.save") : SC.t("common.create"));
+        const bar = el("div", { class: "dialog-foot" });
+        if (mode === "wall") bar.append(el("span", { class: "dim-label" }, file ? `${SC.t("create.imported")} · ${file.name || ""}` : ""));
+        bar.append(saveBtn);
+        saveBtn.addEventListener("click", submit);
+        return bar;
+      }
 
-    async function submit() {
-      if (!title.trim()) { SC.toast(SC.t("create.titleEmpty"), "err"); return; }
-      if (mode === "wall") {
-        if (!isEdit && !file) { SC.toast(SC.t("create.noFile"), "err"); return; }
-        if (file) {
-          const updated = isEdit ? JSON.parse(JSON.stringify(existing)) : null;
-          if (isEdit) {
-            fileUrl = await SC.uploadFile(file, (p) => { progress = p; });
-            const cover = SC.captureCover(previewEl);
-            updated.fileUrl = fileUrl;
-            updated.coverUrl = cover ? await SC.uploadCover(cover) : updated.coverUrl;
-            updated.meta.title = title;
-            if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
+      function render(box) {
+        box.innerHTML = "";
+        // 标题
+        const titleInput = el("input", { class: "input", type: "text", placeholder: SC.t("create.titlePh", playlistMode ? SC.t("create.playlist") : SC.t("create.wallpaper")), value: title });
+        titleInput.addEventListener("input", () => { title = titleInput.value; });
+        box.append(el("div", { class: "field-col" }, el("label", { class: "field-label" }, SC.t("create.titleField")), titleInput));
+
+        if (mode === "wall") {
+          // 文件区
+          const zone = el("div", { class: "drop" });
+          function renderZone() {
+            zone.innerHTML = "";
+            if (folderPack) {
+              // Web 壁纸文件夹整包：展示占位卡（名称 / 文件数 / 体积）
+              zone.append(
+                el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("globe", 26); return s; })()),
+                el("p", { class: "drop-text" }, folderPack.name),
+                el("p", { class: "dim-label" }, SC.t("create.webPack", folderPack.files.length, SC.fmtBytes(folderPack.total))),
+                el("button", {
+                  class: "btn btn-sm drop-re",
+                  onclick: () => { folderPack = null; progress = -1; folderPicker.click(); },
+                }, SC.t("create.reselect")));
+            } else if (isWebSel()) {
+              // 单个 Web 壁纸没有可内嵌预览的媒体元素，展示文件占位即可
+              zone.append(
+                el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("globe", 26); return s; })()),
+                el("p", { class: "drop-text" }, (file && file.name) || existing.fileName || "Web"),
+                el("button", {
+                  class: "btn btn-sm drop-re",
+                  onclick: () => { file = null; previewEl = null; fileUrl = ""; picker.click(); },
+                }, SC.t("create.reselect")));
+            } else if (previewEl || (fileUrl && (!file || file.isLocal))) {
+              const media = previewEl || (isVideoName(fileUrl) ? mutedVideo(fileUrl) : el("img", { src: fileUrl, crossorigin: "anonymous" }));
+              if (!previewEl) {
+                media.addEventListener("loadeddata", () => { previewEl = media; });
+                media.addEventListener("error", () => {
+                  previewEl = null;
+                  zone.innerHTML = "";
+                  zone.append(el("p", { class: "dim-label" }, "load failed"),
+                    el("button", { class: "btn btn-sm", onclick: () => startPick() }, SC.t("create.reselect")));
+                });
+              }
+              previewEl = previewEl || media;
+              zone.append(media, el("button", {
+                class: "btn btn-sm drop-re",
+                onclick: () => { file = null; previewEl = null; fileUrl = ""; startPick(); },
+              }, SC.t("create.reselect")));
+            } else {
+              zone.append(
+                el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("image", 26); return s; })()),
+                el("p", { class: "drop-text" }, SC.t("create.file")),
+                el("p", { class: "dim-label" }, SC.t("create.fileHint")),
+                !isEdit ? el("div", { class: "drop-actions" },
+                  el("button", {
+                    class: "btn btn-sm",
+                    onclick: (e) => { e.stopPropagation(); folderPicker.click(); },
+                  }, SC.t("create.pickFolder"))) : null);
+            }
+            zone.classList.toggle("is-filled", !!(previewEl || fileUrl || isWebSel()));
+            if (progress >= 0 && progress < 100) {
+              zone.append(el("div", { class: "progress" }, el("div", { class: "progress-bar", style: { width: `${progress}%` } })));
+            }
+          }
+          renderZone();
+          const picker = el("input", { type: "file", accept: "image/*,video/*,.html,.htm", hidden: true });
+          // 客户端内走原生对话框 + 后端直接复制进 tmp（HTML input 沙盒拿不到真实路径，
+          // base64 中转大文件既慢又占内存）；demo 无后端，仍用网页选文件
+          async function startPick() {
+            if (SC.demo) { picker.click(); return; }
+            const picked = await SC.pickLocalMedia(["mp4", "m4v", "webm", "mkv", "mov", "avi", "flv",
+              "jpg", "jpeg", "png", "bmp", "gif", "webp", "avif"]);
+            if (!picked) return;
+            file = { name: picked.name, isLocal: true, tmpUrl: picked.tmpUrl };
+            previewEl = null; fileUrl = picked.tmpUrl; folderPack = null;
+            renderZone();
+          }
+          picker.addEventListener("change", () => {
+            const f = picker.files[0];
+            if (!f) return;
+            if (f.size > 500 * 1024 * 1024) { SC.toast(SC.t("create.fileHint"), "err"); return; }
+            file = f; previewEl = null; fileUrl = ""; folderPack = null;
+            if (isWebName(f.name)) { renderZone(); return; } // Web 壁纸不做媒体预览
+            const url = URL.createObjectURL(f);
+            const media = isVideoName(f.name) ? mutedVideo(url) : el("img", { src: url });
+            media.addEventListener("loadeddata", () => { previewEl = media; renderZone(); });
+            media.addEventListener("load", () => { previewEl = media; renderZone(); });
+            previewEl = media;
+            renderZone();
+          });
+          // Web 壁纸文件夹整包导入：选中后按体积判断是否需要二次确认（> 100MB 视为异常大）
+          const folderPicker = el("input", { type: "file", webkitdirectory: "", hidden: true });
+          folderPicker.addEventListener("change", async () => {
+            const files = [...folderPicker.files].filter((f) => f.size >= 0);
+            if (!files.length) return;
+            const rels = files.map((f) => (f.webkitRelativePath || f.name).split("/").slice(1).join("/"));
+            const htmlIdx = files.map((_, i) => i).filter((i) => isWebName(rels[i]));
+            if (!htmlIdx.length) { SC.toast(SC.t("create.webNeedHtml"), "err"); return; }
+            const entryIdx = htmlIdx.find((i) => rels[i] === "index.html")
+              ?? htmlIdx.slice().sort((a, b) => rels[a].split("/").length - rels[b].split("/").length || rels[a].localeCompare(rels[b]))[0];
+            const total = files.reduce((s, f) => s + f.size, 0);
+            const proceed = () => {
+              folderPack = {
+                name: (files[0].webkitRelativePath || "Web").split("/")[0],
+                entry: rels[entryIdx],
+                files: files.map((f, i) => ({ rel: rels[i], f })),
+                total,
+              };
+              file = null; previewEl = null; fileUrl = ""; progress = -1;
+              renderZone();
+            };
+            if (total > 100 * 1024 * 1024) {
+              const ok = await SC.confirm({ title: SC.t("create.webBigTitle"), body: SC.t("create.webBigBody", SC.fmtBytes(total)) });
+              if (!ok) return;
+            }
+            proceed();
+          });
+          zone.addEventListener("click", () => startPick());
+          zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("is-over"); });
+          zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
+          zone.addEventListener("drop", (e) => {
+            e.preventDefault(); zone.classList.remove("is-over");
+            const f = e.dataTransfer.files[0];
+            if (f) { picker.files = e.dataTransfer.files; picker.dispatchEvent(new Event("change")); }
+          });
+          box.append(zone, picker);
+        } else {
+          // 成员网格
+          const grid = el("div", { class: "member-grid" });
+          function renderMembers() {
+            grid.innerHTML = "";
+            if (!members.length) { grid.append(el("p", { class: "dim-label member-empty" }, SC.t("create.membersEmpty"))); return; }
+            members.forEach((m, i) => {
+              const cover = el("div", { class: "member-cover" }, m.coverUrl ? el("img", { src: m.coverUrl, loading: "lazy" }) : null);
+              grid.append(el("div", { class: "member" },
+                cover,
+                el("div", { class: "member-name", title: m.meta && m.meta.title }, (m.meta && m.meta.title) || "—"),
+                el("button", { class: "icon-btn member-x", title: SC.t("common.remove"), onclick: () => { members.splice(i, 1); renderMembers(); renderCount(); } },
+                  (() => { const s = el("span"); s.innerHTML = icon("x", 12); return s; })())));
+            });
+          }
+          // 副标题在 render 时还未挂进 DOM，成员数变化时再查（此时对话框已挂载）
+          function renderCount() {
+            const sub = sheet.querySelector(".dialog-sub");
+            if (sub) sub.textContent = SC.t("create.members", members.length);
+          }
+          const addBtn = el("button", { class: "btn" });
+          addBtn.innerHTML = `${icon("listplus", 15)}<span>${SC.t("create.addMembers")}</span>`;
+          addBtn.addEventListener("click", () => openMemberPicker(members, () => { renderMembers(); renderCount(); }));
+          renderMembers();
+          box.append(el("div", { class: "field-row" }, el("label", { class: "field-label" }, SC.t("create.members", members.length)), addBtn), grid);
+        }
+      }
+
+      async function submit() {
+        // 标题留空时默认用文件夹名 / 文件名（去扩展名）；播放列表没有文件名可取，仍要求填写
+        const baseName = (folderPack && folderPack.name) || (file && file.name) || (isEdit && !playlistMode ? existing.fileName : "") || "";
+        const name = title.trim() || baseName.replace(/\.[^.]+$/, "").trim();
+        if (!name) { SC.toast(SC.t("create.titleEmpty"), "err"); return; }
+        if (mode === "wall") {
+          if (folderPack) {
+            // Web 壁纸文件夹整包导入：逐文件上传到 tmp 临时子目录 → 后端落库为整目录型壁纸
+            const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
+            saveBtn.classList.add("is-loading");
+            saveBtn.textContent = SC.t("create.creating");
+            const prefix = `web-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+            const packed = await SC.uploadWebFolder(folderPack.files, prefix, (p) => {
+              progress = p;
+              saveBtn.textContent = SC.t("create.importing", p);
+              renderZone();
+            });
+            let ok = false;
+            if (packed) {
+              ok = await SC.createWebWallpaperFolder({ entry: `${packed}/${folderPack.entry}`, title: name });
+              if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+            }
+            if (!ok) {
+              saveBtn.classList.remove("is-loading");
+              saveBtn.textContent = SC.t("common.create");
+              progress = -1;
+              renderZone();
+            }
             return;
           }
-          const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
-          saveBtn.classList.add("is-loading");
-          saveBtn.textContent = SC.t("create.creating");
-          const ok = await SC.createMediaWallpaper({ title: title.trim(), file, previewEl, onProgress: (p) => { progress = p; saveBtn.textContent = SC.t("create.importing", p); } });
-          saveBtn.classList.remove("is-loading");
-          if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+          if (!isEdit && !file) { SC.toast(SC.t("create.noFile"), "err"); return; }
+          if (file) {
+            const updated = isEdit ? JSON.parse(JSON.stringify(existing)) : null;
+            if (isEdit) {
+              // 本地直传（后端已复制进 tmp）直接用 tmp URL；网页 File 才走 base64 上传
+              fileUrl = file.isLocal ? file.tmpUrl : await SC.uploadFile(file, (p) => { progress = p; });
+              const cover = SC.captureCover(previewEl);
+              updated.fileUrl = fileUrl;
+              updated.coverUrl = cover ? await SC.uploadCover(cover) : updated.coverUrl;
+              updated.meta.title = name;
+              if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
+              return;
+            }
+            const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
+            saveBtn.classList.add("is-loading");
+            saveBtn.textContent = SC.t("create.creating");
+            const ok = await SC.createMediaWallpaper({
+              title: name,
+              file: file.isLocal ? undefined : file,
+              local: file.isLocal ? file : undefined,
+              previewEl,
+              type: isWebSel() ? 4 : 0,
+              onProgress: (p) => { progress = p; saveBtn.textContent = SC.t("create.importing", p); },
+            });
+            saveBtn.classList.remove("is-loading");
+            if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+            return;
+          }
+          // 仅改标题
+          if (isEdit) {
+            const updated = JSON.parse(JSON.stringify(existing));
+            updated.meta.title = name;
+            if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
+          }
           return;
         }
-        // 仅改标题
+        // 播放列表
+        if (!members.length) { SC.toast(SC.t("create.listEmpty"), "err"); return; }
         if (isEdit) {
           const updated = JSON.parse(JSON.stringify(existing));
           updated.meta.title = title;
+          updated.meta.wallpapers = members;
           if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
+          return;
         }
-        return;
+        if (await SC.createPlaylist({ title: title.trim(), members })) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
       }
-      // 播放列表
-      if (!members.length) { SC.toast(SC.t("create.listEmpty"), "err"); return; }
-      if (isEdit) {
-        const updated = JSON.parse(JSON.stringify(existing));
-        updated.meta.title = title;
-        updated.meta.wallpapers = members;
-        if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
-        return;
-      }
-      if (await SC.createPlaylist({ title: title.trim(), members })) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
-    }
+    }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
   }
 
   function isVideoName(name) { return /\.(mp4|webm|mkv|flv|blv|avi|mov|m4v)$/i.test(name || ""); }
+  function isWebName(name) { return /\.html?$/i.test(name || ""); }
 
   function openMemberPicker(members, onChanged) {
     const picked = new Set(members.map((m) => m.filePath));
@@ -1281,7 +1392,8 @@
         line());
       // 新建文件夹仅在库内子文件夹层级可用（根层级由 设置 → 壁纸目录 管理）；搜索时隐藏
       if (!searching && localDir) menu.append(cmd("folderplus", SC.t("local.newFolder"), () => openNewFolderDialog()));
-      menu.append(cmd("refresh", SC.t("common.refresh"), () => SC.refreshAll()),
+      menu.append(cmd("plus", SC.t("create.wallpaper"), () => openWallpaperDialog(null)),
+        cmd("refresh", SC.t("common.refresh"), () => SC.refreshAll()),
         cmd("folder", SC.t("local.openDirs"), openDirs));
       return menu;
     }
@@ -1497,8 +1609,9 @@
         el("h3", {}, SC.t("local.empty")),
         el("p", {}, SC.t("local.emptyHint")),
         el("div", { class: "empty-actions" },
+          el("button", { class: "btn btn-accent", onclick: () => openWallpaperDialog(null) }, SC.t("create.wallpaper")),
           el("button", { class: "btn", onclick: () => go("settings", "wallpaper") }, SC.t("cfg.dirs")),
-          el("button", { class: "btn btn-accent", onclick: () => go("hub") }, SC.t("hub.title"))));
+          el("button", { class: "btn", onclick: () => go("hub") }, SC.t("hub.title"))));
     }
 
     async function renderGrid() {
@@ -2068,12 +2181,13 @@
 
     renderGrid();
 
-    // 空白处右键：刷新 / 新建文件夹 / 自动整理 / 打开目录（流式区与画布共用）
+    // 空白处右键：创建壁纸 / 刷新 / 新建文件夹 / 自动整理 / 打开目录（流式区与画布共用）
     for (const zone of [flowGrid, canvas]) {
       zone.addEventListener("contextmenu", (e) => {
         if (e.target.closest(".loc-card, .loc-tile")) return;
         e.preventDefault();
         ctxMenu(e.clientX, e.clientY, [
+          { label: SC.t("create.wallpaper"), ico: "plus", act: () => openWallpaperDialog(null) },
           { label: SC.t("common.refresh"), ico: "refresh", act: () => SC.refreshAll() },
           ...(localDir && !searchQuery.trim() ? [
             { label: SC.t("local.newFolder"), ico: "folderplus", act: () => openNewFolderDialog() },

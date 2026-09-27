@@ -69,7 +69,9 @@
       "pv.max": "放大", "pv.restore": "还原", "pv.wheelHint": "滚轮上下切换上一个 / 下一个",
       "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
       "create.titleField": "标题", "create.titlePh": "给{0}起个名字", "create.type": "类型",
-      "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频（≤ 500MB）",
+      "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频 / 网页（≤ 500MB）",
+      "create.pickFolder": "选择文件夹（Web 壁纸）", "create.webPack": "{0} 个文件 · {1}", "create.webNeedHtml": "文件夹里没有网页文件",
+      "create.webBigTitle": "文件夹较大", "create.webBigBody": "共 {0}，导入可能需要一些时间，确定继续吗？",
       "create.importing": "导入中 {0}%", "create.imported": "已导入", "create.reselect": "重新选择",
       "create.addMembers": "添加壁纸", "create.members": "成员 {0}", "create.membersEmpty": "还没有成员，点击「添加壁纸」从库中选择",
       "create.creating": "创建中…", "create.titleEmpty": "标题不能为空", "create.noFile": "请先选择文件",
@@ -159,7 +161,9 @@
       "pv.max": "Maximize", "pv.restore": "Restore", "pv.wheelHint": "Scroll to switch previous / next",
       "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
       "create.titleField": "Title", "create.titlePh": "Name your {0}", "create.type": "Type",
-      "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / Video up to 500MB",
+      "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / video / web page up to 500MB",
+      "create.pickFolder": "Pick a folder (web wallpaper)", "create.webPack": "{0} files · {1}", "create.webNeedHtml": "No web page in that folder",
+      "create.webBigTitle": "Large folder", "create.webBigBody": "{0} in total — importing may take a while. Continue?",
       "create.importing": "Importing {0}%", "create.imported": "Imported", "create.reselect": "Replace",
       "create.addMembers": "Add wallpapers", "create.members": "{0} members", "create.membersEmpty": "No members yet — add from your library",
       "create.creating": "Creating…", "create.titleEmpty": "Title is required", "create.noFile": "Pick a file first",
@@ -496,41 +500,75 @@
     return client.api.uploadToTmp(fileName, base64);
   }
 
-  /** 分块 base64 上传（与默认皮肤 50KB 块策略一致；每块整文件覆盖写，最后一块落盘即完整） */
-  function uploadFile(file, onProgress) {
+  /** 分块 base64 编码：每 32KB 拼一段，避免 String.fromCharCode 栈溢出；onProgress 按字节 0-100 */
+  function fileToBase64(file, onProgress) {
     return new Promise((resolve, reject) => {
-      if (demo) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const buffer = new Uint8Array(reader.result);
+          const STEP = 0x8000;
+          let binary = "";
+          for (let offset = 0; offset < buffer.length; offset += STEP) {
+            binary += String.fromCharCode.apply(null, buffer.subarray(offset, Math.min(offset + STEP, buffer.length)));
+            if (onProgress) onProgress(Math.floor((offset / buffer.length) * 100));
+          }
+          resolve(btoa(binary));
+        } catch (e) { reject(e); }
+      };
+      reader.onerror = () => reject(new Error("read file failed"));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function uploadBlobBase64(fileName, base64) {
+    return client.api.uploadToTmp(fileName, base64);
+  }
+
+  /** 上传单个文件：整文件单次调用 uploadToTmp（后端为覆盖写，分块多次调用会只剩最后一块）。
+   * 编码占 0-90，上传落 90-100。 */
+  async function uploadFile(file, onProgress) {
+    if (demo) {
+      return new Promise((resolve) => {
         let p = 0;
         const timer = setInterval(() => {
           p += 12 + Math.random() * 20;
           if (p >= 100) { clearInterval(timer); onProgress && onProgress(100); resolve(`mock://media/${encodeURIComponent(file.name)}`); }
           else onProgress && onProgress(Math.floor(p));
         }, 120);
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const buffer = new Uint8Array(reader.result);
-          const CHUNK = 50000;
-          const api = client.api;
-          let lastUrl = null;
-          for (let offset = 0; offset < buffer.length; offset += CHUNK) {
-            if (onProgress) onProgress(Math.floor((offset / buffer.length) * 100));
-            const slice = buffer.subarray(offset, Math.min(offset + CHUNK, buffer.length));
-            let binary = "";
-            for (let i = 0; i < slice.length; i += 0x8000) binary += String.fromCharCode.apply(null, slice.subarray(i, i + 0x8000));
-            const res = await api.uploadToTmp(file.name, btoa(binary));
-            if (res.error || !res.data) { reject(new Error(pretty(res.error))); return; }
-            lastUrl = res.data;
-          }
-          if (onProgress) onProgress(100);
-          resolve(lastUrl);
-        } catch (e) { reject(e); }
-      };
-      reader.onerror = () => reject(new Error("read file failed"));
-      reader.readAsArrayBuffer(file);
-    });
+      });
+    }
+    const base64 = await fileToBase64(file, (p) => onProgress && onProgress(Math.floor(p * 0.9)));
+    const res = await client.api.uploadToTmp(file.name, base64);
+    if (res.error || !res.data) throw new Error(pretty(res.error));
+    if (onProgress) onProgress(100);
+    return res.data;
+  }
+
+  /** 整包上传 Web 壁纸文件夹：把目录内全部文件按相对路径上传到 tmp 的 prefix 子目录。
+   * files: [{ rel, file }]；onProgress 按字节聚合 0-95。返回 prefix，失败返回 null。 */
+  async function uploadWebFolder(files, prefix, onProgress) {
+    const total = files.reduce((s, it) => s + (it.file.size || 0), 0) || 1;
+    let done = 0;
+    for (const it of files) {
+      try {
+        const base64 = await fileToBase64(it.file, (p) => onProgress && onProgress(Math.floor(((done + (it.file.size * p) / 100) / total) * 95)));
+        const res = await client.api.uploadToTmp(`${prefix}/${it.rel}`, base64);
+        if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+      } catch (e) { toast(t("common.opFailed", errText(e)), "err"); return null; }
+      done += it.file.size || 0;
+      if (onProgress) onProgress(Math.floor((done / total) * 95));
+    }
+    return prefix;
+  }
+
+  /** 把已上传到 tmp 的 Web 壁纸文件夹落库为整目录型壁纸。entry = "<prefix>/<入口 html 相对路径>"。 */
+  async function createWebWallpaperFolder({ entry, title, setting }) {
+    if (demo) { toast(`${t("common.demo")} · ${t("create.wallpaper")}`, "ok"); return true; }
+    const res = await client.api.createWallpaperFolder({ entry, title, setting: setting || defaultSetting() });
+    if (res.error) { toast(t("create.createFailed", errText(res.error)), "err"); return false; }
+    await refreshWallpapers();
+    return true;
   }
 
   /** 从预览元素（video/img）截 500px 宽 JPEG 封面，返回 base64（不含前缀）或 null */
@@ -587,17 +625,32 @@
     } catch (e) { console.warn("generatePlaylistCover:", e); return null; }
   }
 
-  /** 创建媒体壁纸：上传 → 截封面 → createWallpaperNew */
-  async function createMediaWallpaper({ title, file, previewEl, onProgress }) {
-    const fileUrl = await uploadFile(file, onProgress);
+  /** 原生对话框选本地文件，后端直接复制进 tmp（不经前端 base64 中转，大文件也秒级完成）。
+   *  返回 { name, tmpUrl }；取消 / 失败返回 null。仅客户端模式可用，demo 返回 null。 */
+  async function pickLocalMedia(filters) {
+    if (demo) return null;
+    const picked = await client.shell.showFileDialog(filters);
+    if (picked.error || !picked.data) return null;
+    const path = picked.data;
+    const res = await client.api.copyToTmp(path);
+    if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
+    const name = path.split(/[\\/]/).pop() || "file";
+    return { name, tmpUrl: res.data };
+  }
+
+  /** 创建媒体壁纸：上传 → 截封面 → createWallpaperNew；type 可显式指定（如 4 = Web），缺省自动检测。
+   *  local = pickLocalMedia 的结果（后端已把源文件复制进 tmp），给了就跳过前端上传。 */
+  async function createMediaWallpaper({ title, file, local, previewEl, type, onProgress }) {
+    const fileUrl = local ? local.tmpUrl : await uploadFile(file, onProgress);
     let coverUrl = "";
     const base64 = previewEl ? captureCover(previewEl) : null;
     if (base64) coverUrl = await uploadCover(base64);
-    else if (!demo) toast(t("create.coverFailed"));
+    else if (!demo && type !== 4) toast(t("create.coverFailed"));
+    const srcName = (file || local || {}).name || "";
     const payload = {
       fileUrl,
       coverUrl,
-      meta: { title: title || file.name.replace(/\.[^.]+$/, ""), type: 0, playIndex: 0, wallpapers: [] },
+      meta: { title: title || srcName.replace(/\.[^.]+$/, ""), type: type || 0, playIndex: 0, wallpapers: [] },
       setting: defaultSetting(),
       runningInfo: { screenIndexes: [], isPaused: false },
     };
@@ -1096,8 +1149,9 @@
     applyWallpaper, pause, resume, stop, prevIn, nextIn, setVolume,
     onTime, seek, setTimeScreen,
     // 创建 / 编辑
-    defaultSetting, uploadFile, captureCover, uploadCover, generatePlaylistCover,
+    defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover, generatePlaylistCover,
     createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
+    pickLocalMedia, demo,
     // 下载
     cancelDownload, clearHistory, removeHistory,
     // 文件夹整理

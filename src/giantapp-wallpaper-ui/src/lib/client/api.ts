@@ -240,10 +240,42 @@ class API {
     }
   }
 
+  /** 本地文件后端直接复制进 tmp（前端只传绝对路径，不经 base64 中转），返回 media URL。 */
+  async copyToTmp(srcPath: string): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("copy_to_tmp", { srcPath });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
   async createWallpaperNew(wallpaper: Wallpaper): Promise<ApiResult<boolean>> {
     try {
       if (!this.isRunningInClient()) return { error: null, data: true };
       const data = await invoke<boolean>("create_wallpaper_new", { wallpaper });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: false };
+    }
+  }
+
+  /** 整包导入 Web 壁纸文件夹：entry 为已上传到 tmp 的入口 html 相对路径（含临时子目录前缀）。 */
+  async createWallpaperFolder(args: {
+    entry: string;
+    title: string;
+    setting?: WallpaperSetting;
+  }): Promise<ApiResult<boolean>> {
+    try {
+      if (!this.isRunningInClient()) return { error: null, data: true };
+      const data = await invoke<boolean>("create_web_wallpaper_folder", {
+        entry: args.entry,
+        title: args.title,
+        setting: args.setting ?? null,
+      });
       return { error: null, data };
     } catch (e) {
       console.error(e);

@@ -506,6 +506,13 @@ pub fn delete_wallpaper(wallpaper: &Wallpaper) -> Result<()> {
         .ok_or_else(|| anyhow!("wallpaper has no file path"))?;
     let dir = file.parent().unwrap_or_else(|| Path::new("."));
 
+    // 整目录型壁纸（目录内有 project.json，如 Wallpaper Engine 项目 / 导入的 Web 文件夹）：
+    // 目录即壁纸，连同资源整体删除，避免留下无入口的资源垃圾
+    if dir.join("project.json").is_file() {
+        let _ = std::fs::remove_dir_all(dir);
+        return Ok(());
+    }
+
     // 播放列表成员不删除（仅引用）
     let _ = std::fs::remove_file(&file);
 
