@@ -479,7 +479,7 @@ body.is-target-all .loc-tile.is-file:hover .loc-tile-thumb::after {
 /* 拖放上传区 */
 .drop {
   position: relative; border: 1px dashed var(--ctl-stroke); border-radius: var(--r-md);
-  min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 150px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 8px; cursor: pointer; transition: border-color var(--speed), background var(--speed); overflow: hidden;
 }
 .drop:hover, .drop.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }

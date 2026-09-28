@@ -71,6 +71,7 @@
       "create.titleField": "标题", "create.titlePh": "给{0}起个名字", "create.type": "类型",
       "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频 / 网页（≤ 500MB）",
       "create.pickFolder": "选择文件夹（Web 壁纸）", "create.webPack": "{0} 个文件 · {1}", "create.webNeedHtml": "文件夹里没有网页文件",
+      "create.webAskTitle": "导入 Web 壁纸", "create.webAskBody": "是否包含整个文件夹？将同时导入该网页所在目录的全部资源", "create.webAskYes": "包含整个文件夹", "create.webAskNo": "仅此文件",
       "create.webBigTitle": "文件夹较大", "create.webBigBody": "共 {0}，导入可能需要一些时间，确定继续吗？",
       "create.importing": "导入中 {0}%", "create.imported": "已导入", "create.reselect": "重新选择",
       "create.addMembers": "添加壁纸", "create.members": "成员 {0}", "create.membersEmpty": "还没有成员，点击「添加壁纸」从库中选择",
@@ -163,6 +164,7 @@
       "create.titleField": "Title", "create.titlePh": "Name your {0}", "create.type": "Type",
       "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / video / web page up to 500MB",
       "create.pickFolder": "Pick a folder (web wallpaper)", "create.webPack": "{0} files · {1}", "create.webNeedHtml": "No web page in that folder",
+      "create.webAskTitle": "Import web wallpaper", "create.webAskBody": "Include the whole folder? All assets next to this page will be imported too.", "create.webAskYes": "Include whole folder", "create.webAskNo": "This file only",
       "create.webBigTitle": "Large folder", "create.webBigBody": "{0} in total — importing may take a while. Continue?",
       "create.importing": "Importing {0}%", "create.imported": "Imported", "create.reselect": "Replace",
       "create.addMembers": "Add wallpapers", "create.members": "{0} members", "create.membersEmpty": "No members yet — add from your library",
@@ -319,7 +321,7 @@
   function typeName(type) { return t(`type.${type}`); }
 
   // ---------------------------------------------------------------- 确认框
-  function confirmDlg({ title, body, okText, danger }) {
+  function confirmDlg({ title, body, okText, cancelText, danger }) {
     return new Promise((resolve) => {
       const close = (val) => { overlay.remove(); window.removeEventListener("keydown", onKey); resolve(val); };
       const onKey = (e) => { if (e.key === "Escape") close(false); if (e.key === "Enter") close(true); };
@@ -328,7 +330,7 @@
           el("div", { class: "sc-modal-title" }, title),
           body ? el("div", { class: "sc-modal-body" }, body) : null,
           el("div", { class: "sc-modal-actions" },
-            el("button", { class: "sc-btn", onclick: () => close(false) }, t("common.cancel")),
+            el("button", { class: "sc-btn", onclick: () => close(false) }, cancelText || t("common.cancel")),
             el("button", { class: `sc-btn ${danger ? "is-danger" : "is-primary"}`, onclick: () => close(true) }, okText || t("common.ok")),
           ),
         ));
@@ -574,23 +576,18 @@
   /** 异常大文件夹阈值：超过需用户二次确认 */
   const WEB_FOLDER_LARGE = 100 * 1024 * 1024;
 
-  /** 原生选 Web 壁纸文件夹：后端统计体积与入口 html，异常大（>100MB）需二次确认。
-   *  返回 { name, dir, entry, total, fileCount }；取消 / 失败 / 没有网页文件返回 null。demo 返回 null。 */
-  async function pickWebFolder() {
+  /** 统计 Web 壁纸文件夹（总体积 / 文件数 / 入口），异常大（>100MB）弹二次确认。
+   *  返回 stat；取消 / 失败返回 null。demo 返回 null。 */
+  async function statWebFolder(dir) {
     if (demo) return null;
-    const picked = await client.shell.showFolderDialog();
-    if (picked.error || !picked.data) return null;
-    const dir = picked.data;
     const res = await client.api.webFolderStat(dir);
     if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
     const stat = res.data;
-    if (!stat.entryRel) { toast(t("create.webNeedHtml"), "err"); return null; }
     if (stat.totalSize > WEB_FOLDER_LARGE) {
       const ok = await confirm({ title: t("create.webBigTitle"), body: t("create.webBigBody", fmtBytes(stat.totalSize)) });
       if (!ok) return null;
     }
-    const name = dir.split(/[\\/]/).filter(Boolean).pop() || "web";
-    return { name, dir, entry: stat.entryRel, total: stat.totalSize, fileCount: stat.fileCount };
+    return stat;
   }
 
   /** 把本地 Web 壁纸文件夹直接导入：后端整包复制进 tmp → 落库（不经前端逐文件 base64 上传）。 */
@@ -656,7 +653,7 @@
   }
 
   /** 原生对话框选本地文件，后端直接复制进 tmp（不经前端 base64 中转，大文件也秒级完成）。
-   *  返回 { name, tmpUrl }；取消 / 失败返回 null。仅客户端模式可用，demo 返回 null。 */
+   *  返回 { path, name, tmpUrl }；取消 / 失败返回 null。仅客户端模式可用，demo 返回 null。 */
   async function pickLocalMedia(filters) {
     if (demo) return null;
     const picked = await client.shell.showFileDialog(filters);
@@ -665,7 +662,7 @@
     const res = await client.api.copyToTmp(path);
     if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
     const name = path.split(/[\\/]/).pop() || "file";
-    return { name, tmpUrl: res.data };
+    return { path, name, tmpUrl: res.data };
   }
 
   /** 创建媒体壁纸：上传 → 截封面 → createWallpaperNew；type 可显式指定（如 4 = Web），缺省自动检测。
@@ -675,7 +672,8 @@
     let coverUrl = "";
     const base64 = previewEl ? captureCover(previewEl) : null;
     if (base64) coverUrl = await uploadCover(base64);
-    else if (!demo && type !== 4) toast(t("create.coverFailed"));
+    // 预览在但截图失败 = canvas 受污染（media.localhost 跨源），落库后 mpv 会兜底生成封面，不必惊扰
+    else if (!demo && type !== 4 && !previewEl) toast(t("create.coverFailed"));
     const srcName = (file || local || {}).name || "";
     const payload = {
       fileUrl,
@@ -1181,7 +1179,7 @@
     // 创建 / 编辑
     defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover, generatePlaylistCover,
     createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
-    pickLocalMedia, pickWebFolder, importWebFolder, demo,
+    pickLocalMedia, statWebFolder, importWebFolder, demo,
     // 下载
     cancelDownload, clearHistory, removeHistory,
     // 文件夹整理

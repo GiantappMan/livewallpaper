@@ -64,47 +64,59 @@
     return !isVideoName(name) && /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(name) ? (w.fileUrl || "") : "";
   }
 
-  // 悬停即播的目标视频：视频 = 本体；播放列表 = 当前项（仅视频）。其余类型不处理
-  function hoverVideoUrlOf(w) {
+  // 悬停即播的目标：视频 = 本体；播放列表 = 当前项。视频返回本体流；GIF 返回原图 ——
+  // 网格封面是 ?thumb=1 静态边车或后端截帧，悬停叠原图才会动起来。其余类型不处理
+  function hoverMediaOf(w) {
     let target = w;
     if ((w.meta && w.meta.type) === 6) { // 播放列表：解析当前播放项
       const list = w.meta.wallpapers || [];
       target = list.length ? list[(w.meta.playIndex || 0) % list.length] : null;
     }
-    return target && target.fileUrl && previewKind(target) === "video" ? target.fileUrl : null;
+    if (!target || !target.fileUrl) return null;
+    const kind = previewKind(target);
+    if (kind === "video") return { kind, url: target.fileUrl };
+    // fileUrl 是百分号编码的（media.localhost），先解码再认扩展名
+    const isGif = /\.gif($|\?)/i.test(target.fileName || "") || /\.gif($|\?)/i.test(safeDecodeUrl(target.fileUrl));
+    if (kind === "img" && isGif) return { kind: "img", url: target.fileUrl };
+    return null;
   }
 
   // 静音视频：muted 内容属性对 JS 动态创建的元素在 Chromium 下不生效（只影响"默认静音态"，
-  // 编程起播仍可能出声），必须直接设 IDL 属性。crossorigin 匿名 CORS：media.localhost
-  // 响应带 ACAO:*，不加的话视频进 canvas 会污染，captureCover 截封面必然失败
+  // 编程起播仍可能出声），必须直接设 IDL 属性。
+  // 注意不要加 crossorigin：media.localhost 的 ACAO:* 在部分 WebView2 环境不满足
+  // 匿名 CORS 校验，预览会直接加载失败（默认皮肤对话框无 crossorigin 一切正常）；
+  // 代价是 canvas 受污染截不了封面，落库后由后端 mpv 兜底生成封面
   function mutedVideo(url, cls) {
-    const v = el("video", { class: cls, src: url, autoplay: true, loop: true, muted: true, playsinline: true, crossorigin: "anonymous" });
+    const v = el("video", { class: cls, src: url, autoplay: true, loop: true, muted: true, playsinline: true });
     v.muted = true;
     return v;
   }
 
   // 悬停即播：进入卡片 150ms 后才拉流（快速划过网格不反复起停），移开即卸载且始终无声；
-  // 解码失败等错误静默回退静态封面。视频插在封面图之后，操作条 / 徽标仍在视频之上
+  // 解码失败等错误静默回退静态封面。媒体插在封面图之后，操作条 / 徽标仍在媒体之上。
+  // 视频用静音 <video>；GIF 直接叠原图 <img>（无需 <video> 解码）让静态封面动起来
   function attachHoverPlay(card, cover, w) {
-    const url = hoverVideoUrlOf(w);
-    if (!url) return;
-    let video = null;
+    const media = hoverMediaOf(w);
+    if (!media) return;
+    let live = null;
     let timer = 0;
     const stop = () => {
       if (timer) { clearTimeout(timer); timer = 0; }
-      if (video) {
-        try { video.pause(); } catch (_) { /* 已释放等场景忽略 */ }
-        video.remove(); video = null;
+      if (live) {
+        if (media.kind === "video") { try { live.pause(); } catch (_) { /* 已释放等场景忽略 */ } }
+        live.remove(); live = null;
       }
     };
     card.addEventListener("mouseenter", () => {
-      if (video || timer) return;
+      if (live || timer) return;
       timer = setTimeout(() => {
         timer = 0;
-        video = mutedVideo(url, "cover-live");
-        video.addEventListener("error", stop);
+        live = media.kind === "video"
+          ? mutedVideo(media.url, "cover-live")
+          : el("img", { class: "cover-live", src: media.url, alt: "", draggable: "false" });
+        live.addEventListener("error", stop);
         const img = cover.querySelector("img");
-        if (img) img.after(video); else cover.prepend(video);
+        if (img) img.after(live); else cover.prepend(live);
       }, 150);
     });
     card.addEventListener("mouseleave", stop);
@@ -700,7 +712,7 @@
                 el("p", { class: "dim-label" }, SC.t("create.webPack", folderPack.fileCount ?? folderPack.files.length, SC.fmtBytes(folderPack.total))),
                 el("button", {
                   class: "btn btn-sm drop-re",
-                  onclick: (e) => { e.stopPropagation(); folderPack = null; progress = -1; startFolderPick(); },
+                  onclick: (e) => { e.stopPropagation(); folderPack = null; progress = -1; startPick(); },
                 }, SC.t("create.reselect")));
             } else if (isWebSel()) {
               // 单个 Web 壁纸没有可内嵌预览的媒体元素，展示文件占位即可
@@ -712,7 +724,9 @@
                   onclick: (e) => { e.stopPropagation(); file = null; previewEl = null; fileUrl = ""; startPick(); },
                 }, SC.t("create.reselect")));
             } else if (previewEl || (fileUrl && (!file || file.isLocal))) {
-              const media = previewEl || (isVideoName(fileUrl) ? mutedVideo(fileUrl) : el("img", { src: fileUrl, crossorigin: "anonymous" }));
+              // 媒体类型按文件名判断：fileUrl 是百分号编码 URL，不能直接喂给 isVideoName
+              const kindName = (file && file.name) || safeDecodeUrl(fileUrl);
+              const media = previewEl || (isVideoName(kindName) ? mutedVideo(fileUrl) : el("img", { src: fileUrl }));
               if (!previewEl) {
                 media.addEventListener("loadeddata", () => { previewEl = media; });
                 media.addEventListener("error", () => {
@@ -730,13 +744,8 @@
             } else {
               zone.append(
                 el("div", { class: "drop-ico" }, (() => { const s = el("span"); s.innerHTML = icon("image", 26); return s; })()),
-                el("p", { class: "drop-text" }, SC.t("create.file")),
-                el("p", { class: "dim-label" }, SC.t("create.fileHint")),
-                !isEdit ? el("div", { class: "drop-actions" },
-                  el("button", {
-                    class: "btn btn-sm",
-                    onclick: (e) => { e.stopPropagation(); startFolderPick(); },
-                  }, SC.t("create.pickFolder"))) : null);
+                el("p", { class: "drop-text" }, SC.t("create.file")));
+                // 支持格式 / 大小见对话框副标题；Web 文件夹导入：选到 html 后会询问是否包含整个文件夹
             }
             zone.classList.toggle("is-filled", !!(previewEl || fileUrl || isWebSel()));
             if (progress >= 0 && progress < 100) {
@@ -747,24 +756,34 @@
           const picker = el("input", { type: "file", accept: "image/*,video/*,.html,.htm", hidden: true });
           // 客户端内走原生对话框 + 后端直接复制进 tmp（HTML input 沙盒拿不到真实路径，
           // base64 中转大文件既慢又占内存）；demo 无后端，仍用网页选文件。
-          // 媒体文件与单 html 走 startPick，Web 文件夹走 startFolderPick（见空态的选文件夹按钮）
+          // 选到 html 时询问是否包含整个文件夹（默认包含）：包含则整包导入其所在目录
           async function startPick() {
             if (SC.demo) { picker.click(); return; }
             const picked = await SC.pickLocalMedia(["mp4", "m4v", "webm", "mkv", "mov", "avi", "flv",
               "jpg", "jpeg", "png", "bmp", "gif", "webp", "avif", "html", "htm"]);
             if (!picked) return;
+            if (isWebName(picked.name) && picked.path) {
+              const includeFolder = await SC.confirm({
+                title: SC.t("create.webAskTitle"),
+                body: SC.t("create.webAskBody"),
+                okText: SC.t("create.webAskYes"),
+                cancelText: SC.t("create.webAskNo"),
+              });
+              if (includeFolder) {
+                const dir = picked.path.replace(/[\\/][^\\/]*$/, "");
+                const stat = await SC.statWebFolder(dir);
+                if (!stat) return;
+                folderPack = {
+                  name: dir.split(/[\\/]/).filter(Boolean).pop() || "web",
+                  entry: picked.name, total: stat.totalSize, fileCount: stat.fileCount, dir,
+                };
+                file = null; previewEl = null; fileUrl = ""; progress = -1;
+                renderZone();
+                return;
+              }
+            }
             file = { name: picked.name, isLocal: true, tmpUrl: picked.tmpUrl };
             previewEl = null; fileUrl = picked.tmpUrl; folderPack = null;
-            renderZone();
-          }
-          // Web 壁纸文件夹：客户端走原生选文件夹 + 后端统计体积（>100MB 二次确认）；
-          // demo 用 webkitdirectory 网页选择
-          async function startFolderPick() {
-            if (SC.demo) { folderPicker.click(); return; }
-            const picked = await SC.pickWebFolder();
-            if (!picked) return;
-            folderPack = { name: picked.name, entry: picked.entry, total: picked.total, fileCount: picked.fileCount, dir: picked.dir };
-            file = null; previewEl = null; fileUrl = ""; progress = -1;
             renderZone();
           }
           picker.addEventListener("change", () => {
@@ -779,33 +798,6 @@
             media.addEventListener("load", () => { previewEl = media; renderZone(); });
             previewEl = media;
             renderZone();
-          });
-          // Web 壁纸文件夹整包导入：选中后按体积判断是否需要二次确认（> 100MB 视为异常大）
-          const folderPicker = el("input", { type: "file", webkitdirectory: "", hidden: true });
-          folderPicker.addEventListener("change", async () => {
-            const files = [...folderPicker.files].filter((f) => f.size >= 0);
-            if (!files.length) return;
-            const rels = files.map((f) => (f.webkitRelativePath || f.name).split("/").slice(1).join("/"));
-            const htmlIdx = files.map((_, i) => i).filter((i) => isWebName(rels[i]));
-            if (!htmlIdx.length) { SC.toast(SC.t("create.webNeedHtml"), "err"); return; }
-            const entryIdx = htmlIdx.find((i) => rels[i] === "index.html")
-              ?? htmlIdx.slice().sort((a, b) => rels[a].split("/").length - rels[b].split("/").length || rels[a].localeCompare(rels[b]))[0];
-            const total = files.reduce((s, f) => s + f.size, 0);
-            const proceed = () => {
-              folderPack = {
-                name: (files[0].webkitRelativePath || "Web").split("/")[0],
-                entry: rels[entryIdx],
-                files: files.map((f, i) => ({ rel: rels[i], f })),
-                total,
-              };
-              file = null; previewEl = null; fileUrl = ""; progress = -1;
-              renderZone();
-            };
-            if (total > 100 * 1024 * 1024) {
-              const ok = await SC.confirm({ title: SC.t("create.webBigTitle"), body: SC.t("create.webBigBody", SC.fmtBytes(total)) });
-              if (!ok) return;
-            }
-            proceed();
           });
           zone.addEventListener("click", () => startPick());
           zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("is-over"); });
@@ -932,6 +924,8 @@
 
   function isVideoName(name) { return /\.(mp4|webm|mkv|flv|blv|avi|mov|m4v)$/i.test(name || ""); }
   function isWebName(name) { return /\.html?$/i.test(name || ""); }
+  // media.localhost 的 URL 是百分号编码的（.mp4 → %2Emp4），直接喂 isVideoName 会误判成图片
+  function safeDecodeUrl(text) { try { return decodeURIComponent(text); } catch { return text; } }
 
   function openMemberPicker(members, onChanged) {
     const picked = new Set(members.map((m) => m.filePath));
