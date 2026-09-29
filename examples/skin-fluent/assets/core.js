@@ -858,7 +858,7 @@
   }
   function onMpvEvent(cb) {
     if (demo) return () => {};
-    return client.on("mpv-download-event", (e) => cb(e.payload));
+    return client.on("mpv-download-event", (p) => cb(p));
   }
 
   async function listSkins() {
@@ -1124,13 +1124,29 @@
     }
     client.api.initEvents();
     client.on("playing-status-changed", () => refreshStatus());
-    client.on("download-status-changed", () => { refreshDownloads(); refreshHistory(); });
+    // 下载完成 -> 新文件入库，刷新本地库。进度/失败/取消不触发全库重扫；
+    // 完成事件在 30s 状态清理时还会重发一次，按 id 去重，同 id 重新下载时重置。
+    // 注意：client.on 回调参数是已解包的事件 payload（见 SDK on()），不是原始事件
+    const importedIds = new Set();
+    client.on("download-status-changed", (p) => {
+      refreshDownloads();
+      refreshHistory();
+      let completed = false;
+      for (const it of (p && p.items) || []) {
+        if (it.isDownloading && !it.IsCanceled) { importedIds.delete(it.id); continue; }
+        if (it.isDownloadCompleted && !it.IsCanceled && !importedIds.has(it.id)) {
+          importedIds.add(it.id);
+          completed = true;
+        }
+      }
+      if (completed) refreshWallpapers();
+    });
     client.on("skins-changed", () => emit("skins"));
     client.on("appearance-changed", async () => { await loadConfig(); applyMode(); emit("config", "Appearance"); });
     client.on("system-theme-changed", () => applyMode());
     client.on("hub-session-changed", () => emit("hub-session"));
-    client.on("navigate", (e) => {
-      const p = e && e.payload ? e.payload : {};
+    client.on("navigate", (p) => {
+      p = p || {};
       if (p.target) { state.hubTarget = p.target; emit("nav", { view: "hub" }); }
       else if (p.path) {
         const map = { "/": "library", "/hub": "hub", "/downloads": "downloads", "/settings": "settings", "/about": "about" };

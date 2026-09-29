@@ -764,7 +764,13 @@ button.card-row:hover { background: var(--subtle); }
 /* 窗格折叠（.is-compact：点击标题栏汉堡按钮切换；≤860px 且未手动选择时自动折叠）。
    标题栏（☰ + logo + 名称）保持原样，仅导航列表收起文字变图标 */
 .pane.is-compact { min-width: 64px; max-width: 64px; }
-.pane.is-compact .nav-item-label, .pane.is-compact .nav-badge, .pane.is-compact .nav-item-pill { display: none; }
+.pane.is-compact .nav-item-label, .pane.is-compact .nav-item-pill { display: none; }
+/* 折叠态下载角标：改为叠加在图标右上角的小计数点（展开态是行尾胶囊，见上方 .nav-badge） */
+.pane.is-compact .nav-badge {
+  position: absolute; top: 2px; right: 3px; margin-left: 0;
+  min-width: 15px; height: 15px; padding: 0 4px; font-size: 10px;
+  box-shadow: 0 0 0 2px var(--bg);
+}
 /* 折叠态选中/悬停色块收缩为图标周围的小方块（WinUI 紧凑样式），不再全宽铺开 */
 .pane.is-compact .nav-item { width: 40px; margin: 0 auto; padding: 0; justify-content: center; }
 /* 折叠按钮固定在标题栏左上角（拖拽带之上，no-drag 可点），展开/折叠位置一致 */

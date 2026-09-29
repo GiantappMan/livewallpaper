@@ -242,6 +242,14 @@
   ];
 
   let dlBadge = null;
+  // 侧边栏"下载"角标：进行中任务数（与下载页活跃列表同一过滤条件）。
+  // buildPane 重建导航后会换新角标元素，需按当前状态重同步，故更新逻辑收敛到这里
+  function updateDlBadge() {
+    if (!dlBadge) return;
+    const n = SC.state.downloads.filter((d) => d.isDownloading && !d.IsCanceled).length;
+    dlBadge.hidden = n === 0;
+    dlBadge.textContent = n > 99 ? "99+" : String(n);
+  }
   // 窗格折叠：用户手动选择（localStorage）优先；未选择时 ≤860px 自动折叠
   const PANE_KEY = "fluent.paneCompact";
   let panePref = localStorage.getItem(PANE_KEY); // null = 未手动选择
@@ -286,6 +294,7 @@
       flag.title = SC.t("common.demoHint");
     }
     updatePane();
+    updateDlBadge();
     applyPaneCompact();
   }
   function updatePane() {
@@ -2793,11 +2802,7 @@
     renderDock();
   });
   SC.on("downloads", () => {
-    if (dlBadge) {
-      const n = SC.state.downloads.filter((d) => d.isDownloading && !d.IsCanceled).length;
-      dlBadge.hidden = n === 0;
-      dlBadge.textContent = n > 99 ? "99+" : String(n);
-    }
+    updateDlBadge();
     if (currentView === "downloads") renderView();
   });
   SC.on("history", () => { if (currentView === "downloads") renderView(); });

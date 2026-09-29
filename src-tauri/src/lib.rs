@@ -6,6 +6,7 @@
 //! - `--headless`：零窗口全功能运行（壁纸/播放列表/下载/系统事件照常），
 //!   任意时刻经单实例回调、托盘、深链或控制管道 `ui.show` 按需创建主窗口。
 
+mod appres;
 mod cli;
 mod commands;
 mod control;
@@ -81,6 +82,7 @@ pub fn run() {
         }))
         .register_uri_scheme_protocol("media", |ctx, request| media_protocol::handle(ctx, request))
         .register_uri_scheme_protocol("skin", |ctx, request| skin::handle(ctx, request))
+        .register_uri_scheme_protocol("appres", |ctx, request| appres::handle(ctx, request))
         .setup(move |app| setup(app, dirs.clone(), headless))
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
@@ -453,10 +455,16 @@ fn rebuild_main_window_async(app: tauri::AppHandle) {
 }
 
 fn build_splashscreen(app: &tauri::App) -> tauri::Result<tauri::WebviewWindow<tauri::Wry>> {
+    // 外壳页走 appres 协议而非 WebviewUrl::App：后者在 dev 配置的构建里解析到
+    // devUrl，Vite 未运行时启动屏直接连接被拒
     tauri::WebviewWindowBuilder::new(
         app,
         "splashscreen",
-        tauri::WebviewUrl::App("splash.html".into()),
+        tauri::WebviewUrl::External(
+            format!("{}/splash.html", appres::APPRES_ORIGIN)
+                .parse()
+                .unwrap_or_else(|_| appres::APPRES_ORIGIN.parse().unwrap()),
+        ),
     )
     .title("GiantappWallpaper")
     .inner_size(360.0, 240.0)
@@ -825,14 +833,24 @@ fn build_hub_popup(
     let handle = app.clone();
     // 请求未带位置时居中显示（center 标志在构建时总会覆盖显式位置，故互斥处理）
     let has_position = features.position().is_some();
+    // 外壳页走 appres 协议而非 WebviewUrl::App：后者在 dev 配置的构建里解析到
+    // devUrl（localhost:5173），Vite 未运行时弹窗就是"localhost 拒绝连接"错误页
     // 唯一 query 破缓存，确保外壳页始终为最新
     let shell = format!(
-        "hub-detail.html?w={}#{}",
+        "{}/hub-detail.html?w={}#{}",
+        appres::APPRES_ORIGIN,
         label,
         utf8_percent_encode(url.as_str(), NON_ALPHANUMERIC)
     );
-    let builder =
-        tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::App(shell.into()))
+    let builder = tauri::WebviewWindowBuilder::new(
+        app,
+        label,
+        WebviewUrl::External(
+            shell
+                .parse()
+                .unwrap_or_else(|_| appres::APPRES_ORIGIN.parse().unwrap()),
+        ),
+    )
             .title("巨应壁纸")
             .inner_size(1100.0, 780.0)
             .min_inner_size(700.0, 500.0)
