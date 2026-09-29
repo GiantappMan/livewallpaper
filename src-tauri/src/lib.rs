@@ -1013,10 +1013,15 @@ pub(crate) fn build_oauth_window(
             for _ in 0..30 {
                 std::thread::sleep(std::time::Duration::from_millis(100));
                 if let Some(fp) = hub_session_fingerprint(&app, &label) {
+                    log::info!(
+                        "oauth window session baseline captured: {} ({label})",
+                        fingerprint_digest(&fp)
+                    );
                     *baseline.lock() = Some(fp);
                     return;
                 }
             }
+            log::warn!("oauth window session baseline capture failed: {label}");
         });
     }
 
@@ -1041,9 +1046,11 @@ pub(crate) fn build_oauth_window(
             let on_hub_oauth_landing = is_hub_oauth_entry(payload.url())
                 || (is_hub_origin(payload.url()) && payload.url().path().contains("/callback/"));
             if on_hub_oauth_landing {
+                log::info!("oauth landing (callback endpoint), closer scheduled");
                 spawn_oauth_window_close(
                     window.app_handle().clone(),
                     window.label().to_string(),
+                    window.clone(),
                     session_baseline.clone(),
                 );
                 return;
@@ -1058,9 +1065,11 @@ pub(crate) fn build_oauth_window(
             }
             // 授权后回到社区（微信登录的落点 /{lang}/login?code=... 走这里）：
             // 会话由站点客户端侧建立，等 Cookie 落盘再关，见 spawn_oauth_window_close。
+            log::info!("oauth landing (back on hub), closer scheduled");
             spawn_oauth_window_close(
                 window.app_handle().clone(),
                 window.label().to_string(),
+                window.clone(),
                 session_baseline.clone(),
             );
         })
@@ -1071,13 +1080,13 @@ pub(crate) fn build_oauth_window(
     let window = build_result?;
 
     // 弹窗销毁后刷新社区窗口：登录/退出产生的新会话 Cookie 已在共享 Cookie
-    // 罐里（社区窗口同为第一方，直接可用），重载后立即可见。
+    // 罐里（社区窗口同为第一方，直接可用），重载后立即可见。登录成功路径
+    // 的精准同步在 spawn_oauth_window_close 里（Cookie 落盘即驱动，不依赖
+    // 窗口销毁），这里兜底手关等场景。
     let app_handle = window.app_handle().clone();
     window.on_window_event(move |event| {
         if matches!(event, tauri::WindowEvent::Destroyed) {
-            if let Some(community) = app_handle.get_webview(COMMUNITY_WEBVIEW_LABEL) {
-                let _ = community.eval("location.reload();");
-            }
+            refresh_community_after_login(&app_handle, "oauth-window-destroyed");
         }
     });
 
