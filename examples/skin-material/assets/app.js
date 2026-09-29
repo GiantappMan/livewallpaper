@@ -791,8 +791,7 @@
     const links = [
       ["zap", SC.t("about.review"), () => SC.openStoreReview()],
       ["star", SC.t("about.github"), () => SC.openUrl("https://github.com/GiantappMan/livewallpaper")],
-      ["heart", SC.t("about.donate"), () => SC.openUrl("https://afdian.net/a/mscoder")],
-      ["bug", SC.t("about.feedback"), () => SC.openUrl("https://support.qq.com/products/315103")],
+      ["bug", SC.t("about.feedback"), () => SC.openUrl("https://wallpaper.giantapp.cn/zh-CN/feedback")],
     ];
     viewEl.append(sectionHead(SC.t("about.title"), ""),
       el("div", { class: "m3-about-hero" },

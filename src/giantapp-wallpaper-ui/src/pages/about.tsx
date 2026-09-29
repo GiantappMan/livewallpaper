@@ -7,8 +7,7 @@ import LinkClient from "@/components/link-client"
 import {
     LayoutGrid,
     MessageCircleWarning,
-    Github,
-    DollarSign
+    Github
 } from "lucide-react";
 import Link from "@/components/link";
 import { langDictAtom } from "@/atoms/lang";
@@ -57,7 +56,7 @@ const AboutPage = () => {
             </h1>
             {dictionary['about'].reminder}
             <LinkClient
-                className="underline-offset-4 hover:underline" href="https://support.qq.com/products/315103" target="_blank">
+                className="underline-offset-4 hover:underline" href="https://wallpaper.giantapp.cn/zh-CN/feedback" target="_blank">
                 {dictionary['about'].problems_and_suggestions}
             </LinkClient>
             <LinkClient
@@ -87,13 +86,6 @@ const AboutPage = () => {
                     className="underline-offset-4 flex items-center" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
                     <Github className="h-4 w-4 mr-1" />
                     {dictionary['about'].give_star}
-                </LinkClient>
-            </Button>
-            <Button variant="outline" asChild>
-                <LinkClient
-                    className="underline-offset-4 flex items-center" href="https://afdian.net/a/giantapp" target="_blank">
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    {dictionary['about'].donate_membership}
                 </LinkClient>
             </Button>
         </div>

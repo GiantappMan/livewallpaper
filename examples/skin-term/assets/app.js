@@ -707,8 +707,7 @@
     const links = [
       [SC.t("about.review"), () => SC.openStoreReview()],
       ["GitHub", () => SC.openUrl("https://github.com/GiantappMan/livewallpaper")],
-      [SC.t("about.donate"), () => SC.openUrl("https://afdian.net/a/mscoder")],
-      [SC.t("about.feedback"), () => SC.openUrl("https://support.qq.com/products/315103")],
+      [SC.t("about.feedback"), () => SC.openUrl("https://wallpaper.giantapp.cn/zh-CN/feedback")],
     ];
     viewEl.append(
       el("div", { class: "tabout" },
