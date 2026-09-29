@@ -873,12 +873,123 @@ fn build_hub_popup(
     }
 }
 
+/// 社区站（NextAuth）会话 Cookie 的指纹：所有名字含 "session-token" 的
+/// Cookie 的 "name=value" 排序拼接。前缀（authjs. / next-auth. / __Secure-）
+/// 与分片后缀（.0/.1）一并不关心，登录成功换发的新 JWT 含随机 jti，值必变。
+/// 必须在工作线程调用（cookies() 在主线程会死锁，见 [`clear_github_session`]）。
+fn hub_session_fingerprint(app: &tauri::AppHandle, label: &str) -> Option<String> {
+    let webview = app.get_webview(label)?;
+    let all = webview.cookies().ok()?;
+    let mut parts: Vec<String> = all
+        .into_iter()
+        .filter(|c| c.name().contains("session-token"))
+        .map(|c| format!("{}={}", c.name(), c.value()))
+        .collect();
+    parts.sort();
+    Some(parts.join("|"))
+}
+
+/// 指纹摘要（FNV-1a 前 8 位十六进制）。日志只记摘要，不落会话 Cookie 原值。
+fn fingerprint_digest(fp: &str) -> String {
+    let mut hash: u64 = 0xcbf29ce484222325;
+    for b in fp.as_bytes() {
+        hash ^= u64::from(*b);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("{hash:08x}")
+}
+
+/// 登录完成后驱动社区 WebView 同步：优先跳站点存好的回跳地址
+/// （wxLoginCallbackUrl，form 发起微信登录时写入；社区 WebView 与 OAuth
+/// 窗口同源同 profile，可直接读），没有则登录页退到 explorer、其余页刷新。
+/// 不能只依赖 OAuth 窗口销毁时的 reload：社区 WebView 可能停在 /login，
+/// 已登录状态下 reload 仍停在登录页，用户会误以为没登录成功。
+fn refresh_community_after_login(app: &tauri::AppHandle, reason: &str) {
+    let Some(community) = app.get_webview(COMMUNITY_WEBVIEW_LABEL) else {
+        log::warn!("community webview not found, skip post-login sync ({reason})");
+        return;
+    };
+    // 站点 form 发起微信登录时已用 sanitizeCallbackUrl 清洗过该值；这里仍
+    // 只接受站内路径或同源绝对地址，其余一律走 reload/explorer 兜底。
+    let script = r#"(function(){
+  var t = null;
+  try {
+    t = localStorage.getItem('wxLoginCallbackUrl');
+    localStorage.removeItem('wxLoginCallbackUrl');
+  } catch (e) {}
+  if (t && (t.charAt(0) === '/' || t.indexOf(location.origin) === 0)) {
+    location.assign(t); return;
+  }
+  if (/\/login(\/|$)/.test(location.pathname)) {
+    var s = location.pathname.split('/');
+    location.assign('/' + (s[1] ? s[1] + '/' : '') + 'explorer'); return;
+  }
+  location.reload();
+})();"#;
+    match community.eval(script) {
+        Ok(_) => log::info!("community post-login sync requested ({reason})"),
+        Err(e) => log::warn!("community post-login sync failed ({reason}): {e}"),
+    }
+}
+
+/// OAuth 落地后的关窗：轮询共享 Cookie 罐，等站点客户端侧把新会话 Cookie
+/// 落盘（出现与建窗快照不同的非空会话）再驱动社区窗口同步并关窗。
+///
+/// 此前的固定 5 秒强关对微信登录是竞态：微信的会话建立全部发生在落地页
+/// load 之后（hydration → signIn → 服务端调微信换 token → Set-Cookie），
+/// 关早了请求被掐断，Cookie 永远落不了盘，社区页刷新后仍是未登录。改为
+/// 以 Cookie 变化为信号后，链路多慢都不影响；登录失败/卡住则超时兜底关窗。
+fn spawn_oauth_window_close(
+    app: tauri::AppHandle,
+    label: String,
+    window: tauri::WebviewWindow<tauri::Wry>,
+    baseline: Arc<Mutex<Option<String>>>,
+) {
+    std::thread::spawn(move || {
+        const POLL: std::time::Duration = std::time::Duration::from_millis(400);
+        // Cookie 落盘后页面还有收尾（postMessage 通知 opener、自导航），留出尾巴
+        const GRACE: std::time::Duration = std::time::Duration::from_millis(1500);
+        const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
+
+        let started = std::time::Instant::now();
+        loop {
+            std::thread::sleep(POLL);
+            if let Some(fp) = hub_session_fingerprint(&app, &label) {
+                // 基线未就绪（快照线程还没读到）视同空基线：按“出现会话即关”
+                let baseline = baseline.lock().clone().unwrap_or_default();
+                if !fp.is_empty() && fp != baseline {
+                    log::info!(
+                        "oauth window: session cookie changed {} -> {}, closing ({label})",
+                        fingerprint_digest(&baseline),
+                        fingerprint_digest(&fp)
+                    );
+                    std::thread::sleep(GRACE);
+                    refresh_community_after_login(&app, "session-cookie-changed");
+                    let _ = window.close();
+                    return;
+                }
+            } else if app.get_webview(&label).is_none() {
+                // 窗口已不在（用户手关/已关）：收工，销毁回调已刷新社区窗口
+                log::info!("oauth window gone before close: {label}");
+                return;
+            }
+            if started.elapsed() >= TIMEOUT {
+                log::info!("oauth window close timeout: {label}");
+                refresh_community_after_login(&app, "oauth-close-timeout");
+                let _ = window.close();
+                return;
+            }
+        }
+    });
+}
+
 /// OAuth 弹窗窗口：顶层直接加载授权页（GitHub/微信）、hub 的 OAuth 入口
 /// 端点（服务端 302 到授权页，见 [`is_hub_oauth_entry`]）或 about:blank
 /// 空白页（弹窗式授权，由站点脚本导航），顶层导航不受 X-Frame-Options 限制，
 /// 登录产生的会话 Cookie 以第一方身份写入应用共享的 WebView2 Cookie 罐，
 /// 社区窗口（同为第一方）随后即可使用。跳去授权域后又回到社区域名、或落回
-/// hub 的 OAuth 回调端点，视为登录完成，稍候自动关窗并刷新社区窗口。
+/// hub 的 OAuth 回调端点，视为登录完成，等新会话 Cookie 落盘后自动关窗
+/// （[`spawn_oauth_window_close`]）并刷新社区窗口。
 pub(crate) fn build_oauth_window(
     app: &tauri::AppHandle,
     label: &str,
@@ -888,6 +999,26 @@ pub(crate) fn build_oauth_window(
     // 打开的登录窗口：只有在“离开→回来”后关窗，避免刚打开就被误关。
     let went_external = Arc::new(AtomicBool::new(false));
     let flag = went_external.clone();
+
+    // 建窗时（尚未授权）的会话 Cookie 基线快照，供关窗判定“会话发生变化”。
+    // 兼容此前已登录、本次换号重登的情况：Cookie 本就存在，但新 JWT 值必变。
+    // Cookie 管理器在建窗初期可能未就绪，短暂重试；快照远在用户扫码/走完
+    // 授权之前完成，不会读到登录后的新值。
+    let session_baseline: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    {
+        let app = app.clone();
+        let label = label.to_string();
+        let baseline = session_baseline.clone();
+        std::thread::spawn(move || {
+            for _ in 0..30 {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                if let Some(fp) = hub_session_fingerprint(&app, &label) {
+                    *baseline.lock() = Some(fp);
+                    return;
+                }
+            }
+        });
+    }
 
     log::info!("oauth window building: label={label} url={url}");
     let build_result = tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::External(url))
@@ -906,17 +1037,15 @@ pub(crate) fn build_oauth_window(
             // （如 /zh-CN/callback/github，/api 回调 302 后的最终页面）。
             // 已授权用户的整条跳转可能全部在服务端 302 内完成（github 页面
             // 从不真正加载，went_external 不会置位），所以见到这些落点即视为
-            // 登录完成，稍候关窗。
+            // 登录完成，进入关窗流程。
             let on_hub_oauth_landing = is_hub_oauth_entry(payload.url())
                 || (is_hub_origin(payload.url()) && payload.url().path().contains("/callback/"));
             if on_hub_oauth_landing {
-                let win = window.clone();
-                std::thread::spawn(move || {
-                    // 延迟要给站点客户端侧的会话建立（code 换 session、Cookie
-                    // 落盘）留足时间，关早了社区窗口重载后仍是未登录态。
-                    std::thread::sleep(std::time::Duration::from_millis(5000));
-                    let _ = win.close();
-                });
+                spawn_oauth_window_close(
+                    window.app_handle().clone(),
+                    window.label().to_string(),
+                    session_baseline.clone(),
+                );
                 return;
             }
             let on_hub = window.url().map(|u| is_hub_origin(&u)).unwrap_or(false);
@@ -927,14 +1056,13 @@ pub(crate) fn build_oauth_window(
             if !flag.swap(false, Ordering::Relaxed) {
                 return;
             }
-            // 授权后回到社区：稍候关窗。延迟要给站点客户端侧的会话建立留足
-            // 时间（如微信登录信号回到主窗口后还要发 signIn/update 请求），
-            // 关早了会话 Cookie 尚未落盘。
-            let win = window.clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(5000));
-                let _ = win.close();
-            });
+            // 授权后回到社区（微信登录的落点 /{lang}/login?code=... 走这里）：
+            // 会话由站点客户端侧建立，等 Cookie 落盘再关，见 spawn_oauth_window_close。
+            spawn_oauth_window_close(
+                window.app_handle().clone(),
+                window.label().to_string(),
+                session_baseline.clone(),
+            );
         })
         .build();
     if let Err(e) = &build_result {
