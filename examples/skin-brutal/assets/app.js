@@ -842,7 +842,9 @@
         el("div", { class: "cfg-gap" }),
         fieldRow(SC.t("cfg.player"), selectEl([
           { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
-        ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); }))));
+        ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })),
+        el("div", { class: "cfg-gap" }),
+        fieldRow(SC.t("cfg.keep"), switchEl(c.keepWallpaper, (v) => { c.keepWallpaper = v; SC.saveConfig("Wallpaper", { keepWallpaper: v }); }), SC.t("cfg.keepHint"))));
     // MPV 下载提示仅在默认引擎选中 MPV 时展示
     const mpvBox = mpvBlock();
     function syncMpv() { mpvBox.style.display = c.defaultVideoPlayer === 1 ? "" : "none"; }

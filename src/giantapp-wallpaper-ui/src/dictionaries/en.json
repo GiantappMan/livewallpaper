@@ -165,6 +165,8 @@
     "failed_to_save": "Failed to Save",
     "general": "General",
     "general_settings": "General Settings",
+    "keep_wallpaper": "Keep wallpaper",
+    "keep_wallpaper_description": "Keep the wallpaper snapshot after exit and restore it on next launch",
     "language": "Language",
     "light_mode": "Light Mode",
     "minimize_on_startup": "Minimize on Startup",

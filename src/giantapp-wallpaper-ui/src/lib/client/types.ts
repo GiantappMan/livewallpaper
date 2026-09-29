@@ -201,6 +201,8 @@ export type ConfigWallpaper = {
   directories: string[];
   coveredBehavior: WallpaperCoveredBehavior;
   defaultVideoPlayer: VideoPlayer;
+  /** 退出时保留壁纸快照，下次启动自动恢复 */
+  keepWallpaper: boolean;
 };
 
 // ---------- 运行状态 ----------

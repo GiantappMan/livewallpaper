@@ -165,6 +165,8 @@
     "failed_to_save": "保存失败",
     "general": "常规",
     "general_settings": "常规设置",
+    "keep_wallpaper": "保留壁纸",
+    "keep_wallpaper_description": "退出后保留壁纸快照，下次启动自动恢复壁纸",
     "language": "多语言",
     "light_mode": "浅色",
     "minimize_on_startup": "启动后最小化",

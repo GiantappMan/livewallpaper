@@ -388,6 +388,15 @@
           characterData: true,
         });
       }
+      // Esc 转发给父窗口（详情弹窗外壳按它关窗；键盘焦点在 iframe 内时外壳页
+      // 收不到按键）。气泡阶段监听：页面自己已消费 Esc（如关闭站内弹层、
+      // preventDefault/stopPropagation）时不外传，避免误关窗口。
+      window.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape' || e.defaultPrevented) return;
+        try {
+          window.parent.postMessage({ __wpRelay: 5, key: 'Escape' }, '*');
+        } catch (err) {}
+      });
     }
   }
 

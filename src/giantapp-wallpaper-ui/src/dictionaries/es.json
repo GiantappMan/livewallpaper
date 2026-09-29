@@ -171,6 +171,8 @@
       "failed_to_save": "Error al Guardar",
       "general": "General",
       "general_settings": "Configuración General",
+      "keep_wallpaper": "Mantener fondo de pantalla",
+      "keep_wallpaper_description": "Mantener la instantánea del fondo al salir y restaurarla en el próximo inicio",
       "language": "Idioma",
       "light_mode": "Modo Claro",
       "minimize_on_startup": "Minimizar al Inicio",

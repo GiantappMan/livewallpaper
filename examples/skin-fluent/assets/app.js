@@ -2390,6 +2390,8 @@
         selectEl([
           { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
         ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })],
+      ["restore", SC.t("cfg.keep"), SC.t("cfg.keepHint"),
+        switchEl(c.keepWallpaper, (v) => { c.keepWallpaper = v; SC.saveConfig("Wallpaper", { keepWallpaper: v }); })],
     ]));
     // MPV 下载提示仅在默认引擎选中 MPV 时展示
     const mpvBox = mpvBlock();

@@ -699,6 +699,7 @@
       grouped([
         groupRow(SC.t("cfg.covered"), "", selectEl([{ value: 0, label: SC.t("cfg.covered0") }, { value: 1, label: SC.t("cfg.covered1") }, { value: 2, label: SC.t("cfg.covered2") }], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })),
         groupRow(SC.t("cfg.player"), "", selectEl([{ value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })),
+        groupRow(SC.t("cfg.keep"), SC.t("cfg.keepHint"), switchEl(c.keepWallpaper, (v) => { c.keepWallpaper = v; SC.saveConfig("Wallpaper", { keepWallpaper: v }); })),
         mpvRow,
       ]));
   }

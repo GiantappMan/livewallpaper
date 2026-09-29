@@ -165,6 +165,8 @@
     "failed_to_save": "Не удалось сохранить",
     "general": "Общие",
     "general_settings": "Общие настройки",
+    "keep_wallpaper": "Сохранять обои",
+    "keep_wallpaper_description": "Сохранять снимок обоев после выхода и восстановить их при следующем запуске",
     "language": "Язык",
     "light_mode": "Светлый режим",
     "minimize_on_startup": "Свернуть при запуске",

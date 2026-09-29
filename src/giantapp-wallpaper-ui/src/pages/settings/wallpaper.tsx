@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -19,6 +20,7 @@ import { useCallback, useEffect, useState } from "react"
 import { ConfigWallpaper, WallpaperCoveredBehavior, MpvDownloadEvent, MpvStatus } from "@/lib/client/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from "@/components/ui/switch"
 import { VideoPlayer } from "@/lib/client/types"
 import { langDictAtom } from "@/atoms/lang"
 import { useAtomValue } from "jotai"
@@ -27,7 +29,7 @@ const FormSchema = z.object({
     directories: z.array(z.object({
         path: z.string(),
     })),
-    // keepWallpaper: z.boolean(),
+    keepWallpaper: z.boolean(),
     coveredBehavior: z.nativeEnum(WallpaperCoveredBehavior),
     defaultVideoPlayer: z.nativeEnum(VideoPlayer),
 })
@@ -42,7 +44,7 @@ export default function Page() {
         resolver: zodResolver(FormSchema),
         defaultValues: {
             directories: [{ path: "" }],
-            // keepWallpaper: false,
+            keepWallpaper: false,
             coveredBehavior: WallpaperCoveredBehavior.Pause,
             defaultVideoPlayer: VideoPlayer.MPV_Player
         },
@@ -110,7 +112,7 @@ export default function Page() {
         }
 
         form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
-        // form.setValue("keepWallpaper", config.data.keepWallpaper);
+        form.setValue("keepWallpaper", config.data.keepWallpaper);
         form.setValue("coveredBehavior", config.data.coveredBehavior);
         form.setValue("defaultVideoPlayer", config.data.defaultVideoPlayer);
 
@@ -131,7 +133,7 @@ export default function Page() {
         );
         const saveRes = await api.setConfig("Wallpaper", {
             directories,
-            // keepWallpaper: data.keepWallpaper,
+            keepWallpaper: data.keepWallpaper,
             coveredBehavior: data.coveredBehavior,
             defaultVideoPlayer: data.defaultVideoPlayer
         })
@@ -316,6 +318,27 @@ export default function Page() {
                                         </div>
                                     </div>
                                 )}
+                                <FormField
+                                    control={control}
+                                    name="keepWallpaper"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>{dictionary['settings'].keep_wallpaper}</FormLabel>
+                                                <FormDescription>{dictionary['settings'].keep_wallpaper_description}</FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={(v) => {
+                                                        field.onChange(v);
+                                                        form.handleSubmit(onSubmit)();
+                                                    }}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                             </FormItem>
                         </form>
                     </Form>

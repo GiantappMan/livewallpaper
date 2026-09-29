@@ -23,33 +23,9 @@
         border: 0;
         background: #141414;
       }
-      /* 远程详情页装载期间的加载动画，iframe 就绪后移除 */
-      #boot {
-        position: fixed;
-        inset: 0;
-        z-index: 9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #141414;
-      }
-      #boot .ring {
-        width: 28px;
-        height: 28px;
-        border: 3px solid rgba(255, 255, 255, 0.14);
-        border-top-color: rgba(255, 255, 255, 0.6);
-        border-radius: 50%;
-        animation: boot-spin 0.8s linear infinite;
-      }
-      @keyframes boot-spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
     </style>
   </head>
   <body>
-    <div id="boot"><div class="ring"></div></div>
     <script>
       (function () {
         // 与 src-tauri/src/lib.rs HUB_ORIGINS 保持一致
@@ -68,27 +44,39 @@
         try {
           url = new URL(raw);
         } catch (e) {}
-        var boot = document.getElementById("boot");
-        if (!url || ALLOWED_ORIGINS.indexOf(url.origin) < 0) {
-          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
-          return;
+        if (url && ALLOWED_ORIGINS.indexOf(url.origin) >= 0) {
+          var iframe = document.createElement("iframe");
+          iframe.allow = "fullscreen; autoplay";
+          // 不做加载动画：iframe 直接挂载，远程页边下边渲染
+          iframe.src = url.href;
+          document.body.appendChild(iframe);
         }
 
-        var iframe = document.createElement("iframe");
-        iframe.allow = "fullscreen; autoplay";
-        // 装载完成（或失败出现错误页）后撤掉动画；兜底 15s 强制移除防卡死
-        iframe.addEventListener("load", function () {
-          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
-        });
-        setTimeout(function () {
-          if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
-        }, 15000);
-        iframe.src = url.href;
-        document.body.appendChild(iframe);
+        var closed = false;
+        // 关闭弹窗。本页是本地上下文（不受 ACL 限制），直接 invoke 应用命令，
+        // 与 hub_compat.js 方法表的 CloseWindow -> close_window 一致
+        function closeSelf() {
+          if (closed) return;
+          closed = true;
+          try {
+            window.__TAURI_INTERNALS__.invoke("close_window");
+          } catch (e) {
+            window.close();
+          }
+        }
 
-        // 远程页标题（hub_compat 转发）→ 窗口标题
+        // Esc 关窗：焦点在本页时直接收；焦点在远程 iframe 里时本页收不到
+        // 键盘事件，由 hub_compat.js 捕获后经 __wpRelay:5 转发过来
+        window.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeSelf();
+        });
+
+        // 远程页消息：标题（hub_compat 转发）→ 窗口标题；Esc → 关窗
         window.addEventListener("message", function (e) {
-          if (e.data && e.data.__wpRelay === 4 && e.data.title) {
+          if (!e.data) return;
+          if (e.data.__wpRelay === 5 && e.data.key === "Escape") {
+            closeSelf();
+          } else if (e.data.__wpRelay === 4 && e.data.title) {
             document.title = e.data.title;
           }
         });
