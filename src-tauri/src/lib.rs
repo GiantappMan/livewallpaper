@@ -144,6 +144,7 @@ pub fn run() {
             commands::list_skins,
             commands::set_active_skin,
             commands::open_skins_folder,
+            commands::get_custom_skin_doc,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
@@ -489,6 +490,12 @@ fn setup(
     let hub = events::EventHub::new();
     events::forward_to_tauri(&hub, app.handle().clone());
 
+    // 官方皮肤随安装包内置：解包 / 升级到 skins/（开发联接目录不动）。
+    // 必须先于主窗口创建：出厂默认生效 Fluent 皮肤，全新安装首次建窗时
+    // 皮肤文件须已在 skins/ 就位；也须在皮肤目录监听启动前完成，避免监听
+    // 到自己的解包事件。
+    official_skins::sync(&dirs);
+
     // 窗口（headless 零窗口；GUI 启动屏 + 隐藏主窗口，加载完成后 hide_loading 显示）
     if !headless {
         build_splashscreen(app)?;
@@ -555,10 +562,6 @@ fn setup(
 
     // 系统事件
     system_events::start(hub.clone(), api.clone());
-
-    // 官方皮肤随安装包内置：解包 / 升级到 skins/（开发联接目录不动）。
-    // 须在皮肤目录监听启动前完成，避免监听到自己的解包事件。
-    official_skins::sync(&dirs);
 
     // 皮肤目录热监听：当前皮肤文件变化 -> refresh-page 整页刷新（热更新开发）
     skin_watch::start(app.handle().clone());

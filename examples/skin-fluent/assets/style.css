@@ -581,6 +581,8 @@ button.card-row:hover { background: var(--subtle); }
 .card-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .card-label { font-size: 14px; }
 .card-hint { font-size: 12px; color: var(--ink-2); }
+/* 卡片行尾按钮组（如 皮肤 行的「自定义皮肤 / 打开皮肤目录」） */
+.card-row-tail { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .card-sep { height: 1px; background: var(--divider); margin: 0 16px; }
 .card-more { display: flex; justify-content: flex-end; padding: 8px 16px 6px; }
 .dir-list { display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 2px; }
@@ -760,6 +762,21 @@ button.card-row:hover { background: var(--subtle); }
 .sc-btn.is-primary:hover { background: var(--accent-hover); }
 .sc-btn.is-danger { background: var(--danger); color: #fff; }
 .sc-btn.is-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #000); }
+
+/* 自定义皮肤指南弹窗（.sc-modal-doc）：宽版 ContentDialog + 可滚动 Markdown 全文 */
+.sc-modal-doc { width: min(720px, 92vw); height: min(78vh, 720px); }
+.sc-doc-hint { padding-bottom: 12px; }
+.sc-doc-pre {
+  flex: 1; min-height: 0; margin: 0 24px; padding: 14px 16px; overflow: auto;
+  font-family: var(--mono, Consolas, "Cascadia Mono", monospace); font-size: 12.5px; line-height: 1.65;
+  color: var(--ink-2); white-space: pre-wrap; word-break: break-word;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border: 1px solid var(--divider); border-radius: var(--r-ctl);
+}
+.sc-doc-pre:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.sc-modal-doc .sc-modal-actions { padding: 12px 24px 16px; gap: 8px; border-top: 0; }
+.sc-modal-doc .sc-btn { flex: 0 0 auto; height: 34px; padding: 0 16px; border-radius: var(--r-ctl); border: 1px solid var(--divider); }
+.sc-modal-doc .sc-btn.is-primary { border-color: transparent; }
 
 /* 窗格折叠（.is-compact：点击标题栏汉堡按钮切换；≤860px 且未手动选择时自动折叠）。
    标题栏（☰ + logo + 名称）保持原样，仅导航列表收起文字变图标 */

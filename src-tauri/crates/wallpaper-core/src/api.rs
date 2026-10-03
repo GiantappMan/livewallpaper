@@ -40,8 +40,12 @@ impl WallpaperApi {
     /// 初始化引擎：枚举屏幕、组装播放器工厂、建管理器、启动 tick。
     /// 不恢复快照（restore 单独调）。
     pub async fn init(host: Arc<dyn EngineHost>, dirs: AppDirs) -> Arc<Self> {
-        // 播放器工厂：引擎自带 mpv 在前（兜底优先），宿主注入的自定义播放器在后
+        // 播放器工厂：内置 libmpv 在最前（打包内置恒可用），外部 mpv 次之，
+        // 宿主注入的自定义播放器在后；注册顺序即兜底优先级
+        #[allow(unused_mut)]
         let mut factories = Vec::new();
+        #[cfg(windows)]
+        factories.push(Arc::new(crate::libmpv::LibmpvFactory::new(host.clone())) as _);
         factories.push(Arc::new(MpvFactory::new(host.clone(), dirs.clone())) as _);
         factories.extend(host.player_factories());
         let players = Arc::new(PlayerRegistry::new(factories));

@@ -18,6 +18,9 @@ use tauri::{Manager, UriSchemeContext, WebviewUrl};
 use wallpaper_core::AppDirs;
 
 pub const DEFAULT_SKIN_ID: &str = "default";
+/// Dev 开发皮肤 id（examples/skin-dev，开发机经联接脚本挂入）。不属于官方
+/// 分发皮肤，仅 dev（debug）构建出现在皮肤列表；正式版即使目录存在也隐藏。
+pub const DEV_SKIN_ID: &str = "dev";
 /// 清单兼容版本（应用大版本）。
 const SKIN_COMPAT: u32 = 4;
 /// Windows WebView2 下自定义协议的 URL 形态（与 media 协议一致）。
@@ -164,20 +167,30 @@ fn info_of(dir: &Path) -> SkinInfo {
     }
 }
 
-/// 列出全部皮肤（默认皮肤固定在首位）。
+/// 内置默认皮肤是否出现在可选列表。正式版已退役（云母 Fluent 是唯一
+/// 出厂皮肤，见 `wallpaper_core::config::FACTORY_SKIN_ID`）；dev（debug）
+/// 构建保留入口——内置界面前端开发走 `bun dev`，需要能切回 default。
+fn builtin_listed(debug_build: bool) -> bool {
+    debug_build
+}
+
+/// 列出全部皮肤（默认皮肤在 dev 构建固定首位；正式版从退役版起不含内置项）。
 pub fn list_skins(dirs: &AppDirs) -> Vec<SkinInfo> {
-    let mut out = vec![SkinInfo {
-        id: DEFAULT_SKIN_ID.into(),
-        name: "默认皮肤".into(),
-        version: crate::APP_VERSION.into(),
-        author: "GiantappMan".into(),
-        description: "应用内置界面".into(),
-        kind: "app".into(),
-        entry: "index.html".into(),
-        builtin: true,
-        valid: true,
-        invalid_reason: None,
-    }];
+    let mut out = Vec::new();
+    if builtin_listed(cfg!(debug_assertions)) {
+        out.push(SkinInfo {
+            id: DEFAULT_SKIN_ID.into(),
+            name: "默认皮肤".into(),
+            version: crate::APP_VERSION.into(),
+            author: "GiantappMan".into(),
+            description: "应用内置界面".into(),
+            kind: "app".into(),
+            entry: "index.html".into(),
+            builtin: true,
+            valid: true,
+            invalid_reason: None,
+        });
+    }
     let dir = skins_dir(dirs);
     if let Ok(entries) = std::fs::read_dir(&dir) {
         let mut infos: Vec<SkinInfo> = entries
@@ -185,6 +198,10 @@ pub fn list_skins(dirs: &AppDirs) -> Vec<SkinInfo> {
             .filter(|e| e.path().is_dir())
             .map(|e| info_of(&e.path()))
             .collect();
+        // Dev 皮肤只在 dev（debug）构建显示，正式版一律隐藏
+        if !cfg!(debug_assertions) {
+            infos.retain(|info| info.id != DEV_SKIN_ID);
+        }
         infos.sort_by(|a, b| a.id.cmp(&b.id));
         out.extend(infos);
     }
@@ -362,6 +379,8 @@ fn mime_of(path: &Path) -> &'static str {
 }
 
 /// 供主窗口创建：解析配置的皮肤 id（来自 Appearance 配置文件，避免依赖 AppState）。
+/// 配置缺失 / 无 skin 字段时回退出厂默认皮肤（Win11 Fluent）；内置界面
+/// （`default`）仅当用户显式切换回去时生效。
 pub fn configured_skin_id(dirs: &AppDirs) -> String {
     let file = dirs.config_file("appearance");
     std::fs::read_to_string(&file)
@@ -372,7 +391,7 @@ pub fn configured_skin_id(dirs: &AppDirs) -> String {
                 .and_then(|s| s.as_str())
                 .map(|s| s.to_string())
         })
-        .unwrap_or_else(|| DEFAULT_SKIN_ID.into())
+        .unwrap_or_else(|| wallpaper_core::config::FACTORY_SKIN_ID.into())
 }
 
 /// 当前生效皮肤的展示信息（headless app_info / 日志用）。
@@ -463,10 +482,16 @@ mod tests {
         )
         .unwrap();
         let list = list_skins(&dirs);
-        assert_eq!(list.len(), 2);
-        assert!(list[0].builtin);
-        assert!(!list[1].valid);
-        assert!(list[1].invalid_reason.is_some());
+        // dev（debug）构建含内置默认皮肤首位；正式版已退役不含内置项
+        if cfg!(debug_assertions) {
+            assert_eq!(list.len(), 2);
+            assert!(list[0].builtin);
+            assert!(!list[1].valid);
+        } else {
+            assert_eq!(list.len(), 1);
+            assert!(!list[0].builtin);
+        }
+        assert!(list.last().unwrap().invalid_reason.is_some());
         let _ = std::fs::remove_dir_all(&dirs.root);
     }
 

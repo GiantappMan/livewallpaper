@@ -220,7 +220,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                         </FormControl>
                                         <SelectContent>
                                             {/* Web 播放器是默认引擎，排在 MPV 之前 */}
-                                            {[VideoPlayer.Default_Player, VideoPlayer.System_Player, VideoPlayer.MPV_Player].map((value) => (
+                                            {[VideoPlayer.Default_Player, VideoPlayer.System_Player, VideoPlayer.MPV_Player, VideoPlayer.Libmpv_Player].map((value) => (
                                                 <SelectItem key={value.toString()} value={value.toString()}>
                                                     {dictionary['local'][VideoPlayer[value].toLowerCase()]}
                                                 </SelectItem>

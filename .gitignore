@@ -9,6 +9,8 @@ node_modules
 # bundled player binaries (downloaded at build time, see docs/1.开发.md)
 /src-tauri/assets/players/mpv/*
 !/src-tauri/assets/players/mpv/.gitkeep
+/src-tauri/assets/players/libmpv/*
+!/src-tauri/assets/players/libmpv/.gitkeep
 
 # secrets / local credentials
 .env

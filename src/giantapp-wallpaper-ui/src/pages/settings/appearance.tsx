@@ -17,9 +17,12 @@ import {
 } from "@radix-ui/react-icons"
 import api from "@/lib/client/api";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfigAppearance, SkinInfo } from "@/lib/client/types";
 import { langDictAtom } from "@/atoms/lang";
 import { useAtomValue } from "jotai";
+import { toast } from "sonner";
 
 const Page = () => {
     const dictionary = useAtomValue(langDictAtom);
@@ -27,6 +30,8 @@ const Page = () => {
     const [config, setConfig] = useConfig()
     const { setTheme: setMode, resolvedTheme: mode } = useTheme()
     const [skins, setSkins] = React.useState<SkinInfo[]>([])
+    const [skinDocOpen, setSkinDocOpen] = React.useState(false)
+    const [skinDoc, setSkinDoc] = React.useState("")
 
     const saveConfig = async (configAppearance: ConfigAppearance) => {
         setConfig(configAppearance)
@@ -59,6 +64,24 @@ const Page = () => {
         }
         // 本地同步；后端会重建主窗口加载新皮肤
         setConfig({ ...config, skin: skin.id })
+    }
+
+    const openSkinDoc = async () => {
+        try {
+            setSkinDoc(await invoke<string>("get_custom_skin_doc"))
+            setSkinDocOpen(true)
+        } catch (e) {
+            toast.error(String(e))
+        }
+    }
+
+    const copySkinDoc = async () => {
+        try {
+            await navigator.clipboard.writeText(skinDoc)
+            toast.success(dictionary['settings'].skin_doc_copied)
+        } catch {
+            toast.error("clipboard")
+        }
     }
 
     return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] space-y-6">
@@ -152,14 +175,24 @@ const Page = () => {
         <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <h2 className="font-semibold mt-4">{dictionary['settings'].skin}</h2>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => api.openSkinsFolder()}
-                >
-                    <ExternalLinkIcon className="mr-1" />
-                    {dictionary['settings'].skin_open_folder}
-                </Button>
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={openSkinDoc}
+                    >
+                        <ExternalLinkIcon className="mr-1" />
+                        {dictionary['settings'].skin_custom}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => api.openSkinsFolder()}
+                    >
+                        <ExternalLinkIcon className="mr-1" />
+                        {dictionary['settings'].skin_open_folder}
+                    </Button>
+                </div>
             </div>
             <p className="text-xs text-muted-foreground">
                 {dictionary['settings'].skin_hint}
@@ -207,6 +240,22 @@ const Page = () => {
                     </>
                 )}
             </div>
+            <Dialog open={skinDocOpen} onOpenChange={setSkinDocOpen}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>{dictionary['settings'].skin_custom}</DialogTitle>
+                        <DialogDescription>{dictionary['settings'].skin_doc_hint}</DialogDescription>
+                    </DialogHeader>
+                    <pre className="max-h-[55vh] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground" tabIndex={0}>{skinDoc}</pre>
+                    <DialogFooter>
+                        <Button variant="outline" size="sm" onClick={() => api.openSkinsFolder()}>
+                            <ExternalLinkIcon className="mr-1" />
+                            {dictionary['settings'].skin_open_folder}
+                        </Button>
+                        <Button size="sm" onClick={copySkinDoc}>{dictionary['settings'].skin_doc_copy}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     </div>;
 };

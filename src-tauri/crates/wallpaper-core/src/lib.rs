@@ -18,6 +18,9 @@ pub mod window_state;
 #[cfg(windows)]
 pub mod mpv;
 
+#[cfg(windows)]
+pub mod libmpv;
+
 pub use api::WallpaperApi;
 pub use config::{ConfigAppearance, ConfigGeneral, ConfigStore, ConfigWallpaper};
 pub use dirs::AppDirs;

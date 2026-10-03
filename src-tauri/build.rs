@@ -1,20 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// 随安装包分发的官方皮肤（examples/ 下的目录名）。skin-dev / skin-minimal
-/// 只是开发示例，不内置分发。
-const OFFICIAL_SKIN_DIRS: &[&str] = &[
-    "skin-aurora",
-    "skin-brutal",
-    "skin-bento",
-    "skin-cupertino",
-    "skin-fluent",
-    "skin-linear",
-    "skin-liquid",
-    "skin-material",
-    "skin-paper",
-    "skin-term",
-];
+/// 随安装包分发的官方皮肤（examples/ 下的目录名）。当前只内置分发 Win11
+/// Fluent 皮肤（出厂默认生效）；其余官方风格皮肤归档在 examples/archive/
+/// 下，不再随包分发。skin-dev / skin-minimal 只是开发示例，不内置分发。
+const OFFICIAL_SKIN_DIRS: &[&str] = &["skin-fluent"];
 
 fn main() {
     tauri_build::build();
@@ -68,9 +58,18 @@ fn embed_official_skins() {
 }
 
 /// 递归收集 base 下所有普通文件 -> (相对路径，统一正斜杠, 绝对路径)。
+/// 点开头的文件 / 目录（`.mimosa` 等 AI 工具本地状态、`.DS_Store`）不入嵌入表。
 fn collect_files(base: &Path, dir: &Path, out: &mut Vec<(String, PathBuf)>) {
     for entry in fs::read_dir(dir).into_iter().flatten().flatten() {
         let path = entry.path();
+        if path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| n.starts_with('.'))
+            .unwrap_or(false)
+        {
+            continue;
+        }
         if path.is_dir() {
             collect_files(base, &path, out);
         } else if path.is_file() {

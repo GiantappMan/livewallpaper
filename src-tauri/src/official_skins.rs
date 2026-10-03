@@ -5,6 +5,8 @@
 //!   写进源码仓库；
 //! - 普通目录且内置版本更新 -> 整目录替换升级（官方皮肤由应用托管，升级
 //!   会覆盖本地改动）。
+//! - 曾内置、现已退役的官方皮肤 -> 启动时从 skins/ 移除（junction 不动），
+//!   配置仍指向退役皮肤时改回出厂默认。
 //!
 //! 旧版本安装包的用户升级应用后无需手动操作即可拿到最新的官方皮肤。
 
@@ -21,8 +23,25 @@ pub struct OfficialSkin {
 
 include!(concat!(env!("OUT_DIR"), "/official_skins.rs"));
 
+/// 曾随安装包内置分发、现已退役的官方皮肤 id（源码归档在
+/// examples/archive/）。启动同步时从 skins/ 移除对应普通目录；开发联接
+/// （junction / symlink）不在此列，绝不动。
+const RETIRED_SKIN_IDS: &[&str] = &[
+    "aurora",
+    "bento",
+    "brutal",
+    "cupertino",
+    "linear",
+    "liquid",
+    "material",
+    "paper",
+    "term",
+];
+
 /// 启动时同步全部官方皮肤。尽力而为，单项失败只记日志，不阻断启动。
 pub fn sync(dirs: &AppDirs) {
+    remove_retired(dirs);
+    remap_retired_active_config(dirs);
     for skin in OFFICIAL_SKINS {
         let bundled = bundled_version(skin);
         let dest = crate::skin::skins_dir(dirs).join(skin.id);
@@ -40,6 +59,69 @@ pub fn sync(dirs: &AppDirs) {
                 }
             }
         }
+    }
+}
+
+/// 移除退役官方皮肤的 skins/ 目录（仅普通目录；junction / symlink / 普通文件
+/// 一律不动）。旧版应用装过、新版不再分发的皮肤由此清理出列表。
+fn remove_retired(dirs: &AppDirs) {
+    let skins = crate::skin::skins_dir(dirs);
+    for id in RETIRED_SKIN_IDS {
+        let dest = skins.join(id);
+        let Ok(meta) = std::fs::symlink_metadata(&dest) else {
+            continue;
+        };
+        if meta.file_type().is_symlink() || !meta.is_dir() {
+            continue;
+        }
+        match std::fs::remove_dir_all(&dest) {
+            Ok(()) => log::info!("official skin {id:?}: retired, removed from skins/"),
+            Err(e) => log::warn!("official skin {id:?}: retire removal failed: {e}"),
+        }
+    }
+}
+
+/// release 构建把已退役的内置默认皮肤（`default`，原内置 React 界面）迁移到
+/// 出厂默认 fluent；dev（debug）构建保留 default——内置界面前端开发走
+/// `bun dev`，需要能切回去。
+fn should_migrate_deprecated_default(active: &str, debug_build: bool) -> bool {
+    !debug_build && active == crate::skin::DEFAULT_SKIN_ID
+}
+
+/// appearance.json 的 skin 指向退役皮肤 / 已废弃的内置默认皮肤时改指出厂
+/// 默认皮肤，迁移体验更连贯。直接文件读写：本函数在主窗口创建前、
+/// ConfigStore 装配前执行。
+fn remap_retired_active_config(dirs: &AppDirs) {
+    let file = dirs.config_file("appearance");
+    let Ok(text) = std::fs::read_to_string(&file) else {
+        return;
+    };
+    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return;
+    };
+    let Some(active) = value
+        .get("skin")
+        .and_then(|s| s.as_str())
+        .map(str::to_string)
+    else {
+        return;
+    };
+    let retired = RETIRED_SKIN_IDS.contains(&active.as_str());
+    let deprecated_default =
+        should_migrate_deprecated_default(&active, cfg!(debug_assertions));
+    if !retired && !deprecated_default {
+        return;
+    }
+    if retired && crate::skin::skins_dir(dirs).join(&active).exists() {
+        return; // 开发联接等仍可用，不动
+    }
+    value["skin"] = serde_json::Value::String(wallpaper_core::config::FACTORY_SKIN_ID.into());
+    match serde_json::to_string_pretty(&value) {
+        Ok(pretty) => {
+            let _ = std::fs::write(&file, pretty);
+            log::info!("appearance.skin {active:?} retired, remapped to factory default");
+        }
+        Err(e) => log::warn!("remap retired appearance.skin failed: {e}"),
     }
 }
 
@@ -243,6 +325,84 @@ mod tests {
         assert!(content.contains("0.1.0"));
 
         let _ = fs::remove_dir_all(root);
+    }
+
+    /// 退役皮肤清理：普通目录删除、联接与无关皮肤保留、配置改指出厂默认。
+    #[test]
+    fn retired_skins_removed_and_config_remapped() {
+        let (dirs, root) = temp_dirs("retired");
+        let skins = crate::skin::skins_dir(&dirs);
+        fs::create_dir_all(&skins).unwrap();
+
+        // 退役皮肤（普通目录）+ 无关皮肤 + （Windows）退役皮肤的联接
+        let retired = skins.join("bento");
+        fs::create_dir_all(&retired).unwrap();
+        fs::write(retired.join("skin.json"), b"{}").unwrap();
+        let custom = skins.join("custom");
+        fs::create_dir_all(&custom).unwrap();
+
+        #[cfg(windows)]
+        let (paper_link, paper_real) = {
+            let real = root.join("paper-src");
+            fs::create_dir_all(&real).unwrap();
+            let link = skins.join("paper");
+            let status = std::process::Command::new("cmd")
+                .args(["/C", "mklink", "/J"])
+                .arg(&link)
+                .arg(&real)
+                .status()
+                .expect("run mklink");
+            assert!(status.success(), "mklink /J failed");
+            (link, real)
+        };
+
+        // 配置指向退役皮肤
+        let appearance = dirs.config_file("appearance");
+        fs::create_dir_all(appearance.parent().expect("config file has a parent")).unwrap();
+        fs::write(
+            &appearance,
+            serde_json::json!({ "theme": "zinc", "mode": "dark", "skin": "bento" }).to_string(),
+        )
+        .unwrap();
+
+        remove_retired(&dirs);
+        remap_retired_active_config(&dirs);
+
+        assert!(!retired.exists(), "retired skin dir should be removed");
+        assert!(custom.exists(), "unrelated skin must stay");
+        #[cfg(windows)]
+        {
+            assert!(paper_link.exists(), "junction must stay");
+            assert!(paper_real.exists(), "junction target must stay");
+        }
+        let skin: serde_json::Value = serde_json::from_str(&fs::read_to_string(&appearance).unwrap())
+            .unwrap();
+        assert_eq!(skin["skin"], wallpaper_core::config::FACTORY_SKIN_ID);
+
+        // 联接仍在（目录存在）时配置不动
+        #[cfg(windows)]
+        {
+            fs::write(
+                &appearance,
+                serde_json::json!({ "skin": "paper" }).to_string(),
+            )
+            .unwrap();
+            remap_retired_active_config(&dirs);
+            let skin: serde_json::Value =
+                serde_json::from_str(&fs::read_to_string(&appearance).unwrap()).unwrap();
+            assert_eq!(skin["skin"], "paper");
+        }
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    /// 已废弃的内置默认皮肤：release 迁移到出厂默认，debug 保留（内置界面开发）。
+    #[test]
+    fn deprecated_default_migrated_only_in_release() {
+        assert!(should_migrate_deprecated_default("default", false));
+        assert!(!should_migrate_deprecated_default("default", true));
+        assert!(!should_migrate_deprecated_default("fluent", false));
+        assert!(!should_migrate_deprecated_default("custom", false));
     }
 
     #[test]

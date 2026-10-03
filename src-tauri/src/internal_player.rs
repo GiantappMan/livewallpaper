@@ -1024,6 +1024,16 @@ impl EngineHost for InternalPlayerController {
         crate::paths::resolve_mpv_path(&wallpaper_core::AppDirs::resolve())
     }
 
+    fn libmpv_path(&self) -> std::path::PathBuf {
+        if let Ok(dir) = self.app.path().resource_dir() {
+            let p = dir.join("assets/players/libmpv/libmpv-2.dll");
+            if p.exists() {
+                return p;
+            }
+        }
+        crate::paths::resolve_libmpv_path(&wallpaper_core::AppDirs::resolve())
+    }
+
     fn default_cover(&self) -> std::path::PathBuf {
         if let Ok(dir) = self.app.path().resource_dir() {
             let p = dir.join("assets/default_cover.webp");

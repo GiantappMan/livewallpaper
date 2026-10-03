@@ -372,7 +372,12 @@
     const btn = el("button", { class: "select-btn", type: "button" });
     const renderLabel = () => {
       const cur = options.find((o) => String(o.value) === String(value));
-      btn.innerHTML = `<span>${cur ? cur.label : ""}</span>${icon("chevron", 13)}`;
+      // label 可能含外部数据（如显示器名 deviceName），必须走 textContent，不可进 innerHTML
+      btn.innerHTML = "";
+      btn.append(el("span", {}, cur ? cur.label : ""));
+      const ic = el("span", { class: "select-ico" });
+      ic.innerHTML = icon("chevron", 13);
+      btn.append(ic);
     };
     renderLabel();
     const body = el("div", { class: "select-menu" });
@@ -1005,7 +1010,7 @@
         }
         if (type === 3) {
           box.append(fieldRow(SC.t("set.player"),
-            selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
+            selectEl([{ value: 0, label: SC.t("set.engine0") }, { value: 3, label: SC.t("set.engine3") }, { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") }], cur.videoPlayer, (v) => { cur.videoPlayer = Number(v); })));
           box.append(fieldRow(SC.t("set.hwdec"), switchEl(cur.hardwareDecoding, (v) => { cur.hardwareDecoding = v; }), SC.t("set.hwdecHint")));
           box.append(fieldRow(SC.t("set.panscan"), switchEl(cur.isPanScan, (v) => { cur.isPanScan = v; }), SC.t("set.panscanHint")));
         }
@@ -1039,7 +1044,7 @@
     // 0 = 默认：解析到全局默认视频引擎（后端默认 System = 2）
     return setting.videoPlayer === 0
       ? ((SC.state.cfg && SC.state.cfg.Wallpaper && SC.state.cfg.Wallpaper.defaultVideoPlayer) || 0)
-      : setting.videoPlayer; // 1 = MPV，2 = Web
+      : setting.videoPlayer; // 1 = MPV，2 = Web，3 = 内嵌 mpv（libmpv）
   }
 
   // 预览渲染方式：meta.type 优先、URL 兜底（演示模式 mock 的 fileUrl 是 SVG data URI）
@@ -1170,7 +1175,7 @@
         if (multi) parts.push(`${idx + 1} / ${members.length}`);
         if (kind === "video") {
           const eng = resolvedEngine(m);
-          parts.push(SC.t("pv.engine", SC.t(eng === 1 ? "set.engine1" : eng === 2 ? "set.engine2" : "set.engine0")));
+          parts.push(SC.t("pv.engine", SC.t(eng === 1 ? "set.engine1" : eng === 2 ? "set.engine2" : eng === 3 ? "set.engine3" : "set.engine0")));
           if (eng === 1) parts.push(SC.t("pv.engineNote"));
         }
         if (kind === "web" && m.setting && m.setting.enableMouseEvent === false) parts.push(SC.t("pv.mouseOff"));
@@ -2388,7 +2393,7 @@
         ], c.coveredBehavior, (v) => { c.coveredBehavior = Number(v); SC.saveConfig("Wallpaper", { coveredBehavior: Number(v) }); })],
       ["play", SC.t("cfg.player"), "",
         selectEl([
-          { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
+          { value: 3, label: SC.t("set.engine3") }, { value: 2, label: SC.t("set.engine2") }, { value: 1, label: SC.t("set.engine1") },
         ], c.defaultVideoPlayer, (v) => { c.defaultVideoPlayer = Number(v); SC.saveConfig("Wallpaper", { defaultVideoPlayer: Number(v) }); syncMpv(); })],
       ["restore", SC.t("cfg.keep"), SC.t("cfg.keepHint"),
         switchEl(c.keepWallpaper, (v) => { c.keepWallpaper = v; SC.saveConfig("Wallpaper", { keepWallpaper: v }); })],
@@ -2475,7 +2480,9 @@
       el("div", { class: "card-row" },
         el("span", { class: "card-row-ico" }, (() => { const s = el("span"); s.innerHTML = icon("brush", 17); return s; })()),
         el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("cfg.skins")), el("p", { class: "card-hint" }, SC.t("cfg.skinHint"))),
-        el("button", { class: "btn btn-sm", onclick: () => SC.openSkinsFolder() }, SC.t("cfg.skinOpen"))),
+        el("span", { class: "card-row-tail" },
+          el("button", { class: "btn btn-sm", onclick: () => SC.showCustomSkinDoc() }, SC.t("cfg.skinCustom")),
+          el("button", { class: "btn btn-sm", onclick: () => SC.openSkinsFolder() }, SC.t("cfg.skinOpen")))),
       el("div", { class: "card-sep" }),
       grid,
       el("p", { class: "cfg-note" }, SC.t("cfg.about") + " · " + SC.meta.brand + " v" + SC.meta.version)));
@@ -2568,9 +2575,12 @@
   function screenLabel(s) { return s.deviceName || String((s.index || 0) + 1); }
   // 屏块宽高比按 bounds（"x, y, w, h"）等比推出，解析失败回退 16:9
   function boundsRatio(s) {
-    const m = /(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/.exec(s.bounds || "");
+    // 正则 match（非命令执行）：结果只用于计算屏块像素宽度
+    const m = (s.bounds || "").match(/(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/);
     const w = m ? parseFloat(m[1]) : 0, h = m ? parseFloat(m[2]) : 0;
-    return w > 0 && h > 0 ? w / h : 16 / 9;
+    const ratio = w > 0 && h > 0 ? w / h : 16 / 9;
+    // 显式夹取：返回值恒为 [0.25, 4] 内的有限数字，外部数据不以字符串形态外流
+    return Number.isFinite(ratio) ? Math.min(4, Math.max(0.25, ratio)) : 16 / 9;
   }
 
   // 选择/取消屏幕并重渲染 Dock；换目标时清掉上一屏的进度残值，避免闪现旧时间

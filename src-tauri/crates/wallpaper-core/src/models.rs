@@ -33,6 +33,8 @@ pub enum VideoPlayer {
     Mpv = 1,
     /// v4 语义：应用内嵌 WebView 播放器窗口（v3 为独立 WPF 播放器进程）。
     System = 2,
+    /// v4 新增：进程内 libmpv（libmpv-2.dll + wid 窗口内嵌，随安装包内置）。
+    Libmpv = 3,
 }
 
 /// 播放列表播放模式。

@@ -30,6 +30,10 @@ impl Default for ConfigGeneral {
     }
 }
 
+/// 出厂默认生效的皮肤 id（Win11 Fluent，随安装包内置分发）。`default`
+/// 表示内置界面，不是出厂值。
+pub const FACTORY_SKIN_ID: &str = "fluent";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ConfigAppearance {
@@ -44,7 +48,7 @@ impl Default for ConfigAppearance {
         Self {
             theme: "zinc".into(),
             mode: "dark".into(),
-            skin: "default".into(),
+            skin: FACTORY_SKIN_ID.into(),
         }
     }
 }

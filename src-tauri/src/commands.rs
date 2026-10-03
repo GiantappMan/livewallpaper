@@ -1208,6 +1208,8 @@ pub struct MpvStatus {
     pub available: bool,
     pub path: String,
     pub downloading: bool,
+    /// 内嵌 mpv（libmpv-2.dll，随安装包内置）是否可用。
+    pub libmpv_available: bool,
 }
 
 #[tauri::command]
@@ -1223,6 +1225,7 @@ pub(crate) fn mpv_status_inner(st: &AppState) -> MpvStatus {
         available: path.exists(),
         path: path.to_string_lossy().into_owned(),
         downloading: crate::mpv_download::in_progress(),
+        libmpv_available: st.player.libmpv_path().exists(),
     }
 }
 
@@ -1343,6 +1346,13 @@ pub fn open_skins_folder(app: AppHandle) -> Result<()> {
     let _ = std::fs::create_dir_all(&dir);
     let _ = wallpaper_core::system::reveal_in_explorer(&dir);
     Ok(())
+}
+
+/// 自定义皮肤开发指南全文（Markdown）。设置页「自定义皮肤」弹窗展示，
+/// 供用户复制给 AI 生成皮肤。文档随源码维护：docs/5.自定义皮肤指南.md。
+#[tauri::command]
+pub fn get_custom_skin_doc() -> Result<String> {
+    Ok(include_str!("../../docs/5.自定义皮肤指南.md").to_string())
 }
 
 /// Appearance 配置按字段合并（保留 theme / mode，仅更新传入字段）。

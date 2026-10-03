@@ -77,7 +77,12 @@ export default function Page() {
             }
             setMpvProgress(null);
             if (event.state === "done") {
-                setMpvStatus({ available: true, path: event.path, downloading: false });
+                setMpvStatus((prev) => ({
+                    available: true,
+                    path: event.path,
+                    downloading: false,
+                    libmpvAvailable: prev?.libmpvAvailable ?? false,
+                }));
                 toast.success(dictionary['settings'].mpv_download_success);
                 // 重载页面让库扫描/封面生成立即用上 mpv（与 refresh-page 行为一致）
                 setTimeout(() => window.location.reload(), 1200);
@@ -256,11 +261,17 @@ export default function Page() {
                                                     {/* <SelectItem value="0">{dictionary['local'].default_player}</SelectItem> */}
                                                     <SelectItem value="1">{dictionary['local'].mpv_player}</SelectItem>
                                                     <SelectItem value="2">{dictionary['local'].system_player}</SelectItem>
+                                                    <SelectItem value="3">{dictionary['local'].libmpv_player}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>
                                     )}
                                 />
+                                {defaultVideoPlayer === VideoPlayer.Libmpv_Player && mpvStatus && !mpvStatus.libmpvAvailable && (
+                                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                        {dictionary['settings'].libmpv_missing_hint}
+                                    </p>
+                                )}
                                 {defaultVideoPlayer === VideoPlayer.MPV_Player && mpvStatus && (
                                     <div className="mt-1 space-y-2">
                                         {!mpvStatus.available && (

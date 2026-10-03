@@ -38,7 +38,7 @@ bun dev       # 根目录一键启动（Vite + Rust + 应用）
 |---|---|---|
 | 外壳 | C# WPF + WebView2 | Tauri 2（Rust + 系统 WebView2） |
 | UI | Next.js 14 静态导出 | Vite + React 18 + Tailwind + shadcn/ui |
-| 视频引擎 | 外部 mpv.exe / WPF 播放器进程（命名管道 IPC） | mpv（命名管道 IPC）/ 内置 WebView 播放器窗口 |
+| 视频引擎 | 外部 mpv.exe / WPF 播放器进程（命名管道 IPC） | 内嵌 libmpv（进程内渲染，DLL 随包内置）/ mpv.exe（命名管道 IPC）/ 内置 WebView 播放器窗口 |
 | 桌面嵌入 | WorkerW + SetParent | WorkerW + SetParent（windows-rs） |
 | 静态壁纸 | IDesktopWallpaper COM | IDesktopWallpaper COM（windows-rs） |
 | 安装包 | Inno Setup | NSIS（tauri bundle） |
@@ -53,6 +53,7 @@ bun dev       # 根目录一键启动（Vite + Rust + 应用）
     ├── src/                       # Tauri 应用层（命令 / 托盘 / 事件 / 内置播放器）
     ├── crates/wallpaper-core/     # 壁纸引擎（纯 Rust，无 Tauri 依赖）
     ├── assets/players/mpv/        # mpv.exe 放置处（构建时下载，见开发文档）
+    ├── assets/players/libmpv/     # libmpv-2.dll 放置处（内嵌 mpv，构建时下载）
     └── tauri.conf.json
 ```
 

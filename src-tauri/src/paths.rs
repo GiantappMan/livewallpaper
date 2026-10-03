@@ -29,6 +29,27 @@ pub fn resolve_mpv_path(dirs: &AppDirs) -> PathBuf {
     PathBuf::new()
 }
 
+/// 内嵌 libmpv 的 libmpv-2.dll 探测，顺序同 mpv.exe（资源目录由调用方先行探测）：
+/// exe 旁 assets → 开发模式源码树 → 数据目录 players/libmpv/（手动放置）。
+pub fn resolve_libmpv_path(dirs: &AppDirs) -> PathBuf {
+    let candidates = [
+        std::env::current_exe().ok().and_then(|exe| {
+            let p = exe.parent().unwrap().join("assets/players/libmpv/libmpv-2.dll");
+            p.exists().then_some(p)
+        }),
+        Some(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("assets/players/libmpv/libmpv-2.dll"),
+        ),
+        Some(dirs.root.join("players/libmpv/libmpv-2.dll")),
+    ];
+    candidates
+        .into_iter()
+        .flatten()
+        .find(|p| p.exists())
+        .unwrap_or_default()
+}
+
 pub fn resolve_default_cover() -> PathBuf {
     if let Ok(exe) = std::env::current_exe() {
         let p = exe.parent().unwrap().join("assets/default_cover.webp");
@@ -52,6 +73,10 @@ pub struct HeadlessHost;
 impl EngineHost for HeadlessHost {
     fn mpv_path(&self) -> PathBuf {
         resolve_mpv_path(&AppDirs::resolve())
+    }
+
+    fn libmpv_path(&self) -> PathBuf {
+        resolve_libmpv_path(&AppDirs::resolve())
     }
 
     fn default_cover(&self) -> PathBuf {

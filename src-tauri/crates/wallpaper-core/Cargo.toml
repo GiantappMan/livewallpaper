@@ -25,6 +25,10 @@ thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros", "net", "io-util", "fs", "process"] }
 uuid = { version = "1", features = ["v4"] }
 
+[dev-dependencies]
+# 测试用 logger（libmpv 端到端冒烟转发 mpv 日志到 stderr）
+log = { version = "0.4", features = ["std"] }
+
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [
   "Win32_Foundation",

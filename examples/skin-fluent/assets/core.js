@@ -84,7 +84,7 @@
       "set.duration": "播放时长", "set.durationHint": "该壁纸在播放列表中停留的时间（时:分）",
       "set.playMode": "播放模式", "set.order": "顺序播放", "set.random": "随机播放",
       "set.mouse": "鼠标交互", "set.mouseHint": "允许壁纸响应鼠标移动与点击",
-      "set.player": "视频引擎", "set.engine0": "默认", "set.engine1": "MPV 播放器", "set.engine2": "Web 播放器",
+      "set.player": "视频引擎", "set.engine0": "默认", "set.engine1": "MPV 播放器", "set.engine2": "Web 播放器", "set.engine3": "内嵌 MPV 播放器",
       "set.hwdec": "硬件解码", "set.hwdecHint": "显著降低播放视频时的 CPU 占用",
       "set.panscan": "铺满拉伸", "set.panscanHint": "裁剪画面以铺满整个屏幕",
       "set.fit": "契合度", "set.fit0": "居中", "set.fit1": "平铺", "set.fit2": "拉伸", "set.fit3": "适应", "set.fit4": "填充", "set.fit5": "跨屏",
@@ -119,6 +119,7 @@
       "cfg.mode": "外观模式", "cfg.modeSys": "跟随系统", "cfg.modeLight": "浅色", "cfg.modeDark": "深色",
       "cfg.skins": "皮肤", "cfg.skinHint": "皮肤可整体更换界面风格；app 型替换界面，style 型覆盖样式",
       "cfg.skinOpen": "打开皮肤目录", "cfg.skinCurrent": "使用中", "cfg.skinInvalid": "不可用", "cfg.skinApplied": "已应用「{0}」",
+      "cfg.skinCustom": "自定义皮肤", "cfg.skinDocHint": "把开发指南全文复制给任意 AI（ChatGPT / Claude 等），按规范生成皮肤文件后放入皮肤目录即可使用。", "cfg.skinDocCopy": "复制全文", "cfg.skinDocCopied": "已复制全文，可粘贴给 AI 生成皮肤",
       "cfg.about": "关于本皮肤", "cfg.reloadHint": "部分选项保存后界面会自动刷新",
       "about.title": "关于", "about.logs": "打开日志目录", "about.feedback": "问题反馈", "about.github": "项目主页",
       "about.review": "商店好评", "about.star": "点个 Star", "about.author": "{0} 出品",
@@ -178,7 +179,7 @@
       "set.duration": "Duration", "set.durationHint": "How long this wallpaper stays in a playlist (hh:mm)",
       "set.playMode": "Play mode", "set.order": "In order", "set.random": "Random",
       "set.mouse": "Mouse interaction", "set.mouseHint": "Let the wallpaper respond to mouse",
-      "set.player": "Video engine", "set.engine0": "Default", "set.engine1": "MPV player", "set.engine2": "Web player",
+      "set.player": "Video engine", "set.engine0": "Default", "set.engine1": "MPV player", "set.engine2": "Web player", "set.engine3": "Embedded MPV player",
       "set.hwdec": "Hardware decoding", "set.hwdecHint": "Greatly reduces CPU usage for video",
       "set.panscan": "Fill & crop", "set.panscanHint": "Crop the frame to fill the screen",
       "set.fit": "Fit", "set.fit0": "Center", "set.fit1": "Tile", "set.fit2": "Stretch", "set.fit3": "Fit", "set.fit4": "Fill", "set.fit5": "Span",
@@ -213,6 +214,7 @@
       "cfg.mode": "Theme mode", "cfg.modeSys": "System", "cfg.modeLight": "Light", "cfg.modeDark": "Dark",
       "cfg.skins": "Skins", "cfg.skinHint": "Skins restyle the whole app; app skins replace the UI, style skins overlay CSS",
       "cfg.skinOpen": "Open skins folder", "cfg.skinCurrent": "In use", "cfg.skinInvalid": "Invalid", "cfg.skinApplied": "Applied “{0}”",
+      "cfg.skinCustom": "Custom skin", "cfg.skinDocHint": "Copy this guide to any AI (ChatGPT / Claude…) to generate a skin, then drop the files into the skins folder.", "cfg.skinDocCopy": "Copy all", "cfg.skinDocCopied": "Copied — paste it to your AI to generate a skin",
       "cfg.about": "About this skin", "cfg.reloadHint": "Some options refresh the UI after saving",
       "about.title": "About", "about.logs": "Open log folder", "about.feedback": "Feedback", "about.github": "Homepage",
       "about.review": "Rate the app", "about.star": "Star on GitHub", "about.author": "Made by {0}",
@@ -895,6 +897,60 @@
     await client.api.openSkinsFolder();
   }
 
+  /** 自定义皮肤开发指南全文（后端内嵌的 Markdown，见 docs/5.自定义皮肤指南.md） */
+  async function customSkinDoc() {
+    if (demo) return `# ${t("cfg.skinCustom")}\n\n${t("cfg.skinDocHint")}`;
+    try {
+      return await window.__TAURI__.core.invoke("get_custom_skin_doc");
+    } catch (e) {
+      toast(t("common.opFailed", errText(e)), "err");
+      return null;
+    }
+  }
+
+  /** 写剪贴板：优先 async Clipboard API，失败回退 execCommand */
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.append(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+      } catch { return false; }
+    }
+  }
+
+  /** 「自定义皮肤」弹窗：指南全文 + 一键复制（粘贴给 AI 生成皮肤） */
+  async function showCustomSkinDoc() {
+    const doc = await customSkinDoc();
+    if (doc === null) return;
+    const overlay = el("div", { class: "sc-modal-overlay" },
+      el("div", { class: "sc-modal sc-modal-doc" },
+        el("div", { class: "sc-modal-title" }, t("cfg.skinCustom")),
+        el("div", { class: "sc-modal-body sc-doc-hint" }, t("cfg.skinDocHint")),
+        el("pre", { class: "sc-doc-pre", tabIndex: 0 }, doc),
+        el("div", { class: "sc-modal-actions" },
+          el("button", { class: "sc-btn", onclick: () => openSkinsFolder() }, t("cfg.skinOpen")),
+          el("button", {
+            class: "sc-btn is-primary",
+            onclick: async () => {
+              const ok = await copyText(doc);
+              toast(ok ? t("cfg.skinDocCopied") : t("common.opFailed", "clipboard"), ok ? "ok" : "err");
+            },
+          }, t("cfg.skinDocCopy")),
+          el("button", { class: "sc-btn", onclick: () => overlay.remove() }, t("common.close")))));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+    document.body.append(overlay);
+  }
+
   function openUrl(url) {
     if (demo) { window.open(url, "_blank"); return; }
     client.api.openUrl(url);
@@ -1205,7 +1261,7 @@
     // mpv
     mpvStatus, mpvDownload, mpvCancel, mpvFolder, onMpvEvent,
     // 皮肤
-    listSkins, applySkin, openSkinsFolder,
+    listSkins, applySkin, openSkinsFolder, showCustomSkinDoc,
     // 系统 / 链接
     openUrl, openStoreReview, openLogs, exitApp, hubUrl, communityLogin,
     HUB_ADDRESS,

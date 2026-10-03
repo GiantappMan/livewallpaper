@@ -14,6 +14,10 @@ pub trait EngineHost: Send + Sync {
 
     /// 外部 mpv.exe 的路径（空 PathBuf 表示不可用）。
     fn mpv_path(&self) -> PathBuf;
+    /// 内嵌 libmpv 的 `libmpv-2.dll` 路径（空 PathBuf 表示不可用）。
+    fn libmpv_path(&self) -> PathBuf {
+        PathBuf::new()
+    }
     fn default_cover(&self) -> PathBuf;
 
     // ---- 播放器工厂 ----

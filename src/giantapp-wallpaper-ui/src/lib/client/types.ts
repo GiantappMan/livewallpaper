@@ -23,6 +23,8 @@ export enum VideoPlayer {
   Default_Player,
   MPV_Player,
   System_Player,
+  /** 内嵌 mpv：libmpv（libmpv-2.dll）进程内渲染，随安装包内置 */
+  Libmpv_Player,
 }
 
 export enum PlayMode {
@@ -259,6 +261,8 @@ export type MpvStatus = {
   available: boolean;
   path: string;
   downloading: boolean;
+  /** 内嵌 mpv（libmpv-2.dll）是否可用 */
+  libmpvAvailable: boolean;
 };
 
 export type MpvDownloadEvent =

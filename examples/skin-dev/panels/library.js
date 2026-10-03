@@ -214,6 +214,7 @@
     const labWallpaper = el("select", { style: { maxWidth: "280px" } }, el("option", { value: "" }, "加载壁纸库…"));
     const labEngine = el("select", {},
       el("option", { value: "0" }, "引擎：跟随壁纸设置"),
+      el("option", { value: "3" }, "引擎：内嵌 mpv（libmpv）"),
       el("option", { value: "1" }, "引擎：mpv"),
       el("option", { value: "2" }, "引擎：内嵌 WebView"),
     );
