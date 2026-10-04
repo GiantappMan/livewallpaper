@@ -105,6 +105,8 @@
       "pause": "Pausar",
       "play": "Reproducir",
       "play_list": "Lista de reproducción",
+      "overlay_time": "Superponer hora",
+      "overlay_time_description": "Muestra un reloj con la hora del sistema en la esquina superior derecha",
       "play_mode": "Modo de reproducción",
       "play_mode_description": "Establece cómo cambiar fondos de pantalla en la lista",
       "play_mode_order": "Reproducir en orden",

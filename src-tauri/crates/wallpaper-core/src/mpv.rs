@@ -6,6 +6,7 @@
 
 use crate::host::EngineHost;
 use crate::models::VideoPlayer;
+use crate::overlay::{clock_ass_now, OVERLAY_ID};
 use crate::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory};
 use crate::system::workerw;
 use anyhow::{anyhow, Context, Result};
@@ -56,6 +57,54 @@ mod lines {
     }
 }
 
+/// 单条 IPC 连接上的一次请求-响应（跳过事件行），5s 超时视为连接损坏。
+/// [`MpvPlayer::request`] 与叠加任务（独占连接）共用。
+async fn conn_request(conn: &mut IpcConn, command: Value) -> Result<Value> {
+    let id = conn.next_id;
+    conn.next_id += 1;
+
+    // request_id 必须是整数（mpv 新版已弃用字符串形式）
+    let payload = json!({"command": command, "request_id": id});
+    let mut bytes = serde_json::to_string(&payload)?.into_bytes();
+    bytes.push(b'\n');
+
+    if let Err(e) = conn.writer.write_all(&bytes).await {
+        return Err(anyhow!("mpv write failed: {e}"));
+    }
+    let _ = conn.writer.flush().await;
+
+    let mut line = String::new();
+    loop {
+        line.clear();
+        let read = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            conn.reader.buf.read_line(&mut line),
+        )
+        .await;
+        match read {
+            Ok(Ok(0)) => return Err(anyhow!("mpv ipc closed")),
+            Ok(Ok(_)) => {}
+            Ok(Err(e)) => return Err(anyhow!("mpv read failed: {e}")),
+            Err(_) => return Err(anyhow!("mpv ipc timeout")),
+        }
+
+        let Ok(value) = serde_json::from_str::<Value>(&line) else {
+            continue;
+        };
+        let resp_id = value
+            .get("request_id")
+            .and_then(|v| v.as_u64());
+        if resp_id != Some(conn.next_id.wrapping_sub(1)) {
+            continue; // 事件或错位响应（按发起顺序串行匹配）
+        }
+        return match value.get("error").and_then(|v| v.as_str()) {
+            Some("success") => Ok(value.get("data").cloned().unwrap_or(Value::Null)),
+            Some(err) => Err(anyhow!("mpv: {err}")),
+            None => Ok(Value::Null),
+        };
+    }
+}
+
 pub struct MpvPlayer {
     pipe_full_name: String,
     ipc: Ipc,
@@ -67,6 +116,8 @@ pub struct MpvPlayer {
     pub screen: u32,
     /// false = 独立窗口模式（attach 不嵌 WorkerW，启动即可见）。
     embed_desktop: bool,
+    /// 时间叠加更新任务（每秒经 IPC 重发 osd-overlay）；None = 未开启。
+    overlay_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
 }
 
 impl MpvPlayer {
@@ -136,6 +187,7 @@ impl MpvPlayer {
             pid_hint: 0,
             screen: config.screen,
             embed_desktop: config.embed_desktop,
+            overlay_task: Mutex::new(None),
         };
 
         log::info!("mpv[{}] launched, pid={pid}, embed={}", config.screen, config.embed_desktop);
@@ -159,6 +211,7 @@ impl MpvPlayer {
             pid_hint: snapshot.pid,
             screen,
             embed_desktop: snapshot.embed_desktop,
+            overlay_task: Mutex::new(None),
         };
         log::info!("mpv[{screen}] adopted, pid={}", snapshot.pid);
         Ok(player)
@@ -208,50 +261,39 @@ impl MpvPlayer {
 
     pub async fn request(&self, command: Value) -> Result<Value> {
         let mut conn = self.ipc.inner.lock().await;
-        let id = conn.next_id;
-        conn.next_id += 1;
+        conn_request(&mut conn, command).await
+    }
 
-        // request_id 必须是整数（mpv 新版已弃用字符串形式）
-        let payload = json!({"command": command, "request_id": id});
-        let mut bytes = serde_json::to_string(&payload)?.into_bytes();
-        bytes.push(b'\n');
-
-        if let Err(e) = conn.writer.write_all(&bytes).await {
-            return Err(anyhow!("mpv write failed: {e}"));
+    /// 画面叠加（时间时钟）：开启时任务独占一条 IPC 连接（mpv 支持多客户端，
+    /// 不与控制通道争锁）每秒重发 osd-overlay；关闭时取消任务并清除。
+    async fn apply_overlay(&self, enabled: bool) {
+        if let Some(old) = self.overlay_task.lock().await.take() {
+            old.abort();
         }
-        let _ = conn.writer.flush().await;
-
-        // 读取响应（跳过事件行），5s 超时后标记连接损坏
-        let mut line = String::new();
-        loop {
-            line.clear();
-            let read = tokio::time::timeout(
-                std::time::Duration::from_secs(5),
-                conn.reader.buf.read_line(&mut line),
-            )
-            .await;
-            match read {
-                Ok(Ok(0)) => return Err(anyhow!("mpv ipc closed")),
-                Ok(Ok(_)) => {}
-                Ok(Err(e)) => return Err(anyhow!("mpv read failed: {e}")),
-                Err(_) => return Err(anyhow!("mpv ipc timeout")),
+        let pipe = self.pipe_full_name.clone();
+        if !enabled {
+            // 清除旧叠加（fire-and-forget；接管实例没有 pipe 名时自然跳过）
+            if !pipe.is_empty() {
+                tokio::spawn(async move {
+                    if let Ok(mut conn) = MpvPlayer::connect(&pipe).await {
+                        let _ = conn_request(&mut conn, json!(["osd-overlay", OVERLAY_ID, "none", ""])).await;
+                    }
+                });
             }
-
-            let Ok(value) = serde_json::from_str::<Value>(&line) else {
-                continue;
-            };
-            let resp_id = value
-                .get("request_id")
-                .and_then(|v| v.as_u64());
-            if resp_id != Some(conn.next_id.wrapping_sub(1)) {
-                continue; // 事件或错位响应（按发起顺序串行匹配）
-            }
-            return match value.get("error").and_then(|v| v.as_str()) {
-                Some("success") => Ok(value.get("data").cloned().unwrap_or(Value::Null)),
-                Some(err) => Err(anyhow!("mpv: {err}")),
-                None => Ok(Value::Null),
-            };
+            return;
         }
+        *self.overlay_task.lock().await = Some(tokio::spawn(async move {
+            let Ok(mut conn) = MpvPlayer::connect(&pipe).await else { return };
+            loop {
+                if conn_request(&mut conn, json!(["osd-overlay", OVERLAY_ID, "ass-events", clock_ass_now()]))
+                    .await
+                    .is_err()
+                {
+                    break; // 连接断裂（实例退出），下次 load 会重新开启
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            }
+        }));
     }
 
     pub async fn get_property(&self, name: &str) -> Result<Value> {
@@ -307,6 +349,9 @@ impl MpvPlayer {
 
     /// 优雅退出：quit -> 等待 -> kill。
     pub async fn shutdown(&self) {
+        if let Some(task) = self.overlay_task.lock().await.take() {
+            task.abort();
+        }
         let _ = self.request(json!(["quit"])).await;
         tokio::time::sleep(std::time::Duration::from_millis(300)).await;
         self.kill().await;
@@ -332,13 +377,17 @@ impl PlayerEngine for MpvPlayer {
     }
 
     /// 原地重写播放列表临时文件并 loadlist 换源（进程保持存活，切换近乎即时）。
-    async fn load(&self, source: &MediaSource, _config: &PlayerConfig) -> Result<()> {
+    async fn load(&self, source: &MediaSource, config: &PlayerConfig) -> Result<()> {
         if self.playlist_file.as_os_str().is_empty() {
             // 接管的实例没有自己的临时文件，退回 loadfile 单文件直放
-            return self.loadfile(&source.path).await;
+            self.loadfile(&source.path).await?;
+        } else {
+            write_playlist_file(&self.playlist_file, source)?;
+            self.loadlist(&self.playlist_file).await?;
         }
-        write_playlist_file(&self.playlist_file, source)?;
-        self.loadlist(&self.playlist_file).await
+        // 叠加随设置切换（换源复用路径也走这里，实时生效）
+        self.apply_overlay(config.overlay_time).await;
+        Ok(())
     }
 
     /// 嵌入模式：等待 mpv 主窗口出现并 SetParent 到桌面 WorkerW 层；

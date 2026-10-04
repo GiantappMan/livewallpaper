@@ -105,6 +105,8 @@
     "pause": "Pause",
     "play": "Play",
     "play_list": "Play list",
+    "overlay_time": "Time overlay",
+    "overlay_time_description": "Show a live system-time clock in the top-right corner",
     "play_mode": "Play mode",
     "play_mode_description": "Set how to switch wallpapers in the list",
     "play_mode_order": "Play in order",

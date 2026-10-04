@@ -16,6 +16,7 @@
 
 use crate::host::EngineHost;
 use crate::models::VideoPlayer;
+use crate::overlay::{clock_ass_now, OVERLAY_ID};
 use crate::player::{MediaSource, PlayerConfig, PlayerEngine, PlayerFactory};
 use crate::system::workerw;
 use anyhow::{anyhow, Context, Result};
@@ -73,6 +74,34 @@ struct mpv_event_log_message {
     log_level: c_int,
 }
 
+/// mpv_node_format（client.h）。
+mod node_format {
+    pub const STRING: i32 = 1;
+    pub const INT64: i32 = 4;
+    pub const NODE_ARRAY: i32 = 4;
+}
+
+#[repr(C)]
+union mpv_node_u {
+    string: *mut c_char,
+    flag: c_int,
+    int64: i64,
+    list: *mut mpv_node_list,
+}
+
+#[repr(C)]
+struct mpv_node {
+    u: mpv_node_u,
+    format: i32,
+}
+
+#[repr(C)]
+struct mpv_node_list {
+    num: c_int,
+    values: *mut mpv_node,
+    keys: *mut *mut c_char,
+}
+
 type MpvCreate = unsafe extern "C" fn() -> *mut mpv_handle;
 type MpvInitialize = unsafe extern "C" fn(*mut mpv_handle) -> c_int;
 type MpvTerminateDestroy = unsafe extern "C" fn(*mut mpv_handle);
@@ -84,6 +113,8 @@ type MpvSetPropertyString =
     unsafe extern "C" fn(*mut mpv_handle, *const c_char, *const c_char) -> c_int;
 type MpvGetPropertyString = unsafe extern "C" fn(*mut mpv_handle, *const c_char) -> *mut c_char;
 type MpvCommand = unsafe extern "C" fn(*mut mpv_handle, *mut *mut c_char) -> c_int;
+/// mpv_command_node：参数为 node 数组（osd-overlay 等带结构化参数的命令需要）。
+type MpvCommandNode = unsafe extern "C" fn(*mut mpv_handle, *const mpv_node) -> c_int;
 type MpvRequestLogMessages = unsafe extern "C" fn(*mut mpv_handle, *const c_char) -> c_int;
 type MpvWaitEvent = unsafe extern "C" fn(*mut mpv_handle, c_double) -> *mut mpv_event;
 type MpvFree = unsafe extern "C" fn(*mut c_void);
@@ -100,6 +131,7 @@ struct MpvApi {
     set_property_string: MpvSetPropertyString,
     get_property_string: MpvGetPropertyString,
     command: MpvCommand,
+    command_node: MpvCommandNode,
     request_log_messages: MpvRequestLogMessages,
     wait_event: MpvWaitEvent,
     free: MpvFree,
@@ -151,6 +183,7 @@ unsafe fn load_library_inner(dll_path: &Path) -> Result<MpvApi> {
         set_property_string: sym!("mpv_set_property_string"),
         get_property_string: sym!("mpv_get_property_string"),
         command: sym!("mpv_command"),
+        command_node: sym!("mpv_command_node"),
         request_log_messages: sym!("mpv_request_log_messages"),
         wait_event: sym!("mpv_wait_event"),
         free: sym!("mpv_free"),
@@ -172,6 +205,8 @@ struct LibmpvPlayer {
     /// 独立窗口模式（不嵌 WorkerW）。
     embed_desktop: bool,
     screen: u32,
+    /// 时间叠加更新任务（每 500ms 重发 osd-overlay）；None = 未开启。
+    overlay_task: parking_lot::Mutex<Option<tokio::task::JoinHandle<()>>>,
 }
 
 // mpv client API 保证线程安全（除渲染上下文外），跨线程共享句柄安全。
@@ -222,6 +257,7 @@ impl LibmpvPlayer {
                 window_alive,
                 embed_desktop: config.embed_desktop,
                 screen: config.screen,
+                overlay_task: parking_lot::Mutex::new(None),
             };
             player.load(source, config).await?;
             log::info!(
@@ -297,6 +333,43 @@ impl LibmpvPlayer {
         }
     }
 
+    /// 画面叠加（时间时钟）：开启时启动每 500ms 重发 osd-overlay 的更新任务，
+    /// 关闭时取消任务并清除叠加。叠加按 id 复用（同 id 原子替换内容）。
+    fn apply_overlay(&self, enabled: bool) {
+        let mut task = self.overlay_task.lock();
+        if let Some(old) = task.take() {
+            old.abort();
+        }
+        if !enabled {
+            let api = LIB.get().copied();
+            let mpv = self.handle();
+            if let Some(api) = api {
+                // 清除旧叠加（best-effort，引擎已退出则忽略）
+                let _ = osd_overlay(&api, mpv, OVERLAY_ID, "none", "");
+            }
+            return;
+        }
+        // 任务只持有可克隆的句柄部分；引擎退出（句柄置空）后下一轮自行结束
+        let player = LibmpvPlayer {
+            mpv: self.mpv.clone(),
+            hwnd: 0,
+            window_alive: self.window_alive.clone(),
+            embed_desktop: false,
+            screen: self.screen,
+            overlay_task: parking_lot::Mutex::new(None),
+        };
+        *task = Some(tokio::spawn(async move {
+            let Some(api) = LIB.get().copied() else { return };
+            loop {
+                let text = clock_ass_now();
+                if osd_overlay(&api, player.handle(), OVERLAY_ID, "ass-events", &text).is_err() {
+                    break;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            }
+        }));
+    }
+
     /// 释放 mpv 主句柄（幂等）。terminate_destroy 按文档等待事件泵句柄分离。
     fn teardown(&self) {
         let mpv = self.mpv.swap(std::ptr::null_mut(), Ordering::SeqCst);
@@ -351,6 +424,8 @@ impl PlayerEngine for LibmpvPlayer {
         let path = source.path.display().to_string();
         self.command(&["loadfile", &path, "replace"])?;
         self.set_property("panscan", if config.panscan { "1.0" } else { "0.0" })?;
+        // 叠加随设置切换（换源复用路径也走这里，实时生效）
+        self.apply_overlay(config.overlay_time);
         Ok(())
     }
 
@@ -433,12 +508,17 @@ impl PlayerEngine for LibmpvPlayer {
 
     /// 释放 mpv（阻塞操作放线程池）并请求窗口线程退出。
     async fn shutdown(&self) {
+        // 先停叠加任务（它持有句柄克隆，靠空指针自停，这里提前收掉更干净）
+        if let Some(task) = self.overlay_task.lock().take() {
+            task.abort();
+        }
         let player = LibmpvPlayer {
             mpv: self.mpv.clone(),
             hwnd: self.hwnd,
             window_alive: self.window_alive.clone(),
             embed_desktop: self.embed_desktop,
             screen: self.screen,
+            overlay_task: parking_lot::Mutex::new(None),
         };
         let _ = tokio::task::spawn_blocking(move || {
             player.teardown();
@@ -721,6 +801,44 @@ fn error_text(api: &MpvApi, err: c_int) -> String {
         .into_owned()
 }
 
+// ---------------------------------------------------------------------------
+// 画面叠加（osd-overlay）
+// ---------------------------------------------------------------------------
+
+/// 经 mpv_command_node 发送 osd-overlay（参数含 int64/string 混合，字符串数组
+/// 版 mpv_command 表达不了）。`format` 为 "ass-events" 或清除用的 "none"。
+fn osd_overlay(api: &MpvApi, mpv: *mut mpv_handle, id: i64, format: &str, data: &str) -> Result<()> {
+    if mpv.is_null() {
+        return Err(anyhow!("引擎已退出"));
+    }
+    let cformat = CString::new(format)?;
+    let cdata = CString::new(data)?;
+    let mut nodes = [
+        mpv_node { u: mpv_node_u { int64: id }, format: node_format::INT64 },
+        mpv_node {
+            u: mpv_node_u { string: cformat.as_ptr() as *mut c_char },
+            format: node_format::STRING,
+        },
+        mpv_node {
+            u: mpv_node_u { string: cdata.as_ptr() as *mut c_char },
+            format: node_format::STRING,
+        },
+    ];
+    let mut list = mpv_node_list {
+        num: nodes.len() as c_int,
+        values: nodes.as_mut_ptr(),
+        keys: std::ptr::null_mut(),
+    };
+    let root = mpv_node { u: mpv_node_u { list: &mut list }, format: node_format::NODE_ARRAY };
+    // mpv_command_node 同步拷贝 node 内容，调用返回后本地内存即可释放
+    let err = unsafe { (api.command_node)(mpv, &root) };
+    if err < 0 {
+        Err(anyhow!("osd-overlay 失败: {}", error_text(api, err)))
+    } else {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -766,6 +884,7 @@ mod tests {
             hardware_decoding: false,
             mouse_events: false,
             embed_desktop: false,
+            overlay_time: false,
         }
     }
 
@@ -816,6 +935,11 @@ mod tests {
         let (_, p2) = player.time_pos().await;
         assert!((p1 - p2).abs() < 0.01, "暂停后进度不应推进（{p1} -> {p2}）");
         player.set_paused(false).await.expect("resume");
+
+        // 时间叠加演练：真实走一遍 mpv_command_node / osd-overlay（开 -> 关）
+        player.apply_overlay(true);
+        tokio::time::sleep(std::time::Duration::from_millis(1600)).await;
+        player.apply_overlay(false);
 
         player.shutdown().await;
         assert!(!player.is_alive().await, "shutdown 后应判死");

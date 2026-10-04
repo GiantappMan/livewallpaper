@@ -105,6 +105,8 @@
     "pause": "Pause",
     "play": "Abspielen",
     "play_list": "Wiedergabeliste",
+    "overlay_time": "Zeit-Overlay",
+    "overlay_time_description": "Zeigt eine Uhr mit der Systemzeit in der oberen rechten Ecke",
     "play_mode": "Wiedergabemodus",
     "play_mode_description": "Festlegen, wie die Wallpapers in der Liste wechseln",
     "play_mode_order": "Der Reihe nach",

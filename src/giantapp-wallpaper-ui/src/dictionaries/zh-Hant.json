@@ -105,6 +105,8 @@
     "pause": "暫停",
     "play": "播放",
     "play_list": "播放清單",
+    "overlay_time": "疊加時間",
+    "overlay_time_description": "在畫面右上角顯示即時系統時間時鐘",
     "play_mode": "播放模式",
     "play_mode_description": "設定如何切換清單中的桌布",
     "play_mode_order": "順序播放",

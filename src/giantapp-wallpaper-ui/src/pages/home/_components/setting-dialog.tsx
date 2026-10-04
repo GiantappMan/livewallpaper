@@ -38,6 +38,7 @@ const formSchema = z.object({
     // keepWallpaper: z.boolean(),
     setting: z.object({
         duration: z.string().optional(),
+        overlay: z.object({ time: z.boolean() }).optional(),
         playMode: z.nativeEnum(PlayMode),
         enableMouseEvent: z.boolean(),
         hardwareDecoding: z.boolean(),
@@ -135,6 +136,33 @@ export function SettingDialog(props: SettingDialogProps) {
                                     <FormDescription>
                                         {dictionary['local'].duration_description}
                                     </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                    </>}
+                    {(wallpaperType === WallpaperType.Img ||
+                        wallpaperType === WallpaperType.AnimatedImg ||
+                        wallpaperType === WallpaperType.Video ||
+                        wallpaperType === WallpaperType.Web) && <>
+                        <FormField
+                            control={form.control}
+                            name="setting.overlay.time"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>
+                                            {dictionary['local'].overlay_time}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            {dictionary['local'].overlay_time_description}
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value ?? false}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
                                 </FormItem>
                             )}
                         />

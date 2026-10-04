@@ -53,6 +53,8 @@ pub struct PlayerConfig {
     pub mouse_events: bool,
     /// 窗口是否嵌入桌面（WorkerW）。false = 独立可见窗口（调试 / 预览）。
     pub embed_desktop: bool,
+    /// 画面叠加系统时间时钟（封面"叠加"设置）。
+    pub overlay_time: bool,
 }
 
 /// 播放器实例的可序列化恢复信息（写入屏幕快照，崩溃后供 `restore` 接管）。

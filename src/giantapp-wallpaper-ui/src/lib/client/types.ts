@@ -53,6 +53,8 @@ export interface WallpaperMeta {
 export interface WallpaperSetting {
   /** 播放时长 hh:mm / hh:mm:ss（播放列表项） */
   duration?: string;
+  /** 画面叠加元素（封面"叠加"入口配置；不叠加时不传/字段为 false） */
+  overlay?: { time: boolean };
   /** web/exe：鼠标交互 */
   enableMouseEvent: boolean;
   /** video：硬件解码 */

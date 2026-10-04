@@ -14,6 +14,8 @@ interface CmdPayload {
   panscan?: boolean;
   paused?: boolean;
   percent?: number;
+  /** 画面叠加系统时间时钟（封面"叠加"设置） */
+  overlayTime?: boolean;
 }
 
 const label = window.__TAURI__!.window.getCurrentWindow().label;
@@ -23,6 +25,8 @@ let currentUrl = "";
 // 最近一次的音量/铺满设置：换源 load 未携带时沿用，避免换源后闪断
 let lastVolume = 0;
 let lastPanscan = true;
+// 时间叠加当前态（换源 load 未携带时沿用）
+let lastOverlayTime = false;
 // 期望暂停态（与宿主 WindowInfo.paused 对齐）：命令可能早于媒体元素
 // 创建到达，必须先记住；load 换源、加载失败重试都要遵守，否则
 // 遮挡/手动暂停下会被 autoplay 或重试逻辑重新播起来
@@ -48,6 +52,33 @@ function applyPaused(video: HTMLVideoElement) {
 }
 function fitClass(panscan: boolean) {
   return panscan ? "cover" : "contain";
+}
+
+// 时间叠加：右上角常驻时钟（系统时间，500ms 刷新；样式内联防皮肤样式干扰）
+function setClock(show: boolean) {
+  lastOverlayTime = show;
+  let clock = document.getElementById("wp-clock");
+  const timer = (window as unknown as { __wpClockTimer?: number }).__wpClockTimer;
+  if (!show) {
+    if (timer) clearInterval(timer);
+    clock?.remove();
+    return;
+  }
+  if (!clock) {
+    clock = document.createElement("div");
+    clock.id = "wp-clock";
+    clock.style.cssText =
+      'position:fixed;top:16px;right:24px;z-index:2147483647;pointer-events:none;color:#fff;font:700 42px/1.2 "Microsoft YaHei",sans-serif;text-shadow:0 0 4px #000,0 2px 6px rgba(0,0,0,.7);letter-spacing:1px;';
+    document.body.appendChild(clock);
+    (window as unknown as { __wpClockTimer?: number }).__wpClockTimer = window.setInterval(
+      () => {
+        const c = document.getElementById("wp-clock");
+        if (c) c.textContent = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+      },
+      500
+    );
+  }
+  clock.textContent = new Date().toLocaleTimeString("zh-CN", { hour12: false });
 }
 
 function removeMedia() {
@@ -86,6 +117,7 @@ function load(payload: CmdPayload) {
   const panscan = payload.panscan ?? lastPanscan;
   lastVolume = volume;
   lastPanscan = panscan;
+  setClock(payload.overlayTime ?? lastOverlayTime);
 
   // 媒体 URL 是全量百分号编码的（.mp4 -> %2Emp4），判定前先解码
   let decoded = src;

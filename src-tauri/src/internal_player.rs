@@ -282,9 +282,9 @@ impl InternalPlayerController {
 
     /// 打开（或复用）播放器窗口并加载媒体。不挂载不显示——
     /// 由引擎的 attach_to_desktop 统一处理；复用窗口时保持原状实现无缝换源。
-    fn player_open(&self, screen: u32, url: &str, volume: u32, panscan: bool, embed: bool) -> Result<(), String> {
+    fn player_open(&self, screen: u32, url: &str, volume: u32, panscan: bool, embed: bool, overlay_time: bool) -> Result<(), String> {
         let label = Self::label_player(screen);
-        log::info!("player_open: screen {screen} url={url} volume={volume} panscan={panscan} embed={embed}");
+        log::info!("player_open: screen {screen} url={url} volume={volume} panscan={panscan} embed={embed} overlay={overlay_time}");
         // 窗口本身以不可见方式创建：复用时保持原状（已挂载可见则无缝换源），
         // 全新窗口则等 attach_to_desktop 挂载成功后再显示
         self.ensure_window(&label, WebviewUrl::App("player.html".into()))?;
@@ -297,13 +297,13 @@ impl InternalPlayerController {
         if let Some(info) = self.info_of(&label) {
             info.embed.store(embed, Ordering::SeqCst);
             *info.last_load.lock() = Some(
-                serde_json::json!({ "action": "load", "src": url, "volume": volume, "panscan": panscan, "paused": paused }),
+                serde_json::json!({ "action": "load", "src": url, "volume": volume, "panscan": panscan, "paused": paused, "overlayTime": overlay_time }),
             );
         }
         self.emit_cmd(
             &label,
             "load",
-            serde_json::json!({ "src": url, "volume": volume, "panscan": panscan, "paused": paused }),
+            serde_json::json!({ "src": url, "volume": volume, "panscan": panscan, "paused": paused, "overlayTime": overlay_time }),
         );
         Ok(())
     }
@@ -471,6 +471,25 @@ impl InternalPlayerController {
             webview_top: mouse_hook::chain_top(child),
             input: child,
         })
+    }
+
+    /// 时间叠加注入/清除。页面导航是异步的，eval 命中旧文档会随导航丢失：
+    /// 注入用短周期重试（脚本幂等，重复执行无副作用），清除即时执行即可。
+    fn web_overlay(&self, screen: u32, enabled: bool) {
+        if !enabled {
+            let _ = self.web_eval(screen, OVERLAY_CLOCK_REMOVE_JS);
+            return;
+        }
+        let app = self.app.clone();
+        tauri::async_runtime::spawn(async move {
+            for _ in 0..10 {
+                tokio::time::sleep(Duration::from_millis(700)).await;
+                let Some(window) = app.get_webview_window(&format!("{WEB_PREFIX}{screen}")) else {
+                    return; // 窗口已关闭
+                };
+                let _ = window.eval(OVERLAY_CLOCK_JS);
+            }
+        });
     }
 
     /// 已存活的窗口原地导航到新 URL（不销毁窗口，切换不闪屏）。
@@ -707,6 +726,18 @@ fn err_msg(e: String) -> anyhow::Error {
     anyhow::anyhow!(e)
 }
 
+/// WebView 引擎的媒体源地址：优先显式 url；快照恢复等只有本地路径的场景
+/// 回退生成 media:// 地址（图片叠加壁纸即走此路径）。
+fn media_url_of(source: &MediaSource) -> Option<String> {
+    source
+        .url
+        .clone()
+        .or_else(|| {
+            (!source.path.as_os_str().is_empty())
+                .then(|| crate::urls::path_to_media_url(&source.path))
+        })
+}
+
 #[async_trait::async_trait]
 impl PlayerEngine for WebViewPlayer {
     fn kind(&self) -> &'static str {
@@ -719,10 +750,7 @@ impl PlayerEngine for WebViewPlayer {
 
     /// 复用窗口换源：重发 load 命令（参数随 config 下发，避免换源闪断）。
     async fn load(&self, source: &MediaSource, config: &PlayerConfig) -> anyhow::Result<()> {
-        let url = source
-            .url
-            .clone()
-            .ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
+        let url = media_url_of(source).ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
         self.controller
             .player_open(
                 self.screen,
@@ -730,6 +758,7 @@ impl PlayerEngine for WebViewPlayer {
                 config.volume,
                 config.panscan,
                 self.embed_desktop,
+                config.overlay_time,
             )
             .map_err(err_msg)
     }
@@ -803,12 +832,16 @@ impl PlayerFactory for WebViewPlayerFactory {
         source: &MediaSource,
         config: &PlayerConfig,
     ) -> anyhow::Result<Arc<dyn PlayerEngine>> {
-        let url = source
-            .url
-            .clone()
-            .ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
+        let url = media_url_of(source).ok_or_else(|| anyhow::anyhow!("内嵌播放器需要媒体 URL"))?;
         self.controller
-            .player_open(config.screen, &url, config.volume, config.panscan, config.embed_desktop)
+            .player_open(
+                config.screen,
+                &url,
+                config.volume,
+                config.panscan,
+                config.embed_desktop,
+                config.overlay_time,
+            )
             .map_err(err_msg)?;
         Ok(Arc::new(WebViewPlayer {
             controller: self.controller.clone(),
@@ -848,6 +881,16 @@ struct WebPlayer {
 const MEDIA_PAUSE_JS: &str = "try{document.querySelectorAll('video,audio').forEach(function(m){try{m.pause()}catch(e){}})}catch(e){}";
 const MEDIA_RESUME_JS: &str = "try{document.querySelectorAll('video,audio').forEach(function(m){try{var p=m.play();if(p&&p.catch){p.catch(function(){})}}catch(e){}})}catch(e){}";
 
+/// 时间叠加：右上角常驻时钟（500ms 刷新），样式内联防皮肤样式干扰。
+const OVERLAY_CLOCK_JS: &str = "(function(){var d=document;if(!d.body)return;\
+var e=d.getElementById('__wp_clock');\
+if(!e){e=d.createElement('div');e.id='__wp_clock';\
+e.style.cssText='position:fixed;top:16px;right:24px;z-index:2147483647;pointer-events:none;color:#fff;font:700 42px/1.2 \\'Microsoft YaHei\\',sans-serif;text-shadow:0 0 4px #000,0 2px 6px rgba(0,0,0,.7);letter-spacing:1px;';\
+d.body.appendChild(e);}\
+function t(){var c=document.getElementById('__wp_clock');if(c)c.textContent=new Date().toLocaleTimeString('zh-CN',{hour12:false});}\
+t();if(!window.__wpClockTimer)window.__wpClockTimer=setInterval(t,500);})()";
+const OVERLAY_CLOCK_REMOVE_JS: &str = "(function(){if(window.__wpClockTimer){clearInterval(window.__wpClockTimer);window.__wpClockTimer=null;}var e=document.getElementById('__wp_clock');if(e)e.remove();})()";
+
 #[async_trait::async_trait]
 impl PlayerEngine for WebPlayer {
     fn kind(&self) -> &'static str {
@@ -871,6 +914,8 @@ impl PlayerEngine for WebPlayer {
         self.controller
             .web_set_mouse(self.screen, config.mouse_events)
             .map_err(err_msg)?;
+        // 叠加随设置切换（导航后页面重建，注入带重试）
+        self.controller.web_overlay(self.screen, config.overlay_time);
         // 引擎音量跟随新配置；暂停态由管理器在播放后统一 apply_pause
         self.set_volume(config.volume).await
     }
@@ -977,6 +1022,10 @@ impl PlayerFactory for WebPlayerFactory {
         if let Err(e) = player.set_volume(config.volume).await {
             log::warn!("screen {} web 初始静音设置失败: {e}", config.screen);
         }
+        // 时间叠加（带注入重试，覆盖页面异步加载完成的时机）
+        player
+            .controller
+            .web_overlay(config.screen, config.overlay_time);
         Ok(player)
     }
 

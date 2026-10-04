@@ -62,6 +62,7 @@ async fn libmpv_plays_real_file() {
         hardware_decoding: true,
         mouse_events: false,
         embed_desktop: false, // 全程隐藏窗口，不嵌桌面
+        overlay_time: false,
     };
     let player = factory
         .create(&MediaSource::from_path(&video), &config)

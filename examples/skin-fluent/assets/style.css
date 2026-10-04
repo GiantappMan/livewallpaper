@@ -278,9 +278,12 @@ img { display: block; }
   background: var(--fly, rgba(249, 249, 249, .88)); backdrop-filter: blur(30px) saturate(125%); -webkit-backdrop-filter: blur(30px) saturate(125%);
   border: 1px solid var(--stroke); border-radius: var(--r-lg);
   padding: 4px; box-shadow: var(--shadow-fly); display: none;
+  overflow-y: auto;
 }
 [data-mode="dark"] .select-menu { --fly: rgba(44, 44, 44, .88); }
 .select.is-open .select-menu { display: block; animation: fly-in .18s var(--ease); }
+/* 下方放不下时由 selectEl 计算加 is-up 向上弹出 */
+.select.is-up .select-menu { top: auto; bottom: calc(100% + 6px); }
 .select-item {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 0 10px; height: 32px; border-radius: var(--r-ctl); font-size: 14px; text-align: left; color: var(--ink);
@@ -374,6 +377,15 @@ img { display: block; }
 }
 .wall-card.is-playing .wall-live { display: inline-flex; }
 .wall-type { font-size: 11px; color: var(--ink-3); flex-shrink: 0; }
+/* 叠加设置入口（元信息行、类型徽标左侧） */
+.wall-overlay-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  color: var(--ink-3); background: transparent; cursor: pointer;
+  border: 1px solid var(--stroke); opacity: .75;
+  transition: opacity var(--speed), background var(--speed), color var(--speed);
+}
+.wall-overlay-btn:hover { opacity: 1; color: var(--ink-1); background: rgba(255, 255, 255, .08); }
 .wall-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: var(--card-solid); border-top: 1px solid var(--stroke); }
 .wall-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wall-acts {

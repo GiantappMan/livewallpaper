@@ -119,13 +119,21 @@ impl ScreenManager {
             return Ok(());
         };
         let item = wallpaper.current_item().clone();
+        // 画面叠加（时间时钟等）：见 models::OverlayConfig
+        let overlay_time = item.setting.overlay.as_ref().is_some_and(|o| o.time);
 
-        // 引擎项：解析目标工厂（视频按用户设置 + 可用性兜底；web 按 kind 直取）
+        // 引擎项：解析目标工厂（视频按用户设置 + 可用性兜底；web 按 kind 直取；
+        // 静态图叠加时系统壁纸层动不起来，改经内置 WebView 渲染器显示）
         let engine_factory = match item.meta.wallpaper_type {
             WallpaperType::Video | WallpaperType::AnimatedImg => Some(
                 self.players
                     .resolve(requested_engine(&item, settings))
                     .ok_or_else(|| "无可用视频播放引擎".to_string())?,
+            ),
+            WallpaperType::Img if overlay_time => Some(
+                self.players
+                    .resolve(VideoPlayer::System)
+                    .ok_or_else(|| "无可用叠加渲染器".to_string())?,
             ),
             WallpaperType::Web => Some(
                 self.players
@@ -161,6 +169,15 @@ impl ScreenManager {
         self.item_duration = None;
 
         let result = match item.meta.wallpaper_type {
+            // 叠加开启的静态图走渲染器（engine_factory 已解析为 WebView）
+            WallpaperType::Img if overlay_time => {
+                if reuse_video {
+                    self.render = old_render;
+                } else {
+                    self.cleanup_render(old_render).await;
+                }
+                self.play_video(&item, settings, engine_factory.unwrap()).await
+            }
             WallpaperType::Img => {
                 // 先设新图（系统壁纸层），再撤旧渲染，桌面不出现空档
                 let r = self.play_image(&item).await;
@@ -250,6 +267,7 @@ impl ScreenManager {
             hardware_decoding: item.setting.hardware_decoding,
             mouse_events: item.setting.enable_mouse_event,
             embed_desktop: item.setting.embed_desktop,
+            overlay_time: item.setting.overlay.as_ref().is_some_and(|o| o.time),
         };
         log::info!(
             "play_video screen {} engine={} reuse_available={} file={} url={:?}",

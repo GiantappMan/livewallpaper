@@ -105,6 +105,8 @@
     "pause": "一時停止",
     "play": "再生",
     "play_list": "プレイリスト",
+    "overlay_time": "時刻オーバーレイ",
+    "overlay_time_description": "画面の右上にシステム時刻の時計を表示します",
     "play_mode": "再生モード",
     "play_mode_description": "リスト内の壁紙の切り替え方法を設定",
     "play_mode_order": "順番に再生",

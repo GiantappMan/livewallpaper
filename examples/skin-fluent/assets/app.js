@@ -398,6 +398,19 @@
           String(o.value) === String(value) ? el("span", { class: "select-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 13); return s; })()) : null,
         ));
       }
+      // 空间自适应：默认向下弹；下方放不下且上方更高时向上弹；两个方向都放不下则限高滚动
+      const rect = btn.getBoundingClientRect();
+      const margin = 8;
+      const below = window.innerHeight - rect.bottom - margin;
+      const above = rect.top - margin;
+      const need = options.length * 32 + 12; // 项高 32 + 容器 padding 8 + 边框 2，近似值
+      wrap.classList.remove("is-up");
+      body.style.maxHeight = "";
+      if (need > below) {
+        if (above > below) wrap.classList.add("is-up");
+        const room = Math.max(below, above);
+        if (need > room) body.style.maxHeight = `${Math.max(room, 3 * 32 + 12)}px`; // 最少可见 3 项，其余滚动
+      }
       wrap.classList.add("is-open");
     });
     wrap.append(btn, body);
@@ -559,6 +572,16 @@
       }
       const title = el("div", { class: "wall-meta" },
         el("span", { class: "wall-name", title: w.meta && w.meta.title }, (w.meta && w.meta.title) || w.fileName || "—"),
+        // 叠加设置入口（类型徽标左侧）：打开叠加元素弹窗（时间时钟等）
+        (() => {
+          const b = el("button", {
+            class: "wall-overlay-btn",
+            title: SC.t("set.overlayTitle"),
+            onclick: (e) => { e.stopPropagation(); openOverlayDialog(w); },
+          });
+          b.innerHTML = icon("clock", 12);
+          return b;
+        })(),
         typeBadge);
 
       card.append(cover, playDot, screenChips || "", acts, title);
@@ -1032,6 +1055,33 @@
         box,
         el("div", { class: "dialog-foot" }, saveBtn));
     }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
+  }
+
+  // ---------------------------------------------------------------- 叠加设置
+  // 封面右下角时钟按钮：自定义叠加在壁纸画面上的元素（内置元素暂定时间时钟）。
+  // 保存走 saveWallpaperSetting：正在播放的壁纸由后端即时重放，叠加立即生效。
+  function openOverlayDialog(w) {
+    const s0 = w.setting || SC.defaultSetting();
+    const cur = { time: !!(s0.overlay && s0.overlay.time) };
+    openDialog((sheet, close) => {
+      const box = el("div", { class: "dialog-body" });
+      box.append(fieldRow(SC.t("set.overlayTime"),
+        switchEl(cur.time, (v) => { cur.time = v; }),
+        SC.t("set.overlayTimeHint")));
+      const saveBtn = el("button", { class: "btn btn-accent" }, SC.t("common.save"));
+      saveBtn.addEventListener("click", async () => {
+        saveBtn.classList.add("is-loading");
+        // 关闭态写 null（= 未配置）；其余设置原样保留
+        const next = { ...s0, overlay: cur.time ? { time: true } : null };
+        const ok = await SC.saveWallpaperSetting(w, next);
+        saveBtn.classList.remove("is-loading");
+        if (ok) close(true);
+      });
+      sheet.append(
+        dialogHead(SC.t("set.overlayTitle"), SC.t("set.overlaySub", (w.meta && w.meta.title) || ""), close),
+        box,
+        el("div", { class: "dialog-foot" }, saveBtn));
+    });
   }
 
   // ---------------------------------------------------------------- 预览（本地库）

@@ -105,6 +105,8 @@
     "pause": "Pausar",
     "play": "Reproduzir",
     "play_list": "Lista de reprodução",
+    "overlay_time": "Sobrepor hora",
+    "overlay_time_description": "Mostra um relógio com a hora do sistema no canto superior direito",
     "play_mode": "Modo de reprodução",
     "play_mode_description": "Define como alternar os papéis de parede da lista",
     "play_mode_order": "Em ordem",

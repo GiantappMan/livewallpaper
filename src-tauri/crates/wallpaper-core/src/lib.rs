@@ -10,6 +10,7 @@ pub mod host;
 pub mod library;
 pub mod manager;
 pub mod models;
+pub mod overlay;
 pub mod player;
 pub mod system;
 pub mod thumbs;

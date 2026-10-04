@@ -170,12 +170,24 @@ impl WallpaperMeta {
     }
 }
 
+/// 壁纸叠加元素设置（封面"叠加"入口配置，渲染时由引擎绘制在画面上）。
+/// None / 字段 false = 不叠加。各引擎按能力渲染：webview 系画 DOM 元素、
+/// mpv 系走 osd-overlay（ASS）、静态图叠加时改经 webview 渲染。
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct OverlayConfig {
+    /// 系统时间时钟（实时变化）。
+    pub time: bool,
+}
+
 /// 单个壁纸的播放设置，存储为 `.metadata/<name>.setting.json`。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct WallpaperSetting {
     /// 播放列表中该项的展示时长，"HH:MM" 或 "HH:MM:SS"。
     pub duration: Option<String>,
+    /// 画面叠加元素（时间时钟等）；None = 未配置（不叠加）。
+    pub overlay: Option<OverlayConfig>,
     /// web / exe 壁纸：是否允许鼠标交互（穿透开关）。
     pub enable_mouse_event: bool,
     /// 视频：硬件解码。
@@ -196,6 +208,7 @@ impl Default for WallpaperSetting {
     fn default() -> Self {
         Self {
             duration: None,
+            overlay: None,
             enable_mouse_event: true,
             hardware_decoding: true,
             is_pan_scan: true,

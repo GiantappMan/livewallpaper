@@ -105,6 +105,8 @@
     "pause": "Pause",
     "play": "Lire",
     "play_list": "Liste de lecture",
+    "overlay_time": "Superposition de l'heure",
+    "overlay_time_description": "Affiche une horloge (heure système) dans le coin supérieur droit",
     "play_mode": "Mode de lecture",
     "play_mode_description": "Définit comment basculer entre les fonds d'écran de la liste",
     "play_mode_order": "Dans l'ordre",

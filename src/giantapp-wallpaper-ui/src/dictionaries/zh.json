@@ -105,6 +105,8 @@
     "pause": "暂停",
     "play": "播放",
     "play_list": "播放列表",
+    "overlay_time": "叠加时间",
+    "overlay_time_description": "在画面右上角显示实时系统时间时钟",
     "play_mode": "播放模式",
     "play_mode_description": "设置如何切换列表中的壁纸",
     "play_mode_order": "顺序播放",
