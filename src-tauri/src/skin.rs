@@ -167,30 +167,14 @@ fn info_of(dir: &Path) -> SkinInfo {
     }
 }
 
-/// 内置默认皮肤是否出现在可选列表。正式版已退役（云母 Fluent 是唯一
-/// 出厂皮肤，见 `wallpaper_core::config::FACTORY_SKIN_ID`）；dev（debug）
-/// 构建保留入口——内置界面前端开发走 `bun dev`，需要能切回 default。
-fn builtin_listed(debug_build: bool) -> bool {
-    debug_build
-}
-
-/// 列出全部皮肤（默认皮肤在 dev 构建固定首位；正式版从退役版起不含内置项）。
+/// 列出全部皮肤。内置默认皮肤（`default`，v3 时代界面）已全面退役：
+/// 任何构建都不再进入可选列表（云母 Fluent 是唯一出厂皮肤，见
+/// `wallpaper_core::config::FACTORY_SKIN_ID`）。它仍是皮肤失效时的兜底
+/// 回退目标（`main_window_target`），保证主窗口永不白屏；内置界面前端
+/// 开发走 `bun dev` + 手动把 appearance.json 的 skin 设为 `default`
+/// （debug 构建不迁移该配置）。
 pub fn list_skins(dirs: &AppDirs) -> Vec<SkinInfo> {
     let mut out = Vec::new();
-    if builtin_listed(cfg!(debug_assertions)) {
-        out.push(SkinInfo {
-            id: DEFAULT_SKIN_ID.into(),
-            name: "默认皮肤".into(),
-            version: crate::APP_VERSION.into(),
-            author: "GiantappMan".into(),
-            description: "应用内置界面".into(),
-            kind: "app".into(),
-            entry: "index.html".into(),
-            builtin: true,
-            valid: true,
-            invalid_reason: None,
-        });
-    }
     let dir = skins_dir(dirs);
     if let Ok(entries) = std::fs::read_dir(&dir) {
         let mut infos: Vec<SkinInfo> = entries
@@ -482,16 +466,11 @@ mod tests {
         )
         .unwrap();
         let list = list_skins(&dirs);
-        // dev（debug）构建含内置默认皮肤首位；正式版已退役不含内置项
-        if cfg!(debug_assertions) {
-            assert_eq!(list.len(), 2);
-            assert!(list[0].builtin);
-            assert!(!list[1].valid);
-        } else {
-            assert_eq!(list.len(), 1);
-            assert!(!list[0].builtin);
-        }
-        assert!(list.last().unwrap().invalid_reason.is_some());
+        // 内置默认皮肤已全面退役：任何构建都不进入可选列表
+        assert!(!list.iter().any(|s| s.builtin));
+        assert_eq!(list.len(), 1);
+        assert!(!list[0].valid);
+        assert!(list[0].invalid_reason.is_some());
         let _ = std::fs::remove_dir_all(&dirs.root);
     }
 
