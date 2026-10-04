@@ -2333,14 +2333,14 @@
         switchEl(g.hideWindow, control((v) => ({ hideWindow: v })))],
       ["shield", SC.t("cfg.headless"), SC.t("cfg.headlessHint"),
         (() => { const s = switchEl(g.autoStartHeadless, control((v) => ({ autoStartHeadless: v }))); if (!g.autoStart) s.classList.add("is-disabled"); return s; })()],
-      ["locale", SC.t("cfg.language"), SC.t("cfg.langHint"),
+      ["locale", SC.t("cfg.language"), "",
         selectEl([
-          { value: "zh", label: "中文" }, { value: "en", label: "English" },
+          { value: "zh", label: "中文（简体）" }, { value: "en", label: "English" },
           { value: "ru", label: "Русский" }, { value: "es", label: "Español" },
+          { value: "zh-Hant", label: "中文（繁體）" }, { value: "ja", label: "日本語" },
+          { value: "de", label: "Deutsch" }, { value: "fr", label: "Français" },
+          { value: "pt-BR", label: "Português (Brasil)" },
         ], g.currentLan, (v) => SC.setLang(v))],
-      ["external", SC.t("cfg.contribute"), "",
-        el("button", { class: "btn btn-sm", onclick: () => SC.openUrl("https://github.com/GiantappMan/livewallpaper/tree/v4.x/src/giantapp-wallpaper-ui/src/dictionaries") },
-          (() => { const s = el("span"); s.innerHTML = icon("external", 14); return s; })())],
     ]));
   }
 

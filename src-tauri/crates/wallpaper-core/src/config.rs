@@ -14,7 +14,7 @@ pub struct ConfigGeneral {
     pub hide_window: bool,
     /// 开机自启时以 headless 模式（无窗口）运行。
     pub auto_start_headless: bool,
-    /// zh / en / ru / es
+    /// 与社区站一致的语言集：zh / en / ru / es / zh-Hant / ja / de / fr / pt-BR
     pub current_lan: String,
 }
 
@@ -118,15 +118,22 @@ fn system_language() -> String {
 
 #[cfg(windows)]
 fn sys_locale() -> String {
-    // GetUserDefaultUILanguage 返回主语言 LCID，取低 9 位即可映射 ISO 639-1。
+    // LANGID 低 10 位是主语言，10-15 位是子语言；中文需按子语言区分简繁
+    // （繁体：TRADITIONAL=1 / HONGKONG=3 / MACAO=5）。
     unsafe {
         let lang = windows::Win32::Globalization::GetUserDefaultUILanguage();
         let primary = lang & 0x3FF;
+        let sub = (lang >> 10) & 0x0F;
         match primary {
+            0x04 if matches!(sub, 1 | 3 | 5) => "zh-Hant",
             0x04 => "zh",
+            0x07 => "de",
             0x09 => "en",
-            0x19 => "ru",
             0x0A => "es",
+            0x0C => "fr",
+            0x11 => "ja",
+            0x16 => "pt-BR",
+            0x19 => "ru",
             _ => "en",
         }
         .to_string()
@@ -135,10 +142,17 @@ fn sys_locale() -> String {
 
 #[cfg(not(windows))]
 fn sys_locale() -> String {
-    std::env::var("LANG")
-        .ok()
-        .and_then(|l| l.get(0..2).map(str::to_string))
-        .unwrap_or_else(|| "en".into())
+    // LANG 形如 zh_TW.UTF-8 → zh-Hant；zh.UTF-8 / zh → zh
+    let lang = std::env::var("LANG").unwrap_or_default();
+    let base = lang.split('.').next().unwrap_or("en");
+    let mut seg = base.split(['_', '-']);
+    let primary = seg.next().unwrap_or("en").to_lowercase();
+    let region = seg.next().map(|r| r.to_uppercase());
+    match (primary.as_str(), region.as_deref()) {
+        ("zh", Some("TW") | Some("HK") | Some("MO") | Some("HANT")) => "zh-Hant",
+        _ => &primary,
+    }
+    .to_string()
 }
 
 /// 三组配置的容器，负责读写与 v3 导入。
@@ -218,13 +232,23 @@ impl ConfigStore {
     }
 }
 
+/// 语言归一化：大小写不敏感，接受别名（zh-tw / pt / pt-br 等），
+/// 统一收敛到与词典文件名一致的规范写法，非法值回退 en。
 fn normalize_lan(lan: &str) -> String {
-    let lan = lan.to_lowercase();
-    if ["zh", "en", "ru", "es"].contains(&lan.as_str()) {
-        lan
-    } else {
-        "en".into()
+    let lan = lan.to_lowercase().replace('_', "-");
+    match lan.as_str() {
+        "zh" => "zh",
+        "en" => "en",
+        "ru" => "ru",
+        "es" => "es",
+        "zh-hant" | "zh-tw" | "zh-hk" | "zh-mo" | "zh-hant-cn" => "zh-Hant",
+        "ja" => "ja",
+        "de" => "de",
+        "fr" => "fr",
+        "pt" | "pt-br" | "pt-pt" => "pt-BR",
+        _ => "en",
     }
+    .to_string()
 }
 
 fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
@@ -272,7 +296,10 @@ mod tests {
         dirs.ensure().unwrap();
         let mut store = ConfigStore::load(dirs.clone());
         // 默认语言跟随系统，只需保证合法
-        assert!(["zh", "en", "ru", "es"].contains(&store.general.current_lan.as_str()));
+        assert!([
+            "zh", "en", "ru", "es", "zh-Hant", "ja", "de", "fr", "pt-BR",
+        ]
+        .contains(&store.general.current_lan.as_str()));
 
         store
             .save(
@@ -304,5 +331,21 @@ mod tests {
         std::fs::remove_dir_all(dirs.v3_root()).unwrap();
         let again = ConfigStore::load(dirs);
         assert_eq!(again.appearance.theme, "blue");
+    }
+
+    #[test]
+    fn normalize_lan_aliases() {
+        assert_eq!(normalize_lan("zh"), "zh");
+        assert_eq!(normalize_lan("EN"), "en");
+        assert_eq!(normalize_lan("zh-Hant"), "zh-Hant");
+        assert_eq!(normalize_lan("ZH-TW"), "zh-Hant");
+        assert_eq!(normalize_lan("zh_tw"), "zh-Hant");
+        assert_eq!(normalize_lan("pt"), "pt-BR");
+        assert_eq!(normalize_lan("PT-br"), "pt-BR");
+        assert_eq!(normalize_lan("ja"), "ja");
+        assert_eq!(normalize_lan("de"), "de");
+        assert_eq!(normalize_lan("fr"), "fr");
+        assert_eq!(normalize_lan("ko"), "en");
+        assert_eq!(normalize_lan(""), "en");
     }
 }

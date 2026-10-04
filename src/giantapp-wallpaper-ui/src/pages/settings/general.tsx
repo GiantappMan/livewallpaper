@@ -132,18 +132,6 @@ const Page = () => {
                                         ))}
 
                                     </CommandGroup>
-                                    {/* 分割线 */}
-                                    <CommandSeparator />
-                                    {/* 贡献你的语言，一个超链接 */}
-                                    <CommandGroup>
-                                        <CommandItem
-                                            onSelect={() => {
-                                                api.openUrl("https://github.com/GiantappMan/livewallpaper/tree/v4.x/src/giantapp-wallpaper-ui/src/dictionaries")
-                                            }}
-                                        >
-                                            {dictionary['settings'].contribute_your_language}
-                                        </CommandItem>
-                                    </CommandGroup>
                                 </Command>
                             </PopoverContent>
                         </Popover>
