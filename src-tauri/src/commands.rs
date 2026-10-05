@@ -1355,6 +1355,118 @@ pub fn get_custom_skin_doc() -> Result<String> {
     Ok(include_str!("../../docs/5.自定义皮肤指南.md").to_string())
 }
 
+// ---------- 更新（界面热更新 + 程序自动更新） ----------
+
+/// 界面热更新状态（设置页渲染用）。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UiUpdateStatus {
+    pub ui_url: String,
+    pub ui_auto: bool,
+    pub ui_active: bool,
+    pub installed_version: Option<String>,
+    pub installed_at: Option<String>,
+    pub app_version: String,
+}
+
+#[tauri::command]
+pub fn ui_update_status(app: AppHandle) -> Result<UiUpdateStatus> {
+    let st = state(&app);
+    let (ui_url, ui_auto, ui_active) = {
+        let config = st.config.lock();
+        (
+            config.update.ui_url.clone(),
+            config.update.ui_auto,
+            config.update.ui_active,
+        )
+    };
+    let manifest = crate::ui_update::read_installed_manifest(&st.dirs);
+    Ok(UiUpdateStatus {
+        ui_url,
+        ui_auto,
+        ui_active,
+        installed_version: manifest.as_ref().map(|m| m.version.clone()),
+        installed_at: manifest.map(|m| m.applied_at),
+        app_version: crate::APP_VERSION.into(),
+    })
+}
+
+/// 手动检查界面更新：url 缺省时用配置地址。返回 Some(清单) 表示有新版本。
+#[tauri::command]
+pub async fn ui_update_check(
+    app: AppHandle,
+    url: Option<String>,
+) -> Result<Option<crate::ui_update::UiRemoteManifest>> {
+    let manifest_url = match url {
+        Some(u) if !u.trim().is_empty() => u,
+        _ => {
+            let st = state(&app);
+            let config = st.config.lock();
+            config.update.ui_url.clone()
+        }
+    };
+    let st = state(&app);
+    let dirs = st.dirs.clone();
+    drop(st);
+    crate::ui_update::check(&dirs, &manifest_url).await.map_err(|e| e)
+}
+
+/// 手动下载并应用界面更新（无条件重新拉取清单并下载；进度经 ui-update-event 广播）。
+/// 返回新版本号；成功后主窗口原地加载新界面。
+#[tauri::command]
+pub async fn ui_update_apply(app: AppHandle, url: Option<String>) -> Result<String> {
+    let manifest_url = match url {
+        Some(u) if !u.trim().is_empty() => u,
+        _ => {
+            let st = state(&app);
+            let config = st.config.lock();
+            config.update.ui_url.clone()
+        }
+    };
+    let (manifest, resolved_url) = crate::ui_update::fetch_manifest(&manifest_url).await?;
+    let version = crate::ui_update::apply(&app, &manifest, &resolved_url).await?;
+    // 原地 navigate 到新界面（与皮肤切换同一机制，无销毁、无闪烁）
+    crate::recreate_main_window(&app);
+    Ok(version)
+}
+
+/// 还原内置前端：删除热更新界面目录、清除生效标记并刷新主窗口。
+#[tauri::command]
+pub fn ui_update_restore(app: AppHandle) -> Result<()> {
+    crate::ui_update::restore(&app)?;
+    if app.get_webview("main").is_some() {
+        crate::recreate_main_window(&app);
+    }
+    Ok(())
+}
+
+/// 手动检查程序更新（按配置的通道与地址）。返回 Some(信息) 表示有新版本。
+#[tauri::command]
+pub async fn app_update_check(app: AppHandle) -> Result<Option<crate::app_update::AppUpdateInfo>> {
+    crate::app_update::check(&app).await.map_err(|e| e)
+}
+
+/// 下载程序更新（info 缺省时用最近一次检查结果；进度经 app-update-event 广播）。
+#[tauri::command]
+pub async fn app_update_download(
+    app: AppHandle,
+    info: Option<crate::app_update::AppUpdateInfo>,
+) -> Result<()> {
+    crate::app_update::download(&app, info).await
+}
+
+/// 安装已下载的程序更新（退出应用并启动安装器，安装完成后自动重启）。
+#[tauri::command]
+pub fn app_update_install(app: AppHandle) -> Result<()> {
+    crate::app_update::install(&app)
+}
+
+/// 程序更新状态快照。
+#[tauri::command]
+pub fn app_update_state(app: AppHandle) -> Result<crate::app_update::AppUpdateState> {
+    Ok(crate::app_update::current_state(&app))
+}
+
 /// Appearance 配置按字段合并（保留 theme / mode，仅更新传入字段）。
 fn merge_appearance(app: &AppHandle, patch: serde_json::Value) -> serde_json::Value {
     let st = state(app);

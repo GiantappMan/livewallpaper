@@ -12,7 +12,9 @@ import SettingsLayout from "@/pages/settings/layout";
 import GeneralSettings from "@/pages/settings/general";
 import WallpaperSettings from "@/pages/settings/wallpaper";
 import AppearanceSettings from "@/pages/settings/appearance";
+import UpdateSettings from "@/pages/settings/update";
 import AboutPage from "@/pages/about";
+import { AppUpdatePrompt } from "@/components/app-update-prompt";
 
 export default function App() {
   return (
@@ -33,9 +35,11 @@ export default function App() {
                     <Route index element={<GeneralSettings />} />
                     <Route path="wallpaper" element={<WallpaperSettings />} />
                     <Route path="appearance" element={<AppearanceSettings />} />
+                    <Route path="update" element={<UpdateSettings />} />
                   </Route>
                   <Route path="/about" element={<AboutPage />} />
                 </Routes>
+                <AppUpdatePrompt />
                 <RatingDialog />
               </main>
             </div>

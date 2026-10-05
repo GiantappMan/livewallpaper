@@ -200,7 +200,12 @@ pub struct MainWindowTarget {
 
 /// 解析当前生效皮肤 -> 主窗口加载目标。
 /// 任何无效情形（清单坏 / entry 缺失 / id 未知）回退默认皮肤。
+/// 界面热更新生效时最优先接管（`ui_update::active_target`，目录损坏自动回退）。
 pub fn main_window_target(dirs: &AppDirs, configured: &str) -> MainWindowTarget {
+    if let Some(target) = crate::ui_update::active_target(dirs) {
+        log::info!("main window target: ui hot update");
+        return target;
+    }
     let fallback = MainWindowTarget {
         url: WebviewUrl::App("index.html".into()),
         extra_init_scripts: Vec::new(),
@@ -335,7 +340,8 @@ fn not_found() -> Result<Response<Vec<u8>>, tauri::Error> {
         .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!(e)))
 }
 
-fn mime_of(path: &Path) -> &'static str {
+/// 按扩展名推断 MIME（皮肤与热更新界面协议共用）。
+pub(crate) fn mime_of(path: &Path) -> &'static str {
     let ext = path
         .extension()
         .map(|e| e.to_string_lossy().to_lowercase())

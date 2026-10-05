@@ -2358,10 +2358,10 @@
 
   // ---------------------------------------------------------------- 设置视图
   let settingsTab = "general";
-  const SETTINGS_TAB_IDS = ["general", "wallpaper", "appearance"];
+  const SETTINGS_TAB_IDS = ["general", "wallpaper", "appearance", "update"];
   function renderSettings() {
     viewEl.innerHTML = "";
-    const tabs = [["general", SC.t("cfg.general")], ["wallpaper", SC.t("cfg.wallpaper")], ["appearance", SC.t("cfg.appearance")]];
+    const tabs = [["general", SC.t("cfg.general")], ["wallpaper", SC.t("cfg.wallpaper")], ["appearance", SC.t("cfg.appearance")], ["update", SC.t("cfg.update")]];
     const tabbar = el("div", { class: "pivot" }, tabs.map(([id, label]) =>
       el("button", { class: `pivot-item ${settingsTab === id ? "is-active" : ""}`, onclick: () => { settingsTab = id; location.hash = `#/settings/${id}`; renderSettings(); } }, label)));
     viewEl.append(pageHead(SC.t("nav.settings"), SC.t("cfg.reloadHint")));
@@ -2370,6 +2370,7 @@
     viewEl.append(panel);
     if (settingsTab === "general") generalTab(panel);
     else if (settingsTab === "wallpaper") wallpaperTab(panel);
+    else if (settingsTab === "update") updateTab(panel);
     else appearanceTab(panel);
   }
 
@@ -2536,6 +2537,234 @@
       el("div", { class: "card-sep" }),
       grid,
       el("p", { class: "cfg-note" }, SC.t("cfg.about") + " · " + SC.meta.brand + " v" + SC.meta.version)));
+  }
+
+  // ---------------------------------------------------------------- 更新设置
+  /** 挂载中的更新页回调（事件 -> 状态/进度条）；页面重建时被覆盖，仅最新实例收数据 */
+  let updateProgressHook = null;
+  // 最近一次更新事件（界面热更新 / 程序更新）
+  let lastUiEvent = null, lastAppEvent = null;
+
+  function updateTab(panel) {
+    const rawInvoke = (cmd, args) => (SC.inClient ? SC.invoke(cmd, args) : Promise.reject(new Error("demo")));
+    const cfgU = () => SC.state.cfg.Update || {};
+
+    /** 状态行：文本 + 内联按钮；无内容时整行隐藏 */
+    function statusRow() {
+      const box = el("div", { class: "card-row status-row", style: "display:none" });
+      const text = el("span", { class: "card-hint" }, "");
+      const actions = el("div", { class: "status-actions" });
+      box.append(text, actions);
+      return {
+        el: box,
+        set(message, buttons) {
+          text.textContent = message || "";
+          actions.innerHTML = "";
+          for (const b of buttons || []) actions.append(b);
+          box.style.display = message || (buttons && buttons.length) ? "" : "none";
+        },
+      };
+    }
+    const bar = () => el("div", { class: "progress card-progress", style: "display:none" }, el("div", { class: "progress-bar", style: "width:0%" }));
+    function setBar(wrap, percent) {
+      wrap.style.display = percent == null ? "none" : "";
+      wrap.firstChild.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    }
+
+    // ---------- 界面热更新 ----------
+    let uiBusy = false, uiFound = null, uiActive = false;
+    const uiBar = bar();
+    const uiStatusLine = statusRow();
+    const uiStatus = el("p", { class: "card-hint" }, "");
+    async function refreshUiStatus() {
+      if (!SC.inClient) { uiStatus.textContent = SC.t("common.demoHint"); return; }
+      try {
+        const s = await rawInvoke("ui_update_status");
+        uiActive = !!(s.uiActive && s.installedVersion);
+        uiStatus.textContent = uiActive
+          ? SC.t("upd.uiActive", s.installedVersion, s.installedAt || "")
+          : SC.t("upd.uiBuiltin");
+      } catch { uiStatus.textContent = ""; }
+      uiRestoreBtn.style.display = uiActive ? "" : "none";
+    }
+    async function checkUi() {
+      if (uiBusy) return;
+      uiBusy = true;
+      try {
+        const found = await rawInvoke("ui_update_check", { url: cfgU().uiUrl || null });
+        uiFound = found || null;
+        uiStatusLine.set(found ? SC.t("upd.found", found.version) : SC.t("upd.upToDate"));
+      } catch (e) {
+        uiFound = null;
+        uiStatusLine.set(SC.t("common.opFailed", SC.errText(String(e))));
+      }
+      uiApplyBtn.style.display = uiFound ? "" : "none";
+      uiBusy = false;
+    }
+    async function applyUi() {
+      if (uiBusy) return;
+      uiBusy = true;
+      uiStatusLine.set(SC.t("upd.progress", 0));
+      try {
+        // 成功后后端原地导航到新界面，本页面随即被替换；下方代码仅导航失败时执行
+        const ver = await rawInvoke("ui_update_apply", { url: cfgU().uiUrl || null });
+        uiStatusLine.set(SC.t("upd.applied", ver));
+      } catch (e) {
+        uiStatusLine.set(SC.t("common.opFailed", SC.errText(String(e))));
+      }
+      uiBusy = false;
+    }
+    async function restoreUi() {
+      const ok = await SC.confirm({
+        title: SC.t("upd.uiRestore"),
+        body: SC.t("upd.restoreConfirm"),
+        okText: SC.t("upd.uiRestore"),
+        cancelText: SC.t("common.cancel"),
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await rawInvoke("ui_update_restore");
+        uiFound = null;
+        uiApplyBtn.style.display = "none";
+        uiStatusLine.clear();
+        SC.toast(SC.t("upd.restored"), "ok");
+      } catch (e) {
+        SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
+      }
+    }
+    const uiUrl = el("input", { class: "input", type: "text", placeholder: SC.t("upd.uiUrlHint"), value: cfgU().uiUrl || "" });
+    uiUrl.addEventListener("change", () => SC.saveConfig("Update", { uiUrl: uiUrl.value.trim() }));
+    const uiAuto = switchEl(cfgU().uiAuto, (v) => SC.saveConfig("Update", { uiAuto: v }));
+    const uiApplyBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: applyUi }, SC.t("upd.uiApply"));
+    const uiRestoreBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: restoreUi }, SC.t("upd.uiRestore"));
+
+    panel.append(el("div", { class: "card-group" },
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" },
+          el("span", { class: "card-label" }, SC.t("upd.uiAuto")),
+          uiStatus),
+        uiAuto),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "dir-list" }, el("div", { class: "dir-row" }, uiUrl)),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "card-more" },
+        el("button", { class: "btn btn-sm", onclick: checkUi }, SC.t("upd.uiCheck")),
+        uiApplyBtn,
+        uiRestoreBtn),
+      uiStatusLine.el,
+      uiBar));
+
+    // ---------- 程序更新 ----------
+    let appBusy = false, appInfo = null, downloaded = null;
+    let readyText;
+    const appBar = bar();
+    const appStatusLine = statusRow();
+    async function installApp() {
+      try {
+        await rawInvoke("app_update_install");
+        SC.toast(SC.t("upd.installing"), "ok");
+      } catch (e) {
+        SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
+      }
+    }
+    function renderDownloaded() {
+      if (downloaded) {
+        readyText.textContent = SC.t("upd.downloaded", downloaded);
+        appStatusLine.set("", [
+          readyBox,
+        ]);
+      } else {
+        appStatusLine.set(lastAppEvent && lastAppEvent.state === "progress"
+          ? SC.t("upd.progress", Math.round(lastAppEvent.percent)) : "");
+      }
+      setBar(appBar, lastAppEvent && lastAppEvent.state === "progress" && !downloaded ? lastAppEvent.percent : null);
+    }
+    async function checkApp() {
+      if (appBusy) return;
+      appBusy = true;
+      try {
+        const info = await rawInvoke("app_update_check");
+        appInfo = info || null;
+        appStatusLine.set(info ? SC.t("upd.found", info.version) : SC.t("upd.upToDate"),
+          info ? [el("button", { class: "btn btn-sm", onclick: downloadApp }, SC.t("upd.download"))] : []);
+      } catch (e) {
+        appInfo = null;
+        appStatusLine.set(SC.t("common.opFailed", SC.errText(String(e))));
+      }
+      appBusy = false;
+    }
+    async function downloadApp() {
+      if (appBusy || !appInfo) return;
+      appBusy = true;
+      try {
+        await rawInvoke("app_update_download", { info: appInfo });
+        downloaded = appInfo.version;
+        renderDownloaded();
+      } catch (e) {
+        SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
+        renderDownloaded();
+      }
+      appBusy = false;
+    }
+    const readyBox = el("div", { class: "ready-inline" },
+      (readyText = el("span", { class: "card-hint" }, "")),
+      el("button", { class: "btn btn-sm", onclick: installApp }, SC.t("upd.install")),
+      el("button", { class: "icon-btn", title: SC.t("upd.later"), onclick: () => { downloaded = null; renderDownloaded(); hideReadyBar(); } },
+        (() => { const s = el("span"); s.innerHTML = icon("x", 13); return s; })()));
+    const appUrl = el("input", { class: "input", type: "text", placeholder: SC.t("upd.appUrl"), value: cfgU().appUrl || "" });
+    appUrl.addEventListener("change", () => SC.saveConfig("Update", { appUrl: appUrl.value.trim() }));
+    const appAuto = switchEl(cfgU().appAutoDownload, (v) => SC.saveConfig("Update", { appAutoDownload: v }));
+    const channel = selectEl([
+      { value: "stable", label: SC.t("upd.chStable") },
+      { value: "preview", label: SC.t("upd.chPreview") },
+      { value: "off", label: SC.t("upd.chOff") },
+    ], cfgU().appChannel || "stable", (v) => SC.saveConfig("Update", { appChannel: v }));
+    const versionHint = el("p", { class: "card-hint" }, "");
+    if (SC.inClient) {
+      rawInvoke("app_update_state").then((st) => {
+        if (!st) return;
+        if (st.info && st.phase !== "idle" && !st.downloadedVersion) {
+          appInfo = st.info;
+          appStatusLine.set(SC.t("upd.found", st.info.version),
+            [el("button", { class: "btn btn-sm", onclick: downloadApp }, SC.t("upd.download"))]);
+        }
+        if (st.downloadedVersion) { downloaded = st.downloadedVersion; renderDownloaded(); }
+        if (st.error) appStatusLine.set(SC.t("common.opFailed", st.error));
+      }).catch(() => {});
+      SC.client.api.getVersion().then((r) => { if (r && r.data) versionHint.textContent = SC.t("upd.current", r.data); }).catch(() => {});
+    }
+    function renderUiProgress() {
+      if (lastUiEvent && lastUiEvent.state === "progress") {
+        setBar(uiBar, lastUiEvent.percent);
+        uiStatusLine.set(SC.t("upd.progress", Math.round(lastUiEvent.percent)));
+      } else if (lastUiEvent && lastUiEvent.state !== "progress") {
+        setBar(uiBar, null);
+      }
+    }
+    const prevHook = updateProgressHook;
+    updateProgressHook = () => { if (prevHook) prevHook(); renderUiProgress(); renderDownloaded(); };
+
+    panel.append(el("div", { class: "card-group" },
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" },
+          el("span", { class: "card-label" }, SC.t("upd.appTitle")),
+          versionHint),
+        el("button", { class: "btn btn-sm", onclick: checkApp }, SC.t("upd.appCheck"))),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("upd.channel"))),
+        channel),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("upd.autoDownload"))),
+        appAuto),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "dir-list" }, el("div", { class: "dir-row" }, appUrl)),
+      appStatusLine.el,
+      appBar));
+
+    refreshUiStatus();
   }
 
   // ---------------------------------------------------------------- 关于视图
@@ -2874,6 +3103,44 @@
   SC.on("skins", () => { if (currentView === "settings" && settingsTab === "appearance") renderSettings(); });
   // 配置变化（本页保存 / refresh-page 软刷新）→ 设置页原地重渲染
   SC.on("config", (group) => { if (group === "Wallpaper" && currentView === "settings") renderSettings(); });
+
+  // ---------------------------------------------------------------- 更新事件与安装提示条
+  // 程序更新下载完成后在底部弹安装提示条：点「安装并重启」立即装，点 × 稍后
+  // （已下载状态保留在 设置→更新，随时可装）。界面热更新只更新进度变量。
+  let readyBarVersion = null;
+  const readyBarText = el("span", { class: "update-bar-text" }, "");
+  const readyBar = el("div", { class: "update-bar", style: "display:none" },
+    (() => { const s = el("span"); s.innerHTML = icon("download", 16); return s; })(),
+    readyBarText,
+    el("button", {
+      class: "btn btn-sm", onclick: async () => {
+        if (!SC.inClient) return;
+        try { await SC.invoke("app_update_install"); SC.toast(SC.t("upd.installing"), "ok"); }
+        catch (e) { SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err"); }
+      },
+    }, SC.t("upd.install")),
+    el("button", { class: "icon-btn", title: SC.t("upd.later"), onclick: hideReadyBar },
+      (() => { const s = el("span"); s.innerHTML = icon("x", 13); return s; })()));
+  function showReadyBar(version) {
+    readyBarVersion = version;
+    readyBarText.textContent = SC.t("upd.readyBar", version);
+    readyBar.style.display = "";
+  }
+  function hideReadyBar() { readyBarVersion = null; readyBar.style.display = "none"; }
+  document.body.append(readyBar);
+
+  SC.on("ui-update", (p) => {
+    lastUiEvent = p || null;
+    if (p && p.state === "applied") SC.toast(SC.t("upd.applied", p.version), "ok");
+    if (p && p.state === "error") SC.toast(SC.t("common.opFailed", SC.errText(p.message)), "err");
+    if (updateProgressHook) updateProgressHook();
+  });
+  SC.on("app-update", (p) => {
+    lastAppEvent = p || null;
+    if (p && p.state === "downloaded") { showReadyBar(p.version); SC.toast(SC.t("upd.downloaded", p.version), "ok"); }
+    if (p && p.state === "error") SC.toast(SC.t("common.opFailed", SC.errText(p.message)), "err");
+    if (updateProgressHook) updateProgressHook();
+  });
 
   // ---------------------------------------------------------------- 启动
   // 标题栏居中搜索：全局唯一搜索入口，输入即跳转本地库并过滤

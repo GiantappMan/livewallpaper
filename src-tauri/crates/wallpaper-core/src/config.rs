@@ -55,6 +55,47 @@ impl Default for ConfigAppearance {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
+pub struct ConfigUpdate {
+    /// 界面热更新清单地址（`ui.json`）；为空表示未启用。
+    pub ui_url: String,
+    /// 启动时自动检查并应用界面更新。
+    pub ui_auto: bool,
+    /// 热更新界面是否生效（应用更新后置位；还原内置界面时清除）。
+    pub ui_active: bool,
+    /// 程序更新检查地址 base（清单为 `<base>/stable.json` / `<base>/preview.json`）。
+    pub app_url: String,
+    /// 程序更新通道：`off` | `stable` | `preview`。
+    pub app_channel: String,
+    /// 发现新版本后自动下载（安装始终需要用户确认）。
+    pub app_auto_download: bool,
+}
+
+impl Default for ConfigUpdate {
+    fn default() -> Self {
+        Self {
+            ui_url: String::new(),
+            ui_auto: true,
+            ui_active: false,
+            app_url: String::new(),
+            app_channel: "stable".into(),
+            app_auto_download: true,
+        }
+    }
+}
+
+impl ConfigUpdate {
+    pub fn normalized_channel(&self) -> String {
+        match self.app_channel.as_str() {
+            "off" => "off",
+            "preview" => "preview",
+            _ => "stable",
+        }
+        .to_string()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConfigWallpaper {
     pub directories: Vec<String>,
     pub covered_behavior: CoveredBehavior,
@@ -162,6 +203,7 @@ pub struct ConfigStore {
     pub general: ConfigGeneral,
     pub appearance: ConfigAppearance,
     pub wallpaper: ConfigWallpaper,
+    pub update: ConfigUpdate,
 }
 
 impl ConfigStore {
@@ -177,6 +219,7 @@ impl ConfigStore {
             .unwrap_or_else(|| {
                 import_v3(&dirs, "Client.Apps.Configs.Wallpaper").unwrap_or_default()
             });
+        let update: ConfigUpdate = read_json(&dirs.config_file("update")).unwrap_or_default();
 
         let mut general = general;
         general.current_lan = normalize_lan(&general.current_lan);
@@ -184,12 +227,15 @@ impl ConfigStore {
         if !["system", "light", "dark"].contains(&appearance.mode.as_str()) {
             appearance.mode = "dark".into();
         }
+        let mut update = update;
+        update.app_channel = update.normalized_channel();
 
         let store = Self {
             dirs,
             general,
             appearance,
             wallpaper,
+            update,
         };
         store.save_all();
         store
@@ -199,6 +245,7 @@ impl ConfigStore {
         let _ = write_json(&self.dirs.config_file("general"), &self.general);
         let _ = write_json(&self.dirs.config_file("appearance"), &self.appearance);
         let _ = write_json(&self.dirs.config_file("wallpaper"), &self.wallpaper);
+        let _ = write_json(&self.dirs.config_file("update"), &self.update);
     }
 
     pub fn save(&mut self, key: &str, value: serde_json::Value) -> Result<(), String> {
@@ -216,6 +263,10 @@ impl ConfigStore {
             "Wallpaper" => {
                 self.wallpaper = serde_json::from_value(value).map_err(|e| e.to_string())?;
             }
+            "Update" => {
+                self.update = serde_json::from_value(value).map_err(|e| e.to_string())?;
+                self.update.app_channel = self.update.normalized_channel();
+            }
             _ => return Err(format!("unknown config key: {key}")),
         }
         self.save_all();
@@ -227,6 +278,7 @@ impl ConfigStore {
             "General" => serde_json::to_value(&self.general).map_err(|e| e.to_string()),
             "Appearance" => serde_json::to_value(&self.appearance).map_err(|e| e.to_string()),
             "Wallpaper" => serde_json::to_value(&self.wallpaper).map_err(|e| e.to_string()),
+            "Update" => serde_json::to_value(&self.update).map_err(|e| e.to_string()),
             _ => Err(format!("unknown config key: {key}")),
         }
     }

@@ -29,7 +29,7 @@ parking_lot = "0.12"
 percent-encoding = "2"
 rand = "0.8"
 rfd = "0.15"
-reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "gzip"] }
+reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "gzip", "json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 tauri = { version = "2", features = ["tray-icon", "image-png", "unstable"] }
@@ -39,6 +39,8 @@ uuid = { version = "1", features = ["v4"] }
 sevenz-rust2 = "0.22.2"
 notify = "8"
 notify-debouncer-mini = "0.7"
+# 界面热更新包（zip）解压；仅 deflate + stored，不引入加密等重特性
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [

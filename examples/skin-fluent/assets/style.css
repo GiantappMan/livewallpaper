@@ -748,6 +748,24 @@ button.card-row:hover { background: var(--subtle); }
 .sc-toast.is-err::before { background: #ff99a4; }
 .sc-toast.is-out { opacity: 0; transform: translateY(8px); transition: all .3s ease; }
 
+/* 程序更新安装提示条：底部居中悬浮（亚克力表面，与 toast 同层风格） */
+.update-bar {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 110;
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 16px;
+  border-radius: var(--r-lg); font-size: 13px; color: var(--ink);
+  background: var(--card-solid); border: 1px solid var(--stroke); box-shadow: var(--shadow-fly);
+  animation: dialog-in .2s var(--ease);
+}
+.update-bar .update-bar-text { font-weight: 600; white-space: nowrap; }
+.update-bar > svg { flex: none; color: var(--accent); }
+
+/* 更新页状态行：提示文本 + 内联按钮（按需显示） */
+.status-row .card-hint { flex: 1; align-self: center; }
+.status-actions { display: flex; align-items: center; gap: 8px; }
+.ready-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* 更新页进度条：与卡片行同一水平内边距；隐藏时不占位 */
+.card-progress { margin: 2px 16px 10px; }
+
 /* 核心确认框弹窗（SC.confirm 生成 .sc-modal，Win11 ContentDialog 样式） */
 .sc-modal-overlay { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; background: rgba(0, 0, 0, .3); backdrop-filter: blur(2px); }
 [data-mode="dark"] .sc-modal-overlay { background: rgba(0, 0, 0, .46); }

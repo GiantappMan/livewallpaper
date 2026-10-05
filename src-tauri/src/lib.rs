@@ -24,7 +24,11 @@ mod skin_watch;
 mod state;
 mod system_events;
 mod tray;
+mod ui_update;
+mod updater;
 mod urls;
+
+mod app_update;
 
 use parking_lot::Mutex;
 use state::AppState;
@@ -83,6 +87,7 @@ pub fn run() {
         .register_uri_scheme_protocol("media", |ctx, request| media_protocol::handle(ctx, request))
         .register_uri_scheme_protocol("skin", |ctx, request| skin::handle(ctx, request))
         .register_uri_scheme_protocol("appres", |ctx, request| appres::handle(ctx, request))
+        .register_uri_scheme_protocol("ui", |ctx, request| ui_update::handle(ctx, request))
         .setup(move |app| setup(app, dirs.clone(), headless))
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
@@ -145,6 +150,14 @@ pub fn run() {
             commands::set_active_skin,
             commands::open_skins_folder,
             commands::get_custom_skin_doc,
+            commands::ui_update_status,
+            commands::ui_update_check,
+            commands::ui_update_apply,
+            commands::ui_update_restore,
+            commands::app_update_check,
+            commands::app_update_download,
+            commands::app_update_install,
+            commands::app_update_state,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
@@ -512,6 +525,19 @@ fn setup(
     // 配置
     let config = Arc::new(Mutex::new(ConfigStore::load(dirs.clone())));
 
+    // 全新配置（无 update.json）时注入构建期内置的更新源默认值；
+    // 已有配置则完全尊重用户设置（清空地址视为有意停用）。
+    if !dirs.config_file("update").exists() {
+        let mut cfg = config.lock();
+        if cfg.update.app_url.is_empty() {
+            cfg.update.app_url = option_env!("GIANTAPP_UPDATE_URL").unwrap_or("").to_string();
+        }
+        if cfg.update.ui_url.is_empty() {
+            cfg.update.ui_url = option_env!("GIANTAPP_UI_UPDATE_URL").unwrap_or("").to_string();
+        }
+        cfg.save_all();
+    }
+
     // 引擎宿主（内嵌播放器控制器；headless 下 webview 壁纸窗口仍按需隐藏创建）
     let player = internal_player::InternalPlayerController::new(app.handle().clone());
 
@@ -601,6 +627,10 @@ fn setup(
 
     // 本地控制管道：CLI / 外部脚本的控制面（所有模式）
     control::start(app.handle().clone(), hub.clone());
+
+    // 更新检查（界面热更新 + 程序更新）：后台执行，不阻塞启动
+    ui_update::start_background(app.handle().clone());
+    app_update::start_background(app.handle().clone());
 
     log::info!("setup done");
     Ok(())

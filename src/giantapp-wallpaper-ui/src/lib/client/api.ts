@@ -22,6 +22,12 @@ import type {
   Wallpaper,
   WallpaperMeta,
   WallpaperSetting,
+  AppUpdateEvent,
+  AppUpdateInfo,
+  AppUpdateState,
+  UiRemoteManifest,
+  UiUpdateEvent,
+  UiUpdateStatus,
 } from "./types";
 
 export type ApiResult<T> = {
@@ -29,7 +35,7 @@ export type ApiResult<T> = {
   data: T | null;
 };
 
-export type ConfigKey = "Appearance" | "General" | "Wallpaper";
+export type ConfigKey = "Appearance" | "General" | "Wallpaper" | "Update";
 
 const noClient = <T,>(): ApiResult<T> => ({
   error: "no client",
@@ -747,6 +753,118 @@ class API {
       console.error(e);
       return { error: e, data: null };
     }
+  }
+
+  // ---------- 更新（界面热更新 + 程序自动更新） ----------
+
+  /** 界面热更新状态（当前生效版本 / 配置） */
+  async uiUpdateStatus(): Promise<ApiResult<UiUpdateStatus>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<UiUpdateStatus>("ui_update_status");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 检查界面更新（url 缺省用配置地址）；返回 null 表示已是最新 */
+  async uiUpdateCheck(url?: string): Promise<ApiResult<UiRemoteManifest | null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<UiRemoteManifest | null>("ui_update_check", { url: url ?? null });
+      return { error: null, data: data ?? null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 下载并应用界面更新（进度经 onUiUpdateEvent 推送），返回新版本号 */
+  async uiUpdateApply(url?: string): Promise<ApiResult<string>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<string>("ui_update_apply", { url: url ?? null });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 还原到内置界面（删除热更新界面并刷新主窗口） */
+  async uiUpdateRestore(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("ui_update_restore");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 界面更新进度/结果事件 */
+  onUiUpdateEvent(callback: (event: UiUpdateEvent) => void) {
+    listen<UiUpdateEvent>("ui-update-event", (e) => callback(e.payload)).then((un) =>
+      this.unlisteners.push(un)
+    );
+  }
+
+  /** 检查程序更新（按配置通道）；返回 null 表示已是最新 */
+  async appUpdateCheck(): Promise<ApiResult<AppUpdateInfo | null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<AppUpdateInfo | null>("app_update_check");
+      return { error: null, data: data ?? null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 下载程序更新（info 缺省用最近一次检查结果） */
+  async appUpdateDownload(info?: AppUpdateInfo): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("app_update_download", { info: info ?? null });
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 安装已下载的程序更新（退出应用并启动安装器，完成后自动重启） */
+  async appUpdateInstall(): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("app_update_install");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 程序更新状态快照 */
+  async appUpdateState(): Promise<ApiResult<AppUpdateState>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<AppUpdateState>("app_update_state");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 程序更新进度/结果事件 */
+  onAppUpdateEvent(callback: (event: AppUpdateEvent) => void) {
+    listen<AppUpdateEvent>("app-update-event", (e) => callback(e.payload)).then((un) =>
+      this.unlisteners.push(un)
+    );
   }
 }
 

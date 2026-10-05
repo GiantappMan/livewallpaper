@@ -277,6 +277,75 @@ export type MpvDownloadEvent =
   | { state: "done"; path: string }
   | { state: "error"; message: string };
 
+// ---------- 更新（界面热更新 + 程序自动更新） ----------
+
+export type ConfigUpdate = {
+  /** 界面热更新清单地址（ui.json）；为空表示未启用 */
+  uiUrl: string;
+  /** 启动时自动检查并应用界面更新 */
+  uiAuto: boolean;
+  /** 热更新界面是否生效 */
+  uiActive: boolean;
+  /** 程序更新检查地址 base（清单为 <base>/stable.json、<base>/preview.json） */
+  appUrl: string;
+  /** off | stable | preview */
+  appChannel: string;
+  /** 发现新版本后自动下载（安装始终需确认） */
+  appAutoDownload: boolean;
+};
+
+/** 远程界面更新清单 */
+export type UiRemoteManifest = {
+  version: string;
+  url: string;
+  notes: string;
+  date: string;
+};
+
+export type UiUpdateStatus = {
+  uiUrl: string;
+  uiAuto: boolean;
+  uiActive: boolean;
+  installedVersion: string | null;
+  installedAt: string | null;
+  appVersion: string;
+};
+
+export type AppUpdateInfo = {
+  version: string;
+  url: string;
+  notes: string;
+  date: string;
+  channel: string;
+};
+
+export type AppUpdateState = {
+  channel: string;
+  autoDownload: boolean;
+  /** idle | available | downloading | downloaded | error */
+  phase: string;
+  percent: number;
+  info: AppUpdateInfo | null;
+  error: string | null;
+  downloadedVersion: string | null;
+};
+
+export type UiUpdateEvent =
+  | { state: "checking" }
+  | { state: "available"; version: string; notes: string }
+  | { state: "progress"; percent: number; receivedBytes: number; totalBytes: number }
+  | { state: "applied"; version: string }
+  | { state: "restored" }
+  | { state: "error"; message: string };
+
+export type AppUpdateEvent =
+  | { state: "checking" }
+  | { state: "upToDate" }
+  | { state: "available"; version: string; notes: string; channel: string }
+  | { state: "progress"; percent: number; receivedBytes: number; totalBytes: number }
+  | { state: "downloaded"; version: string }
+  | { state: "error"; message: string };
+
 // ---------- 皮肤 ----------
 
 export type SkinInfo = {

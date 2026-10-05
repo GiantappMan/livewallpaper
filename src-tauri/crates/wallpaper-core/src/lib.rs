@@ -23,7 +23,7 @@ pub mod mpv;
 pub mod libmpv;
 
 pub use api::WallpaperApi;
-pub use config::{ConfigAppearance, ConfigGeneral, ConfigStore, ConfigWallpaper};
+pub use config::{ConfigAppearance, ConfigGeneral, ConfigStore, ConfigUpdate, ConfigWallpaper};
 pub use dirs::AppDirs;
 pub use download::{
     DownloadEventCallback, DownloadHistoryItem, DownloadItem, DownloadManager, DownloadStatus,

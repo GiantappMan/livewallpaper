@@ -31,3 +31,8 @@ node_modules
 .mimosa/
 .zcode/plans/
 .video_agent/
+
+# CF 发布（scripts/publish.ts）：wrangler 本地状态与脚本生成的临时配置/产物
+.wrangler/
+scripts/cloudflare/wrangler.generated.toml
+build/publish/
