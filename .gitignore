@@ -30,6 +30,7 @@ node_modules
 # AI 工具本地状态（mimosa 扫描状态、会话计划、本机插件路径）
 .mimosa/
 .zcode/plans/
+.zcode/tmp/
 .video_agent/
 
 # CF 发布（scripts/publish.ts）：wrangler 本地状态与脚本生成的临时配置/产物
