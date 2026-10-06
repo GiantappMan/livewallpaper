@@ -97,7 +97,7 @@ Date format like `2026.9.12`; if the user only mentioned fixes, the `### 功能`
 
 **7. Ask whether to publish to the Cloudflare update channel** (use AskUserQuestion: publish / not for now)
 
-应用内「程序更新」与「界面热更新」都从该渠道拉取（界面热更新地址留空时自动跟随通道）。通道与发布类型一一对应：**正式版 → release 通道（stable.json），预览版 → preview 通道（preview.json）**；界面热更新清单（ui/stable.json、ui/preview.json、ui.json）会随之一起更新，无需单独操作。
+应用内「程序更新」与「界面热更新」都从该渠道拉取（界面热更新地址留空时自动跟随通道）。通道与发布类型一一对应：**正式版 → release 通道（stable.json），预览版 → preview 通道（preview.json）**。脚本会**同时打包并上传界面热更新本体**（`ui/ui-<版本>.zip`，取自当前前端 dist，与安装包内置界面同一份构建）和三份界面清单（ui/stable.json、ui/preview.json、ui.json）——即一次发布同时更新程序更新与界面热更新两个通道，界面热更新无需单独操作。
 
 **Not for now** -> skip to step 8.
 
