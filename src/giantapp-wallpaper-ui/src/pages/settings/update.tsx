@@ -194,6 +194,11 @@ const Page = () => {
                     onChange={(e) => setConfig({ ...config, uiUrl: e.target.value })}
                     onBlur={() => api.setConfig("Update", config)} />
             </div>
+            {uiStatus?.urlFollowsChannel && uiStatus.resolvedUrl && (
+                <p className="text-xs text-muted-foreground break-all pl-44">
+                    {dictionary['update'].ui_url_follow.replace("{0}", uiStatus.resolvedUrl)}
+                </p>
+            )}
             <p className="text-xs text-muted-foreground">
                 {uiStatus
                     ? (uiStatus.uiActive && uiStatus.installedVersion

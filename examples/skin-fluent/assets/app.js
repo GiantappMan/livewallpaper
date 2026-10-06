@@ -182,6 +182,19 @@
   function icon(name, size) {
     return `<svg viewBox="0 0 24 24" width="${size || 18}" height="${size || 18}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name] || ""}</svg>`;
   }
+  /** 安全图标节点：SVG 路径全部来自代码内常量表 I[]，经 DOMParser 惰性解析
+   *  （image/svg+xml 文档不执行脚本、不加载外部资源），不经过 innerHTML
+   *  拼接任何运行时字符串。需要往 DOM 里放图标时一律用它而非 icon() 字符串。 */
+  function iconEl(name, size) {
+    const span = el("span");
+    const parsed = new DOMParser().parseFromString(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size || 18}" height="${size || 18}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name] || ""}</svg>`,
+      "image/svg+xml",
+    );
+    const root = parsed.documentElement;
+    if (root && root.localName === "svg") span.append(root);
+    return span;
+  }
   /** Win11 标题栏键字形（细线，与 Segoe Fluent Icons 的 ChromeMinimize/Maximize/Close 对齐） */
   function winGlyph(type) {
     const paths = {
@@ -265,7 +278,7 @@
       title: SC.t(item.label),
       onclick: () => go(item.id),
     });
-    btn.innerHTML = `<span class="nav-item-pill"></span><span class="nav-item-ico">${icon(item.icon, 17)}</span>`;
+    btn.append(el("span", { class: "nav-item-pill" }), el("span", { class: "nav-item-ico" }, iconEl(item.icon, 17)));
     btn.append(el("span", { class: "nav-item-label" }, SC.t(item.label)));
     if (item.badge) {
       dlBadge = el("span", { class: "nav-badge", hidden: true });
@@ -440,7 +453,7 @@
     rows.forEach((r, i) => {
       const [ico, label, hint, control] = r;
       card.append(el("div", { class: "card-row" },
-        ico ? el("span", { class: "card-row-ico" }, (() => { const s = el("span"); s.innerHTML = icon(ico, 17); return s; })()) : null,
+        ico ? el("span", { class: "card-row-ico" }, iconEl(ico, 17)) : null,
         el("div", { class: "card-text" }, el("span", { class: "card-label" }, label), hint ? el("p", { class: "card-hint" }, hint) : null),
         control || null));
       if (i < rows.length - 1) card.append(el("div", { class: "card-sep" }));
@@ -497,7 +510,7 @@
 
     // Win11 命令栏：主命令（创建，带下拉）+ 应用到 + 搜索
     const createBtn = el("button", { class: "btn btn-accent cmdbar-primary" });
-    createBtn.innerHTML = `${icon("plus", 15)}<span>${SC.t("common.create")}</span>${icon("chevron", 12)}`;
+    createBtn.append(iconEl("plus", 15), el("span", {}, SC.t("common.create")), iconEl("chevron", 12));
     const createPop = pop(createBtn, () => el("div", { class: "pop-menu" },
       el("button", { class: "pop-item", onclick: () => { closePops(); openWallpaperDialog(null); } },
         (() => { const s = el("span", { class: "pop-ico" }); s.innerHTML = icon("image", 15); return s; })(), SC.t("create.wallpaper")),
@@ -618,7 +631,7 @@
 
     function actBtn(ic, title, onclick) {
       const b = el("button", { class: "icon-btn", title, onclick: (e) => { e.stopPropagation(); onclick(); } });
-      b.innerHTML = icon(ic, 15);
+      b.append(iconEl(ic, 15));
       return b;
     }
 
@@ -661,7 +674,7 @@
     closeCtx();
     ctx = el("div", { class: "ctx" }, items.map((it) =>
       el("button", { class: `ctx-item ${it.danger ? "is-danger" : ""}`, onclick: () => { closeCtx(); it.act(); } },
-        el("span", { class: "ctx-ico" }, (() => { const s = el("span"); s.innerHTML = icon(it.ico || "chevr", 14); return s; })()),
+        el("span", { class: "ctx-ico" }, iconEl(it.ico || "chevr", 14)),
         el("span", {}, it.label))));
     document.body.append(ctx);
     const r = ctx.getBoundingClientRect();
@@ -866,7 +879,7 @@
             if (sub) sub.textContent = SC.t("create.members", members.length);
           }
           const addBtn = el("button", { class: "btn" });
-          addBtn.innerHTML = `${icon("listplus", 15)}<span>${SC.t("create.addMembers")}</span>`;
+          addBtn.append(iconEl("listplus", 15), el("span", {}, SC.t("create.addMembers")));
           addBtn.addEventListener("click", () => openMemberPicker(members, () => { renderMembers(); renderCount(); }));
           renderMembers();
           box.append(el("div", { class: "field-row" }, el("label", { class: "field-label" }, SC.t("create.members", members.length)), addBtn), grid);
@@ -1153,7 +1166,7 @@
       maxBtn.addEventListener("click", () => {
         maxed = !maxed;
         sheet.classList.toggle("is-max", maxed);
-        maxBtn.innerHTML = icon(maxed ? "restore" : "maxw", 14);
+        maxBtn.replaceChildren(iconEl(maxed ? "restore" : "maxw", 14));
         maxBtn.title = SC.t(maxed ? "pv.restore" : "pv.max");
       });
       const closeBtn = el("button", { class: "icon-btn", onclick: () => close() }, (() => { const s = el("span"); s.innerHTML = icon("x", 15); return s; })());
@@ -1284,7 +1297,7 @@
             onclick: () => { if (!video) return; video.paused ? video.play().catch(() => {}) : video.pause(); },
           });
           playBtn.innerHTML = icon("pause", 16);
-          const syncPlay = () => { if (!video) return; playBtn.innerHTML = icon(video.paused ? "play" : "pause", 16); playBtn.title = SC.t(video.paused ? "dock.resume" : "dock.pause"); };
+          const syncPlay = () => { if (!video) return; playBtn.replaceChildren(iconEl(video.paused ? "play" : "pause", 16)); playBtn.title = SC.t(video.paused ? "dock.resume" : "dock.pause"); };
           video.addEventListener("play", syncPlay);
           video.addEventListener("pause", syncPlay);
 
@@ -1316,7 +1329,7 @@
             if (video) { video.volume = volume / 100; video.muted = volume === 0; }
             volNum.textContent = String(volume);
             volSlider.value = String(volume);
-            volIcon.innerHTML = icon(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16);
+            volIcon.replaceChildren(iconEl(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16));
           };
           // 用户调整音量即记住，下次预览沿用（初始渲染不写，未动过时继续跟随桌面音量）
           const saveVolume = () => { try { localStorage.setItem("fluent.pvVolume", String(volume)); } catch (_) { /* 存储不可用则忽略 */ } };
@@ -1448,7 +1461,7 @@
         return b;
       };
       const cmd = (ic, label, act) => {
-        const i = el("span", { class: "pop-ico" }); i.innerHTML = icon(ic, 15);
+        const i = el("span", { class: "pop-ico" }, iconEl(ic, 15));
         return el("button", { class: "pop-item", onclick: () => { closePops(); act(); } }, i, label);
       };
       const setType = (v) => { localType = v; localStorage.setItem("fluent.localType", v); if (localRefresh) localRefresh(); };
@@ -1491,7 +1504,7 @@
 
     const newFolderBtnEl = () => {
       const b = el("button", { class: "btn btn-sm" });
-      b.innerHTML = `${icon("folderplus", 14)}<span>${SC.t("local.newFolder")}</span>`;
+      b.append(iconEl("folderplus", 14), el("span", {}, SC.t("local.newFolder")));
       b.addEventListener("click", () => openNewFolderDialog());
       return b;
     };
@@ -2175,7 +2188,7 @@
 
     function actBtn(ic, title, onclick) {
       const b = el("button", { class: "icon-btn", title, onclick: (e) => { e.stopPropagation(); onclick(); } });
-      b.innerHTML = icon(ic, 15);
+      b.append(iconEl(ic, 15));
       return b;
     }
 
@@ -2498,7 +2511,7 @@
       const cur = a.mode || "system";
       for (const [val, key, ic] of modes) {
         const b = el("button", { class: `seg-item ${cur === val ? "is-active" : ""}`, onclick: async () => { await SC.setMode(val); a.mode = val; renderModes(); } });
-        b.innerHTML = `${icon(ic, 14)}<span>${SC.t(key)}</span>`;
+        b.append(iconEl(ic, 14), el("span", {}, SC.t(key)));
         modeWrap.append(b);
       }
     }
@@ -2784,9 +2797,9 @@
     const card = el("div", { class: "card-group about-links" });
     links.forEach(([ic, label, act], i) => {
       card.append(el("button", { class: "card-row about-link", onclick: act },
-        el("span", { class: "card-row-ico" }, (() => { const s = el("span"); s.innerHTML = icon(ic, 17); return s; })()),
+        el("span", { class: "card-row-ico" }, iconEl(ic, 17)),
         el("div", { class: "card-text" }, el("span", { class: "card-label" }, label)),
-        el("span", { class: "about-arrow" }, (() => { const s = el("span"); s.innerHTML = icon("chevr", 14); return s; })())));
+        el("span", { class: "about-arrow" }, iconEl("chevr", 14))));
       if (i < links.length - 1) card.append(el("div", { class: "card-sep" }));
     });
     viewEl.append(card);
@@ -3025,7 +3038,7 @@
     // 音量 + 音源
     const volume = st.volume || 0;
     const volBtn = el("button", { class: "icon-btn", title: SC.t("dock.volume") });
-    volBtn.innerHTML = icon(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16);
+    volBtn.append(iconEl(volume === 0 ? "volx" : volume <= 50 ? "volq" : "vol", 16));
     const volSlider = el("input", { class: "dock-vol", type: "range", min: 0, max: 100, value: volume });
     const volNum = el("span", { class: "dock-volnum" }, String(volume));
     const doSetVol = SC.debounce((v) => SC.setVolume(v, st.audioScreenIndex < 0 ? -1 : st.audioScreenIndex), 250);
@@ -3035,7 +3048,7 @@
 
     // 音源选择
     const audioBtn = el("button", { class: "icon-btn", title: SC.t("dock.audio") });
-    audioBtn.innerHTML = icon(st.audioScreenIndex < 0 ? "volx" : "music", 16);
+    audioBtn.append(iconEl(st.audioScreenIndex < 0 ? "volx" : "music", 16));
     const audioPop = pop(audioBtn, () => el("div", { class: "pop-menu" },
       screens.map((s) => el("button", {
         class: `pop-item ${st.audioScreenIndex === s.index ? "is-active" : ""}`,
@@ -3058,7 +3071,7 @@
 
   function ctlBtn(ic, title, onclick) {
     const b = el("button", { class: "icon-btn dock-btn", title, onclick });
-    b.innerHTML = icon(ic, 16);
+    b.append(iconEl(ic, 16));
     return b;
   }
 

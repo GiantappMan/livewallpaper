@@ -1367,6 +1367,10 @@ pub struct UiUpdateStatus {
     pub installed_version: Option<String>,
     pub installed_at: Option<String>,
     pub app_version: String,
+    /// 实际生效的清单地址（自定义地址优先，否则由更新通道推导）
+    pub resolved_url: Option<String>,
+    /// 清单地址是否跟随更新通道（未自定义 uiUrl）
+    pub url_follows_channel: bool,
 }
 
 #[tauri::command]
@@ -1381,6 +1385,8 @@ pub fn ui_update_status(app: AppHandle) -> Result<UiUpdateStatus> {
         )
     };
     let manifest = crate::ui_update::read_installed_manifest(&st.dirs);
+    let resolved_url = crate::ui_update::resolve_manifest_url(&st.dirs).ok();
+    let url_follows_channel = ui_url.trim().is_empty();
     Ok(UiUpdateStatus {
         ui_url,
         ui_auto,
@@ -1388,10 +1394,13 @@ pub fn ui_update_status(app: AppHandle) -> Result<UiUpdateStatus> {
         installed_version: manifest.as_ref().map(|m| m.version.clone()),
         installed_at: manifest.map(|m| m.applied_at),
         app_version: crate::APP_VERSION.into(),
+        resolved_url,
+        url_follows_channel,
     })
 }
 
-/// 手动检查界面更新：url 缺省时用配置地址。返回 Some(清单) 表示有新版本。
+/// 手动检查界面更新：url 缺省时按「自定义地址 > 更新通道推导」解析。
+/// 返回 Some(清单) 表示有新版本。
 #[tauri::command]
 pub async fn ui_update_check(
     app: AppHandle,
@@ -1401,8 +1410,7 @@ pub async fn ui_update_check(
         Some(u) if !u.trim().is_empty() => u,
         _ => {
             let st = state(&app);
-            let config = st.config.lock();
-            config.update.ui_url.clone()
+            crate::ui_update::resolve_manifest_url(&st.dirs)?
         }
     };
     let st = state(&app);
@@ -1419,8 +1427,7 @@ pub async fn ui_update_apply(app: AppHandle, url: Option<String>) -> Result<Stri
         Some(u) if !u.trim().is_empty() => u,
         _ => {
             let st = state(&app);
-            let config = st.config.lock();
-            config.update.ui_url.clone()
+            crate::ui_update::resolve_manifest_url(&st.dirs)?
         }
     };
     let (manifest, resolved_url) = crate::ui_update::fetch_manifest(&manifest_url).await?;

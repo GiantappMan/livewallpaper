@@ -309,6 +309,10 @@ export type UiUpdateStatus = {
   installedVersion: string | null;
   installedAt: string | null;
   appVersion: string;
+  /** 实际生效的清单地址（自定义地址优先，否则按更新通道推导） */
+  resolvedUrl: string | null;
+  /** 清单地址是否跟随更新通道（未自定义 uiUrl） */
+  urlFollowsChannel: boolean;
 };
 
 export type AppUpdateInfo = {

@@ -118,6 +118,26 @@ fn config_file_update(dirs: &AppDirs) -> wallpaper_core::ConfigUpdate {
         .unwrap_or_default()
 }
 
+/// 解析界面更新清单地址：自定义 `uiUrl` 优先；否则跟随程序更新通道——
+/// 正式版拉 `<appUrl>/ui/stable.json`、预览版拉 `<appUrl>/ui/preview.json`，
+/// 通道关闭或未配置地址时返回错误（不检查）。
+pub fn resolve_manifest_url(dirs: &AppDirs) -> Result<String, String> {
+    let config = config_file_update(dirs);
+    let ui_url = config.ui_url.trim();
+    if !ui_url.is_empty() {
+        return Ok(ui_url.to_string());
+    }
+    let app_url = config.app_url.trim();
+    if app_url.is_empty() {
+        return Err("未配置更新地址".into());
+    }
+    if config.app_channel == "off" {
+        return Err("更新通道已关闭".into());
+    }
+    let name = if config.app_channel == "preview" { "preview" } else { "stable" };
+    Ok(format!("{}/ui/{name}.json", app_url.trim_end_matches('/')))
+}
+
 /// 热更新界面生效时返回主窗口加载目标（在 `skin::main_window_target` 最前面接管）。
 /// 仅当配置 `uiActive` 且界面目录可用时生效，否则 None 走常规皮肤解析。
 pub fn active_target(dirs: &AppDirs) -> Option<crate::skin::MainWindowTarget> {
@@ -323,13 +343,17 @@ fn extract_zip(archive: &std::path::Path, dest: &std::path::Path) -> Result<(), 
 pub fn start_background(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         let dirs = app_dirs(&app);
-        let (url, auto) = {
-            let config = config_file_update(&dirs);
-            (config.ui_url.clone(), config.ui_auto)
-        };
-        if !auto || url.trim().is_empty() {
+        if !config_file_update(&dirs).ui_auto {
             return;
         }
+        // 清单地址：自定义 uiUrl 优先，否则跟随程序更新通道（ui/stable|preview.json）
+        let url = match resolve_manifest_url(&dirs) {
+            Ok(u) => u,
+            Err(e) => {
+                log::info!("ui update skipped: {e}");
+                return;
+            }
+        };
         publish(&app, UiUpdateEvent::Checking);
         match check(&dirs, &url).await {
             Ok(Some(manifest)) => {
@@ -523,6 +547,37 @@ mod tests {
             }
             _ => panic!("expected external ui url"),
         }
+        let _ = std::fs::remove_dir_all(&dirs.root);
+    }
+
+    #[test]
+    fn resolve_manifest_url_follows_channel_or_custom() {
+        let dirs = temp_dirs("resolve");
+        std::fs::create_dir_all(dirs.configs_dir()).unwrap();
+        let write_config = |json: &str| {
+            std::fs::write(dirs.config_file("update"), json).unwrap();
+        };
+        // 未配置任何地址 -> 错误
+        write_config(r#"{}"#);
+        assert!(resolve_manifest_url(&dirs).is_err());
+        // 跟随通道：stable / preview / off
+        write_config(r#"{"appUrl":"https://cdn.example.com/updates","appChannel":"stable"}"#);
+        assert_eq!(
+            resolve_manifest_url(&dirs).unwrap(),
+            "https://cdn.example.com/updates/ui/stable.json"
+        );
+        write_config(r#"{"appUrl":"https://cdn.example.com/updates/","appChannel":"preview"}"#);
+        assert_eq!(
+            resolve_manifest_url(&dirs).unwrap(),
+            "https://cdn.example.com/updates/ui/preview.json"
+        );
+        write_config(r#"{"appUrl":"https://cdn.example.com/updates","appChannel":"off"}"#);
+        assert!(resolve_manifest_url(&dirs).is_err());
+        // 自定义 uiUrl 优先于通道推导
+        write_config(
+            r#"{"uiUrl":"https://other.example.com/ui.json","appUrl":"https://cdn.example.com/updates","appChannel":"preview"}"#,
+        );
+        assert_eq!(resolve_manifest_url(&dirs).unwrap(), "https://other.example.com/ui.json");
         let _ = std::fs::remove_dir_all(&dirs.root);
     }
 

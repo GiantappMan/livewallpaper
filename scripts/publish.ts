@@ -201,6 +201,14 @@ async function main() {
     notes,
     date: today,
   };
+  // 通道化界面清单：应用「热更新地址留空」时按更新通道拉取
+  // （正式版用户 ui/stable.json、预览版用户 ui/preview.json）
+  for (const channel of ["stable", "preview"]) {
+    const file = join(OUT_DIR, `ui-${channel}.json`);
+    writeFileSync(file, JSON.stringify(uiManifest, null, 2));
+    await putObject(`ui/${channel}.json`, file, "application/json");
+  }
+  // 顶层 ui.json 兼容保留：手动指定热更新地址 / 自定义部署场景
   const uiJson = join(OUT_DIR, "ui.json");
   writeFileSync(uiJson, JSON.stringify(uiManifest, null, 2));
   await putObject("ui.json", uiJson, "application/json");
@@ -236,15 +244,16 @@ async function main() {
 [publish] 完成 ✔
 
   Worker 地址      ${workerUrl}
-  界面热更新清单    ${workerUrl}/ui.json
+  界面热更新清单    ${workerUrl}/ui/stable.json  /  ${workerUrl}/ui/preview.json（按应用内更新通道自动跟随）
+                    ${workerUrl}/ui.json（兼容保留，手动指定时用）
   程序更新清单      ${workerUrl}/stable.json  /  ${workerUrl}/preview.json
 
 应用侧接入（二选一）：
-  1) 应用内 设置 → 软件更新，把上面的地址填入「热更新地址 / 更新服务器地址」；
-  2) 打包时内置默认值：
-       GIANTAPP_UI_UPDATE_URL=${workerUrl}/ui.json
+  1) 应用内 设置 → 软件更新，只需把 ${workerUrl} 填入「更新服务器地址」——
+     程序更新与界面热更新都会按所选通道自动跟随（推荐）；
+  2) 打包时内置默认值（留空热更新地址即跟随通道）：
        GIANTAPP_UPDATE_URL=${workerUrl}
-     例：GIANTAPP_UPDATE_URL=${workerUrl} GIANTAPP_UI_UPDATE_URL=${workerUrl}/ui.json bun run build
+     例：GIANTAPP_UPDATE_URL=${workerUrl} bun run build
 `);
 }
 
