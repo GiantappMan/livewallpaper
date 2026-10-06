@@ -1447,6 +1447,23 @@ pub fn ui_update_restore(app: AppHandle) -> Result<()> {
     Ok(())
 }
 
+/// 列出本地缓存的所有界面版本（含当前生效标记）。
+#[tauri::command]
+pub fn ui_update_versions(app: AppHandle) -> Result<Vec<crate::ui_update::UiVersionEntry>> {
+    let st = state(&app);
+    Ok(crate::ui_update::list_versions(&st.dirs))
+}
+
+/// 手动切换界面版本：`version` 为 None 时还原内置界面，否则激活对应缓存版本。
+#[tauri::command]
+pub fn ui_update_select(app: AppHandle, version: Option<String>) -> Result<()> {
+    crate::ui_update::activate_version(&app, version)?;
+    if app.get_webview("main").is_some() {
+        crate::recreate_main_window(&app);
+    }
+    Ok(())
+}
+
 /// 手动检查程序更新（按配置的通道与地址）。返回 Some(信息) 表示有新版本。
 #[tauri::command]
 pub async fn app_update_check(app: AppHandle) -> Result<Option<crate::app_update::AppUpdateInfo>> {

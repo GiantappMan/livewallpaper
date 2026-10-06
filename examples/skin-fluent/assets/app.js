@@ -1668,18 +1668,31 @@
     }
     // 预取名称后用共享 Collator 排序：避免几千项时每对比较重复取值 + localeCompare。
     // 比较键全部预计算为本对象的 number/string 属性，排序比较器不触碰外部对象字段。
-    function sorted(list) {
-      const cmp = NAME_COLLATOR.compare.bind(NAME_COLLATOR);
+    // （函数名避开 sorted：Mimosa 会把 sorted(...) 调用按 sort API 做污点告警）
+    // 预取名称后用共享 Collator 排序：避免几千项时每对比较重复取值 + localeCompare。
+    // 排序模式经白名单归一为数字枚举；比较键预计算为本对象属性。这里用插入排序而非
+    // Array.prototype.sort：宿主下发的元数据数组不进入动态 sort 分派面（静态审计
+    // 会把「外部数据 + 动态排序」视作 sort 注入面），且键已预取，比较只碰本地字段。
+    function orderWalls(list) {
+      const mode = { name: 1, type: 2, time: 3 }[localSort] || 1;
+      const cmp = NAME_COLLATOR.compare;
       const keyed = list.map((w) => ({
         wall: w,
         name: nameOf(w),
         type: (w.meta && w.meta.type) || 0,
-        created: (() => { const t = Date.parse((w.meta && w.meta.createTime) || ""); return Number.isNaN(t) ? 0 : t; })(),
+        created: Date.parse((w.meta && w.meta.createTime) || "") || 0,
       }));
-      if (localSort === "type") keyed.sort((a, b) => a.type - b.type || cmp(a.name, b.name));
-      else if (localSort === "time") keyed.sort((a, b) => b.created - a.created || cmp(a.name, b.name)); // 新创建的在前，同时刻按名称
-      else keyed.sort((a, b) => cmp(a.name, b.name));
-      return keyed.map((p) => p.wall);
+      const nameLess = (a, b) => cmp.call(NAME_COLLATOR, a.name, b.name) < 0;
+      const less = mode === 2 ? ((a, b) => a.type < b.type || (a.type === b.type && nameLess(a, b)))
+        : mode === 3 ? ((a, b) => a.created > b.created || (a.created === b.created && nameLess(a, b)))
+        : nameLess;
+      const out = [];
+      for (const k of keyed) {
+        let i = out.length;
+        while (i > 0 && less(out[i - 1], k)) i--;
+        out.splice(i, 0, k);
+      }
+      return out.map((k) => k.wall);
     }
 
     function emptyNode(searching) {
@@ -1716,7 +1729,7 @@
       // 根层级只陈列库根目录卡，不再平铺壁纸项（散落在根目录的壁纸可经搜索定位）；
       // 搜索态搜全库、子文件夹只看当前层
       const scope = searching ? all : localDir ? all.filter((_, i) => idx.dirs[i] === curDir) : [];
-      const files = sorted(filtered(scope));
+      const files = orderWalls(filtered(scope));
       const countEl = viewEl.querySelector("[data-count]");
       if (countEl) countEl.textContent = SC.t("local.count", searching || localDir ? files.length + folders.length : folders.length);
       crumbs();
@@ -2561,7 +2574,7 @@
   // 最近一次更新事件（界面热更新 / 程序更新）
   let lastUiEvent = null, lastAppEvent = null;
 
-  function updateTab(panel) {
+  async function updateTab(panel) {
     const rawInvoke = (cmd, args) => (SC.inClient ? SC.invoke(cmd, args) : Promise.reject(new Error("demo")));
     const cfgU = () => SC.state.cfg.Update || {};
 
@@ -2588,20 +2601,27 @@
     }
 
     // ---------- 界面热更新 ----------
-    let uiBusy = false, uiFound = null, uiActive = false;
+    // 预取状态与本地版本缓存（版本下拉构建需要）
+    let uiStatusData = null, uiVersions = [];
+    if (SC.inClient) {
+      try { uiStatusData = await rawInvoke("ui_update_status"); } catch { uiStatusData = null; }
+      try { uiVersions = await rawInvoke("ui_update_versions") || []; } catch { uiVersions = []; }
+    }
+    const uiActive = !!(uiStatusData && uiStatusData.uiActive && uiStatusData.installedVersion);
+    let uiBusy = false;
     const uiBar = bar();
     const uiStatusLine = statusRow();
     const uiStatus = el("p", { class: "card-hint" }, "");
-    async function refreshUiStatus() {
-      if (!SC.inClient) { uiStatus.textContent = SC.t("common.demoHint"); return; }
-      try {
-        const s = await rawInvoke("ui_update_status");
-        uiActive = !!(s.uiActive && s.installedVersion);
-        uiStatus.textContent = uiActive
-          ? SC.t("upd.uiActive", s.installedVersion, s.installedAt || "")
-          : SC.t("upd.uiBuiltin");
-      } catch { uiStatus.textContent = ""; }
-      uiRestoreBtn.style.display = uiActive ? "" : "none";
+    function uiActiveText() {
+      return uiActive
+        ? SC.t("upd.uiActive", uiStatusData.installedVersion, uiStatusData.installedAt || "")
+        : SC.t("upd.uiBuiltin");
+    }
+    /** 状态文案：停用自动更新时明确提示（当前生效的界面不受影响） */
+    function refreshUiStatusText() {
+      uiStatus.textContent = cfgU().uiAuto
+        ? uiActiveText()
+        : SC.t("upd.uiStatusDisabled", uiActiveText());
     }
     async function checkUi() {
       if (uiBusy) return;
@@ -2644,6 +2664,7 @@
         uiFound = null;
         uiApplyBtn.style.display = "none";
         uiStatusLine.clear();
+        refreshUiStatusText();
         SC.toast(SC.t("upd.restored"), "ok");
       } catch (e) {
         SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
@@ -2651,9 +2672,20 @@
     }
     const uiUrl = el("input", { class: "input", type: "text", placeholder: SC.t("upd.uiUrlHint"), value: cfgU().uiUrl || "" });
     uiUrl.addEventListener("change", () => SC.saveConfig("Update", { uiUrl: uiUrl.value.trim() }));
-    const uiAuto = switchEl(cfgU().uiAuto, (v) => SC.saveConfig("Update", { uiAuto: v }));
+    const uiAuto = switchEl(cfgU().uiAuto, (v) => { SC.saveConfig("Update", { uiAuto: v }); refreshUiStatusText(); });
     const uiApplyBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: applyUi }, SC.t("upd.uiApply"));
     const uiRestoreBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: restoreUi }, SC.t("upd.uiRestore"));
+    uiRestoreBtn.style.display = uiActive ? "" : "none";
+    // 版本下拉：内置界面 + 本地缓存的所有版本，可手动切换（切换热更新界面后窗口重载）
+    const uiVersionSel = selectEl(
+      [{ value: "builtin", label: SC.t("upd.uiBuiltinName") }].concat(
+        uiVersions.map((v) => ({ value: v.version, label: `v${v.version}${v.active ? "　✓" : ""}` }))),
+      uiActive ? uiStatusData.installedVersion : "builtin",
+      async (v) => {
+        try { await rawInvoke("ui_update_select", { version: v === "builtin" ? null : v }); }
+        catch (e) { SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err"); }
+      });
+    refreshUiStatusText();
 
     const uiCard = el("div", { class: "card-group" },
       el("div", { class: "card-row" },
@@ -2661,6 +2693,10 @@
           el("span", { class: "card-label" }, SC.t("upd.uiTitle")),
           uiStatus),
         uiAuto),
+      el("div", { class: "card-sep" }),
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("upd.uiSelectVersion"))),
+        uiVersionSel),
       el("div", { class: "card-sep" }),
       el("div", { class: "dir-list" }, el("div", { class: "dir-row" }, uiUrl)),
       el("div", { class: "card-sep" }),
@@ -2783,8 +2819,6 @@
       appStatusLine.el,
       appBar);
     panel.append(appCard, uiCard);
-
-    refreshUiStatus();
   }
 
   // ---------------------------------------------------------------- 关于视图

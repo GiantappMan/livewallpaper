@@ -154,6 +154,8 @@ pub fn run() {
             commands::ui_update_check,
             commands::ui_update_apply,
             commands::ui_update_restore,
+            commands::ui_update_versions,
+            commands::ui_update_select,
             commands::app_update_check,
             commands::app_update_download,
             commands::app_update_install,

@@ -246,25 +246,7 @@ pub async fn apply(app: &AppHandle, manifest: &UiRemoteManifest, manifest_url: &
         return Err(format!("更新包缺少入口文件 {UI_ENTRY}"));
     }
 
-    // 3. 原子换装：ui -> ui.old -> 删除；staging -> ui
-    let installed = ui_dir(&dirs);
-    let backup = dirs.root.join("ui.old");
-    let _ = std::fs::remove_dir_all(&backup);
-    if installed.exists() {
-        std::fs::rename(&installed, &backup).map_err(|e| format!("备份旧界面失败: {e}"))?;
-    }
-    if let Err(e) = std::fs::rename(&staging, &installed) {
-        // 换装失败则回滚备份，保住可用界面
-        if backup.exists() {
-            let _ = std::fs::rename(&backup, &installed);
-        }
-        let _ = std::fs::remove_dir_all(&staging);
-        return Err(format!("应用界面更新失败: {e}"));
-    }
-    let _ = std::fs::remove_dir_all(&backup);
-    let _ = std::fs::remove_file(&zip_path);
-
-    // 4. 落盘本地清单 + 置生效标记
+    // 3. 入版本缓存：staging -> ui-versions/<version>（同版本重下则替换）
     let record = UiInstalledManifest {
         version: manifest.version.clone(),
         notes: manifest.notes.clone(),
@@ -273,24 +255,147 @@ pub async fn apply(app: &AppHandle, manifest: &UiRemoteManifest, manifest_url: &
         applied_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
     };
     std::fs::write(
-        installed.join(MANIFEST_FILE),
+        staging.join(MANIFEST_FILE),
         serde_json::to_string_pretty(&record).unwrap_or_default(),
     )
     .map_err(|e| format!("写入清单失败: {e}"))?;
-    set_ui_active(app, true);
-    publish(app, UiUpdateEvent::Applied { version: manifest.version.clone() });
+    let cache_dir = versions_dir(&dirs).join(&manifest.version);
+    let _ = std::fs::remove_dir_all(&cache_dir);
+    std::fs::create_dir_all(versions_dir(&dirs)).map_err(|e| format!("创建目录失败: {e}"))?;
+    std::fs::rename(&staging, &cache_dir).map_err(|e| format!("写入版本缓存失败: {e}"))?;
+    let _ = std::fs::remove_file(&zip_path);
+    prune_versions(&dirs, VERSION_CACHE_KEEP);
+
+    // 4. 激活该版本（拷贝到 ui/，置生效标记，广播事件）
+    activate_version(app, Some(manifest.version.clone()))?;
     log::info!("ui update applied: v{}", manifest.version);
     Ok(manifest.version.clone())
 }
 
-/// 还原内置界面：删除 `ui/`、清除生效标记、广播事件。
-pub fn restore(app: &AppHandle) -> Result<(), String> {
+/// 本地缓存的界面版本数上限（超出裁掉最旧的）。
+const VERSION_CACHE_KEEP: usize = 5;
+
+pub fn versions_dir(dirs: &AppDirs) -> std::path::PathBuf {
+    dirs.root.join("ui-versions")
+}
+
+/// 本地缓存的界面版本条目（设置页版本下拉用）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UiVersionEntry {
+    pub version: String,
+    pub date: String,
+    pub notes: String,
+    /// 是否为当前生效版本
+    pub active: bool,
+}
+
+/// 列出本地缓存的所有界面版本（按版本号新→旧），`active` 标记当前生效版本。
+pub fn list_versions(dirs: &AppDirs) -> Vec<UiVersionEntry> {
+    let active_version = read_installed_manifest(dirs)
+        .filter(|_| config_file_update(dirs).ui_active)
+        .map(|m| m.version);
+    let mut entries: Vec<UiVersionEntry> = std::fs::read_dir(versions_dir(dirs))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|e| {
+            let manifest: UiInstalledManifest =
+                serde_json::from_str(&std::fs::read_to_string(e.path().join(MANIFEST_FILE)).ok()?)
+                .ok()?;
+            Some(UiVersionEntry {
+                version: manifest.version,
+                date: manifest.date,
+                notes: manifest.notes,
+                active: false,
+            })
+        })
+        .collect();
+    // active 标记按版本号比较（目录名与清单 version 一致，但避免所有权纠错）
+    for entry in entries.iter_mut() {
+        entry.active = active_version.as_deref() == Some(entry.version.as_str());
+    }
+    entries.sort_by(|a, b| compare_versions(&b.version, &a.version));
+    entries
+}
+
+/// 裁剪版本缓存：按版本号新→旧保留 `keep` 个，其余删除（当前生效版本不删）。
+fn prune_versions(dirs: &AppDirs, keep: usize) {
+    let active_version = read_installed_manifest(dirs).map(|m| m.version);
+    let mut versions: Vec<String> = std::fs::read_dir(versions_dir(dirs))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|e| e.file_name().to_str().map(str::to_string))
+        .collect();
+    versions.sort_by(|a, b| compare_versions(b, a));
+    for version in versions.into_iter().skip(keep) {
+        if active_version.as_deref() == Some(version.as_str()) {
+            continue;
+        }
+        let _ = std::fs::remove_dir_all(versions_dir(dirs).join(version));
+    }
+}
+
+/// 递归拷贝目录（界面包约 1-2 MB，激活时使用）。
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let to = dst.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_recursive(&entry.path(), &to)?;
+        } else {
+            std::fs::copy(entry.path(), &to)?;
+        }
+    }
+    Ok(())
+}
+
+/// 切换界面版本：`None` = 内置界面（删除 `ui/`、清除生效标记）；
+/// `Some(version)` = 激活缓存的该版本（拷贝到 `ui/`、置生效标记）。
+/// 广播事件；调用方负责刷新主窗口。
+pub fn activate_version(app: &AppHandle, version: Option<String>) -> Result<(), String> {
     let dirs = app_dirs(app);
-    let _ = std::fs::remove_dir_all(ui_dir(&dirs));
-    let _ = std::fs::remove_dir_all(dirs.root.join("ui.old"));
     let _ = std::fs::remove_dir_all(dirs.root.join("ui.staging"));
-    set_ui_active(app, false);
-    publish(app, UiUpdateEvent::Restored);
+    match version {
+        None => {
+            let _ = std::fs::remove_dir_all(ui_dir(&dirs));
+            set_ui_active(app, false);
+            publish(app, UiUpdateEvent::Restored);
+            log::info!("ui switched to builtin frontend");
+        }
+        Some(version) => {
+            let src = versions_dir(&dirs).join(&version);
+            if !src.join(UI_ENTRY).is_file() {
+                return Err(format!("本地缓存中不存在界面版本 {version}"));
+            }
+            let installed = ui_dir(&dirs);
+            let backup = dirs.root.join("ui.old");
+            let _ = std::fs::remove_dir_all(&backup);
+            if installed.exists() {
+                std::fs::rename(&installed, &backup).map_err(|e| format!("备份当前界面失败: {e}"))?;
+            }
+            if let Err(e) = copy_dir_recursive(&src, &installed) {
+                if backup.exists() {
+                    let _ = std::fs::rename(&backup, &installed);
+                }
+                return Err(format!("切换界面版本失败: {e}"));
+            }
+            let _ = std::fs::remove_dir_all(&backup);
+            set_ui_active(app, true);
+            publish(app, UiUpdateEvent::Applied { version: version.clone() });
+            log::info!("ui switched to cached version v{version}");
+        }
+    }
+    Ok(())
+}
+
+/// 还原内置界面：删除 `ui/`、清除生效标记、广播事件（缓存版本保留，可再次选择）。
+pub fn restore(app: &AppHandle) -> Result<(), String> {
+    activate_version(app, None)?;
+    let dirs = app_dirs(app);
+    let _ = std::fs::remove_dir_all(dirs.root.join("ui.old"));
     log::info!("ui update restored to builtin frontend");
     Ok(())
 }
@@ -547,6 +652,40 @@ mod tests {
             }
             _ => panic!("expected external ui url"),
         }
+        let _ = std::fs::remove_dir_all(&dirs.root);
+    }
+
+    #[test]
+    fn versions_cache_list_and_prune() {
+        let dirs = temp_dirs("cache");
+        for v in ["1.0.1", "1.0.2", "1.0.3"] {
+            let dir = versions_dir(&dirs).join(v);
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(
+                dir.join(MANIFEST_FILE),
+                format!(r#"{{"version":"{v}","notes":"","date":"","source_url":"","applied_at":""}}"#),
+            )
+            .unwrap();
+        }
+        // 列表：新→旧
+        let list = list_versions(&dirs);
+        assert_eq!(list.iter().map(|e| e.version.as_str()).collect::<Vec<_>>(), ["1.0.3", "1.0.2", "1.0.1"]);
+        assert!(list.iter().all(|e| !e.active));
+        // 裁剪：保留 2 个，最旧的 1.0.1 被删
+        prune_versions(&dirs, 2);
+        let left = list_versions(&dirs);
+        assert_eq!(left.iter().map(|e| e.version.as_str()).collect::<Vec<_>>(), ["1.0.3", "1.0.2"]);
+        // 当前生效版本不参与裁剪（ui/ui.json 指向 1.0.3 时即使最旧也保留）
+        std::fs::create_dir_all(ui_dir(&dirs)).unwrap();
+        std::fs::write(
+            ui_dir(&dirs).join(MANIFEST_FILE),
+            r#"{"version":"1.0.2","notes":"","date":"","source_url":"","applied_at":""}"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dirs.configs_dir()).unwrap();
+        std::fs::write(dirs.config_file("update"), r#"{"uiActive":true}"#).unwrap();
+        prune_versions(&dirs, 1);
+        assert!(versions_dir(&dirs).join("1.0.2").is_dir(), "生效版本不应被裁剪");
         let _ = std::fs::remove_dir_all(&dirs.root);
     }
 

@@ -334,6 +334,14 @@ export type AppUpdateState = {
   downloadedVersion: string | null;
 };
 
+/** 本地缓存的界面版本 */
+export type UiVersionEntry = {
+  version: string;
+  date: string;
+  notes: string;
+  active: boolean;
+};
+
 export type UiUpdateEvent =
   | { state: "checking" }
   | { state: "available"; version: string; notes: string }

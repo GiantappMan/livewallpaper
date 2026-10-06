@@ -28,6 +28,7 @@ import type {
   UiRemoteManifest,
   UiUpdateEvent,
   UiUpdateStatus,
+  UiVersionEntry,
 } from "./types";
 
 export type ApiResult<T> = {
@@ -798,6 +799,30 @@ class API {
     try {
       if (!this.isRunningInClient()) return noClient();
       await invoke("ui_update_restore");
+      return { error: null, data: null };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 列出本地缓存的所有界面版本 */
+  async uiUpdateVersions(): Promise<ApiResult<UiVersionEntry[]>> {
+    try {
+      if (!this.isRunningInClient()) return { error: null, data: [] };
+      const data = await invoke<UiVersionEntry[]>("ui_update_versions");
+      return { error: null, data: data ?? [] };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: [] };
+    }
+  }
+
+  /** 切换界面版本（null = 内置界面），后端刷新主窗口 */
+  async uiUpdateSelect(version: string | null): Promise<ApiResult<null>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      await invoke("ui_update_select", { version });
       return { error: null, data: null };
     } catch (e) {
       console.error(e);

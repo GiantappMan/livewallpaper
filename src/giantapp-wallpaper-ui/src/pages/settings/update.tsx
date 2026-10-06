@@ -12,7 +12,7 @@ import api from "@/lib/client/api";
 import React from "react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { ConfigUpdate, UiRemoteManifest, UiUpdateStatus, AppUpdateInfo } from "@/lib/client/types";
+import { ConfigUpdate, UiRemoteManifest, UiUpdateStatus, UiVersionEntry, AppUpdateInfo } from "@/lib/client/types";
 import { langDictAtom } from "@/atoms/lang";
 import { useAtomValue } from "jotai";
 import { DownloadIcon, RotateCcwIcon, SearchIcon } from "lucide-react";
@@ -31,12 +31,19 @@ const Page = () => {
     const [appInfo, setAppInfo] = React.useState<AppUpdateInfo | null>(null);
     const [appDownloaded, setAppDownloaded] = React.useState<string | null>(null);
     const [appError, setAppError] = React.useState<string | null>(null);
+    const [uiVersions, setUiVersions] = React.useState<UiVersionEntry[]>([]);
+
+    const fetchVersions = useCallback(async () => {
+        const res = await api.uiUpdateVersions();
+        if (res.data) setUiVersions(res.data);
+    }, []);
 
     const fetchAll = useCallback(async () => {
         const res = await api.getConfig<ConfigUpdate>("Update");
         if (res.data) setConfig(res.data);
         const status = await api.uiUpdateStatus();
         if (status.data) setUiStatus(status.data);
+        await fetchVersions();
         const st = await api.appUpdateState();
         if (st.data) {
             setAppInfo(st.data.info);
@@ -44,7 +51,7 @@ const Page = () => {
             setAppError(st.data.error);
         }
         setMounted(true);
-    }, []);
+    }, [fetchVersions]);
 
     React.useEffect(() => {
         fetchAll();
@@ -54,6 +61,7 @@ const Page = () => {
             } else if (e.state === "applied") {
                 setUiProgress(null);
                 setUiFound(null);
+                fetchVersions();
                 toast.success(dictionary['update'].applied.replace("{0}", e.version));
             } else if (e.state === "restored") {
                 setUiProgress(null);
@@ -124,6 +132,15 @@ const Page = () => {
             toast.success(dictionary['update'].restored);
         }
         fetchAll();
+    };
+
+    // 手动切换界面版本：内置(null)或任一本地缓存版本；切换热更新界面后窗口会重载
+    const selectUiVersion = async (v: string) => {
+        const res = await api.uiUpdateSelect(v === "builtin" ? null : v);
+        if (res.error) {
+            toast.error(`${dictionary['update'].update_failed}: ${res.error}`);
+            fetchVersions();
+        }
     };
 
     // ---------- 程序更新 ----------
@@ -276,13 +293,35 @@ const Page = () => {
             )}
             <p className="text-xs text-muted-foreground">
                 {uiStatus
-                    ? (uiStatus.uiActive && uiStatus.installedVersion
-                        ? dictionary['update'].ui_status_active
-                            .replace("{0}", uiStatus.installedVersion)
-                            .replace("{1}", uiStatus.installedAt ?? "")
-                        : dictionary['update'].ui_status_builtin)
+                    ? (() => {
+                        const activeText = uiStatus.uiActive && uiStatus.installedVersion
+                            ? dictionary['update'].ui_status_active
+                                .replace("{0}", uiStatus.installedVersion)
+                                .replace("{1}", uiStatus.installedAt ?? "")
+                            : dictionary['update'].ui_status_builtin;
+                        return config.uiAuto
+                            ? activeText
+                            : dictionary['update'].ui_status_disabled.replace("{0}", activeText);
+                    })()
                     : <Skeleton className="h-4 w-64" />}
             </p>
+            <div className="flex items-center space-x-2">
+                <Label className="w-40 shrink-0">{dictionary['update'].ui_select_version}</Label>
+                <Select value={uiStatus?.uiActive && uiStatus.installedVersion ? uiStatus.installedVersion : "builtin"}
+                    onValueChange={(v) => selectUiVersion(v)}>
+                    <SelectTrigger className="w-[240px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="builtin">{dictionary['update'].ui_builtin_label}</SelectItem>
+                        {uiVersions.map((v) => (
+                            <SelectItem key={v.version} value={v.version}>
+                                {"v" + v.version + (v.active ? " ✓" : "")}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
             {uiProgress !== null && (
                 <div className="flex items-center space-x-3">
                     <Progress value={uiProgress} className="flex-1" />
