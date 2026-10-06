@@ -6,8 +6,8 @@
 //   bun run scripts/publish.ts preview            # 发布预览版（alpha 版本发到 preview 通道）
 //   选项：
 //     --skip-build     跳过构建，直接使用已有产物（src-tauri/target/.../nsis 与 UI dist）
-//     --ui-only        只发布界面热更新包（ui.json + ui zip），不动程序通道
-//     --sync-preview   正式版发布时同步覆盖 preview.json（预览用户也能收到该正式版）
+//     --ui-only        只发布界面热更新包（ui/<通道>.json + ui zip），不动程序通道
+//     --sync-preview   正式版发布时同步覆盖预览通道（preview.json + ui/preview.json）
 //     --notes "..."    更新说明（写入清单，应用内展示）
 //
 // 登录：脚本只检测本机 wrangler 登录态；未登录时提示你自己执行
@@ -17,10 +17,10 @@
 // 自定义名称（可选，默认 giantapp-wallpaper-releases）：
 //   CF_WORKER_NAME / CF_R2_BUCKET —— 会生成 wrangler.generated.toml（已 gitignore）。
 //
-// 产物布局（R2 对象 key）：
+// 产物布局（R2 对象 key，清单严格按通道各自更新，互不影响）：
 //   stable.json / preview.json           程序更新清单（version/url/notes/date）
 //   dl/<安装包文件名>                     NSIS 安装包
-//   ui.json                              界面热更新清单
+//   ui/stable.json / ui/preview.json     界面热更新清单（按发布通道写入）
 //   ui/ui-<version>.zip                  界面热更新包（dist 打包，index.html 在根）
 
 import { spawnSync } from "node:child_process";
@@ -195,23 +195,17 @@ async function main() {
   }
 
   await putObject(`ui/ui-${version}.zip`, uiZip, "application/zip");
+  // 严格单通道：只更新所选通道的界面热更新清单，另一通道不受影响
+  // （应用「热更新地址留空」时按更新通道拉取：正式版 ui/stable.json、预览版 ui/preview.json）
   const uiManifest = {
     version,
     url: `${workerUrl}/ui/ui-${version}.zip`,
     notes,
     date: today,
   };
-  // 通道化界面清单：应用「热更新地址留空」时按更新通道拉取
-  // （正式版用户 ui/stable.json、预览版用户 ui/preview.json）
-  for (const channel of ["stable", "preview"]) {
-    const file = join(OUT_DIR, `ui-${channel}.json`);
-    writeFileSync(file, JSON.stringify(uiManifest, null, 2));
-    await putObject(`ui/${channel}.json`, file, "application/json");
-  }
-  // 顶层 ui.json 兼容保留：手动指定热更新地址 / 自定义部署场景
-  const uiJson = join(OUT_DIR, "ui.json");
-  writeFileSync(uiJson, JSON.stringify(uiManifest, null, 2));
-  await putObject("ui.json", uiJson, "application/json");
+  const uiChannelJson = join(OUT_DIR, `ui-${kind}.json`);
+  writeFileSync(uiChannelJson, JSON.stringify(uiManifest, null, 2));
+  await putObject(`ui/${kind}.json`, uiChannelJson, "application/json");
 
   if (!uiOnly) {
     const installer = join(ROOT, "src-tauri", "target", "release", "bundle", "nsis",
@@ -231,29 +225,30 @@ async function main() {
     writeFileSync(channelJson, JSON.stringify(appManifest, null, 2));
     await putObject(`${kind}.json`, channelJson, "application/json");
 
-    // 正式版发布可选择同步预览通道：preview 用户（alpha 版）也能收到该正式版
+    // 正式版发布可选择同步预览通道：程序与界面热更新清单一起覆盖，
+    // preview 用户（alpha 版）也能收到该正式版
     if (kind === "release" && syncPreview) {
       const previewJson = join(OUT_DIR, "preview.json");
       writeFileSync(previewJson, JSON.stringify(appManifest, null, 2));
       await putObject("preview.json", previewJson, "application/json");
+      const uiPreviewJson = join(OUT_DIR, "ui-preview.json");
+      writeFileSync(uiPreviewJson, JSON.stringify(uiManifest, null, 2));
+      await putObject("ui/preview.json", uiPreviewJson, "application/json");
     }
   }
 
   // ---- 7. 汇总 ----
+  const scope = uiOnly ? "仅界面热更新" : "程序更新 + 界面热更新";
   console.log(`
-[publish] 完成 ✔
+[publish] 完成 ✔（通道：${kind}，范围：${scope}；另一通道不受影响）
 
-  Worker 地址      ${workerUrl}
-  界面热更新清单    ${workerUrl}/ui/stable.json  /  ${workerUrl}/ui/preview.json（按应用内更新通道自动跟随）
-                    ${workerUrl}/ui.json（兼容保留，手动指定时用）
-  程序更新清单      ${workerUrl}/stable.json  /  ${workerUrl}/preview.json
+  Worker 地址              ${workerUrl}
+  程序更新清单（${kind}）     ${workerUrl}/${kind}.json${uiOnly ? "（本次未更新）" : ""}
+  界面热更新清单（${kind}）   ${workerUrl}/ui/${kind}.json
 
-应用侧接入（二选一）：
-  1) 应用内 设置 → 软件更新，只需把 ${workerUrl} 填入「更新服务器地址」——
-     程序更新与界面热更新都会按所选通道自动跟随（推荐）；
-  2) 打包时内置默认值（留空热更新地址即跟随通道）：
-       GIANTAPP_UPDATE_URL=${workerUrl}
-     例：GIANTAPP_UPDATE_URL=${workerUrl} bun run build
+应用侧接入：应用内 设置 → 软件更新，把 ${workerUrl} 填入「更新服务器地址」——
+程序更新与界面热更新都会按所选通道自动跟随；打包时内置默认值：
+  GIANTAPP_UPDATE_URL=${workerUrl} bun run build
 `);
 }
 
