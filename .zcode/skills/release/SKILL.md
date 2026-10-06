@@ -1,23 +1,24 @@
 ---
 name: release
-description: Package GiantappWallpaper (the livewallpaper repository) into an NSIS installer and release it. Use when the user wants to package / release / publish / launch a new version (release, package, publish). Asks whether it is an official release or a preview release, auto-increments the version tail number and syncs three files, collects update records and always writes them to the top of docs/2.更新记录.md, and finally asks whether to automatically publish a GitHub Release (including the installer artifact).
+description: Package GiantappWallpaper (the livewallpaper repository) into an NSIS installer and release it. Use when the user wants to package / release / publish / launch a new version (release, package, publish). Asks whether it is an official release or a preview release, auto-increments the version tail number and syncs three files, collects update records and always writes them to the top of docs/2.更新记录.md, then asks about two optional publish targets: the Cloudflare update channel (stable / preview manifests for the in-app updater, via scripts/publish.ts) and a GitHub Release (including the installer artifact).
 ---
 
 <objective>
-One flow completes a release: determine release type -> tail number +1 -> collect update records -> write changelog -> build NSIS installer -> (optional) publish GitHub Release.
+One flow completes a release: determine release type -> tail number +1 -> collect update records -> write changelog -> build NSIS installer -> (optional) publish to the Cloudflare update channel (stable / preview) -> (optional) publish a GitHub Release.
 This skill is bound to the livewallpaper repository (GiantappMan/livewallpaper, Tauri 2 + NSIS), used within this repository's workspace.
 </objective>
 
 <quick_start>
-Preflight (git status / current version) -> AskUserQuestion "official or preview?" -> version.ts next to compute new version -> ask user for update records -> version.ts apply to increment tail number and write in three places -> insert this version entry at the top of docs/2.更新记录.md -> bun run build to produce the NSIS installer -> AskUserQuestion "publish to GitHub?" -> (when publishing) gh check / commit / tag / push / gh release create.
+Preflight (git status / current version) -> AskUserQuestion "official or preview?" -> version.ts next to compute new version -> ask user for update records -> version.ts apply to increment tail number and write in three places -> insert this version entry at the top of docs/2.更新记录.md -> bun run build to produce the NSIS installer -> AskUserQuestion "publish to Cloudflare update channel?" (channel follows the release type: official -> stable.json, preview -> preview.json; run scripts/publish.ts --skip-build) -> AskUserQuestion "publish to GitHub?" -> (when publishing) gh check / commit / tag / push / gh release create.
 </quick_start>
 
 <essential_principles>
 - 全程用中文和用户交流：提问、选项文案、确认、进度播报和结果汇报一律用中文；代码、路径、命令、版本号、tag 等保持原样书写。
-- Release type (official / preview) and whether to publish to GitHub must be asked; never infer or decide on behalf of the user.
-- Update records must be collected on every release and always inserted at the top of `docs/2.更新记录.md` (sorted descending by version, newest on top); the same content is also used as the GitHub Release notes.
+- Release type (official / preview) and whether to publish (Cloudflare channel / GitHub) must be asked; never infer or decide on behalf of the user.
+- Update records must be collected on every release and always inserted at the top of `docs/2.更新记录.md` (sorted descending by version, newest on top); the same content is also used as the GitHub Release notes and the `--notes` of the Cloudflare publish.
 - The version number is written in three places (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src/giantapp-wallpaper-ui/package.json`); always use `scripts/version.ts apply` to modify them together. Hand-editing a single file is forbidden.
-- `git push` and `gh release create` are irreversible external actions, and may only be executed after the user explicitly answers "publish".
+- `git push`, `gh release create` and `scripts/publish.ts`（上传 Cloudflare）are irreversible external actions, and may only be executed after the user explicitly confirms the respective target.
+- Cloudflare 凭据不经手：发布前只检测 `bunx wrangler@4 whoami`；未登录/不可用时提示用户自己执行 `bunx wrangler@4 login`（OAuth 凭据存本机用户目录），并把用户明确的拒绝/取消如实终止流程，绝不把任何凭据写入仓库或环境变量。
 - If the user has not provided update record content, ask until they do; fabricating update content on behalf of the user is forbidden.
 </essential_principles>
 
@@ -32,6 +33,7 @@ Preflight (git status / current version) -> AskUserQuestion "official or preview
 | Preview version suffix | `alpha.N` (inheriting the repository convention; can be changed to beta as requested by the user) |
 | Packaging command | `bun run build` (= `tauri build`, bundle target is NSIS) |
 | Artifact | `src-tauri/target/release/bundle/nsis/GiantappWallpaper_<version>_x64-setup.exe` |
+| Cloudflare publish | `bun run scripts/publish.ts <release|preview> --skip-build --notes "<更新记录>"`（正式版→stable 通道，预览版→preview 通道；详细机制见 `docs/6.更新与发布.md`） |
 | Tag and Release title | `v<version>` (e.g. `v4.0.1`, `v4.0.1-alpha.1`) |
 | Release repository | github.com/GiantappMan/livewallpaper, published via `gh` CLI |
 
@@ -91,9 +93,22 @@ Date format like `2026.9.12`; if the user only mentioned fixes, the `### 功能`
 
 - Run `bun run build` (Rust release build is slow, use run_in_background or a long timeout and wait for completion).
 - Confirm the artifact exists under `src-tauri/target/release/bundle/nsis/` with `GiantappWallpaper_<version>_x64-setup.exe` (list the directory to confirm the filename).
-- On build failure, fix the error; do not proceed to the publish step.
+- On build failure, fix the error; do not proceed to the publish steps.
 
-**7. Ask whether to publish to GitHub** (use AskUserQuestion: publish / not for now)
+**7. Ask whether to publish to the Cloudflare update channel** (use AskUserQuestion: publish / not for now)
+
+应用内「程序更新」与「界面热更新」都从该渠道拉取（界面热更新地址留空时自动跟随通道）。通道与发布类型一一对应：**正式版 → release 通道（stable.json），预览版 → preview 通道（preview.json）**；界面热更新清单（ui/stable.json、ui/preview.json、ui.json）会随之一起更新，无需单独操作。
+
+**Not for now** -> skip to step 8.
+
+**Publish** -> execute in order:
+
+1. 检测登录：`bunx wrangler@4 whoami`。失败/未登录/输出版本帮助文本时，提示用户自己执行 `bunx wrangler@4 login`（浏览器 OAuth，凭据存本机，不入仓库；也可用 `CLOUDFLARE_API_TOKEN` 环境变量），等用户确认已登录后重试检测；用户放弃则终止本步并告知可稍后手动执行发布命令。
+2. 运行 `bun run scripts/publish.ts <release|preview> --skip-build --notes "<本次更新记录（步骤 3 收集的内容）>"`。脚本幂等：部署 Worker → 确保 R2 桶 → 上传安装包 + 界面包 + 通道清单 → 打印接入地址。`*.workers.dev` 不可达的网络环境提示可用 `CF_WORKER_URL` 绑定自定义域名后重发。
+3. 正式版如需让预览通道用户也收到（覆盖 preview.json），追加 `--sync-preview`（先询问用户）。
+4. 汇报脚本输出的清单地址；构建期可用 `GIANTAPP_UPDATE_URL=<worker地址> bun run build` 把默认更新源烧进安装包（仅全新安装生效）。
+
+**8. Ask whether to publish to GitHub** (use AskUserQuestion: publish / not for now)
 
 **Not for now** -> report the artifact path and version number, remind: version files and changelog have been modified but not committed; do not run this skill again before committing (otherwise the tail number will be +1 again), then end.
 
@@ -111,5 +126,6 @@ Date format like `2026.9.12`; if the user only mentioned fixes, the `### 功能`
 - The version number is consistent across tauri.conf.json, Cargo.toml, and ui package.json, and matches the tag and Release.
 - The top of `docs/2.更新记录.md` gains an entry for this version, with the release date and record content provided by the user.
 - The NSIS installer is successfully generated and the path reported.
-- push and GitHub Release are only executed after the user explicitly confirms publishing; preview releases are marked as prerelease.
+- push, Cloudflare publish, and GitHub Release are only executed after the user explicitly confirms the respective target; the Cloudflare channel matches the release type (official -> stable.json, preview -> preview.json); preview releases are marked as prerelease on GitHub.
+- When Cloudflare is not logged in, the user is guided to log in themselves (`bunx wrangler@4 login`), and no credentials are ever written to the repository.
 </success_criteria>
