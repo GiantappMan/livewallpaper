@@ -21,7 +21,7 @@
       const id = currentId();
       const panel = DevSkin.allPanels().find((p) => p.id === id);
       nav.querySelectorAll(".item").forEach((n) => n.classList.toggle("active", n.dataset.id === id));
-      root.innerHTML = "";
+      root.replaceChildren();
       try {
         panel.render(root);
       } catch (e) {
@@ -83,12 +83,16 @@
   }
 
   if (!window.DevSkin || !window.DevSkin.client) {
-    // SDK 未加载：浏览器直接打开本页（file:// / 静态服务器）时的友好提示
+    // SDK 未加载：浏览器直接打开本页（file:// / 静态服务器）时的友好提示。
+    // 提示文案是常量，但一律走 textContent 构建，不经 innerHTML。
     const banner = document.createElement("div");
     banner.id = "nosdk";
-    banner.innerHTML =
-      "<b>SDK 未加载</b><br/>皮肤需要在应用窗口内运行（<code>/_sdk/client.js</code> 由应用提供）。<br/>" +
-      "把本目录放入 <code>%LOCALAPPDATA%/LiveWallpaper4/skins/</code>，在 设置 → 外观 → 皮肤 中应用即可。";
+    const strong = document.createElement("strong");
+    strong.textContent = "SDK 未加载";
+    const msg = document.createElement("p");
+    msg.append(strong,
+      " 皮肤需要在应用窗口内运行（/_sdk/client.js 由应用提供）。把本目录放入 %LOCALAPPDATA%/LiveWallpaper4/skins/，在 设置 → 外观 → 皮肤 中应用即可。");
+    banner.append(msg);
     document.body.prepend(banner);
     return;
   }

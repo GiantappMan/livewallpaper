@@ -53,9 +53,16 @@
   function icon(name, size) {
     return `<svg viewBox="0 0 24 24" width="${size || 16}" height="${size || 16}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name] || ""}</svg>`;
   }
-  function ico(name, size) {
-    const s = el("span", { style: { display: "inline-flex" } });
-    s.innerHTML = icon(name, size);
+  /** 图标安全节点：SVG 路径来自代码内常量表，经 DOMParser 惰性解析后挂载，
+   *  不经过 innerHTML 拼接运行时字符串。需要图标时一律用它而非 icon() 字符串。 */
+  function ico(name, size, attrs) {
+    const s = el("span", Object.assign({ style: { display: "inline-flex" } }, attrs || {}));
+    const parsed = new DOMParser().parseFromString(
+      icon(name, size).replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
+      "image/svg+xml",
+    );
+    const root = parsed.documentElement;
+    if (root && root.localName === "svg") s.append(root);
     return s;
   }
 
@@ -142,7 +149,8 @@
     const btn = el("button", { class: "mc-pulldown-btn", type: "button" });
     const renderLabel = () => {
       const cur = options.find((o) => String(o.value) === String(value));
-      btn.innerHTML = `<span>${cur ? cur.label : ""}</span>${icon("chevron", 12)}`;
+      // label 可能含外部数据（如显示器名 deviceName），必须走 textContent，不可进 innerHTML
+      btn.replaceChildren(el("span", {}, cur ? cur.label : ""), ico("chevron", 12));
     };
     renderLabel();
     const menu = el("div", { class: "mc-menu" });
@@ -153,7 +161,7 @@
       closeAll();
       if (open) return;
       menu.innerHTML = "";
-      const check = (() => { const s = el("span", { class: "mc-menu-check" }); s.innerHTML = icon("check", 11); return s; })();
+      const check = ico("check", 11, { class: "mc-menu-check" });
       for (const o of options) {
         const item = el("button", {
           class: `mc-menu-item-d ${String(o.value) === String(value) ? "is-active" : ""}`,

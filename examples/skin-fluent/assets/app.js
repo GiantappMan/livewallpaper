@@ -185,8 +185,8 @@
   /** 安全图标节点：SVG 路径全部来自代码内常量表 I[]，经 DOMParser 惰性解析
    *  （image/svg+xml 文档不执行脚本、不加载外部资源），不经过 innerHTML
    *  拼接任何运行时字符串。需要往 DOM 里放图标时一律用它而非 icon() 字符串。 */
-  function iconEl(name, size) {
-    const span = el("span");
+  function iconEl(name, size, attrs) {
+    const span = el("span", attrs);
     const parsed = new DOMParser().parseFromString(
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size || 18}" height="${size || 18}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name] || ""}</svg>`,
       "image/svg+xml",
@@ -386,10 +386,8 @@
     const renderLabel = () => {
       const cur = options.find((o) => String(o.value) === String(value));
       // label 可能含外部数据（如显示器名 deviceName），必须走 textContent，不可进 innerHTML
-      btn.innerHTML = "";
-      btn.append(el("span", {}, cur ? cur.label : ""));
-      const ic = el("span", { class: "select-ico" });
-      ic.innerHTML = icon("chevron", 13);
+      btn.replaceChildren(el("span", {}, cur ? cur.label : ""));
+      const ic = iconEl("chevron", 13, { class: "select-ico" });
       btn.append(ic);
     };
     renderLabel();
@@ -408,7 +406,7 @@
           onclick: () => { value = o.value; renderLabel(); wrap.classList.remove("is-open"); onchange && onchange(o.value); },
         },
           el("span", {}, o.label),
-          String(o.value) === String(value) ? el("span", { class: "select-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 13); return s; })()) : null,
+          String(o.value) === String(value) ? el("span", { class: "select-check" }, iconEl("check", 13)) : null,
         ));
       }
       // 空间自适应：默认向下弹；下方放不下且上方更高时向上弹；两个方向都放不下则限高滚动
@@ -999,7 +997,7 @@
         appendChunked(grid, candidates, (w) => {
           const on = picked.has(w.filePath);
           return el("button", { class: `pick ${on ? "is-on" : ""}`, onclick: () => { on ? picked.delete(w.filePath) : picked.add(w.filePath); renderGrid(); syncAll(); } },
-            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, (() => { const s = el("span"); s.innerHTML = icon("check", 12); return s; })()) : null),
+            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, iconEl("check", 12)) : null),
             el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
         }, () => seq !== pickSeq);
       }
@@ -1457,7 +1455,7 @@
       const line = () => el("div", { class: "pop-line" });
       const pick = (label, on, act) => {
         const b = el("button", { class: `pop-item ${on ? "is-active" : ""}`, onclick: () => { closePops(); act(); } }, el("span", {}, label));
-        if (on) { const c = el("span", { class: "pop-check" }); c.innerHTML = icon("check", 13); b.append(c); }
+        if (on) b.append(iconEl("check", 13, { class: "pop-check" }));
         return b;
       };
       const cmd = (ic, label, act) => {
@@ -1668,15 +1666,20 @@
         return nameOf(w).toLowerCase().includes(q) || (w.fileName || "").toLowerCase().includes(q);
       });
     }
-    // 预取名称后用共享 Collator 排序：避免几千项时每对比较重复取值 + localeCompare
+    // 预取名称后用共享 Collator 排序：避免几千项时每对比较重复取值 + localeCompare。
+    // 比较键全部预计算为本对象的 number/string 属性，排序比较器不触碰外部对象字段。
     function sorted(list) {
       const cmp = NAME_COLLATOR.compare.bind(NAME_COLLATOR);
-      const keyed = list.map((w) => [w, nameOf(w)]);
-      const created = (w) => { const t = Date.parse((w.meta && w.meta.createTime) || ""); return Number.isNaN(t) ? 0 : t; };
-      if (localSort === "type") keyed.sort((a, b) => ((a[0].meta && a[0].meta.type) || 0) - ((b[0].meta && b[0].meta.type) || 0) || cmp(a[1], b[1]));
-      else if (localSort === "time") keyed.sort((a, b) => created(b[0]) - created(a[0]) || cmp(a[1], b[1])); // 新创建的在前，同时刻按名称
-      else keyed.sort((a, b) => cmp(a[1], b[1]));
-      return keyed.map((p) => p[0]);
+      const keyed = list.map((w) => ({
+        wall: w,
+        name: nameOf(w),
+        type: (w.meta && w.meta.type) || 0,
+        created: (() => { const t = Date.parse((w.meta && w.meta.createTime) || ""); return Number.isNaN(t) ? 0 : t; })(),
+      }));
+      if (localSort === "type") keyed.sort((a, b) => a.type - b.type || cmp(a.name, b.name));
+      else if (localSort === "time") keyed.sort((a, b) => b.created - a.created || cmp(a.name, b.name)); // 新创建的在前，同时刻按名称
+      else keyed.sort((a, b) => cmp(a.name, b.name));
+      return keyed.map((p) => p.wall);
     }
 
     function emptyNode(searching) {
@@ -1781,16 +1784,16 @@
     if (zoomCtl) zoomCtl.remove(); // 重渲染防重复挂载
     zoomCtl = el("div", { class: "loc-zoom-ctl", title: SC.t("local.zoomHint") });
     const zoomToggle = el("div", { class: "loc-zoom-toggle" });
-    zoomToggle.innerHTML = icon("zoomin", 15);
+    zoomToggle.replaceChildren(iconEl("zoomin", 15));
     const zoomLess = el("button", { class: "icon-btn", title: SC.t("local.zoomOut") });
-    zoomLess.innerHTML = icon("zoomout", 15);
+    zoomLess.replaceChildren(iconEl("zoomout", 15));
     zoomLess.addEventListener("click", () => setZoom(localZoom - 0.1));
     // 百分比下拉（复用 .select 组件的紧凑变体）：内置常用档位，选中即应用
     const zoomOpts = zoomPresetOpts(localZoom);
     const zoomSel = selectEl(zoomOpts, localZoom, (v) => setZoom(Number(v)));
     zoomSel.classList.add("loc-zoom-dd");
     const zoomMore = el("button", { class: "icon-btn", title: SC.t("local.zoomIn") });
-    zoomMore.innerHTML = icon("zoomin", 15);
+    zoomMore.replaceChildren(iconEl("zoomin", 15));
     zoomMore.addEventListener("click", () => setZoom(localZoom + 0.1));
     zoomCtl.append(zoomToggle, zoomLess, zoomSel, zoomMore);
     document.body.append(zoomCtl);
@@ -2655,7 +2658,7 @@
     const uiCard = el("div", { class: "card-group" },
       el("div", { class: "card-row" },
         el("div", { class: "card-text" },
-          el("span", { class: "card-label" }, SC.t("upd.uiAuto")),
+          el("span", { class: "card-label" }, SC.t("upd.uiTitle")),
           uiStatus),
         uiAuto),
       el("div", { class: "card-sep" }),
