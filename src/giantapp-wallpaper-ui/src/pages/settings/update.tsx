@@ -178,6 +178,81 @@ const Page = () => {
             <h1 className="text-2xl font-semibold">{dictionary['update'].title}</h1>
         </div>
 
+        {/* 程序更新（更新通道同时决定界面热更新跟随的清单，置顶优先选择） */}
+        <div className="space-y-3">
+            <h2 className="font-semibold mt-4">{dictionary['update'].app_section}</h2>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap">{dictionary['update'].app_hint}</p>
+            <div className="flex items-center space-x-2">
+                <div className="w-40 shrink-0">
+                    <Label>{dictionary['update'].app_channel}</Label>
+                    <p className="text-xs text-muted-foreground">{dictionary['update'].channel_hint}</p>
+                </div>
+                <Select value={config.appChannel ?? "stable"}
+                    onValueChange={(e) => saveConfig({ ...config, appChannel: e })}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="stable">{dictionary['update'].channel_stable}</SelectItem>
+                        <SelectItem value="preview">{dictionary['update'].channel_preview}</SelectItem>
+                        <SelectItem value="off">{dictionary['update'].channel_off}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Label htmlFor="app-auto-download" className="w-40">{dictionary['update'].app_auto_download}</Label>
+                <Switch id="app-auto-download" checked={config.appAutoDownload ?? false}
+                    onCheckedChange={(e) => saveConfig({ ...config, appAutoDownload: e })} />
+            </div>
+            <div className="flex items-center justify-between pt-2">
+                <p className="text-sm text-muted-foreground">
+                    {uiStatus ? dictionary['update'].current_version.replace("{0}", uiStatus.appVersion) : null}
+                </p>
+                <Button size="sm" disabled={appBusy || config.appChannel === "off"} onClick={checkAppUpdate}>
+                    <SearchIcon className="h-4 w-4 mr-1" />
+                    {dictionary['update'].app_check}
+                </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Label htmlFor="app-url" className="w-40 shrink-0">{dictionary['update'].app_url}</Label>
+                <Input id="app-url" className="flex-1" placeholder="https://"
+                    value={config.appUrl ?? ""}
+                    onChange={(e) => setConfig({ ...config, appUrl: e.target.value })}
+                    onBlur={() => api.setConfig("Update", config)} />
+            </div>
+            {appProgress !== null && (
+                <div className="flex items-center space-x-3">
+                    <Progress value={appProgress} className="flex-1" />
+                    <span className="text-xs text-muted-foreground w-16">{dictionary['update'].downloading.replace("{0}", Math.round(appProgress))}</span>
+                </div>
+            )}
+            {appDownloaded ? (
+                <div className="rounded-md border border-primary/50 bg-primary/5 p-3 space-y-2">
+                    <p className="text-sm font-medium">{dictionary['update'].downloaded_ready.replace("{0}", appDownloaded)}</p>
+                    <p className="text-xs text-muted-foreground">{dictionary['update'].installing_hint}</p>
+                    <div className="flex items-center space-x-2">
+                        <Button size="sm" onClick={installAppUpdate}>
+                            <DownloadIcon className="h-4 w-4 mr-1" />
+                            {dictionary['update'].install_now}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setAppDownloaded(null)}>
+                            {dictionary['update'].not_now}
+                        </Button>
+                    </div>
+                </div>
+            ) : appInfo ? (
+                <div className="rounded-md border p-3 space-y-2">
+                    <p className="text-sm font-medium">{dictionary['update'].new_version_found.replace("{0}", appInfo.version)}</p>
+                    {formatNotes(appInfo) && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{formatNotes(appInfo)}</p>}
+                    <Button size="sm" disabled={appBusy} onClick={downloadAppUpdate}>
+                        <DownloadIcon className="h-4 w-4 mr-1" />
+                        {dictionary['update'].download}
+                    </Button>
+                </div>
+            ) : null}
+            {appError && <p className="text-xs text-destructive">{appError}</p>}
+        </div>
+
         {/* 界面热更新 */}
         <div className="space-y-3">
             <h2 className="font-semibold mt-4">{dictionary['update'].ui_section}</h2>
@@ -232,78 +307,6 @@ const Page = () => {
                 <Button variant="outline" size="sm" onClick={() => setRestoreOpen(true)}>
                     <RotateCcwIcon className="h-4 w-4 mr-1" />
                     {dictionary['update'].ui_restore}
-                </Button>
-            </div>
-        </div>
-
-        {/* 程序更新 */}
-        <div className="space-y-3">
-            <h2 className="font-semibold mt-4">{dictionary['update'].app_section}</h2>
-            <p className="text-xs text-muted-foreground whitespace-pre-wrap">{dictionary['update'].app_hint}</p>
-            <div className="flex items-center space-x-2">
-                <Label className="w-40 shrink-0">{dictionary['update'].app_channel}</Label>
-                <Select value={config.appChannel ?? "stable"}
-                    onValueChange={(e) => saveConfig({ ...config, appChannel: e })}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="stable">{dictionary['update'].channel_stable}</SelectItem>
-                        <SelectItem value="preview">{dictionary['update'].channel_preview}</SelectItem>
-                        <SelectItem value="off">{dictionary['update'].channel_off}</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Label htmlFor="app-auto-download" className="w-40">{dictionary['update'].app_auto_download}</Label>
-                <Switch id="app-auto-download" checked={config.appAutoDownload ?? false}
-                    onCheckedChange={(e) => saveConfig({ ...config, appAutoDownload: e })} />
-            </div>
-            <div className="flex items-center space-x-2">
-                <Label htmlFor="app-url" className="w-40 shrink-0">{dictionary['update'].app_url}</Label>
-                <Input id="app-url" className="flex-1" placeholder="https://"
-                    value={config.appUrl ?? ""}
-                    onChange={(e) => setConfig({ ...config, appUrl: e.target.value })}
-                    onBlur={() => api.setConfig("Update", config)} />
-            </div>
-            <p className="text-xs text-muted-foreground">
-                {uiStatus ? dictionary['update'].current_version.replace("{0}", uiStatus.appVersion) : null}
-            </p>
-            {appProgress !== null && (
-                <div className="flex items-center space-x-3">
-                    <Progress value={appProgress} className="flex-1" />
-                    <span className="text-xs text-muted-foreground w-16">{dictionary['update'].downloading.replace("{0}", Math.round(appProgress))}</span>
-                </div>
-            )}
-            {appDownloaded ? (
-                <div className="rounded-md border border-primary/50 bg-primary/5 p-3 space-y-2">
-                    <p className="text-sm font-medium">{dictionary['update'].downloaded_ready.replace("{0}", appDownloaded)}</p>
-                    <p className="text-xs text-muted-foreground">{dictionary['update'].installing_hint}</p>
-                    <div className="flex items-center space-x-2">
-                        <Button size="sm" onClick={installAppUpdate}>
-                            <DownloadIcon className="h-4 w-4 mr-1" />
-                            {dictionary['update'].install_now}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setAppDownloaded(null)}>
-                            {dictionary['update'].not_now}
-                        </Button>
-                    </div>
-                </div>
-            ) : appInfo ? (
-                <div className="rounded-md border p-3 space-y-2">
-                    <p className="text-sm font-medium">{dictionary['update'].new_version_found.replace("{0}", appInfo.version)}</p>
-                    {formatNotes(appInfo) && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{formatNotes(appInfo)}</p>}
-                    <Button size="sm" disabled={appBusy} onClick={downloadAppUpdate}>
-                        <DownloadIcon className="h-4 w-4 mr-1" />
-                        {dictionary['update'].download}
-                    </Button>
-                </div>
-            ) : null}
-            {appError && <p className="text-xs text-destructive">{appError}</p>}
-            <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" disabled={appBusy || config.appChannel === "off"} onClick={checkAppUpdate}>
-                    <SearchIcon className="h-4 w-4 mr-1" />
-                    {dictionary['update'].app_check}
                 </Button>
             </div>
         </div>

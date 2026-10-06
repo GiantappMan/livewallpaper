@@ -231,6 +231,7 @@
     "app_hint": "Zwei Kanäle: Stabil und Vorschau. Bei aktivierter Auto-Aktualisierung werden neue Versionen automatisch geladen; die Installation erfordert immer Ihre Bestätigung und kann verschoben werden.",
     "app_url": "Update-Server-URL",
     "app_channel": "Update-Kanal",
+    "channel_hint": "Das UI-Hotfix-Update folgt ebenfalls diesem Kanal",
     "channel_off": "Aus",
     "channel_stable": "Stabil",
     "channel_preview": "Vorschau",

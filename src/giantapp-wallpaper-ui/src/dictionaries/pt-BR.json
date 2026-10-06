@@ -231,6 +231,7 @@
     "app_hint": "Há dois canais: estável e prévia. Com a atualização automática ativada, novas versões são baixadas automaticamente; a instalação sempre exige sua confirmação e pode ser adiada.",
     "app_url": "URL do servidor de atualização",
     "app_channel": "Canal de atualização",
+    "channel_hint": "A atualização rápida da interface também segue este canal",
     "channel_off": "Desativado",
     "channel_stable": "Estável",
     "channel_preview": "Prévia",

@@ -2652,7 +2652,7 @@
     const uiApplyBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: applyUi }, SC.t("upd.uiApply"));
     const uiRestoreBtn = el("button", { class: "btn btn-sm", style: "display:none", onclick: restoreUi }, SC.t("upd.uiRestore"));
 
-    panel.append(el("div", { class: "card-group" },
+    const uiCard = el("div", { class: "card-group" },
       el("div", { class: "card-row" },
         el("div", { class: "card-text" },
           el("span", { class: "card-label" }, SC.t("upd.uiAuto")),
@@ -2666,7 +2666,7 @@
         uiApplyBtn,
         uiRestoreBtn),
       uiStatusLine.el,
-      uiBar));
+      uiBar);
 
     // ---------- 程序更新 ----------
     let appBusy = false, appInfo = null, downloaded = null;
@@ -2758,24 +2758,28 @@
     const prevHook = updateProgressHook;
     updateProgressHook = () => { if (prevHook) prevHook(); renderUiProgress(); renderDownloaded(); };
 
-    panel.append(el("div", { class: "card-group" },
+    const appCard = el("div", { class: "card-group" },
+      // 通道置顶：程序更新与界面热更新都按此通道跟随
       el("div", { class: "card-row" },
         el("div", { class: "card-text" },
-          el("span", { class: "card-label" }, SC.t("upd.appTitle")),
-          versionHint),
-        el("button", { class: "btn btn-sm", onclick: checkApp }, SC.t("upd.appCheck"))),
-      el("div", { class: "card-sep" }),
-      el("div", { class: "card-row" },
-        el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("upd.channel"))),
+          el("span", { class: "card-label" }, SC.t("upd.channel")),
+          el("p", { class: "card-hint" }, SC.t("upd.channelHint"))),
         channel),
       el("div", { class: "card-sep" }),
       el("div", { class: "card-row" },
         el("div", { class: "card-text" }, el("span", { class: "card-label" }, SC.t("upd.autoDownload"))),
         appAuto),
       el("div", { class: "card-sep" }),
+      el("div", { class: "card-row" },
+        el("div", { class: "card-text" },
+          el("span", { class: "card-label" }, SC.t("upd.appTitle")),
+          versionHint),
+        el("button", { class: "btn btn-sm", onclick: checkApp }, SC.t("upd.appCheck"))),
+      el("div", { class: "card-sep" }),
       el("div", { class: "dir-list" }, el("div", { class: "dir-row" }, appUrl)),
       appStatusLine.el,
-      appBar));
+      appBar);
+    panel.append(appCard, uiCard);
 
     refreshUiStatus();
   }

@@ -231,6 +231,7 @@
     "app_hint": "Hay dos canales: estable y vista previa. Con la actualización automática activada, las nuevas versiones se descargan automáticamente; instalar siempre requiere su confirmación y puede posponerse.",
     "app_url": "URL del servidor de actualizaciones",
     "app_channel": "Canal de actualización",
+    "channel_hint": "La actualización en caliente de la interfaz también sigue este canal",
     "channel_off": "Desactivado",
     "channel_stable": "Estable",
     "channel_preview": "Vista previa",

@@ -231,6 +231,7 @@
     "app_hint": "Two channels are available: stable and preview. With auto-update on, new versions are downloaded automatically; installing always requires your confirmation and can be postponed.",
     "app_url": "Update server URL",
     "app_channel": "Update channel",
+    "channel_hint": "The UI hot update follows this channel too",
     "channel_off": "Off",
     "channel_stable": "Stable",
     "channel_preview": "Preview",

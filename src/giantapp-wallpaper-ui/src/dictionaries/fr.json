@@ -231,6 +231,7 @@
     "app_hint": "Deux canaux sont disponibles : stable et aperçu. Avec la mise à jour automatique activée, les nouvelles versions sont téléchargées automatiquement ; l'installation requiert toujours votre confirmation et peut être reportée.",
     "app_url": "URL du serveur de mise à jour",
     "app_channel": "Canal de mise à jour",
+    "channel_hint": "La mise à jour à chaud de l'interface suit aussi ce canal",
     "channel_off": "Désactivé",
     "channel_stable": "Stable",
     "channel_preview": "Aperçu",

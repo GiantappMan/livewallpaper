@@ -231,6 +231,7 @@
     "app_hint": "支援正式版與預覽版雙通道。開啟自動更新後發現新版本會自動下載，安裝始終由你確認，可選擇暫不安裝。",
     "app_url": "更新伺服器位址",
     "app_channel": "更新通道",
+    "channel_hint": "介面熱更新同樣跟隨此通道",
     "channel_off": "關閉",
     "channel_stable": "正式版",
     "channel_preview": "預覽版",
