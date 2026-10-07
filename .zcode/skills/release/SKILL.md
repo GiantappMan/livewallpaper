@@ -105,8 +105,9 @@ Date format like `2026.9.12`; if the user only mentioned fixes, the `### 功能`
 
 1. 检测登录：`bunx wrangler@4 whoami`。失败/未登录/输出版本帮助文本时，提示用户自己执行 `bunx wrangler@4 login`（浏览器 OAuth，凭据存本机，不入仓库；也可用 `CLOUDFLARE_API_TOKEN` 环境变量），等用户确认已登录后重试检测；用户放弃则终止本步并告知可稍后手动执行发布命令。
 2. 运行 `bun run scripts/publish.ts <release|preview> --skip-build --notes "<本次更新记录（步骤 3 收集的内容）>"`。脚本幂等：部署 Worker → 确保 R2 桶 → 上传安装包 + 界面包 + 通道清单 → 打印接入地址。`*.workers.dev` 不可达的网络环境提示可用 `CF_WORKER_URL` 绑定自定义域名后重发。
-3. 正式版如需让预览通道用户也收到（覆盖 preview.json），追加 `--sync-preview`（先询问用户）。
-4. 汇报脚本输出的清单地址；构建期可用 `GIANTAPP_UPDATE_URL=<worker地址> bun run build` 把默认更新源烧进安装包（仅全新安装生效）。
+3. 正式版如需让预览通道用户也收到（覆盖 preview.json + ui/preview.json），追加 `--sync-preview`（先询问用户）。
+4. 汇报脚本输出的清单地址与**固定下载入口**：`<worker地址>/dl/latest`（正式版安装包）、`/dl/latest-preview`（预览版）——壁纸服务端 / 官网的下载地址配置一次即可，发布后自动 302 到最新安装包，无需每次改服务端；如站点仍指向旧地址，提醒用户更新为该固定入口。
+5. 构建期可用 `GIANTAPP_UPDATE_URL=<worker地址> bun run build` 把默认更新源烧进安装包（仅全新安装生效）。
 
 **8. Ask whether to publish to GitHub** (use AskUserQuestion: publish / not for now)
 

@@ -246,6 +246,10 @@ async function main() {
   程序更新清单（${kind}）     ${workerUrl}/${kind}.json${uiOnly ? "（本次未更新）" : ""}
   界面热更新清单（${kind}）   ${workerUrl}/ui/${kind}.json
 
+固定下载入口（官网 / 壁纸服务端的下载地址配置一次即可，发布后自动指向最新安装包）：
+  正式版  ${workerUrl}/dl/latest
+  预览版  ${workerUrl}/dl/latest-preview
+
 应用侧接入：应用内 设置 → 软件更新，把 ${workerUrl} 填入「更新服务器地址」——
 程序更新与界面热更新都会按所选通道自动跟随；打包时内置默认值：
   GIANTAPP_UPDATE_URL=${workerUrl} bun run build

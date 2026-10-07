@@ -38,6 +38,24 @@ export default {
       return new Response("not found", { status: 404 });
     }
 
+    // 固定最新下载入口：官网 / 壁纸服务端的下载地址只需指向这里，
+    // 每次发布后自动 302 到对应通道清单里的当前安装包，无需改服务端
+    if (key === "dl/latest" || key === "dl/latest-preview") {
+      const manifestKey = key === "dl/latest" ? "stable.json" : "preview.json";
+      const manifestObj = await env.BUCKET.get(manifestKey);
+      if (!manifestObj) return new Response("not found", { status: 404 });
+      let target;
+      try {
+        target = (await manifestObj.json()).url;
+      } catch {
+        return new Response("upstream manifest broken", { status: 502 });
+      }
+      if (!target || !/^https:\/\//.test(target)) {
+        return new Response("upstream manifest broken", { status: 502 });
+      }
+      return Response.redirect(target, 302);
+    }
+
     const obj = await env.BUCKET.get(key);
     if (!obj) {
       return new Response("not found", { status: 404 });
