@@ -9,6 +9,9 @@ import type {
   ConfigAppearance,
   ConfigGeneral,
   ConfigWallpaper,
+  CalendarDoc,
+  CalendarPayload,
+  CalendarPreview,
   DownloadHistoryItem,
   DownloadItem,
   DownloadStatus,
@@ -718,6 +721,56 @@ class API {
     listen<MpvDownloadEvent>("mpv-download-event", (e) =>
       callback(e.payload)
     ).then((un) => this.unlisteners.push(un));
+  }
+
+  // ---------- 壁纸日历 ----------
+
+  /** 读取日历文档（含失效引用与展示 URL） */
+  async getCalendar(): Promise<ApiResult<CalendarPayload>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<CalendarPayload>("get_calendar");
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 保存日历文档；后端重建预解析快照并立即求值，返回保存后的载荷 */
+  async saveCalendar(doc: CalendarDoc): Promise<ApiResult<CalendarPayload>> {
+    try {
+      if (!this.isRunningInClient()) return { error: null, data: null };
+      const data = await invoke<CalendarPayload>("save_calendar", { doc: { doc } });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 全年逐日预览（月历视图的唯一数据口径，含展示 URL） */
+  async getCalendarPreview(year: number): Promise<ApiResult<CalendarPreview>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<CalendarPreview>("get_calendar_preview", { year });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 保存前的引用合法性校验，返回失效路径列表 */
+  async validateCalendar(doc: CalendarDoc): Promise<ApiResult<string[]>> {
+    try {
+      if (!this.isRunningInClient()) return { error: null, data: [] };
+      const data = await invoke<string[]>("validate_calendar", { doc: { doc } });
+      return { error: null, data: data ?? [] };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: [] };
+    }
   }
 
   // ---------- 皮肤 ----------

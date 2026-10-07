@@ -388,3 +388,91 @@ export type DownloadHistoryItem = {
   /** 媒体文件 media URL（后端生成） */
   fileUrl: string;
 };
+
+// ---------- 壁纸日历 ----------
+
+/** 壁纸引用：绝对 filePath 为解析主键（后端回填展示 URL 经 previews） */
+export interface CalendarRef {
+  filePath: string;
+  dir?: string | null;
+  fileName?: string | null;
+}
+
+/** 时间段 HH:MM-HH:MM；end <= start 表示跨零点 */
+export interface CalendarTimeSegment {
+  start: string;
+  end: string;
+  wallpaper: CalendarRef;
+}
+
+export interface CalendarSlots {
+  allDay?: CalendarRef | null;
+  segments?: CalendarTimeSegment[];
+}
+
+/** 单日具体编排 */
+export interface CalendarDayPlan extends CalendarSlots {
+  date: string; // YYYY-MM-DD
+  enabled: boolean;
+}
+
+/** 每年循环的节日日期 */
+export type CalendarYearlyDate =
+  | { kind: "solar"; month: number; day: number }
+  | { kind: "lunar"; month: number; day: number; leap: boolean };
+
+export interface CalendarYearlyRule extends CalendarSlots {
+  id: string;
+  name: string;
+  enabled: boolean;
+  date?: CalendarYearlyDate | null;
+}
+
+/** 每周规则；weekdays 取值 0=周日 … 6=周六（与 JS getDay 一致） */
+export interface CalendarWeeklyRule extends CalendarSlots {
+  id: string;
+  name: string;
+  enabled: boolean;
+  weekdays: number[];
+}
+
+export interface CalendarDoc {
+  enabled: boolean;
+  days: CalendarDayPlan[];
+  yearly: CalendarYearlyRule[];
+  weekly: CalendarWeeklyRule[];
+}
+
+/** 引用的展示信息（media:// URL 由后端填充，前端无法自行构造） */
+export interface CalendarRefInfo {
+  fileUrl: string;
+  coverUrl?: string | null;
+  title?: string;
+  wallpaperType?: WallpaperType;
+}
+
+export type CalendarPreviews = Record<string, CalendarRefInfo>;
+
+export interface CalendarPayload {
+  doc: CalendarDoc;
+  /** 解析失败（缺失 / 类型不支持）的引用路径 */
+  invalid: string[];
+  previews: CalendarPreviews;
+}
+
+export type CalendarSource =
+  | { kind: "day" }
+  | { kind: "yearly"; id: string; name: string }
+  | { kind: "weekly"; id: string; name: string };
+
+export interface CalendarPreviewDay {
+  date: string;
+  source?: CalendarSource | null;
+  filePath?: string | null;
+  segmentCount: number;
+}
+
+export interface CalendarPreview {
+  days: CalendarPreviewDay[];
+  previews: CalendarPreviews;
+}

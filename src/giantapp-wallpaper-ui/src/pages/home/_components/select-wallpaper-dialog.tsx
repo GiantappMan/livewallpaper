@@ -11,10 +11,13 @@ import { useAtomValue } from "jotai"
 import { langDictAtom } from "@/atoms/lang"
 
 interface Props {
-    selectedWallpapers: Wallpaper[]
+    /** 未使用（组件内部自持选中态），保留以兼容既有调用方 */
+    selectedWallpapers?: Wallpaper[]
     open: boolean
     onChangeOpen: (open: boolean) => void
     onSaveSuccess?: (wallpapers: Wallpaper[]) => void
+    /** 放行播放列表（壁纸日历的时段允许选顶层播放列表，列表内轮播由引擎 tick 推进） */
+    includePlaylist?: boolean
 }
 
 export function SelectWallpaperDialog(props: Props) {
@@ -51,10 +54,12 @@ export function SelectWallpaperDialog(props: Props) {
             //     }, 5000)
             // });
 
-            //过滤playlist
-            const tmp = res.data?.filter((wallpaper) => {
-                return wallpaper.meta.type !== WallpaperType.Playlist;
-            })
+            //过滤playlist（includePlaylist 时放行顶层播放列表）
+            const tmp = props.includePlaylist
+                ? res.data
+                : res.data?.filter((wallpaper) => {
+                      return wallpaper.meta.type !== WallpaperType.Playlist;
+                  })
 
             setWallpapers(tmp);
         } catch (e) {

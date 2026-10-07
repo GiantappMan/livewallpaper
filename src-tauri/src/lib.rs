@@ -35,7 +35,8 @@ use state::AppState;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use tauri::Manager;
-use wallpaper_core::{AppDirs, ConfigStore, DownloadManager, WallpaperApi};
+use wallpaper_core::calendar::CalendarScheduler;
+use wallpaper_core::{AppDirs, ConfigStore, DownloadManager, EngineHost, WallpaperApi};
 
 pub const DEEP_LINK_SCHEME: &str = "livewallpaper4";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -160,6 +161,10 @@ pub fn run() {
             commands::app_update_download,
             commands::app_update_install,
             commands::app_update_state,
+            commands::get_calendar,
+            commands::save_calendar,
+            commands::get_calendar_preview,
+            commands::validate_calendar,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
@@ -562,6 +567,19 @@ fn setup(
     };
 
     let launched_hidden = config.lock().general.hide_window;
+
+    // 壁纸日历调度器：启动即用当前配置预解析引用（锁外文件 I/O，放线程池）
+    let calendar = Arc::new(CalendarScheduler::new(api.clone(), &dirs));
+    {
+        let calendar = calendar.clone();
+        let mpv_path = player.mpv_path();
+        let default_cover = player.default_cover();
+        tauri::async_runtime::spawn_blocking(move || {
+            let doc = calendar.current_doc();
+            calendar.rebuild_snapshot(doc, &mpv_path, &default_cover);
+        });
+    }
+
     app.manage(AppState {
         api: api.clone(),
         dirs: dirs.clone(),
@@ -571,6 +589,7 @@ fn setup(
         window_restorer: Mutex::new(state::WindowRestore::default()),
         hub: hub.clone(),
         headless,
+        calendar: calendar.clone(),
     });
 
     // 引擎状态变化 -> 广播 + 快照
@@ -589,18 +608,33 @@ fn setup(
     }
 
     // 系统事件
-    system_events::start(hub.clone(), api.clone());
+    system_events::start(hub.clone(), api.clone(), calendar.clone());
 
     // 皮肤目录热监听：当前皮肤文件变化 -> refresh-page 整页刷新（热更新开发）
     skin_watch::start(app.handle().clone());
 
-    // 恢复快照（含 v3 导入）
+    // 恢复快照（含 v3 导入）-> 日历首次求值 -> 日历周期 tick。
+    // 三步在同一 spawn 内顺序执行：快照先恢复（只占空屏），日历再接管，
+    // 避免求值先于恢复运行导致快照条目被静默丢弃。
     {
         let api = api.clone();
+        let calendar = calendar.clone();
         tauri::async_runtime::spawn(async move {
             let legacy = api.import_v3_snapshot();
             api.restore_from_snapshot(legacy).await;
             api.notify_change();
+            calendar.evaluate_now(true).await;
+
+            // 周期 tick：每 15 秒比对一次目标（到点切换的最大延迟即 15 秒）
+            let calendar = calendar.clone();
+            tauri::async_runtime::spawn(async move {
+                let mut interval = tokio::time::interval(std::time::Duration::from_secs(15));
+                interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                loop {
+                    interval.tick().await;
+                    calendar.tick().await;
+                }
+            });
         });
     }
 

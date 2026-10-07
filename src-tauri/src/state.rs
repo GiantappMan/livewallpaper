@@ -2,6 +2,7 @@
 
 use parking_lot::Mutex;
 use std::sync::Arc;
+use wallpaper_core::calendar::CalendarScheduler;
 use wallpaper_core::{AppDirs, ConfigStore, DownloadManager, WallpaperApi};
 
 use crate::internal_player::InternalPlayerController;
@@ -54,6 +55,8 @@ pub struct AppState {
     pub hub: crate::events::EventHub,
     /// 本次进程是否以 `--headless` 启动（零窗口，按需唤起 UI）。
     pub headless: bool,
+    /// 壁纸日历调度器（规则 + 预解析快照 + 到点切换）。
+    pub calendar: Arc<CalendarScheduler>,
 }
 
 impl AppState {

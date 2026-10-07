@@ -1,0 +1,70 @@
+# build outputs
+target/
+/src-tauri/gen/schemas
+
+# frontend
+node_modules
+/src/giantapp-wallpaper-ui/dist
+/src/giantapp-wallpaper-ui/.env*.local
+# bundled player binaries (downloaded at build time, see docs/1.开发.md)
+/src-tauri/assets/players/mpv/*
+!/src-tauri/assets/players/mpv/.gitkeep
+/src-tauri/assets/players/libmpv/*
+!/src-tauri/assets/players/libmpv/.gitkeep
+
+# secrets / local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# logs / local
+*.log
+.DS_Store
+
+# 本地临时产物
+.tmp-shots/
+.tmp-chrome-profile/
+
+# AI 工具本地状态（mimosa 扫描状态、会话计划、本机插件路径）
+.mimosa/
+.zcode/plans/
+.zcode/tmp/
+.video_agent/
+
+# CF 发布（scripts/publish.ts）：wrangler 本地状态与脚本生成的临时配置/产物
+.wrangler/
+scripts/cloudflare/wrangler.generated.toml
+build/publish/
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）

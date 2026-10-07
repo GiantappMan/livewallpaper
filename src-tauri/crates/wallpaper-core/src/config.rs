@@ -314,6 +314,11 @@ fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
     }
 }
 
+/// 读一个 JSON 配置文件（损坏时返回 None 并记日志）。日历等独立数据文件共用。
+pub(crate) fn read_json_file<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
+    read_json(path)
+}
+
 fn write_json<T: serde::Serialize>(path: &Path, value: &T) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -326,6 +331,11 @@ fn write_json<T: serde::Serialize>(path: &Path, value: &T) -> std::io::Result<()
         f.write_all(text.as_bytes())?;
     }
     std::fs::rename(&tmp, path)
+}
+
+/// 原子写一个 JSON 配置文件（.tmp + rename）。日历等独立数据文件共用。
+pub(crate) fn write_json_file<T: serde::Serialize>(path: &Path, value: &T) -> std::io::Result<()> {
+    write_json(path, value)
 }
 
 /// v3 配置为 `{}` 包装的相同字段结构（v3 文件本身就是扁平对象），直接尝试解析。

@@ -1054,6 +1054,147 @@ pub fn remove_download_history_item(app: AppHandle, id: String) -> Result<()> {
     Ok(())
 }
 
+// ---------- 壁纸日历 ----------
+
+/// 引用的展示信息（前端拿不到 media:// URL，统一由后端填充）。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarRefInfo {
+    pub file_url: String,
+    pub cover_url: Option<String>,
+    pub title: String,
+    pub wallpaper_type: WallpaperType,
+}
+
+/// filePath -> 展示信息。
+pub type CalendarPreviews = BTreeMap<String, CalendarRefInfo>;
+
+/// get_calendar 的返回：文档 + 失效引用 + 展示信息。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarPayload {
+    pub doc: wallpaper_core::calendar::CalendarDoc,
+    /// 解析失败（缺失 / 类型不支持）的引用路径。
+    pub invalid: Vec<PathBuf>,
+    pub previews: CalendarPreviews,
+}
+
+/// 全年月历预览：逐日求值结果 + 展示信息（前端唯一数据口径，不再自行推优先级）。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarPreview {
+    pub days: Vec<wallpaper_core::calendar::CalendarPreviewDay>,
+    pub previews: CalendarPreviews,
+}
+
+fn calendar_previews_from_snapshot(
+    snap: &wallpaper_core::calendar::CalendarSnapshot,
+) -> CalendarPreviews {
+    let mut previews = CalendarPreviews::new();
+    for (path, w) in &snap.resolved {
+        previews.insert(
+            path.to_string_lossy().to_string(),
+            CalendarRefInfo {
+                file_url: path_to_media_url(path),
+                cover_url: w.cover_path.as_ref().map(|c| path_to_media_url(c)),
+                title: w.meta.title.clone(),
+                wallpaper_type: w.meta.wallpaper_type,
+            },
+        );
+    }
+    previews
+}
+
+#[tauri::command]
+pub async fn get_calendar(app: AppHandle) -> Result<CalendarPayload> {
+    let st = state(&app);
+    let snap = st.calendar.snapshot();
+    Ok(CalendarPayload {
+        doc: snap.doc.clone(),
+        invalid: snap.invalid.clone(),
+        previews: calendar_previews_from_snapshot(&snap),
+    })
+}
+
+/// 保存前规范化：补规则 id、去空白时间段、清理引用上的展示残留。
+fn normalize_calendar_doc(doc: &mut wallpaper_core::calendar::CalendarDoc) {
+    for day in doc.days.iter_mut() {
+        day.date = day.date.trim().to_string();
+        day.slots
+            .segments
+            .retain(|s| !s.wallpaper.file_path.as_os_str().is_empty());
+    }
+    for rule in doc.yearly.iter_mut() {
+        if rule.id.trim().is_empty() {
+            rule.id = uuid::Uuid::new_v4().to_string();
+        }
+        rule.slots
+            .segments
+            .retain(|s| !s.wallpaper.file_path.as_os_str().is_empty());
+    }
+    for rule in doc.weekly.iter_mut() {
+        if rule.id.trim().is_empty() {
+            rule.id = uuid::Uuid::new_v4().to_string();
+        }
+        rule.weekdays.retain(|w| *w <= 6);
+        rule.weekdays.sort_unstable();
+        rule.weekdays.dedup();
+        rule.slots
+            .segments
+            .retain(|s| !s.wallpaper.file_path.as_os_str().is_empty());
+    }
+}
+
+#[tauri::command]
+pub async fn save_calendar(app: AppHandle, mut doc: CalendarPayloadDoc) -> Result<CalendarPayload> {
+    let st = state(&app);
+    normalize_calendar_doc(&mut doc.doc);
+    // 先落盘再重建快照：引用解析含封面生成等重 I/O，放线程池、managers 锁外
+    wallpaper_core::calendar::CalendarStore::save(&st.dirs, &doc.doc).map_err(|e| e.to_string())?;
+    let (mpv, cover) = (st.player.mpv_path(), st.player.default_cover());
+    let calendar = st.calendar.clone();
+    let doc_to_build = doc.doc.clone();
+    tokio::task::spawn_blocking(move || {
+        calendar.rebuild_snapshot(doc_to_build, &mpv, &cover);
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    // 保存后立即求值：命中目标变化即切壁纸，用户保存即可见
+    st.calendar.evaluate_now(true).await;
+    let snap = st.calendar.snapshot();
+    Ok(CalendarPayload {
+        doc: snap.doc.clone(),
+        invalid: snap.invalid.clone(),
+        previews: calendar_previews_from_snapshot(&snap),
+    })
+}
+
+/// save_calendar 的入参（前端只传 doc；结构与 CalendarPayload 区分开）。
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarPayloadDoc {
+    pub doc: wallpaper_core::calendar::CalendarDoc,
+}
+
+#[tauri::command]
+pub async fn get_calendar_preview(app: AppHandle, year: i32) -> Result<CalendarPreview> {
+    let st = state(&app);
+    let snap = st.calendar.snapshot();
+    let days = wallpaper_core::calendar::preview_year(&snap.doc, year);
+    Ok(CalendarPreview {
+        days,
+        previews: calendar_previews_from_snapshot(&snap),
+    })
+}
+
+/// 保存前的引用合法性校验（轻量：文件存在 + 类型可渲染）。
+#[tauri::command]
+pub async fn validate_calendar(
+    doc: wallpaper_core::calendar::CalendarDoc,
+) -> Result<Vec<PathBuf>> {
+    Ok(wallpaper_core::calendar::invalid_refs(&doc))
+}
+
 // ---------- 外壳 ----------
 
 #[tauri::command]

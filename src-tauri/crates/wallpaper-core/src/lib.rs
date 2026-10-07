@@ -3,6 +3,7 @@
 //! 视频播放器通过 [`player::PlayerFactory`] / [`player::PlayerEngine`] 接入。
 
 pub mod api;
+pub mod calendar;
 pub mod config;
 pub mod dirs;
 pub mod download;

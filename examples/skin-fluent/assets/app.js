@@ -144,6 +144,7 @@
     globe: '<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3c2.5 2.6 4 5.7 4 9s-1.5 6.4-4 9c-2.5-2.6-4-5.7-4-9s1.5-6.4 4-9z"/>',
     x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
     check: '<polyline points="20 6 9 17 4 12"/>',
+    calendar: '<rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8.2" cy="14.5" r="0.6" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="0.6" fill="currentColor" stroke="none"/><circle cx="15.8" cy="14.5" r="0.6" fill="currentColor" stroke="none"/><circle cx="8.2" cy="18" r="0.6" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="0.6" fill="currentColor" stroke="none"/>',
     pencil: '<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
     trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
     folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
@@ -160,6 +161,8 @@
     refresh: '<polyline points="22.5 4 22.5 10 16.5 10"/><path d="M20.2 15.5A8.5 8.5 0 1 1 18.5 6l4 4"/>',
     music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
     chevron: '<polyline points="6 9 12 15 18 9"/>',
+    chevronL: '<polyline points="15 18 9 12 15 6"/>',
+    chevronR: '<polyline points="9 18 15 12 9 6"/>',
     chevr: '<polyline points="9 6 15 12 9 18"/>',
     power: '<path d="M12 3v9"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
     shield: '<path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>',
@@ -247,6 +250,7 @@
   const NAV = [
     // library（壁纸库）已废弃，入口屏蔽不再下发；视图代码保留（见 renderLibrary @deprecated）
     { id: "local", icon: "folder", label: "nav.local" },
+    { id: "calendar", icon: "calendar", label: "nav.calendar" },
     { id: "hub", icon: "globe", label: "nav.hub" },
     // Win11 惯例：低频项（下载 / 设置 / 关于）沉到窗格底部 FooterMenuItems 区
     { id: "downloads", icon: "download", label: "nav.downloads", badge: true, foot: true },
@@ -3116,6 +3120,448 @@
     return b;
   }
 
+  // ---------------------------------------------------------------- 壁纸日历
+  // 数据口径与后端一致：四级优先级（单日 > 年度节日 > 每周 > 不接管）由后端
+  // resolve_at 求值，月历只渲染 get_calendar_preview 的结果；保存走
+  // save_calendar（后端锁外重建预解析快照并立即求值）。
+  const calState = { doc: null, previews: {}, invalid: [], loaded: false, loading: false };
+  const calDays = {}; // "YYYY-MM-DD" -> 预览日（命中来源 + 生效壁纸路径 + 段数）
+  const calPreviewCache = new Set(); // 已拉取预览的年份
+  let calView = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() + 1 }; })();
+
+  const CAL_PRESETS = [
+    { key: "cal.presetNewYear", date: { kind: "solar", month: 1, day: 1 } },
+    { key: "cal.presetSpring", date: { kind: "lunar", month: 1, day: 1, leap: false } },
+    { key: "cal.presetLantern", date: { kind: "lunar", month: 1, day: 15, leap: false } },
+    { key: "cal.presetValentine", date: { kind: "solar", month: 2, day: 14 } },
+    { key: "cal.presetWomen", date: { kind: "solar", month: 3, day: 8 } },
+    { key: "cal.presetLabor", date: { kind: "solar", month: 5, day: 1 } },
+    { key: "cal.presetChildren", date: { kind: "solar", month: 6, day: 1 } },
+    { key: "cal.presetDragonBoat", date: { kind: "lunar", month: 5, day: 5, leap: false } },
+    { key: "cal.presetQixi", date: { kind: "lunar", month: 7, day: 7, leap: false } },
+    { key: "cal.presetMidAutumn", date: { kind: "lunar", month: 8, day: 15, leap: false } },
+    { key: "cal.presetNational", date: { kind: "solar", month: 10, day: 1 } },
+    { key: "cal.presetDoubleNinth", date: { kind: "lunar", month: 9, day: 9, leap: false } },
+    { key: "cal.presetChristmas", date: { kind: "solar", month: 12, day: 25 } },
+    // 注意：清明是节气日（公历 4/4-4/6 浮动），公历/农历都无法固定表达，不进预设。
+  ];
+
+  // crypto.randomUUID 仅安全上下文可用；skin.localhost 非 https 时兜底随机 id
+  // （后端 normalize_calendar_doc 对空 id 也会补 uuid，双保险）
+  const calUid = () => (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `cal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+  function calApplyPayload(payload) {
+    calState.doc = payload.doc;
+    calState.previews = payload.previews || {};
+    calState.invalid = payload.invalid || [];
+    calState.loaded = true;
+  }
+
+  async function loadCalendar(force) {
+    if (calState.loading || (calState.loaded && !force)) return;
+    calState.loading = true;
+    try {
+      calApplyPayload(await SC.invoke("get_calendar"));
+    } catch (e) {
+      SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
+    }
+    calState.loading = false;
+  }
+
+  async function fetchCalPreview(years, force) {
+    let changed = false;
+    for (const y of years) {
+      if (!force && calPreviewCache.has(y)) continue;
+      try {
+        const data = await SC.invoke("get_calendar_preview", { year: y });
+        for (const day of data.days || []) calDays[day.date] = day;
+        Object.assign(calState.previews, data.previews || {});
+        calPreviewCache.add(y);
+        changed = true;
+      } catch (e) { /* 单年预览失败不阻断整页 */ }
+    }
+    return changed;
+  }
+
+  function saveCalendarDoc(doc, done) {
+    SC.invoke("save_calendar", { doc: { doc } }).then((payload) => {
+      calApplyPayload(payload);
+      calPreviewCache.clear();
+      for (const k of Object.keys(calDays)) delete calDays[k];
+      const years = Array.from(new Set(monthGridCells(calView.y, calView.m).map((c) => Number(c.slice(0, 4)))));
+      fetchCalPreview(years, true).then(() => { if (currentView === "calendar") renderView(); });
+      SC.toast(SC.t("cal.saved"), "ok");
+      done && done(true);
+    }).catch((e) => {
+      SC.toast(SC.t("common.opFailed", SC.errText(String(e))), "err");
+      done && done(false);
+    });
+  }
+
+  function monthGridCells(year, month) {
+    const first = new Date(year, month - 1, 1);
+    const offset = (first.getDay() + 6) % 7; // 周一开头
+    const start = new Date(year, month - 1, 1 - offset);
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      cells.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    }
+    return cells;
+  }
+
+  function calRefInfo(ref) {
+    return ref && ref.filePath ? calState.previews[ref.filePath] : null;
+  }
+
+  function calRefThumb(ref) {
+    const info = calRefInfo(ref);
+    return el("img", { class: "cal-ref-thumb", src: (info && (info.coverUrl || info.fileUrl)) || "/wp-placeholder.webp", loading: "lazy", alt: "" });
+  }
+
+  function calPreviewBtn(ref) {
+    return el("button", {
+      class: "icon-btn", title: SC.t("cal.preview"),
+      onclick: () => {
+        const w = (wallpapersCache || []).find((x) => x.filePath === ref.filePath);
+        if (!w) { SC.toast(SC.t("cal.previewNotFound"), "err"); return; }
+        SC.applyWallpaper(w);
+      },
+    }, iconEl("play", 14));
+  }
+
+  /** 槽位编辑器（全天 + 时间段）：单日与节日/每周规则共用。slots 直接持有 allDay/segments。 */
+  function calSlotList(slots, onChanged) {
+    const box = el("div", { class: "cal-slots" });
+    function render() {
+      box.innerHTML = "";
+      const hasAllDay = !!(slots.allDay && slots.allDay.filePath);
+      const info = calRefInfo(slots.allDay);
+      box.append(el("div", { class: "cal-slot-row" },
+        el("span", { class: "cal-slot-label" }, SC.t("cal.allDay")),
+        el("span", { class: "cal-ref" },
+          calRefThumb(slots.allDay || {}),
+          el("span", { class: "cal-ref-name", title: info && info.title }, (info && info.title) || SC.t("cal.unset"))),
+        el("button", {
+          class: "btn btn-sm",
+          onclick: () => openCalendarPick(hasAllDay ? slots.allDay.filePath : null, (ref) => {
+            slots.allDay = ref; onChanged && onChanged(); render();
+          }),
+        }, SC.t(hasAllDay ? "cal.change" : "cal.set")),
+        hasAllDay ? calPreviewBtn(slots.allDay) : null,
+        hasAllDay ? el("button", {
+          class: "icon-btn", title: SC.t("cal.clear"),
+          onclick: () => { slots.allDay = null; onChanged && onChanged(); render(); },
+        }, iconEl("x", 13)) : null));
+
+      (slots.segments || []).forEach((seg, i) => {
+        const segInfo = calRefInfo(seg.wallpaper);
+        const start = el("input", { class: "input input-time", type: "time", value: seg.start });
+        start.addEventListener("change", () => { seg.start = start.value || seg.start; onChanged && onChanged(); });
+        const end = el("input", { class: "input input-time", type: "time", value: seg.end });
+        end.addEventListener("change", () => { seg.end = end.value || seg.end; onChanged && onChanged(); });
+        box.append(el("div", { class: "cal-slot-row is-seg" },
+          start,
+          el("span", { class: "dim-label" }, "–"),
+          end,
+          (seg.end && seg.start && seg.end <= seg.start) ? el("span", { class: "cal-overnight" }, SC.t("cal.overnight")) : null,
+          el("button", {
+            class: "icon-btn", title: SC.t("common.delete"),
+            onclick: () => { slots.segments.splice(i, 1); onChanged && onChanged(); render(); },
+          }, iconEl("x", 13)),
+          el("div", { class: "cal-slot-row2" },
+            el("span", { class: "cal-ref" },
+              calRefThumb(seg.wallpaper || {}),
+              el("span", { class: "cal-ref-name", title: segInfo && segInfo.title }, (segInfo && segInfo.title) || SC.t("cal.unset"))),
+            el("button", {
+              class: "btn btn-sm",
+              onclick: () => openCalendarPick(seg.wallpaper && seg.wallpaper.filePath || null, (ref) => {
+                seg.wallpaper = ref || { filePath: "" }; onChanged && onChanged(); render();
+              }),
+            }, SC.t(seg.wallpaper && seg.wallpaper.filePath ? "cal.change" : "cal.set")),
+            seg.wallpaper && seg.wallpaper.filePath ? calPreviewBtn(seg.wallpaper) : null)));
+      });
+
+      box.append(el("button", {
+        class: "btn btn-sm cal-addseg",
+        onclick: () => {
+          if (!slots.segments) slots.segments = [];
+          slots.segments.push({ start: "08:00", end: "22:00", wallpaper: { filePath: "" } });
+          onChanged && onChanged(); render();
+        },
+      }, iconEl("plus", 13), el("span", {}, SC.t("cal.addSeg"))));
+    }
+    render();
+    return box;
+  }
+
+  /** 单选壁纸（含顶层播放列表；列表内轮播由引擎按 tick 推进）。onPick 收到 Wallpaper 或 null。 */
+  function openCalendarPick(currentPath, onPick) {
+    let picked = currentPath || null;
+    openDialog((sheet, close) => {
+      const grid = el("div", { class: "pick-grid" });
+      function renderGrid() {
+        grid.innerHTML = "";
+        appendChunked(grid, wallpapersCache || [], (w) => {
+          const on = picked && picked === w.filePath;
+          return el("button", {
+            class: `pick ${on ? "is-on" : ""}`,
+            onclick: () => { picked = w.filePath; renderGrid(); },
+          },
+            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null,
+              on ? el("span", { class: "pick-check" }, iconEl("check", 12)) : null),
+            el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
+        });
+      }
+      renderGrid();
+      sheet.append(
+        dialogHead(SC.t("cal.pickTitle"), SC.t("cal.pickHint"), close),
+        el("div", { class: "dialog-body" }, grid),
+        el("div", { class: "dialog-foot" },
+          el("button", { class: "btn", onclick: () => { close(true); onPick && onPick(null); } }, SC.t("cal.none")),
+          el("button", {
+            class: "btn btn-accent",
+            onclick: () => {
+              const w = (wallpapersCache || []).find((x) => x.filePath === picked) || null;
+              close(true); onPick && onPick(w);
+            },
+          }, SC.t("common.ok"))));
+    });
+  }
+
+  function openCalendarDay(dateStr) {
+    const doc = calState.doc;
+    if (!doc) return;
+    const existing = doc.days.find((d) => d.date === dateStr);
+    const draft = existing
+      ? JSON.parse(JSON.stringify(existing))
+      : { date: dateStr, enabled: true, allDay: null, segments: [] };
+    openDialog((sheet, close) => {
+      const body = el("div", { class: "dialog-body" });
+      const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(5, 7)), d = Number(dateStr.slice(8, 10));
+      const dayLabel = new Date(y, m - 1, d).toLocaleDateString(SC.state.lang || undefined, { month: "long", day: "numeric", weekday: "long" });
+      const enableSw = switchEl(draft.enabled, (v) => { draft.enabled = v; });
+      const slotsBox = calSlotList(draft);
+      body.append(
+        el("div", { class: "field-row" },
+          el("div", { class: "check is-strong" }, enableSw, el("span", {}, SC.t("cal.dayEnabled")))),
+        el("p", { class: "dim-label cal-hint" }, SC.t("cal.dayHint")),
+        slotsBox);
+      sheet.append(
+        dialogHead(SC.t("cal.editDay"), dayLabel, close),
+        body,
+        el("div", { class: "dialog-foot" },
+          el("button", { class: "btn", onclick: () => close() }, SC.t("common.cancel")),
+          el("button", {
+            class: "btn btn-accent",
+            onclick: () => {
+              const others = doc.days.filter((x) => x.date !== dateStr);
+              const empty = !draft.enabled && !(draft.allDay && draft.allDay.filePath) && !(draft.segments || []).length;
+              if (!empty) others.push(draft);
+              others.sort((a, b) => a.date.localeCompare(b.date));
+              saveCalendarDoc({ ...doc, days: others }, (ok) => ok && close(true));
+            },
+          }, SC.t("common.save"))));
+    });
+  }
+
+  function calDateLabel(date) {
+    if (!date) return SC.t("cal.unset");
+    if (date.kind === "lunar") return `${SC.t("cal.lunar")} ${date.month}-${date.day}${date.leap ? " · " + SC.t("cal.leap") : ""}`;
+    return `${SC.t("cal.solar")} ${date.month}/${date.day}`;
+  }
+
+  function calRuleCard(rule, isYearly, rerender) {
+    const card = el("div", { class: "cal-rule" });
+    const name = el("input", { class: "input cal-rule-name", value: rule.name || "", placeholder: SC.t("cal.ruleName") });
+    name.addEventListener("input", () => { rule.name = name.value; });
+    card.append(el("div", { class: "cal-rule-head" },
+      name,
+      isYearly ? el("span", { class: "cal-date-badge" }, calDateLabel(rule.date)) : null,
+      switchEl(rule.enabled, (v) => { rule.enabled = v; }),
+      el("button", { class: "icon-btn", title: SC.t("common.delete") }, iconEl("x", 13))));
+    // 删除走标记：保存时过滤，渲染中只按标记隐藏，避免索引错乱
+    card.querySelector(".cal-rule-head .icon-btn").addEventListener("click", () => { rule.__deleted = true; rerender(); });
+
+    if (isYearly) {
+      const kindSel = selectEl(
+        [{ value: "solar", label: SC.t("cal.solar") }, { value: "lunar", label: SC.t("cal.lunar") }],
+        (rule.date && rule.date.kind) || "solar",
+        (v) => {
+          rule.date = v === "lunar" ? { kind: "lunar", month: 1, day: 1, leap: false } : { kind: "solar", month: 1, day: 1 };
+          rerender();
+        });
+      const monthIn = el("input", { class: "input cal-num", type: "number", min: 1, max: 12, value: (rule.date && rule.date.month) || 1 });
+      monthIn.addEventListener("change", () => { if (rule.date) rule.date.month = Math.min(12, Math.max(1, Math.round(Number(monthIn.value) || 1))); });
+      const dayIn = el("input", { class: "input cal-num", type: "number", min: 1, max: 30, value: (rule.date && rule.date.day) || 1 });
+      dayIn.addEventListener("change", () => { if (rule.date) rule.date.day = Math.min(30, Math.max(1, Math.round(Number(dayIn.value) || 1))); });
+      const dateRow = el("div", { class: "cal-rule-date" }, kindSel,
+        el("span", { class: "dim-label" }, SC.t("cal.month")), monthIn,
+        el("span", { class: "dim-label" }, SC.t("cal.day")), dayIn);
+      if (rule.date && rule.date.kind === "lunar") {
+        const leap = el("input", { type: "checkbox" });
+        leap.checked = !!rule.date.leap;
+        leap.addEventListener("change", () => { rule.date.leap = leap.checked; });
+        dateRow.append(el("label", { class: "check" }, leap, el("span", {}, SC.t("cal.leap"))));
+      }
+      card.append(dateRow);
+    } else {
+      const chips = el("div", { class: "cal-chips" });
+      for (const wd of [1, 2, 3, 4, 5, 6, 0]) {
+        const on = (rule.weekdays || []).includes(wd);
+        chips.append(el("button", {
+          class: `chip ${on ? "is-on" : ""}`,
+          onclick: (e) => {
+            const list = rule.weekdays || (rule.weekdays = []);
+            const idx = list.indexOf(wd);
+            if (idx >= 0) list.splice(idx, 1); else list.push(wd);
+            e.currentTarget.classList.toggle("is-on", idx < 0);
+          },
+        }, SC.t(`cal.weekday${wd}`)));
+      }
+      card.append(chips);
+    }
+    card.append(calSlotList(rule, () => {}));
+    return card;
+  }
+
+  function openCalendarRules() {
+    const doc = calState.doc;
+    if (!doc) return;
+    const draftY = doc.yearly.map((r) => JSON.parse(JSON.stringify(r)));
+    const draftW = doc.weekly.map((r) => JSON.parse(JSON.stringify(r)));
+    openDialog((sheet, close) => {
+      const body = el("div", { class: "dialog-body" });
+      function render() {
+        body.innerHTML = "";
+        // 每年节日
+        const yearHead = el("div", { class: "field-row cal-sec-head" },
+          el("h3", { class: "cal-sec-title" }, SC.t("cal.yearly")));
+        const presetSel = selectEl(
+          [{ value: "", label: SC.t("cal.addPreset") }].concat(CAL_PRESETS.map((p) => ({ value: p.key, label: `${SC.t(p.key)}（${calDateLabel(p.date)}）` }))),
+          "", (v) => {
+            const p = CAL_PRESETS.find((x) => x.key === v);
+            if (!p) return;
+            draftY.push({ id: calUid(), name: SC.t(p.key), enabled: true, date: { ...p.date }, allDay: null, segments: [] });
+            presetSel.setValue(""); // 复位占位：连续添加同一预设也能再次触发
+            render();
+          });
+        yearHead.append(presetSel);
+        yearHead.append(el("button", {
+          class: "btn btn-sm",
+          onclick: () => { draftY.push({ id: calUid(), name: SC.t("cal.newRule"), enabled: true, date: { kind: "solar", month: 1, day: 1 }, allDay: null, segments: [] }); render(); },
+        }, iconEl("plus", 13), el("span", {}, SC.t("cal.addYearly"))));
+        body.append(yearHead);
+        const liveY = draftY.filter((r) => !r.__deleted);
+        if (!liveY.length) body.append(el("p", { class: "dim-label cal-empty" }, SC.t("cal.emptyYearly")));
+        for (const r of draftY) if (!r.__deleted) body.append(calRuleCard(r, true, render));
+
+        // 每周规则
+        body.append(el("div", { class: "field-row cal-sec-head" },
+          el("h3", { class: "cal-sec-title" }, SC.t("cal.weekly")),
+          el("button", {
+            class: "btn btn-sm",
+            onclick: () => { draftW.push({ id: calUid(), name: SC.t("cal.weekend"), enabled: true, weekdays: [0, 6], allDay: null, segments: [] }); render(); },
+          }, iconEl("plus", 13), el("span", {}, SC.t("cal.addWeekly")))));
+        const liveW = draftW.filter((r) => !r.__deleted);
+        if (!liveW.length) body.append(el("p", { class: "dim-label cal-empty" }, SC.t("cal.emptyWeekly")));
+        for (const r of draftW) if (!r.__deleted) body.append(calRuleCard(r, false, render));
+      }
+      render();
+      const saveBtn = el("button", { class: "btn btn-accent" }, SC.t("common.save"));
+      saveBtn.addEventListener("click", () => {
+        const yearly = draftY.filter((r) => !r.__deleted).map((r) => { const c = { ...r }; if (!c.id) c.id = calUid(); delete c.__deleted; return c; });
+        const weekly = draftW.filter((r) => !r.__deleted).map((r) => { const c = { ...r }; if (!c.id) c.id = calUid(); delete c.__deleted; return c; });
+        saveCalendarDoc({ ...doc, yearly, weekly }, (ok) => ok && close(true));
+      });
+      sheet.append(
+        dialogHead(SC.t("cal.rules"), SC.t("cal.rulesHint"), close),
+        body,
+        el("div", { class: "dialog-foot" },
+          el("button", { class: "btn", onclick: () => close() }, SC.t("common.cancel")),
+          saveBtn));
+    });
+  }
+
+  function renderCalendar() {
+    viewEl.innerHTML = "";
+    if (!calState.loaded && !calState.loading) {
+      loadCalendar().then(() => { if (currentView === "calendar") renderView(); });
+    }
+
+    // 命令栏：月份导航 + 今天 + 总开关 + 规则
+    const monthLabel = el("span", { class: "cal-month" }, (() => {
+      try { return new Date(calView.y, calView.m - 1, 1).toLocaleDateString(SC.state.lang || undefined, { year: "numeric", month: "long" }); }
+      catch { return `${calView.y}/${calView.m}`; }
+    })());
+    const actions = el("div", { class: "page-actions" },
+      el("button", { class: "icon-btn", title: SC.t("cal.prevMonth"), onclick: () => { calView = calView.m === 1 ? { y: calView.y - 1, m: 12 } : { y: calView.y, m: calView.m - 1 }; renderView(); } }, iconEl("chevronL", 15)),
+      monthLabel,
+      el("button", { class: "icon-btn", title: SC.t("cal.nextMonth"), onclick: () => { calView = calView.m === 12 ? { y: calView.y + 1, m: 1 } : { y: calView.y, m: calView.m + 1 }; renderView(); } }, iconEl("chevronR", 15)),
+      el("button", {
+        class: "btn btn-sm",
+        onclick: () => { const d = new Date(); calView = { y: d.getFullYear(), m: d.getMonth() + 1 }; renderView(); },
+      }, SC.t("cal.today")));
+    if (calState.doc) {
+      actions.append(
+        // 注意不能用 label 包 switchEl：switchEl 自身已是 label，嵌套会双重触发
+        el("div", { class: "check cal-takeover" },
+          switchEl(calState.doc.enabled, (v) => saveCalendarDoc({ ...calState.doc, enabled: v })),
+          el("span", {}, SC.t("cal.takeover"))),
+        el("button", { class: "btn", onclick: () => openCalendarRules() }, iconEl("calendar", 15), el("span", {}, SC.t("cal.rules"))));
+    }
+    viewEl.append(el("header", { class: "page-head head-row" },
+      el("h1", { class: "page-title" }, SC.t("cal.title")),
+      el("span", { class: "title-count" }, SC.t("cal.subtitle")),
+      actions));
+
+    // 状态提示
+    if (calState.loaded && calState.doc) {
+      if (calState.invalid.length) viewEl.append(el("p", { class: "cal-warn" }, SC.t("cal.invalidWarn", calState.invalid.length)));
+      const doc = calState.doc;
+      if (!doc.days.length && !doc.yearly.length && !doc.weekly.length) viewEl.append(el("p", { class: "cal-hint-block" }, SC.t("cal.emptyHint")));
+    }
+
+    // 星期表头 + 六行网格
+    const wrap = el("div", { class: "cal-wrap" });
+    const head = el("div", { class: "cal-grid is-head" });
+    for (const wd of [1, 2, 3, 4, 5, 6, 0]) head.append(el("span", { class: "cal-weekday" }, SC.t(`cal.weekday${wd}`)));
+    wrap.append(head);
+    const grid = el("div", { class: "cal-grid" });
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const cells = monthGridCells(calView.y, calView.m);
+    const gridYears = Array.from(new Set(cells.map((c) => Number(c.slice(0, 4)))));
+    fetchCalPreview(gridYears).then((changed) => { if (changed && currentView === "calendar") renderView(); });
+
+    for (const dateStr of cells) {
+      const inMonth = Number(dateStr.slice(5, 7)) === calView.m;
+      const day = calDays[dateStr];
+      const info = day && day.filePath ? calState.previews[day.filePath] : null;
+      let badge = null, badgeCls = "";
+      if (day && day.source) {
+        if (day.source.kind === "day") { badge = SC.t("cal.badgeDay"); badgeCls = "is-day"; }
+        else if (day.source.kind === "yearly") { badge = day.source.name || SC.t("cal.badgeYearly"); badgeCls = "is-yearly"; }
+        else if (day.source.kind === "weekly") { badge = day.source.name || SC.t("cal.badgeWeekly"); badgeCls = "is-weekly"; }
+      }
+      const cell = el("button", {
+        class: `cal-cell ${inMonth ? "" : "is-out"} ${dateStr === todayStr ? "is-today" : ""}`,
+        onclick: () => calState.doc && openCalendarDay(dateStr),
+        title: badge || "",
+      },
+        info ? el("img", { class: "cal-cover", src: (info.coverUrl || info.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "" }) : null,
+        el("span", { class: "cal-num" }, String(Number(dateStr.slice(8, 10)))),
+        badge ? el("span", { class: `cal-badge ${badgeCls}` }, badge) : null,
+        day && day.segmentCount > 0 ? el("span", { class: "cal-segcount" }, String(day.segmentCount)) : null);
+      grid.append(cell);
+    }
+    wrap.append(grid);
+    viewEl.append(wrap);
+    renderDock();
+  }
+
   // ---------------------------------------------------------------- 视图调度
   function renderView() {
     closeCtx();
@@ -3126,6 +3572,7 @@
     localZoomKeys = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "local") renderLocal();
+    else if (currentView === "calendar") renderCalendar();
     else if (currentView === "downloads") renderDownloads();
     else if (currentView === "hub") renderHub();
     else if (currentView === "settings") renderSettings();

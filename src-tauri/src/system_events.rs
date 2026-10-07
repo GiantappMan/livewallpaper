@@ -3,10 +3,11 @@
 
 use crate::events::EventHub;
 use std::sync::Arc;
+use wallpaper_core::calendar::CalendarScheduler;
 use wallpaper_core::system::events as sys_events;
 use wallpaper_core::WallpaperApi;
 
-pub fn start(hub: EventHub, api: Arc<WallpaperApi>) {
+pub fn start(hub: EventHub, api: Arc<WallpaperApi>, calendar: Arc<CalendarScheduler>) {
     wallpaper_core::system::events::start();
     let (tx, rx) = std::sync::mpsc::channel::<sys_events::SystemEvent>();
     sys_events::subscribe(tx);
@@ -16,7 +17,7 @@ pub fn start(hub: EventHub, api: Arc<WallpaperApi>) {
         .name("wp4-event-forward".into())
         .spawn(move || {
             for event in rx {
-                handle_event(hub_for_thread.clone(), api.clone(), event);
+                handle_event(hub_for_thread.clone(), api.clone(), calendar.clone(), event);
             }
         })
         .ok();
@@ -32,12 +33,19 @@ fn publish_theme(hub: &EventHub, dark: bool) {
     );
 }
 
-fn handle_event(hub: EventHub, api: Arc<WallpaperApi>, event: sys_events::SystemEvent) {
+fn handle_event(
+    hub: EventHub,
+    api: Arc<WallpaperApi>,
+    calendar: Arc<CalendarScheduler>,
+    event: sys_events::SystemEvent,
+) {
     use sys_events::SystemEvent;
     tauri::async_runtime::spawn(async move {
         match event {
             SystemEvent::DisplayChanged => {
                 api.handle_display_changed().await;
+                // 重建管理器并从快照恢复后，日历规则若命中需重新接管
+                calendar.evaluate_now(true).await;
                 hub.publish("refresh-page", ());
             }
             SystemEvent::SessionLock => {

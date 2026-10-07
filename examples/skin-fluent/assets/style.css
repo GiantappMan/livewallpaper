@@ -1102,3 +1102,63 @@ button.card-row:hover { background: var(--subtle); }
 .pv-nav:active { opacity: .8; }
 .pv-nav.is-prev { left: 10px; }
 .pv-nav.is-next { right: 10px; }
+
+/* ---------------------------------------------------------------- 壁纸日历 */
+.cal-month { font-weight: 600; min-width: 10rem; text-align: center; }
+.cal-takeover { display: inline-flex; align-items: center; gap: 8px; margin: 0 4px; font-size: 12.5px; }
+.cal-warn { margin-top: 12px; padding: 8px 12px; border-radius: var(--r-md); border: 1px solid rgba(196, 43, 28, .35); background: rgba(196, 43, 28, .08); color: var(--danger); font-size: 12px; }
+.cal-hint-block { margin-top: 12px; padding: 8px 12px; border-radius: var(--r-md); border: 1px dashed var(--ctl-stroke); color: var(--ink-2); font-size: 12px; }
+.cal-wrap { margin-top: 14px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-grid.is-head { margin-bottom: 2px; }
+.cal-weekday { text-align: center; font-size: 11px; color: var(--ink-3); padding: 2px 0; }
+.cal-cell {
+  position: relative; aspect-ratio: 1 / 0.95; padding: 6px; text-align: left; font: inherit; color: var(--ink);
+  border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); overflow: hidden; cursor: pointer;
+  transition: border-color var(--speed), transform var(--speed);
+}
+.cal-cell:hover { border-color: var(--ctl-stroke); }
+.cal-cell:active { transform: scale(.985); }
+.cal-cell.is-out { opacity: .4; }
+.cal-cell.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; }
+.cal-num { position: relative; font-size: 12px; font-weight: 600; }
+.cal-badge {
+  position: absolute; left: 6px; bottom: 6px; max-width: calc(100% - 12px); padding: 2px 7px; border-radius: 999px;
+  font-size: 10px; line-height: 1.5; color: #fff; background: var(--accent);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cal-badge.is-yearly { background: #c42b1c; }
+.cal-badge.is-weekly { background: #0f7b0f; }
+[data-mode="dark"] .cal-badge.is-yearly { background: #da6b5d; }
+[data-mode="dark"] .cal-badge.is-weekly { background: #6ccb5f; }
+.cal-segcount { position: absolute; top: 5px; right: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; background: rgba(0, 0, 0, .5); color: #fff; }
+
+/* 对话框内：槽位编辑器（全天 + 时间段） */
+.cal-slots { display: flex; flex-direction: column; gap: 10px; }
+.cal-slot-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px;
+  border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card);
+}
+.cal-slot-row2 { display: flex; align-items: center; gap: 8px; flex: 1 1 100%; min-width: 0; }
+.cal-slot-label { flex: 0 0 auto; width: 3.5em; font-size: 12px; font-weight: 600; }
+.cal-ref { display: inline-flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.cal-ref-thumb { width: 52px; height: 32px; object-fit: cover; border-radius: var(--r-ctl); background: var(--subtle); }
+.cal-ref-name { font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-overnight { padding: 1px 7px; border: 1px solid var(--ctl-stroke); border-radius: 999px; font-size: 10px; color: var(--ink-3); }
+.cal-addseg { width: 100%; justify-content: center; border-style: dashed; }
+.cal-hint { margin: 8px 0 10px; }
+.check.is-strong { font-size: 13px; font-weight: 600; }
+
+/* 规则管理 */
+.cal-sec-head { margin-top: 16px; margin-bottom: 8px; }
+.cal-sec-title { font-size: 13px; font-weight: 600; margin-right: auto; }
+.cal-rule { margin-bottom: 8px; padding: 10px; border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); }
+.cal-rule-head { display: flex; align-items: center; gap: 8px; }
+.cal-rule-name { flex: 0 0 auto; width: 150px; }
+.cal-date-badge { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; font-size: 11px; color: var(--ink-2); background: var(--subtle); }
+.cal-rule-date { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; }
+.cal-num { width: 64px; }
+.cal-chips { display: flex; gap: 6px; margin-top: 8px; }
+.chip.is-on { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.cal-empty { margin: 4px 0 10px; }

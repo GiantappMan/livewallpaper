@@ -4,12 +4,14 @@ import { useState } from "react";
 import NavMenuItem from "./nav-menu-item";
 import {
     ArrowDownTrayIcon,
+    CalendarDaysIcon,
     CogIcon,
     HomeIcon,
     Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import {
     ArrowDownTrayIcon as solidArrowDownTrayIcon,
+    CalendarDaysIcon as solidCalendarDaysIcon,
     CogIcon as solidCogIcon,
     HomeIcon as solidHomeIcon,
     QuestionMarkCircleIcon as questionMarkCircleIcon,
@@ -39,6 +41,14 @@ export default function SideMenu() {
         //   selectedIcon: solidSquares2X2Icon,
         //   current: false,
         // },
+        {
+            name: dictionary['calendar']?.title ?? "Calendar",
+            href: `/calendar`,
+            urls: [`/calendar`],
+            icon: CalendarDaysIcon,
+            selectedIcon: solidCalendarDaysIcon,
+            current: false,
+        },
         {
             name: dictionary['common'].hub,
             href: `/hub`,

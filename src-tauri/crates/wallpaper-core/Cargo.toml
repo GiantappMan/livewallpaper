@@ -9,6 +9,8 @@ license = "LGPL-3.0"
 anyhow = "1"
 async-trait = "0.1"
 base64 = "0.22"
+# 农历换算（壁纸日历的节日规则）；离线计算，不支持联网
+chinese-lunisolar-calendar = "0.2"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"
 futures-util = "0.3"
