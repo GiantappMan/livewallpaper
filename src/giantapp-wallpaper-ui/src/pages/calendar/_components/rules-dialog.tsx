@@ -21,7 +21,7 @@ import {
     CalendarYearlyDate,
     CalendarYearlyRule,
 } from "@/lib/client/types";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 /** 节日预设（按评审结论：节气日清明无法用公历/农历固定表达，本期不进预设）。 */
 const PRESETS: { key: string; date: CalendarYearlyDate }[] = [
@@ -76,6 +76,20 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
     const updateWeeklySlots = (id: string, slots: CalendarSlots) => {
         setWeekly((prev) => prev.map((r) => (r.id === id ? { ...r, ...slots } : r)));
     };
+    /** 上移/下移：文档序即优先级（同日多条取靠前者），把顺序做成可操作的 */
+    const moveItem =
+        <T,>(setter: (fn: (prev: T[]) => T[]) => void) =>
+        (index: number, dir: -1 | 1) => {
+            setter((prev) => {
+                const next = [...prev];
+                const j = index + dir;
+                if (j < 0 || j >= next.length) return prev;
+                [next[index], next[j]] = [next[j], next[index]];
+                return next;
+            });
+        };
+    const moveYearly = moveItem(setYearly);
+    const moveWeekly = moveItem(setWeekly);
 
     const addYearlyFromPreset = (key: string) => {
         const preset = PRESETS.find((p) => p.key === key);
@@ -189,6 +203,28 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
                                         <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                                             {dateLabel(rule.date)}
                                         </span>
+                                        <div className="ml-auto flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={index === 0}
+                                                title={t.move_up}
+                                                onClick={() => moveYearly(index, -1)}
+                                            >
+                                                <ArrowUpIcon className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={index === yearly.length - 1}
+                                                title={t.move_down}
+                                                onClick={() => moveYearly(index, 1)}
+                                            >
+                                                <ArrowDownIcon className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                         <Switch
                                             checked={rule.enabled}
                                             onCheckedChange={(enabled) =>
@@ -196,7 +232,6 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
                                                     prev.map((r) => (r.id === rule.id ? { ...r, enabled } : r))
                                                 )
                                             }
-                                            className="ml-auto"
                                         />
                                         <Button
                                             variant="ghost"
@@ -316,7 +351,7 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
                             </div>
                         )}
                         <div className="mt-2 space-y-2">
-                            {weekly.map((rule) => (
+                            {weekly.map((rule, index) => (
                                 <div key={rule.id} className="rounded-lg border bg-card/40 p-3">
                                     <div className="flex items-center gap-2">
                                         <Input
@@ -361,6 +396,28 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
                                                 );
                                             })}
                                         </div>
+                                        <div className="ml-auto flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={index === 0}
+                                                title={t.move_up}
+                                                onClick={() => moveWeekly(index, -1)}
+                                            >
+                                                <ArrowUpIcon className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={index === weekly.length - 1}
+                                                title={t.move_down}
+                                                onClick={() => moveWeekly(index, 1)}
+                                            >
+                                                <ArrowDownIcon className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                         <Switch
                                             checked={rule.enabled}
                                             onCheckedChange={(enabled) =>
@@ -368,7 +425,6 @@ export function RulesDialog({ open, doc, resolve, onRecord, onPreview, onSave, o
                                                     prev.map((r) => (r.id === rule.id ? { ...r, enabled } : r))
                                                 )
                                             }
-                                            className="ml-auto"
                                         />
                                         <Button
                                             variant="ghost"

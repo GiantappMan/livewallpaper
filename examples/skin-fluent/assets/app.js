@@ -163,6 +163,8 @@
     chevron: '<polyline points="6 9 12 15 18 9"/>',
     chevronL: '<polyline points="15 18 9 12 15 6"/>',
     chevronR: '<polyline points="9 18 15 12 9 6"/>',
+    chevronUp: '<polyline points="18 15 12 9 6 15"/>',
+    chevronDown: '<polyline points="6 9 12 15 18 9"/>',
     chevr: '<polyline points="9 6 15 12 9 18"/>',
     power: '<path d="M12 3v9"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
     shield: '<path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>',
@@ -326,6 +328,7 @@
   }
   function go(view, sub) {
     if (view === "library") view = "local"; // 废弃视图一律重定向：外部 nav 事件 / 旧调用点统一落到本地库
+    if (view !== currentView) searchQuery = ""; // 搜索框属于本地库：离开即清空，回来是未过滤的全量视图
     currentView = view;
     if (view === "settings" && SETTINGS_TAB_IDS.includes(sub)) settingsTab = sub;
     location.hash = view === "settings" ? `#/settings/${settingsTab}` : `#/${view}`;
@@ -337,7 +340,7 @@
     if (view === "library") { location.hash = "#/local"; return; } // 废弃视图：前进/后退/手输旧 hash 一律归一
     const tabChanged = view === "settings" && SETTINGS_TAB_IDS.includes(sub) && sub !== settingsTab;
     if (tabChanged) settingsTab = sub;
-    if (view !== currentView && NAV.some((n) => n.id === view)) { currentView = view; updatePane(); renderView(); }
+    if (view !== currentView && NAV.some((n) => n.id === view)) { searchQuery = ""; currentView = view; updatePane(); renderView(); }
     else if (tabChanged && currentView === "settings") renderSettings();
   });
 
@@ -1365,6 +1368,7 @@
   let localSaveTimer = 0;    // 布局落盘防抖
   let localPendingSave = null; // 防抖期内未落盘的 {dir, snapshot}；页面卸载时补写，否则刷新会丢最后一次拖动
   let localRefresh = null; // 本地库网格刷新函数（仅本视图存在，切视图置空）
+  let localSearchFocus = null; // 本地库搜索框 input（Ctrl+F 聚焦入口；仅本视图存在，切视图置空）
   let localReflow = null;  // 桌面画布窗口 resize 重排（仅本视图存在，切视图置空）
   let localResizeHooked = false;
   let localSeq = 0;        // 异步渲染序号：快速切换文件夹时丢弃过期结果
@@ -1396,6 +1400,18 @@
     if (step === null) return;
     e.preventDefault(); // 拦截 WebView 自身的 Ctrl+± 页面缩放
     localZoomKeys(step);
+  });
+
+  // 搜索快捷键：Ctrl+F 聚焦本地库搜索框（搜索入口移入本地库后的键盘可达性，再按全选便于换词），
+  // 同时拦掉 WebView2 自身的查找条；仅本地库视图生效，其余视图不接管
+  window.addEventListener("keydown", (e) => {
+    if (!localSearchFocus || currentView !== "local" || !e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.key !== "f" && e.key !== "F") return;
+    const t = e.target;
+    if (t && t.closest && t.closest("input, textarea, select")) return;
+    e.preventDefault();
+    if (document.activeElement === localSearchFocus) localSearchFocus.select();
+    else localSearchFocus.focus();
   });
 
   // 本地库头部：滚动贴顶常驻（sticky），滚过之后加亚克力底与底缘描边和内容分层
@@ -1496,13 +1512,49 @@
     const flowGrid = el("div", { class: "loc-grid" });       // 搜索态：流式网格
     const canvas = el("div", { class: "loc-canvas" });       // 桌面画布：子文件夹层级自由摆放
 
-    // 单行头部：面包屑 + 计数 + ⋯（不再重复「本地库」大标题，压低头部高度）。
+    // 本地库内搜索（原为标题栏居中搜索，移入本视图头部右侧，Explorer 命令栏搜索位）。
+    // 输入即防抖过滤；Esc / 清除钮清空；Ctrl+F 从视图任意处聚焦（见顶部 keydown 监听）。
+    // 头部滚动贴顶（sticky），浏览任何层级时搜索框都在；离开视图由 go()/hashchange 清空 searchQuery
+    const debouncedFilter = SC.debounce((q) => {
+      searchQuery = q;
+      if (localRefresh) localRefresh();
+    }, 180); // 输入防抖：每次击键都全量重建网格在几千壁纸时是持续卡顿源
+    const searchInput = el("input", {
+      type: "search", placeholder: SC.t("local.search"), value: searchQuery,
+      oninput: (e) => {
+        e.target.closest(".loc-search").classList.toggle("is-filled", !!e.target.value);
+        debouncedFilter(e.target.value);
+      },
+    });
+    const clearSearch = () => {
+      searchInput.value = "";
+      searchQuery = "";
+      searchBox.classList.remove("is-filled");
+      if (localRefresh) localRefresh();
+      searchInput.focus();
+    };
+    const searchClear = el("button", { class: "icon-btn loc-search-clear", title: SC.t("local.searchClear"), tabindex: "-1", onclick: clearSearch });
+    searchClear.innerHTML = icon("x", 13);
+    searchInput.addEventListener("keydown", (e) => {
+      // Esc 清空；输入法组合中的 Esc 先交给候选窗，不清字段
+      if (e.key !== "Escape" || e.isComposing || !searchInput.value) return;
+      e.preventDefault();
+      clearSearch();
+    });
+    const searchBox = el("label",
+      { class: `loc-search${searchQuery.trim() ? " is-filled" : ""}`, title: SC.t("local.searchHint") },
+      (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(),
+      searchInput,
+      searchClear);
+    localSearchFocus = searchInput;
+
+    // 单行头部：面包屑 + 计数 + 搜索 + ⋯（不再重复「本地库」大标题，压低头部高度）。
     // 滚动贴顶常驻，低频命令在 ⋯ 菜单里随时可用
     viewEl.append(el("div", { class: "loc-head" },
       el("div", { class: "loc-head-row" },
         crumb,
         el("span", { class: "title-count", dataset: { count: "" } }, SC.t("local.count", all.length)),
-        el("div", { class: "page-actions" }, morePop))));
+        el("div", { class: "page-actions" }, searchBox, morePop))));
 
     const newFolderBtnEl = () => {
       const b = el("button", { class: "btn btn-sm" });
@@ -3125,25 +3177,59 @@
   // resolve_at 求值，月历只渲染 get_calendar_preview 的结果；保存走
   // save_calendar（后端锁外重建预解析快照并立即求值）。
   const calState = { doc: null, previews: {}, invalid: [], loaded: false, loading: false };
-  const calDays = {}; // "YYYY-MM-DD" -> 预览日（命中来源 + 生效壁纸路径 + 段数）
+  const calDays = {}; // "YYYY-MM-DD" -> 预览日（命中来源 + 生效壁纸路径 + 段数 + 内置节日）
+  const calLocalInfo = {}; // filePath -> 本地即时展示信息（拖入/选择后、保存刷新前可见）
   const calPreviewCache = new Set(); // 已拉取预览的年份
   let calView = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() + 1 }; })();
+  let calNowTimer = null;
+
+  /** 「此刻」条：当前时刻的求值结果（来自 get_calendar_now，与调度器同一口径）。 */
+  async function refreshNowBar() {
+    const bar = document.getElementById("cal-now");
+    if (!bar || currentView !== "calendar" || !calState.loaded) return;
+    let now;
+    try { now = await SC.invoke("get_calendar_now"); } catch { return; }
+    if (!bar.isConnected) return; // 视图已重建，丢弃过期结果
+    bar.innerHTML = "";
+    if (!now.enabled) {
+      bar.classList.add("is-off");
+      bar.append(el("span", { class: "cal-now-label" }, `${SC.t("cal.now")} · ${now.time}`),
+        el("span", { class: "cal-now-text" }, SC.t("cal.nowDisabled")));
+      return;
+    }
+    bar.classList.remove("is-off");
+    bar.append(el("span", { class: "cal-now-label" }, `${SC.t("cal.now")} · ${now.time}`));
+    if (now.info) {
+      const kind = now.source ? now.source.kind : "";
+      const srcName = now.source
+        ? (kind === "day" ? SC.t("cal.badgeDay")
+          : now.source.name || (kind === "yearly" ? SC.t("cal.badgeYearly") : SC.t("cal.badgeWeekly")))
+        : "";
+      bar.append(
+        el("img", { class: "cal-ref-thumb", src: (now.info.coverUrl || now.info.fileUrl || "/wp-placeholder.webp"), alt: "" }),
+        el("span", { class: "cal-now-text" }, now.info.title || "—"),
+        srcName ? el("span", { class: `cal-badge ${kind === "day" ? "is-day" : kind === "yearly" ? "is-yearly" : "is-weekly"}` }, srcName) : null);
+    } else {
+      bar.append(el("span", { class: "cal-now-text is-dim" }, SC.t("cal.nowNone")));
+    }
+  }
 
   const CAL_PRESETS = [
-    { key: "cal.presetNewYear", date: { kind: "solar", month: 1, day: 1 } },
-    { key: "cal.presetSpring", date: { kind: "lunar", month: 1, day: 1, leap: false } },
-    { key: "cal.presetLantern", date: { kind: "lunar", month: 1, day: 15, leap: false } },
-    { key: "cal.presetValentine", date: { kind: "solar", month: 2, day: 14 } },
-    { key: "cal.presetWomen", date: { kind: "solar", month: 3, day: 8 } },
-    { key: "cal.presetLabor", date: { kind: "solar", month: 5, day: 1 } },
-    { key: "cal.presetChildren", date: { kind: "solar", month: 6, day: 1 } },
-    { key: "cal.presetDragonBoat", date: { kind: "lunar", month: 5, day: 5, leap: false } },
-    { key: "cal.presetQixi", date: { kind: "lunar", month: 7, day: 7, leap: false } },
-    { key: "cal.presetMidAutumn", date: { kind: "lunar", month: 8, day: 15, leap: false } },
-    { key: "cal.presetNational", date: { kind: "solar", month: 10, day: 1 } },
-    { key: "cal.presetDoubleNinth", date: { kind: "lunar", month: 9, day: 9, leap: false } },
-    { key: "cal.presetChristmas", date: { kind: "solar", month: 12, day: 25 } },
+    { id: "new_year", key: "cal.presetNewYear", date: { kind: "solar", month: 1, day: 1 } },
+    { id: "spring", key: "cal.presetSpring", date: { kind: "lunar", month: 1, day: 1, leap: false } },
+    { id: "lantern", key: "cal.presetLantern", date: { kind: "lunar", month: 1, day: 15, leap: false } },
+    { id: "valentine", key: "cal.presetValentine", date: { kind: "solar", month: 2, day: 14 } },
+    { id: "women", key: "cal.presetWomen", date: { kind: "solar", month: 3, day: 8 } },
+    { id: "labor", key: "cal.presetLabor", date: { kind: "solar", month: 5, day: 1 } },
+    { id: "children", key: "cal.presetChildren", date: { kind: "solar", month: 6, day: 1 } },
+    { id: "dragon_boat", key: "cal.presetDragonBoat", date: { kind: "lunar", month: 5, day: 5, leap: false } },
+    { id: "qixi", key: "cal.presetQixi", date: { kind: "lunar", month: 7, day: 7, leap: false } },
+    { id: "mid_autumn", key: "cal.presetMidAutumn", date: { kind: "lunar", month: 8, day: 15, leap: false } },
+    { id: "national", key: "cal.presetNational", date: { kind: "solar", month: 10, day: 1 } },
+    { id: "double_ninth", key: "cal.presetDoubleNinth", date: { kind: "lunar", month: 9, day: 9, leap: false } },
+    { id: "christmas", key: "cal.presetChristmas", date: { kind: "solar", month: 12, day: 25 } },
     // 注意：清明是节气日（公历 4/4-4/6 浮动），公历/农历都无法固定表达，不进预设。
+    // id 与后端 FESTIVAL_PRESETS 的稳定 key 一致（月历节日标注 → 一键为节日排壁纸）。
   ];
 
   // crypto.randomUUID 仅安全上下文可用；skin.localhost 非 https 时兜底随机 id
@@ -3213,7 +3299,9 @@
   }
 
   function calRefInfo(ref) {
-    return ref && ref.filePath ? calState.previews[ref.filePath] : null;
+    if (!ref || !ref.filePath) return null;
+    // 保存/预览刷新前，刚拖入的壁纸先看本地即时信息
+    return calState.previews[ref.filePath] || calLocalInfo[ref.filePath] || null;
   }
 
   function calRefThumb(ref) {
@@ -3331,6 +3419,15 @@
     });
   }
 
+  const CAL_SNAP = 15; // 时间轴吸附粒度（分钟）
+  const calToMin = (hhmm) => {
+    const [h, m] = String(hhmm || "0:0").split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const calToHhmm = (min) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+  const calSnap = (min) => Math.max(0, Math.min(1440, Math.round(min / CAL_SNAP) * CAL_SNAP));
+
+  /** 视频剪辑式日内编辑：本地库缩略图条拖上 24h 时间轴，拖动移位、拖边改时长。 */
   function openCalendarDay(dateStr) {
     const doc = calState.doc;
     if (!doc) return;
@@ -3338,32 +3435,244 @@
     const draft = existing
       ? JSON.parse(JSON.stringify(existing))
       : { date: dateStr, enabled: true, allDay: null, segments: [] };
+    if (!Array.isArray(draft.segments)) draft.segments = [];
+    const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(5, 7)), d = Number(dateStr.slice(8, 10));
+    const dayLabel = new Date(y, m - 1, d).toLocaleDateString(SC.state.lang || undefined, { month: "long", day: "numeric", weekday: "long" });
+    const isToday = dateStr === (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
+
     openDialog((sheet, close) => {
+      sheet.classList.add("cal-dialog-wide");
       const body = el("div", { class: "dialog-body" });
-      const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(5, 7)), d = Number(dateStr.slice(8, 10));
-      const dayLabel = new Date(y, m - 1, d).toLocaleDateString(SC.state.lang || undefined, { month: "long", day: "numeric", weekday: "long" });
-      const enableSw = switchEl(draft.enabled, (v) => { draft.enabled = v; });
-      const slotsBox = calSlotList(draft);
-      body.append(
-        el("div", { class: "field-row" },
-          el("div", { class: "check is-strong" }, enableSw, el("span", {}, SC.t("cal.dayEnabled")))),
-        el("p", { class: "dim-label cal-hint" }, SC.t("cal.dayHint")),
-        slotsBox);
-      sheet.append(
-        dialogHead(SC.t("cal.editDay"), dayLabel, close),
-        body,
-        el("div", { class: "dialog-foot" },
-          el("button", { class: "btn", onclick: () => close() }, SC.t("common.cancel")),
+
+      // ---- 头部：启用开关 + 命中/节日提示
+      body.append(el("div", { class: "field-row" },
+        el("div", { class: "check is-strong" }, switchEl(draft.enabled, (v) => { draft.enabled = v; }), el("span", {}, SC.t("cal.dayEnabled")))),
+        el("p", { class: "dim-label cal-hint" }, SC.t("cal.dayHint")));
+      const hit = calDays[dateStr] && calDays[dateStr].source;
+      if (hit && hit.kind !== "day") {
+        const hitName = hit.kind === "yearly" ? (hit.name || SC.t("cal.badgeYearly")) : (hit.name || SC.t("cal.badgeWeekly"));
+        body.append(el("p", { class: "cal-hithint" }, SC.t("cal.hitHint", hitName)));
+      }
+      // 节日一键编排：月历上看到的节日，点了就排（已有同日期规则则直接更新它的全天壁纸）
+      const fests = (calDays[dateStr] && calDays[dateStr].festivals) || [];
+      const festDefs = fests.map((id) => CAL_PRESETS.find((p) => p.id === id)).filter(Boolean);
+      if (festDefs.length) {
+        const festRow = el("div", { class: "field-row cal-festrow" });
+        for (const p of festDefs) {
+          festRow.append(el("button", {
+            class: "btn btn-sm",
+            onclick: () => openCalendarPick(null, (w) => {
+              if (!w || !w.filePath) return;
+              calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
+              const same = (a, b) => a && b && a.kind === b.kind && a.month === b.month && a.day === b.day && (a.kind === "solar" || a.leap === b.leap);
+              const target = doc.yearly.find((r) => same(r.date, p.date));
+              if (target) {
+                target.enabled = true;
+                target.allDay = { filePath: w.filePath, dir: w.dir, fileName: w.fileName };
+              } else {
+                doc.yearly.push({ id: calUid(), name: SC.t(p.key), enabled: true, date: { ...p.date }, allDay: { filePath: w.filePath, dir: w.dir, fileName: w.fileName }, segments: [] });
+              }
+              saveCalendarDoc(doc, () => {});
+              close(true);
+            }),
+          }, iconEl("calendar", 13), el("span", {}, SC.t("cal.festPick", SC.t(p.key)))));
+        }
+        body.append(festRow);
+      }
+
+      // ---- 本地库缩略图条：拖到时间轴，或点击插入空档
+      function addClipAt(min, w) {
+        const start = calSnap(min);
+        let end = Math.min(1440, start + 120);
+        // 与已有片段重叠时顺延到其后第一个空档
+        const overlaps = (s, e) => draft.segments.some((s2) => s < calToMin(s2.end) && e > calToMin(s2.start));
+        let s = start;
+        while (s < 1425 && overlaps(s, Math.min(1440, s + 120))) s += CAL_SNAP;
+        if (s >= 1425) { SC.toast(SC.t("cal.dayFull"), "err"); return; }
+        end = Math.min(1440, s + 120);
+        draft.segments.push({ start: calToHhmm(s), end: calToHhmm(end), wallpaper: { filePath: w.filePath, dir: w.dir, fileName: w.fileName } });
+        if (w) calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
+        renderTrack();
+      }
+      const lib = el("div", { class: "cal-lib" });
+      (wallpapersCache || []).forEach((w) => {
+        lib.append(el("button", {
+          class: "cal-lib-item", draggable: "true", title: (w.meta && w.meta.title) || "",
+          ondragstart: (e) => { e.dataTransfer.setData("text/plain", w.filePath); e.dataTransfer.effectAllowed = "copy"; },
+          onclick: () => addClipAt(0, w),
+        }, el("img", { src: thumbSrc(w.coverUrl || w.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "", draggable: "false" })));
+      });
+      if (!(wallpapersCache || []).length) lib.append(el("p", { class: "dim-label cal-lib-empty" }, SC.t("cal.libEmpty")));
+      body.append(el("div", { class: "field-label cal-lib-label" }, SC.t("cal.libLabel")), lib);
+
+      // ---- 24h 时间轴
+      let selected = -1;
+      const ruler = el("div", { class: "cal-ruler" });
+      for (let h = 0; h <= 24; h += 6) ruler.append(el("span", { style: { left: `${(h / 24) * 100}%` } }, String(h).padStart(2, "0")));
+      const track = el("div", { class: "cal-track" });
+      const allday = el("div", { class: "cal-allday" });
+      let renderTrack = () => {};
+
+      function commitAndRender() {
+        draft.segments.sort((a, b) => calToMin(a.start) - calToMin(b.start));
+        renderTrack();
+      }
+
+      function makeClip(seg, index) {
+        const s = calToMin(seg.start), e = calToMin(seg.end);
+        const wrapEnd = e <= s ? 1440 : e; // 跨零点段在轨道上画到 24:00（其余语义不变）
+        const clip = el("div", { class: `cal-clip ${selected === index ? "is-on" : ""}` });
+        const info = calRefInfo(seg.wallpaper);
+        clip.style.left = `${(s / 1440) * 100}%`;
+        clip.style.width = `${Math.max(2, ((wrapEnd - s) / 1440) * 100)}%`;
+        if (info && (info.coverUrl || info.fileUrl)) {
+          clip.append(el("img", { class: "cal-clip-cover", src: info.coverUrl || info.fileUrl, loading: "lazy", alt: "", draggable: "false" }));
+        }
+        clip.append(el("span", { class: "cal-clip-name" },
+          `${calToHhmm(s)}–${calToHhmm(e)} ${(info && info.title) || SC.t("cal.unset")}`));
+        clip.append(el("button", {
+          class: "cal-clip-x", title: SC.t("common.delete"),
+          onclick: (ev) => { ev.stopPropagation(); draft.segments.splice(index, 1); selected = -1; commitAndRender(); },
+        }, iconEl("x", 11)));
+        const headL = el("span", { class: "cal-clip-h is-w" });
+        const headR = el("span", { class: "cal-clip-h is-e" });
+
+        // 指针交互：拖边改时长，拖身移位；15 分钟吸附
+        function beginDrag(ev, mode) {
+          ev.preventDefault(); ev.stopPropagation();
+          selected = index; renderTrack();
+          const rect = track.getBoundingClientRect();
+          const seg0 = { start: calToMin(seg.start), end: calToMin(seg.end) };
+          const pxToMin = (clientX) => calSnap(((clientX - rect.left) / rect.width) * 1440);
+          const move = (e2) => {
+            const cur = pxToMin(e2.clientX);
+            if (mode === "w") {
+              // 拖左缘收短：压到 end-SNAP 以内时自然从跨零点变为普通段
+              seg.start = calToHhmm(Math.min(cur, seg0.end - CAL_SNAP));
+            } else if (mode === "e") {
+              seg.end = calToHhmm(Math.max(cur, seg0.start + CAL_SNAP));
+            } else {
+              // 整段移位：光标对齐片段中点；总长超出 24h 的部分回卷到零点后（保持跨零点语义）
+              const s0 = seg0.start, e0 = seg0.end;
+              const dur = e0 > s0 ? e0 - s0 : 1440 - s0 + e0;
+              const ns = Math.max(0, Math.min(1440 - Math.min(dur, 1440), cur - Math.floor(dur / 2)));
+              const ne = ns + dur;
+              seg.start = calToHhmm(ns);
+              seg.end = calToHhmm(ne <= 1440 ? ne : ne - 1440);
+            }
+            renderTrack();
+          };
+          const up = () => {
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+            commitAndRender();
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+        }
+        // 片段体按下 = 选中并进入移位拖拽；删除按钮不参与（否则重渲染会吞掉 click）
+        clip.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0 || e.target.closest(".cal-clip-x")) return;
+          beginDrag(e, "m");
+        });
+        headL.addEventListener("pointerdown", (e) => beginDrag(e, "w"));
+        headR.addEventListener("pointerdown", (e) => beginDrag(e, "e"));
+        clip.append(headL, headR);
+        return clip;
+      }
+
+      renderTrack = () => {
+        track.innerHTML = "";
+        // 整点刻度线
+        for (let h = 1; h < 24; h++) {
+          track.append(el("i", { class: "cal-tick", style: { left: `${(h / 24) * 100}%` } }));
+        }
+        // 当天此刻播放头
+        if (isToday) {
+          const n = new Date();
+          const nowMin = n.getHours() * 60 + n.getMinutes();
+          track.append(el("i", { class: "cal-nowline", style: { left: `${(nowMin / 1440) * 100}%` } }));
+        }
+        draft.segments.forEach((seg, i) => track.append(makeClip(seg, i)));
+        if (!draft.segments.length) {
+          track.append(el("p", { class: "cal-track-empty" }, SC.t("cal.trackEmpty")));
+        }
+        // 全天兜底槽
+        allday.innerHTML = "";
+        const hasAllDay = !!(draft.allDay && draft.allDay.filePath);
+        const aInfo = calRefInfo(draft.allDay);
+        // 原生 append 会把 null 字符串化，先过滤（或改用 el() 包装）
+        const alldayKids = [
+          el("span", { class: "cal-slot-label" }, SC.t("cal.allDay")),
+          hasAllDay ? el("img", { class: "cal-ref-thumb", src: (aInfo && (aInfo.coverUrl || aInfo.fileUrl)) || "/wp-placeholder.webp", alt: "" }) : null,
+          el("span", { class: "cal-allday-name" }, hasAllDay ? ((aInfo && aInfo.title) || SC.t("cal.unset")) : SC.t("cal.alldayHint")),
           el("button", {
-            class: "btn btn-accent",
-            onclick: () => {
-              const others = doc.days.filter((x) => x.date !== dateStr);
-              const empty = !draft.enabled && !(draft.allDay && draft.allDay.filePath) && !(draft.segments || []).length;
-              if (!empty) others.push(draft);
-              others.sort((a, b) => a.date.localeCompare(b.date));
-              saveCalendarDoc({ ...doc, days: others }, (ok) => ok && close(true));
-            },
-          }, SC.t("common.save"))));
+            class: "btn btn-sm", onclick: () => openCalendarPick(hasAllDay ? draft.allDay.filePath : null, (w) => {
+              draft.allDay = w ? { filePath: w.filePath, dir: w.dir, fileName: w.fileName } : null;
+              if (w) calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
+              renderTrack();
+            }),
+          }, SC.t(hasAllDay ? "cal.change" : "cal.set")),
+          hasAllDay ? calPreviewBtn(draft.allDay) : null,
+          hasAllDay ? el("button", { class: "icon-btn", title: SC.t("cal.clear"), onclick: () => { draft.allDay = null; renderTrack(); } }, iconEl("x", 13)) : null,
+        ].filter(Boolean);
+        allday.append(...alldayKids);
+      };
+      renderTrack();
+
+      track.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+      track.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const path = e.dataTransfer.getData("text/plain");
+        const w = (wallpapersCache || []).find((x) => x.filePath === path);
+        if (!w) return;
+        const rect = track.getBoundingClientRect();
+        addClipAt(((e.clientX - rect.left) / rect.width) * 1440, w);
+      });
+      allday.addEventListener("dragover", (e) => { e.preventDefault(); allday.classList.add("is-over"); });
+      allday.addEventListener("dragleave", () => allday.classList.remove("is-over"));
+      allday.addEventListener("drop", (e) => {
+        e.preventDefault(); allday.classList.remove("is-over");
+        const path = e.dataTransfer.getData("text/plain");
+        const w = (wallpapersCache || []).find((x) => x.filePath === path);
+        if (!w) return;
+        draft.allDay = { filePath: w.filePath, dir: w.dir, fileName: w.fileName };
+        calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
+        renderTrack();
+      });
+
+      body.append(el("div", { class: "field-label cal-lib-label" }, SC.t("cal.timeline")), ruler, track, allday);
+
+      const foot = el("div", { class: "dialog-foot" });
+      if (existing) {
+        foot.append(el("button", {
+          class: "btn btn-danger",
+          onclick: () => {
+            const dayText = new Date(y, m - 1, d).toLocaleDateString(SC.state.lang || undefined, { month: "long", day: "numeric" });
+            SC.confirm({ title: SC.t("cal.clearDay"), body: SC.t("cal.clearConfirm", dayText), danger: true }).then((ok) => {
+              if (!ok) return;
+              saveCalendarDoc({ ...doc, days: doc.days.filter((x) => x.date !== dateStr) }, (done) => done && close(true));
+            });
+          },
+        }, SC.t("cal.clearDay")));
+      }
+      foot.append(
+        el("button", { class: "btn", onclick: () => close() }, SC.t("common.cancel")),
+        el("button", {
+          class: "btn btn-accent",
+          onclick: () => {
+            if ((draft.segments || []).some((s) => !(s.wallpaper && s.wallpaper.filePath))) {
+              SC.toast(SC.t("cal.segEmpty"), "err");
+              return;
+            }
+            const others = doc.days.filter((x) => x.date !== dateStr);
+            const empty = !draft.enabled && !(draft.allDay && draft.allDay.filePath) && !(draft.segments || []).length;
+            if (!empty) others.push(draft);
+            others.sort((a, b) => a.date.localeCompare(b.date));
+            saveCalendarDoc({ ...doc, days: others }, (ok) => ok && close(true));
+          },
+        }, SC.t("common.save")));
+      sheet.append(dialogHead(SC.t("cal.editDay"), dayLabel, close), body, foot);
     });
   }
 
@@ -3373,13 +3682,30 @@
     return `${SC.t("cal.solar")} ${date.month}/${date.day}`;
   }
 
-  function calRuleCard(rule, isYearly, rerender) {
+  function calRuleCard(rule, list, isYearly, rerender) {
     const card = el("div", { class: "cal-rule" });
     const name = el("input", { class: "input cal-rule-name", value: rule.name || "", placeholder: SC.t("cal.ruleName") });
     name.addEventListener("input", () => { rule.name = name.value; });
+    // 上移/下移：文档序即优先级（同日多条取靠前者），把顺序做成可操作的
+    const visible = list.filter((r) => !r.__deleted);
+    const vi = visible.indexOf(rule);
+    const moveBtn = (dir, icon, title, disabled) => el("button", {
+      class: "icon-btn", title, ...(disabled ? { disabled: true } : {}),
+      onclick: () => {
+        const idx = list.indexOf(rule);
+        let j = idx + dir;
+        while (j >= 0 && j < list.length && list[j].__deleted) j += dir;
+        if (j < 0 || j >= list.length) return;
+        [list[idx], list[j]] = [list[j], list[idx]];
+        rerender();
+      },
+    }, iconEl(icon, 13));
     card.append(el("div", { class: "cal-rule-head" },
       name,
       isYearly ? el("span", { class: "cal-date-badge" }, calDateLabel(rule.date)) : null,
+      el("span", { class: "cal-move" },
+        moveBtn(-1, "chevronUp", SC.t("cal.moveUp"), vi <= 0),
+        moveBtn(1, "chevronDown", SC.t("cal.moveDown"), vi >= visible.length - 1)),
       switchEl(rule.enabled, (v) => { rule.enabled = v; }),
       el("button", { class: "icon-btn", title: SC.t("common.delete") }, iconEl("x", 13))));
     // 删除走标记：保存时过滤，渲染中只按标记隐藏，避免索引错乱
@@ -3456,7 +3782,7 @@
         body.append(yearHead);
         const liveY = draftY.filter((r) => !r.__deleted);
         if (!liveY.length) body.append(el("p", { class: "dim-label cal-empty" }, SC.t("cal.emptyYearly")));
-        for (const r of draftY) if (!r.__deleted) body.append(calRuleCard(r, true, render));
+        for (const r of draftY) if (!r.__deleted) body.append(calRuleCard(r, draftY, true, render));
 
         // 每周规则
         body.append(el("div", { class: "field-row cal-sec-head" },
@@ -3467,7 +3793,7 @@
           }, iconEl("plus", 13), el("span", {}, SC.t("cal.addWeekly")))));
         const liveW = draftW.filter((r) => !r.__deleted);
         if (!liveW.length) body.append(el("p", { class: "dim-label cal-empty" }, SC.t("cal.emptyWeekly")));
-        for (const r of draftW) if (!r.__deleted) body.append(calRuleCard(r, false, render));
+        for (const r of draftW) if (!r.__deleted) body.append(calRuleCard(r, draftW, false, render));
       }
       render();
       const saveBtn = el("button", { class: "btn btn-accent" }, SC.t("common.save"));
@@ -3517,6 +3843,12 @@
       el("span", { class: "title-count" }, SC.t("cal.subtitle")),
       actions));
 
+    // 「此刻」条：回答“现在桌面这张图是谁安排的”；30 秒自刷一次（跨段/跨天可见）
+    const nowBar = el("div", { class: "cal-now", id: "cal-now" });
+    viewEl.append(nowBar);
+    refreshNowBar();
+    if (!calNowTimer) calNowTimer = setInterval(() => { if (currentView === "calendar") refreshNowBar(); }, 30000);
+
     // 状态提示
     if (calState.loaded && calState.doc) {
       if (calState.invalid.length) viewEl.append(el("p", { class: "cal-warn" }, SC.t("cal.invalidWarn", calState.invalid.length)));
@@ -3524,8 +3856,9 @@
       if (!doc.days.length && !doc.yearly.length && !doc.weekly.length) viewEl.append(el("p", { class: "cal-hint-block" }, SC.t("cal.emptyHint")));
     }
 
-    // 星期表头 + 六行网格
-    const wrap = el("div", { class: "cal-wrap" });
+    // 星期表头 + 六行网格（未接管时整片置灰，状态不再自相矛盾；仍可点进去编辑）
+    const takeoverOff = !!(calState.loaded && calState.doc && !calState.doc.enabled);
+    const wrap = el("div", { class: `cal-wrap ${takeoverOff ? "is-off" : ""}` });
     const head = el("div", { class: "cal-grid is-head" });
     for (const wd of [1, 2, 3, 4, 5, 6, 0]) head.append(el("span", { class: "cal-weekday" }, SC.t(`cal.weekday${wd}`)));
     wrap.append(head);
@@ -3546,13 +3879,19 @@
         else if (day.source.kind === "yearly") { badge = day.source.name || SC.t("cal.badgeYearly"); badgeCls = "is-yearly"; }
         else if (day.source.kind === "weekly") { badge = day.source.name || SC.t("cal.badgeWeekly"); badgeCls = "is-weekly"; }
       }
+      // 内置节日标注（与是否排了壁纸无关，日历该有节日）；无节日则显示农历
+      const festText = ((day && day.festivals) || [])
+        .map((id) => { const p = CAL_PRESETS.find((x) => x.id === id); return p ? SC.t(p.key) : ""; })
+        .filter(Boolean).join(" · ");
+      const subText = festText || (day && day.lunar) || "";
       const cell = el("button", {
         class: `cal-cell ${inMonth ? "" : "is-out"} ${dateStr === todayStr ? "is-today" : ""}`,
         onclick: () => calState.doc && openCalendarDay(dateStr),
-        title: badge || "",
+        title: [festText, badge].filter(Boolean).join(" · "),
       },
         info ? el("img", { class: "cal-cover", src: (info.coverUrl || info.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "" }) : null,
         el("span", { class: "cal-num" }, String(Number(dateStr.slice(8, 10)))),
+        subText ? el("span", { class: `cal-sub ${festText ? "is-fest" : "is-lunar"}` }, subText) : null,
         badge ? el("span", { class: `cal-badge ${badgeCls}` }, badge) : null,
         day && day.segmentCount > 0 ? el("span", { class: "cal-segcount" }, String(day.segmentCount)) : null);
       grid.append(cell);
@@ -3570,6 +3909,7 @@
     localReflow = null;
     if (zoomCtl) { zoomCtl.remove(); zoomCtl = null; } // 缩放控件仅本地库视图存在
     localZoomKeys = null;
+    localSearchFocus = null;
     if (currentView === "library") renderLibrary();
     else if (currentView === "local") renderLocal();
     else if (currentView === "calendar") renderCalendar();
@@ -3644,19 +3984,7 @@
   });
 
   // ---------------------------------------------------------------- 启动
-  // 标题栏居中搜索：全局唯一搜索入口，输入即跳转本地库并过滤
-  const titleSearchInput = el("input", {
-    type: "search", placeholder: SC.t("lib.search"),
-    // 输入防抖：每次击键都全量重建网格在几千壁纸时是持续卡顿源
-    oninput: SC.debounce((e) => {
-      searchQuery = e.target.value;
-      if (currentView === "local") { if (localRefresh) localRefresh(); }
-      else go("local");
-    }, 180),
-  });
-  const titleSearch = el("label", { class: "title-search", title: SC.t("lib.search") },
-    (() => { const s = el("span"); s.innerHTML = icon("search", 14); return s; })(), titleSearchInput);
-  SC.on("lang", () => { titleSearchInput.placeholder = SC.t("lib.search"); });
+  // 搜索框已移入本地库视图头部（见 renderLocal）：标题栏不再有全局搜索入口
 
   // 左侧窗格 + 内容区组成 flex 行：窗格按文字宽度自适应收缩
   const shell = el("div", { class: "shell" }, paneEl, viewEl);
@@ -3670,7 +3998,7 @@
     },
   });
   paneToggle.innerHTML = icon("menu", 17);
-  document.body.append(bgEl, dragStrip, shell, brandEl, dockEl, winCtrl, titleSearch, paneToggle);
+  document.body.append(bgEl, dragStrip, shell, brandEl, dockEl, winCtrl, paneToggle);
   document.body.append(paneToggle);
   window.addEventListener("resize", applyPaneCompact);
   applyPaneCompact();

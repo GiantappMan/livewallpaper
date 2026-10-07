@@ -313,6 +313,22 @@
     "saved": "Salvo — o calendário já aplica as novas regras",
     "today": "Hoje",
     "prev_month": "Mês anterior",
-    "next_month": "Próximo mês"
+    "next_month": "Próximo mês",
+    "seg_empty": "Há um período sem papel de parede — escolha um ou remova o período vazio.",
+    "hit_hint": "Este dia também corresponde a «{0}»; o plano do dia abaixo tem prioridade.",
+    "now": "Agora",
+    "now_none": "Nenhuma regra vale agora — seu papel definido manualmente permanece",
+    "now_disabled": "O calendário não está assumindo",
+    "clear_day": "Limpar o plano deste dia",
+    "clear_confirm": "Todo o plano de {0} será removido; as regras de feriados/semanais voltam a valer. Continuar?",
+    "fest_pick": "Planejar {0} todo ano",
+    "day_full": "A linha do tempo do dia está cheia",
+    "lib_label": "Arraste da biblioteca →",
+    "lib_empty": "Biblioteca vazia — adicione papéis primeiro",
+    "timeline": "Linha do dia (arraste para mover · bordas para duração)",
+    "track_empty": "Solte papéis na trilha, arraste as bordas",
+    "allday_hint": "Fora dos períodos",
+    "move_up": "Mover para cima (mais prioridade)",
+    "move_down": "Mover para baixo (menos prioridade)"
   }
 }

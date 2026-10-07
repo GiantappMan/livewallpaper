@@ -313,6 +313,22 @@
     "saved": "Enregistré — le calendrier applique les nouvelles règles",
     "today": "Aujourd'hui",
     "prev_month": "Mois précédent",
-    "next_month": "Mois suivant"
+    "next_month": "Mois suivant",
+    "seg_empty": "Un créneau n'a pas de fond — choisissez-en un ou supprimez le créneau vide.",
+    "hit_hint": "Ce jour touche aussi « {0} » ; le plan du jour ci-dessous passe avant.",
+    "now": "Maintenant",
+    "now_none": "Aucune règle active pour l'instant — votre fond manuel reste",
+    "now_disabled": "Le calendrier ne prend pas le relais",
+    "clear_day": "Effacer le plan de ce jour",
+    "clear_confirm": "Tout le plan de {0} sera supprimé ; les règles de fêtes/hebdo s'appliquent à nouveau. Continuer ?",
+    "fest_pick": "Planifier {0} chaque année",
+    "day_full": "La chronologie du jour est pleine",
+    "lib_label": "Glissez depuis la bibliothèque →",
+    "lib_empty": "Bibliothèque vide — ajoutez d'abord des fonds",
+    "timeline": "Chronologie du jour (glisser = déplacer · bords = durée)",
+    "track_empty": "Déposez des fonds sur la piste, glissez les bords",
+    "allday_hint": "Fond hors créneaux",
+    "move_up": "Monter (plus prioritaire)",
+    "move_down": "Descendre (moins prioritaire)"
   }
 }

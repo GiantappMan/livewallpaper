@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { SlotsEditor } from "./slots-editor";
 import {
     CalendarDayPlan,
-    CalendarPreviews,
     CalendarRef,
     CalendarRefInfo,
     CalendarSlots,
@@ -15,6 +25,8 @@ import {
 interface Props {
     date: string | null; // YYYY-MM-DD
     plan?: CalendarDayPlan;
+    /** 该日期命中的节日/每周规则名（单日编排会盖过它，需要明说） */
+    hitName?: string | null;
     resolve: (ref?: CalendarRef | null) => CalendarRefInfo | undefined;
     onRecord: (
         fileUrl: string | undefined,
@@ -24,15 +36,18 @@ interface Props {
     ) => void;
     onPreview?: (ref: CalendarRef) => void;
     onSave: (plan: CalendarDayPlan) => Promise<boolean>;
+    /** 显式清除这天的全部编排（父层负责保存；成功后本组件自行关闭） */
+    onClearDay?: () => Promise<boolean>;
     onClose: () => void;
     t: any;
     local: any;
 }
 
 /** 单日编辑：当天是否启用 + 全天壁纸 + 分时段壁纸。 */
-export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onClose, t, local }: Props) {
+export function DaySheet({ date, plan, hitName, resolve, onRecord, onPreview, onSave, onClearDay, onClose, t, local }: Props) {
     const [draft, setDraft] = useState<CalendarDayPlan | null>(null);
     const [saving, setSaving] = useState(false);
+    const [confirmClear, setConfirmClear] = useState(false);
 
     useEffect(() => {
         if (date) {
@@ -44,6 +59,7 @@ export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onC
                     segments: [],
                 }
             );
+            setConfirmClear(false);
         }
     }, [date, plan]);
 
@@ -53,9 +69,21 @@ export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onC
 
     const save = async () => {
         if (!draft) return;
+        // 空段不再被后端静默丢弃：保存前明确拦下
+        if ((draft.segments ?? []).some((s) => !s.wallpaper?.filePath)) {
+            toast.error(t.seg_empty);
+            return;
+        }
         setSaving(true);
         const ok = await onSave(draft);
         setSaving(false);
+        if (ok) onClose();
+    };
+
+    const clearDay = async () => {
+        setConfirmClear(false);
+        if (!onClearDay) return;
+        const ok = await onClearDay();
         if (ok) onClose();
     };
 
@@ -89,6 +117,12 @@ export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onC
 
                         <p className="text-xs text-muted-foreground">{t.day_editor_hint}</p>
 
+                        {hitName && (
+                            <p className="rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                {t.hit_hint.replace("{0}", hitName)}
+                            </p>
+                        )}
+
                         <SlotsEditor
                             slots={{ allDay: draft.allDay, segments: draft.segments }}
                             onChange={updateSlots}
@@ -101,7 +135,16 @@ export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onC
                     </div>
                 )}
 
-                <SheetFooter className="flex-row justify-end gap-2 border-t px-4 py-3">
+                <SheetFooter className="flex-row items-center gap-2 border-t px-4 py-3">
+                    {plan && onClearDay && (
+                        <Button
+                            variant="ghost"
+                            className="mr-auto text-destructive hover:text-destructive"
+                            onClick={() => setConfirmClear(true)}
+                        >
+                            {t.clear_day}
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={onClose}>
                         {local.cancel}
                     </Button>
@@ -109,6 +152,22 @@ export function DaySheet({ date, plan, resolve, onRecord, onPreview, onSave, onC
                         {local.confirm}
                     </Button>
                 </SheetFooter>
+
+                {/* 清除确认 */}
+                <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t.clear_day}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t.clear_confirm.replace("{0}", title)}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>{local.cancel}</AlertDialogCancel>
+                            <AlertDialogAction onClick={clearDay}>{local.confirm}</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </SheetContent>
         </Sheet>
     );

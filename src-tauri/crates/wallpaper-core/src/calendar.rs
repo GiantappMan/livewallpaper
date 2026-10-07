@@ -94,14 +94,14 @@ impl WallpaperSlots {
     }
 }
 
-/// "HH:MM" / "HH:MM:SS" -> 当天分钟数。非法返回 None。
+/// "HH:MM" / "HH:MM:SS" -> 当天分钟数。"24:00" 合法（时间轴右端点）。非法返回 None。
 pub fn parse_hhmm(text: &str) -> Option<u32> {
     let parts: Vec<&str> = text.trim().split(':').collect();
     match parts.len() {
         2 | 3 => {
             let h: u32 = parts[0].trim().parse().ok()?;
             let m: u32 = parts[1].trim().parse().ok()?;
-            if h > 23 || m > 59 {
+            if h > 24 || m > 59 || (h == 24 && m != 0) {
                 return None;
             }
             Some(h * 60 + m)
@@ -223,7 +223,7 @@ pub struct Resolution {
 
 /// 按四级优先级求值：某天某时刻应显示的壁纸；None = 不接管。
 pub fn resolve_at(doc: &CalendarDoc, date: NaiveDate, time: NaiveTime) -> Option<Resolution> {
-    match_day(doc, date, time).map(|m| Resolution {
+    match_day(doc, date, time, false).map(|m| Resolution {
         source: m.source,
         file_path: m.file_path.to_path_buf(),
     })
@@ -235,8 +235,13 @@ struct Matched<'a> {
     segment_count: usize,
 }
 
-fn match_day<'a>(doc: &'a CalendarDoc, date: NaiveDate, time: NaiveTime) -> Option<Matched<'a>> {
-    if !doc.enabled {
+fn match_day<'a>(
+    doc: &'a CalendarDoc,
+    date: NaiveDate,
+    time: NaiveTime,
+    ignore_enabled: bool,
+) -> Option<Matched<'a>> {
+    if !doc.enabled && !ignore_enabled {
         return None;
     }
     let date_str = date.format("%Y-%m-%d").to_string();
@@ -285,6 +290,62 @@ fn match_day<'a>(doc: &'a CalendarDoc, date: NaiveDate, time: NaiveTime) -> Opti
     None
 }
 
+/// 内置节日表：月历上直接标注节日名（与用户是否建规则无关）。
+/// key 为稳定标识，由前端各自映射到本地化文案；清明是节气日（公历 4/4-4/6
+/// 浮动），公历/农历都无法固定表达，不进表。
+pub const FESTIVAL_PRESETS: &[(&str, YearlyDate)] = &[
+    ("new_year", YearlyDate::Solar { month: 1, day: 1 }),
+    ("spring", YearlyDate::Lunar { month: 1, day: 1, leap: false }),
+    ("lantern", YearlyDate::Lunar { month: 1, day: 15, leap: false }),
+    ("valentine", YearlyDate::Solar { month: 2, day: 14 }),
+    ("women", YearlyDate::Solar { month: 3, day: 8 }),
+    ("labor", YearlyDate::Solar { month: 5, day: 1 }),
+    ("children", YearlyDate::Solar { month: 6, day: 1 }),
+    ("dragon_boat", YearlyDate::Lunar { month: 5, day: 5, leap: false }),
+    ("qixi", YearlyDate::Lunar { month: 7, day: 7, leap: false }),
+    ("mid_autumn", YearlyDate::Lunar { month: 8, day: 15, leap: false }),
+    ("national", YearlyDate::Solar { month: 10, day: 1 }),
+    ("double_ninth", YearlyDate::Lunar { month: 9, day: 9, leap: false }),
+    ("christmas", YearlyDate::Solar { month: 12, day: 25 }),
+];
+
+/// 某天命中的内置节日 key 列表（农历整日只换算一次再比对全部条目）。
+pub fn festivals_on(date: NaiveDate) -> Vec<String> {
+    let lunar = lunar_of(date);
+    FESTIVAL_PRESETS
+        .iter()
+        .filter(|(_, d)| match d {
+            YearlyDate::Solar { month, day } => date.month() == *month && date.day() == *day,
+            YearlyDate::Lunar { month, day, leap } => lunar
+                .is_some_and(|(m, lm, dd)| m == *month && lm == *leap && dd == *day),
+        })
+        .map(|(k, _)| k.to_string())
+        .collect()
+}
+
+/// 某天的农历显示文本：初一带出月名（正月 / 闰四月…），其余为日名（初二…三十）。
+/// 汉字为固有表示，各语言通用；超出换算范围返回空。
+pub fn lunar_text_on(date: NaiveDate) -> Option<String> {
+    use chinese_lunisolar_calendar::{ChineseVariant, LunisolarDate};
+    if !(1901..=2101).contains(&date.year()) {
+        return None;
+    }
+    let solar = chinese_lunisolar_calendar::SolarDate::from_ymd(
+        date.year() as u16,
+        date.month() as u8,
+        date.day() as u8,
+    )
+    .ok()?;
+    let l = LunisolarDate::from_solar_date(solar).ok()?;
+    let month = l.to_lunar_month();
+    let day = l.to_lunar_day();
+    Some(if day.to_u8() == 1 {
+        month.to_str(ChineseVariant::Simple).to_string()
+    } else {
+        day.to_str().to_string()
+    })
+}
+
 /// 月历预览里的一天：以正午为代表时刻求值（代表当日"主体"壁纸）。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -293,6 +354,10 @@ pub struct CalendarPreviewDay {
     pub source: Option<ResolutionSource>,
     pub file_path: Option<PathBuf>,
     pub segment_count: usize,
+    /// 当天的内置节日 key（前端映射为本地化节日名，如 "spring" → 春节）。
+    pub festivals: Vec<String>,
+    /// 农历显示文本（初一显示月名）。
+    pub lunar: String,
 }
 
 /// 全年逐日预览（月历视图的唯一数据口径，前端不再自行推优先级）。
@@ -304,12 +369,15 @@ pub fn preview_year(doc: &CalendarDoc, year: i32) -> Vec<CalendarPreviewDay> {
             break;
         }
         let noon = NaiveTime::from_hms_opt(12, 0, 0).unwrap_or_default();
-        let matched = match_day(doc, d, noon);
+        // 预览不受总开关约束：未接管时前端置灰展示编排，而不是藏起来
+        let matched = match_day(doc, d, noon, true);
         out.push(CalendarPreviewDay {
             date: d.format("%Y-%m-%d").to_string(),
             source: matched.as_ref().map(|m| m.source.clone()),
             file_path: matched.as_ref().map(|m| m.file_path.to_path_buf()),
             segment_count: matched.as_ref().map(|m| m.segment_count).unwrap_or(0),
+            festivals: festivals_on(d),
+            lunar: lunar_text_on(d).unwrap_or_default(),
         });
         date = d.succ_opt();
     }
@@ -563,8 +631,13 @@ mod tests {
     fn parse_hhmm_works() {
         assert_eq!(parse_hhmm("08:30"), Some(510));
         assert_eq!(parse_hhmm("23:59"), Some(1439));
+        assert_eq!(parse_hhmm("24:00"), Some(1440)); // 时间轴右端点
+        assert_eq!(parse_hhmm("24:01"), None);
         assert_eq!(parse_hhmm("08:30:15"), Some(510));
-        assert_eq!(parse_hhmm("24:00"), None);
+        assert_eq!(parse_hhmm("24:00"), Some(1440));
+        assert_eq!(parse_hhmm("24:00:00"), Some(1440));
+        assert_eq!(parse_hhmm("24:00"), Some(1440));
+        assert_eq!(parse_hhmm("24:01"), None);
         assert_eq!(parse_hhmm("bad"), None);
     }
 
@@ -863,5 +936,24 @@ mod tests {
         // 2026-10-04 是周日：num_days_from_sunday() == 0（与 JS getDay 一致）
         assert_eq!(date(2026, 10, 4).weekday().num_days_from_sunday(), 0);
         assert_eq!(date(2026, 10, 3).weekday(), Weekday::Sat);
+    }
+
+    #[test]
+    fn festivals_on_matches_solar_and_lunar() {
+        // 公历：国庆 / 元旦
+        assert_eq!(festivals_on(date(2026, 10, 1)), vec!["national"]);
+        assert_eq!(festivals_on(date(2026, 1, 1)), vec!["new_year"]);
+        // 农历：2026 春节 = 公历 2026-02-17
+        assert_eq!(festivals_on(date(2026, 2, 17)), vec!["spring"]);
+        assert!(festivals_on(date(2026, 2, 16)).is_empty());
+        // 预览全年每天带 festivals 字段
+        let days = preview_year(&CalendarDoc::default(), 2026);
+        let d = days.iter().find(|x| x.date == "2026-02-17").unwrap();
+        assert_eq!(d.festivals, vec!["spring"]);
+        let plain = days.iter().find(|x| x.date == "2026-03-15").unwrap();
+        assert!(plain.festivals.is_empty());
+        // 农历文本：初一显月名，其余显日名（2026-02-17 = 正月初一；03-03 = 正月十五）
+        assert_eq!(days.iter().find(|x| x.date == "2026-02-17").unwrap().lunar, "正月");
+        assert_eq!(days.iter().find(|x| x.date == "2026-03-03").unwrap().lunar, "十五");
     }
 }

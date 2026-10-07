@@ -10,6 +10,7 @@ import type {
   ConfigGeneral,
   ConfigWallpaper,
   CalendarDoc,
+  CalendarNow,
   CalendarPayload,
   CalendarPreview,
   DownloadHistoryItem,
@@ -754,6 +755,18 @@ class API {
     try {
       if (!this.isRunningInClient()) return noClient();
       const data = await invoke<CalendarPreview>("get_calendar_preview", { year });
+      return { error: null, data };
+    } catch (e) {
+      console.error(e);
+      return { error: e, data: null };
+    }
+  }
+
+  /** 「此刻」求值（当前时刻命中的规则与壁纸） */
+  async getCalendarNow(): Promise<ApiResult<CalendarNow>> {
+    try {
+      if (!this.isRunningInClient()) return noClient();
+      const data = await invoke<CalendarNow>("get_calendar_now");
       return { error: null, data };
     } catch (e) {
       console.error(e);

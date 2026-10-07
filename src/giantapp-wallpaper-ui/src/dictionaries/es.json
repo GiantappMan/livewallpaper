@@ -313,6 +313,22 @@
     "saved": "Guardado: el calendario ya aplica las nuevas reglas",
     "today": "Hoy",
     "prev_month": "Mes anterior",
-    "next_month": "Mes siguiente"
+    "next_month": "Mes siguiente",
+    "seg_empty": "Hay un tramo sin fondo: elige uno o elimina el tramo vacío.",
+    "hit_hint": "Este día también coincide con «{0}»; el plan del día tiene prioridad.",
+    "now": "Ahora",
+    "now_none": "Ninguna regla coincide ahora: se mantiene tu fondo manual",
+    "now_disabled": "El calendario no toma el control",
+    "clear_day": "Limpiar el plan de este día",
+    "clear_confirm": "Se eliminará todo el plan de {0}; vuelven a regir las reglas de festivos/semanales. ¿Continuar?",
+    "fest_pick": "Planificar {0} cada año",
+    "day_full": "La línea de tiempo del día está llena",
+    "lib_label": "Arrastra desde la biblioteca →",
+    "lib_empty": "La biblioteca está vacía: añade fondos primero",
+    "timeline": "Línea del día (arrastra para mover · bordes para duración)",
+    "track_empty": "Suelta fondos en la línea; arrastra los bordes para ajustar",
+    "allday_hint": "Fondo fuera de los tramos",
+    "move_up": "Subir (más prioridad)",
+    "move_down": "Bajar (menos prioridad)"
   }
 }

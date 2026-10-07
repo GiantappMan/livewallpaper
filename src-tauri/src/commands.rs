@@ -1195,6 +1195,46 @@ pub async fn validate_calendar(
     Ok(wallpaper_core::calendar::invalid_refs(&doc))
 }
 
+/// 「此刻」求值：日历页回答“现在桌面这张图是谁安排的”。
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarNow {
+    pub date: String,
+    pub time: String,
+    pub enabled: bool,
+    pub source: Option<wallpaper_core::calendar::ResolutionSource>,
+    pub file_path: Option<PathBuf>,
+    pub info: Option<CalendarRefInfo>,
+}
+
+#[tauri::command]
+pub async fn get_calendar_now(app: AppHandle) -> Result<CalendarNow> {
+    let st = state(&app);
+    let snap = st.calendar.snapshot();
+    let now = chrono::Local::now();
+    let mut result = CalendarNow {
+        date: now.format("%Y-%m-%d").to_string(),
+        time: now.format("%H:%M").to_string(),
+        enabled: snap.doc.enabled,
+        source: None,
+        file_path: None,
+        info: None,
+    };
+    if snap.doc.enabled {
+        if let Some(r) = wallpaper_core::calendar::resolve_at(&snap.doc, now.date_naive(), now.time()) {
+            result.source = Some(r.source);
+            result.info = snap.resolved.get(&r.file_path).map(|w| CalendarRefInfo {
+                file_url: path_to_media_url(&r.file_path),
+                cover_url: w.cover_path.as_ref().map(|c| path_to_media_url(c)),
+                title: w.meta.title.clone(),
+                wallpaper_type: w.meta.wallpaper_type,
+            });
+            result.file_path = Some(r.file_path);
+        }
+    }
+    Ok(result)
+}
+
 // ---------- 外壳 ----------
 
 #[tauri::command]

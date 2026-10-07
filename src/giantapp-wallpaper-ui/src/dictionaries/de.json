@@ -313,6 +313,22 @@
     "saved": "Gespeichert — der Kalender wendet die neuen Regeln an",
     "today": "Heute",
     "prev_month": "Voriger Monat",
-    "next_month": "Nächster Monat"
+    "next_month": "Nächster Monat",
+    "seg_empty": "Ein Zeitabschnitt hat noch kein Wallpaper — wählen oder entferne ihn.",
+    "hit_hint": "Dieser Tag trifft auch „{0}“; der Tagesplan unten hat Vorrang.",
+    "now": "Jetzt",
+    "now_none": "Gerade greift keine Regel — dein manuelles Wallpaper bleibt",
+    "now_disabled": "Kalender übernimmt nicht",
+    "clear_day": "Plan dieses Tages löschen",
+    "clear_confirm": "Der komplette Plan für {0} wird entfernt; Feiertags-/Wochenregeln greifen wieder. Fortfahren?",
+    "fest_pick": "„{0}“ jährlich einrichten",
+    "day_full": "Die Zeitachse dieses Tages ist voll",
+    "lib_label": "Aus Bibliothek ziehen →",
+    "lib_empty": "Bibliothek ist leer — erst Wallpaper hinzufügen",
+    "timeline": "Tageszeitachse (ziehen = verschieben · Kanten = Dauer)",
+    "track_empty": "Wallpapers auf die Achse ziehen, an den Enden ziehen",
+    "allday_hint": "Außerhalb der Abschnitte",
+    "move_up": "Nach oben (höhere Priorität)",
+    "move_down": "Nach unten (niedrigere Priorität)"
   }
 }

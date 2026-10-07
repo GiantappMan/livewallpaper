@@ -313,6 +313,22 @@
     "saved": "Saved — the calendar is now applying the new rules",
     "today": "Today",
     "prev_month": "Previous month",
-    "next_month": "Next month"
+    "next_month": "Next month",
+    "seg_empty": "A time segment has no wallpaper yet — pick one or remove the empty segment.",
+    "hit_hint": "This day also hits \"{0}\"; the day plan below takes priority.",
+    "now": "Now",
+    "now_none": "No rule hits right now — your manually set wallpaper stays",
+    "now_disabled": "Calendar is not taking over",
+    "clear_day": "Clear this day's plan",
+    "clear_confirm": "This removes the whole plan for {0}; holiday/weekly rules apply again. Continue?",
+    "fest_pick": "Plan {0} wallpaper yearly",
+    "day_full": "This day's timeline is full",
+    "lib_label": "Drag from library →",
+    "lib_empty": "Library is empty — add wallpapers first",
+    "timeline": "Day timeline (drag to move · drag edges to resize)",
+    "track_empty": "Drop wallpapers on the track, drag the edges to adjust",
+    "allday_hint": "Fallback outside segments",
+    "move_up": "Move up (higher priority)",
+    "move_down": "Move down (lower priority)"
   }
 }

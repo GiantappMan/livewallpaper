@@ -470,9 +470,23 @@ export interface CalendarPreviewDay {
   source?: CalendarSource | null;
   filePath?: string | null;
   segmentCount: number;
+    /** 当天的内置节日 key（前端映射为本地化节日名，如 "spring" → 春节） */
+    festivals?: string[];
+    /** 农历显示文本（初一显示月名，如“正月”“十五”） */
+    lunar?: string;
 }
 
 export interface CalendarPreview {
   days: CalendarPreviewDay[];
   previews: CalendarPreviews;
+}
+
+/** 「此刻」求值：与调度器同一口径，回答“现在这张壁纸是谁安排的” */
+export interface CalendarNow {
+  date: string;
+  time: string;
+  enabled: boolean;
+  source?: CalendarSource | null;
+  filePath?: string | null;
+  info?: CalendarRefInfo | null;
 }

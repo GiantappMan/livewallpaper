@@ -164,6 +164,7 @@ pub fn run() {
             commands::get_calendar,
             commands::save_calendar,
             commands::get_calendar_preview,
+            commands::get_calendar_now,
             commands::validate_calendar,
         ])
         .build(tauri::generate_context!())

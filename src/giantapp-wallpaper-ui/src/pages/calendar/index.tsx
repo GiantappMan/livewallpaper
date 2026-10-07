@@ -6,6 +6,7 @@ import { langAtom, langDictAtom } from "@/atoms/lang";
 import api from "@/lib/client/api";
 import {
     CalendarDayPlan,
+    CalendarNow,
     CalendarPayload,
     CalendarPreviewDay,
     CalendarPreviews,
@@ -21,6 +22,23 @@ import { RulesDialog } from "./_components/rules-dialog";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (y: number, m: number, d: number) => `${y}-${pad2(m)}-${pad2(d)}`;
+
+/** 内置节日 key → 词典键（与后端 FESTIVAL_PRESETS 对齐；清明是节气日不进表） */
+const FEST_LABEL_KEY: Record<string, string> = {
+    new_year: "preset_new_year",
+    spring: "preset_spring_festival",
+    lantern: "preset_lantern",
+    valentine: "preset_valentine",
+    women: "preset_women",
+    labor: "preset_labor",
+    children: "preset_children",
+    dragon_boat: "preset_dragon_boat",
+    qixi: "preset_qixi",
+    mid_autumn: "preset_mid_autumn",
+    national: "preset_national",
+    double_ninth: "preset_double_ninth",
+    christmas: "preset_christmas",
+};
 
 /** 月历网格：周一开头，固定 6 行 42 格，返回 "YYYY-MM-DD"。 */
 function monthGrid(year: number, month: number): string[] {
@@ -49,6 +67,7 @@ const Page = () => {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [rulesOpen, setRulesOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [nowInfo, setNowInfo] = useState<CalendarNow | null>(null);
     const wallpapersCacheRef = useRef<Wallpaper[] | null>(null);
     const fetchedYearsRef = useRef<Set<number>>(new Set());
 
@@ -62,6 +81,18 @@ const Page = () => {
     useEffect(() => {
         loadDoc();
     }, [loadDoc]);
+
+    /** 「此刻」条：当前时刻的求值结果，30 秒自刷（跨段/跨天可见） */
+    const refreshNow = useCallback(async () => {
+        const res = await api.getCalendarNow();
+        if (!res.error && res.data) setNowInfo(res.data);
+    }, []);
+
+    useEffect(() => {
+        refreshNow();
+        const timer = setInterval(refreshNow, 30000);
+        return () => clearInterval(timer);
+    }, [refreshNow]);
 
     const cells = useMemo(() => monthGrid(view.year, view.month), [view]);
     const gridYears = useMemo(
@@ -237,6 +268,37 @@ const Page = () => {
                     </Button>
                 </div>
 
+                {/* 「此刻」条：回答“现在这张壁纸是谁安排的” */}
+                {nowInfo && (
+                    <div className={`mt-4 flex items-center gap-2.5 rounded-lg border bg-card/40 px-3.5 py-2 ${!nowInfo.enabled ? "opacity-70" : ""}`}>
+                        <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                            {t.now} · {nowInfo.time}
+                        </span>
+                        {nowInfo.enabled ? (
+                            nowInfo.info ? (
+                                <>
+                                    <img
+                                        src={nowInfo.info.coverUrl || nowInfo.info.fileUrl || "/wp-placeholder.webp"}
+                                        className="h-8 w-12 shrink-0 rounded bg-muted object-cover"
+                                        alt=""
+                                    />
+                                    <span className="truncate text-sm">{nowInfo.info.title || "—"}</span>
+                                    {(() => {
+                                        const b = nowInfo.source ? badgeOf(nowInfo.source) : null;
+                                        return b ? (
+                                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] leading-none text-white ${b.cls}`}>{b.text}</span>
+                                        ) : null;
+                                    })()}
+                                </>
+                            ) : (
+                                <span className="text-sm text-muted-foreground">{t.now_none}</span>
+                            )
+                        ) : (
+                            <span className="text-sm text-muted-foreground">{t.now_disabled}</span>
+                        )}
+                    </div>
+                )}
+
                 {/* 状态提示 */}
                 {invalidCount > 0 && (
                     <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-600 dark:text-amber-400">
@@ -284,8 +346,9 @@ const Page = () => {
                     </div>
                 </div>
 
-                {/* 月历 */}
-                <div className="mt-3 grid grid-cols-7 gap-1.5">
+                {/* 月历（未接管时整片置灰，状态不再自相矛盾；仍可点进去编辑） */}
+                <div className={`mt-3 ${doc && !doc.enabled ? "opacity-45 grayscale-[.5]" : ""}`}>
+                    <div className="grid grid-cols-7 gap-1.5">
                     {weekdayLabels.map((label, i) => (
                         <div key={i} className="pb-1 text-center text-xs font-medium text-muted-foreground">
                             {label}
@@ -296,6 +359,10 @@ const Page = () => {
                         const inMonth = Number(date.slice(5, 7)) === view.month;
                         const info = previewDays[date];
                         const badge = badgeOf(info?.source);
+                        const festText = ((info?.festivals ?? []) as string[])
+                            .map((id) => t[FEST_LABEL_KEY[id]])
+                            .filter(Boolean)
+                            .join(" · ");
                         const ref = info?.filePath ? { filePath: info.filePath } : null;
                         const info_ = resolve(ref);
                         const isToday = date === todayStr;
@@ -307,7 +374,7 @@ const Page = () => {
                                 className={`relative aspect-[1/1.05] overflow-hidden rounded-lg border text-left transition hover:ring-1 hover:ring-primary ${
                                     inMonth ? "bg-card/40" : "bg-transparent opacity-45"
                                 } ${isToday ? "ring-2 ring-primary" : ""}`}
-                                title={badge?.text}
+                                title={[festText, badge?.text].filter(Boolean).join(" · ")}
                             >
                                 {info_ && (
                                     <img
@@ -327,6 +394,17 @@ const Page = () => {
                                     >
                                         {dayNum}
                                     </span>
+                                    {(() => {
+                                        const fest = festText;
+                                        const lunar = (info?.lunar as string) || "";
+                                        const sub = fest || lunar;
+                                        if (!sub) return null;
+                                        return (
+                                            <span className={`mt-0.5 truncate text-[10px] font-semibold leading-tight ${fest ? "text-rose-600 dark:text-rose-300" : "font-normal text-muted-foreground"}`}>
+                                                {sub}
+                                            </span>
+                                        );
+                                    })()}
                                     {badge && (
                                         <span
                                             className={`mt-auto w-fit max-w-full truncate rounded px-1 py-0.5 text-[10px] leading-none text-white ${badge.cls}`}
@@ -346,6 +424,7 @@ const Page = () => {
                             </button>
                         );
                     })}
+                    </div>
                 </div>
             </div>
 
@@ -353,10 +432,19 @@ const Page = () => {
             <DaySheet
                 date={selectedDate}
                 plan={selectedDate ? doc?.days.find((d) => d.date === selectedDate) : undefined}
+                hitName={
+                    selectedDate && previewDays[selectedDate]?.source && previewDays[selectedDate]!.source!.kind !== "day"
+                        ? previewDays[selectedDate]!.source!.name || (previewDays[selectedDate]!.source!.kind === "yearly" ? t.badge_yearly : t.badge_weekly)
+                        : null
+                }
                 resolve={resolve}
                 onRecord={record}
                 onPreview={previewOnDesktop}
                 onSave={saveDayPlan}
+                onClearDay={async () => {
+                    if (!doc || !selectedDate) return false;
+                    return saveDoc({ ...doc, days: doc.days.filter((d) => d.date !== selectedDate) });
+                }}
                 onClose={() => setSelectedDate(null)}
                 t={t}
                 local={local}

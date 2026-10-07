@@ -239,22 +239,7 @@ img { display: block; }
 .icon-btn:active { background: var(--ctl-press); }
 .icon-ghost { width: 32px; height: 32px; display: inline-block; }
 
-/* 搜索 / 输入 */
-/* 标题栏居中搜索（全窗口唯一搜索入口；置于拖拽带之上，自身不可拖拽） */
-.title-search {
-  position: fixed; top: 5px; left: 50%; transform: translateX(-50%); z-index: 62;
-  display: flex; align-items: center; gap: 8px; width: min(420px, 34vw); height: 30px;
-  padding: 0 10px; border-radius: var(--r-ctl);
-  background: var(--card); border: 1px solid var(--ctl-stroke); color: var(--ink-3);
-  -webkit-app-region: no-drag;
-  transition: border-color var(--speed), background var(--speed);
-}
-.title-search:focus-within { border-color: var(--accent); background: var(--card-solid); }
-.title-search input {
-  flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font-size: 13px;
-}
-.title-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
-.title-search input::placeholder { color: var(--ink-3); }
+/* 搜索 / 输入（搜索框在本地库视图头部，样式见 .loc-search） */
 .input {
   width: 100%; height: 32px; padding: 0 10px; border-radius: var(--r-ctl);
   background: var(--card); border: 1px solid var(--ctl-stroke); outline: 0;
@@ -826,9 +811,9 @@ button.card-row:hover { background: var(--subtle); }
   -webkit-app-region: no-drag; color: var(--ink);
 }
 
-/* 窄窗口自动收窄搜索框等（窗格折叠由 .is-compact 控制，不随宽度强改） */
+/* 窄窗口自动收窄本地库搜索框等（窗格折叠由 .is-compact 控制，不随宽度强改） */
 @media (max-width: 860px) {
-  .title-search { width: 200px; }
+  .loc-search { width: 160px; }
   .view { --view-pt: 16px; --view-px: 20px; --view-pb: 140px; }
   .dock { width: calc(100vw - 40px); }
   .dock-meta { width: 110px; }
@@ -899,6 +884,27 @@ button.card-row:hover { background: var(--subtle); }
   backdrop-filter: blur(30px) saturate(125%); -webkit-backdrop-filter: blur(30px) saturate(125%);
   box-shadow: inset 0 -1px 0 var(--divider);
 }
+/* 本地库内搜索（原为标题栏居中搜索，移入贴顶头部右侧，Explorer 命令栏搜索位）：
+   与按钮行同高（32px）对齐；聚焦 accent 描边 + 实底；有内容时显示圆形清除钮。
+   label 包裹：点整框即聚焦输入；宽度随窗口伸缩，被挤压时收到 min-width */
+.loc-search {
+  display: flex; align-items: center; gap: 6px; flex: 0 1 auto;
+  width: clamp(180px, 22vw, 300px); min-width: 140px; height: 32px;
+  padding: 0 5px 0 10px; border-radius: var(--r-ctl); cursor: text;
+  background: var(--card); border: 1px solid var(--ctl-stroke); color: var(--ink-3);
+  transition: border-color var(--speed), background var(--speed);
+}
+.loc-search:focus-within { border-color: var(--accent); background: var(--card-solid); }
+.loc-search input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font-size: 13px;
+}
+.loc-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.loc-search input::placeholder { color: var(--ink-3); }
+.loc-search-clear {
+  display: none; width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  color: var(--ink-2); cursor: pointer;
+}
+.loc-search.is-filled .loc-search-clear { display: inline-grid; }
 .loc-crumb { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; margin-bottom: 12px; }
 .loc-crumb-seg {
   display: inline-flex; align-items: center; height: 28px; padding: 0 9px;
@@ -1108,14 +1114,18 @@ button.card-row:hover { background: var(--subtle); }
 .cal-takeover { display: inline-flex; align-items: center; gap: 8px; margin: 0 4px; font-size: 12.5px; }
 .cal-warn { margin-top: 12px; padding: 8px 12px; border-radius: var(--r-md); border: 1px solid rgba(196, 43, 28, .35); background: rgba(196, 43, 28, .08); color: var(--danger); font-size: 12px; }
 .cal-hint-block { margin-top: 12px; padding: 8px 12px; border-radius: var(--r-md); border: 1px dashed var(--ctl-stroke); color: var(--ink-2); font-size: 12px; }
-.cal-wrap { margin-top: 14px; }
+.cal-wrap { margin-top: 14px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* 有日历的视图：整月一屏（不再竖向滚动） */
+.view:has(.cal-wrap) { display: flex; flex-direction: column; overflow: hidden; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-grid:not(.is-head) { flex: 1; grid-auto-rows: 1fr; }
 .cal-grid.is-head { margin-bottom: 2px; }
 .cal-weekday { text-align: center; font-size: 11px; color: var(--ink-3); padding: 2px 0; }
 .cal-cell {
-  position: relative; aspect-ratio: 1 / 0.95; padding: 6px; text-align: left; font: inherit; color: var(--ink);
+  position: relative; padding: 6px; text-align: left; font: inherit; color: var(--ink);
   border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); overflow: hidden; cursor: pointer;
   transition: border-color var(--speed), transform var(--speed);
+  display: flex; flex-direction: column; align-items: flex-start;
 }
 .cal-cell:hover { border-color: var(--ctl-stroke); }
 .cal-cell:active { transform: scale(.985); }
@@ -1162,3 +1172,72 @@ button.card-row:hover { background: var(--subtle); }
 .cal-chips { display: flex; gap: 6px; margin-top: 8px; }
 .chip.is-on { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .cal-empty { margin: 4px 0 10px; }
+
+/* 日历 UX 补充：「此刻」条 / 命中提示 / 未接管置灰 / 规则排序 */
+.cal-now {
+  display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 8px 12px;
+  border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); min-height: 48px;
+}
+.cal-now.is-off { opacity: .7; }
+.cal-now-label { flex: 0 0 auto; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.cal-now-text { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-now-text.is-dim { color: var(--ink-3); font-size: 12px; }
+.cal-wrap.is-off .cal-grid:not(.is-head) { opacity: .45; filter: grayscale(.5); }
+.cal-hithint {
+  margin: 2px 0 8px; padding: 7px 10px; border-radius: var(--r-md); font-size: 12px; color: var(--ink-2);
+  border: 1px solid var(--ctl-stroke); background: var(--subtle);
+}
+.cal-move { display: inline-flex; gap: 2px; margin-left: auto; }
+.cal-rule-head .switch { margin-left: 0; }
+.cal-cell:hover { background: var(--subtle); }
+
+/* 日内时间轴（视频剪辑式）：库条拖入、片段拖移、拖边改时长 */
+.cal-dialog-wide { width: min(880px, 94vw); max-width: min(880px, 94vw); }
+/* 内容超高时滚动而不是把时间轴/库条压扁 */
+.cal-dialog-wide .dialog-body > * { flex-shrink: 0; }
+.cal-festrow { flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cal-lib { display: flex; gap: 6px; overflow-x: auto; padding: 6px 2px 4px; }
+.cal-lib-item { flex: 0 0 auto; width: 84px; height: 52px; padding: 0; border-radius: var(--r-ctl); overflow: hidden; border: 1px solid var(--stroke); cursor: grab; background: var(--subtle); }
+.cal-lib-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.cal-lib-item:hover { border-color: var(--accent); }
+.cal-lib-label { margin-top: 12px; }
+.cal-lib-empty { padding: 8px 10px; }
+.cal-ruler { position: relative; height: 16px; margin-top: 8px; font-size: 10px; color: var(--ink-3); }
+.cal-ruler span { position: absolute; transform: translateX(-2px); }
+.cal-track {
+  position: relative; height: 64px; flex: 0 0 64px; overflow: hidden; touch-action: none;
+  border: 1px solid var(--ctl-stroke); border-radius: var(--r-md);
+  background-image: linear-gradient(to right, var(--divider) 1px, transparent 1px);
+  background-size: calc(100% / 24) 100%;
+}
+.cal-tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--divider); }
+.cal-nowline { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); opacity: .85; }
+.cal-clip {
+  position: absolute; top: 6px; bottom: 6px; min-width: 14px; border-radius: var(--r-ctl); overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 28%, var(--card-solid));
+  border: 1px solid var(--accent); cursor: grab; user-select: none; touch-action: none;
+}
+.cal-clip.is-on { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 3; }
+.cal-clip-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .4; pointer-events: none; }
+.cal-clip-name { position: relative; display: block; padding: 3px 18px 2px 6px; font-size: 10.5px; line-height: 1.35; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.cal-clip-x { position: absolute; top: 1px; right: 1px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 0; background: rgba(0, 0, 0, .45); color: #fff; border-radius: var(--r-ctl); cursor: pointer; }
+.cal-clip-h { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; }
+.cal-clip-h.is-w { left: 0; }
+.cal-clip-h.is-e { right: 0; }
+.cal-track-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--ink-3); pointer-events: none; }
+.cal-allday {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 6px 8px; min-height: 46px;
+  border: 1px dashed var(--ctl-stroke); border-radius: var(--r-md); background: var(--card);
+}
+.cal-allday.is-over { border-color: var(--accent); background: var(--subtle); }
+.cal-allday-name { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 月历格子上的节日标注（红字，盖在封面/浅底上都可读） */
+.cal-fest { position: relative; margin-top: 2px; font-size: 10px; font-weight: 600; color: var(--danger-2); text-shadow: 0 1px 2px rgba(255, 255, 255, .55); }
+[data-mode="dark"] .cal-fest { color: #ff99a4; text-shadow: 0 1px 2px rgba(0, 0, 0, .65); }
+
+/* 农历副文本（节日优先，无节日显农历） */
+.cal-sub { position: relative; margin-top: 1px; font-size: 10px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-sub.is-fest { font-weight: 600; color: var(--danger-2); text-shadow: 0 1px 2px rgba(255, 255, 255, .55); }
+.cal-sub.is-lunar { color: var(--ink-3); }
+[data-mode="dark"] .cal-sub.is-fest { color: #ff99a4; text-shadow: 0 1px 2px rgba(0, 0, 0, .65); }
