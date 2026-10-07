@@ -31,6 +31,9 @@ node_modules
 .mimosa/
 .zcode/plans/
 .zcode/tmp/
+.zcode/screenshots/
+.zcode/workflow-drafts/
+.zcode/workflow-runs/
 .video_agent/
 
 # CF 发布（scripts/publish.ts）：wrangler 本地状态与脚本生成的临时配置/产物
