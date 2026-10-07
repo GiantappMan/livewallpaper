@@ -329,6 +329,7 @@
     "track_empty": "Wallpapers auf die Achse ziehen, an den Enden ziehen",
     "allday_hint": "Außerhalb der Abschnitte",
     "move_up": "Nach oben (höhere Priorität)",
-    "move_down": "Nach unten (niedrigere Priorität)"
+    "move_down": "Nach unten (niedrigere Priorität)",
+    "from_yesterday": "Von gestern Abend"
   }
 }

@@ -982,38 +982,159 @@
   // media.localhost 的 URL 是百分号编码的（.mp4 → %2Emp4），直接喂 isVideoName 会误判成图片
   function safeDecodeUrl(text) { try { return decodeURIComponent(text); } catch { return text; } }
 
+  // ---------------------------------------------------------------- 通用壁纸浏览器
+  // 本地库的浏览体验复用件：文件夹拼图卡 → 壁纸磁贴两级浏览 + 分帧渲染 + 拖出 + 选择态。
+  // 供播放列表成员选择、日历选壁纸、日内编辑内嵌浏览等场景共用。
+  // opts: {
+  //   includePlaylist: 含播放列表（默认不含）
+  //   browseFolders:   本地库式两级浏览（文件夹卡 → 进入文件夹看磁贴）
+  //   draggable:       卡片可拖出（dragstart 带 filePath，落到时间轴/Dock 等目标）
+  //   multi:           点击=切换选中；false 时点击=onPick 直选
+  //   isPicked(w):     选中态判断（多选/单选通用）
+  //   onToggle(w):     multi 点击回调
+  //   onPick(w):       非多选点击回调
+  //   compact:         紧凑网格（内嵌小空间用）
+  // }
+  function wallpaperBrowser(opts) {
+    const root = el("div", { class: "wpb-root" });
+    let folder = null; // 当前所在文件夹（browseFolders 模式）；null = 文件夹层
+    let query = ""; // 搜索词（非空时跨全部文件夹过滤磁贴）
+    const all = () => (wallpapersCache || []).filter((w) => opts.includePlaylist || w.meta.type !== 6);
+    const baseName = (dir) => (dir || "").split(/[\\/]/).filter(Boolean).pop() || dir || "";
+
+    function makeCard(w) {
+      const picked = opts.isPicked ? !!opts.isPicked(w) : false;
+      const card = el("article", { class: `wpb-card ${picked ? "is-picked" : ""}` });
+      const cover = el("div", { class: "wpb-cover" });
+      const src = w.coverUrl || w.fileUrl;
+      if (src) cover.append(el("img", { src: thumbSrc(src), loading: "lazy", decoding: "async", alt: "", draggable: "false" }));
+      const name = (w.meta && w.meta.title) || baseName(w.fileName) || "—";
+      // 原生 append 会把 null 字符串化，条件子元素必须过滤后再 append
+      card.append(...[
+        cover,
+        el("span", { class: "wpb-name", title: name }, name),
+        picked ? el("span", { class: "wpb-pickmark" }, iconEl("check", 11)) : null,
+      ].filter(Boolean));
+      if (opts.multi && opts.onToggle) {
+        card.addEventListener("click", () => opts.onToggle(w));
+      } else if (opts.onPick) {
+        card.addEventListener("click", () => opts.onPick(w));
+      }
+      if (opts.draggable) {
+        card.draggable = true;
+        card.addEventListener("dragstart", (e) => {
+          if (e.dataTransfer) { e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", w.filePath || ""); }
+        });
+      }
+      return card;
+    }
+
+    function folderCard(f) {
+      const covers = f.items.map((w) => w.coverUrl || w.fileUrl).filter(Boolean).slice(0, 4);
+      return el("button", { class: "wpb-folder", onclick: () => { folder = f.dir; renderContent(); } },
+        el("div", { class: "wpb-collage" },
+          covers.map((c) => el("img", { src: thumbSrc(c), loading: "lazy", decoding: "async", alt: "", draggable: "false" }))),
+        el("span", { class: "wpb-folder-name", title: f.name }, f.name),
+        el("span", { class: "wpb-folder-count" }, SC.t("lib.count", f.items.length)));
+    }
+
+    function tileGrid(list) {
+      const grid = el("div", { class: `wpb-grid ${opts.compact ? "is-compact" : ""}` });
+      if (!list.length) grid.append(el("p", { class: "dim-label" }, SC.t("lib.empty")));
+      appendChunked(grid, list, makeCard);
+      return grid;
+    }
+
+    // 搜索框常驻不重建：renderContent 不动它，输入过程中不失焦
+    const searchInput = el("input", { class: "input wpb-search", type: "search", placeholder: SC.t("local.search") });
+    searchInput.addEventListener("input", () => { query = searchInput.value; renderContent(); });
+    const searchRow = el("div", { class: "field-row wpb-searchrow" }, searchInput);
+    const content = el("div", { class: "wpb-content" });
+
+    function renderContent() {
+      content.innerHTML = "";
+      const foldersMode = !!opts.browseFolders;
+      const q = query.trim().toLowerCase();
+      // 搜索态：跨全部文件夹过滤磁贴
+      if (foldersMode && !folder && q) {
+        const list = all().filter((w) =>
+          ((w.meta && w.meta.title) || "").toLowerCase().includes(q) ||
+          (w.fileName || "").toLowerCase().includes(q));
+        content.append(tileGrid(list));
+        return;
+      }
+      if (foldersMode && !folder) {
+        // 文件夹层：拼图预览卡（与本地库根目录同语义）
+        const map = new Map();
+        for (const w of all()) {
+          const key = w.dir || "";
+          if (!map.has(key)) map.set(key, []);
+          map.get(key).push(w);
+        }
+        const folders = [...map.entries()].map(([dir, items]) => ({ dir, name: baseName(dir), items }));
+        content.append(tileGridFolders(folders));
+        return;
+      }
+      const list = foldersMode ? all().filter((w) => (w.dir || "") === folder) : all();
+      if (foldersMode) {
+        content.append(el("div", { class: "field-row wpb-crumb" },
+          el("button", {
+            class: "btn btn-sm",
+            onclick: () => { folder = null; query = ""; searchInput.value = ""; renderContent(); },
+          },
+            iconEl("chevronL", 13), el("span", {}, SC.t("common.back"))),
+          el("span", { class: "dim-label" }, baseName(folder)),
+          el("span", { class: "dim-label" }, SC.t("lib.count", list.length))));
+      }
+      content.append(tileGrid(list));
+    }
+
+    function tileGridFolders(folders) {
+      const grid = el("div", { class: `wpb-grid ${opts.compact ? "is-compact" : ""}` });
+      if (!folders.length) grid.append(el("p", { class: "dim-label" }, SC.t("lib.empty")));
+      appendChunked(grid, folders, folderCard);
+      return grid;
+    }
+
+    function render() {
+      searchRow.style.display = opts.browseFolders ? "" : "none";
+      renderContent();
+    }
+    root.append(searchRow, content);
+    render();
+    return { el: root, refresh: render };
+  }
+
   function openMemberPicker(members, onChanged) {
     const picked = new Set(members.map((m) => m.filePath));
     openDialog((sheet, close) => {
-      const grid = el("div", { class: "pick-grid" });
-      const candidates = wallpapersCache.filter((w) => w.meta.type !== 6);
-      const allBox = el("input", { type: "checkbox" });
-      const head = el("div", { class: "field-row" },
-        el("label", { class: "check" }, allBox, el("span", {}, SC.t("create.selectAll"))),
-        el("span", { class: "dim-label" }, SC.t("create.pickHint")));
-      function syncAll() { allBox.checked = candidates.length > 0 && candidates.every((c) => picked.has(c.filePath)); }
-      allBox.addEventListener("change", () => {
-        if (allBox.checked) candidates.forEach((c) => picked.add(c.filePath));
-        else candidates.forEach((c) => picked.delete(c.filePath));
-        renderGrid();
+      const browser = wallpaperBrowser({
+        includePlaylist: false,
+        multi: true,
+        isPicked: (w) => picked.has(w.filePath),
+        onToggle: (w) => {
+          picked.has(w.filePath) ? picked.delete(w.filePath) : picked.add(w.filePath);
+          browser.refresh();
+          syncCount();
+        },
       });
-      let pickSeq = 0;
-      function renderGrid() {
-        const seq = ++pickSeq;
-        grid.innerHTML = "";
-        appendChunked(grid, candidates, (w) => {
-          const on = picked.has(w.filePath);
-          return el("button", { class: `pick ${on ? "is-on" : ""}`, onclick: () => { on ? picked.delete(w.filePath) : picked.add(w.filePath); renderGrid(); syncAll(); } },
-            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null, on ? el("span", { class: "pick-check" }, iconEl("check", 12)) : null),
-            el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
-        }, () => seq !== pickSeq);
+      const countEl = el("span", { class: "dim-label" }, SC.t("create.members", picked.size));
+      function syncCount() { countEl.textContent = SC.t("create.members", picked.size); }
+      function toggleAll() {
+        const candidates = (wallpapersCache || []).filter((w) => w.meta.type !== 6);
+        const allIn = candidates.length > 0 && candidates.every((c) => picked.has(c.filePath));
+        allIn ? candidates.forEach((c) => picked.delete(c.filePath)) : candidates.forEach((c) => picked.add(c.filePath));
+        browser.refresh();
+        syncCount();
       }
-      renderGrid(); syncAll();
+      const head = el("div", { class: "field-row" },
+        el("button", { class: "btn btn-sm", onclick: toggleAll }, SC.t("create.selectAll")),
+        el("span", { class: "dim-label" }, SC.t("create.pickHint")));
       sheet.append(
         dialogHead(SC.t("create.pickTitle"), "", close),
-        el("div", { class: "dialog-body" }, head, grid),
+        el("div", { class: "dialog-body" }, head, browser.el),
         el("div", { class: "dialog-foot" },
-          el("span", { class: "dim-label" }, SC.t("create.members", picked.size)),
+          countEl,
           el("button", {
             class: "btn btn-accent",
             onclick: () => {
@@ -3389,24 +3510,18 @@
   function openCalendarPick(currentPath, onPick) {
     let picked = currentPath || null;
     openDialog((sheet, close) => {
-      const grid = el("div", { class: "pick-grid" });
-      function renderGrid() {
-        grid.innerHTML = "";
-        appendChunked(grid, wallpapersCache || [], (w) => {
-          const on = picked && picked === w.filePath;
-          return el("button", {
-            class: `pick ${on ? "is-on" : ""}`,
-            onclick: () => { picked = w.filePath; renderGrid(); },
-          },
-            el("div", { class: "pick-cover" }, w.coverUrl ? el("img", { src: thumbSrc(w.coverUrl), loading: "lazy", decoding: "async" }) : null,
-              on ? el("span", { class: "pick-check" }, iconEl("check", 12)) : null),
-            el("span", { class: "pick-name" }, (w.meta && w.meta.title) || "—"));
-        });
-      }
-      renderGrid();
+      const browser = wallpaperBrowser({
+        includePlaylist: true,
+        multi: true,
+        isPicked: (w) => picked != null && picked === w.filePath,
+        onToggle: (w) => {
+          picked = picked === w.filePath ? null : w.filePath;
+          browser.refresh();
+        },
+      });
       sheet.append(
         dialogHead(SC.t("cal.pickTitle"), SC.t("cal.pickHint"), close),
-        el("div", { class: "dialog-body" }, grid),
+        el("div", { class: "dialog-body" }, browser.el),
         el("div", { class: "dialog-foot" },
           el("button", { class: "btn", onclick: () => { close(true); onPick && onPick(null); } }, SC.t("cal.none")),
           el("button", {
@@ -3436,6 +3551,11 @@
       ? JSON.parse(JSON.stringify(existing))
       : { date: dateStr, enabled: true, allDay: null, segments: [] };
     if (!Array.isArray(draft.segments)) draft.segments = [];
+    // 休息时段（文档级设置，可多段）：等分铺满时排除；可关闭
+    const restDraft = JSON.parse(JSON.stringify(
+      doc.rest || { enabled: true, ranges: [{ start: "23:00", end: "07:00" }] }
+    ));
+    if (!Array.isArray(restDraft.ranges)) restDraft.ranges = [];
     const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(5, 7)), d = Number(dateStr.slice(8, 10));
     const dayLabel = new Date(y, m - 1, d).toLocaleDateString(SC.state.lang || undefined, { month: "long", day: "numeric", weekday: "long" });
     const isToday = dateStr === (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
@@ -3481,32 +3601,62 @@
       }
 
       // ---- 本地库缩略图条：拖到时间轴，或点击插入空档
+      // 昨天跨零段的尾巴：今天 0:00–end 只读展示（后端求值已自动包含）
+      const yest = new Date(y, m - 1, d - 1);
+      const yestStr = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, "0")}-${String(yest.getDate()).padStart(2, "0")}`;
+      const yPlan = doc.days.find((x) => x.date === yestStr && x.enabled);
+      const ghostTails = ((yPlan && yPlan.segments) || [])
+        .filter((s) => calToMin(s.start) > calToMin(s.end))
+        .map((s) => ({ start: 0, end: calToMin(s.end), from: calToMin(s.start), wallpaper: s.wallpaper }));
+
+      // 轨道占用（分钟区间）：自己的片段（跨零段占 start→24:00，尾巴归明天）+ 昨天尾巴
+      function blockers(excludeIndex) {
+        const blocks = [];
+        draft.segments.forEach((seg, i) => {
+          if (i === excludeIndex) return;
+          const s = calToMin(seg.start), e = calToMin(seg.end);
+          blocks.push(s < e ? [s, e] : [s, 1440]);
+        });
+        ghostTails.forEach((g) => blocks.push([g.start, g.end]));
+        return blocks;
+      }
+      function freeWindows(blocks) {
+        const sorted = [...blocks].sort((a, b) => a[0] - b[0]);
+        const wins = [];
+        let cur = 0;
+        for (const [bs, be] of sorted) {
+          if (bs > cur) wins.push([cur, Math.min(bs, 1440)]);
+          cur = Math.max(cur, be);
+        }
+        if (cur < 1440) wins.push([cur, 1440]);
+        return wins.filter(([a, b]) => b - a >= CAL_SNAP);
+      }
+
       function addClipAt(min, w) {
-        const start = calSnap(min);
-        let end = Math.min(1440, start + 120);
-        // 与已有片段重叠时顺延到其后第一个空档
-        const overlaps = (s, e) => draft.segments.some((s2) => s < calToMin(s2.end) && e > calToMin(s2.start));
-        let s = start;
-        while (s < 1425 && overlaps(s, Math.min(1440, s + 120))) s += CAL_SNAP;
-        if (s >= 1425) { SC.toast(SC.t("cal.dayFull"), "err"); return; }
-        end = Math.min(1440, s + 120);
-        draft.segments.push({ start: calToHhmm(s), end: calToHhmm(end), wallpaper: { filePath: w.filePath, dir: w.dir, fileName: w.fileName } });
+        const dur = 120;
+        const wins = freeWindows(blockers(-1));
+        const start0 = calSnap(Math.min(Math.max(min, 0), 1440 - CAL_SNAP));
+        const win = wins.find(([a, b]) => start0 >= a && start0 < b) || wins[0];
+        if (!win || win[1] - win[0] < CAL_SNAP) { SC.toast(SC.t("cal.dayFull"), "err"); return; }
+        const s = Math.max(win[0], Math.min(start0, win[1] - Math.min(dur, win[1] - win[0])));
+        const e = Math.min(win[1], s + dur);
+        draft.segments.push({ start: calToHhmm(s), end: calToHhmm(e), wallpaper: { filePath: w.filePath, dir: w.dir, fileName: w.fileName } });
         if (w) calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
         renderTrack();
       }
-      const lib = el("div", { class: "cal-lib" });
-      (wallpapersCache || []).forEach((w) => {
-        lib.append(el("button", {
-          class: "cal-lib-item", draggable: "true", title: (w.meta && w.meta.title) || "",
-          ondragstart: (e) => { e.dataTransfer.setData("text/plain", w.filePath); e.dataTransfer.effectAllowed = "copy"; },
-          onclick: () => addClipAt(0, w),
-        }, el("img", { src: thumbSrc(w.coverUrl || w.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "", draggable: "false" })));
+      // 本地库浏览（通用组件）：文件夹拼图卡 → 磁贴，拖到时间轴，或点击插入空档；含播放列表
+      const lib = wallpaperBrowser({
+        includePlaylist: true,
+        browseFolders: true,
+        draggable: true,
+        compact: true,
+        onPick: (w) => addClipAt(0, w),
       });
-      if (!(wallpapersCache || []).length) lib.append(el("p", { class: "dim-label cal-lib-empty" }, SC.t("cal.libEmpty")));
-      body.append(el("div", { class: "field-label cal-lib-label" }, SC.t("cal.libLabel")), lib);
+      body.append(el("div", { class: "field-label cal-lib-label" }, SC.t("cal.libLabel")), el("div", { class: "cal-lib-box" }, lib.el));
 
       // ---- 24h 时间轴
       let selected = -1;
+      let dropGhost = null;
       const ruler = el("div", { class: "cal-ruler" });
       for (let h = 0; h <= 24; h += 6) ruler.append(el("span", { style: { left: `${(h / 24) * 100}%` } }, String(h).padStart(2, "0")));
       const track = el("div", { class: "cal-track" });
@@ -3537,25 +3687,46 @@
         const headL = el("span", { class: "cal-clip-h is-w" });
         const headR = el("span", { class: "cal-clip-h is-e" });
 
-        // 指针交互：拖边改时长，拖身移位；15 分钟吸附
+        // 指针交互：拖边改时长，拖身移位；15 分钟吸附；永不与相邻片段/昨天尾巴重叠
         function beginDrag(ev, mode) {
           ev.preventDefault(); ev.stopPropagation();
           selected = index; renderTrack();
           const rect = track.getBoundingClientRect();
           const seg0 = { start: calToMin(seg.start), end: calToMin(seg.end) };
+          const blocks = blockers(index); // 不含自己
           const pxToMin = (clientX) => calSnap(((clientX - rect.left) / rect.width) * 1440);
+          // 不钳制的原始分钟数：允许拖过 24:00（>1440）表达跨零
+          const pxToMinRaw = (clientX) => Math.round((((clientX - rect.left) / rect.width) * 1440) / CAL_SNAP) * CAL_SNAP;
+          const maxEnd = Math.min(1440, ...blocks.filter(([bs]) => bs >= seg0.start + CAL_SNAP).map(([bs]) => bs));
+          let minStart = 0;
+          for (const [bs, be] of blocks) {
+            if (be <= seg0.end) minStart = Math.max(minStart, be);
+            // 跨零段：头部（start→24:00）区间内的占用块同样约束左缘
+            else if (seg0.start > seg0.end && be > seg0.end && be <= seg0.start) minStart = Math.max(minStart, be);
+          }
           const move = (e2) => {
             const cur = pxToMin(e2.clientX);
             if (mode === "w") {
-              // 拖左缘收短：压到 end-SNAP 以内时自然从跨零点变为普通段
-              seg.start = calToHhmm(Math.min(cur, seg0.end - CAL_SNAP));
+              // 拖左缘：不越过前一个占用块的末端；压到 end-SNAP 以内时自然从跨零点变为普通段
+              seg.start = calToHhmm(Math.max(minStart, Math.min(cur, seg0.end - CAL_SNAP)));
             } else if (mode === "e") {
-              seg.end = calToHhmm(Math.max(cur, seg0.start + CAL_SNAP));
+              // 拖右缘：越过 24:00 继续向右 = 跨到明天（end 回卷），受幽灵尾巴避让
+              let ne = pxToMinRaw(e2.clientX);
+              if (ne >= 1440) {
+                ne = Math.min(ne - 1440, Math.max(0, Math.min(seg0.start - CAL_SNAP, minGhostEnd)));
+                if (ne < 0) ne = 1440;
+              } else {
+                ne = Math.min(Math.max(ne, seg0.start + CAL_SNAP), maxEnd);
+              }
+              seg.end = calToHhmm(ne);
             } else {
-              // 整段移位：光标对齐片段中点；总长超出 24h 的部分回卷到零点后（保持跨零点语义）
+              // 整段移位：光标对齐片段中点，钳制进光标所在的空闲窗口
               const s0 = seg0.start, e0 = seg0.end;
               const dur = e0 > s0 ? e0 - s0 : 1440 - s0 + e0;
-              const ns = Math.max(0, Math.min(1440 - Math.min(dur, 1440), cur - Math.floor(dur / 2)));
+              const wins = freeWindows(blocks).filter(([a, b]) => b - a >= Math.min(dur, 1440));
+              if (!wins.length) return;
+              const win = wins.find(([a, b]) => cur >= a && cur < b) || wins[0];
+              const ns = Math.max(win[0], Math.min(win[1] - dur, cur - Math.floor(dur / 2)));
               const ne = ns + dur;
               seg.start = calToHhmm(ns);
               seg.end = calToHhmm(ne <= 1440 ? ne : ne - 1440);
@@ -3593,8 +3764,31 @@
           const nowMin = n.getHours() * 60 + n.getMinutes();
           track.append(el("i", { class: "cal-nowline", style: { left: `${(nowMin / 1440) * 100}%` } }));
         }
+        // 昨天跨零段的尾巴：今天 0:00–end 只读展示（不可拖拽/编辑）
+        ghostTails.forEach((g) => {
+          const info = calRefInfo(g.wallpaper);
+          const gc = el("div", { class: "cal-clip is-ghost" });
+          gc.style.left = `${(g.start / 1440) * 100}%`;
+          gc.style.width = `${Math.max(1.5, ((g.end - g.start) / 1440) * 100)}%`;
+          gc.append(el("span", { class: "cal-clip-name" },
+            `${SC.t("cal.fromYesterday")} ${calToHhmm(g.from)}–${calToHhmm(g.end)} ${(info && info.title) || ""}`));
+          track.append(gc);
+        });
+        // 休息时段阴影带（可多段；等分时排除；手动编排仍可放入）
+        if (restDraft.enabled) {
+          for (const [a, b] of restBlocks()) {
+            track.append(el("i", {
+              class: "cal-sleepband",
+              style: { left: `${(a / 1440) * 100}%`, width: `${((b - a) / 1440) * 100}%` },
+            }));
+          }
+        }
+        // 拖放定位预览块（dragover 时更新位置与时长）
+        dropGhost = el("div", { class: "cal-dropghost", style: "display:none" },
+          el("span", { class: "cal-dropghost-t" }, ""));
+        track.append(dropGhost);
         draft.segments.forEach((seg, i) => track.append(makeClip(seg, i)));
-        if (!draft.segments.length) {
+        if (!draft.segments.length && !ghostTails.length) {
           track.append(el("p", { class: "cal-track-empty" }, SC.t("cal.trackEmpty")));
         }
         // 全天兜底槽
@@ -3620,14 +3814,44 @@
       };
       renderTrack();
 
-      track.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+      // 拖放定位：dragover 实时显示落点预览（吸附 + 避让后的位置与时长），drop 按预览落位
+      let dropAt = null;
+      function updateDropGhost(min) {
+        if (!dropGhost || !dropGhost.isConnected) return;
+        const dur = 120;
+        const wins = freeWindows(blockers(-1));
+        const start0 = calSnap(Math.min(Math.max(min, 0), 1440 - CAL_SNAP));
+        const win = wins.find(([a, b]) => start0 >= a && start0 < b) || wins[0];
+        if (!win || win[1] - win[0] < CAL_SNAP) { dropAt = null; dropGhost.style.display = "none"; return; }
+        const s = Math.max(win[0], Math.min(start0, win[1] - Math.min(dur, win[1] - win[0])));
+        const e = Math.min(win[1], s + dur);
+        dropAt = { s, e };
+        dropGhost.style.display = "";
+        dropGhost.style.left = `${(s / 1440) * 100}%`;
+        dropGhost.style.width = `${Math.max(1.5, ((e - s) / 1440) * 100)}%`;
+        dropGhost.querySelector(".cal-dropghost-t").textContent = `${calToHhmm(s)}–${calToHhmm(e)}`;
+      }
+      track.addEventListener("dragover", (e) => {
+        e.preventDefault(); e.dataTransfer.dropEffect = "copy";
+        track.classList.add("is-dragover"); // 拖拽经过时已有片段降透明，突出落点
+        const rect = track.getBoundingClientRect();
+        updateDropGhost(((e.clientX - rect.left) / rect.width) * 1440);
+      });
+      track.addEventListener("dragleave", (e) => {
+        if (!track.contains(e.relatedTarget)) {
+          track.classList.remove("is-dragover");
+          if (dropGhost) dropGhost.style.display = "none";
+        }
+      });
       track.addEventListener("drop", (e) => {
         e.preventDefault();
+        track.classList.remove("is-dragover");
         const path = e.dataTransfer.getData("text/plain");
         const w = (wallpapersCache || []).find((x) => x.filePath === path);
         if (!w) return;
         const rect = track.getBoundingClientRect();
-        addClipAt(((e.clientX - rect.left) / rect.width) * 1440, w);
+        addClipAt(dropAt ? dropAt.s : ((e.clientX - rect.left) / rect.width) * 1440, w);
+        dropAt = null;
       });
       allday.addEventListener("dragover", (e) => { e.preventDefault(); allday.classList.add("is-over"); });
       allday.addEventListener("dragleave", () => allday.classList.remove("is-over"));
@@ -3641,7 +3865,88 @@
         renderTrack();
       });
 
-      body.append(el("div", { class: "field-label cal-lib-label" }, SC.t("cal.timeline")), ruler, track, allday);
+      // ---- 等分铺满 + 休息时段（可多段，支持跨零）
+      function restBlocks() {
+        const blocks = [];
+        for (const r of restDraft.ranges) {
+          const s = calToMin(r.start), e = calToMin(r.end);
+          if (Number.isNaN(s) || Number.isNaN(e) || s === e) continue;
+          if (s < e) blocks.push([s, e]); else { blocks.push([s, 1440]); blocks.push([0, e]); }
+        }
+        return blocks;
+      }
+      function awakeWindows() {
+        if (!restDraft.enabled) return [[0, 1440]];
+        const blocks = restBlocks().sort((a, b) => a[0] - b[0]);
+        const wins = [];
+        let cur = 0;
+        for (const [bs, be] of blocks) {
+          if (bs > cur) wins.push([cur, Math.min(bs, 1440)]);
+          cur = Math.max(cur, be);
+        }
+        if (cur < 1440) wins.push([cur, 1440]);
+        return wins.filter(([a, b]) => b - a >= CAL_SNAP);
+      }
+      function equalSplit() {
+        const n = draft.segments.length;
+        if (!n) { SC.toast(SC.t("cal.trackEmpty"), "err"); return; }
+        const wins = awakeWindows();
+        const total = wins.reduce((s, [a, b]) => s + (b - a), 0);
+        if (total < n * CAL_SNAP) { SC.toast(SC.t("cal.dayFull"), "err"); return; }
+        const per = total / n;
+        const posToMin = (pos) => {
+          for (const [a, b] of wins) { if (pos <= b - a) return a + pos; pos -= b - a; }
+          return 1440;
+        };
+        const out = [];
+        for (let i = 0; i < n; i++) {
+          const s = i === 0 ? wins[0][0] : Math.max(posToMin(i * per), calSnap(posToMin(i * per)));
+          const e = i === n - 1 ? posToMin(total) : Math.max(calSnap(posToMin((i + 1) * per)), s + CAL_SNAP);
+          out.push({ start: calToHhmm(s), end: calToHhmm(e), wallpaper: draft.segments[i].wallpaper });
+        }
+        draft.segments = out;
+        renderTrack();
+      }
+      // ---- 休息时段分组卡：标题行（名称 + 开关 + 添加）+ 时段行
+      const restSw = switchEl(restDraft.enabled, (v) => { restDraft.enabled = v; renderRestRows(); renderTrack(); });
+      const addRangeBtn = el("button", {
+        class: "btn btn-sm",
+        onclick: () => { restDraft.ranges.push({ start: "23:00", end: "07:00" }); renderRestRows(); renderTrack(); },
+      }, iconEl("plus", 13), el("span", {}, SC.t("cal.addRange")));
+      const restHeader = el("div", { class: "field-row cal-rest-head" },
+        el("span", { class: "cal-sec-label" }, SC.t("cal.rest")),
+        el("span", { class: "cal-tools-gap" }),
+        restSw, addRangeBtn);
+      const restRows = el("div", { class: "cal-restrows" });
+      function renderRestRows() {
+        restRows.innerHTML = "";
+        if (!restDraft.enabled) return;
+        restDraft.ranges.forEach((r, i) => {
+          const st = el("input", { class: "input input-time", type: "time", value: r.start });
+          st.addEventListener("change", () => { if (st.value) { r.start = st.value; renderTrack(); } });
+          const en = el("input", { class: "input input-time", type: "time", value: r.end });
+          en.addEventListener("change", () => { if (en.value) { r.end = en.value; renderTrack(); } });
+          restRows.append(el("div", { class: "field-row cal-restrow" },
+            el("span", { class: "dim-label" }, (i + 1) + "."),
+            st, el("span", { class: "dim-label" }, "–"), en,
+            el("button", {
+              class: "icon-btn", title: SC.t("common.delete"),
+              onclick: () => { restDraft.ranges.splice(i, 1); renderRestRows(); renderTrack(); },
+            }, iconEl("x", 12))));
+        });
+      }
+      renderRestRows();
+      const restGroup = el("div", { class: "cal-restgroup" }, restHeader, restRows);
+
+      // ---- 时间轴：等分铺满属于时间轴，放在它自己的标题行
+      const equalBtn = el("button", { class: "btn btn-sm", onclick: equalSplit, title: SC.t("cal.equalSplit") },
+        iconEl("check", 13), el("span", {}, SC.t("cal.equalSplit")));
+      const tlHead = el("div", { class: "field-row cal-tl-head" },
+        el("span", { class: "field-label", style: "margin:0" }, SC.t("cal.timeline")),
+        el("span", { class: "cal-tools-gap" }),
+        equalBtn);
+
+      body.append(restGroup, tlHead, ruler, track, allday);
 
       const foot = el("div", { class: "dialog-foot" });
       if (existing) {
@@ -3669,7 +3974,7 @@
             const empty = !draft.enabled && !(draft.allDay && draft.allDay.filePath) && !(draft.segments || []).length;
             if (!empty) others.push(draft);
             others.sort((a, b) => a.date.localeCompare(b.date));
-            saveCalendarDoc({ ...doc, days: others }, (ok) => ok && close(true));
+            saveCalendarDoc({ ...doc, days: others, rest: restDraft }, (ok) => ok && close(true));
           },
         }, SC.t("common.save")));
       sheet.append(dialogHead(SC.t("cal.editDay"), dayLabel, close), body, foot);
@@ -3872,11 +4177,15 @@
     for (const dateStr of cells) {
       const inMonth = Number(dateStr.slice(5, 7)) === calView.m;
       const day = calDays[dateStr];
-      const info = day && day.filePath ? calState.previews[day.filePath] : null;
+      // 当天壁纸集合（多时段 → 拼图；单张 → 全幅封面）
+      const wallInfos = ((day && day.wallpapers) || [])
+        .map((p) => calState.previews[p])
+        .filter(Boolean);
+      const info = wallInfos[0] || (day && day.filePath ? calState.previews[day.filePath] : null);
       let badge = null, badgeCls = "";
-      if (day && day.source) {
-        if (day.source.kind === "day") { badge = SC.t("cal.badgeDay"); badgeCls = "is-day"; }
-        else if (day.source.kind === "yearly") { badge = day.source.name || SC.t("cal.badgeYearly"); badgeCls = "is-yearly"; }
+      // 单日编排不标徽章：封面缩略图本身就是证据；徽章只标"来源规则"（节日名/周名）
+      if (day && day.source && day.source.kind !== "day") {
+        if (day.source.kind === "yearly") { badge = day.source.name || SC.t("cal.badgeYearly"); badgeCls = "is-yearly"; }
         else if (day.source.kind === "weekly") { badge = day.source.name || SC.t("cal.badgeWeekly"); badgeCls = "is-weekly"; }
       }
       // 内置节日标注（与是否排了壁纸无关，日历该有节日）；无节日则显示农历
@@ -3889,7 +4198,11 @@
         onclick: () => calState.doc && openCalendarDay(dateStr),
         title: [festText, badge].filter(Boolean).join(" · "),
       },
-        info ? el("img", { class: "cal-cover", src: (info.coverUrl || info.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "" }) : null,
+        (wallInfos.length >= 2
+          ? el("div", { class: "cal-collage" },
+              wallInfos.slice(0, 4).map((inf) =>
+                el("img", { class: "cal-collage-img", src: (inf.coverUrl || inf.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "" })))
+          : info ? el("img", { class: "cal-cover", src: (info.coverUrl || info.fileUrl || "/wp-placeholder.webp"), loading: "lazy", alt: "" }) : null),
         el("span", { class: "cal-num" }, String(Number(dateStr.slice(8, 10)))),
         subText ? el("span", { class: `cal-sub ${festText ? "is-fest" : "is-lunar"}` }, subText) : null,
         badge ? el("span", { class: `cal-badge ${badgeCls}` }, badge) : null,

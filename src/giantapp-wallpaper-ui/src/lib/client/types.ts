@@ -436,11 +436,24 @@ export interface CalendarWeeklyRule extends CalendarSlots {
   weekdays: number[];
 }
 
+/** 休息时段（等分铺满时排除；可关闭） */
+export interface CalendarRestRange {
+  start: string; // HH:MM
+  end: string; // HH:MM；end <= start 表示跨零
+}
+
+export interface CalendarRestConfig {
+  enabled: boolean;
+  ranges: CalendarRestRange[];
+}
+
 export interface CalendarDoc {
   enabled: boolean;
   days: CalendarDayPlan[];
   yearly: CalendarYearlyRule[];
   weekly: CalendarWeeklyRule[];
+  /** 休息时段配置 */
+  rest?: CalendarRestConfig;
 }
 
 /** 引用的展示信息（media:// URL 由后端填充，前端无法自行构造） */
@@ -470,10 +483,12 @@ export interface CalendarPreviewDay {
   source?: CalendarSource | null;
   filePath?: string | null;
   segmentCount: number;
-    /** 当天的内置节日 key（前端映射为本地化节日名，如 "spring" → 春节） */
-    festivals?: string[];
-    /** 农历显示文本（初一显示月名，如“正月”“十五”） */
-    lunar?: string;
+  /** 当天的内置节日 key（前端映射为本地化节日名，如 “spring” → 春节） */
+  festivals?: string[];
+  /** 农历显示文本（初一显示月名，如“正月”“十五”） */
+  lunar?: string;
+  /** 当天按时间排序的去重壁纸路径（多时段 → 月历拼图） */
+  wallpapers?: string[];
 }
 
 export interface CalendarPreview {

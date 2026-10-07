@@ -329,6 +329,7 @@
     "track_empty": "Suelta fondos en la línea; arrastra los bordes para ajustar",
     "allday_hint": "Fondo fuera de los tramos",
     "move_up": "Subir (más prioridad)",
-    "move_down": "Bajar (menos prioridad)"
+    "move_down": "Bajar (menos prioridad)",
+    "from_yesterday": "De anoche"
   }
 }

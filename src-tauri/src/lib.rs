@@ -223,6 +223,10 @@ pub(crate) fn build_main_window(
         .min_inner_size(800.0, 482.0)
         .center()
         .visible(false)
+        // 关掉 Tauri 的原生文件拖放接管：默认开启会让 WebView2 压制页面内的
+        // HTML5 拖拽（本地库拖到 Dock、日历拖壁纸到时间轴全都拖不动）。
+        // 关闭后网页内 HTML5 drag&drop（含外部文件拖入的 dataTransfer.files）正常工作。
+        .disable_drag_drop_handler()
         // 去掉系统标题栏，由前端自绘（见 components/title-bar.tsx）
         .decorations(false)
         .initialization_script(HUB_COMPAT_SCRIPT);

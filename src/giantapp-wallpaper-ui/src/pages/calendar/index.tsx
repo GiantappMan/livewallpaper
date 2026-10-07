@@ -233,9 +233,10 @@ const Page = () => {
 
     const badgeOf = (source?: CalendarSource | null): { text: string; cls: string } | null => {
         if (!source) return null;
+        // 单日编排不标徽章：封面缩略图本身就是证据；徽章只标"来源规则"（节日名/周名）
         switch (source.kind) {
             case "day":
-                return { text: t.badge_day, cls: "bg-blue-600/90" };
+                return null;
             case "yearly":
                 return { text: source.name || t.badge_yearly, cls: "bg-rose-600/90" };
             case "weekly":
@@ -332,10 +333,6 @@ const Page = () => {
                     </div>
                     <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
                         <span className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                            {t.badge_day}
-                        </span>
-                        <span className="flex items-center gap-1.5">
                             <span className="h-2.5 w-2.5 rounded-full bg-rose-600" />
                             {t.badge_yearly}
                         </span>
@@ -365,6 +362,10 @@ const Page = () => {
                             .join(" · ");
                         const ref = info?.filePath ? { filePath: info.filePath } : null;
                         const info_ = resolve(ref);
+                        // 多时段 → 拼图（按时间排序的去重壁纸，最多展示 4 张）
+                        const wallInfos = ((info?.wallpapers ?? []) as string[])
+                            .map((p) => payload?.previews[p])
+                            .filter(Boolean) as CalendarRefInfo[];
                         const isToday = date === todayStr;
                         return (
                             <button
@@ -376,14 +377,26 @@ const Page = () => {
                                 } ${isToday ? "ring-2 ring-primary" : ""}`}
                                 title={[festText, badge?.text].filter(Boolean).join(" · ")}
                             >
-                                {info_ && (
+                                {wallInfos.length >= 2 ? (
+                                    <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px opacity-55">
+                                        {wallInfos.slice(0, 4).map((inf, i) => (
+                                            <img
+                                                key={i}
+                                                src={inf.coverUrl || inf.fileUrl || "/wp-placeholder.webp"}
+                                                alt=""
+                                                className="h-full w-full object-cover"
+                                                loading="lazy"
+                                            />
+                                        ))}
+                                    </div>
+                                ) : info_ ? (
                                     <img
                                         src={info_.coverUrl || info_.fileUrl || "/wp-placeholder.webp"}
                                         alt=""
                                         className="absolute inset-0 h-full w-full object-cover opacity-55"
                                         loading="lazy"
                                     />
-                                )}
+                                ) : null}
                                 <div className="relative flex h-full flex-col p-1.5">
                                     <span
                                         className={`text-xs font-semibold ${

@@ -329,6 +329,7 @@
     "track_empty": "Déposez des fonds sur la piste, glissez les bords",
     "allday_hint": "Fond hors créneaux",
     "move_up": "Monter (plus prioritaire)",
-    "move_down": "Descendre (moins prioritaire)"
+    "move_down": "Descendre (moins prioritaire)",
+    "from_yesterday": "De la nuit"
   }
 }

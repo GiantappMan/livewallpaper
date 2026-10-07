@@ -1131,6 +1131,12 @@ button.card-row:hover { background: var(--subtle); }
 .cal-cell:active { transform: scale(.985); }
 .cal-cell.is-out { opacity: .4; }
 .cal-cell.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+/* 今天：日期数字用强调色圆饼填充，盖着封面也一眼可见 */
+.cal-cell.is-today .cal-num {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 999px;
+  background: var(--accent); color: var(--on-accent);
+}
 .cal-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; }
 .cal-num { position: relative; font-size: 12px; font-weight: 600; }
 .cal-badge {
@@ -1196,12 +1202,42 @@ button.card-row:hover { background: var(--subtle); }
 /* 内容超高时滚动而不是把时间轴/库条压扁 */
 .cal-dialog-wide .dialog-body > * { flex-shrink: 0; }
 .cal-festrow { flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
-.cal-lib { display: flex; gap: 6px; overflow-x: auto; padding: 6px 2px 4px; }
-.cal-lib-item { flex: 0 0 auto; width: 84px; height: 52px; padding: 0; border-radius: var(--r-ctl); overflow: hidden; border: 1px solid var(--stroke); cursor: grab; background: var(--subtle); }
-.cal-lib-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-.cal-lib-item:hover { border-color: var(--accent); }
 .cal-lib-label { margin-top: 12px; }
-.cal-lib-empty { padding: 8px 10px; }
+.cal-lib-box { max-height: 232px; overflow-y: auto; padding: 8px; border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); }
+
+/* ---------------------------------------------------------------- 通用壁纸浏览器
+   本地库卡片的网格化复用件：成员选择 / 日历选壁纸 / 日内编辑内嵌浏览共用 */
+.wpb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
+.wpb-grid.is-compact { grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 8px; }
+.wpb-card {
+  position: relative; border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card);
+  overflow: hidden; cursor: grab; transition: border-color var(--speed), transform var(--speed);
+}
+.wpb-card:hover { border-color: var(--accent); }
+.wpb-card:active { transform: scale(.98); }
+.wpb-card.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.wpb-cover { aspect-ratio: 16 / 9; background: var(--subtle); }
+.wpb-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wpb-name { display: block; padding: 4px 6px; font-size: 11px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wpb-pickmark {
+  position: absolute; top: 4px; right: 4px; width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center; border-radius: 999px;
+  background: var(--accent); color: var(--on-accent);
+}
+/* 文件夹拼图卡（本地库根目录同款）与进入文件夹的面包屑 */
+.wpb-crumb { margin-bottom: 8px; align-items: center; }
+.wpb-searchrow { margin-bottom: 8px; }
+.wpb-search { width: 100%; }
+.wpb-folder {
+  display: flex; flex-direction: column; padding: 0 0 4px; text-align: left;
+  border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card);
+  overflow: hidden; cursor: pointer; transition: border-color var(--speed);
+}
+.wpb-folder:hover { border-color: var(--accent); }
+.wpb-collage { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; aspect-ratio: 16 / 7; background: var(--subtle); }
+.wpb-collage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wpb-folder-name { padding: 5px 8px 0; font-size: 11.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wpb-folder-count { padding: 0 8px 5px; font-size: 10.5px; color: var(--ink-3); }
 .cal-ruler { position: relative; height: 16px; margin-top: 8px; font-size: 10px; color: var(--ink-3); }
 .cal-ruler span { position: absolute; transform: translateX(-2px); }
 .cal-track {
@@ -1241,3 +1277,40 @@ button.card-row:hover { background: var(--subtle); }
 .cal-sub.is-fest { font-weight: 600; color: var(--danger-2); text-shadow: 0 1px 2px rgba(255, 255, 255, .55); }
 .cal-sub.is-lunar { color: var(--ink-3); }
 [data-mode="dark"] .cal-sub.is-fest { color: #ff99a4; text-shadow: 0 1px 2px rgba(0, 0, 0, .65); }
+
+/* 跨零段尾巴（昨天延续，只读）与拖放定位预览 */
+.cal-clip.is-ghost {
+  background: repeating-linear-gradient(135deg, var(--subtle) 0 6px, transparent 6px 12px);
+  border: 1px dashed var(--ctl-stroke); cursor: default;
+}
+.cal-clip.is-ghost .cal-clip-name { color: var(--ink-3); font-style: normal; }
+.cal-dropghost {
+  position: absolute; top: 6px; bottom: 6px; z-index: 4; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px dashed var(--accent); border-radius: var(--r-ctl);
+}
+.cal-dropghost-t { font-size: 10px; color: var(--on-accent); background: var(--accent); border-radius: 999px; padding: 1px 6px; }
+
+/* 等分铺满 + 睡眠时段 */
+.cal-tools { margin-top: 10px; align-items: center; }
+.cal-tools-gap { flex: 1; }
+.cal-sleepband {
+  position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 1;
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, .22) 0 8px, transparent 8px 16px);
+}
+[data-mode="light"] .cal-sleepband { background: repeating-linear-gradient(135deg, rgba(0, 0, 0, .08) 0 8px, transparent 8px 16px); }
+/* 拖拽经过时间轴：已有片段降透明，突出落点预览 */
+.cal-track.is-dragover .cal-clip { opacity: .25; }
+.cal-track.is-dragover .cal-clip.is-ghost { opacity: .12; }
+.cal-track.is-dragover .cal-dropghost { display: flex !important; }
+
+/* 休息时间分组卡 + 时间轴标题行（布局修正） */
+.cal-restgroup { margin-top: 12px; padding: 10px; border: 1px solid var(--stroke); border-radius: var(--r-md); background: var(--card); }
+.cal-rest-head { align-items: center; margin-bottom: 8px; }
+.cal-sec-label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.cal-tl-head { margin-top: 14px; margin-bottom: 2px; align-items: center; }
+
+/* 多壁纸拼图（多时段日的封面） */
+.cal-collage { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 1px; opacity: .55; }
+.cal-collage-img { width: 100%; height: 100%; object-fit: cover; }

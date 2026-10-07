@@ -74,19 +74,55 @@ pub struct WallpaperSlots {
 }
 
 impl WallpaperSlots {
-    /// 当前时刻应显示的壁纸路径。
-    pub fn pick(&self, time: NaiveTime) -> Option<&WallpaperRef> {
+    /// 当前时刻应显示的壁纸（跨零段只匹配“当天前半”：t ≥ start）。
+    /// 跨零段的后半夜属于第二天，由 [`Self::pick_tail`] 在次日求值。
+    pub fn pick_head(&self, time: NaiveTime) -> Option<&WallpaperRef> {
+        self.pick_head_segment(time)
+            .or_else(|| self.pick_all_day())
+    }
+
+    /// 仅匹配时间段（不含全天兜底）。
+    fn pick_head_segment(&self, time: NaiveTime) -> Option<&WallpaperRef> {
+        let t = time.num_seconds_from_midnight() / 60;
         for seg in &self.segments {
             let (Some(start), Some(end)) = (parse_hhmm(&seg.start), parse_hhmm(&seg.end)) else {
                 continue;
             };
-            if time_in_range(time, start, end) && !seg.wallpaper.file_path.as_os_str().is_empty() {
+            if seg.wallpaper.file_path.as_os_str().is_empty() {
+                continue;
+            }
+            let hit = if start < end {
+                t >= start && t < end
+            } else if start > end {
+                t >= start // 跨零段的前半：start → 24:00
+            } else {
+                true // start == end：全天
+            };
+            if hit {
                 return Some(&seg.wallpaper);
             }
         }
+        None
+    }
+
+    fn pick_all_day(&self) -> Option<&WallpaperRef> {
         self.all_day
             .as_ref()
             .filter(|w| !w.file_path.as_os_str().is_empty())
+    }
+
+    /// 跨零段的尾巴（前一天排的，今天 0:00 – end 生效）。不回退到全天壁纸。
+    pub fn pick_tail(&self, time: NaiveTime) -> Option<&WallpaperRef> {
+        let t = time.num_seconds_from_midnight() / 60;
+        for seg in &self.segments {
+            let (Some(start), Some(end)) = (parse_hhmm(&seg.start), parse_hhmm(&seg.end)) else {
+                continue;
+            };
+            if start > end && t < end && !seg.wallpaper.file_path.as_os_str().is_empty() {
+                return Some(&seg.wallpaper);
+            }
+        }
+        None
     }
 
     pub fn segment_count(&self) -> usize {
@@ -107,18 +143,6 @@ pub fn parse_hhmm(text: &str) -> Option<u32> {
             Some(h * 60 + m)
         }
         _ => None,
-    }
-}
-
-/// time（分钟）是否落在 [start, end)；start >= end 视为跨零点区间。
-fn time_in_range(time: NaiveTime, start: u32, end: u32) -> bool {
-    let t = time.num_seconds_from_midnight() / 60;
-    if start < end {
-        t >= start && t < end
-    } else if start > end {
-        t >= start || t < end
-    } else {
-        true // start == end：全天
     }
 }
 
@@ -194,6 +218,34 @@ pub struct WeeklyRule {
     pub slots: WallpaperSlots,
 }
 
+/// 休息时段：可配置多个区间；等分铺满时排除全部区间；`enabled = false` 整体关闭。
+/// end <= start 表示跨零（如 23:00 → 07:00）。只影响前端等分与轨道示意，不约束手动编排。
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RestRange {
+    pub start: String,
+    pub end: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RestConfig {
+    pub enabled: bool,
+    pub ranges: Vec<RestRange>,
+}
+
+impl Default for RestConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            ranges: vec![RestRange {
+                start: "23:00".into(),
+                end: "07:00".into(),
+            }],
+        }
+    }
+}
+
 /// 壁纸日历文档。`enabled = false` 时整体不接管（数据保留）。
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -202,6 +254,8 @@ pub struct CalendarDoc {
     pub days: Vec<DayPlan>,
     pub yearly: Vec<YearlyRule>,
     pub weekly: Vec<WeeklyRule>,
+    /// 休息时段（等分铺满时排除）。
+    pub rest: RestConfig,
 }
 
 /// 求值命中的规则来源（月历徽章 / 调试用）。
@@ -235,6 +289,25 @@ struct Matched<'a> {
     segment_count: usize,
 }
 
+/// 槽位里按时间段排序的去重壁纸路径（段在前、全天兜底在后）。
+fn distinct_paths(slots: &WallpaperSlots) -> Vec<PathBuf> {
+    let mut segs: Vec<&TimeSegment> = slots.segments.iter().collect();
+    segs.sort_by_key(|s| parse_hhmm(&s.start).unwrap_or(0));
+    let mut out: Vec<PathBuf> = Vec::new();
+    for seg in segs {
+        let p = &seg.wallpaper.file_path;
+        if !p.as_os_str().is_empty() && !out.contains(p) {
+            out.push(p.clone());
+        }
+    }
+    if let Some(ad) = &slots.all_day {
+        if !ad.file_path.as_os_str().is_empty() && !out.contains(&ad.file_path) {
+            out.push(ad.file_path.clone());
+        }
+    }
+    out
+}
+
 fn match_day<'a>(
     doc: &'a CalendarDoc,
     date: NaiveDate,
@@ -244,21 +317,63 @@ fn match_day<'a>(
     if !doc.enabled && !ignore_enabled {
         return None;
     }
+    let yesterday = date.pred_opt().unwrap_or(date);
     let date_str = date.format("%Y-%m-%d").to_string();
-    // 1) 单日编排
-    if let Some(plan) = doc.days.iter().find(|d| d.enabled && d.date == date_str) {
-        if let Some(r) = plan.slots.pick(time) {
+    let yesterday_str = yesterday.format("%Y-%m-%d").to_string();
+    let weekday = date.weekday().num_days_from_sunday();
+    let y_weekday = yesterday.weekday().num_days_from_sunday();
+
+    // 三级优先（单日 > 年度节日 > 每周）；每级先看今天（含跨零段前半），
+    // 再看昨天跨零段的尾巴（今天 0:00 – end 自动延续昨晚的编排）。
+    // 1) 单日编排。优先序：今天的时段命中 > 昨天跨零段的尾巴 > 今天的全天兜底
+    //    （时间明确的编排优先于宽泛的全天壁纸）。
+    let today_plan = doc.days.iter().find(|d| d.enabled && d.date == date_str);
+    let yesterday_plan = doc.days.iter().find(|d| d.enabled && d.date == yesterday_str);
+    if let Some(plan) = today_plan {
+        if let Some(r) = plan.slots.pick_head_segment(time) {
             return Some(Matched {
                 source: ResolutionSource::Day,
                 file_path: &r.file_path,
-                segment_count: plan.slots.segment_count(),
+                    segment_count: plan.slots.segment_count(),
+            });
+        }
+    }
+    if let Some(plan) = yesterday_plan {
+        if let Some(r) = plan.slots.pick_tail(time) {
+            return Some(Matched {
+                source: ResolutionSource::Day,
+                file_path: &r.file_path,
+                    segment_count: plan.slots.segment_count(),
+            });
+        }
+    }
+    if let Some(plan) = today_plan {
+        if let Some(r) = plan.slots.pick_all_day() {
+            return Some(Matched {
+                source: ResolutionSource::Day,
+                file_path: &r.file_path,
+                    segment_count: plan.slots.segment_count(),
             });
         }
     }
     // 2) 年度节日（同日多条按文档序取第一条）
     for rule in doc.yearly.iter().filter(|r| r.enabled) {
         if rule.date.is_some_and(|d| d.matches(date)) {
-            if let Some(r) = rule.slots.pick(time) {
+            if let Some(r) = rule.slots.pick_head(time) {
+                return Some(Matched {
+                    source: ResolutionSource::Yearly {
+                        id: rule.id.clone(),
+                        name: rule.name.clone(),
+                    },
+                    file_path: &r.file_path,
+                    segment_count: rule.slots.segment_count(),
+                });
+            }
+        }
+    }
+    for rule in doc.yearly.iter().filter(|r| r.enabled) {
+        if rule.date.is_some_and(|d| d.matches(yesterday)) {
+            if let Some(r) = rule.slots.pick_tail(time) {
                 return Some(Matched {
                     source: ResolutionSource::Yearly {
                         id: rule.id.clone(),
@@ -271,10 +386,23 @@ fn match_day<'a>(
         }
     }
     // 3) 每周规则（周末等；同日多条按文档序取第一条）
-    let weekday = date.weekday().num_days_from_sunday();
     for rule in doc.weekly.iter().filter(|r| r.enabled) {
         if rule.weekdays.contains(&weekday) {
-            if let Some(r) = rule.slots.pick(time) {
+            if let Some(r) = rule.slots.pick_head(time) {
+                return Some(Matched {
+                    source: ResolutionSource::Weekly {
+                        id: rule.id.clone(),
+                        name: rule.name.clone(),
+                    },
+                    file_path: &r.file_path,
+                    segment_count: rule.slots.segment_count(),
+                });
+            }
+        }
+    }
+    for rule in doc.weekly.iter().filter(|r| r.enabled) {
+        if rule.weekdays.contains(&y_weekday) {
+            if let Some(r) = rule.slots.pick_tail(time) {
                 return Some(Matched {
                     source: ResolutionSource::Weekly {
                         id: rule.id.clone(),
@@ -289,6 +417,7 @@ fn match_day<'a>(
     // 4) 不接管
     None
 }
+
 
 /// 内置节日表：月历上直接标注节日名（与用户是否建规则无关）。
 /// key 为稳定标识，由前端各自映射到本地化文案；清明是节气日（公历 4/4-4/6
@@ -356,8 +485,50 @@ pub struct CalendarPreviewDay {
     pub segment_count: usize,
     /// 当天的内置节日 key（前端映射为本地化节日名，如 "spring" → 春节）。
     pub festivals: Vec<String>,
+    /// 当天按时间排序的去重壁纸路径（月历拼图）。
+    pub wallpapers: Vec<PathBuf>,
     /// 农历显示文本（初一显示月名）。
     pub lunar: String,
+}
+
+/// 当天归属的编排槽位（与 match_day 同一层级顺序，但不看时刻）：
+/// 单日 > 年度节日 > 每周。月历拼图用——即使正午没有时段命中，多壁纸拼图仍然完整。
+fn winning_slots<'a>(
+    doc: &'a CalendarDoc,
+    date: NaiveDate,
+    ignore_enabled: bool,
+) -> Option<(&'a WallpaperSlots, ResolutionSource)> {
+    if !doc.enabled && !ignore_enabled {
+        return None;
+    }
+    let date_str = date.format("%Y-%m-%d").to_string();
+    let weekday = date.weekday().num_days_from_sunday();
+    if let Some(p) = doc.days.iter().find(|d| d.enabled && d.date == date_str) {
+        return Some((&p.slots, ResolutionSource::Day));
+    }
+    for rule in doc.yearly.iter().filter(|r| r.enabled) {
+        if rule.date.is_some_and(|d| d.matches(date)) {
+            return Some((
+                &rule.slots,
+                ResolutionSource::Yearly {
+                    id: rule.id.clone(),
+                    name: rule.name.clone(),
+                },
+            ));
+        }
+    }
+    for rule in doc.weekly.iter().filter(|r| r.enabled) {
+        if rule.weekdays.contains(&weekday) {
+            return Some((
+                &rule.slots,
+                ResolutionSource::Weekly {
+                    id: rule.id.clone(),
+                    name: rule.name.clone(),
+                },
+            ));
+        }
+    }
+    None
 }
 
 /// 全年逐日预览（月历视图的唯一数据口径，前端不再自行推优先级）。
@@ -371,13 +542,21 @@ pub fn preview_year(doc: &CalendarDoc, year: i32) -> Vec<CalendarPreviewDay> {
         let noon = NaiveTime::from_hms_opt(12, 0, 0).unwrap_or_default();
         // 预览不受总开关约束：未接管时前端置灰展示编排，而不是藏起来
         let matched = match_day(doc, d, noon, true);
+        // 拼图取“当天归属规则”的全部壁纸，与正午是否命中解耦
+        let wallpapers = winning_slots(doc, d, true)
+            .map(|(slots, _)| distinct_paths(slots))
+            .unwrap_or_default();
         out.push(CalendarPreviewDay {
             date: d.format("%Y-%m-%d").to_string(),
             source: matched.as_ref().map(|m| m.source.clone()),
-            file_path: matched.as_ref().map(|m| m.file_path.to_path_buf()),
+            file_path: matched
+                .as_ref()
+                .map(|m| m.file_path.to_path_buf())
+                .or_else(|| wallpapers.first().cloned()),
             segment_count: matched.as_ref().map(|m| m.segment_count).unwrap_or(0),
             festivals: festivals_on(d),
             lunar: lunar_text_on(d).unwrap_or_default(),
+            wallpapers,
         });
         date = d.succ_opt();
     }
@@ -728,6 +907,7 @@ mod tests {
                 date: Some(YearlyDate::Solar { month: 10, day: 1 }),
                 slots: slots_all_day("flag.jpg"),
             }],
+            rest: RestConfig::default(),
             weekly: vec![WeeklyRule {
                 id: "weekend".into(),
                 name: "周末".into(),
@@ -757,6 +937,7 @@ mod tests {
                 }),
                 slots: slots_all_day("moon.jpg"),
             }],
+            rest: RestConfig::default(),
             weekly: vec![WeeklyRule {
                 id: "weekend".into(),
                 name: "周末".into(),
@@ -823,13 +1004,90 @@ mod tests {
                 },
             ],
         };
-        let d = date(2026, 10, 1);
-        assert_eq!(slots.pick(time(7, 0)).unwrap().file_path, PathBuf::from("morning.jpg"));
-        assert_eq!(slots.pick(time(12, 30)).unwrap().file_path, PathBuf::from("default.jpg"));
-        assert_eq!(slots.pick(time(23, 0)).unwrap().file_path, PathBuf::from("night.jpg"));
-        // 跨零点段的后半夜归属同一规则
-        assert_eq!(slots.pick(time(5, 59)).unwrap().file_path, PathBuf::from("night.jpg"));
-        let _ = d;
+        // 当天前半：普通段 + 跨零段的 22:00 → 24:00 部分
+        assert_eq!(slots.pick_head(time(7, 0)).unwrap().file_path, PathBuf::from("morning.jpg"));
+        assert_eq!(slots.pick_head(time(12, 30)).unwrap().file_path, PathBuf::from("default.jpg"));
+        assert_eq!(slots.pick_head(time(23, 0)).unwrap().file_path, PathBuf::from("night.jpg"));
+        // 跨零段的后半夜（05:59）不属于当天 → 落到全天兜底；尾巴由 pick_tail 在次日求值
+        assert_eq!(slots.pick_head(time(5, 59)).unwrap().file_path, PathBuf::from("default.jpg"));
+        assert_eq!(slots.pick_tail(time(5, 59)).unwrap().file_path, PathBuf::from("night.jpg"));
+        assert_eq!(slots.pick_tail(time(7, 0)), None);
+    }
+
+    /// 跨零段的尾巴自动归属第二天：10-01 排 22:00-06:00，10-02 凌晨 06:00 前延续；
+    /// 10-02 自己的编排优先于昨天的尾巴。
+    #[test]
+    fn preview_collects_distinct_wallpapers_in_time_order() {
+        let doc = CalendarDoc {
+            enabled: true,
+            days: vec![DayPlan {
+                date: "2026-10-01".into(),
+                enabled: true,
+                slots: WallpaperSlots {
+                    all_day: None,
+                    segments: vec![
+                        TimeSegment { start: "22:00".into(), end: "06:00".into(), wallpaper: ref_of("night.jpg") },
+                        TimeSegment { start: "06:00".into(), end: "12:00".into(), wallpaper: ref_of("morning.jpg") },
+                    ],
+                },
+            }],
+            yearly: Vec::new(),
+            weekly: Vec::new(),
+            rest: RestConfig::default(),
+        };
+        let days = preview_year(&doc, 2026);
+        let d = days.iter().find(|x| x.date == "2026-10-01").unwrap();
+        // 未按 start 排序存储 → 预览按时间排序：06:00 段在前
+        assert_eq!(d.wallpapers, vec![PathBuf::from("morning.jpg"), PathBuf::from("night.jpg")]);
+        assert_eq!(d.file_path.as_deref(), Some(Path::new("morning.jpg"))); // 正午命中 morning
+    }
+
+    #[test]
+    fn cross_midnight_tail_applies_on_next_day() {
+        let doc = CalendarDoc {
+            enabled: true,
+            days: vec![
+                DayPlan {
+                    date: "2026-10-01".into(),
+                    enabled: true,
+                    slots: WallpaperSlots {
+                        all_day: None,
+                        segments: vec![TimeSegment {
+                            start: "22:00".into(),
+                            end: "06:00".into(),
+                            wallpaper: ref_of("night.jpg"),
+                        }],
+                    },
+                },
+                DayPlan {
+                    date: "2026-10-02".into(),
+                    enabled: true,
+                    slots: slots_all_day("second.jpg"),
+                },
+            ],
+            yearly: Vec::new(),
+            weekly: Vec::new(),
+            rest: RestConfig::default(),
+        };
+        // 10-01 当晚：跨零段前半
+        assert_eq!(
+            resolve_at(&doc, date(2026, 10, 1), time(23, 0)).unwrap().file_path,
+            PathBuf::from("night.jpg")
+        );
+        // 10-01 当天凌晨：不该被当晚的段覆盖
+        assert!(resolve_at(&doc, date(2026, 10, 1), time(5, 0)).is_none());
+        // 10-02 凌晨：昨天跨零段的尾巴自动延续
+        assert_eq!(
+            resolve_at(&doc, date(2026, 10, 2), time(5, 59)).unwrap().file_path,
+            PathBuf::from("night.jpg")
+        );
+        // 10-02 白天：尾巴已结束，回到自己的全天编排
+        assert_eq!(
+            resolve_at(&doc, date(2026, 10, 2), time(12, 0)).unwrap().file_path,
+            PathBuf::from("second.jpg")
+        );
+        // 10-03 凌晨：尾巴只延续一天，不会无限传
+        assert!(resolve_at(&doc, date(2026, 10, 3), time(5, 0)).is_none());
     }
 
     #[test]
@@ -864,6 +1122,7 @@ mod tests {
                 date: Some(YearlyDate::Solar { month: 10, day: 1 }),
                 slots: WallpaperSlots::default(),
             }],
+            rest: RestConfig::default(),
             weekly: vec![WeeklyRule {
                 id: "thu".into(),
                 name: "周四".into(),
@@ -909,6 +1168,7 @@ mod tests {
 
         let doc = CalendarDoc {
             enabled: true,
+            rest: RestConfig::default(),
             weekly: vec![WeeklyRule {
                 id: "weekend".into(),
                 name: "周末".into(),
@@ -929,6 +1189,18 @@ mod tests {
         assert_eq!(bad, vec![exe]);
         assert!(ref_is_valid(&img));
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn rest_config_defaults_and_roundtrip() {
+        let doc = CalendarDoc::default();
+        assert!(doc.rest.enabled, "默认开启");
+        assert_eq!(doc.rest.ranges.len(), 1);
+        assert_eq!(doc.rest.ranges[0].start, "23:00");
+        let json = serde_json::to_string(&doc).unwrap();
+        assert!(json.contains("\"rest\":{\"enabled\":true,"));
+        let back: CalendarDoc = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.rest, doc.rest);
     }
 
     #[test]

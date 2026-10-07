@@ -329,6 +329,10 @@
     "track_empty": "把壁纸拖到时间轴上，拖动两端调时间",
     "allday_hint": "时段之外的兜底壁纸",
     "move_up": "上移（优先级更高）",
-    "move_down": "下移（优先级更低）"
+    "move_down": "下移（优先级更低）",
+    "from_yesterday": "昨晚",
+    "equalSplit": "等分铺满",
+    "rest": "休息时间",
+    "add_range": "添加时段"
   }
 }

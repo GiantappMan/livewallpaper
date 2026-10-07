@@ -329,6 +329,7 @@
     "track_empty": "Solte papéis na trilha, arraste as bordas",
     "allday_hint": "Fora dos períodos",
     "move_up": "Mover para cima (mais prioridade)",
-    "move_down": "Mover para baixo (menos prioridade)"
+    "move_down": "Mover para baixo (menos prioridade)",
+    "from_yesterday": "De ontem à noite"
   }
 }

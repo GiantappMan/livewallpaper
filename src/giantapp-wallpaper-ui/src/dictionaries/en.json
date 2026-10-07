@@ -329,6 +329,7 @@
     "track_empty": "Drop wallpapers on the track, drag the edges to adjust",
     "allday_hint": "Fallback outside segments",
     "move_up": "Move up (higher priority)",
-    "move_down": "Move down (lower priority)"
+    "move_down": "Move down (lower priority)",
+    "from_yesterday": "From last night"
   }
 }
