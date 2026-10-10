@@ -527,6 +527,17 @@ fn respond(dirs: &AppDirs, request: Request<Vec<u8>>) -> Result<Response<Vec<u8>
     {
         return not_found();
     }
+    // 皮肤客户端 SDK：app 型皮肤前端以 `/_sdk/client.js` 引入（见 skin.rs）。
+    // 热更新界面可能就是皮肤构建产物（如 Fluent），ui:// 同权提供。
+    if rel == "_sdk/client.js" {
+        return Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "text/javascript")
+            .header(header::CACHE_CONTROL, "no-cache")
+            .header(header::CONTENT_LENGTH, crate::skin::CLIENT_SDK_JS.len())
+            .body(crate::skin::CLIENT_SDK_JS.as_bytes().to_vec())
+            .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!(e)));
+    }
     let file = ui_dir(dirs).join(rel.replace('/', std::path::MAIN_SEPARATOR_STR));
     if !file.is_file() {
         return not_found();
@@ -563,6 +574,24 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
         AppDirs::new(root)
+    }
+
+    #[test]
+    fn ui_protocol_serves_skin_sdk() {
+        // 热更新界面可能是皮肤构建产物（Fluent），依赖 `/_sdk/client.js`
+        let dirs = temp_dirs("sdk");
+        let req = Request::builder()
+            .uri("http://ui.localhost/_sdk/client.js")
+            .body(Vec::new())
+            .unwrap();
+        let res = respond(&dirs, req).unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        assert_eq!(res.body().len(), crate::skin::CLIENT_SDK_JS.len());
+        let miss = Request::builder()
+            .uri("http://ui.localhost/_sdk/other.js")
+            .body(Vec::new())
+            .unwrap();
+        assert_eq!(respond(&dirs, miss).unwrap().status(), StatusCode::NOT_FOUND);
     }
 
     #[test]

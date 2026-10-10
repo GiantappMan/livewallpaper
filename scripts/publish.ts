@@ -1,5 +1,6 @@
 // 本地发布脚本：把安装包 / 界面热更新包 / 更新清单发布到开发者自己的
-// Cloudflare 渠道（Worker + R2），供应用的程序更新与界面热更新检查。
+// Cloudflare R2 桶（r2.dev 公开访问，直连，无 Worker），供应用的程序更新
+// 与界面热更新检查。
 //
 // 用法（仓库根目录）：
 //   bun run scripts/publish.ts release            # 发布正式版（版本号不得带 - 后缀）
@@ -7,6 +8,8 @@
 //   选项：
 //     --skip-build     跳过构建，直接使用已有产物（src-tauri/target/.../nsis 与 UI dist）
 //     --ui-only        只发布界面热更新包（ui/<通道>.json + ui zip），不动程序通道
+//     --with-ui        程序发布的同时更新界面热更新包（默认不发：界面热更新层
+//                      生效时会盖住整个皮肤系统，仅在全量换新界面时才用）
 //     --sync-preview   正式版发布时同步覆盖预览通道（preview.json + ui/preview.json）
 //     --notes "..."    更新说明（写入清单，应用内展示）
 //
@@ -14,29 +17,36 @@
 // `bunx wrangler login`（OAuth，凭据保存在本机用户目录），绝不把任何
 // CF 凭据写进仓库。也可用 CLOUDFLARE_API_TOKEN 环境变量提供令牌。
 //
-// 自定义名称（可选，默认 giantapp-wallpaper-releases）：
-//   CF_WORKER_NAME / CF_R2_BUCKET —— 会生成 wrangler.generated.toml（已 gitignore）。
+// 桶名（可选，默认 giantapp-releases，多产品共用一个桶，壁纸的所有对象
+// 都在 wallpaper/ 前缀下）：CF_R2_BUCKET 环境变量。
 //
-// 产物布局（R2 对象 key，清单严格按通道各自更新，互不影响）：
-//   stable.json / preview.json           程序更新清单（version/url/notes/date）
-//   dl/<安装包文件名>                     NSIS 安装包
-//   ui/stable.json / ui/preview.json     界面热更新清单（按发布通道写入）
-//   ui/ui-<version>.zip                  界面热更新包（dist 打包，index.html 在根）
+// 对外地址：桶的 r2.dev 公开地址（pub-<hash>.r2.dev，首次发布自动开启）。
+// r2.dev 有限速且部分网络不可达；桶绑定自定义域名后用 CF_R2_PUBLIC_URL
+// 覆盖。清单里的下载地址是绝对 URL，换对外域名只需重新发布清单，客户端
+// 「更新服务器地址」（清单 base）不变则无感。
+//
+// 产物布局（R2 对象 key，正式版 stable.json 与预览版 preview.json 是两个
+// 独立清单，严格按通道各自更新，互不影响）：
+//   wallpaper/stable.json / wallpaper/preview.json            程序更新清单（version/url/notes/date）
+//   wallpaper/dl/<安装包文件名>                                NSIS 安装包
+//   wallpaper/ui/stable.json / wallpaper/ui/preview.json      界面热更新清单（按发布通道写入）
+//   wallpaper/ui/ui-<version>.zip                             界面热更新包（Fluent 皮肤构建产物，index.html 在根）
 
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 
 const ROOT = join(import.meta.dir, "..");
-const UI_DIR = join(ROOT, "src", "giantapp-wallpaper-ui");
-const CLOUDFLARE_DIR = join(ROOT, "scripts", "cloudflare");
 const OUT_DIR = join(ROOT, "build", "publish");
-const WORKER_NAME = process.env.CF_WORKER_NAME || "giantapp-wallpaper-releases";
-const BUCKET_NAME = process.env.CF_R2_BUCKET || "giantapp-wallpaper-releases";
-// Worker 对外地址：默认从 deploy 输出解析 workers.dev 域名；绑定自定义域名后
-// 用 CF_WORKER_URL 覆盖（workers.dev 在部分网络环境不可达，见 docs/6.更新与发布.md）
-const WORKER_URL_OVERRIDE = process.env.CF_WORKER_URL?.replace(/\/+$/, "");
-const WRANGLER_CONFIG = join(CLOUDFLARE_DIR, "wrangler.generated.toml");
+// 界面热更新包内容 = Fluent 皮肤构建产物（examples/skin-fluent，app 型完整
+// 前端，index.html 在根）。内置界面 dist 不再作为热更新内容——它已随包内置，
+// 且经 build.rs 以「巨应3 怀旧」皮肤分发。
+const SKIN_DIST_DIR = join(ROOT, "examples", "skin-fluent");
+const BUCKET_NAME = process.env.CF_R2_BUCKET || "giantapp-releases";
+// 本产品在共用桶里的对象前缀（favape 等其他产品各有自己的前缀，互不干扰）
+const PRODUCT_PREFIX = "wallpaper";
+// 对外地址覆盖：桶绑定自定义域名后设置（r2.dev 有限速、部分网络不可达）
+const PUBLIC_URL_OVERRIDE = process.env.CF_R2_PUBLIC_URL?.replace(/\/+$/, "");
 
 const now = new Date();
 const today = `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}`;
@@ -51,10 +61,11 @@ function parseArgs(argv) {
   if (kind !== "release" && kind !== "preview") {
     fail("用法: bun run scripts/publish.ts <release|preview> [--skip-build] [--ui-only] [--sync-preview] [--notes \"...\"]");
   }
-  const flags = { skipBuild: false, uiOnly: false, syncPreview: false, notes: "" };
+  const flags = { skipBuild: false, uiOnly: false, withUi: false, syncPreview: false, notes: "" };
   for (let i = 1; i < argv.length; i++) {
     if (argv[i] === "--skip-build") flags.skipBuild = true;
     else if (argv[i] === "--ui-only") flags.uiOnly = true;
+    else if (argv[i] === "--with-ui") flags.withUi = true;
     else if (argv[i] === "--sync-preview") flags.syncPreview = true;
     else if (argv[i] === "--notes") flags.notes = argv[++i] ?? "";
     else fail(`未知参数: ${argv[i]}`);
@@ -141,118 +152,136 @@ async function main() {
     process.exit(1);
   }
 
-  // ---- 2. 生成 wrangler 配置并部署 Worker（幂等，首次发布即完成安装）----
-  writeFileSync(
-    WRANGLER_CONFIG,
-    `name = "${WORKER_NAME}"\nmain = "worker.js"\ncompatibility_date = "2026-01-01"\nworkers_dev = true\n\n[[r2_buckets]]\nbinding = "BUCKET"\nbucket_name = "${BUCKET_NAME}"\n`,
-  );
-  console.log(`[publish] 部署 Worker（${WORKER_NAME}）…`);
-  const deploy = wrangler(["deploy", "--config", WRANGLER_CONFIG], { cwd: CLOUDFLARE_DIR, captureOutput: true });
-  if (deploy.status !== 0) {
-    console.error(deploy.output);
-    fail("Worker 部署失败");
-  }
-  const workerUrl = WORKER_URL_OVERRIDE
-    || deploy.output.match(/https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev/)?.[0];
-  if (!workerUrl) {
-    console.error(deploy.output);
-    fail("未能从 deploy 输出解析 workers.dev 域名（绑定自定义域名后可用 CF_WORKER_URL 环境变量指定）");
-  }
-  console.log(`[publish] Worker 地址: ${workerUrl}`);
-
-  // ---- 3. 确保 R2 桶存在（已存在时报错可忽略）----
+  // ---- 2. 确保 R2 桶存在并开启 r2.dev 公开访问（幂等）----
   const createBucket = wrangler(["r2", "bucket", "create", BUCKET_NAME], { captureOutput: true });
   if (createBucket.status !== 0 && !/already exists/i.test(createBucket.output)) {
     console.error(createBucket.output);
     fail(`R2 桶创建失败（${BUCKET_NAME}）。若你的账号尚未开通 R2，请先到 Cloudflare 控制台开通。`);
   }
 
-  // ---- 4. 构建（可用 --skip-build 复用上次产物）----
+  let publicUrl = PUBLIC_URL_OVERRIDE;
+  if (!publicUrl) {
+    console.log("[publish] 检查桶的 r2.dev 公开访问…");
+    const devUrl = wrangler(["r2", "bucket", "dev-url", "get", BUCKET_NAME], { captureOutput: true });
+    if (devUrl.status !== 0) {
+      console.error(devUrl.output);
+      fail("查询 r2.dev 公开访问状态失败");
+    }
+    if (/disabled/i.test(devUrl.output)) {
+      console.log("[publish] 开启公开访问（桶内容将经 r2.dev 对外只读）…");
+      const enable = wrangler(["r2", "bucket", "dev-url", "enable", BUCKET_NAME], { captureOutput: true });
+      if (enable.status !== 0) {
+        console.error(enable.output);
+        fail("开启 r2.dev 公开访问失败");
+      }
+      publicUrl = enable.output.match(/https:\/\/pub-[0-9a-f]+\.r2\.dev/)?.[0];
+    } else {
+      publicUrl = devUrl.output.match(/https:\/\/pub-[0-9a-f]+\.r2\.dev/)?.[0];
+    }
+    if (!publicUrl) {
+      fail(`未能解析 ${BUCKET_NAME} 的 r2.dev 公开地址（到 Cloudflare 控制台查看，或绑定自定义域名后用 CF_R2_PUBLIC_URL 指定）`);
+    }
+  }
+  console.log(`[publish] 对外地址: ${publicUrl}`);
+
+  // ---- 3. 构建（可用 --skip-build 复用上次产物）----
   if (!skipBuild && !uiOnly) {
     console.log("[publish] 构建（前端 + Rust + NSIS，耗时较长）…");
     if (runBuild() !== 0) fail("构建失败");
   }
 
-  // ---- 5. 打包 UI 热更新 zip（dist -> ui-<version>.zip，index.html 在根）----
-  const dist = join(UI_DIR, "dist");
-  if (!existsSync(join(dist, "index.html"))) {
-    fail(`找不到前端构建产物 ${dist}（先运行 bun run build，或去掉 --skip-build）`);
-  }
-  mkdirSync(OUT_DIR, { recursive: true });
-  const uiZip = join(OUT_DIR, `ui-${version}.zip`);
-  rmSync(uiZip, { force: true });
-  console.log("[publish] 打包界面热更新 zip…");
-  if (!runTarZip(uiZip, dist) && !runPowerShellZip(uiZip, dist)) {
-    fail("UI zip 打包失败");
-  }
-
-  // ---- 6. 上传 ----
-  async function putObject(key, file, contentType) {
+  // ---- 4. 上传（清单不缓存保证发版即刻可见；大文件允许边缘缓存 1 小时）----
+  async function putObject(key, file, contentType, cacheControl) {
     console.log(`[publish] 上传 ${key} <- ${basename(file)}`);
     const r = wrangler(["r2", "object", "put", `${BUCKET_NAME}/${key}`,
-      "--file", file, "--remote", "--content-type", contentType]);
+      "--file", file, "--remote", "--content-type", contentType, "--cache-control", cacheControl]);
     if (r.status !== 0) fail(`上传失败: ${key}`);
   }
 
-  await putObject(`ui/ui-${version}.zip`, uiZip, "application/zip");
-  // 严格单通道：只更新所选通道的界面热更新清单，另一通道不受影响
-  // （应用「热更新地址留空」时按更新通道拉取：正式版 ui/stable.json、预览版 ui/preview.json）
-  const uiManifest = {
-    version,
-    url: `${workerUrl}/ui/ui-${version}.zip`,
-    notes,
-    date: today,
-  };
-  const uiChannelJson = join(OUT_DIR, `ui-${kind}.json`);
-  writeFileSync(uiChannelJson, JSON.stringify(uiManifest, null, 2));
-  await putObject(`ui/${kind}.json`, uiChannelJson, "application/json");
+  // 界面热更新包默认不发：界面热更新层生效时会盖住整个皮肤系统（皮肤切换
+  // 失效），仅在全量换新界面（--ui-only / --with-ui）时才发布
+  let uiManifest: Record<string, unknown> | null = null;
+  let uiManifestLine = "界面通道未动（默认；--with-ui 可发布界面热更新包）";
+  if (uiOnly || withUi) {
+    const dist = SKIN_DIST_DIR;
+    if (!existsSync(join(dist, "index.html"))) {
+      fail(`找不到 Fluent 皮肤构建产物 ${dist}（examples/skin-fluent 随皮肤源码提交）`);
+    }
+    mkdirSync(OUT_DIR, { recursive: true });
+    const uiZip = join(OUT_DIR, `ui-${version}.zip`);
+    rmSync(uiZip, { force: true });
+    console.log("[publish] 打包界面热更新 zip…");
+    if (!runTarZip(uiZip, dist) && !runPowerShellZip(uiZip, dist)) {
+      fail("UI zip 打包失败");
+    }
+    await putObject(`${PRODUCT_PREFIX}/ui/ui-${version}.zip`, uiZip, "application/zip", "public, max-age=3600");
+    // 界面包 URL 带上传时间戳作缓存穿透参数：zip 边缘缓存 1 小时，同版本重发
+    // （修内容不发版）时查询串变化即绕开旧缓存，客户端不会拿到上一次的包
+    const uiZipUrl = `${publicUrl}/${PRODUCT_PREFIX}/ui/ui-${version}.zip?v=${now.getTime()}`;
+    // 严格单通道：只更新所选通道的界面热更新清单，另一通道不受影响
+    // （应用「热更新地址留空」时按更新通道拉取：正式版 ui/stable.json、预览版 ui/preview.json）
+    uiManifest = {
+      version,
+      url: uiZipUrl,
+      notes,
+      date: today,
+    };
+    const uiChannelJson = join(OUT_DIR, `ui-${kind}.json`);
+    writeFileSync(uiChannelJson, JSON.stringify(uiManifest, null, 2));
+    await putObject(`${PRODUCT_PREFIX}/ui/${kind}.json`, uiChannelJson, "application/json", "no-cache");
+    uiManifestLine = `界面热更新清单（${kind}）   ${publicUrl}/${PRODUCT_PREFIX}/ui/${kind}.json`;
+  }
 
+  // ---- 5. 程序更新清单 ----
   if (!uiOnly) {
     const installer = join(ROOT, "src-tauri", "target", "release", "bundle", "nsis",
       `GiantappWallpaper_${version}_x64-setup.exe`);
     if (!existsSync(installer)) {
       fail(`找不到安装包 ${installer}（先构建，或去掉 --skip-build）`);
     }
-    await putObject(`dl/${basename(installer)}`, installer, "application/octet-stream");
+    await putObject(`${PRODUCT_PREFIX}/dl/${basename(installer)}`, installer, "application/octet-stream", "public, max-age=3600");
     const appManifest = {
       version,
-      url: `${workerUrl}/dl/${basename(installer)}`,
+      url: `${publicUrl}/${PRODUCT_PREFIX}/dl/${basename(installer)}`,
       notes,
       date: today,
       prerelease: isPrerelease,
     };
     const channelJson = join(OUT_DIR, `${kind}.json`);
     writeFileSync(channelJson, JSON.stringify(appManifest, null, 2));
-    await putObject(`${kind}.json`, channelJson, "application/json");
+    await putObject(`${PRODUCT_PREFIX}/${kind}.json`, channelJson, "application/json", "no-cache");
 
     // 正式版发布可选择同步预览通道：程序与界面热更新清单一起覆盖，
     // preview 用户（alpha 版）也能收到该正式版
     if (kind === "release" && syncPreview) {
       const previewJson = join(OUT_DIR, "preview.json");
       writeFileSync(previewJson, JSON.stringify(appManifest, null, 2));
-      await putObject("preview.json", previewJson, "application/json");
-      const uiPreviewJson = join(OUT_DIR, "ui-preview.json");
-      writeFileSync(uiPreviewJson, JSON.stringify(uiManifest, null, 2));
-      await putObject("ui/preview.json", uiPreviewJson, "application/json");
+      await putObject(`${PRODUCT_PREFIX}/preview.json`, previewJson, "application/json", "no-cache");
+      if (uiManifest) {
+        const uiPreviewJson = join(OUT_DIR, "ui-preview.json");
+        writeFileSync(uiPreviewJson, JSON.stringify(uiManifest, null, 2));
+        await putObject(`${PRODUCT_PREFIX}/ui/preview.json`, uiPreviewJson, "application/json", "no-cache");
+      }
     }
   }
 
-  // ---- 7. 汇总 ----
-  const scope = uiOnly ? "仅界面热更新" : "程序更新 + 界面热更新";
+  // ---- 6. 汇总 ----
+  const scope = uiOnly ? "仅界面热更新" : withUi ? "程序更新 + 界面热更新" : "仅程序更新";
   console.log(`
 [publish] 完成 ✔（通道：${kind}，范围：${scope}；另一通道不受影响）
 
-  Worker 地址              ${workerUrl}
-  程序更新清单（${kind}）     ${workerUrl}/${kind}.json${uiOnly ? "（本次未更新）" : ""}
-  界面热更新清单（${kind}）   ${workerUrl}/ui/${kind}.json
+  对外地址                 ${publicUrl}
+  产品前缀                 ${PRODUCT_PREFIX}
+  程序更新清单（${kind}）     ${publicUrl}/${PRODUCT_PREFIX}/${kind}.json${uiOnly ? "（本次未更新）" : ""}
+  ${uiManifestLine}
 
-固定下载入口（官网 / 壁纸服务端的下载地址配置一次即可，发布后自动指向最新安装包）：
-  正式版  ${workerUrl}/dl/latest
-  预览版  ${workerUrl}/dl/latest-preview
-
-应用侧接入：应用内 设置 → 软件更新，把 ${workerUrl} 填入「更新服务器地址」——
+应用侧接入：应用内 设置 → 软件更新，把 ${publicUrl}/${PRODUCT_PREFIX} 填入「更新服务器地址」——
 程序更新与界面热更新都会按所选通道自动跟随；打包时内置默认值：
-  GIANTAPP_UPDATE_URL=${workerUrl} bun run build
+  GIANTAPP_UPDATE_URL=${publicUrl}/${PRODUCT_PREFIX} bun run build
+
+官网 / 壁纸服务端的下载地址：没有固定「最新版」入口了（dl/latest 随 Worker 移除），
+由服务端自己拉 ${publicUrl}/${PRODUCT_PREFIX}/stable.json 取 url 做 302，
+或直接把下载按钮指向清单内当前版本的安装包地址（发版后需同步更新）。
 `);
 }
 

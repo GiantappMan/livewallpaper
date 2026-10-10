@@ -1,5 +1,5 @@
 /**
- * 云母 Fluent · app.js
+ * 默认（云母 Fluent） · app.js
  * Windows 11 Fluent 风：左侧导航窗格（选中胶囊指示条）+ 命令栏 + 卡片分组设置页，
  * 亚克力浮层 / ContentDialog / Win11 开关，Mica 底 + Bloom 花形背景。
  * 依赖 ../assets/core.js（window.SC）。

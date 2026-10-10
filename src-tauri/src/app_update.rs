@@ -2,7 +2,7 @@
 //! 清单，发现新版本后（可选）自动下载安装包到数据目录 `update/`；安装始终
 //! 由用户在界面上确认（点击「安装并重启」），也可以选择暂不安装。
 //!
-//! 清单约定（发布渠道提供，见 scripts/cloudflare/worker.js）：
+//! 清单约定（发布渠道提供，见 scripts/publish.ts 与 docs/6.更新与发布.md）：
 //! - `<base>/stable.json`  正式版通道
 //! - `<base>/preview.json` 预览版通道
 //! - 字段：`version` / `url`（安装包地址，相对地址以清单为 base） / `notes` / `date`
@@ -169,6 +169,17 @@ fn read_config(dirs: &AppDirs) -> (String, bool) {
     }
 }
 
+/// 检查用清单地址：`<base>/<stable|preview>.json`。
+/// base 允许带路径段（多产品共用发布桶后为 `https://<worker>/wallpaper`），
+/// 不能用 `Url::join` 直接拼——base 无尾斜杠时 RFC 语义会吞掉最后一段。
+fn manifest_url_for(base: &str, manifest_name: &str) -> Result<reqwest::Url, String> {
+    let mut url = updater::validate_update_url(base)?;
+    if !url.path().ends_with('/') {
+        url.set_path(&format!("{}/", url.path()));
+    }
+    url.join(manifest_name).map_err(|e| format!("地址无效: {e}"))
+}
+
 /// 按当前配置的地址与通道检查更新。
 /// 返回 Some(信息) 表示有比当前程序更新的版本（已缓存到 LAST_INFO 并广播事件）。
 pub async fn check(app: &AppHandle) -> Result<Option<AppUpdateInfo>, String> {
@@ -191,9 +202,7 @@ pub async fn check(app: &AppHandle) -> Result<Option<AppUpdateInfo>, String> {
     };
     publish(app, AppUpdateEvent::Checking);
 
-    let manifest_url = updater::validate_update_url(&base)?
-        .join(channel.manifest_name())
-        .map_err(|e| format!("地址无效: {e}"))?;
+    let manifest_url = manifest_url_for(&base, channel.manifest_name())?;
     let mut info: AppUpdateInfo = updater::http_client()?
         .get(manifest_url.clone())
         .send()
@@ -388,6 +397,23 @@ mod tests {
         assert_eq!(Channel::parse("whatever"), Channel::Off);
         assert_eq!(Channel::Stable.manifest_name(), "stable.json");
         assert_eq!(Channel::Preview.manifest_name(), "preview.json");
+    }
+
+    #[test]
+    fn manifest_url_keeps_base_path() {
+        // 多产品共用发布桶后 base 带产品前缀（如 .../wallpaper）：
+        // 尾斜杠有无都必须保住路径段，清单地址落在前缀内而非根（2026-10-10 回归）。
+        for base in ["https://x.example.com/wallpaper", "https://x.example.com/wallpaper/"] {
+            assert_eq!(
+                manifest_url_for(base, "stable.json").unwrap().as_str(),
+                "https://x.example.com/wallpaper/stable.json"
+            );
+        }
+        assert_eq!(
+            manifest_url_for("https://x.example.com", "preview.json").unwrap().as_str(),
+            "https://x.example.com/preview.json"
+        );
+        assert!(manifest_url_for("ftp://x.example.com", "stable.json").is_err());
     }
 
     #[test]

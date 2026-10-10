@@ -4,6 +4,9 @@ import path from "path";
 
 // Tauri 前端：hash 路由 + 多页面（主界面 / 内嵌播放器）
 export default defineConfig({
+  // 相对路径：同一份 dist 也要作为「巨应3 怀旧」皮肤从 skin.localhost 子路径
+  // 服务（build.rs 嵌入），绝对路径在子路径下会 404
+  base: "./",
   plugins: [react()],
   resolve: {
     alias: {

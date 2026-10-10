@@ -97,17 +97,17 @@ Date format like `2026.9.12`; if the user only mentioned fixes, the `### 功能`
 
 **7. Ask whether to publish to the Cloudflare update channel** (use AskUserQuestion: publish / not for now)
 
-应用内「程序更新」与「界面热更新」都从该渠道拉取（界面热更新地址留空时自动跟随通道）。通道与发布类型一一对应：**正式版 → release 通道（stable.json），预览版 → preview 通道（preview.json）**。脚本会**同时打包并上传界面热更新本体**（`ui/ui-<版本>.zip`，取自当前前端 dist，与安装包内置界面同一份构建），并且**严格只更新所选通道的清单**：正式版 → `stable.json` + `ui/stable.json`；预览版 → `preview.json` + `ui/preview.json`——另一通道完全不受影响（正式版可加 `--sync-preview` 把程序与界面清单一起同步到预览通道）。程序更新与界面热更新一次发布同时覆盖，界面热更新无需单独操作。
+应用内「程序更新」从该渠道拉取（「界面热更新」地址留空时跟随通道）。通道与发布类型一一对应：**正式版 → release 通道（stable.json），预览版 → preview 通道（preview.json）**。**界面热更新包默认不发**——界面热更新层生效时会盖住整个皮肤系统（皮肤切换失效），仅在全量换新界面时加 `--with-ui`（或只发界面用 `--ui-only`），包内容取自 Fluent 皮肤构建产物 examples/skin-fluent（不是内置界面 dist，后者只随安装包内置并作为「巨应3 怀旧」皮肤分发），**严格只更新所选通道的清单**：正式版 → `stable.json`（+ `ui/stable.json`）；预览版 → `preview.json`（+ `ui/preview.json`）——另一通道完全不受影响（正式版可加 `--sync-preview` 把程序清单同步到预览通道）。
 
 **Not for now** -> skip to step 8.
 
 **Publish** -> execute in order:
 
 1. 检测登录：`bunx wrangler@4 whoami`。失败/未登录/输出版本帮助文本时，提示用户自己执行 `bunx wrangler@4 login`（浏览器 OAuth，凭据存本机，不入仓库；也可用 `CLOUDFLARE_API_TOKEN` 环境变量），等用户确认已登录后重试检测；用户放弃则终止本步并告知可稍后手动执行发布命令。
-2. 运行 `bun run scripts/publish.ts <release|preview> --skip-build --notes "<本次更新记录（步骤 3 收集的内容）>"`。脚本幂等：部署 Worker → 确保 R2 桶 → 上传安装包 + 界面包 + 通道清单 → 打印接入地址。`*.workers.dev` 不可达的网络环境提示可用 `CF_WORKER_URL` 绑定自定义域名后重发。
+2. 运行 `CF_R2_PUBLIC_URL=https://releases.giantapp.cc bun run scripts/publish.ts <release|preview> --skip-build --notes "<本次更新记录（步骤 3 收集的内容）>"`。脚本幂等：确保 R2 桶存在并开启公开访问 → 上传安装包 + 通道清单（直连桶，无 Worker）→ 打印接入地址。`CF_R2_PUBLIC_URL` 必填（当前值 `https://releases.giantapp.cc`，绑在桶上的自定义域；不带时会输出 r2.dev 地址，限速且境内不可达）。默认不动界面热更新通道（保持 0.0.0 占位，皮肤系统正常工作）。
 3. 正式版如需让预览通道用户也收到（覆盖 preview.json + ui/preview.json），追加 `--sync-preview`（先询问用户）。
-4. 汇报脚本输出的清单地址与**固定下载入口**：`<worker地址>/dl/latest`（正式版安装包）、`/dl/latest-preview`（预览版）——壁纸服务端 / 官网的下载地址配置一次即可，发布后自动 302 到最新安装包，无需每次改服务端；如站点仍指向旧地址，提醒用户更新为该固定入口。
-5. 构建期可用 `GIANTAPP_UPDATE_URL=<worker地址> bun run build` 把默认更新源烧进安装包（仅全新安装生效）。
+4. 汇报脚本输出的清单地址（`<对外地址>/wallpaper/<通道>.json`）。官网/壁纸服务端没有固定「最新版」入口（dl/latest 已随 Worker 移除）：服务端拉 stable.json 取 url 做 302（推荐，配置一次），或直链版本化安装包地址（发版同步更新）。
+5. 构建期可用 `GIANTAPP_UPDATE_URL=<对外地址>/wallpaper bun run build` 把默认更新源烧进安装包（仅全新安装生效）。
 
 **8. Ask whether to publish to GitHub** (use AskUserQuestion: publish / not for now)
 

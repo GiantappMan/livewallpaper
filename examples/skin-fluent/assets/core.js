@@ -1844,7 +1844,7 @@
         skin("bento", "便当 Bento", "Bento Grid 模块卡片"),
         skin("brutal", "新粗野 Brutal", "硬边框硬阴影撞色"),
         skin("liquid", "流光 Liquid", "液态玻璃悬浮胶囊"),
-        skin("fluent", "云母 Fluent", "Windows 11 云母质感"),
+        skin("fluent", "默认", "Windows 11 云母质感"),
       ];
     }
     const res = await client.api.listSkins();
