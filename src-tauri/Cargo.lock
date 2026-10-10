@@ -1567,7 +1567,7 @@ dependencies = [
 
 [[package]]
 name = "giantapp-wallpaper"
-version = "4.0.1-alpha.3"
+version = "4.0.1-alpha.4"
 dependencies = [
  "anyhow",
  "async-trait",
