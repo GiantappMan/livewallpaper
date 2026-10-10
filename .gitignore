@@ -27,8 +27,9 @@ node_modules
 .tmp-shots/
 .tmp-chrome-profile/
 
-# AI 工具本地状态（mimosa 扫描状态、会话计划、本机插件路径）
+# AI 工具本地状态（mimosa 扫描状态、会话计划、本机插件路径、gh 设备标识）
 .mimosa/
+.local/
 .zcode/plans/
 .zcode/tmp/
 .zcode/screenshots/
