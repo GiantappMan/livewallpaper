@@ -7,6 +7,7 @@ Github：https://github.com/GiantappMan/livewallpaper/releases
 ---
 
 如需访问巨应2，请查看分支 2.x。
+巨应Ⅲ已进入维护期，巨应Ⅳ开发中
 
 ---
 
