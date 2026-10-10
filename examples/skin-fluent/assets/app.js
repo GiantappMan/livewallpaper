@@ -3173,6 +3173,7 @@
       return;
     }
     dockEl.hidden = false;
+    dockArm(); // 可见即进入收起倒计时；指针在附近时 pointermove 会不断续期（见「Dock 自动收起」）
     SC.setTimeScreen(dockSelScreen);
     dockEl.innerHTML = "";
 
@@ -3292,6 +3293,52 @@
     b.append(iconEl(ic, 16));
     return b;
   }
+
+  // ---------------------------------------------------------------- Dock 自动收起
+  // Dock 常驻屏幕会挡住下方壁纸（用户反馈「有点挡事」）：无交互 4s 后整条沉出
+  // 屏底只留一枚小把手条，指针移近（把手外扩 28px 热区）即重新升起。桌面上的
+  // 鼠标事件由后端全局钩子转发进页面（src-tauri/mouse_hook.rs），window 级
+  // pointermove 即可感知真实光标；收起状态只落在 dock-wrap 的类上，renderDock
+  // 重建 .dock 不影响。收起只在指针静止时发生——唤醒靠移动，指针持续在附近
+  // 移动就会一直续期，因此不会出现「展开后原地又收起」的闪跳。
+  const DOCK_COLLAPSE_MS = 4000;
+  const DOCK_WAKE_MARGIN = 28;
+  let dockCollapseTimer = null;
+  function dockArm() {
+    if (dockCollapseTimer) clearTimeout(dockCollapseTimer);
+    dockCollapseTimer = setTimeout(dockCollapse, DOCK_COLLAPSE_MS);
+  }
+  function dockWake() {
+    dockEl.classList.remove("is-collapsed");
+    dockArm();
+  }
+  function dockCollapse() {
+    dockCollapseTimer = null;
+    if (dockEl.hidden) return;
+    // 音量/音源弹层展开、壁纸拖拽进行中（.loc-ghost 幻影存在 = 画布磁贴与
+    // HTML5 卡片两种拖拽任一在途）时不收：屏块落点必须保持可见可落
+    if (document.querySelector(".pop-anchor.is-open, .select.is-open, .loc-ghost") || dndWallpaper) {
+      dockArm();
+      return;
+    }
+    dockEl.classList.add("is-collapsed");
+  }
+  function dockNear(x, y) {
+    const inner = dockEl.firstElementChild;
+    if (!inner) return false;
+    const r = inner.getBoundingClientRect();
+    return x >= r.left - DOCK_WAKE_MARGIN && x <= r.right + DOCK_WAKE_MARGIN
+      && y >= r.top - DOCK_WAKE_MARGIN && y <= r.bottom + DOCK_WAKE_MARGIN;
+  }
+  // mousemove + pointermove 双监听：钩子转发的 WM_MOUSEMOVE 在 WebView2 里两者都合成，
+  // 双保险覆盖不同版本的行为差异；dockWake 幂等，重复触发无副作用
+  const dockHoverWake = (e) => {
+    if (!dockEl.hidden && dockNear(e.clientX, e.clientY)) dockWake();
+  };
+  window.addEventListener("mousemove", dockHoverWake);
+  window.addEventListener("pointermove", dockHoverWake);
+  // HTML5 拖拽（库卡片 → Dock 屏块）期间不产生鼠标移动事件，用 dragover 坐标唤醒
+  window.addEventListener("dragover", dockHoverWake);
 
   // ---------------------------------------------------------------- 壁纸日历
   // 数据口径与后端一致：四级优先级（单日 > 年度节日 > 每周 > 不接管）由后端

@@ -674,8 +674,18 @@ button.card-row:hover { background: var(--subtle); }
   background: rgba(249, 249, 249, .8); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%);
   border: 1px solid var(--stroke); border-radius: var(--r-lg);
   box-shadow: var(--shadow-fly); color: var(--ink);
+  transition: transform .35s var(--ease);
 }
 [data-mode="dark"] .dock { background: rgba(43, 43, 43, .8); }
+/* 自动收起（app.js 切 .dock-wrap.is-collapsed）：整条沉出屏底（含 16px 底距），
+   只在原位置留一枚小把手条示意「这里有一条」，指针移近即升回 */
+.dock-wrap.is-collapsed .dock { transform: translateY(calc(100% + 16px)); pointer-events: none; }
+.dock-wrap.is-collapsed .dock::after {
+  content: ""; position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translateX(-50%);
+  width: 56px; height: 6px; border-radius: 99px;
+  background: color-mix(in srgb, var(--ink) 32%, transparent);
+}
+@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
 .dock-line { position: absolute; top: 0; left: 5px; max-width: calc(100% - 10px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
 .dock-line.is-idle { opacity: .25; }
 /* 音量/音源弹层贴着 Dock 右端，向下弹会被视口底边裁掉：改为向上弹、右缘对齐按钮 */
