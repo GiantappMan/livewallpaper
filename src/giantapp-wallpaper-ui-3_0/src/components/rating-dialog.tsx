@@ -32,7 +32,7 @@ export function RatingDialog(props: RatingDialogProps) {
 
     //打开商店评价
     const openRating = async () => {
-        await api.openStoreReview(process.env.NEXT_PUBLIC_MS_Address!);
+        await api.openStoreReview();
         setOpen(false);
 
         const config = localStorage.getItem('launchRecord');

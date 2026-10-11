@@ -376,7 +376,8 @@ public partial class ShellWindow : Window
         {
             string dir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
             var setupPath = Path.Combine(dir, "Assets/MicrosoftEdgeWebview2Setup.exe");
-            Process.Start(new ProcessStartInfo(setupPath) { UseShellExecute = true });
+            //固定程序 explorer.exe，随包安装器路径仅作参数
+            Process.Start("explorer.exe", $"\"{setupPath}\"");
         }
         catch (Exception ex)
         {

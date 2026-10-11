@@ -1,4 +1,5 @@
 ﻿using Client.Apps;
+using Client.Libs;
 using HandyControl.Controls;
 using HandyControl.Interactivity;
 using MultiLanguageForXAML;
@@ -110,9 +111,10 @@ internal class AppNotifyIcon
     {
         try
         {
-            if (url == null)
+            if (url == null || !UrlGuard.IsSafeHttpUrl(url))
                 return;
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            //固定程序 explorer.exe，url 仅作参数
+            Process.Start("explorer.exe", $"\"{url}\"");
         }
         catch (Exception ex)
         {

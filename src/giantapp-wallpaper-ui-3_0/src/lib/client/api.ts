@@ -386,11 +386,12 @@ class API {
     }
   }
 
-  async openStoreReview(defaultUrl: string): Promise<ApiResult<boolean>> {
+  async openStoreReview(): Promise<ApiResult<boolean>> {
     try {
       if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
       const { api } = (window as any).chrome.webview.hostObjects;
-      const res = await api.OpenStoreReview(defaultUrl);
+      //商店地址由宿主本地常量发起，前端不下发 URL
+      const res = await api.OpenStoreReview("");
       return { error: null, data: res };
     }
     catch (e) {

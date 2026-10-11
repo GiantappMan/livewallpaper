@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Libs\Debouncer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Libs\NLogHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Libs\UrlGuard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Libs\UWPHelper.cs" />
   </ItemGroup>
 </Project>

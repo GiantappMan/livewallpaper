@@ -375,12 +375,14 @@ public class ApiObject
         return false;
     }
 
-    //通过默认浏览器打开url
+    //通过默认浏览器打开url（固定程序 explorer.exe，url 仅作参数）
     public void OpenUrl(string url)
     {
         try
         {
-            Process.Start(url);
+            if (!UrlGuard.IsSafeHttpUrl(url))
+                return;
+            Process.Start("explorer.exe", $"\"{url}\"");
         }
         catch (Exception ex)
         {
@@ -569,6 +571,7 @@ public class ApiObject
         AppService.ShowShell(path);
     }
 
+    //商店评分页地址由本机常量发起，不接受前端下发（defaultUrl 仅为兼容旧调用保留）
     public async Task<bool> OpenStoreReview(string? defaultUrl)
     {
         try
@@ -583,9 +586,9 @@ public class ApiObject
             }
             else
             {
-                if (defaultUrl != null)
-                    OpenUrl(defaultUrl);
-                return true;
+                var uri = new Uri("ms-windows-store://pdp/?productid=9MWTG433JV6B");
+                bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+                return success;
             }
         }
         catch (Exception ex)

@@ -74,7 +74,7 @@ const AboutPage = () => {
             <Button variant="outline" asChild>
                 <Link
                     onClick={(e) => {
-                        api.openStoreReview(process.env.NEXT_PUBLIC_MS_Address!);
+                        api.openStoreReview();
                         e.preventDefault();
                     }}
                     className="underline-offset-4 flex items-center" href="#" target="_blank">
