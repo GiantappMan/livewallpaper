@@ -1,20 +1,19 @@
 import { i18n, type Locale } from "@/i18n-config";
 
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 import '@/app/styles/globals.css'
 import "@/app/styles/themes.css"
-import { Inter as FontSans } from "next/font/google"
 import { cn } from '@/lib/utils'
 import { Providers } from '@/components/providers';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import SideMenu from '@/components/side-menu';
+import { TitleBar } from '@/components/title-bar';
 import { getDictionary } from "@/get-dictionary";
 import { RatingDialog } from "@/components/rating-dialog";
-
-export const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
 
 export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
@@ -33,10 +32,10 @@ export default async function Root({
       <head />
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable
+          "min-h-screen bg-background font-sans antialiased"
         )}
       >
+        <TitleBar />
         <Providers
           lang={params.lang}
           dictionary={dictionary}
@@ -46,7 +45,7 @@ export default async function Root({
           disableTransitionOnChange
         >
           <ThemeWrapper>
-            <div className="flex h-screen bg-background">
+            <div className="flex h-[calc(100vh-3rem)] bg-background">
               <SideMenu lang={params.lang} />
 
               {/* Content area */}

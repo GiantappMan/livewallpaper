@@ -25,6 +25,33 @@ class Shell {
     shell.CloseWindow();
   }
 
+  minimizeWindow() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.MinimizeWindow();
+  }
+
+  maximizeWindow() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.MaximizeWindow();
+  }
+
+  restoreWindow() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.RestoreWindow();
+  }
+
+  //窗口状态变化（Normal/Minimized/Maximized），由宿主 ShellApiObject.WindowStateChanged 事件推送
+  onWindowStateChanged(callback: (state: string) => void): void {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.addEventListener('WindowStateChanged', (event: any) => {
+      callback(event);
+    });
+  }
+
   isRunningInClient(): boolean {
     return typeof window !== 'undefined' && !!window.chrome?.webview;
   }
