@@ -4,3 +4,13 @@
 /src/build/dist
 /src/giantapp-wallpaper-ui/.env
 /src/giantapp-wallpaper-client/WallpaperCore/Assets/Players/
+
+# 本地工具生成目录
+.mimosa/
+.video_agent/
+.wrangler/
+.zcode/plans/
+.zcode/tmp/
+.zcode/screenshots/
+.zcode/workflow-drafts/
+.zcode/workflow-runs/
