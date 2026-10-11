@@ -1,0 +1,7 @@
+{
+  "name": "livewallpaper-v3",
+  "private": true,
+  "scripts": {
+    "dev": "bun run scripts/dev.ts"
+  }
+}
