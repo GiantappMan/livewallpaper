@@ -14,7 +14,7 @@ import GeneralSettings from "@/pages/settings/general";
 import WallpaperSettings from "@/pages/settings/wallpaper";
 import AppearanceSettings from "@/pages/settings/appearance";
 import UpdateSettings from "@/pages/settings/update";
-import AboutPage from "@/pages/about";
+import AboutSettings from "@/pages/settings/about";
 import { AppUpdatePrompt } from "@/components/app-update-prompt";
 
 export default function App() {
@@ -38,8 +38,8 @@ export default function App() {
                     <Route path="wallpaper" element={<WallpaperSettings />} />
                     <Route path="appearance" element={<AppearanceSettings />} />
                     <Route path="update" element={<UpdateSettings />} />
+                    <Route path="about" element={<AboutSettings />} />
                   </Route>
-                  <Route path="/about" element={<AboutPage />} />
                 </Routes>
                 <AppUpdatePrompt />
                 <RatingDialog />

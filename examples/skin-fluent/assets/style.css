@@ -403,6 +403,12 @@ img { display: block; }
    仅悬停的单张卡片播放动画，常驻不耗绘制 */
 @property --apply-ring { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes apply-ring-spin { to { --apply-ring: 360deg; } }
+/* Dock 屏块播放进度（跨回绕累计，可超 100；core ticker 每秒写一次）：注册成可过渡的
+   <number>，.dock-screen 对它做 1s 线性过渡，彗尾锚角 calc(var(--prog) * 3.6deg) 即
+   逐帧连续插值，消除逐秒一跳的顿挫；角度取模无界累计，回绕处彗头恰好连续转过 12 点、
+   彗尾整体跟着旋转，无任何重置。inherits: true 让屏块的 ::after 取得到插值中的当前值；
+   app.js 侧按最短路径增量累计，过渡永不倒卷（见 app.js screensTime 订阅） */
+@property --prog { syntax: "<number>"; inherits: true; initial-value: 0; }
 .wall-cover::after, .loc-cover::after, .loc-tile-thumb::after {
   content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
   padding: 2px; border-radius: inherit;
@@ -690,6 +696,8 @@ button.card-row:hover { background: var(--subtle); }
 .about-hero { display: flex; align-items: center; gap: 20px; padding: 18px 0 20px; }
 .about-name { font-size: 24px; font-weight: 600; }
 .about-ver { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+.about-author { color: var(--accent); text-decoration: none; }
+.about-author:hover { color: var(--accent-hover); text-decoration: underline; }
 .about-links { max-width: 760px; }
 .about-arrow { margin-left: auto; color: var(--ink-3); display: inline-flex; }
 .about-foot { display: flex; gap: 8px; margin-top: 16px; }
@@ -721,9 +729,8 @@ button.card-row:hover { background: var(--subtle); }
    即展开回完整播放条 */
 .dock-wrap.is-collapsed .dock { width: var(--pill-w, 220px); overflow: hidden; padding: 4px 6px; border-radius: 10px; }
 /* 容器收缩时屏块条自身不可被 flex 压缩（否则会被挤没），溢出的部分交给裁切；
-   收起态进一步收紧：屏块压矮到 28px、进度线内缩对齐 6px padding，整体成药丸 */
+   收起态进一步收紧：屏块压矮到 28px，整体成药丸 */
 .dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; --dock-h: 28px; }
-.dock-wrap.is-collapsed .dock-line { left: 6px; max-width: calc(100% - 12px); }
 /* 收起态屏块「唱片化」：圆形碟 + 封面匀速旋转示意在播（暂停屏停转压暗），编号静居
    中心作轴标，碟间轻微重叠。方形封面放大到 142% 再旋转（32px 方图内接圆只有 ~23px，
    不放大会在斜对角露出碟底）；展开态屏块不受影响 */
@@ -733,27 +740,33 @@ button.card-row:hover { background: var(--subtle); }
    accent 边框（展开态选中高亮见下方 .dock-screen.is-selected） */
 .dock-wrap.is-collapsed .dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .dock-wrap.is-collapsed .dock-screen + .dock-screen { margin-left: -7px; }
-.dock-wrap.is-collapsed .dock-screen img { inset: -21%; width: 142%; height: 142%; animation: dock-screen-spin 9s linear infinite; }
-.dock-wrap.is-collapsed .dock-screen.is-paused img { animation-play-state: paused; filter: brightness(.75); }
-/* 收起碟流光环：未选屏的在播碟外圈跑与库封面悬停同款的 accent 流光——复用 --apply-ring
-   注册属性 + apply-ring-spin 旋转，2.2s 一圈无缝循环（不随播放进度归零重启）。仅 is-live
-   碟点亮，空屏碟保持素碟；选中碟不跑环，让位给上方 accent 选中描边。is-paused 的斜纹
-   ::after 在收起态被环取代——流光冻结 + 碟压暗已表达暂停 */
+/* 碟封面默认冻结、仅在播碟旋转（未播放/暂停的碟不转）：play-state 放在基类上，
+   暂停即就地冻结、不跳回 0 度角；live 且未暂停才放行转动 */
+.dock-wrap.is-collapsed .dock-screen img { inset: -21%; width: 142%; height: 142%; animation: dock-screen-spin 9s linear infinite; animation-play-state: paused; }
+.dock-wrap.is-collapsed .dock-screen.is-live:not(.is-paused) img { animation-play-state: running; }
+/* 停走兜底：个别暂停路径后端不上报 isPaused（旋转门控依赖该标记），进度连续 ~3s 未
+   推进的碟由 app.js 挂 prog-stalled，按暂停处理——冻结旋转并压暗，恢复推进即解除 */
+.dock-wrap.is-collapsed .dock-screen.is-live.prog-stalled img { animation-play-state: paused; filter: brightness(.75); }
+.dock-wrap.is-collapsed .dock-screen.is-paused img { filter: brightness(.75); }
+/* 收起碟进度流光：在播碟外圈跑 accent 流光彗尾指示各自真实播放进度——彗头亮弧锚在
+   进度角、随进度无缝旋转（--prog 跨回绕累计，core ticker 逐屏轮询写入，见展开态说明），
+   彗尾拖满一整圈、在彗头后方持续渐隐消散，回绕不重置、不残留断点。仅 is-live 且有
+   进度数据的碟点亮（has-prog 控显隐，无进度的网页/静态壁纸不留残影），空屏碟保持
+   素碟；选中碟让位给上方 accent 选中描边。is-paused 的斜纹 ::after 在收起态被彗尾
+   取代——全暂停后轮询停、--prog 冻结，彗尾停在原位 + 碟压暗已表达暂停 */
 .dock-wrap.is-collapsed .dock-screen.is-live:not(.is-selected)::after {
   content: ""; position: absolute; inset: 0; z-index: 3; border-radius: 50%; pointer-events: none;
-  padding: 1.5px;
-  background: conic-gradient(from var(--apply-ring),
-    transparent 0turn .52turn,
-    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
-    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
-    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  padding: 2px; opacity: 0; transition: opacity var(--speed);
+  background: conic-gradient(from calc(var(--prog, 0) * 3.6deg),
+    transparent 0turn,
+    color-mix(in srgb, var(--accent) 45%, transparent) .22turn,
+    var(--accent) .5turn, var(--accent) 1turn);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: apply-ring-spin 2.2s linear infinite;
 }
-.dock-wrap.is-collapsed .dock-screen.is-live.is-paused::after { animation-play-state: paused; }
+.dock-wrap.is-collapsed .dock-screen.is-live.has-prog:not(.is-selected)::after { opacity: 1; }
 @keyframes dock-screen-spin { to { transform: rotate(360deg); } }
 /* 容器收缩时屏块条自身不可被 flex 压缩（否则会被挤没），溢出的其余部分交给裁切 */
 .dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; }
@@ -772,11 +785,13 @@ button.card-row:hover { background: var(--subtle); }
 @media (prefers-reduced-motion: reduce) {
   .dock, .dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock-empty-hint { transition: none; }
   .dock-wrap.is-collapsed .dock-screen img { animation: none; } /* 减动效：封面不旋转 */
-  /* 减动效：流光环不转也不显示（animation:none 会留一截静止弧，像卡住的残影） */
-  .dock-wrap .dock-screen.is-live::after { animation: none; opacity: 0; }
+  /* 屏块进度彗尾是进度信息本身（非装饰动画），减动效下保留 */
 }
-.dock-line { position: absolute; top: 0; left: 5px; max-width: calc(100% - 10px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
-.dock-line.is-idle { opacity: .25; }
+/* 顶部进度线只在「收起态 + 已选屏」显示：展开态中部有滑杆和时间文本、未选屏碟上有
+   彗尾，顶部线都是重复信息；收起后滑杆随内容淡出，它才作为该屏唯一进度指示留在
+   胶囊上沿。is-idle（未选屏 / 无进度可显）一并隐藏 */
+.dock-line { position: absolute; top: 0; left: 6px; max-width: calc(100% - 12px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; display: none; }
+.dock-wrap.is-collapsed .dock-line:not(.is-idle) { display: block; }
 /* 音量/音源弹层贴着 Dock 右端，向下弹会被视口底边裁掉：改为向上弹、右缘对齐按钮 */
 .dock .pop { top: auto; bottom: calc(100% + 8px); }
 /* 空闲 Dock 中央的休息提示：绝对定位居中于整条 Dock（不随屏块条宽度偏移），
@@ -803,7 +818,8 @@ button.card-row:hover { background: var(--subtle); }
 .dock-screen {
   position: relative; flex-shrink: 0; padding: 0; cursor: pointer; overflow: hidden;
   border: 1px solid var(--stroke); border-radius: 4px; background: var(--ctl-hover); color: var(--ink-3);
-  transition: border-color var(--speed), box-shadow var(--speed), color var(--speed), height .35s var(--ease);
+  /* --prog 1s 线性过渡：ticker 每秒一笔的进度在两拍间逐帧插值，彗尾不再一秒一跳 */
+  transition: border-color var(--speed), box-shadow var(--speed), color var(--speed), height .35s var(--ease), --prog 1s linear;
 }
 .dock-screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dock-screen-num {
@@ -815,24 +831,25 @@ button.card-row:hover { background: var(--subtle); }
 .dock-screen:hover { border-color: var(--divider); }
 .dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .dock-screen.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 12px color-mix(in srgb, var(--accent) 22%, transparent); }
-/* 展开态未选屏的在播屏块：贴边方框跑与库封面悬停同款的 accent 流光（复用
-   --apply-ring + apply-ring-spin，2.2s 一圈无缝循环，不随播放进度归零重启）。
-   框贴屏块内缘 1.5px——屏块自身 overflow: hidden（外层屏块条还是滚动容器）会把
-   外浮部分整圈裁没，画在外面不可行。仅非暂停屏显示——暂停屏保留斜纹表达；
-   选中屏不跑环，让位给 accent 选中描边 */
+/* 展开态未选屏的在播屏块：贴边方框跑 accent 流光彗尾指示各自真实播放进度——彗头亮弧
+   锚在进度角、随进度无缝旋转（--prog 跨回绕累计，core ticker 逐屏轮询写入屏块），彗尾
+   拖满一整圈、在彗头后方持续渐隐消散，回绕不重置（见收起碟说明）。框贴屏块内缘 2px
+   ——屏块自身 overflow: hidden（外层屏块条还是滚动容器）会把外浮部分整圈裁没，画在
+   外面不可行。仅非暂停屏显示——暂停屏保留斜纹表达；选中屏不跑彗尾，让位给 accent
+   选中描边（其进度由滑杆表达，其余屏块彗尾照常流动） */
 .dock-wrap:not(.is-collapsed) .dock-screen.is-live:not(.is-paused):not(.is-selected)::after {
-  content: ""; position: absolute; inset: 0; padding: 1.5px; border-radius: 3px; z-index: 3; pointer-events: none;
-  background: conic-gradient(from var(--apply-ring),
-    transparent 0turn .52turn,
-    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
-    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
-    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  content: ""; position: absolute; inset: 0; padding: 2px; border-radius: 3px; z-index: 3; pointer-events: none;
+  opacity: 0; transition: opacity var(--speed);
+  background: conic-gradient(from calc(var(--prog, 0) * 3.6deg),
+    transparent 0turn,
+    color-mix(in srgb, var(--accent) 45%, transparent) .22turn,
+    var(--accent) .5turn, var(--accent) 1turn);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  animation: apply-ring-spin 2.2s linear infinite;
 }
+.dock-wrap:not(.is-collapsed) .dock-screen.is-live.has-prog:not(.is-paused):not(.is-selected)::after { opacity: 1; }
 
 /* ---------------- Toast（Win11 通知） ---------------- */
 .sc-toasts { position: fixed; right: 20px; bottom: 20px; z-index: 120; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }

@@ -14,7 +14,6 @@ import {
     CalendarDaysIcon as solidCalendarDaysIcon,
     CogIcon as solidCogIcon,
     HomeIcon as solidHomeIcon,
-    QuestionMarkCircleIcon as questionMarkCircleIcon,
     Squares2X2Icon as solidSquares2X2Icon,
 } from "@heroicons/react/24/solid";
 import { useLocation } from "react-router-dom";
@@ -74,14 +73,6 @@ export default function SideMenu() {
             urls: [`/settings`],
             icon: CogIcon,
             selectedIcon: solidCogIcon,
-            current: false,
-        },
-        {
-            name: dictionary['common'].about,
-            href: `/about`,
-            urls: [`/about`],
-            icon: questionMarkCircleIcon,
-            selectedIcon: questionMarkCircleIcon,
             current: false,
         },
     ]);

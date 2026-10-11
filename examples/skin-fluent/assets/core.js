@@ -1415,16 +1415,51 @@
   const tickerCbs = new Set();
   let timeScreen = -1;
   function setTimeScreen(i) { timeScreen = typeof i === "number" ? i : -1; }
+  // 未选屏时置 true：ticker 逐屏查询进度并 emit("screensTime", map)（Dock 屏块进度彗尾的
+  // 数据源）。并入 ticker 统一管理前后台与暂停，避免皮肤侧自建轮询的口径差异
+  let screenTimesWanted = false;
+  function setScreenTimesWanted(v) { screenTimesWanted = !!v; }
   function startTicker() {
     if (tickerTimer) return;
     tickerTimer = setInterval(async () => {
       if (document.hidden || (document).shell_hidden) return;
-      if (!tickerCbs.size) return; // 没有订阅者（如进度未显示）就不发轮询请求
-      if (demo) { mockTick(); const payload = mockTime(); tickerCbs.forEach((fn) => fn(payload)); return; }
+      if (!tickerCbs.size && !screenTimesWanted) return; // 没有订阅者且彗尾不需要进度就不发轮询请求
+      if (demo) {
+        mockTick();
+        const payload = mockTime();
+        tickerCbs.forEach((fn) => fn(payload));
+        if (screenTimesWanted && state.status) {
+          const map = {};
+          for (const w of state.status.wallpapers) {
+            for (const si of (w.runningInfo && w.runningInfo.screenIndexes) || []) {
+              if (!(si in map)) map[si] = payload;
+            }
+          }
+          emit("screensTime", map);
+        }
+        return;
+      }
       if (!state.status || !state.status.wallpapers.length) { tickerCbs.forEach((fn) => fn(null)); return; }
       if (Date.now() - lastSeekAt < 2000) return;
       const allPaused = state.status.wallpapers.every((w) => w.runningInfo && w.runningInfo.isPaused);
-      if (allPaused) return;
+      if (allPaused) return; // 全部暂停：彗尾冻结在原处
+      if (screenTimesWanted) {
+        // 逐屏查询，各屏进度互不相干：未选屏时它是 Dock 上唯一的进度显示；选中屏时
+        // 供其余屏块彗尾继续流动（选中块让位给 accent 描边，其滑杆进度走下方 timeScreen 轮询）
+        const map = {};
+        for (const w of state.status.wallpapers) {
+          for (const si of (w.runningInfo && w.runningInfo.screenIndexes) || []) {
+            if (si in map) continue;
+            try {
+              const r = await client.api.getWallpaperTime(si);
+              map[si] = r && r.data && r.data.duration > 0 && r.data.position >= 0
+                ? { position: r.data.position, duration: r.data.duration } : null;
+            } catch { map[si] = null; }
+          }
+        }
+        emit("screensTime", map);
+        if (timeScreen < 0) return; // 未选屏：没有滑杆轮询，逐屏结果即全部
+      }
       const res = await client.api.getWallpaperTime(timeScreen >= 0 ? timeScreen : undefined);
       const tp = res && res.data ? res.data : null;
       if (!tp || tp.position < 0 || tp.duration <= 0) { tickerCbs.forEach((fn) => fn(null)); return; }
@@ -2119,7 +2154,7 @@
     // 播放
     playingSet, screenIndexOf, canPause,
     applyWallpaper, pause, resume, stop, setVolume,
-    onTime, seek, setTimeScreen,
+    onTime, seek, setTimeScreen, setScreenTimesWanted,
     // 创建 / 编辑
     defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover,
     createMediaWallpaper, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,

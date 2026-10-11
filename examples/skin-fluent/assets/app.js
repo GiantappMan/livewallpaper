@@ -268,10 +268,9 @@
     { id: "local", icon: "folder", label: "nav.local" },
     { id: "calendar", icon: "calendar", label: "nav.calendar" },
     { id: "hub", icon: "globe", label: "nav.hub" },
-    // Win11 惯例：低频项（下载 / 设置 / 关于）沉到窗格底部 FooterMenuItems 区
+    // Win11 惯例：低频项（下载 / 设置）沉到窗格底部 FooterMenuItems 区
     { id: "downloads", icon: "download", label: "nav.downloads", badge: true, foot: true },
     { id: "settings", icon: "gear", label: "nav.settings", foot: true },
-    { id: "about", icon: "info", label: "nav.about", foot: true },
   ];
 
   let dlBadge = null;
@@ -342,6 +341,7 @@
   }
   function go(view, sub) {
     if (view === "library") view = "local"; // 废弃视图一律重定向：外部 nav 事件 / 旧调用点统一落到本地库
+    if (view === "about") { view = "settings"; sub = "about"; } // 关于已并入设置页签：外部 nav 事件归一
     if (view !== currentView) searchQuery = ""; // 搜索框属于本地库：离开即清空，回来是未过滤的全量视图
     currentView = view;
     if (view === "settings" && SETTINGS_TAB_IDS.includes(sub)) settingsTab = sub;
@@ -352,6 +352,7 @@
   window.addEventListener("hashchange", () => {
     const { view, sub } = parseHash();
     if (view === "library") { location.hash = "#/local"; return; } // 废弃视图：前进/后退/手输旧 hash 一律归一
+    if (view === "about") { location.hash = "#/settings/about"; return; } // 关于已并入设置页签：旧 hash 归一
     const tabChanged = view === "settings" && SETTINGS_TAB_IDS.includes(sub) && sub !== settingsTab;
     if (tabChanged) settingsTab = sub;
     if (view !== currentView && NAV.some((n) => n.id === view)) { searchQuery = ""; currentView = view; updatePane(); renderView(); }
@@ -2471,10 +2472,10 @@
 
   // ---------------------------------------------------------------- 设置视图
   let settingsTab = "general";
-  const SETTINGS_TAB_IDS = ["general", "wallpaper", "appearance", "update"];
+  const SETTINGS_TAB_IDS = ["general", "wallpaper", "appearance", "update", "about"];
   function renderSettings() {
     viewEl.innerHTML = "";
-    const tabs = [["general", SC.t("cfg.general")], ["wallpaper", SC.t("cfg.wallpaper")], ["appearance", SC.t("cfg.appearance")], ["update", SC.t("cfg.update")]];
+    const tabs = [["general", SC.t("cfg.general")], ["wallpaper", SC.t("cfg.wallpaper")], ["appearance", SC.t("cfg.appearance")], ["update", SC.t("cfg.update")], ["about", SC.t("nav.about")]];
     const tabbar = el("div", { class: "pivot" }, tabs.map(([id, label]) =>
       el("button", { class: `pivot-item ${settingsTab === id ? "is-active" : ""}`, onclick: () => { settingsTab = id; location.hash = `#/settings/${id}`; renderSettings(); } }, label)));
     viewEl.append(pageHead(SC.t("nav.settings"), SC.t("cfg.reloadHint")));
@@ -2484,6 +2485,7 @@
     if (settingsTab === "general") generalTab(panel);
     else if (settingsTab === "wallpaper") wallpaperTab(panel);
     else if (settingsTab === "update") updateTab(panel);
+    else if (settingsTab === "about") aboutTab(panel);
     else appearanceTab(panel);
   }
 
@@ -2905,20 +2907,39 @@
     panel.append(appCard, uiCard);
   }
 
-  // ---------------------------------------------------------------- 关于视图
-  function renderAbout() {
-    viewEl.innerHTML = "";
+  // ---------------------------------------------------------------- 设置「关于」页签
+  function aboutTab(panel) {
     const links = [
       ["zap", SC.t("about.review"), () => SC.openStoreReview()],
       ["star", SC.t("about.github"), () => SC.openUrl("https://github.com/GiantappMan/livewallpaper")],
       ["bug", SC.t("about.feedback"), () => SC.openUrl("https://wallpaper.giantapp.cn/zh-CN/feedback")],
     ];
-    viewEl.append(pageHead(SC.t("about.title"), ""));
-    viewEl.append(el("div", { class: "about-hero" },
+    // 版权年份区间：起点为仓库最早提交（2018-02），终点动态取当前年份
+    const yearRange = `2018-${new Date().getFullYear()}`;
+    // 版本行主显应用版本（4.x）：皮肤自身版本仅在外观-皮肤列表展示。
+    // 异步取到前先落皮肤版本兜底，取到后原位替换（可能已切走视图，判 isConnected）
+    const verEl = el("span", {}, `v${SC.meta.version}`);
+    if (SC.client) {
+      SC.client.api.getVersion().then((res) => {
+        if (res && !res.error && res.data && verEl.isConnected) verEl.textContent = `v${res.data}`;
+      }).catch(() => { });
+    }
+    // about.author 是 "{0} 出品" 模板：把 {0} 挖空，作者名渲染成 mscoder.cn 链接
+    const authorParts = SC.t("about.author", "{0}").split("{0}");
+    panel.append(el("div", { class: "about-hero" },
       (() => { const s = el("span"); s.innerHTML = winLogo("win-logo-lg"); return s; })(),
       el("div", {},
         el("h2", { class: "about-name" }, SC.meta.brand),
-        el("p", { class: "about-ver" }, `v${SC.meta.version} · ${SC.t("about.author", "巨应君")} · ${SC.t("about.skinBy")}`))));
+        el("p", { class: "about-ver" },
+          verEl,
+          " · ",
+          authorParts[0],
+          el("a", {
+            class: "about-author", href: "https://www.mscoder.cn", target: "_blank", rel: "noreferrer",
+            onclick: (e) => { e.preventDefault(); SC.openUrl("https://www.mscoder.cn"); },
+          }, "巨应君"),
+          authorParts[1],
+          ` · ${yearRange}`))));
     const card = el("div", { class: "card-group about-links" });
     links.forEach(([ic, label, act], i) => {
       card.append(el("button", { class: "card-row about-link", onclick: act },
@@ -2927,8 +2948,8 @@
         el("span", { class: "about-arrow" }, iconEl("chevr", 14))));
       if (i < links.length - 1) card.append(el("div", { class: "card-sep" }));
     });
-    viewEl.append(card);
-    viewEl.append(el("div", { class: "about-foot" },
+    panel.append(card);
+    panel.append(el("div", { class: "about-foot" },
       el("button", { class: "btn btn-sm", onclick: () => SC.openLogs() }, SC.t("about.logs")),
       el("button", {
         class: "btn btn-danger btn-sm",
@@ -2941,6 +2962,7 @@
   let dragging = false;
   let dragPos = 0;
   let lastTime = { position: 0, duration: 0 };
+  let selStall = null; // 选中屏的停走检测状态 { pos, n }（见 renderDockTime）
   let dockSelScreen = -1;   // 选中的屏幕：-1 = 未选（操作作用于全部屏幕）
   let dndWallpaper = null;  // HTML5 拖拽中的壁纸（库/搜索卡片 → Dock 屏幕块）
   let offDockTime = null;   // 进度轮询订阅（showProgress 时挂，其余时刻注销省请求）
@@ -3004,6 +3026,7 @@
   function pickScreen(idx) {
     dockSelScreen = idx;
     lastTime = { position: 0, duration: 0 };
+    selStall = null;
     dragging = false;
     renderDock();
   }
@@ -3075,6 +3098,7 @@
     const st = SC.state.status;
     const playing = st ? st.wallpapers : [];
     const screens = SC.state.screens || [];
+    SC.setScreenTimesWanted(false); // 播放条重建后按下方条件决定是否重新要求数据
     if (dockSelScreen >= 0 && !screens.some((s) => s.index === dockSelScreen)) dockSelScreen = -1; // 屏幕被拔出等场景
     if (!playing.length && (!IDLE_DOCK_VIEWS.has(currentView) || !SC.state.wallpapers.length)) {
       if (offDockTime) { offDockTime(); offDockTime = null; }
@@ -3147,9 +3171,24 @@
     function renderDockTime() {
       time.textContent = `${SC.fmtTime(dragging ? dragPos : lastTime.position)} / ${SC.fmtTime(lastTime.duration || 0)}`;
       if (!dragging && lastTime.duration > 0) seekEl.value = String(Math.round((lastTime.position / lastTime.duration) * 1000));
-      // 顶部进度线与滑块同源更新：此前线宽只在 renderDock 重建时设置一次，
-      // 播放中基本不动，造成「滑块在走、线不动」的不一致
+      // 顶部进度线与滑块同源更新（线只在「收起态 + 已选屏」可见，见 style.css .dock-line）：
+      // 此前线宽只在 renderDock 重建时设置一次，播放中基本不动，造成「滑块在走、线不动」
+      // 的不一致
       if (showProgress && lastTime.duration > 0) line.style.width = `${Math.min(100, (lastTime.position / lastTime.duration) * 100)}%`;
+      // 选中屏的停走检测：与未选屏的 prog-stalled 兜底同款——个别暂停路径后端不上报
+      // isPaused，进度连续 ~3s 未推进就把该屏碟片按暂停冻结（展开/收起都生效），恢复推进
+      // 自动解除。拖动 seek 中不判定，换屏/无进度时重置
+      if (showProgress && !dragging && lastTime.duration > 0) {
+        const st = selStall ?? { pos: lastTime.position, n: 0 };
+        if (Math.abs(lastTime.position - st.pos) >= 0.05) { st.pos = lastTime.position; st.n = 0; } else { st.n += 1; }
+        selStall = st;
+        const blk = dockEl.querySelector(`.dock-screen[data-screen='${dockSelScreen}']`);
+        if (blk) blk.classList.toggle("prog-stalled", st.n >= 3);
+      } else if (selStall) {
+        selStall = null;
+        const blk = dockEl.querySelector(`.dock-screen[data-screen='${dockSelScreen}']`);
+        if (blk) blk.classList.remove("prog-stalled");
+      }
     }
     // 全局只挂一个轮询订阅，renderDock 只换绑回调（旧实现每次渲染新增一个监听且不注销）
     if (offDockTime) { offDockTime(); offDockTime = null; }
@@ -3193,6 +3232,7 @@
     dockEl.append(el("div", { class: "dock" }, line, strip, meta,
       ...(showProgress ? [time, seekEl] : []), ctrl, volPop, audioPop));
     setPillWidth(strip);
+    SC.setScreenTimesWanted(true); // Dock 可见即逐屏广播进度供彗尾显示（选中屏的滑杆另有 timeScreen 轮询）
   }
 
   // 收起胶囊的目标宽度：屏块收起态是 32px 圆碟（见 style.css 唱片化规则）、碟间重叠
@@ -3201,6 +3241,53 @@
     const n = strip.children.length;
     dockEl.style.setProperty("--pill-w", `${Math.max(56, n * 32 - (n - 1) * 7 + 14)}px`);
   }
+
+  // 未选屏时各碟/屏块以 accent 流光彗尾显示所属屏幕的真实播放进度：彗头亮弧锚在进度
+  // 角、随进度无缝旋转（跨过 12 点不重置），彗尾拖一整圈在彗头后方持续渐隐消散。
+  // 进度由 core ticker 逐屏查询并广播（SC.setScreenTimesWanted 开关 + emit("screensTime")，
+  // 见 core.js），写入屏块 --prog，有/无数据切 has-prog 控显隐——无进度的网页/静态壁纸
+  // 不留残影。选中屏时其余屏块彗尾照常流动（选中块让位给 accent 描边），其进度展示
+  // 交给顶部进度线 + 滑块（现有行为）
+  //
+  // 平滑：ticker 每秒一笔，--prog 已注册为可过渡属性（style.css @property + .dock-screen
+  // 的 1s 线性过渡），按「最短路径增量」跨回绕累计写入——原始值跳回小值即播满一圈，
+  // 增量取向前的一小步，彗尾角度连续不倒卷；大跨度 seek 则一秒滑到位。progShown 按屏
+  // 记忆累计值，元素重建后进度衔接不断；每屏首笔免过渡直接落位，避免 Dock 重建后
+  // 从 12 点扫到当前角
+  //
+  // 停走兜底：个别暂停路径后端不上报 isPaused（碟片旋转门控依赖该标记，见 style.css
+  // .dock-screen img），这里按「进度连续 ~3s 未推进」就地挂 prog-stalled 兜底冻结，
+  // 恢复推进自动解除；progStall 按屏记忆原始值与未推进笔数
+  const progStall = new Map(); // screenIndex → { raw, n }
+  SC.on("screensTime", (map) => {
+    if (dockEl.hidden) return;
+    for (const si of Object.keys(map)) {
+      const n = dockEl.querySelector(`.dock-screen[data-screen='${si}']`);
+      if (!n) continue;
+      const tp = map[si];
+      n.classList.toggle("has-prog", !!tp);
+      if (!tp) { progShown.delete(si); progStall.delete(si); n.classList.remove("prog-stalled"); continue; }
+      const raw = Math.min(100, Math.max(0, (tp.position / tp.duration) * 100));
+      const st = progStall.get(si) ?? { raw, n: 0 };
+      if (Math.abs(raw - st.raw) >= 0.05) { st.raw = raw; st.n = 0; } else { st.raw = raw; st.n += 1; }
+      progStall.set(si, st);
+      n.classList.toggle("prog-stalled", st.n >= 3);
+      let shown = progShown.has(si) ? progShown.get(si) : raw;
+      let d = raw - (shown % 100);
+      if (d < -50) d += 100; // 回绕：差值换成向前的一小步，彗尾前进不倒卷
+      shown += d;
+      progShown.set(si, shown);
+      if (!n.dataset.progInit) {
+        n.dataset.progInit = "1";
+        n.style.transition = "none";
+        n.style.setProperty("--prog", String(shown));
+        void n.offsetWidth; // 强制同步布局，免过渡落位先生效
+        n.style.transition = "";
+      } else {
+        n.style.setProperty("--prog", String(shown));
+      }
+    }
+  });
 
   function ctlBtn(ic, title, onclick) {
     const b = el("button", { class: "icon-btn dock-btn", title, onclick });
@@ -4207,7 +4294,6 @@
     else if (currentView === "downloads") renderDownloads();
     else if (currentView === "hub") renderHub();
     else if (currentView === "settings") renderSettings();
-    else if (currentView === "about") renderAbout();
     renderDock();
   }
 
@@ -4303,6 +4389,7 @@
   buildPane();
   const { view: initial, sub: initialTab } = parseHash();
   if (initial === "library") location.hash = "#/local"; // 废弃视图的旧链接 / 旧 hash 归一到本地库
+  if (initial === "about") location.hash = "#/settings/about"; // 关于已并入设置页签：旧 hash 归一
   if (NAV.some((n) => n.id === initial)) {
     currentView = initial;
     if (initial === "settings") settingsTab = SETTINGS_TAB_IDS.includes(initialTab) ? initialTab : "general";

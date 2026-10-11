@@ -25,7 +25,7 @@ const Author = ({ dictionary }: { dictionary: any; }) => {
     );
 }
 
-const AboutPage = () => {
+const Page = () => {
     const [version, setVersion] = useState<string | null>();
     const dictionary = useAtomValue(langDictAtom);
 
@@ -37,10 +37,12 @@ const AboutPage = () => {
         });
     }, [version]);
 
-    return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] flex flex-col items-start space-y-6 m-6">
-        <h1 className="text-2xl">{dictionary['about'].product_name.replace("{0}", version)} </h1>
+    return <div className="h-[calc(100vh_-_var(--app-titlebar-h))] space-y-6 overflow-y-auto p-1">
+        <div className="space-y-2">
+            <h1 className="text-2xl font-semibold">{dictionary['about'].product_name.replace("{0}", version)}</h1>
+        </div>
         <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl font-semibold mt-4">
+            <h2 className="font-semibold">
                 {dictionary['about'].feedback_and_source_code}
                 <Button variant="ghost" asChild>
                     <Link
@@ -49,11 +51,11 @@ const AboutPage = () => {
                             e.preventDefault();
                         }}
                         className="ml-4 underline-offset-4 flex items-center" href="#" title={dictionary['about'].open_log_folder} target="_blank">
-                        
+
                         <MessageCircleWarning className="h-4 w-4" />
                     </Link>
                 </Button>
-            </h1>
+            </h2>
             {dictionary['about'].reminder}
             <LinkClient
                 className="underline-offset-4 hover:underline" href="https://wallpaper.giantapp.cn/zh-CN/feedback" target="_blank">
@@ -69,8 +71,8 @@ const AboutPage = () => {
             </LinkClient>
         </div>
         <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl font-semibold mt-4">{dictionary['about'].encourage}</h1>
-            <Button variant="outline" asChild>
+            <h2 className="font-semibold">{dictionary['about'].encourage}</h2>
+            <Button variant="outline" asChild className="w-fit">
                 <Link
                     onClick={(e) => {
                         api.openStoreReview(import.meta.env.VITE_MS_ADDRESS || "https://www.microsoft.com/store/apps/9MWTG433JV6B");
@@ -81,7 +83,7 @@ const AboutPage = () => {
                     {dictionary['about'].rate_us}
                 </Link>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="w-fit">
                 <LinkClient
                     className="underline-offset-4 flex items-center" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
                     <Github className="h-4 w-4 mr-1" />
@@ -92,6 +94,7 @@ const AboutPage = () => {
         <div className="flex items-center space-x-2 text-lg">
             <Author dictionary={dictionary} />
         </div>
-    </div>
+    </div>;
 }
-export default AboutPage;
+
+export default Page;
