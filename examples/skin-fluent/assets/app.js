@@ -3313,8 +3313,9 @@
   // 不再沉出屏底——屏块封面仍在，可点选屏幕、可拖壁纸落屏，播放中顶部进度线继续走。
   // 指针移近胶囊（外扩 28px 热区）即展开回完整播放条。收起以「指针离开 Dock 区域」
   // 为前提（dockPointerInside 跟踪，见 dockHoverWake）：鼠标停在 Dock 上哪怕一动
-  // 不动也不收，移出热区的瞬间才重新起算 4s。桌面上的鼠标事件由后端全局钩子转发
-  // 进页面（src-tauri/mouse_hook.rs），window 级 pointermove 即可感知真实光标；
+  // 不动也不收，移出热区的瞬间才重新起算 4s。全局鼠标钩子（src-tauri/mouse_hook.rs）
+  // 只转发给桌面壁纸窗口，应用窗口只能感知光标位于窗口上的真实输入——光标移出窗口
+  // 事件流即终止，见下方 dockPointerLeave 的收尾处理；
   // 收起状态只落在 dock-wrap 的类上，renderDock 重建 .dock 不影响。
   const DOCK_COLLAPSE_MS = 4000;
   const DOCK_WAKE_MARGIN = 28;
@@ -3371,6 +3372,18 @@
   window.addEventListener("mousemove", dockHoverWake);
   window.addEventListener("pointermove", dockHoverWake);
   window.addEventListener("dragover", dockHoverWake);
+  // 光标移出窗口 / 窗口失焦：全局鼠标钩子只转发给桌面壁纸窗口，应用窗口收不到
+  // 窗外事件——光标从 Dock 热区内直接移出窗口后，不会再有 move 把 dockPointerInside
+  // 翻回 false，dockCollapse 的「指针在内不收」守卫会无限重挂计时器，整条 Dock
+  // 常驻不收。mouseleave（离开 html 根）/ blur 时视作已离开热区，从该时刻重新起算
+  // 收起倒计时；光标回到窗口上时下一个 move 自会重新唤醒
+  const dockPointerLeave = () => {
+    if (!dockPointerInside) return;
+    dockPointerInside = false;
+    dockArm();
+  };
+  document.documentElement.addEventListener("mouseleave", dockPointerLeave);
+  window.addEventListener("blur", dockPointerLeave);
 
   // ---------------------------------------------------------------- 壁纸日历
   // 数据口径与后端一致：四级优先级（单日 > 年度节日 > 每周 > 不接管）由后端
