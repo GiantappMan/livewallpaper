@@ -3235,11 +3235,15 @@
     SC.setScreenTimesWanted(true); // Dock 可见即逐屏广播进度供彗尾显示（选中屏的滑杆另有 timeScreen 轮询）
   }
 
-  // 收起胶囊的目标宽度：屏块收起态是 32px 圆碟（见 style.css 唱片化规则）、碟间重叠
-  // 7px，故按碟数公式算而不能量展开态的矩形屏块条宽；+14 = 左右 padding 6×2 + 边框 2
+  // 收起胶囊的目标宽度：屏块收起态是 32px 圆碟（见 style.css 唱片化规则），碟间距离
+  // 与收起态布局同步——相邻两碟都有封面才叠碟（-7px），素碟/无封面碟参与的对留 4px 缝；
+  // +14 = 左右 padding 6×2 + 边框 2。宽度按对逐个累加，避免素碟留缝后胶囊露底或裁切
   function setPillWidth(strip) {
-    const n = strip.children.length;
-    dockEl.style.setProperty("--pill-w", `${Math.max(56, n * 32 - (n - 1) * 7 + 14)}px`);
+    const kids = Array.from(strip.children);
+    const hasCover = (k) => k.classList.contains("is-live") && !k.classList.contains("is-nocover");
+    const w = kids.length * 32 + 14
+      + kids.slice(1).reduce((s, k, i) => s + (hasCover(kids[i]) && hasCover(k) ? -7 : 4), 0);
+    dockEl.style.setProperty("--pill-w", `${Math.max(56, w)}px`);
   }
 
   // 未选屏时各碟/屏块以 accent 流光彗尾显示所属屏幕的真实播放进度：彗头亮弧锚在进度
@@ -3259,6 +3263,7 @@
   // .dock-screen img），这里按「进度连续 ~3s 未推进」就地挂 prog-stalled 兜底冻结，
   // 恢复推进自动解除；progStall 按屏记忆原始值与未推进笔数
   const progStall = new Map(); // screenIndex → { raw, n }
+  const progShown = new Map(); // screenIndex → 累计显示值（跨回绕连续，元素重建后衔接）
   SC.on("screensTime", (map) => {
     if (dockEl.hidden) return;
     for (const si of Object.keys(map)) {

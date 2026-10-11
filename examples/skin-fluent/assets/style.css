@@ -732,14 +732,24 @@ button.card-row:hover { background: var(--subtle); }
    收起态进一步收紧：屏块压矮到 28px，整体成药丸 */
 .dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; --dock-h: 28px; }
 /* 收起态屏块「唱片化」：圆形碟 + 封面匀速旋转示意在播（暂停屏停转压暗），编号静居
-   中心作轴标，碟间轻微重叠。方形封面放大到 142% 再旋转（32px 方图内接圆只有 ~23px，
+   中心作轴标。方形封面放大到 142% 再旋转（32px 方图内接圆只有 ~23px，
    不放大会在斜对角露出碟底）；展开态屏块不受影响 */
 .dock-wrap.is-collapsed .dock-screens { gap: 0; }
 .dock-wrap.is-collapsed .dock-screen { width: 32px !important; height: 32px !important; border-radius: 50%; border-color: transparent; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent); }
 /* 上面圆形化规则按碟形清了边框，特异性也盖过通用 .is-selected 高亮：选中碟在此补回
    accent 边框（展开态选中高亮见下方 .dock-screen.is-selected） */
 .dock-wrap.is-collapsed .dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
-.dock-wrap.is-collapsed .dock-screen + .dock-screen { margin-left: -7px; }
+/* 碟间布局：相邻两碟都有封面才叠碟（-7px，唱片堆叠语言）；素碟（空白屏）或无封面碟
+   参与的相邻对改为留 4px 缝——两块无内容的灰碟互叠只会糊成一团分不清屏 */
+.dock-wrap.is-collapsed .dock-screen + .dock-screen { margin-left: 4px; }
+.dock-wrap.is-collapsed .dock-screen.is-live:not(.is-nocover) + .dock-screen.is-live:not(.is-nocover) { margin-left: -7px; }
+/* 收起态素碟（空白屏）：虚线空槽圈 + 居中编号，读作「该屏空着」而非一块半透明灰圆；
+   悬停实线化提示可点选/可拖壁纸落屏；选中碟仍走上方 accent 描边，编号随之提亮 */
+.dock-wrap.is-collapsed .dock-screen:not(.is-live):not(.is-selected) {
+  background: transparent; border: 1px dashed color-mix(in srgb, var(--ink) 30%, transparent); box-shadow: none;
+}
+.dock-wrap.is-collapsed .dock-screen:not(.is-live):not(.is-selected):hover { border-style: solid; border-color: var(--ink-2); }
+.dock-wrap.is-collapsed .dock-screen:not(.is-live) .dock-screen-num { font-size: 11px; color: var(--ink-2); }
 /* 碟封面默认冻结、仅在播碟旋转（未播放/暂停的碟不转）：play-state 放在基类上，
    暂停即就地冻结、不跳回 0 度角；live 且未暂停才放行转动 */
 .dock-wrap.is-collapsed .dock-screen img { inset: -21%; width: 142%; height: 142%; animation: dock-screen-spin 9s linear infinite; animation-play-state: paused; }
