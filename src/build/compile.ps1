@@ -20,6 +20,13 @@ if ($key.Character -eq 'y') {
 #返回build目录
 Set-Location ../build
 
+# mpv 播放器缺失时自动下载（目录被 gitignore，新环境必缺；失败则终止打包）
+& "$PSScriptRoot\download-mpv.ps1"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "mpv 下载失败，安装包将缺少视频播放器（mpv），终止打包。"
+    exit 1
+}
+
 Import-Module -Name "$PSScriptRoot\Invoke-MsBuild\Invoke-MsBuild.psm1" -Force
 
 $sln = "..\giantapp-wallpaper-client\Client\Client.csproj"

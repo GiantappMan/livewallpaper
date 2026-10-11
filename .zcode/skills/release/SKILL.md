@@ -129,10 +129,10 @@ Date format like `2026.10.10`; if the user only mentioned fixes, the `### 功能
 
 - 安装包渠道：
   1. 前端：`cd src/giantapp-wallpaper-ui && pnpm i && pnpm build:client`（产物进 `Client/Assets/UI`；若本次发布的是 `giantapp-wallpaper-ui-3_0` 的界面改动，则在其目录执行同样的 `pnpm build:client`，两者输出同一目录）。compile.ps1 交互选 y 可代替此步。
-  2. 运行 `powershell -ExecutionPolicy Bypass -File src/build/compile.ps1`（n 跳过前端构建；MSBuild Publish + Inno Setup 自动完成）。
+  2. 运行 `powershell -ExecutionPolicy Bypass -File src/build/compile.ps1`（n 跳过前端构建；脚本会先自动补齐缺失的 mpv 播放器（`download-mpv.ps1`，从 shinchiro/mpv-winbuild-cmake 最新 release 下载），再 MSBuild Publish + Inno Setup；mpv 下载失败会终止打包）。
   3. 列出 `src/build/dist/` 确认 `LiveWallpaper_Installer_v*.exe` 存在。构建失败先修复，不进入发布步骤。
 - 微软商店渠道：
-  1. 前端构建同上（WAP 打包同样内嵌 `Client/Assets/UI`）。
+  1. 前端构建同上（WAP 打包同样内嵌 `Client/Assets/UI`）；先跑 `powershell -ExecutionPolicy Bypass -File src/build/download-mpv.ps1` 补齐 mpv（WAP 打包不会自动执行它）。
   2. `msbuild src/giantapp-wallpaper-client/Client.App/Client.App.wapproj /restore /p:Configuration=Release /p:Platform=x64 /p:UapAppxPackageBuildMode=StoreUpload`（项目已配置 x64 bundle、不签名）。
   3. 在 `Client.App/AppPackages/` 下找到 `*.msixupload`，确认包内版本号（来自 `Identity Version`）已随步骤 5 更新。
 
