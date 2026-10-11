@@ -12,7 +12,7 @@ $key = $Host.UI.RawUI.ReadKey()
  
 if ($key.Character -eq 'y') {
     # build frontend
-    Set-Location ../giantapp-wallpaper-ui
+    Set-Location ../giantapp-wallpaper-ui-3_0
     pnpm i
     pnpm build:client
 }
