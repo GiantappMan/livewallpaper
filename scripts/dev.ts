@@ -17,7 +17,9 @@ const UI_DIR = join(ROOT, "src", "giantapp-wallpaper-ui-3_0");
 const MPV_EXE = join(ROOT, "src", "giantapp-wallpaper-client", "WallpaperCore", "Assets", "Players", "Mpv", "mpv.exe");
 const DOWNLOAD_MPV_PS1 = join(ROOT, "src", "build", "download-mpv.ps1");
 const CLIENT_CSPROJ = join(ROOT, "src", "giantapp-wallpaper-client", "Client", "Client.csproj");
-const APP_EXE = join(ROOT, "src", "giantapp-wallpaper-client", "Client", "bin", "Debug", "net462", "LiveWallpaper3.exe");
+// 输出在 bin/x64/Debug/net462；必须与安装包发布配置同为 x64——
+// 32 位首选进程加载 x64 的 WebView2Loader.dll 会在启动时报入口点错误
+const APP_EXE = join(ROOT, "src", "giantapp-wallpaper-client", "Client", "bin", "x64", "Debug", "net462", "LiveWallpaper3.exe");
 
 const flags = process.argv.slice(2);
 const onlyWeb = flags.includes("--web");
@@ -43,8 +45,8 @@ function runBunInstall(cwd: string): Promise<void> {
 }
 
 function runDotnetBuild(csproj: string): Promise<void> {
-  console.log(`[dev] $ dotnet build ${csproj} -c Debug`);
-  const child = spawn("dotnet", ["build", csproj, "-c", "Debug", "--nologo", "-v", "q"], { stdio: "inherit" });
+  console.log(`[dev] $ dotnet build ${csproj} -c Debug -p:Platform=x64`);
+  const child = spawn("dotnet", ["build", csproj, "-c", "Debug", "-p:Platform=x64", "--nologo", "-v", "q"], { stdio: "inherit" });
   return new Promise((resolve, reject) => {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`dotnet build 退出码 ${code}`))));
     child.on("error", reject);
