@@ -3254,16 +3254,18 @@
   // 交给顶部进度线 + 滑块（现有行为）
   //
   // 平滑：ticker 每秒一笔，--prog 已注册为可过渡属性（style.css @property + .dock-screen
-  // 的 1s 线性过渡），按「最短路径增量」跨回绕累计写入——原始值跳回小值即播满一圈，
-  // 增量取向前的一小步，彗尾角度连续不倒卷；大跨度 seek 则一秒滑到位。progShown 按屏
-  // 记忆累计值，元素重建后进度衔接不断；每屏首笔免过渡直接落位，避免 Dock 重建后
-  // 从 12 点扫到当前角
+  // 的 1s 线性过渡）。跨回绕累计的回绕判定看前后两笔：只有「上一笔在高位、这一笔落到
+  // 低位」才算播满一圈，补一圈内差值继续前进；其余倒退（seek 回跳、迟到旧笔）照实跟随，
+  // 仅 <0.5% 的微抖动按原位吃掉——彗尾不因数据抖动来回倒卷。progShown 按屏记忆累计值，
+  // 元素重建后进度衔接不断；每屏首笔免过渡直接落位，避免 Dock 重建后从 12 点扫到当前角
   //
   // 停走兜底：个别暂停路径后端不上报 isPaused（碟片旋转门控依赖该标记，见 style.css
-  // .dock-screen img），这里按「进度连续 ~3s 未推进」就地挂 prog-stalled 兜底冻结，
-  // 恢复推进自动解除；progStall 按屏记忆原始值与未推进笔数
+  // .dock-screen img），这里按「进度连续 ~3s 一笔未动」就地挂 prog-stalled 兜底冻结
+  // （按位置是否变化判定，长视频每秒推进不足 0.05% 不误判），恢复推进自动解除；
+  // progStall 按屏记忆原始值与未推进笔数
   const progStall = new Map(); // screenIndex → { raw, n }
   const progShown = new Map(); // screenIndex → 累计显示值（跨回绕连续，元素重建后衔接）
+  const progPrev = new Map();  // screenIndex → 上一笔 raw（回绕判定用）
   SC.on("screensTime", (map) => {
     if (dockEl.hidden) return;
     for (const si of Object.keys(map)) {
@@ -3271,17 +3273,22 @@
       if (!n) continue;
       const tp = map[si];
       n.classList.toggle("has-prog", !!tp);
-      if (!tp) { progShown.delete(si); progStall.delete(si); n.classList.remove("prog-stalled"); continue; }
+      if (!tp) { progShown.delete(si); progStall.delete(si); progPrev.delete(si); n.classList.remove("prog-stalled"); continue; }
       const raw = Math.min(100, Math.max(0, (tp.position / tp.duration) * 100));
       const st = progStall.get(si) ?? { raw, n: 0 };
-      if (Math.abs(raw - st.raw) >= 0.05) { st.raw = raw; st.n = 0; } else { st.raw = raw; st.n += 1; }
+      if (Math.abs(raw - st.raw) >= 1e-6) { st.raw = raw; st.n = 0; } else { st.raw = raw; st.n += 1; }
       progStall.set(si, st);
       n.classList.toggle("prog-stalled", st.n >= 3);
       let shown = progShown.has(si) ? progShown.get(si) : raw;
+      const prev = progPrev.has(si) ? progPrev.get(si) : raw;
       let d = raw - (shown % 100);
-      if (d < -50) d += 100; // 回绕：差值换成向前的一小步，彗尾前进不倒卷
+      if (d < 0) {
+        if (prev >= 70 && raw <= 30) d += 100; // 播满一圈的正向回绕
+        else if (d > -0.5) d = 0;              // 微抖动：停在原位不倒卷
+      }
       shown += d;
       progShown.set(si, shown);
+      progPrev.set(si, raw);
       if (!n.dataset.progInit) {
         n.dataset.progInit = "1";
         n.style.transition = "none";
