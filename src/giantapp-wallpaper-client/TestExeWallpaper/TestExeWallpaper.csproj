@@ -8,6 +8,8 @@
     <LangVersion>11</LangVersion>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
 
 </Project>
