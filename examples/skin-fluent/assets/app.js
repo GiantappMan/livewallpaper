@@ -57,27 +57,22 @@
   }
 
   // 封面地址：优先 coverUrl；缺失时仅对图片文件回退 fileUrl。
-  // 视频拿原始文件当 <img> 缩略图只会整段拉流后加载失败，.playlist 是文本占位，都纯浪费请求
+  // 视频拿原始文件当 <img> 缩略图只会整段拉流后加载失败，纯浪费请求
   function coverSrcOf(w) {
     if (w.coverUrl) return w.coverUrl;
     const name = w.fileName || "";
     return !isVideoName(name) && /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(name) ? (w.fileUrl || "") : "";
   }
 
-  // 悬停即播的目标：视频 = 本体；播放列表 = 当前项。视频返回本体流；GIF 返回原图 ——
+  // 悬停即播的目标：视频 = 本体，GIF = 原图 ——
   // 网格封面是 ?thumb=1 静态边车或后端截帧，悬停叠原图才会动起来。其余类型不处理
   function hoverMediaOf(w) {
-    let target = w;
-    if ((w.meta && w.meta.type) === 6) { // 播放列表：解析当前播放项
-      const list = w.meta.wallpapers || [];
-      target = list.length ? list[(w.meta.playIndex || 0) % list.length] : null;
-    }
-    if (!target || !target.fileUrl) return null;
-    const kind = previewKind(target);
-    if (kind === "video") return { kind, url: target.fileUrl };
+    if (!w.fileUrl) return null;
+    const kind = previewKind(w);
+    if (kind === "video") return { kind, url: w.fileUrl };
     // fileUrl 是百分号编码的（media.localhost），先解码再认扩展名
-    const isGif = /\.gif($|\?)/i.test(target.fileName || "") || /\.gif($|\?)/i.test(safeDecodeUrl(target.fileUrl));
-    if (kind === "img" && isGif) return { kind: "img", url: target.fileUrl };
+    const isGif = /\.gif($|\?)/i.test(w.fileName || "") || /\.gif($|\?)/i.test(safeDecodeUrl(w.fileUrl));
+    if (kind === "img" && isGif) return { kind: "img", url: w.fileUrl };
     return null;
   }
 
@@ -137,7 +132,6 @@
     volq: '<polygon points="11 5 6.5 9 3 9 3 15 6.5 15 11 19 11 5"/><path d="M15 9a4.5 4.5 0 0 1 0 6"/>',
     volx: '<polygon points="11 5 6.5 9 3 9 3 15 6.5 15 11 19 11 5"/><line x1="15.5" y1="9.5" x2="20.5" y2="14.5"/><line x1="20.5" y1="9.5" x2="15.5" y2="14.5"/>',
     plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
-    listplus: '<line x1="3" y1="6" x2="12" y2="6"/><line x1="3" y1="11" x2="10" y2="11"/><line x1="3" y1="16" x2="12" y2="16"/><line x1="17" y1="11" x2="22" y2="11"/><line x1="19.5" y1="8.5" x2="19.5" y2="13.5"/>',
     gear: '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 12a7.4 7.4 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2-1.2L14.6 3h-5.2l-.4 2.7a7.6 7.6 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2 1.2l.4 2.7h5.2l.4-2.7a7.6 7.6 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.07-.4.1-.8.1-1.2z"/>',
     info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="16.2" x2="12" y2="11.4"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
     download: '<path d="M12 3v12"/><polyline points="7 10.5 12 15.5 17 10.5"/><path d="M4 20h16"/>',
@@ -233,6 +227,26 @@
     document.querySelectorAll(".wall-card, .loc-card, .loc-tile.is-file").forEach((c) => { c.title = applyHint(); });
   }
   setApplyTarget(applyTarget);
+  // 在播卡片左下角的屏幕编号徽标：多屏各播不同壁纸时，网格里直接看出哪张卡在哪个屏
+  // （数据与 Dock 屏块同源：status.wallpapers[].runningInfo.screenIndexes）。常驻显示，
+  // 悬停时同位出现的逐屏应用 chips 接管该角落，徽标让位隐藏（见 style.css .card-screen-nums）
+  function playingScreenNums(path) {
+    const pw = (SC.state.status || { wallpapers: [] }).wallpapers.find((x) => x.filePath === path);
+    const idxs = (pw && pw.runningInfo && pw.runningInfo.screenIndexes) || [];
+    return idxs.length ? el("span", { class: "card-screen-nums" }, idxs.map((i) => el("i", null, String(i + 1)))) : null;
+  }
+  // 状态推送不重渲染网格：就地同步卡片在播类与编号徽标（卡片 path 挂在 dataset 上）
+  function syncCardPlaying(c, playing) {
+    const on = playing.has(c.dataset.path);
+    c.classList.toggle("is-playing", on);
+    const box = c.querySelector(".wall-cover, .loc-cover, .loc-tile-thumb");
+    if (!box) return;
+    const prev = box.querySelector(":scope > .card-screen-nums");
+    const fresh = on ? playingScreenNums(c.dataset.path) : null;
+    if (prev && fresh) prev.replaceWith(fresh);
+    else if (prev) prev.remove();
+    else if (fresh) box.append(fresh);
+  }
   let refreshGrid = null; // 库视图挂载的网格刷新函数（仅库视图存在，切视图置空）
   const paneEl = el("aside", { class: "pane" });
   const viewEl = el("main", { class: "view" });
@@ -519,8 +533,6 @@
     const createPop = pop(createBtn, () => el("div", { class: "pop-menu" },
       el("button", { class: "pop-item", onclick: () => { closePops(); openWallpaperDialog(null); } },
         (() => { const s = el("span", { class: "pop-ico" }); s.innerHTML = icon("image", 15); return s; })(), SC.t("create.wallpaper")),
-      el("button", { class: "pop-item", onclick: () => { closePops(); openWallpaperDialog({ playlist: true }); } },
-        (() => { const s = el("span", { class: "pop-ico" }); s.innerHTML = icon("listplus", 15); return s; })(), SC.t("create.playlist")),
     ), "left");
 
     // 单行头部：标题 + 计数居左，命令右对齐（替代原先松散的两行结构）
@@ -567,6 +579,8 @@
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
+      const nums = isPlaying ? playingScreenNums(w.filePath) : null;
+      if (nums) cover.append(nums);
 
       const playDot = el("span", { class: "wall-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 10); return s; })(), SC.t("lib.playingBadge"));
       const typeBadge = el("span", { class: `wall-type t${w.meta && w.meta.type}` }, SC.typeName(w.meta && w.meta.type));
@@ -648,7 +662,6 @@
       e.preventDefault();
       ctxMenu(e.clientX, e.clientY, [
         { label: SC.t("create.wallpaper"), ico: "image", act: () => openWallpaperDialog(null) },
-        { label: SC.t("create.playlist"), ico: "listplus", act: () => openWallpaperDialog({ playlist: true }) },
       ]);
     });
 
@@ -701,16 +714,12 @@
 
   // ---------------------------------------------------------------- 创建 / 编辑对话框
   function openWallpaperDialog(existing, presetFile) {
-    const isPlaylist = existing ? existing.meta.type === 6 : !!(existing && existing.playlist) || !!(existing && existing.playlistMode);
-    const playlistMode = existing ? existing.meta && existing.meta.type === 6 : !!(existing && existing.playlist);
     const isEdit = !!existing;
-    const mode = playlistMode || (existing && existing.meta && existing.meta.type === 6) ? "list" : "wall";
 
     let title = isEdit ? (existing.meta.title || "") : "";
     let file = presetFile || null;
-    let fileUrl = isEdit && !playlistMode ? existing.fileUrl : "";
+    let fileUrl = isEdit ? existing.fileUrl : "";
     let previewEl = null;
-    let members = isEdit && playlistMode ? [...(existing.meta.wallpapers || [])] : [];
     let progress = -1;
     // Web 壁纸文件夹整包导入：{ name, entry, files: [{ rel, f }], total }
     let folderPack = null;
@@ -718,16 +727,18 @@
     const isWebSel = () => !!folderPack || (file ? isWebName(file.name) : (isEdit && existing.meta.type === 4));
 
     const dirty = () => {
-      if (!isEdit) return !!(title || file || members.length || folderPack);
-      if (playlistMode) return JSON.stringify(members.map((m) => m.filePath)) !== JSON.stringify((existing.meta.wallpapers || []).map((m) => m.filePath)) || title !== (existing.meta.title || "");
+      if (!isEdit) return !!(title || file || folderPack);
       return title !== (existing.meta.title || "") || !!file;
     };
+    // 文件区刷新入口：render 建好 zone 后回填（submit 的演示上传进度 / 失败重绘要用；
+    // renderZone 声明在 render 的块作用域里，严格模式下 submit 直呼不可见）
+    let refreshZone = () => {};
 
     const d = openDialog((sheet, close) => {
       sheet.append(
         dialogHead(
-          isEdit ? (playlistMode ? SC.t("create.editList") : SC.t("create.editWallpaper")) : (playlistMode ? SC.t("create.playlist") : SC.t("create.wallpaper")),
-          playlistMode ? SC.t("create.members", members.length) : SC.t("create.fileHint"),
+          isEdit ? SC.t("create.editWallpaper") : SC.t("create.wallpaper"),
+          SC.t("create.fileHint"),
           close),
         body(),
         foot(),
@@ -741,7 +752,7 @@
       function foot() {
         const saveBtn = el("button", { class: "btn btn-accent" }, isEdit ? SC.t("common.save") : SC.t("common.create"));
         const bar = el("div", { class: "dialog-foot" });
-        if (mode === "wall") bar.append(el("span", { class: "dim-label" }, file ? `${SC.t("create.imported")} · ${file.name || ""}` : ""));
+        bar.append(el("span", { class: "dim-label" }, file ? `${SC.t("create.imported")} · ${file.name || ""}` : ""));
         bar.append(saveBtn);
         saveBtn.addEventListener("click", submit);
         return bar;
@@ -750,12 +761,12 @@
       function render(box) {
         box.innerHTML = "";
         // 标题
-        const titleInput = el("input", { class: "input", type: "text", placeholder: SC.t("create.titlePh", playlistMode ? SC.t("create.playlist") : SC.t("create.wallpaper")), value: title });
+        const titleInput = el("input", { class: "input", type: "text", placeholder: SC.t("create.titlePh", SC.t("create.wallpaper")), value: title });
         titleInput.addEventListener("input", () => { title = titleInput.value; });
         box.append(el("div", { class: "field-col" }, el("label", { class: "field-label" }, SC.t("create.titleField")), titleInput));
 
-        if (mode === "wall") {
-          // 文件区
+        // 文件区
+        {
           const zone = el("div", { class: "drop" });
           function renderZone() {
             zone.innerHTML = "";
@@ -807,6 +818,7 @@
               zone.append(el("div", { class: "progress" }, el("div", { class: "progress-bar", style: { width: `${progress}%` } })));
             }
           }
+          refreshZone = renderZone;
           renderZone();
           const picker = el("input", { type: "file", accept: "image/*,video/*,.html,.htm", hidden: true });
           // 客户端内走原生对话框 + 后端直接复制进 tmp（HTML input 沙盒拿不到真实路径，
@@ -863,116 +875,78 @@
             if (f) { picker.files = e.dataTransfer.files; picker.dispatchEvent(new Event("change")); }
           });
           box.append(zone, picker);
-        } else {
-          // 成员网格
-          const grid = el("div", { class: "member-grid" });
-          function renderMembers() {
-            grid.innerHTML = "";
-            if (!members.length) { grid.append(el("p", { class: "dim-label member-empty" }, SC.t("create.membersEmpty"))); return; }
-            members.forEach((m, i) => {
-              const cover = el("div", { class: "member-cover" }, m.coverUrl ? el("img", { src: m.coverUrl, loading: "lazy" }) : null);
-              grid.append(el("div", { class: "member" },
-                cover,
-                el("div", { class: "member-name", title: m.meta && m.meta.title }, (m.meta && m.meta.title) || "—"),
-                el("button", { class: "icon-btn member-x", title: SC.t("common.remove"), onclick: () => { members.splice(i, 1); renderMembers(); renderCount(); } },
-                  (() => { const s = el("span"); s.innerHTML = icon("x", 12); return s; })())));
-            });
-          }
-          // 副标题在 render 时还未挂进 DOM，成员数变化时再查（此时对话框已挂载）
-          function renderCount() {
-            const sub = sheet.querySelector(".dialog-sub");
-            if (sub) sub.textContent = SC.t("create.members", members.length);
-          }
-          const addBtn = el("button", { class: "btn" });
-          addBtn.append(iconEl("listplus", 15), el("span", {}, SC.t("create.addMembers")));
-          addBtn.addEventListener("click", () => openMemberPicker(members, () => { renderMembers(); renderCount(); }));
-          renderMembers();
-          box.append(el("div", { class: "field-row" }, el("label", { class: "field-label" }, SC.t("create.members", members.length)), addBtn), grid);
         }
       }
 
       async function submit() {
-        // 标题留空时默认用文件夹名 / 文件名（去扩展名）；播放列表没有文件名可取，仍要求填写
-        const baseName = (folderPack && folderPack.name) || (file && file.name) || (isEdit && !playlistMode ? existing.fileName : "") || "";
+        // 标题留空时默认用文件夹名 / 文件名（去扩展名）
+        const baseName = (folderPack && folderPack.name) || (file && file.name) || (isEdit ? existing.fileName : "") || "";
         const name = title.trim() || baseName.replace(/\.[^.]+$/, "").trim();
         if (!name) { SC.toast(SC.t("create.titleEmpty"), "err"); return; }
-        if (mode === "wall") {
-          if (folderPack) {
-            // Web 壁纸文件夹整包导入：客户端 = 后端整包复制源目录 → 落库；
-            // demo = 逐文件 base64 上传到 tmp 临时子目录 → 后端落库为整目录型壁纸
-            const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
-            saveBtn.classList.add("is-loading");
-            saveBtn.textContent = SC.t("create.creating");
-            let ok = false;
-            if (folderPack.dir) {
-              ok = await SC.importWebFolder({ dir: folderPack.dir, entry: folderPack.entry, title: name });
-              if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
-            } else {
-              const prefix = `web-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-              const packed = await SC.uploadWebFolder(folderPack.files, prefix, (p) => {
-                progress = p;
-                saveBtn.textContent = SC.t("create.importing", p);
-                renderZone();
-              });
-              if (packed) {
-                ok = await SC.createWebWallpaperFolder({ entry: `${packed}/${folderPack.entry}`, title: name });
-                if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
-              }
-            }
-            if (!ok) {
-              saveBtn.classList.remove("is-loading");
-              saveBtn.textContent = SC.t("common.create");
-              progress = -1;
-              renderZone();
-            }
-            return;
-          }
-          if (!isEdit && !file) { SC.toast(SC.t("create.noFile"), "err"); return; }
-          if (file) {
-            const updated = isEdit ? JSON.parse(JSON.stringify(existing)) : null;
-            if (isEdit) {
-              // 本地直传（后端已复制进 tmp）直接用 tmp URL；网页 File 才走 base64 上传
-              fileUrl = file.isLocal ? file.tmpUrl : await SC.uploadFile(file, (p) => { progress = p; });
-              const cover = SC.captureCover(previewEl);
-              updated.fileUrl = fileUrl;
-              updated.coverUrl = cover ? await SC.uploadCover(cover) : updated.coverUrl;
-              updated.meta.title = name;
-              if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
-              return;
-            }
-            const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
-            saveBtn.classList.add("is-loading");
-            saveBtn.textContent = SC.t("create.creating");
-            const ok = await SC.createMediaWallpaper({
-              title: name,
-              file: file.isLocal ? undefined : file,
-              local: file.isLocal ? file : undefined,
-              previewEl,
-              type: isWebSel() ? 4 : 0,
-              onProgress: (p) => { progress = p; saveBtn.textContent = SC.t("create.importing", p); },
-            });
-            saveBtn.classList.remove("is-loading");
+        if (folderPack) {
+          // Web 壁纸文件夹整包导入：客户端 = 后端整包复制源目录 → 落库；
+          // demo = 逐文件 base64 上传到 tmp 临时子目录 → 后端落库为整目录型壁纸
+          const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
+          saveBtn.classList.add("is-loading");
+          saveBtn.textContent = SC.t("create.creating");
+          let ok = false;
+          if (folderPack.dir) {
+            ok = await SC.importWebFolder({ dir: folderPack.dir, entry: folderPack.entry, title: name });
             if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
-            return;
+          } else {
+            const prefix = `web-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+            const packed = await SC.uploadWebFolder(folderPack.files, prefix, (p) => {
+              progress = p;
+              saveBtn.textContent = SC.t("create.importing", p);
+              refreshZone();
+            });
+            if (packed) {
+              ok = await SC.createWebWallpaperFolder({ entry: `${packed}/${folderPack.entry}`, title: name });
+              if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
+            }
           }
-          // 仅改标题
+          if (!ok) {
+            saveBtn.classList.remove("is-loading");
+            saveBtn.textContent = SC.t("common.create");
+            progress = -1;
+            refreshZone();
+          }
+          return;
+        }
+        if (!isEdit && !file) { SC.toast(SC.t("create.noFile"), "err"); return; }
+        if (file) {
+          const updated = isEdit ? JSON.parse(JSON.stringify(existing)) : null;
           if (isEdit) {
-            const updated = JSON.parse(JSON.stringify(existing));
+            // 本地直传（后端已复制进 tmp）直接用 tmp URL；网页 File 才走 base64 上传
+            fileUrl = file.isLocal ? file.tmpUrl : await SC.uploadFile(file, (p) => { progress = p; });
+            const cover = SC.captureCover(previewEl);
+            updated.fileUrl = fileUrl;
+            updated.coverUrl = cover ? await SC.uploadCover(cover) : updated.coverUrl;
             updated.meta.title = name;
             if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
+            return;
           }
+          const saveBtn = sheet.querySelector(".dialog-foot .btn-accent");
+          saveBtn.classList.add("is-loading");
+          saveBtn.textContent = SC.t("create.creating");
+          const ok = await SC.createMediaWallpaper({
+            title: name,
+            file: file.isLocal ? undefined : file,
+            local: file.isLocal ? file : undefined,
+            previewEl,
+            type: isWebSel() ? 4 : 0,
+            onProgress: (p) => { progress = p; saveBtn.textContent = SC.t("create.importing", p); },
+          });
+          saveBtn.classList.remove("is-loading");
+          if (ok) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
           return;
         }
-        // 播放列表
-        if (!members.length) { SC.toast(SC.t("create.listEmpty"), "err"); return; }
+        // 仅改标题
         if (isEdit) {
           const updated = JSON.parse(JSON.stringify(existing));
-          updated.meta.title = title;
-          updated.meta.wallpapers = members;
+          updated.meta.title = name;
           if (await SC.updateWallpaper(updated)) { SC.toast(SC.t("create.updated"), "ok"); close(true); renderView(); }
-          return;
         }
-        if (await SC.createPlaylist({ title: title.trim(), members })) { SC.toast(SC.t("create.created"), "ok"); close(true); renderView(); }
       }
     }, { beforeClose: async () => !dirty() || await SC.confirm({ title: SC.t("create.unsaved"), body: SC.t("create.unsavedBody"), danger: true }) });
   }
@@ -984,9 +958,8 @@
 
   // ---------------------------------------------------------------- 通用壁纸浏览器
   // 本地库的浏览体验复用件：文件夹拼图卡 → 壁纸磁贴两级浏览 + 分帧渲染 + 拖出 + 选择态。
-  // 供播放列表成员选择、日历选壁纸、日内编辑内嵌浏览等场景共用。
+  // 供日历选壁纸、日内编辑内嵌浏览等场景共用。
   // opts: {
-  //   includePlaylist: 含播放列表（默认不含）
   //   browseFolders:   本地库式两级浏览（文件夹卡 → 进入文件夹看磁贴）
   //   draggable:       卡片可拖出（dragstart 带 filePath，落到时间轴/Dock 等目标）
   //   multi:           点击=切换选中；false 时点击=onPick 直选
@@ -999,7 +972,7 @@
     const root = el("div", { class: "wpb-root" });
     let folder = null; // 当前所在文件夹（browseFolders 模式）；null = 文件夹层
     let query = ""; // 搜索词（非空时跨全部文件夹过滤磁贴）
-    const all = () => (wallpapersCache || []).filter((w) => opts.includePlaylist || w.meta.type !== 6);
+    const all = () => wallpapersCache || [];
     const baseName = (dir) => (dir || "").split(/[\\/]/).filter(Boolean).pop() || dir || "";
 
     function makeCard(w) {
@@ -1105,47 +1078,6 @@
     return { el: root, refresh: render };
   }
 
-  function openMemberPicker(members, onChanged) {
-    const picked = new Set(members.map((m) => m.filePath));
-    openDialog((sheet, close) => {
-      const browser = wallpaperBrowser({
-        includePlaylist: false,
-        multi: true,
-        isPicked: (w) => picked.has(w.filePath),
-        onToggle: (w) => {
-          picked.has(w.filePath) ? picked.delete(w.filePath) : picked.add(w.filePath);
-          browser.refresh();
-          syncCount();
-        },
-      });
-      const countEl = el("span", { class: "dim-label" }, SC.t("create.members", picked.size));
-      function syncCount() { countEl.textContent = SC.t("create.members", picked.size); }
-      function toggleAll() {
-        const candidates = (wallpapersCache || []).filter((w) => w.meta.type !== 6);
-        const allIn = candidates.length > 0 && candidates.every((c) => picked.has(c.filePath));
-        allIn ? candidates.forEach((c) => picked.delete(c.filePath)) : candidates.forEach((c) => picked.add(c.filePath));
-        browser.refresh();
-        syncCount();
-      }
-      const head = el("div", { class: "field-row" },
-        el("button", { class: "btn btn-sm", onclick: toggleAll }, SC.t("create.selectAll")),
-        el("span", { class: "dim-label" }, SC.t("create.pickHint")));
-      sheet.append(
-        dialogHead(SC.t("create.pickTitle"), "", close),
-        el("div", { class: "dialog-body" }, head, browser.el),
-        el("div", { class: "dialog-foot" },
-          countEl,
-          el("button", {
-            class: "btn btn-accent",
-            onclick: () => {
-              members.length = 0;
-              for (const w of wallpapersCache) if (picked.has(w.filePath)) members.push(w);
-              close(true); onChanged && onChanged();
-            },
-          }, SC.t("common.ok"))));
-    });
-  }
-
   // ---------------------------------------------------------------- 单壁纸设置
   function openSettingDialog(w) {
     const s0 = w.setting || SC.defaultSetting();
@@ -1158,15 +1090,9 @@
 
       function rebuild() {
         box.innerHTML = "";
-        if (type !== 6) {
-          const dur = el("input", { class: "input input-time", type: "time", value: cur.duration || "" });
-          dur.addEventListener("change", () => { cur.duration = dur.value || null; });
-          box.append(fieldRow(SC.t("set.duration"), dur, SC.t("set.durationHint")));
-        }
-        if (type === 6) {
-          const pm = selectEl([{ value: 0, label: SC.t("set.order") }, { value: 1, label: SC.t("set.random") }], cur.playMode, (v) => { cur.playMode = Number(v); });
-          box.append(fieldRow(SC.t("set.playMode"), pm));
-        }
+        const dur = el("input", { class: "input input-time", type: "time", value: cur.duration || "" });
+        dur.addEventListener("change", () => { cur.duration = dur.value || null; });
+        box.append(fieldRow(SC.t("set.duration"), dur, SC.t("set.durationHint")));
         if (type === 4 || type === 5) {
           box.append(fieldRow(SC.t("set.mouse"), switchEl(cur.enableMouseEvent, (v) => { cur.enableMouseEvent = v; }), SC.t("set.mouseHint")));
         }
@@ -1239,7 +1165,7 @@
   // 预览渲染方式：meta.type 优先、URL 兜底（演示模式 mock 的 fileUrl 是 SVG data URI）
   function previewKind(w) {
     const type = w.meta && w.meta.type;
-    if (type === 5 || type === 0 || type === 6) return null; // Exe / 未识别 / 嵌套列表
+    if (type === 5 || type === 0) return null; // Exe / 未识别
     let url = w.fileUrl || "";
     try { url = decodeURIComponent(url); } catch (_) { /* 保留原串 */ }
     if (type === 4 || /\.html?$/i.test(w.fileName || "") || /\.html?($|\?)/i.test(url)) return "web";
@@ -1250,25 +1176,13 @@
   }
 
   function openPreviewDialog(wallpaper) {
-    const meta = wallpaper.meta || {};
-    const type = meta.type;
-    // 浏览范围：播放列表 = 其成员；单个壁纸 = 全库可预览项（滚轮 / 翻页连续浏览，循环）
-    const pool = type === 6
-      ? (meta.wallpapers || [])
-      : (SC.state.wallpapers && SC.state.wallpapers.length ? SC.state.wallpapers : [wallpaper]);
-    const members = pool.filter((m) => m && m.fileUrl && previewKind(m));
+    // 浏览范围：全库可预览项（滚轮 / 翻页连续浏览，循环）
+    const members = ((SC.state.wallpapers && SC.state.wallpapers.length ? SC.state.wallpapers : [wallpaper]))
+      .filter((m) => m && m.fileUrl && previewKind(m));
     if (!members.length) { SC.toast(SC.t("pv.noPreview"), "err"); return; }
-    // 起始项：播放列表从当前项开始，单个壁纸从被预览的那张开始（按引用找回下标）
-    let idx = 0;
-    {
-      let cur = wallpaper;
-      if (type === 6) {
-        const list = meta.wallpapers || [];
-        cur = list.length ? list[(meta.playIndex || 0) % list.length] : null;
-      }
-      const at = cur ? members.indexOf(cur) : -1;
-      idx = at >= 0 ? at : 0;
-    }
+    // 起始项：被预览的那张（按引用找回下标）
+    const at = members.indexOf(wallpaper);
+    let idx = at >= 0 ? at : 0;
     const multi = members.length > 1; // 多于一项：显示翻页 / 序号，滚轮可切换
 
     // 预览起始音量：优先用上次记住的预览音量（fluent.pvVolume，用户调整时落盘），
@@ -1483,6 +1397,7 @@
   // 数据源 SC.state.wallpapers（后端目录扫描），文件夹结构经 SC.listFolders 实时读盘。
   let localSort = localStorage.getItem("fluent.localSort") || "name";
   let localType = localStorage.getItem("fluent.localType") || "all";
+  if (localType === "6") localType = "all"; // 播放列表类型已下线，旧的筛选记忆重置回全部
   let localDir = localStorage.getItem("fluent.localDir") || ""; // 当前所在文件夹（"" = 根层级）
   let localLayout = {};      // 桌面画布布局表（跨渲染保持：落盘有防抖，重渲染若回读旧值会丢条目）
   let localLayoutDir = null; // localLayout 对应的文件夹；切换文件夹时才重新读盘
@@ -1611,7 +1526,7 @@
       for (const s of screens) menu.append(pick(SC.t("common.screen", s.deviceName || s.index), applyTarget === s.index, () => { setApplyTarget(s.index); }));
       menu.append(line(), sec(SC.t("local.filter")),
         pick(SC.t("local.filterAll"), localType === "all", () => setType("all")));
-      for (let tp = 1; tp <= 6; tp++) menu.append(pick(SC.typeName(tp), localType === String(tp), () => setType(String(tp))));
+      for (let tp = 1; tp <= 5; tp++) menu.append(pick(SC.typeName(tp), localType === String(tp), () => setType(String(tp))));
       menu.append(line(), sec(SC.t("local.sort")),
         pick(SC.t("local.sortName"), localSort === "name", () => setSort("name")),
         pick(SC.t("local.sortType"), localSort === "type", () => setSort("type")),
@@ -1730,19 +1645,8 @@
 
     async function moveTo(w, dir) {
       if (!w || samePath(w.dir, dir)) return;
-      const oldPath = w.filePath;
       const newPath = await SC.moveWallpaper(w, dir);
       if (!newPath) return;
-      // 引用该文件的播放列表成员同步改路径（成员只是引用，不随文件移动）
-      for (const pl of SC.state.wallpapers) {
-        if (!(pl.meta && pl.meta.type === 6)) continue;
-        if (!(pl.meta.wallpapers || []).some((m) => m.filePath === oldPath)) continue;
-        const updated = JSON.parse(JSON.stringify(pl));
-        for (const m of updated.meta.wallpapers) {
-          if (m.filePath === oldPath) { m.filePath = newPath; m.dir = dir; }
-        }
-        await SC.updateWallpaper(updated);
-      }
       SC.toast(SC.t("local.moved", dirName(dir)), "ok");
       await SC.refreshAll();
       if (localRefresh) localRefresh();
@@ -2096,6 +2000,8 @@
         img.addEventListener("error", () => { img.remove(); cover.classList.add("is-fallback"); });
         cover.append(img);
       } else cover.classList.add("is-fallback");
+      const nums = isPlaying ? playingScreenNums(w.filePath) : null;
+      if (nums) cover.append(nums);
 
       const playDot = el("span", { class: "loc-live" }, (() => { const s = el("span"); s.innerHTML = icon("play", 10); return s; })(), SC.t("common.playing"));
       const typeBadge = el("span", { class: "loc-type" }, SC.typeName(w.meta && w.meta.type));
@@ -2293,7 +2199,8 @@
         el("span", { class: "loc-tile-type" }, SC.typeName(w.meta && w.meta.type)),
         screens.length > 1 ? screenChipsOf(w) : null, // 悬停逐屏应用，同壁纸库卡片
         el("span", { class: "loc-acts" },
-          actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w))));
+          actBtn("eye", SC.t("pv.title"), () => openPreviewDialog(w))),
+        isPlaying ? playingScreenNums(w.filePath) : null);
       tile.append(thumb, el("span", { class: "loc-tile-name", title: nameOf(w) }, nameOf(w)));
       attachHoverPlay(tile, thumb, w);
       tile.addEventListener("contextmenu", (e) => {
@@ -3214,11 +3121,7 @@
         + ` · ${paused ? SC.t("common.paused") : SC.t("common.playing")}`));
 
     // 控制：作用于选中屏幕，未选 = 全部屏幕
-    const isList = w.meta && w.meta.type === 6;
     const ctrl = el("div", { class: "dock-ctrl" });
-    if (isList) {
-      ctrl.append(ctlBtn("prev", SC.t("dock.prev"), () => SC.prevIn(w)));
-    }
     if (SC.canPause(w)) {
       ctrl.append(ctlBtn(paused ? "play" : "pause", paused ? SC.t("dock.resume") : SC.t("dock.pause"), () => {
         paused ? SC.resume(target) : SC.pause(target);
@@ -3229,12 +3132,9 @@
       focusIdx = 0;
       pickScreen(-1); // 关闭后取消屏幕选中，避免空态 Dock 仍高亮已关屏
     }));
-    if (isList) {
-      ctrl.append(ctlBtn("next", SC.t("dock.next"), () => SC.nextIn(w)));
-    }
 
-    // 进度：只在选中屏幕（且聚焦壁纸为视频/列表）时显示，按屏轮询
-    const showProgress = dockSelScreen >= 0 && !!(w.meta && (w.meta.type === 3 || w.meta.type === 6));
+    // 进度：只在选中屏幕（且聚焦壁纸为视频）时显示，按屏轮询
+    const showProgress = dockSelScreen >= 0 && !!(w.meta && w.meta.type === 3);
     const cur = dragging ? dragPos : lastTime.position;
     const dur = lastTime.duration || 0;
     const time = el("span", { class: "dock-time" }, showProgress ? `${SC.fmtTime(cur)} / ${SC.fmtTime(dur)}` : "");
@@ -3247,6 +3147,9 @@
     function renderDockTime() {
       time.textContent = `${SC.fmtTime(dragging ? dragPos : lastTime.position)} / ${SC.fmtTime(lastTime.duration || 0)}`;
       if (!dragging && lastTime.duration > 0) seekEl.value = String(Math.round((lastTime.position / lastTime.duration) * 1000));
+      // 顶部进度线与滑块同源更新：此前线宽只在 renderDock 重建时设置一次，
+      // 播放中基本不动，造成「滑块在走、线不动」的不一致
+      if (showProgress && lastTime.duration > 0) line.style.width = `${Math.min(100, (lastTime.position / lastTime.duration) * 100)}%`;
     }
     // 全局只挂一个轮询订阅，renderDock 只换绑回调（旧实现每次渲染新增一个监听且不注销）
     if (offDockTime) { offDockTime(); offDockTime = null; }
@@ -3583,12 +3486,11 @@
     return box;
   }
 
-  /** 单选壁纸（含顶层播放列表；列表内轮播由引擎按 tick 推进）。onPick 收到 Wallpaper 或 null。 */
+  /** 单选壁纸。onPick 收到 Wallpaper 或 null。 */
   function openCalendarPick(currentPath, onPick) {
     let picked = currentPath || null;
     openDialog((sheet, close) => {
       const browser = wallpaperBrowser({
-        includePlaylist: true,
         multi: true,
         isPicked: (w) => picked != null && picked === w.filePath,
         onToggle: (w) => {
@@ -3721,9 +3623,8 @@
         if (w) calLocalInfo[w.filePath] = { fileUrl: w.fileUrl || "", coverUrl: w.coverUrl, title: w.meta && w.meta.title };
         renderTrack();
       }
-      // 本地库浏览（通用组件）：文件夹拼图卡 → 磁贴，拖到时间轴，或点击插入空档；含播放列表
+      // 本地库浏览（通用组件）：文件夹拼图卡 → 磁贴，拖到时间轴，或点击插入空档
       const lib = wallpaperBrowser({
-        includePlaylist: true,
         browseFolders: true,
         draggable: true,
         compact: true,
@@ -4315,10 +4216,10 @@
   SC.on("status", () => {
     const playing = SC.playingSet();
     if (currentView === "library") {
-      viewEl.querySelectorAll(".wall-card").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
+      viewEl.querySelectorAll(".wall-card").forEach((c) => syncCardPlaying(c, playing));
     }
     if (currentView === "local") {
-      viewEl.querySelectorAll(".loc-card, .loc-tile[data-path]").forEach((c) => c.classList.toggle("is-playing", playing.has(c.dataset.path)));
+      viewEl.querySelectorAll(".loc-card, .loc-tile[data-path]").forEach((c) => syncCardPlaying(c, playing));
     }
     renderDock();
   });

@@ -2,7 +2,9 @@
  * 皮肤共享引擎 SkinCore（官方皮肤共用，逻辑与 skin-dev / 默认皮肤对齐）。
  *
  * 职责：状态缓存与订阅、i18n（zh/en/ru/es/zh-Hant/ja/de/fr/pt-BR，缺词回退 en）、播放控制与进度轮询规则、
- * 分块上传 / 封面生成 / 播放列表、配置整组读写、下载、mpv、皮肤管理、演示模式。
+ * 分块上传 / 封面生成、配置整组读写、下载、mpv、皮肤管理、演示模式。
+ * 巨应3 沿用的 .playlist 播放列表（meta.type = 6）已不再支持：数据入口处直接剔除，
+ * 皮肤所有视图一律不渲染（见 refreshWallpapers / refreshStatus）。
  *
  * 皮肤页面在 index.html 里先定义 window.SKIN_META = { brand, version }，再引入本文件。
  * 无应用环境（浏览器直开）时进入演示模式：注入 mock 数据，全部操作本地模拟，
@@ -40,7 +42,7 @@
       "common.demoHint": "未检测到应用环境，正在展示模拟数据", "common.add": "添加", "common.remove": "移除",
       "common.saved": "已保存", "common.opFailed": "操作失败：{0}", "common.done": "完成", "common.back": "返回",
       "card.clickApplyAll": "单击应用到全部屏幕", "card.clickApplyScreen": "单击应用到{0}",
-      "type.1": "图片", "type.2": "动图", "type.3": "视频", "type.4": "Web", "type.5": "Exe", "type.6": "列表", "type.0": "自动检测",
+      "type.1": "图片", "type.2": "动图", "type.3": "视频", "type.4": "Web", "type.5": "Exe", "type.0": "自动检测",
       "lib.title": "壁纸库", "lib.count": "{0} 个壁纸", "lib.empty": "还没有壁纸",
       "lib.emptyHint": "点击右上角「创建」导入本地视频或图片，或从社区下载",
       "lib.target": "应用到", "lib.playingBadge": "正在播放",
@@ -68,24 +70,21 @@
       "pv.mouseOff": "鼠标交互已关闭",
       "pv.loadFailed": "加载失败：当前格式可能不被内置播放器支持",
       "pv.max": "放大", "pv.restore": "还原", "pv.wheelHint": "滚轮上下切换上一个 / 下一个",
-      "create.wallpaper": "创建壁纸", "create.playlist": "创建播放列表", "create.editWallpaper": "编辑壁纸", "create.editList": "编辑列表",
+      "create.wallpaper": "创建壁纸", "create.editWallpaper": "编辑壁纸",
       "create.titleField": "标题", "create.titlePh": "给{0}起个名字", "create.type": "类型",
       "create.file": "点击选择文件，或把文件拖到这里", "create.fileHint": "支持图片 / 动图 / 视频 / 网页（≤ 500MB）",
       "create.pickFolder": "选择文件夹（Web 壁纸）", "create.webPack": "{0} 个文件 · {1}", "create.webNeedHtml": "文件夹里没有网页文件",
       "create.webAskTitle": "导入 Web 壁纸", "create.webAskBody": "是否包含整个文件夹？将同时导入该网页所在目录的全部资源", "create.webAskYes": "包含整个文件夹", "create.webAskNo": "仅此文件",
       "create.webBigTitle": "文件夹较大", "create.webBigBody": "共 {0}，导入可能需要一些时间，确定继续吗？",
       "create.importing": "导入中 {0}%", "create.imported": "已导入", "create.reselect": "重新选择",
-      "create.addMembers": "添加壁纸", "create.members": "成员 {0}", "create.membersEmpty": "还没有成员，点击「添加壁纸」从库中选择",
       "create.creating": "创建中…", "create.titleEmpty": "标题不能为空", "create.noFile": "请先选择文件",
-      "create.listEmpty": "播放列表至少需要一个成员", "create.created": "创建成功", "create.createFailed": "创建失败：{0}",
+      "create.created": "创建成功", "create.createFailed": "创建失败：{0}",
       "create.updated": "已保存", "create.coverFailed": "封面生成失败（已跳过，稍后可自动生成）",
       "create.unsaved": "有未保存的修改", "create.unsavedBody": "关闭后将丢失这些修改，确定关闭吗？",
-      "create.pickTitle": "选择成员", "create.pickHint": "点击卡片选择，播放列表不能嵌套播放列表", "create.selectAll": "全选",
       "set.title": "壁纸设置", "set.sub": "「{0}」的播放参数，保存后立即生效",
       "set.overlayTitle": "叠加设置", "set.overlaySub": "「{0}」的画面叠加，保存后立即生效",
       "set.overlayTime": "时间时钟", "set.overlayTimeHint": "在画面右上角显示实时系统时间",
-      "set.duration": "播放时长", "set.durationHint": "该壁纸在播放列表中停留的时间（时:分）",
-      "set.playMode": "播放模式", "set.order": "顺序播放", "set.random": "随机播放",
+      "set.duration": "播放时长", "set.durationHint": "该壁纸的播放时长（时:分）",
       "set.mouse": "鼠标交互", "set.mouseHint": "允许壁纸响应鼠标移动与点击",
       "set.player": "视频引擎", "set.engine0": "默认", "set.engine1": "MPV 播放器", "set.engine2": "Web 播放器", "set.engine3": "内嵌 MPV 播放器",
       "set.hwdec": "硬件解码", "set.hwdecHint": "显著降低播放视频时的 CPU 占用",
@@ -146,7 +145,7 @@
       "cal.addSeg": "添加时间段", "cal.unset": "未设置", "cal.set": "设置壁纸",
       "cal.change": "换壁纸", "cal.clear": "清除", "cal.preview": "立即在桌面预览",
       "cal.previewNotFound": "在壁纸库里找不到这张壁纸，可能已被移动或删除", "cal.overnight": "跨零点", "cal.pickTitle": "选择壁纸",
-      "cal.pickHint": "可选播放列表；列表内轮播由引擎按设定推进。", "cal.none": "不设置", "cal.yearly": "每年节日",
+      "cal.pickHint": "选择要设置的壁纸。", "cal.none": "不设置", "cal.yearly": "每年节日",
       "cal.weekly": "每周规则", "cal.addYearly": "添加节日", "cal.addWeekly": "添加规则",
       "cal.addPreset": "从预设添加…", "cal.ruleName": "规则名称", "cal.newRule": "自定义节日",
       "cal.emptyYearly": "还没有节日规则，从预设挑一个或自定义。", "cal.emptyWeekly": "还没有每周规则，比如给周末排一组壁纸。", "cal.solar": "公历",
@@ -169,7 +168,7 @@
       "common.demoHint": "App not detected — showing sample data", "common.add": "Add", "common.remove": "Remove",
       "common.saved": "Saved", "common.opFailed": "Failed: {0}", "common.done": "Done", "common.back": "Back",
       "card.clickApplyAll": "Click to apply to all screens", "card.clickApplyScreen": "Click to apply to {0}",
-      "type.1": "Image", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.6": "Playlist", "type.0": "Auto",
+      "type.1": "Image", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.0": "Auto",
       "lib.title": "Library", "lib.count": "{0} wallpapers", "lib.empty": "No wallpapers yet",
       "lib.emptyHint": "Hit Create to import a local video or image, or grab one from the Hub",
       "lib.target": "Apply to", "lib.playingBadge": "Now playing",
@@ -197,24 +196,21 @@
       "pv.mouseOff": "Mouse interaction off",
       "pv.loadFailed": "Failed to load — the format may not be supported by the built-in player",
       "pv.max": "Maximize", "pv.restore": "Restore", "pv.wheelHint": "Scroll to switch previous / next",
-      "create.wallpaper": "New wallpaper", "create.playlist": "New playlist", "create.editWallpaper": "Edit wallpaper", "create.editList": "Edit playlist",
+      "create.wallpaper": "New wallpaper", "create.editWallpaper": "Edit wallpaper",
       "create.titleField": "Title", "create.titlePh": "Name your {0}", "create.type": "Type",
       "create.file": "Click to pick a file, or drop it here", "create.fileHint": "Image / GIF / video / web page up to 500MB",
       "create.pickFolder": "Pick a folder (web wallpaper)", "create.webPack": "{0} files · {1}", "create.webNeedHtml": "No web page in that folder",
       "create.webAskTitle": "Import web wallpaper", "create.webAskBody": "Include the whole folder? All assets next to this page will be imported too.", "create.webAskYes": "Include whole folder", "create.webAskNo": "This file only",
       "create.webBigTitle": "Large folder", "create.webBigBody": "{0} in total — importing may take a while. Continue?",
       "create.importing": "Importing {0}%", "create.imported": "Imported", "create.reselect": "Replace",
-      "create.addMembers": "Add wallpapers", "create.members": "{0} members", "create.membersEmpty": "No members yet — add from your library",
       "create.creating": "Creating…", "create.titleEmpty": "Title is required", "create.noFile": "Pick a file first",
-      "create.listEmpty": "A playlist needs at least one member", "create.created": "Created", "create.createFailed": "Create failed: {0}",
+      "create.created": "Created", "create.createFailed": "Create failed: {0}",
       "create.updated": "Saved", "create.coverFailed": "Cover generation failed (skipped)",
       "create.unsaved": "Unsaved changes", "create.unsavedBody": "Close and lose these changes?",
-      "create.pickTitle": "Pick members", "create.pickHint": "Click cards to select; playlists cannot nest", "create.selectAll": "Select all",
       "set.title": "Wallpaper settings", "set.sub": "Playback options for “{0}”, applied instantly on save",
       "set.overlayTitle": "Overlays", "set.overlaySub": "Overlay elements for “{0}”, applied instantly on save",
       "set.overlayTime": "Clock", "set.overlayTimeHint": "Show a live system-time clock in the top-right corner",
-      "set.duration": "Duration", "set.durationHint": "How long this wallpaper stays in a playlist (hh:mm)",
-      "set.playMode": "Play mode", "set.order": "In order", "set.random": "Random",
+      "set.duration": "Duration", "set.durationHint": "How long this wallpaper plays (hh:mm)",
       "set.mouse": "Mouse interaction", "set.mouseHint": "Let the wallpaper respond to mouse",
       "set.player": "Video engine", "set.engine0": "Default", "set.engine1": "MPV player", "set.engine2": "Web player", "set.engine3": "Embedded MPV player",
       "set.hwdec": "Hardware decoding", "set.hwdecHint": "Greatly reduces CPU usage for video",
@@ -275,7 +271,7 @@
       "cal.addSeg": "Add time segment", "cal.unset": "Not set", "cal.set": "Set wallpaper",
       "cal.change": "Change", "cal.clear": "Clear", "cal.preview": "Preview on desktop",
       "cal.previewNotFound": "Wallpaper not found in the library; it may have been moved or deleted", "cal.overnight": "overnight", "cal.pickTitle": "Pick a wallpaper",
-      "cal.pickHint": "Playlists included; items rotate per their settings.", "cal.none": "None", "cal.yearly": "Yearly holidays",
+      "cal.pickHint": "Pick the wallpaper to use.", "cal.none": "None", "cal.yearly": "Yearly holidays",
       "cal.weekly": "Weekly rules", "cal.addYearly": "Add holiday", "cal.addWeekly": "Add rule",
       "cal.addPreset": "Add from preset…", "cal.ruleName": "Rule name", "cal.newRule": "Custom holiday",
       "cal.emptyYearly": "No holiday rules yet — pick a preset or add your own.", "cal.emptyWeekly": "No weekly rules yet — e.g. a relaxing set for weekends.", "cal.solar": "Solar",
@@ -298,7 +294,7 @@
       "common.demoHint": "Приложение не обнаружено — показаны примерные данные", "common.add": "Добавить", "common.remove": "Убрать",
       "common.saved": "Сохранено", "common.opFailed": "Не удалось: {0}", "common.done": "Готово", "common.back": "Назад",
       "card.clickApplyAll": "Нажмите, чтобы применить ко всем экранам", "card.clickApplyScreen": "Нажмите, чтобы применить к {0}",
-      "type.1": "Изображение", "type.2": "GIF", "type.3": "Видео", "type.4": "Веб", "type.5": "Exe", "type.6": "Плейлист", "type.0": "Авто",
+      "type.1": "Изображение", "type.2": "GIF", "type.3": "Видео", "type.4": "Веб", "type.5": "Exe", "type.0": "Авто",
       "lib.title": "Библиотека", "lib.count": "{0} обоев", "lib.empty": "Пока нет обоев",
       "lib.emptyHint": "Нажмите «Создать», чтобы добавить видео или изображение, или скачайте из Хаба",
       "lib.target": "Применить к", "lib.playingBadge": "Воспроизводится",
@@ -326,24 +322,21 @@
       "pv.mouseOff": "Взаимодействие с мышью выключено",
       "pv.loadFailed": "Не удалось загрузить — формат может не поддерживаться встроенным плеером",
       "pv.max": "Развернуть", "pv.restore": "Восстановить", "pv.wheelHint": "Колесо мыши — предыдущий / следующий",
-      "create.wallpaper": "Создать обои", "create.playlist": "Создать плейлист", "create.editWallpaper": "Изменить обои", "create.editList": "Изменить плейлист",
+      "create.wallpaper": "Создать обои", "create.editWallpaper": "Изменить обои",
       "create.titleField": "Название", "create.titlePh": "Придумайте название для {0}", "create.type": "Тип",
       "create.file": "Нажмите, чтобы выбрать файл, или перетащите его сюда", "create.fileHint": "Изображение / GIF / видео / веб-страница (≤ 500 МБ)",
       "create.pickFolder": "Выбрать папку (веб-обои)", "create.webPack": "Файлов: {0} · {1}", "create.webNeedHtml": "В папке нет веб-страниц",
       "create.webAskTitle": "Импорт веб-обоев", "create.webAskBody": "Импортировать всю папку? Ресурсы рядом со страницей тоже будут добавлены", "create.webAskYes": "Вся папка", "create.webAskNo": "Только этот файл",
       "create.webBigTitle": "Большая папка", "create.webBigBody": "Всего {0} — импорт может занять время. Продолжить?",
       "create.importing": "Импорт {0}%", "create.imported": "Импортировано", "create.reselect": "Заменить",
-      "create.addMembers": "Добавить обои", "create.members": "Элементов: {0}", "create.membersEmpty": "Пока пусто — добавьте обои из библиотеки",
       "create.creating": "Создание…", "create.titleEmpty": "Укажите название", "create.noFile": "Сначала выберите файл",
-      "create.listEmpty": "Плейлист требует хотя бы один элемент", "create.created": "Создано", "create.createFailed": "Не удалось создать: {0}",
+      "create.created": "Создано", "create.createFailed": "Не удалось создать: {0}",
       "create.updated": "Сохранено", "create.coverFailed": "Не удалось создать обложку (пропущено, создастся позже автоматически)",
       "create.unsaved": "Есть несохранённые изменения", "create.unsavedBody": "При закрытии изменения будут потеряны. Закрыть?",
-      "create.pickTitle": "Выбор элементов", "create.pickHint": "Выбирайте карточки; плейлисты нельзя вкладывать друг в друга", "create.selectAll": "Выбрать все",
       "set.title": "Настройки обоев", "set.sub": "Параметры воспроизведения «{0}», применяются сразу после сохранения",
       "set.overlayTitle": "Наложения", "set.overlaySub": "Наложение для «{0}», применяется сразу после сохранения",
       "set.overlayTime": "Часы", "set.overlayTimeHint": "Показывать часы с системным временем в правом верхнем углу",
-      "set.duration": "Длительность", "set.durationHint": "Сколько обои остаются в плейлисте (чч:мм)",
-      "set.playMode": "Режим воспроизведения", "set.order": "По порядку", "set.random": "Случайно",
+      "set.duration": "Длительность", "set.durationHint": "Длительность показа этих обоев (чч:мм)",
       "set.mouse": "Взаимодействие с мышью", "set.mouseHint": "Разрешить обоям реагировать на мышь",
       "set.player": "Видеодвижок", "set.engine0": "По умолчанию", "set.engine1": "MPV-плеер", "set.engine2": "Веб-плеер", "set.engine3": "Встроенный MPV-плеер",
       "set.hwdec": "Аппаратное декодирование", "set.hwdecHint": "Заметно снижает нагрузку на CPU при воспроизведении видео",
@@ -403,7 +396,7 @@
       "cal.addSeg": "Добавить отрезок", "cal.unset": "Не задано", "cal.set": "Задать обои",
       "cal.change": "Заменить", "cal.clear": "Убрать", "cal.preview": "Показать на рабочем столе",
       "cal.previewNotFound": "Обои не найдены в библиотеке; возможно, они перемещены или удалены", "cal.overnight": "через полночь", "cal.pickTitle": "Выберите обои",
-      "cal.pickHint": "Можно выбирать плейлисты; смена внутри — по их настройкам.", "cal.none": "Не задавать", "cal.yearly": "Ежегодные праздники",
+      "cal.pickHint": "Выберите обои для использования.", "cal.none": "Не задавать", "cal.yearly": "Ежегодные праздники",
       "cal.weekly": "Еженедельные правила", "cal.addYearly": "Добавить праздник", "cal.addWeekly": "Добавить правило",
       "cal.addPreset": "Добавить из шаблона…", "cal.ruleName": "Название правила", "cal.newRule": "Свой праздник",
       "cal.emptyYearly": "Праздников пока нет — выберите шаблон или создайте свой.", "cal.emptyWeekly": "Еженедельных правил пока нет — например, спокойный набор на выходные.", "cal.solar": "Солнечный",
@@ -426,7 +419,7 @@
       "common.demoHint": "Aplicación no detectada — mostrando datos de ejemplo", "common.add": "Agregar", "common.remove": "Quitar",
       "common.saved": "Guardado", "common.opFailed": "Error: {0}", "common.done": "Listo", "common.back": "Atrás",
       "card.clickApplyAll": "Clic para aplicar a todas las pantallas", "card.clickApplyScreen": "Clic para aplicar a {0}",
-      "type.1": "Imagen", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.6": "Lista", "type.0": "Auto",
+      "type.1": "Imagen", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.0": "Auto",
       "lib.title": "Biblioteca", "lib.count": "{0} fondos", "lib.empty": "Aún no hay fondos",
       "lib.emptyHint": "Pulsa Crear para importar un video o imagen local, o descarga uno del Hub",
       "lib.target": "Aplicar a", "lib.playingBadge": "Reproduciendo",
@@ -454,24 +447,21 @@
       "pv.mouseOff": "Interacción del ratón desactivada",
       "pv.loadFailed": "Error al cargar — el formato puede no ser compatible con el reproductor incorporado",
       "pv.max": "Maximizar", "pv.restore": "Restaurar", "pv.wheelHint": "Rueda del ratón para anterior / siguiente",
-      "create.wallpaper": "Nuevo fondo", "create.playlist": "Nueva lista", "create.editWallpaper": "Editar fondo", "create.editList": "Editar lista",
+      "create.wallpaper": "Nuevo fondo", "create.editWallpaper": "Editar fondo",
       "create.titleField": "Título", "create.titlePh": "Ponle nombre a tu {0}", "create.type": "Tipo",
       "create.file": "Haz clic para elegir un archivo, o suéltalo aquí", "create.fileHint": "Imagen / GIF / video / página web (≤ 500 MB)",
       "create.pickFolder": "Elegir carpeta (fondo web)", "create.webPack": "{0} archivos · {1}", "create.webNeedHtml": "No hay página web en esa carpeta",
       "create.webAskTitle": "Importar fondo web", "create.webAskBody": "¿Incluir toda la carpeta? También se importarán los recursos junto a esta página", "create.webAskYes": "Incluir toda la carpeta", "create.webAskNo": "Solo este archivo",
       "create.webBigTitle": "Carpeta grande", "create.webBigBody": "{0} en total — la importación puede tardar. ¿Continuar?",
       "create.importing": "Importando {0}%", "create.imported": "Importado", "create.reselect": "Reemplazar",
-      "create.addMembers": "Agregar fondos", "create.members": "{0} miembros", "create.membersEmpty": "Aún no hay miembros — agrega desde tu biblioteca",
       "create.creating": "Creando…", "create.titleEmpty": "El título es obligatorio", "create.noFile": "Elige un archivo primero",
-      "create.listEmpty": "Una lista necesita al menos un miembro", "create.created": "Creado", "create.createFailed": "Error al crear: {0}",
+      "create.created": "Creado", "create.createFailed": "Error al crear: {0}",
       "create.updated": "Guardado", "create.coverFailed": "Error al generar la portada (omitido)",
       "create.unsaved": "Cambios sin guardar", "create.unsavedBody": "¿Cerrar y perder estos cambios?",
-      "create.pickTitle": "Elegir miembros", "create.pickHint": "Haz clic en las tarjetas para seleccionar; las listas no se pueden anidar", "create.selectAll": "Seleccionar todo",
       "set.title": "Ajustes del fondo", "set.sub": "Opciones de reproducción de «{0}», se aplican al guardar",
       "set.overlayTitle": "Superposiciones", "set.overlaySub": "Superposición de «{0}», se aplica al guardar",
       "set.overlayTime": "Reloj", "set.overlayTimeHint": "Muestra un reloj con la hora del sistema en la esquina superior derecha",
-      "set.duration": "Duración", "set.durationHint": "Cuánto tiempo permanece este fondo en la lista (hh:mm)",
-      "set.playMode": "Modo de reproducción", "set.order": "En orden", "set.random": "Aleatorio",
+      "set.duration": "Duración", "set.durationHint": "Cuánto tiempo se muestra este fondo (hh:mm)",
       "set.mouse": "Interacción del ratón", "set.mouseHint": "Permitir que el fondo reaccione al ratón",
       "set.player": "Motor de video", "set.engine0": "Predeterminado", "set.engine1": "Reproductor MPV", "set.engine2": "Reproductor web", "set.engine3": "Reproductor MPV integrado",
       "set.hwdec": "Decodificación por hardware", "set.hwdecHint": "Reduce mucho el uso de CPU al reproducir video",
@@ -531,7 +521,7 @@
       "cal.addSeg": "Añadir tramo", "cal.unset": "Sin definir", "cal.set": "Definir fondo",
       "cal.change": "Cambiar", "cal.clear": "Quitar", "cal.preview": "Vista previa en el escritorio",
       "cal.previewNotFound": "No se encontró el fondo en la biblioteca; quizá se movió o eliminó", "cal.overnight": "de madrugada", "cal.pickTitle": "Elige un fondo",
-      "cal.pickHint": "Se incluyen listas; la rotación interna sigue sus ajustes.", "cal.none": "Ninguno", "cal.yearly": "Festivos anuales",
+      "cal.pickHint": "Elige el fondo que se usará.", "cal.none": "Ninguno", "cal.yearly": "Festivos anuales",
       "cal.weekly": "Reglas semanales", "cal.addYearly": "Añadir festivo", "cal.addWeekly": "Añadir regla",
       "cal.addPreset": "Añadir desde plantilla…", "cal.ruleName": "Nombre de la regla", "cal.newRule": "Festivo personalizado",
       "cal.emptyYearly": "Aún no hay festivos: elige una plantilla o crea el tuyo.", "cal.emptyWeekly": "Aún no hay reglas semanales: por ejemplo, un fondo relajado para el fin de semana.", "cal.solar": "Solar",
@@ -554,7 +544,7 @@
       "common.demoHint": "未偵測到應用程式環境，正在顯示模擬資料", "common.add": "新增", "common.remove": "移除",
       "common.saved": "已儲存", "common.opFailed": "操作失敗：{0}", "common.done": "完成", "common.back": "返回",
       "card.clickApplyAll": "單擊套用到全部螢幕", "card.clickApplyScreen": "單擊套用到{0}",
-      "type.1": "圖片", "type.2": "動圖", "type.3": "影片", "type.4": "Web", "type.5": "Exe", "type.6": "清單", "type.0": "自動偵測",
+      "type.1": "圖片", "type.2": "動圖", "type.3": "影片", "type.4": "Web", "type.5": "Exe", "type.0": "自動偵測",
       "lib.title": "桌布庫", "lib.count": "{0} 個桌布", "lib.empty": "還沒有桌布",
       "lib.emptyHint": "點擊右上角「建立」匯入本機影片或圖片，或從社群下載",
       "lib.target": "套用到", "lib.playingBadge": "正在播放",
@@ -582,24 +572,21 @@
       "pv.mouseOff": "滑鼠互動已關閉",
       "pv.loadFailed": "載入失敗：目前格式可能不受內建播放器支援",
       "pv.max": "放大", "pv.restore": "還原", "pv.wheelHint": "滾輪上下切換上一個 / 下一個",
-      "create.wallpaper": "建立桌布", "create.playlist": "建立播放清單", "create.editWallpaper": "編輯桌布", "create.editList": "編輯清單",
+      "create.wallpaper": "建立桌布", "create.editWallpaper": "編輯桌布",
       "create.titleField": "標題", "create.titlePh": "幫{0}取個名字", "create.type": "類型",
       "create.file": "點擊選擇檔案，或把檔案拖到這裡", "create.fileHint": "支援圖片 / 動圖 / 影片 / 網頁（≤ 500MB）",
       "create.pickFolder": "選擇資料夾（Web 桌布）", "create.webPack": "{0} 個檔案 · {1}", "create.webNeedHtml": "資料夾裡沒有網頁檔案",
       "create.webAskTitle": "匯入 Web 桌布", "create.webAskBody": "是否包含整個資料夾？將同時匯入該網頁所在目錄的全部資源", "create.webAskYes": "包含整個資料夾", "create.webAskNo": "僅此檔案",
       "create.webBigTitle": "資料夾較大", "create.webBigBody": "共 {0}，匯入可能需要一些時間，確定繼續嗎？",
       "create.importing": "匯入中 {0}%", "create.imported": "已匯入", "create.reselect": "重新選擇",
-      "create.addMembers": "新增桌布", "create.members": "成員 {0}", "create.membersEmpty": "還沒有成員，點擊「新增桌布」從庫中選擇",
       "create.creating": "建立中…", "create.titleEmpty": "標題不能為空", "create.noFile": "請先選擇檔案",
-      "create.listEmpty": "播放清單至少需要一個成員", "create.created": "建立成功", "create.createFailed": "建立失敗：{0}",
+      "create.created": "建立成功", "create.createFailed": "建立失敗：{0}",
       "create.updated": "已儲存", "create.coverFailed": "封面產生失敗（已跳過，稍後可自動產生）",
       "create.unsaved": "有未儲存的修改", "create.unsavedBody": "關閉後將遺失這些修改，確定關閉嗎？",
-      "create.pickTitle": "選擇成員", "create.pickHint": "點擊卡片選擇，播放清單不能嵌套播放清單", "create.selectAll": "全選",
       "set.title": "桌布設定", "set.sub": "「{0}」的播放參數，儲存後立即生效",
       "set.overlayTitle": "疊加設定", "set.overlaySub": "「{0}」的畫面疊加，儲存後立即生效",
       "set.overlayTime": "時間時鐘", "set.overlayTimeHint": "在畫面右上角顯示即時系統時間",
-      "set.duration": "播放時長", "set.durationHint": "該桌布在播放清單中停留的時間（時:分）",
-      "set.playMode": "播放模式", "set.order": "順序播放", "set.random": "隨機播放",
+      "set.duration": "播放時長", "set.durationHint": "該桌布的播放時長（時:分）",
       "set.mouse": "滑鼠互動", "set.mouseHint": "允許桌布回應滑鼠移動與點擊",
       "set.player": "影片引擎", "set.engine0": "預設", "set.engine1": "MPV 播放器", "set.engine2": "Web 播放器", "set.engine3": "內嵌 MPV 播放器",
       "set.hwdec": "硬體解碼", "set.hwdecHint": "顯著降低播放影片時的 CPU 佔用",
@@ -659,7 +646,7 @@
       "cal.addSeg": "新增時段", "cal.unset": "未設定", "cal.set": "設定桌布",
       "cal.change": "換桌布", "cal.clear": "清除", "cal.preview": "立即在桌面預覽",
       "cal.previewNotFound": "在桌布庫裡找不到這張桌布，可能已被移動或刪除", "cal.overnight": "跨零點", "cal.pickTitle": "選擇桌布",
-      "cal.pickHint": "可選播放清單；清單內輪播由引擎按設定推進。", "cal.none": "不設定", "cal.yearly": "每年節日",
+      "cal.pickHint": "選擇要設定的桌布。", "cal.none": "不設定", "cal.yearly": "每年節日",
       "cal.weekly": "每週規則", "cal.addYearly": "新增節日", "cal.addWeekly": "新增規則",
       "cal.addPreset": "從預設新增…", "cal.ruleName": "規則名稱", "cal.newRule": "自訂節日",
       "cal.emptyYearly": "還沒有節日規則，從預設挑一個或自訂。", "cal.emptyWeekly": "還沒有每週規則，比如給週末排一組桌布。", "cal.solar": "國曆",
@@ -682,7 +669,7 @@
       "common.demoHint": "アプリ環境が検出されないため、サンプルデータを表示中", "common.add": "追加", "common.remove": "削除",
       "common.saved": "保存しました", "common.opFailed": "操作に失敗：{0}", "common.done": "完了", "common.back": "戻る",
       "card.clickApplyAll": "クリックですべての画面に適用", "card.clickApplyScreen": "クリックで{0}に適用",
-      "type.1": "画像", "type.2": "GIF", "type.3": "動画", "type.4": "Web", "type.5": "Exe", "type.6": "プレイリスト", "type.0": "自動判定",
+      "type.1": "画像", "type.2": "GIF", "type.3": "動画", "type.4": "Web", "type.5": "Exe", "type.0": "自動判定",
       "lib.title": "ライブラリ", "lib.count": "壁紙 {0} 件", "lib.empty": "壁紙がまだありません",
       "lib.emptyHint": "右上の「作成」から動画や画像を読み込むか、コミュニティからダウンロードしましょう",
       "lib.target": "適用先", "lib.playingBadge": "再生中",
@@ -710,24 +697,21 @@
       "pv.mouseOff": "マウス操作はオフです",
       "pv.loadFailed": "読み込みに失敗しました：この形式は内蔵プレーヤーで非対応の可能性があります",
       "pv.max": "拡大", "pv.restore": "元に戻す", "pv.wheelHint": "スクロールで前 / 次へ切り替え",
-      "create.wallpaper": "壁紙を作成", "create.playlist": "プレイリストを作成", "create.editWallpaper": "壁紙を編集", "create.editList": "プレイリストを編集",
+      "create.wallpaper": "壁紙を作成", "create.editWallpaper": "壁紙を編集",
       "create.titleField": "タイトル", "create.titlePh": "{0}に名前をつける", "create.type": "種類",
       "create.file": "クリックしてファイルを選択、またはここにドロップ", "create.fileHint": "画像 / GIF / 動画 / ウェブページ（≤ 500MB）",
       "create.pickFolder": "フォルダを選択（Web 壁紙）", "create.webPack": "{0} ファイル · {1}", "create.webNeedHtml": "フォルダにウェブページがありません",
       "create.webAskTitle": "Web 壁紙を読み込む", "create.webAskBody": "フォルダごと読み込みますか？このページと同じ場所にあるリソースも一緒に取り込みます", "create.webAskYes": "フォルダごと", "create.webAskNo": "このファイルだけ",
       "create.webBigTitle": "フォルダが大きめです", "create.webBigBody": "合計 {0}。読み込みに時間がかかる可能性があります。続けますか？",
       "create.importing": "読み込み中 {0}%", "create.imported": "読み込みました", "create.reselect": "選び直す",
-      "create.addMembers": "壁紙を追加", "create.members": "メンバー {0}", "create.membersEmpty": "メンバーがいません。「壁紙を追加」からライブラリ内で選んでください",
       "create.creating": "作成中…", "create.titleEmpty": "タイトルは必須です", "create.noFile": "先にファイルを選んでください",
-      "create.listEmpty": "プレイリストには最低 1 つのメンバーが必要です", "create.created": "作成しました", "create.createFailed": "作成に失敗：{0}",
+      "create.created": "作成しました", "create.createFailed": "作成に失敗：{0}",
       "create.updated": "保存しました", "create.coverFailed": "サムネイルの生成に失敗しました（スキップ、後で自動生成されます）",
       "create.unsaved": "未保存の変更があります", "create.unsavedBody": "閉じると変更は失われます。閉じますか？",
-      "create.pickTitle": "メンバーを選択", "create.pickHint": "カードをクリックして選択。プレイリストの入れ子はできません", "create.selectAll": "すべて選択",
       "set.title": "壁紙の設定", "set.sub": "「{0}」の再生パラメータ。保存するとすぐ反映されます",
       "set.overlayTitle": "オーバーレイ設定", "set.overlaySub": "「{0}」の画面オーバーレイ。保存するとすぐ反映されます",
       "set.overlayTime": "時計", "set.overlayTimeHint": "画面の右上にシステム時刻の時計を表示します",
-      "set.duration": "再生時間", "set.durationHint": "プレイリストでこの壁紙が表示される時間（時:分）",
-      "set.playMode": "再生モード", "set.order": "順番に再生", "set.random": "ランダム再生",
+      "set.duration": "再生時間", "set.durationHint": "この壁紙の再生時間（時:分）",
       "set.mouse": "マウス操作", "set.mouseHint": "壁紙がマウスの動きやクリックに反応するようにします",
       "set.player": "動画エンジン", "set.engine0": "既定", "set.engine1": "MPV プレーヤー", "set.engine2": "Web プレーヤー", "set.engine3": "内蔵 MPV プレーヤー",
       "set.hwdec": "ハードウェアデコード", "set.hwdecHint": "動画再生時の CPU 負荷を大幅に下げます",
@@ -787,7 +771,7 @@
       "cal.addSeg": "時間帯を追加", "cal.unset": "未設定", "cal.set": "壁紙を設定",
       "cal.change": "変更", "cal.clear": "クリア", "cal.preview": "デスクトップでプレビュー",
       "cal.previewNotFound": "ライブラリにこの壁紙が見つかりません。移動または削除された可能性があります", "cal.overnight": "日跨り", "cal.pickTitle": "壁紙を選択",
-      "cal.pickHint": "プレイリストも選べます。中のローテーションは設定に従います。", "cal.none": "設定しない", "cal.yearly": "毎年の祝日",
+      "cal.pickHint": "設定する壁紙を選んでください。", "cal.none": "設定しない", "cal.yearly": "毎年の祝日",
       "cal.weekly": "毎週のルール", "cal.addYearly": "祝日を追加", "cal.addWeekly": "ルールを追加",
       "cal.addPreset": "プリセットから追加…", "cal.ruleName": "ルール名", "cal.newRule": "カスタム祝日",
       "cal.emptyYearly": "祝日ルールがまだありません。プリセットを選ぶか自分で追加してください。", "cal.emptyWeekly": "毎週のルールがまだありません。例：週末にリラックスできる壁紙を。", "cal.solar": "新暦",
@@ -810,7 +794,7 @@
       "common.demoHint": "App nicht erkannt — Beispieldaten werden angezeigt", "common.add": "Hinzufügen", "common.remove": "Entfernen",
       "common.saved": "Gespeichert", "common.opFailed": "Fehlgeschlagen: {0}", "common.done": "Fertig", "common.back": "Zurück",
       "card.clickApplyAll": "Klicken, um auf alle Bildschirme anzuwenden", "card.clickApplyScreen": "Klicken, um auf {0} anzuwenden",
-      "type.1": "Bild", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.6": "Wiedergabeliste", "type.0": "Auto",
+      "type.1": "Bild", "type.2": "GIF", "type.3": "Video", "type.4": "Web", "type.5": "Exe", "type.0": "Auto",
       "lib.title": "Bibliothek", "lib.count": "{0} Wallpapers", "lib.empty": "Noch keine Wallpapers",
       "lib.emptyHint": "Klicke auf Erstellen, um ein lokales Video oder Bild zu importieren, oder lade eines aus dem Hub",
       "lib.target": "Anwenden auf", "lib.playingBadge": "Wird abgespielt",
@@ -838,24 +822,21 @@
       "pv.mouseOff": "Mausinteraktion aus",
       "pv.loadFailed": "Laden fehlgeschlagen — das Format wird vom integrierten Player womöglich nicht unterstützt",
       "pv.max": "Maximieren", "pv.restore": "Wiederherstellen", "pv.wheelHint": "Mausrad für vorheriges / nächstes",
-      "create.wallpaper": "Neues Wallpaper", "create.playlist": "Neue Wiedergabeliste", "create.editWallpaper": "Wallpaper bearbeiten", "create.editList": "Wiedergabeliste bearbeiten",
+      "create.wallpaper": "Neues Wallpaper", "create.editWallpaper": "Wallpaper bearbeiten",
       "create.titleField": "Titel", "create.titlePh": "Benenne dein {0}", "create.type": "Typ",
       "create.file": "Klicke, um eine Datei zu wählen, oder ziehe sie hierher", "create.fileHint": "Bild / GIF / Video / Webseite (≤ 500 MB)",
       "create.pickFolder": "Ordner wählen (Web-Wallpaper)", "create.webPack": "{0} Dateien · {1}", "create.webNeedHtml": "Keine Webseite in diesem Ordner",
       "create.webAskTitle": "Web-Wallpaper importieren", "create.webAskBody": "Ganzen Ordner einbeziehen? Alle Ressourcen neben der Seite werden mit importiert", "create.webAskYes": "Ganzen Ordner einbeziehen", "create.webAskNo": "Nur diese Datei",
       "create.webBigTitle": "Großer Ordner", "create.webBigBody": "Insgesamt {0} — der Import kann eine Weile dauern. Fortfahren?",
       "create.importing": "Importiere {0}%", "create.imported": "Importiert", "create.reselect": "Erneut wählen",
-      "create.addMembers": "Wallpapers hinzufügen", "create.members": "{0} Mitglieder", "create.membersEmpty": "Noch keine Mitglieder — aus der Bibliothek hinzufügen",
       "create.creating": "Wird erstellt…", "create.titleEmpty": "Titel ist erforderlich", "create.noFile": "Zuerst eine Datei wählen",
-      "create.listEmpty": "Eine Wiedergabeliste braucht mindestens ein Mitglied", "create.created": "Erstellt", "create.createFailed": "Erstellen fehlgeschlagen: {0}",
+      "create.created": "Erstellt", "create.createFailed": "Erstellen fehlgeschlagen: {0}",
       "create.updated": "Gespeichert", "create.coverFailed": "Vorschaubild fehlgeschlagen (übersprungen)",
       "create.unsaved": "Ungespeicherte Änderungen", "create.unsavedBody": "Schließen und Änderungen verwerfen?",
-      "create.pickTitle": "Mitglieder wählen", "create.pickHint": "Karten anklicken zum Auswählen; Wiedergabelisten lassen sich nicht verschachteln", "create.selectAll": "Alle auswählen",
       "set.title": "Wallpaper-Einstellungen", "set.sub": "Wiedergabeoptionen für „{0}“, gelten sofort beim Speichern",
       "set.overlayTitle": "Overlays", "set.overlaySub": "Overlays für „{0}“, gelten sofort beim Speichern",
       "set.overlayTime": "Uhr", "set.overlayTimeHint": "Zeigt eine Uhr mit der Systemzeit in der oberen rechten Ecke",
-      "set.duration": "Dauer", "set.durationHint": "Wie lange dieses Wallpaper in der Wiedergabeliste bleibt (Std:Min)",
-      "set.playMode": "Wiedergabemodus", "set.order": "Der Reihe nach", "set.random": "Zufällig",
+      "set.duration": "Dauer", "set.durationHint": "Wie lange dieses Wallpaper gezeigt wird (Std:Min)",
       "set.mouse": "Mausinteraktion", "set.mouseHint": "Wallpaper darf auf die Maus reagieren",
       "set.player": "Video-Engine", "set.engine0": "Standard", "set.engine1": "MPV-Player", "set.engine2": "Web-Player", "set.engine3": "Integrierter MPV-Player",
       "set.hwdec": "Hardware-Dekodierung", "set.hwdecHint": "Reduziert die CPU-Last bei Videos deutlich",
@@ -915,7 +896,7 @@
       "cal.addSeg": "Zeitabschnitt hinzufügen", "cal.unset": "Nicht gesetzt", "cal.set": "Wallpaper setzen",
       "cal.change": "Ändern", "cal.clear": "Entfernen", "cal.preview": "Auf dem Desktop ansehen",
       "cal.previewNotFound": "Wallpaper in der Bibliothek nicht gefunden; evtl. verschoben oder gelöscht", "cal.overnight": "über Mitternacht", "cal.pickTitle": "Wallpaper wählen",
-      "cal.pickHint": "Playlists erlaubt; der Wechsel darin folgt deren Einstellungen.", "cal.none": "Keine", "cal.yearly": "Jährliche Feiertage",
+      "cal.pickHint": "Wähle das zu verwendende Wallpaper.", "cal.none": "Keine", "cal.yearly": "Jährliche Feiertage",
       "cal.weekly": "Wöchentliche Regeln", "cal.addYearly": "Feiertag hinzufügen", "cal.addWeekly": "Regel hinzufügen",
       "cal.addPreset": "Aus Vorlage hinzufügen…", "cal.ruleName": "Regelname", "cal.newRule": "Eigener Feiertag",
       "cal.emptyYearly": "Noch keine Feiertagsregeln — wähle eine Vorlage oder lege eigene an.", "cal.emptyWeekly": "Noch keine Wochenregeln — z. B. ein entspanntes Set fürs Wochenende.", "cal.solar": "Solar",
@@ -938,7 +919,7 @@
       "common.demoHint": "Application non détectée — affichage de données d'exemple", "common.add": "Ajouter", "common.remove": "Retirer",
       "common.saved": "Enregistré", "common.opFailed": "Échec : {0}", "common.done": "Terminé", "common.back": "Retour",
       "card.clickApplyAll": "Cliquez pour appliquer à tous les écrans", "card.clickApplyScreen": "Cliquez pour appliquer à {0}",
-      "type.1": "Image", "type.2": "GIF", "type.3": "Vidéo", "type.4": "Web", "type.5": "Exe", "type.6": "Liste", "type.0": "Auto",
+      "type.1": "Image", "type.2": "GIF", "type.3": "Vidéo", "type.4": "Web", "type.5": "Exe", "type.0": "Auto",
       "lib.title": "Bibliothèque", "lib.count": "{0} fonds d'écran", "lib.empty": "Aucun fond d'écran pour l'instant",
       "lib.emptyHint": "Cliquez sur Créer pour importer une vidéo ou une image locale, ou téléchargez depuis le Hub",
       "lib.target": "Appliquer à", "lib.playingBadge": "En lecture",
@@ -966,24 +947,21 @@
       "pv.mouseOff": "Interaction souris désactivée",
       "pv.loadFailed": "Échec du chargement — le format n'est peut-être pas pris en charge par le lecteur intégré",
       "pv.max": "Agrandir", "pv.restore": "Restaurer", "pv.wheelHint": "Molette pour passer au précédent / suivant",
-      "create.wallpaper": "Nouveau fond d'écran", "create.playlist": "Nouvelle liste", "create.editWallpaper": "Modifier le fond d'écran", "create.editList": "Modifier la liste",
+      "create.wallpaper": "Nouveau fond d'écran", "create.editWallpaper": "Modifier le fond d'écran",
       "create.titleField": "Titre", "create.titlePh": "Nommez votre {0}", "create.type": "Type",
       "create.file": "Cliquez pour choisir un fichier, ou déposez-le ici", "create.fileHint": "Image / GIF / vidéo / page web (≤ 500 Mo)",
       "create.pickFolder": "Choisir un dossier (fond web)", "create.webPack": "{0} fichiers · {1}", "create.webNeedHtml": "Aucune page web dans ce dossier",
       "create.webAskTitle": "Importer un fond web", "create.webAskBody": "Inclure tout le dossier ? Les ressources à côté de la page seront aussi importées", "create.webAskYes": "Inclure tout le dossier", "create.webAskNo": "Ce fichier seulement",
       "create.webBigTitle": "Dossier volumineux", "create.webBigBody": "{0} au total — l'import peut prendre du temps. Continuer ?",
       "create.importing": "Import {0} %", "create.imported": "Importé", "create.reselect": "Remplacer",
-      "create.addMembers": "Ajouter des fonds", "create.members": "{0} membres", "create.membersEmpty": "Aucun membre — ajoutez depuis votre bibliothèque",
       "create.creating": "Création…", "create.titleEmpty": "Le titre est obligatoire", "create.noFile": "Choisissez d'abord un fichier",
-      "create.listEmpty": "Une liste nécessite au moins un membre", "create.created": "Créé", "create.createFailed": "Échec de la création : {0}",
+      "create.created": "Créé", "create.createFailed": "Échec de la création : {0}",
       "create.updated": "Enregistré", "create.coverFailed": "Échec de la miniature (ignoré)",
       "create.unsaved": "Modifications non enregistrées", "create.unsavedBody": "Fermer et perdre ces modifications ?",
-      "create.pickTitle": "Choisir les membres", "create.pickHint": "Cliquez sur les cartes pour sélectionner ; les listes ne peuvent pas s'imbriquer", "create.selectAll": "Tout sélectionner",
       "set.title": "Réglages du fond d'écran", "set.sub": "Options de lecture de « {0} », appliquées dès l'enregistrement",
       "set.overlayTitle": "Superpositions", "set.overlaySub": "Superposition pour « {0} », appliquée dès l'enregistrement",
       "set.overlayTime": "Horloge", "set.overlayTimeHint": "Affiche une horloge (heure système) dans le coin supérieur droit",
-      "set.duration": "Durée", "set.durationHint": "Durée de présence de ce fond d'écran dans la liste (hh:mm)",
-      "set.playMode": "Mode de lecture", "set.order": "Dans l'ordre", "set.random": "Aléatoire",
+      "set.duration": "Durée", "set.durationHint": "Durée d'affichage de ce fond d'écran (hh:mm)",
       "set.mouse": "Interaction souris", "set.mouseHint": "Autoriser le fond d'écran à réagir à la souris",
       "set.player": "Moteur vidéo", "set.engine0": "Par défaut", "set.engine1": "Lecteur MPV", "set.engine2": "Lecteur Web", "set.engine3": "Lecteur MPV intégré",
       "set.hwdec": "Décodage matériel", "set.hwdecHint": "Réduit fortement l'utilisation du CPU pour la vidéo",
@@ -1043,7 +1021,7 @@
       "cal.addSeg": "Ajouter un créneau", "cal.unset": "Non défini", "cal.set": "Définir le fond",
       "cal.change": "Changer", "cal.clear": "Effacer", "cal.preview": "Aperçu sur le bureau",
       "cal.previewNotFound": "Fond introuvable dans la bibliothèque ; il a peut-être été déplacé ou supprimé", "cal.overnight": "jusqu'au lendemain", "cal.pickTitle": "Choisir un fond",
-      "cal.pickHint": "Listes autorisées ; la rotation interne suit leurs réglages.", "cal.none": "Aucun", "cal.yearly": "Fêtes annuelles",
+      "cal.pickHint": "Choisissez le fond d'écran à utiliser.", "cal.none": "Aucun", "cal.yearly": "Fêtes annuelles",
       "cal.weekly": "Règles hebdomadaires", "cal.addYearly": "Ajouter une fête", "cal.addWeekly": "Ajouter une règle",
       "cal.addPreset": "Ajouter depuis un modèle…", "cal.ruleName": "Nom de la règle", "cal.newRule": "Fête personnalisée",
       "cal.emptyYearly": "Aucune fête pour l'instant — choisissez un modèle ou créez la vôtre.", "cal.emptyWeekly": "Aucune règle hebdomadaire — par ex. un fond détente pour le week-end.", "cal.solar": "Solaire",
@@ -1066,7 +1044,7 @@
       "common.demoHint": "Aplicativo não detectado — exibindo dados de exemplo", "common.add": "Adicionar", "common.remove": "Remover",
       "common.saved": "Salvo", "common.opFailed": "Falha: {0}", "common.done": "Concluído", "common.back": "Voltar",
       "card.clickApplyAll": "Clique para aplicar a todas as telas", "card.clickApplyScreen": "Clique para aplicar à {0}",
-      "type.1": "Imagem", "type.2": "GIF", "type.3": "Vídeo", "type.4": "Web", "type.5": "Exe", "type.6": "Lista", "type.0": "Auto",
+      "type.1": "Imagem", "type.2": "GIF", "type.3": "Vídeo", "type.4": "Web", "type.5": "Exe", "type.0": "Auto",
       "lib.title": "Biblioteca", "lib.count": "{0} papéis de parede", "lib.empty": "Nenhum papel de parede ainda",
       "lib.emptyHint": "Clique em Criar para importar um vídeo ou imagem local, ou baixe um do Hub",
       "lib.target": "Aplicar a", "lib.playingBadge": "Reproduzindo",
@@ -1094,24 +1072,21 @@
       "pv.mouseOff": "Interação do mouse desligada",
       "pv.loadFailed": "Falha ao carregar — o formato pode não ser suportado pelo player integrado",
       "pv.max": "Maximizar", "pv.restore": "Restaurar", "pv.wheelHint": "Use a rolagem para alternar anterior / próximo",
-      "create.wallpaper": "Novo papel de parede", "create.playlist": "Nova lista", "create.editWallpaper": "Editar papel de parede", "create.editList": "Editar lista",
+      "create.wallpaper": "Novo papel de parede", "create.editWallpaper": "Editar papel de parede",
       "create.titleField": "Título", "create.titlePh": "Dê um nome ao seu {0}", "create.type": "Tipo",
       "create.file": "Clique para escolher um arquivo, ou arraste-o até aqui", "create.fileHint": "Imagem / GIF / vídeo / página web (≤ 500 MB)",
       "create.pickFolder": "Escolher pasta (papel de parede web)", "create.webPack": "{0} arquivos · {1}", "create.webNeedHtml": "Nenhuma página web nessa pasta",
       "create.webAskTitle": "Importar papel de parede web", "create.webAskBody": "Incluir a pasta inteira? Os recursos ao lado da página também serão importados", "create.webAskYes": "Incluir a pasta inteira", "create.webAskNo": "Somente este arquivo",
       "create.webBigTitle": "Pasta grande", "create.webBigBody": "{0} no total — a importação pode demorar. Continuar?",
       "create.importing": "Importando {0}%", "create.imported": "Importado", "create.reselect": "Trocar",
-      "create.addMembers": "Adicionar papéis de parede", "create.members": "{0} membros", "create.membersEmpty": "Nenhum membro ainda — adicione da sua biblioteca",
       "create.creating": "Criando…", "create.titleEmpty": "O título é obrigatório", "create.noFile": "Escolha um arquivo primeiro",
-      "create.listEmpty": "Uma lista precisa de pelo menos um membro", "create.created": "Criado", "create.createFailed": "Falha ao criar: {0}",
+      "create.created": "Criado", "create.createFailed": "Falha ao criar: {0}",
       "create.updated": "Salvo", "create.coverFailed": "Falha ao gerar capa (ignorado)",
       "create.unsaved": "Alterações não salvas", "create.unsavedBody": "Fechar e perder estas alterações?",
-      "create.pickTitle": "Escolher membros", "create.pickHint": "Clique nos cartões para selecionar; listas não podem ser aninhadas", "create.selectAll": "Selecionar tudo",
       "set.title": "Configurações do papel de parede", "set.sub": "Opções de reprodução de “{0}”, aplicadas na hora ao salvar",
       "set.overlayTitle": "Sobreposições", "set.overlaySub": "Sobreposição de “{0}”, aplicada na hora ao salvar",
       "set.overlayTime": "Relógio", "set.overlayTimeHint": "Mostra um relógio com a hora do sistema no canto superior direito",
-      "set.duration": "Duração", "set.durationHint": "Quanto tempo este papel de parede fica na lista (hh:mm)",
-      "set.playMode": "Modo de reprodução", "set.order": "Em ordem", "set.random": "Aleatório",
+      "set.duration": "Duração", "set.durationHint": "Quanto tempo este papel de parede é exibido (hh:mm)",
       "set.mouse": "Interação do mouse", "set.mouseHint": "Permitir que o papel de parede reaja ao mouse",
       "set.player": "Motor de vídeo", "set.engine0": "Padrão", "set.engine1": "Player MPV", "set.engine2": "Player Web", "set.engine3": "Player MPV integrado",
       "set.hwdec": "Decodificação por hardware", "set.hwdecHint": "Reduz bastante o uso de CPU ao reproduzir vídeo",
@@ -1171,7 +1146,7 @@
       "cal.addSeg": "Adicionar período", "cal.unset": "Não definido", "cal.set": "Definir papel",
       "cal.change": "Trocar", "cal.clear": "Limpar", "cal.preview": "Pré-visualizar na área de trabalho",
       "cal.previewNotFound": "Papel de parede não encontrado na biblioteca; talvez tenha sido movido ou excluído", "cal.overnight": "virada da meia-noite", "cal.pickTitle": "Escolha um papel de parede",
-      "cal.pickHint": "Listas permitidas; a rotação interna segue suas configurações.", "cal.none": "Nenhum", "cal.yearly": "Feriados anuais",
+      "cal.pickHint": "Escolha o papel de parede a ser usado.", "cal.none": "Nenhum", "cal.yearly": "Feriados anuais",
       "cal.weekly": "Regras semanais", "cal.addYearly": "Adicionar feriado", "cal.addWeekly": "Adicionar regra",
       "cal.addPreset": "Adicionar do modelo…", "cal.ruleName": "Nome da regra", "cal.newRule": "Feriado personalizado",
       "cal.emptyYearly": "Nenhum feriado ainda — escolha um modelo ou crie o seu.", "cal.emptyWeekly": "Nenhuma regra semanal ainda — por exemplo, um conjunto relaxante para o fim de semana.", "cal.solar": "Solar",
@@ -1365,15 +1340,21 @@
   if (darkQuery) darkQuery.addEventListener("change", () => { if ((state.cfg?.Appearance.mode || "system") === "system") applyMode(); });
 
   // ---------------------------------------------------------------- 数据刷新
+  // 巨应3 沿用的 .playlist 播放列表（meta.type = 6）不再支持：两个数据入口都直接剔除，
+  // 库视图 / 选择器 / Dock 等下游一律看不到该格式，无需各自再判
+  const isPlaylistWall = (w) => (w.meta && w.meta.type) === 6;
   async function refreshWallpapers() {
     if (demo) return;
     const res = await client.api.getWallpapers();
-    if (!res.error) { state.wallpapers = res.data || []; emit("wallpapers", state.wallpapers); }
+    if (!res.error) { state.wallpapers = (res.data || []).filter((w) => !isPlaylistWall(w)); emit("wallpapers", state.wallpapers); }
   }
   async function refreshStatus() {
     if (demo) return;
     const res = await client.api.getPlayingStatus();
-    if (!res.error) { state.status = res.data || null; state.screens = state.status ? state.status.screens || [] : []; emit("status", state.status); }
+    if (!res.error) {
+      if (res.data) res.data.wallpapers = (res.data.wallpapers || []).filter((w) => !isPlaylistWall(w));
+      state.status = res.data || null; state.screens = state.status ? state.status.screens || [] : []; emit("status", state.status);
+    }
   }
   async function refreshDownloads() {
     if (demo) return;
@@ -1390,11 +1371,11 @@
   }
 
   // ---------------------------------------------------------------- 播放控制
-  /** 播放中文件集合（含播放列表成员展开）——判断某壁纸是否在播 */
+  /** 播放中文件集合——判断某壁纸是否在播 */
   function playingSet() {
     const st = state.status;
     if (!st) return new Set();
-    return new Set(st.wallpapers.flatMap((w) => [w.filePath, ...((w.meta && w.meta.wallpapers) || []).map((m) => m.filePath)].filter(Boolean)));
+    return new Set(st.wallpapers.map((w) => w.filePath).filter(Boolean));
   }
   function screenIndexOf(w) {
     const idx = w && w.runningInfo && w.runningInfo.screenIndexes && w.runningInfo.screenIndexes.length ? w.runningInfo.screenIndexes[0] : -1;
@@ -1402,14 +1383,7 @@
   }
   function canPause(w) {
     const type = w && w.meta ? w.meta.type : undefined;
-    return type === undefined || type === null || type === 3 || type === 6;
-  }
-  function findPlayingWallpaper(w) {
-    // w 是播放列表时返回后端视角的当前项（含 runningInfo）
-    const st = state.status;
-    if (!st || !w) return null;
-    return st.wallpapers.find((x) => x.filePath === w.filePath)
-      || ((w.meta && w.meta.wallpapers) || []).find((m) => st.wallpapers.some((x) => x.filePath === m.filePath)) || null;
+    return type === undefined || type === null || type === 3;
   }
 
   async function applyWallpaper(wallpaper, screenIndexes) {
@@ -1428,8 +1402,6 @@
     await client.api.stopWallpaper(screenIndex);
     refreshStatus();
   }
-  async function prevIn(w) { if (demo) return mockShift(-1); await client.api.playPrevInPlaylist(w); refreshStatus(); }
-  async function nextIn(w) { if (demo) return mockShift(1); await client.api.playNextInPlaylist(w); refreshStatus(); }
   async function setVolume(volume, screenIndex) {
     if (demo) { if (state.status) state.status.volume = volume; emit("status", state.status); return; }
     await client.api.setVolume(volume, screenIndex);
@@ -1589,38 +1561,6 @@
     return res.error || !res.data ? "" : res.data;
   }
 
-  /** 播放列表占位文件（库里 .playlist 即占位文本） */
-  async function uploadPlaylistPlaceholder() {
-    const name = `${crypto.randomUUID ? crypto.randomUUID() : Date.now()}.playlist`;
-    const placeholder = "占位符，表示当前是一个播放列表";
-    if (demo) return `mock://media/${name}`;
-    const res = await uploadBlobBase64(name, btoa(unescape(encodeURIComponent(placeholder))));
-    if (res.error || !res.data) { toast(t("common.opFailed", errText(res.error)), "err"); return null; }
-    return res.data;
-  }
-
-  /** 3x3 成员封面拼接（最多 9 张；失败返回 null） */
-  async function generatePlaylistCover(memberCoverUrls) {
-    try {
-      const urls = memberCoverUrls.filter(Boolean).slice(0, 9);
-      if (!urls.length) return null;
-      const cell = 320;
-      const canvas = document.createElement("canvas");
-      canvas.width = cell * 3; canvas.height = cell * 3;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#101014";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await Promise.all(urls.map((url, i) => new Promise((done) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => { ctx.drawImage(img, (i % 3) * cell, Math.floor(i / 3) * cell, cell, cell); done(); };
-        img.onerror = () => done();
-        img.src = url;
-      })));
-      return demo ? mockCoverDataURL(500, 280, "playlist") : (await uploadCover(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]));
-    } catch (e) { console.warn("generatePlaylistCover:", e); return null; }
-  }
-
   /** 原生对话框选本地文件，后端直接复制进 tmp（不经前端 base64 中转，大文件也秒级完成）。
    *  返回 { path, name, tmpUrl }；取消 / 失败返回 null。仅客户端模式可用，demo 返回 null。 */
   async function pickLocalMedia(filters) {
@@ -1648,25 +1588,6 @@
       fileUrl,
       coverUrl,
       meta: { title: title || srcName.replace(/\.[^.]+$/, ""), type: type || 0, playIndex: 0, wallpapers: [] },
-      setting: defaultSetting(),
-      runningInfo: { screenIndexes: [], isPaused: false },
-    };
-    if (demo) { mockCreate(payload); return true; }
-    const res = await client.api.createWallpaperNew(payload);
-    if (res.error) { toast(t("create.createFailed", errText(res.error)), "err"); return false; }
-    await refreshWallpapers();
-    return true;
-  }
-
-  /** 创建播放列表 */
-  async function createPlaylist({ title, members }) {
-    const fileUrl = await uploadPlaylistPlaceholder();
-    if (!fileUrl) return false;
-    const coverUrl = (await generatePlaylistCover(members.map((m) => m.coverUrl))) || "";
-    const payload = {
-      fileUrl,
-      coverUrl,
-      meta: { title: title || t("create.playlist"), type: 6, playIndex: 0, wallpapers: members },
       setting: defaultSetting(),
       runningInfo: { screenIndexes: [], isPaused: false },
     };
@@ -1985,16 +1906,9 @@
       mk(3, "赛博都市 Cyber City", 3, 3, "赛博"), mk(4, "海浪白噪 Ocean Waves", 2, 1), mk(5, "水墨山川 Ink Mountains", 1, 2, "风景"),
       mk(6, "流光星轨 Star Trails", 3, 0), mk(7, "粉黛晚霞 Sunset Glow", 1, 1),
     ];
-    const playlist = {
-      dir: "D:\\LiveWallpaper", fileName: "深夜工作台.playlist", filePath: "D:\\LiveWallpaper\\深夜工作台.playlist",
-      fileUrl: "mock://media/x.playlist", coverUrl: mockCoverDataURL(500, 280, 3, 9), coverPath: "",
-      meta: { id: "mock-list", title: "深夜工作台 · Night Shift", description: "", type: 6, playIndex: 1, wallpapers: [list[1], list[3], list[6]] },
-      setting: { ...defaultSetting(), playMode: 0 },
-      runningInfo: { screenIndexes: [0], isPaused: false },
-    };
     const second = mk(8, "极光冰原 Glacier", 1, 2);
     second.runningInfo = { screenIndexes: [1], isPaused: true };
-    return [...list, playlist, second];
+    return [...list, second];
   }
 
   function mockStatus() {
@@ -2023,13 +1937,6 @@
     state.status.wallpapers = screenIndex === undefined || screenIndex < 0
       ? []
       : state.status.wallpapers.filter((w) => !(w.runningInfo.screenIndexes || []).includes(screenIndex));
-    emit("status", state.status);
-  }
-  function mockShift(delta) {
-    const pl = state.status.wallpapers.find((w) => w.meta && w.meta.type === 6);
-    if (!pl) return;
-    const n = pl.meta.wallpapers.length;
-    pl.meta.playIndex = ((pl.meta.playIndex || 0) + delta + n) % n;
     emit("status", state.status);
   }
   let mockPos = 42, mockDur = 214;
@@ -2088,12 +1995,6 @@
     item.dir = targetDir;
     item.filePath = `${targetDir}\\${item.fileName}`;
     demoEmptyFolders = demoEmptyFolders.filter((d) => normWin(d) !== normWin(targetDir));
-    for (const pl of state.wallpapers) {
-      if (!(pl.meta && pl.meta.type === 6)) continue;
-      for (const m of pl.meta.wallpapers || []) {
-        if (m.filePath === oldPath) { m.filePath = item.filePath; m.dir = targetDir; }
-      }
-    }
     emit("wallpapers", state.wallpapers);
     return item.filePath;
   }
@@ -2216,12 +2117,12 @@
     // 数据刷新
     refreshAll,
     // 播放
-    playingSet, screenIndexOf, canPause, findPlayingWallpaper,
-    applyWallpaper, pause, resume, stop, prevIn, nextIn, setVolume,
+    playingSet, screenIndexOf, canPause,
+    applyWallpaper, pause, resume, stop, setVolume,
     onTime, seek, setTimeScreen,
     // 创建 / 编辑
-    defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover, generatePlaylistCover,
-    createMediaWallpaper, createPlaylist, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
+    defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover,
+    createMediaWallpaper, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
     pickLocalMedia, statWebFolder, importWebFolder, demo,
     // 下载
     cancelDownload, clearHistory, removeHistory,

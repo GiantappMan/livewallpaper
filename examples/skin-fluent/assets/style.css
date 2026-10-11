@@ -351,7 +351,8 @@ img { display: block; }
 }
 .wall-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .wall-card:active { opacity: .92; }
-.wall-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
+/* 在播描边用 55% accent 打底：全 accent 光斑（.is-playing::after 常驻流光）巡游其上才可辨 */
+.wall-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent), var(--shadow-card); }
 .wall-cover { position: relative; flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
 .wall-cover img { width: 100%; height: 100%; object-fit: cover; }
 .wall-cover.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 12px, var(--ctl-press) 12px, var(--ctl-press) 24px); }
@@ -420,6 +421,43 @@ body.is-target-all .loc-tile.is-file:hover .loc-tile-thumb::after {
   opacity: 1; animation: apply-ring-spin 2.2s linear infinite;
 }
 
+/* 在播卡片的常驻流光描边：.is-playing 的静态底环降为 55% accent（见各卡片规则），
+   一枚全 accent 光斑沿整卡边框匀速巡游（复用 --apply-ring 角度动画，放慢到 3.6s/圈）——
+   满 accent 底环上光斑无从分辨，降底环才读得出动。在播卡片数 = 屏幕数（通常 1-2 张），
+   常驻动画代价与 Dock 碟封面旋转同级。悬停时整卡光斑让位（目标为全部屏幕时封面有更快的
+   悬停流光，避免双环叠影）；减动效环境光斑静止，退化为静态描边 */
+.wall-card.is-playing::after, .loc-card.is-playing::after, .loc-tile.is-playing::after {
+  content: ""; position: absolute; inset: 0; padding: 2px; border-radius: inherit; z-index: 6; pointer-events: none;
+  background: conic-gradient(from var(--apply-ring),
+    transparent 0turn .52turn,
+    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
+    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
+    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 1; transition: opacity var(--speed);
+  animation: apply-ring-spin 3.6s linear infinite;
+}
+.wall-card.is-playing:hover::after, .loc-card.is-playing:hover::after, .loc-tile.is-playing:hover::after { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .wall-card.is-playing::after, .loc-card.is-playing::after, .loc-tile.is-playing::after { animation: none; }
+}
+
+/* 在播卡片左下角的屏幕编号徽标（多屏各一枚）：视觉与 Dock 屏块编号同语言（深色小方片
+   白字）。常驻显示；悬停时该角落出现逐屏应用 chips，徽标让位隐藏，拖拽幻影中同理 */
+.card-screen-nums {
+  position: absolute; bottom: 3px; left: 3px; z-index: 3;
+  display: flex; gap: 3px; pointer-events: none;
+  transition: opacity var(--speed);
+}
+.wall-cover .card-screen-nums, .loc-cover .card-screen-nums { bottom: 10px; left: 10px; gap: 4px; }
+.card-screen-nums i {
+  font-style: normal; font-size: 10px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: #fff; background: rgba(0, 0, 0, .42); padding: 2px 4px; border-radius: 3px;
+}
+.wall-card:hover .card-screen-nums, .loc-card:hover .card-screen-nums,
+.loc-tile:hover .card-screen-nums, .loc-tile.is-dragging .card-screen-nums { opacity: 0; }
+
 /* 悬停即播：封面区域直接铺静音循环视频（object-fit 与封面图同款，插在封面图之后、
    操作条 / 徽标之前由 DOM 顺序保持其上）；pointer-events 放行，不挡悬停与点击 */
 .cover-live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
@@ -486,14 +524,6 @@ body.is-target-all .loc-tile.is-file:hover .loc-tile-thumb::after {
 .drop video, .drop img { width: 100%; max-height: 260px; object-fit: contain; background: var(--ctl-hover); }
 .drop-re { position: absolute; top: 10px; right: 10px; background: var(--card-solid); color: var(--ink); box-shadow: var(--shadow-card); }
 
-/* 成员 / 选择网格 */
-.member-grid, .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.member { position: relative; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--stroke); background: var(--card); }
-.member-cover { aspect-ratio: 16/10; }
-.member-cover img { width: 100%; height: 100%; object-fit: cover; }
-.member-name { display: block; padding: 7px 9px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.member-x { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: var(--r-ctl); background: var(--card-solid); color: var(--ink); box-shadow: var(--shadow-card); }
-.member-empty { grid-column: 1/-1; text-align: center; padding: 26px 0; }
 .pick { position: relative; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--ctl-stroke); cursor: pointer; text-align: left; background: var(--card); transition: all var(--speed); content-visibility: auto; contain-intrinsic-size: auto 200px; }
 .pick:hover { border-color: var(--ink-3); }
 .pick.is-on { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
@@ -698,10 +728,32 @@ button.card-row:hover { background: var(--subtle); }
    中心作轴标，碟间轻微重叠。方形封面放大到 142% 再旋转（32px 方图内接圆只有 ~23px，
    不放大会在斜对角露出碟底）；展开态屏块不受影响 */
 .dock-wrap.is-collapsed .dock-screens { gap: 0; }
-.dock-wrap.is-collapsed .dock-screen { width: 32px !important; height: 32px !important; border-radius: 50%; }
+.dock-wrap.is-collapsed .dock-screen { width: 32px !important; height: 32px !important; border-radius: 50%; border-color: transparent; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent); }
+/* 上面圆形化规则按碟形清了边框，特异性也盖过通用 .is-selected 高亮：选中碟在此补回
+   accent 边框（展开态选中高亮见下方 .dock-screen.is-selected） */
+.dock-wrap.is-collapsed .dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .dock-wrap.is-collapsed .dock-screen + .dock-screen { margin-left: -7px; }
 .dock-wrap.is-collapsed .dock-screen img { inset: -21%; width: 142%; height: 142%; animation: dock-screen-spin 9s linear infinite; }
 .dock-wrap.is-collapsed .dock-screen.is-paused img { animation-play-state: paused; filter: brightness(.75); }
+/* 收起碟流光环：未选屏的在播碟外圈跑与库封面悬停同款的 accent 流光——复用 --apply-ring
+   注册属性 + apply-ring-spin 旋转，2.2s 一圈无缝循环（不随播放进度归零重启）。仅 is-live
+   碟点亮，空屏碟保持素碟；选中碟不跑环，让位给上方 accent 选中描边。is-paused 的斜纹
+   ::after 在收起态被环取代——流光冻结 + 碟压暗已表达暂停 */
+.dock-wrap.is-collapsed .dock-screen.is-live:not(.is-selected)::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; border-radius: 50%; pointer-events: none;
+  padding: 1.5px;
+  background: conic-gradient(from var(--apply-ring),
+    transparent 0turn .52turn,
+    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
+    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
+    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: apply-ring-spin 2.2s linear infinite;
+}
+.dock-wrap.is-collapsed .dock-screen.is-live.is-paused::after { animation-play-state: paused; }
 @keyframes dock-screen-spin { to { transform: rotate(360deg); } }
 /* 容器收缩时屏块条自身不可被 flex 压缩（否则会被挤没），溢出的其余部分交给裁切 */
 .dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; }
@@ -720,6 +772,8 @@ button.card-row:hover { background: var(--subtle); }
 @media (prefers-reduced-motion: reduce) {
   .dock, .dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock-empty-hint { transition: none; }
   .dock-wrap.is-collapsed .dock-screen img { animation: none; } /* 减动效：封面不旋转 */
+  /* 减动效：流光环不转也不显示（animation:none 会留一截静止弧，像卡住的残影） */
+  .dock-wrap .dock-screen.is-live::after { animation: none; opacity: 0; }
 }
 .dock-line { position: absolute; top: 0; left: 5px; max-width: calc(100% - 10px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
 .dock-line.is-idle { opacity: .25; }
@@ -761,6 +815,24 @@ button.card-row:hover { background: var(--subtle); }
 .dock-screen:hover { border-color: var(--divider); }
 .dock-screen.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .dock-screen.is-over { border-color: var(--accent); box-shadow: inset 0 0 0 12px color-mix(in srgb, var(--accent) 22%, transparent); }
+/* 展开态未选屏的在播屏块：贴边方框跑与库封面悬停同款的 accent 流光（复用
+   --apply-ring + apply-ring-spin，2.2s 一圈无缝循环，不随播放进度归零重启）。
+   框贴屏块内缘 1.5px——屏块自身 overflow: hidden（外层屏块条还是滚动容器）会把
+   外浮部分整圈裁没，画在外面不可行。仅非暂停屏显示——暂停屏保留斜纹表达；
+   选中屏不跑环，让位给 accent 选中描边 */
+.dock-wrap:not(.is-collapsed) .dock-screen.is-live:not(.is-paused):not(.is-selected)::after {
+  content: ""; position: absolute; inset: 0; padding: 1.5px; border-radius: 3px; z-index: 3; pointer-events: none;
+  background: conic-gradient(from var(--apply-ring),
+    transparent 0turn .52turn,
+    color-mix(in srgb, var(--accent) 25%, transparent) .66turn,
+    color-mix(in srgb, var(--accent) 70%, transparent) .78turn,
+    var(--accent) .88turn, var(--accent) .96turn, transparent 1turn);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: apply-ring-spin 2.2s linear infinite;
+}
 
 /* ---------------- Toast（Win11 通知） ---------------- */
 .sc-toasts { position: fixed; right: 20px; bottom: 20px; z-index: 120; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
@@ -878,7 +950,8 @@ button.card-row:hover { background: var(--subtle); }
 }
 .loc-card:hover { border-color: var(--divider); box-shadow: var(--shadow-card); }
 .loc-card:active { opacity: .92; }
-.loc-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
+/* 55% 底环同理（见 .wall-card.is-playing 注释） */
+.loc-card.is-playing { border-color: transparent; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent), var(--shadow-card); }
 .loc-cover { position: relative; flex: 1; min-height: 0; background: var(--ctl-hover); overflow: hidden; }
 .loc-cover img { width: 100%; height: 100%; object-fit: cover; }
 .loc-cover.is-fallback { background: repeating-linear-gradient(45deg, var(--ctl-hover), var(--ctl-hover) 12px, var(--ctl-press) 12px, var(--ctl-press) 24px); }
@@ -1022,6 +1095,9 @@ button.card-row:hover { background: var(--subtle); }
   box-shadow: var(--shadow-fly);
 }
 .loc-tile.is-playing .loc-tile-live { display: inline-flex; }
+/* 磁贴此前漏了在播描边（卡片/列表卡都有）：描边画在缩略图上（磁贴本体透明无边框，
+   名称悬浮在外），55% 底环 + 整卡常驻流光见 .wall-card.is-playing 注释 */
+.loc-tile.is-playing .loc-tile-thumb { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
 .loc-tile-type {
   position: absolute; right: 3px; bottom: 3px; font-size: 10px; line-height: 1; padding: 2px 4px;
   border-radius: 3px; color: var(--ink-2); background: rgba(249, 249, 249, .82);
