@@ -665,7 +665,13 @@ button.card-row:hover { background: var(--subtle); }
 .about-foot { display: flex; gap: 8px; margin-top: 16px; }
 
 /* ---------------- 播放 Dock（Win11 媒体浮层） ---------------- */
-.dock-wrap { position: fixed; left: 0; right: 0; bottom: 16px; z-index: 55; display: flex; justify-content: center; pointer-events: none; }
+/* wrap 左对齐 + padding 撑出 Dock 原本居中时的左缘（展开态视觉与居中版一致）。
+   收起态（.is-collapsed）padding-left 切到 --dock-left（导航窗格右缘 + 16，由 app.js
+   的 ResizeObserver 维护）＝内容区左下角：不碰窗格图标（左）、缩放控件与滚动条（右），
+   浮在 .view 底部 150px 预留留白上，且随窗格折叠/展开平滑跟随。padding-left 与 bottom
+   都可过渡：收起动画 = 整条滑向停靠点 + 宽度收缩的复合运动 */
+.dock-wrap { position: fixed; left: 0; right: 0; bottom: 16px; z-index: 55; display: flex; padding-left: max(28px, calc((100vw - 820px) / 2)); pointer-events: none; transition: bottom .35s var(--ease), padding-left .35s var(--ease); }
+.dock-wrap.is-collapsed { bottom: 8px; padding-left: var(--dock-left, 80px); }
 .dock-wrap[hidden] { display: none; } /* flex 会盖过 hidden 属性的 UA 样式，非壁纸视图空态下靠它整条隐藏 */
 .dock {
   pointer-events: auto; position: relative; overflow: visible;
@@ -674,18 +680,47 @@ button.card-row:hover { background: var(--subtle); }
   background: rgba(249, 249, 249, .8); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%);
   border: 1px solid var(--stroke); border-radius: var(--r-lg);
   box-shadow: var(--shadow-fly); color: var(--ink);
-  transition: transform .35s var(--ease);
+  transition: width .35s var(--ease), padding .35s var(--ease);
 }
 [data-mode="dark"] .dock { background: rgba(43, 43, 43, .8); }
-/* 自动收起（app.js 切 .dock-wrap.is-collapsed）：整条沉出屏底（含 16px 底距），
-   只在原位置留一枚小把手条示意「这里有一条」，指针移近即升回 */
-.dock-wrap.is-collapsed .dock { transform: translateY(calc(100% + 16px)); pointer-events: none; }
-.dock-wrap.is-collapsed .dock::after {
-  content: ""; position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translateX(-50%);
-  width: 56px; height: 6px; border-radius: 99px;
-  background: color-mix(in srgb, var(--ink) 32%, transparent);
+/* 自动收起（app.js 切 .dock-wrap.is-collapsed）：就地收缩成只包住屏块条的胶囊——
+   宽度过渡到 --pill-w（renderDock 量屏块条宽写入），上下 padding 收紧 + 屏块压矮
+   （--dock-h 40 → 30，封面 cover 裁切加深不失真），标题/控制/音量等其余部分先淡出、
+   随容器 overflow 裁掉，进度线保留在胶囊上沿继续走；配合 wrap 下沉 8px 贴底停靠。
+   胶囊停在屏块条原位：屏块可点选、可拖壁纸落屏；指针移近（dockNear 外扩 28px 热区）
+   即展开回完整播放条 */
+.dock-wrap.is-collapsed .dock { width: var(--pill-w, 220px); overflow: hidden; padding: 4px 6px; border-radius: 10px; }
+/* 容器收缩时屏块条自身不可被 flex 压缩（否则会被挤没），溢出的部分交给裁切；
+   收起态进一步收紧：屏块压矮到 28px、进度线内缩对齐 6px padding，整体成药丸 */
+.dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; --dock-h: 28px; }
+.dock-wrap.is-collapsed .dock-line { left: 6px; max-width: calc(100% - 12px); }
+/* 收起态屏块「唱片化」：圆形碟 + 封面匀速旋转示意在播（暂停屏停转压暗），编号静居
+   中心作轴标，碟间轻微重叠。方形封面放大到 142% 再旋转（32px 方图内接圆只有 ~23px，
+   不放大会在斜对角露出碟底）；展开态屏块不受影响 */
+.dock-wrap.is-collapsed .dock-screens { gap: 0; }
+.dock-wrap.is-collapsed .dock-screen { width: 32px !important; height: 32px !important; border-radius: 50%; }
+.dock-wrap.is-collapsed .dock-screen + .dock-screen { margin-left: -7px; }
+.dock-wrap.is-collapsed .dock-screen img { inset: -21%; width: 142%; height: 142%; animation: dock-screen-spin 9s linear infinite; }
+.dock-wrap.is-collapsed .dock-screen.is-paused img { animation-play-state: paused; filter: brightness(.75); }
+@keyframes dock-screen-spin { to { transform: rotate(360deg); } }
+/* 容器收缩时屏块条自身不可被 flex 压缩（否则会被挤没），溢出的其余部分交给裁切 */
+.dock-wrap.is-collapsed .dock-screens { flex-shrink: 0; }
+.dock-wrap.is-collapsed .dock:hover { border-color: var(--divider); }
+/* 收起时除屏块条外的内容淡出并收回高度（仍占位的 34px 高按钮会把胶囊撑胖）：
+   收起立即、展开稍延迟等容器展开后再浮现；pop-anchor 常态不裁切（弹层向上弹出），
+   收起态才 overflow hidden——此时弹层必已关闭（dockCollapse 守卫） */
+.dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock .pop-anchor { max-height: 60px; transition: opacity .22s var(--ease) .12s, max-height .35s var(--ease); }
+.dock-wrap.is-collapsed .dock-meta,
+.dock-wrap.is-collapsed .dock-time,
+.dock-wrap.is-collapsed .dock-seek,
+.dock-wrap.is-collapsed .dock-ctrl,
+.dock-wrap.is-collapsed .dock .pop-anchor { opacity: 0; pointer-events: none; max-height: 0; overflow: hidden; transition-delay: 0s; }
+.dock-wrap.is-collapsed .dock-empty-hint { opacity: 0; }
+.dock-empty-hint { transition: opacity .22s var(--ease) .12s; }
+@media (prefers-reduced-motion: reduce) {
+  .dock, .dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock-empty-hint { transition: none; }
+  .dock-wrap.is-collapsed .dock-screen img { animation: none; } /* 减动效：封面不旋转 */
 }
-@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
 .dock-line { position: absolute; top: 0; left: 5px; max-width: calc(100% - 10px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; }
 .dock-line.is-idle { opacity: .25; }
 /* 音量/音源弹层贴着 Dock 右端，向下弹会被视口底边裁掉：改为向上弹、右缘对齐按钮 */
@@ -709,12 +744,12 @@ button.card-row:hover { background: var(--subtle); }
 .dock-seek { flex: 1; min-width: 90px; accent-color: var(--accent); height: 4px; cursor: pointer; }
 /* 屏幕选择条：各屏幕迷你块（宽度按分辨率等比、在播屏以对应壁纸封面为底、暂停叠斜纹）。
    点击选中/取消（未选 = 操作作用于全部屏幕）；壁纸可拖到屏块上直接在该屏播放 */
-.dock-screens { display: flex; align-items: center; gap: 5px; flex-shrink: 1; min-width: 0; padding: 0 2px; overflow-x: auto; scrollbar-width: none; }
+.dock-screens { display: flex; align-items: center; gap: 5px; flex-shrink: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .dock-screens::-webkit-scrollbar { display: none; }
 .dock-screen {
   position: relative; flex-shrink: 0; padding: 0; cursor: pointer; overflow: hidden;
   border: 1px solid var(--stroke); border-radius: 4px; background: var(--ctl-hover); color: var(--ink-3);
-  transition: border-color var(--speed), box-shadow var(--speed), color var(--speed);
+  transition: border-color var(--speed), box-shadow var(--speed), color var(--speed), height .35s var(--ease);
 }
 .dock-screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dock-screen-num {
@@ -826,6 +861,7 @@ button.card-row:hover { background: var(--subtle); }
   .loc-search { width: 160px; }
   .view { --view-pt: 16px; --view-px: 20px; --view-pb: 140px; }
   .dock { width: calc(100vw - 40px); }
+  .dock-wrap { padding-left: 20px; } /* 窄窗口 Dock 左缘 = 20px，收起胶囊对齐同一位置 */
   .dock-meta { width: 110px; }
   .dock-seek { min-width: 60px; }
 }

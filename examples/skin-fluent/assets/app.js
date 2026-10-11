@@ -3143,7 +3143,9 @@
           ? ` · ${(pw.meta && pw.meta.title) || "—"}${paused ? ` · ${SC.t("common.paused")}` : ""}`
           : ` · ${SC.t("dock.blankTitle")}`}`,
         dataset: { screen: String(s.index) },
-        style: { width: `${Math.round(Math.min(72, Math.max(28, H * boundsRatio(s))))}px`, height: `${H}px` },
+      // 高度走 CSS 变量（--dock-h）：收起态压矮屏块时不改宽度（内联按 40 高等比算），
+      // 封面 object-fit: cover 只是裁切范围变化，不失真
+      style: { height: "var(--dock-h, 40px)", width: `${Math.round(Math.min(72, Math.max(28, H * boundsRatio(s))))}px` },
         onclick: () => {
           const wasSelected = dockSelScreen === s.index;
           pickScreen(wasSelected ? -1 : s.index);
@@ -3173,20 +3175,21 @@
       return;
     }
     dockEl.hidden = false;
-    dockArm(); // 可见即进入收起倒计时；指针在附近时 pointermove 会不断续期（见「Dock 自动收起」）
+    dockArmSoft(); // 可见即确保收缩倒计时在跑（不打断剩余计时）；指针在附近时 pointermove 会不断续期（见「Dock 自动收起」）
     SC.setTimeScreen(dockSelScreen);
     dockEl.innerHTML = "";
 
     const strip = dockScreensStrip(screens, playing);
     if (!playing.length) {
       if (offDockTime) { offDockTime(); offDockTime = null; }
-      // 空闲时沿用完整宽度 Dock 外壳（与播放态同宽同高，避免状态切换时跳动）：
+      // 空态沿用完整宽度 Dock 外壳（与播放态同宽同高，避免状态切换时跳动）：
       // 左侧屏块条（可拖壁纸到指定屏播放），右侧补休息提示避免空旷
       dockEl.append(el("div", { class: "dock dock-empty" }, strip,
         el("div", { class: "dock-empty-hint" },
           (() => { const s = el("span"); s.innerHTML = icon("moon", 15); return s; })(),
           el("span", {}, SC.t("dock.nothing")),
           el("span", { class: "dim-label" }, SC.t("dock.nothingHint")))));
+      setPillWidth(strip);
       return;
     }
 
@@ -3286,6 +3289,14 @@
     // 播放/暂停等控制钮靠右，与音量、音源聚成一排；进度条（flex:1）占据中间空档
     dockEl.append(el("div", { class: "dock" }, line, strip, meta,
       ...(showProgress ? [time, seekEl] : []), ctrl, volPop, audioPop));
+    setPillWidth(strip);
+  }
+
+  // 收起胶囊的目标宽度：屏块收起态是 32px 圆碟（见 style.css 唱片化规则）、碟间重叠
+  // 7px，故按碟数公式算而不能量展开态的矩形屏块条宽；+14 = 左右 padding 6×2 + 边框 2
+  function setPillWidth(strip) {
+    const n = strip.children.length;
+    dockEl.style.setProperty("--pill-w", `${Math.max(56, n * 32 - (n - 1) * 7 + 14)}px`);
   }
 
   function ctlBtn(ic, title, onclick) {
@@ -3295,17 +3306,26 @@
   }
 
   // ---------------------------------------------------------------- Dock 自动收起
-  // Dock 常驻屏幕会挡住下方壁纸（用户反馈「有点挡事」）：无交互 4s 后整条沉出
-  // 屏底只留一枚小把手条，指针移近（把手外扩 28px 热区）即重新升起。桌面上的
-  // 鼠标事件由后端全局钩子转发进页面（src-tauri/mouse_hook.rs），window 级
-  // pointermove 即可感知真实光标；收起状态只落在 dock-wrap 的类上，renderDock
-  // 重建 .dock 不影响。收起只在指针静止时发生——唤醒靠移动，指针持续在附近
-  // 移动就会一直续期，因此不会出现「展开后原地又收起」的闪跳。
+  // Dock 常驻屏幕会挡住下方壁纸（用户反馈「有点挡事」）：无交互 4s 后就地收缩成
+  // 只包住屏块条的胶囊（宽度 --pill-w，其余部分淡出，见 style.css），停在底部原位、
+  // 不再沉出屏底——屏块封面仍在，可点选屏幕、可拖壁纸落屏，播放中顶部进度线继续走。
+  // 指针移近胶囊（外扩 28px 热区）即展开回完整播放条。收起以「指针离开 Dock 区域」
+  // 为前提（dockPointerInside 跟踪，见 dockHoverWake）：鼠标停在 Dock 上哪怕一动
+  // 不动也不收，移出热区的瞬间才重新起算 4s。桌面上的鼠标事件由后端全局钩子转发
+  // 进页面（src-tauri/mouse_hook.rs），window 级 pointermove 即可感知真实光标；
+  // 收起状态只落在 dock-wrap 的类上，renderDock 重建 .dock 不影响。
   const DOCK_COLLAPSE_MS = 4000;
   const DOCK_WAKE_MARGIN = 28;
   let dockCollapseTimer = null;
+  let dockPointerInside = false; // 指针是否在 Dock 热区内（含 28px 外扩）：在内不收，离开才起算
   function dockArm() {
     if (dockCollapseTimer) clearTimeout(dockCollapseTimer);
+    dockCollapseTimer = setTimeout(dockCollapse, DOCK_COLLAPSE_MS);
+  }
+  // 渲染挂载用：已有倒计时在跑就不打断（指针交互才走 dockArm 完整重置）——
+  // 切视图/状态刷新走 renderDock，不应把用户已经等了一半的收缩计时清零重来
+  function dockArmSoft() {
+    if (dockCollapseTimer) return;
     dockCollapseTimer = setTimeout(dockCollapse, DOCK_COLLAPSE_MS);
   }
   function dockWake() {
@@ -3315,9 +3335,11 @@
   function dockCollapse() {
     dockCollapseTimer = null;
     if (dockEl.hidden) return;
+    // 指针还在 Dock 上（哪怕一动不动）就不收，挂着等离开事件重新计时；
     // 音量/音源弹层展开、壁纸拖拽进行中（.loc-ghost 幻影存在 = 画布磁贴与
-    // HTML5 卡片两种拖拽任一在途）时不收：屏块落点必须保持可见可落
-    if (document.querySelector(".pop-anchor.is-open, .select.is-open, .loc-ghost") || dndWallpaper) {
+    // HTML5 卡片两种拖拽任一在途）时同理不收：屏块落点必须保持可见可落
+    if (dockPointerInside
+      || document.querySelector(".pop-anchor.is-open, .select.is-open, .loc-ghost") || dndWallpaper) {
       dockArm();
       return;
     }
@@ -3331,13 +3353,21 @@
       && y >= r.top - DOCK_WAKE_MARGIN && y <= r.bottom + DOCK_WAKE_MARGIN;
   }
   // mousemove + pointermove 双监听：钩子转发的 WM_MOUSEMOVE 在 WebView2 里两者都合成，
-  // 双保险覆盖不同版本的行为差异；dockWake 幂等，重复触发无副作用
+  // 双保险覆盖不同版本的行为差异；dockWake 幂等，重复触发无副作用。除唤醒外还跟踪
+  // 指针在不在热区内：在内持续保持展开（静止也不收），由内转外的瞬间重新起算 4s
   const dockHoverWake = (e) => {
-    if (!dockEl.hidden && dockNear(e.clientX, e.clientY)) dockWake();
+    if (dockEl.hidden) { dockPointerInside = false; return; }
+    const near = dockNear(e.clientX, e.clientY);
+    const was = dockPointerInside;
+    dockPointerInside = near;
+    if (near) { dockWake(); return; }
+    if (was) dockArm(); // 刚离开 Dock 区域：从离开时刻重新计时
   };
+  // mousemove + pointermove 双监听：钩子转发的 WM_MOUSEMOVE 在 WebView2 里两者都合成，
+  // 双保险覆盖不同版本的行为差异；HTML5 拖拽（库卡片 → Dock 屏块）期间不产生鼠标
+  // 移动事件，用 dragover 坐标唤醒
   window.addEventListener("mousemove", dockHoverWake);
   window.addEventListener("pointermove", dockHoverWake);
-  // HTML5 拖拽（库卡片 → Dock 屏块）期间不产生鼠标移动事件，用 dragover 坐标唤醒
   window.addEventListener("dragover", dockHoverWake);
 
   // ---------------------------------------------------------------- 壁纸日历
@@ -4362,6 +4392,11 @@
   document.body.append(paneToggle);
   window.addEventListener("resize", applyPaneCompact);
   applyPaneCompact();
+  // 收起胶囊的停靠点跟随导航窗格右缘（内容区左下，见 style.css .dock-wrap.is-collapsed）：
+  // 窗格折叠/展开/窗口缩放都体现为 paneEl 尺寸变化，ResizeObserver 统一捕获写入 --dock-left
+  new ResizeObserver(() => {
+    document.body.style.setProperty("--dock-left", `${Math.round(paneEl.getBoundingClientRect().right + 16)}px`);
+  }).observe(paneEl);
   // 标题栏键字形
   winCtrl.querySelectorAll(".win-btn").forEach((b) => { b.innerHTML = winGlyph(b.title); });
   buildPane();
