@@ -784,12 +784,13 @@ button.card-row:hover { background: var(--subtle); }
 /* 收起时除屏块条外的内容淡出并收回高度（仍占位的 34px 高按钮会把胶囊撑胖）：
    收起立即、展开稍延迟等容器展开后再浮现；pop-anchor 常态不裁切（弹层向上弹出），
    收起态才 overflow hidden——此时弹层必已关闭（dockCollapse 守卫） */
-.dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock .pop-anchor { max-height: 60px; transition: opacity .22s var(--ease) .12s, max-height .35s var(--ease); }
+.dock-meta, .dock-time, .dock-seek, .dock-ctrl, .dock .pop-anchor, .dock .dock-mode { max-height: 60px; transition: opacity .22s var(--ease) .12s, max-height .35s var(--ease); }
 .dock-wrap.is-collapsed .dock-meta,
 .dock-wrap.is-collapsed .dock-time,
 .dock-wrap.is-collapsed .dock-seek,
 .dock-wrap.is-collapsed .dock-ctrl,
-.dock-wrap.is-collapsed .dock .pop-anchor { opacity: 0; pointer-events: none; max-height: 0; overflow: hidden; transition-delay: 0s; }
+.dock-wrap.is-collapsed .dock .pop-anchor,
+.dock-wrap.is-collapsed .dock .dock-mode { opacity: 0; pointer-events: none; max-height: 0; overflow: hidden; transition-delay: 0s; }
 .dock-wrap.is-collapsed .dock-empty-hint { opacity: 0; }
 .dock-empty-hint { transition: opacity .22s var(--ease) .12s; }
 @media (prefers-reduced-motion: reduce) {
@@ -800,7 +801,7 @@ button.card-row:hover { background: var(--subtle); }
 /* 顶部进度线只在「收起态 + 已选屏」显示：展开态中部有滑杆和时间文本、未选屏碟上有
    彗尾，顶部线都是重复信息；收起后滑杆随内容淡出，它才作为该屏唯一进度指示留在
    胶囊上沿。is-idle（未选屏 / 无进度可显）一并隐藏 */
-.dock-line { position: absolute; top: 0; left: 6px; max-width: calc(100% - 12px); height: 2px; background: var(--accent); border-radius: 99px; transition: width .6s linear; display: none; }
+.dock-line { position: absolute; top: 0; left: 6px; max-width: calc(100% - 12px); height: 2px; background: var(--accent); border-radius: 99px; display: none; } /* 宽度由 rAF 逐帧驱动，不加过渡 */
 .dock-wrap.is-collapsed .dock-line:not(.is-idle) { display: block; }
 /* 音量/音源弹层贴着 Dock 右端，向下弹会被视口底边裁掉：改为向上弹、右缘对齐按钮 */
 .dock .pop { top: auto; bottom: calc(100% + 8px); }
@@ -819,6 +820,9 @@ button.card-row:hover { background: var(--subtle); }
 .dock-sub { font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dock-ctrl { display: flex; align-items: center; gap: 2px; margin-left: auto; }
 .dock-btn { width: 34px; height: 34px; }
+/* 收起方式切换钮：固定/始终折叠（非默认态）以 accent 提示已偏离默认的自动折叠 */
+.dock .dock-mode.is-on { color: var(--accent); }
+.dock-empty .dock-mode { margin-left: auto; }
 .dock-time { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dock-seek { flex: 1; min-width: 90px; accent-color: var(--accent); height: 4px; cursor: pointer; }
 /* 屏幕选择条：各屏幕迷你块（宽度按分辨率等比、在播屏以对应壁纸封面为底、暂停叠斜纹）。

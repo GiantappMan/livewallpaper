@@ -177,6 +177,8 @@
     maxw: '<rect x="4" y="4" width="16" height="16" rx="1.5"/>',
     restore: '<rect x="4.5" y="8" width="11.5" height="11.5" rx="1.5"/><path d="M8 4.5h9A2.5 2.5 0 0 1 19.5 8v9"/>',
     info2: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/>',
+    pin: '<path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/>',
+    fold: '<polyline points="6 6 12 11 18 6"/><polyline points="6 12 12 17 18 12"/><line x1="6" y1="21" x2="18" y2="21"/>',
   };
   function icon(name, size) {
     return `<svg viewBox="0 0 24 24" width="${size || 18}" height="${size || 18}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name] || ""}</svg>`;
@@ -2966,6 +2968,14 @@
   let dockSelScreen = -1;   // 选中的屏幕：-1 = 未选（操作作用于全部屏幕）
   let dndWallpaper = null;  // HTML5 拖拽中的壁纸（库/搜索卡片 → Dock 屏幕块）
   let offDockTime = null;   // 进度轮询订阅（showProgress 时挂，其余时刻注销省请求）
+  // 选中屏进度滑杆的逐帧显示态：轮询一秒一笔，rAF 两笔之间按 1x 速度外推、新样本
+  // 指数平滑收敛（见 renderDock 进度段）。基线跨 renderDock 重建保持连续，重建不跳位
+  let dockRaf = 0;          // 滑杆外推循环句柄（renderDock 顶部取消、showProgress 时重启）
+  let dockDispPos = 0;      // 滑杆当前显示位（秒）
+  let dockBasePos = 0;      // 最近样本位（秒）
+  let dockBaseAt = 0;       // 样本到达时刻（performance.now()，外推起点）
+  let dockPaintSec = -1;    // 上帧绘制到的时间整数秒（避免每帧重写时间文本）
+  const screenTimeMemo = new Map(); // screenIndex → { tp, at }（screensTime 广播按屏缓存，选中屏开屏即用）
 
   // HTML5 卡片拖拽（库/本地流式卡片）的统一幻影：原生拖拽影像由系统合成、无法调透明度，
   // 拖到播放 Dock 屏幕块上会死死挡住落点。这里用 1x1 透明画布隐藏原生影像，改用跟随
@@ -3095,6 +3105,7 @@
   const IDLE_DOCK_VIEWS = new Set(["local", "library"]);
 
   function renderDock() {
+    if (dockRaf) { cancelAnimationFrame(dockRaf); dockRaf = 0; } // 旧滑杆外推循环随重建终止
     const st = SC.state.status;
     const playing = st ? st.wallpapers : [];
     const screens = SC.state.screens || [];
@@ -3119,7 +3130,8 @@
         el("div", { class: "dock-empty-hint" },
           (() => { const s = el("span"); s.innerHTML = icon("moon", 15); return s; })(),
           el("span", {}, SC.t("dock.nothing")),
-          el("span", { class: "dim-label" }, SC.t("dock.nothingHint")))));
+          el("span", { class: "dim-label" }, SC.t("dock.nothingHint"))),
+        dockModeBtn()));
       setPillWidth(strip);
       return;
     }
@@ -3157,30 +3169,74 @@
       pickScreen(-1); // 关闭后取消屏幕选中，避免空态 Dock 仍高亮已关屏
     }));
 
-    // 进度：只在选中屏幕（且聚焦壁纸为视频）时显示，按屏轮询
+    // 进度：只在选中屏幕（且聚焦壁纸为视频）时显示，按屏轮询。
+    // 开屏即在正确位置：优先取 screensTime 广播里该屏的缓存（≤1s 新鲜度），
+    // 再单次取一笔纠正（IPC 十几毫秒）——用户看不到从 0/旧位跳到位的调整过程
     const showProgress = dockSelScreen >= 0 && !!(w.meta && w.meta.type === 3);
+    if (showProgress) {
+      const memo = screenTimeMemo.get(String(dockSelScreen));
+      if (memo && Date.now() - memo.at < 5000) lastTime = memo.tp;
+    }
     const cur = dragging ? dragPos : lastTime.position;
     const dur = lastTime.duration || 0;
+    dockDispPos = Math.min(cur, dur || cur);
+    dockBasePos = dockDispPos;
+    dockBaseAt = performance.now();
+    dockPaintSec = -1;
     const time = el("span", { class: "dock-time" }, showProgress ? `${SC.fmtTime(cur)} / ${SC.fmtTime(dur)}` : "");
     const seekEl = el("input", { class: "dock-seek", type: "range", min: 0, max: 1000, value: dur ? Math.round((cur / dur) * 1000) : 0 });
-    seekEl.addEventListener("input", () => { dragging = true; dragPos = dur * (Number(seekEl.value) / 1000); renderDockTime(); });
+    seekEl.addEventListener("input", () => { dragging = true; dragPos = dur * (Number(seekEl.value) / 1000); });
     seekEl.addEventListener("change", () => {
       dragging = false;
-      if (dur > 0) SC.seek(dur * (Number(seekEl.value) / 1000), dockSelScreen);
+      if (dur > 0) {
+        // 以落点为外推新基线：seek 后端有「设置后 2 秒不回读」窗口，期间滑杆
+        // 从松手位置继续走针，而不是弹回旧样本位
+        dragPos = dur * (Number(seekEl.value) / 1000);
+        dockBasePos = dragPos;
+        dockBaseAt = performance.now();
+        SC.seek(dragPos, dockSelScreen);
+      }
     });
+    // 滑杆/时间文本/顶部进度线的逐帧绘制：两笔轮询之间按 1x 速度外推走针，样本笔
+    // 到来时显示位以指数平滑（~0.4s 收敛）滑向新目标——肉眼是连续走针，没有一秒
+    // 一跳的顿感；仅大跨度（seek 生效/换片，>2.5s）才直接落位。拖拽中/暂停/无时长
+    // 分别钉在拖拽位/样本位
+    function paintDockProgress(now) {
+      const d = lastTime.duration || 0;
+      let target;
+      if (dragging) target = dragPos;
+      else if (paused || d <= 0) target = dockBasePos;
+      else target = Math.min(dockBasePos + Math.min(now - dockBaseAt, 5000) / 1000, d);
+      const dt = Math.min(0.1, (now - (paintDockProgress.t || now)) / 1000);
+      paintDockProgress.t = now;
+      if (dragging) dockDispPos = dragPos;
+      else if (Math.abs(target - dockDispPos) > 2.5) dockDispPos = target;
+      else dockDispPos += (target - dockDispPos) * (1 - Math.exp(-dt * 6));
+      const sec = Math.floor(dockDispPos);
+      if (sec !== dockPaintSec) {
+        dockPaintSec = sec;
+        time.textContent = `${SC.fmtTime(Math.max(0, dockDispPos))} / ${SC.fmtTime(d)}`;
+      }
+      if (d > 0) {
+        seekEl.value = String(Math.round((dockDispPos / d) * 1000));
+        line.style.width = `${Math.min(100, (dockDispPos / d) * 100)}%`;
+      }
+    }
+    function rafLoop(now) {
+      if (!seekEl.isConnected) { dockRaf = 0; return; } // Dock 重建/隐藏后自然停轮
+      paintDockProgress(now || performance.now());
+      dockRaf = requestAnimationFrame(rafLoop);
+    }
+    // 样本笔到来（轮询订阅 / 单次取笔）：换外推基线 + 选中屏停走检测
     function renderDockTime() {
-      time.textContent = `${SC.fmtTime(dragging ? dragPos : lastTime.position)} / ${SC.fmtTime(lastTime.duration || 0)}`;
-      if (!dragging && lastTime.duration > 0) seekEl.value = String(Math.round((lastTime.position / lastTime.duration) * 1000));
-      // 顶部进度线与滑块同源更新（线只在「收起态 + 已选屏」可见，见 style.css .dock-line）：
-      // 此前线宽只在 renderDock 重建时设置一次，播放中基本不动，造成「滑块在走、线不动」
-      // 的不一致
-      if (showProgress && lastTime.duration > 0) line.style.width = `${Math.min(100, (lastTime.position / lastTime.duration) * 100)}%`;
+      dockBasePos = Math.min(lastTime.position, lastTime.duration || lastTime.position);
+      dockBaseAt = performance.now();
       // 选中屏的停走检测：与未选屏的 prog-stalled 兜底同款——个别暂停路径后端不上报
       // isPaused，进度连续 ~3s 未推进就把该屏碟片按暂停冻结（展开/收起都生效），恢复推进
       // 自动解除。拖动 seek 中不判定，换屏/无进度时重置
       if (showProgress && !dragging && lastTime.duration > 0) {
         const st = selStall ?? { pos: lastTime.position, n: 0 };
-        if (Math.abs(lastTime.position - st.pos) >= 0.05) { st.pos = lastTime.position; st.n = 0; } else { st.n += 1; }
+        if (Math.abs(lastTime.position - st.pos) >= 1e-6) { st.pos = lastTime.position; st.n = 0; } else { st.n += 1; }
         selStall = st;
         const blk = dockEl.querySelector(`.dock-screen[data-screen='${dockSelScreen}']`);
         if (blk) blk.classList.toggle("prog-stalled", st.n >= 3);
@@ -3197,6 +3253,12 @@
         lastTime = tp || { position: 0, duration: 0 };
         renderDockTime();
       });
+      SC.timeOnce(dockSelScreen).then((tp) => {
+        if (!tp || dragging || !seekEl.isConnected) return;
+        lastTime = tp;
+        renderDockTime();
+      });
+      dockRaf = requestAnimationFrame(rafLoop);
     }
 
     // 音量 + 音源
@@ -3230,7 +3292,7 @@
 
     // 播放/暂停等控制钮靠右，与音量、音源聚成一排；进度条（flex:1）占据中间空档
     dockEl.append(el("div", { class: "dock" }, line, strip, meta,
-      ...(showProgress ? [time, seekEl] : []), ctrl, volPop, audioPop));
+      ...(showProgress ? [time, seekEl] : []), ctrl, volPop, audioPop, dockModeBtn()));
     setPillWidth(strip);
     SC.setScreenTimesWanted(true); // Dock 可见即逐屏广播进度供彗尾显示（选中屏的滑杆另有 timeScreen 轮询）
   }
@@ -3272,6 +3334,8 @@
       const n = dockEl.querySelector(`.dock-screen[data-screen='${si}']`);
       if (!n) continue;
       const tp = map[si];
+      if (tp) screenTimeMemo.set(si, { tp, at: Date.now() });
+      else screenTimeMemo.delete(si);
       n.classList.toggle("has-prog", !!tp);
       if (!tp) { progShown.delete(si); progStall.delete(si); progPrev.delete(si); n.classList.remove("prog-stalled"); continue; }
       const raw = Math.min(100, Math.max(0, (tp.position / tp.duration) * 100));
@@ -3321,17 +3385,34 @@
   const DOCK_WAKE_MARGIN = 28;
   let dockCollapseTimer = null;
   let dockPointerInside = false; // 指针是否在 Dock 热区内（含 28px 外扩）：在内不收，离开才起算
+  // 收起方式三态（按钮循环切换，localStorage 记忆）：固定 = 常驻展开不收；自动折叠 =
+  // 无交互 4s 收起（默认，即原有行为）；始终折叠 = 只保持胶囊，悬停不展开，点一下
+  // 胶囊临时展开、指针离开立即折回。存储不可用（隐私模式等）静默降级为会话内生效
+  const DOCK_MODES = ["pinned", "auto", "collapsed"];
+  let dockMode = "auto";
+  let dockTempOpen = false; // 始终折叠下的临时展开（点胶囊触发，指针离开即折回）
+  try {
+    const m = localStorage.getItem("dock-mode");
+    if (DOCK_MODES.includes(m)) dockMode = m;
+  } catch { /* 存储不可用：保持默认 */ }
+  function dockCollapseTimerClear() {
+    if (dockCollapseTimer) { clearTimeout(dockCollapseTimer); dockCollapseTimer = null; }
+  }
   function dockArm() {
+    if (dockMode !== "auto") return; // 固定不收、始终折叠无倒计时
     if (dockCollapseTimer) clearTimeout(dockCollapseTimer);
     dockCollapseTimer = setTimeout(dockCollapse, DOCK_COLLAPSE_MS);
   }
   // 渲染挂载用：已有倒计时在跑就不打断（指针交互才走 dockArm 完整重置）——
   // 切视图/状态刷新走 renderDock，不应把用户已经等了一半的收缩计时清零重来
   function dockArmSoft() {
+    if (dockMode === "collapsed") { dockEl.classList.add("is-collapsed"); return; }
+    if (dockMode !== "auto") return;
     if (dockCollapseTimer) return;
     dockCollapseTimer = setTimeout(dockCollapse, DOCK_COLLAPSE_MS);
   }
   function dockWake() {
+    if (dockMode === "collapsed" && !dockTempOpen) return; // 始终折叠：悬停不展开
     dockEl.classList.remove("is-collapsed");
     dockArm();
   }
@@ -3364,7 +3445,14 @@
     const was = dockPointerInside;
     dockPointerInside = near;
     if (near) { dockWake(); return; }
-    if (was) dockArm(); // 刚离开 Dock 区域：从离开时刻重新计时
+    if (!was) return;
+    // 刚离开 Dock 区域：始终折叠立即折回；其余从离开时刻重新计时
+    if (dockMode === "collapsed") {
+      dockTempOpen = false;
+      dockEl.classList.add("is-collapsed");
+      return;
+    }
+    dockArm();
   };
   // mousemove + pointermove 双监听：钩子转发的 WM_MOUSEMOVE 在 WebView2 里两者都合成，
   // 双保险覆盖不同版本的行为差异；HTML5 拖拽（库卡片 → Dock 屏块）期间不产生鼠标
@@ -3380,10 +3468,52 @@
   const dockPointerLeave = () => {
     if (!dockPointerInside) return;
     dockPointerInside = false;
+    // 始终折叠：指针离开（含移出窗口）立即折回；其余从该时刻重新起算倒计时
+    if (dockMode === "collapsed") {
+      dockTempOpen = false;
+      dockEl.classList.add("is-collapsed");
+      return;
+    }
     dockArm();
   };
   document.documentElement.addEventListener("mouseleave", dockPointerLeave);
   window.addEventListener("blur", dockPointerLeave);
+  // 始终折叠下的临时展开：点一下胶囊（含屏块）即展开，指针离开热区立即折回——
+  // 这是折叠态下使用控制钮 / 切换收起方式的入口（捕获阶段先于屏块点击执行）
+  dockEl.addEventListener("click", () => {
+    if (dockMode === "collapsed" && dockEl.classList.contains("is-collapsed")) {
+      dockTempOpen = true;
+      dockWake();
+    }
+  }, true);
+
+  // 收起方式切换钮：三态循环 固定 → 自动折叠 → 始终折叠。图标按态区分
+  // （图钉 = 固定、时钟 = 定时自动、下折箭头 = 始终折叠），非默认态以 accent 提示
+  const DOCK_MODE_META = {
+    pinned: { ico: "pin", key: "dock.modePinned" },
+    auto: { ico: "clock", key: "dock.modeAuto" },
+    collapsed: { ico: "fold", key: "dock.modeCollapsed" },
+  };
+  function setDockMode(m) {
+    dockMode = m;
+    dockTempOpen = false;
+    try { localStorage.setItem("dock-mode", m); } catch { /* 存储不可用：仅会话内生效 */ }
+    dockCollapseTimerClear();
+    if (m === "pinned") dockEl.classList.remove("is-collapsed");
+    if (m === "collapsed") dockEl.classList.add("is-collapsed");
+    if (m === "auto") dockArm();
+    renderDock(); // 重建 Dock 换按钮图标/标题/态
+  }
+  function dockModeBtn() {
+    const meta = DOCK_MODE_META[dockMode];
+    const b = el("button", {
+      class: `icon-btn dock-btn dock-mode${dockMode !== "auto" ? " is-on" : ""}`,
+      title: `${SC.t(meta.key)} · ${SC.t("dock.modeHint")}`,
+      onclick: () => setDockMode(DOCK_MODES[(DOCK_MODES.indexOf(dockMode) + 1) % DOCK_MODES.length]),
+    });
+    b.append(iconEl(meta.ico, 16));
+    return b;
+  }
 
   // ---------------------------------------------------------------- 壁纸日历
   // 数据口径与后端一致：四级优先级（单日 > 年度节日 > 每周 > 不接管）由后端

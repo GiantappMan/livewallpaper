@@ -96,6 +96,7 @@
       "dock.volume": "音量", "dock.audio": "音源", "dock.mute": "静音", "dock.nothing": "桌面正在休息",
       "dock.nothingHint": "点击任意壁纸即可应用", "dock.focus": "正在控制",
       "dock.screensHint": "点击选择要操作的屏幕（再点取消）；未选屏幕时操作作用于全部屏幕；把壁纸拖到屏幕块上即可在该屏播放",
+      "dock.modePinned": "固定显示", "dock.modeAuto": "自动折叠", "dock.modeCollapsed": "始终折叠", "dock.modeHint": "点击切换收起方式",
       "dock.blankTitle": "点击壁纸生效，或拖壁纸到此块播放",
       "dock.blankHint": "点击库中壁纸即可生效；也可把壁纸拖到此屏块上，直接在该屏播放",
       "dl.title": "下载", "dl.sub": "下载任务与历史记录", "dl.active": "进行中", "dl.activeEmpty": "暂无下载任务",
@@ -222,6 +223,7 @@
       "dock.volume": "Volume", "dock.audio": "Audio from", "dock.mute": "Mute", "dock.nothing": "The desktop is resting",
       "dock.nothingHint": "Click any wallpaper to apply it", "dock.focus": "Controlling",
       "dock.screensHint": "Click a screen to target it (click again to clear); with no screen picked, controls apply to all screens. Drag a wallpaper onto a screen to play it there.",
+      "dock.modePinned": "Always show", "dock.modeAuto": "Auto-collapse", "dock.modeCollapsed": "Always collapsed", "dock.modeHint": "Click to switch",
       "dock.blankTitle": "Click a wallpaper to apply it, or drag one onto this block",
       "dock.blankHint": "Click a wallpaper to apply it; or drag one onto a screen block to play it on that screen",
       "dl.title": "Downloads", "dl.sub": "Active tasks and history", "dl.active": "Active", "dl.activeEmpty": "No active downloads",
@@ -348,6 +350,7 @@
       "dock.volume": "Громкость", "dock.audio": "Звук из", "dock.mute": "Без звука", "dock.nothing": "Рабочий стол отдыхает",
       "dock.nothingHint": "Щёлкните любые обои, чтобы применить", "dock.focus": "Управление",
       "dock.screensHint": "Щёлкните экран, чтобы выбрать его (повторный щелчок снимает выбор); без выбора действие применяется ко всем экранам; перетащите обои на экран, чтобы играть там",
+      "dock.modePinned": "Закрепить", "dock.modeAuto": "Автосворачивание", "dock.modeCollapsed": "Всегда свёрнут", "dock.modeHint": "Нажмите, чтобы переключить",
       "dock.blankTitle": "Щёлкните обои, чтобы применить, или перетащите их сюда",
       "dock.blankHint": "Щёлкните обои в библиотеке, чтобы применить; или перетащите их на экран, чтобы воспроизвести там",
       "dl.title": "Загрузки", "dl.sub": "Активные задачи и история", "dl.active": "Активные", "dl.activeEmpty": "Нет активных загрузок",
@@ -473,6 +476,7 @@
       "dock.volume": "Volumen", "dock.audio": "Audio de", "dock.mute": "Silencio", "dock.nothing": "El escritorio está descansando",
       "dock.nothingHint": "Haz clic en cualquier fondo para aplicarlo", "dock.focus": "Controlando",
       "dock.screensHint": "Haz clic en una pantalla para elegirla (clic de nuevo para quitar); sin pantalla elegida, los controles afectan a todas; arrastra un fondo a una pantalla para reproducirlo allí",
+      "dock.modePinned": "Fijar", "dock.modeAuto": "Autoplegar", "dock.modeCollapsed": "Siempre plegado", "dock.modeHint": "Clic para cambiar",
       "dock.blankTitle": "Haz clic en un fondo para aplicarlo, o arrástralo a este bloque",
       "dock.blankHint": "Haz clic en un fondo de la biblioteca para aplicarlo; o arrástralo a una pantalla para reproducirlo en ella",
       "dl.title": "Descargas", "dl.sub": "Tareas activas e historial", "dl.active": "Activas", "dl.activeEmpty": "Sin descargas activas",
@@ -598,6 +602,7 @@
       "dock.volume": "音量", "dock.audio": "音源", "dock.mute": "靜音", "dock.nothing": "桌面正在休息",
       "dock.nothingHint": "點擊任意桌布即可套用", "dock.focus": "正在控制",
       "dock.screensHint": "點擊選擇要操作的螢幕（再點取消）；未選螢幕時操作作用於全部螢幕；把桌布拖到螢幕區塊上即可在該螢幕播放",
+      "dock.modePinned": "固定顯示", "dock.modeAuto": "自動摺疊", "dock.modeCollapsed": "始終摺疊", "dock.modeHint": "點擊切換收起方式",
       "dock.blankTitle": "點擊桌布生效，或拖桌布到此區塊播放",
       "dock.blankHint": "點擊庫中桌布即可生效；也可把桌布拖到此螢幕區塊上，直接在該螢幕播放",
       "dl.title": "下載", "dl.sub": "下載任務與歷史記錄", "dl.active": "進行中", "dl.activeEmpty": "暫無下載任務",
@@ -723,6 +728,7 @@
       "dock.volume": "音量", "dock.audio": "音源", "dock.mute": "ミュート", "dock.nothing": "デスクトップは休憩中です",
       "dock.nothingHint": "好きな壁紙をクリックすると適用されます", "dock.focus": "操作中",
       "dock.screensHint": "操作する画面をクリックで選択（再クリックで解除）。未選択時はすべての画面に作用します。壁紙を画面ブロックへドラッグすると、その画面で再生します",
+      "dock.modePinned": "常に表示", "dock.modeAuto": "自動折りたたみ", "dock.modeCollapsed": "常に折りたたみ", "dock.modeHint": "クリックで切り替え",
       "dock.blankTitle": "壁紙をクリックで適用、またはここへドラッグして再生",
       "dock.blankHint": "ライブラリの壁紙をクリックで適用。画面ブロックへドラッグすれば、その画面で直接再生できます",
       "dl.title": "ダウンロード", "dl.sub": "ダウンロードタスクと履歴", "dl.active": "実行中", "dl.activeEmpty": "実行中のダウンロードはありません",
@@ -848,6 +854,7 @@
       "dock.volume": "Lautstärke", "dock.audio": "Ton von", "dock.mute": "Stumm", "dock.nothing": "Der Desktop ruht sich aus",
       "dock.nothingHint": "Klicke ein Wallpaper an, um es anzuwenden", "dock.focus": "Steuert",
       "dock.screensHint": "Klicke einen Bildschirm an, um ihn zu wählen (nochmals klicken zum Aufheben); ohne Auswahl wirken die Steuerelemente auf allen; ziehe ein Wallpaper auf einen Bildschirm, um es dort abzuspielen",
+      "dock.modePinned": "Immer anzeigen", "dock.modeAuto": "Automatisch einklappen", "dock.modeCollapsed": "Immer eingeklappt", "dock.modeHint": "Zum Wechseln klicken",
       "dock.blankTitle": "Klicke ein Wallpaper an, oder ziehe es in diesen Block",
       "dock.blankHint": "Klicke ein Wallpaper aus der Bibliothek an; oder ziehe es auf einen Bildschirmblock, um es dort abzuspielen",
       "dl.title": "Downloads", "dl.sub": "Aktive Aufgaben und Verlauf", "dl.active": "Aktiv", "dl.activeEmpty": "Keine aktiven Downloads",
@@ -973,6 +980,7 @@
       "dock.volume": "Volume", "dock.audio": "Son de", "dock.mute": "Muet", "dock.nothing": "Le bureau se repose",
       "dock.nothingHint": "Cliquez sur un fond d'écran pour l'appliquer", "dock.focus": "Contrôle en cours",
       "dock.screensHint": "Cliquez sur un écran pour le cibler (recliquez pour annuler) ; sans écran ciblé, les commandes s'appliquent à tous ; glissez un fond d'écran sur un écran pour le lire dessus",
+      "dock.modePinned": "Toujours afficher", "dock.modeAuto": "Repli auto", "dock.modeCollapsed": "Toujours replié", "dock.modeHint": "Cliquez pour changer",
       "dock.blankTitle": "Cliquez sur un fond d'écran pour l'appliquer, ou glissez-le dans ce bloc",
       "dock.blankHint": "Cliquez sur un fond de la bibliothèque pour l'appliquer ; ou glissez-le sur un écran pour le lire dessus",
       "dl.title": "Téléchargements", "dl.sub": "Tâches actives et historique", "dl.active": "Actifs", "dl.activeEmpty": "Aucun téléchargement actif",
@@ -1098,6 +1106,7 @@
       "dock.volume": "Volume", "dock.audio": "Áudio de", "dock.mute": "Mudo", "dock.nothing": "A área de trabalho está descansando",
       "dock.nothingHint": "Clique em qualquer papel de parede para aplicá-lo", "dock.focus": "Controlando",
       "dock.screensHint": "Clique numa tela para escolhê-la (clique de novo para cancelar); sem tela escolhida, os controles valem para todas; arraste um papel de parede para uma tela para reproduzi-lo nela",
+      "dock.modePinned": "Fixar", "dock.modeAuto": "Recolher auto", "dock.modeCollapsed": "Sempre recolhido", "dock.modeHint": "Clique para alternar",
       "dock.blankTitle": "Clique num papel de parede para aplicar, ou arraste um para este bloco",
       "dock.blankHint": "Clique num papel de parede da biblioteca para aplicar; ou arraste-o para um bloco de tela para reproduzi-lo nela",
       "dl.title": "Downloads", "dl.sub": "Tarefas ativas e histórico", "dl.active": "Ativos", "dl.activeEmpty": "Nenhum download ativo",
@@ -1479,6 +1488,16 @@
     tickerCbs.forEach((fn) => fn(tp));
   }
   function onTime(fn) { tickerCbs.add(fn); return () => tickerCbs.delete(fn); }
+  // 单次取某屏当前进度（不进轮询）：Dock 选中屏刚显示滑杆时先取一笔，
+  // 滑杆/时间开屏即在正确位置，不用等下一秒的轮询笔
+  async function timeOnce(screenIndex) {
+    if (demo) return mockTime();
+    try {
+      const r = await client.api.getWallpaperTime(screenIndex);
+      const tp = r && r.data;
+      return tp && tp.duration > 0 && tp.position >= 0 ? { position: tp.position, duration: tp.duration } : null;
+    } catch { return null; }
+  }
   async function seek(seconds, screenIndex) {
     lastSeekAt = Date.now();
     if (demo) { mockSeek(seconds); return; }
@@ -2166,7 +2185,7 @@
     // 播放
     playingSet, screenIndexOf, canPause,
     applyWallpaper, pause, resume, stop, setVolume,
-    onTime, seek, setTimeScreen, setScreenTimesWanted,
+    onTime, timeOnce, seek, setTimeScreen, setScreenTimesWanted,
     // 创建 / 编辑
     defaultSetting, uploadFile, uploadWebFolder, createWebWallpaperFolder, captureCover, uploadCover,
     createMediaWallpaper, updateWallpaper, saveWallpaperSetting, deleteWallpaper, reveal,
