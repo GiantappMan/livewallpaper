@@ -33,7 +33,10 @@ export function TitleBar() {
       className="sticky top-0 z-50 flex h-12 shrink-0 select-none items-center justify-between bg-background pl-3"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
-      <span className="text-sm font-bold text-foreground">巨应壁纸3</span>
+      <div className="flex items-center gap-2">
+        <img src="/logo.png" alt="" className="h-5 w-5" draggable={false} />
+        <span className="text-sm font-bold text-foreground">巨应壁纸3</span>
+      </div>
       <div
         className="flex h-full items-center"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}

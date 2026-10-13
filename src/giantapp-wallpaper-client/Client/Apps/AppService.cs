@@ -165,12 +165,17 @@ internal class AppService
         ApiObject.ConfigSetAfterEvent += Api_SetConfigEvent;
         ApiObject.CorrectConfigEvent += ApiObject_CorrectConfigEvent;
         ShellWindow.ClientApi = _apiObject;
-        ShellWindow.Origins = new[] {
+        //动态端口的本地开发地址一并放行（未检测到 dev server 时回退 3100，已在列表中）
+        var origins = new List<string> {
             "http://localhost:3001",
             "http://localhost:3100",
             "https://wallpaper.giantapp.cn",
             "https://www.giantapp.cc"
         };
+        int devPort = DetectDevServerPort();
+        if (devPort != 3100)
+            origins.Add($"http://localhost:{devPort}");
+        ShellWindow.Origins = origins.ToArray();
 
         bool tmp = await _autoStart.Check();
         if (tmp != generalConfig.AutoStart)
@@ -218,8 +223,8 @@ internal class AppService
 #if DEBUG_LOCAL && DEBUG
         //if (path == "index")
         //    path = null;
-        //本地开发
-        url = $"http://localhost:3100/{config.CurrentLan}";
+        //本地开发：优先用 dev.ts 写入的动态端口，回退 3100
+        url = $"http://localhost:{DetectDevServerPort()}/{config.CurrentLan}";
         //ShellWindow.ShowShell($"http://localhost:3100/{config.CurrentLan}/{path}");
         //return;
 #else
@@ -229,6 +234,42 @@ internal class AppService
             url += $"#/{path}";
         ShellWindow.ShowShell(url);
 
+    }
+
+    //前端 dev server 端口：scripts/dev.ts 启动时动态申请空闲端口并写入 exe 同目录
+    //dev-server.json（{port, pid}）；文件缺失或已失效（pid 退出、端口无响应）时
+    //回退 3100（UI 目录单独 pnpm dev 的固定端口）
+    static int DetectDevServerPort()
+    {
+        const int fallback = 3100;
+        try
+        {
+            string file = Path.Combine(AppContext.BaseDirectory, "dev-server.json");
+            if (!File.Exists(file))
+                return fallback;
+            //dev.ts 写入的是小驼峰（{port, pid}），System.Text.Json 默认区分大小写，必须显式忽略
+            var info = JsonSerializer.Deserialize<DevServerInfo>(File.ReadAllText(file),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (info == null || info.Port < 1 || info.Port > 65535)
+                return fallback;
+            try { using var _ = Process.GetProcessById(info.Pid); }
+            catch { return fallback; } //pid 已退出，是上次 dev 会话的遗留文件
+            using var tcp = new System.Net.Sockets.TcpClient();
+            var connect = tcp.ConnectAsync(System.Net.IPAddress.Loopback, info.Port);
+            if (!connect.Wait(300) || !tcp.Connected)
+                return fallback;
+            return info.Port;
+        }
+        catch
+        {
+            return fallback;
+        }
+    }
+
+    class DevServerInfo
+    {
+        public int Port { get; set; }
+        public int Pid { get; set; }
     }
 
     internal static async void Exit()
