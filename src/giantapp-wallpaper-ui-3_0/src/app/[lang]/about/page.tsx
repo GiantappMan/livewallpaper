@@ -55,7 +55,6 @@ const AboutPage = () => {
                     </Link>
                 </Button>
             </h1>
-            {dictionary['about'].reminder}
             <LinkClient
                 className="underline-offset-4 hover:underline" href="https://support.qq.com/products/315103" target="_blank">
                 {dictionary['about'].problems_and_suggestions}
