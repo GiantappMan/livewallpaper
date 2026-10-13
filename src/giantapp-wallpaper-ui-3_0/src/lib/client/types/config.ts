@@ -12,6 +12,19 @@ export type ConfigGeneral = {
   currentLan: Locale;
 };
 
+export type ConfigUpdate = {
+  url: string;
+  channel: "stable" | "preview";
+};
+
+export type UpdateState = {
+  state: "idle" | "checking" | "downloading" | "downloaded" | "upToDate" | "error";
+  error?: string;
+  version?: string;
+  notes?: string;
+  percent?: number;
+};
+
 export enum WallpaperCoveredBehavior {
   //不做任何处理
   None,

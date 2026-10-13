@@ -1,7 +1,6 @@
 {
   "about": {
     "author": "Giantapp Man",
-    "donate_membership": "Donate / Pro",
     "encourage": "Give Encouragement",
     "feedback_and_source_code": "Feedback & Source Code",
     "give_star": "Give a Star",
@@ -24,7 +23,6 @@
   },
   "hub": {
     "download_wallpaper_with_v2": "You can download wallpapers with Version2 first",
-    "membership_upgrade_to_v3": "Pro of Version2 can upgrade to Version3 for free later",
     "set_same_directory_for_wallpapers_2_and_3": "Set the wallpaper directories for 2 and 3 to be the same",
     "still_in_development": "Still in development"
   },
@@ -148,6 +146,19 @@
     "failed_to_save": "Failed to Save",
     "general": "General",
     "general_settings": "General Settings",
+    "update": "Software Update",
+    "update_address": "Update server address",
+    "update_channel": "Update channel",
+    "channel_stable": "Stable",
+    "channel_preview": "Preview",
+    "check_update": "Check for updates",
+    "update_checking": "Checking for updates…",
+    "update_downloading": "Downloading {0}… {1}%",
+    "install_now": "Install now and restart",
+    "update_later": "Later",
+    "update_downloaded": "New version {0} downloaded",
+    "update_up_to_date": "You're on the latest version",
+    "update_store_hint": "Store builds update via Microsoft Store",
     "language": "Language",
     "light_mode": "Light Mode",
     "minimize_on_startup": "Minimize on Startup",

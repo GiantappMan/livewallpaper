@@ -1,7 +1,6 @@
 {
   "about": {
     "author": "Giantapp Man",
-    "donate_membership": "Пожертвовать / Pro",
     "encourage": "Поддержите проет",
     "feedback_and_source_code": "Обратная связь и исходный код",
     "give_star": "Поставьте звезду",
@@ -24,7 +23,6 @@
   },
   "hub": {
     "download_wallpaper_with_v2": "Сначала вы можете скачать обои с версией 2",
-    "membership_upgrade_to_v3": "Обладатели версии 2 смогут потом бесплатно перейти на версию 3",
     "set_same_directory_for_wallpapers_2_and_3": "Установите одинаковые каталоги обоев для 2 и 3",
     "still_in_development": "Ещё в разработке"
   },
@@ -148,6 +146,19 @@
     "failed_to_save": "Не удалось сохранить",
     "general": "Общие",
     "general_settings": "Общие настройки",
+    "update": "Обновление ПО",
+    "update_address": "Адрес сервера обновлений",
+    "update_channel": "Канал обновлений",
+    "channel_stable": "Стабильный",
+    "channel_preview": "Предварительный",
+    "check_update": "Проверить обновления",
+    "update_checking": "Проверка обновлений…",
+    "update_downloading": "Загрузка {0}… {1}%",
+    "install_now": "Установить и перезапустить",
+    "update_later": "Позже",
+    "update_downloaded": "Новая версия {0} загружена",
+    "update_up_to_date": "У вас последняя версия",
+    "update_store_hint": "Версии из магазина обновляются через Microsoft Store",
     "language": "Язык",
     "light_mode": "Светлый режим",
     "minimize_on_startup": "Свернуть при запуске",

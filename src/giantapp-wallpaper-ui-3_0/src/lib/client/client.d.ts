@@ -26,6 +26,10 @@ interface API {
   OpenStoreReview(defaultUrl: string): Promise<boolean>;
   GetRealThemeMode(): string;
   OpenLogFolder(): void;
+  GetUpdateState(): string;
+  CheckUpdate(): void;
+  InstallUpdate(): void;
+  IsStoreVersion(): boolean;
   addEventListener(type: string, listener: (e: any) => void);
 }
 

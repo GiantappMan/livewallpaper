@@ -1,7 +1,6 @@
 {
   "about": {
     "author": "巨应君",
-    "donate_membership": "捐赠/会员",
     "encourage": "鼓励一下",
     "feedback_and_source_code": "反馈&源码",
     "give_star": "点个星星",
@@ -24,7 +23,6 @@
   },
   "hub": {
     "download_wallpaper_with_v2": "可以先用巨应2下载壁纸",
-    "membership_upgrade_to_v3": "巨应2的会员，后期可以免费升级到巨应3",
     "set_same_directory_for_wallpapers_2_and_3": "2和3壁纸目录都设成一样即可",
     "still_in_development": "仍在开发中"
   },
@@ -148,6 +146,19 @@
     "failed_to_save": "保存失败",
     "general": "常规",
     "general_settings": "常规设置",
+    "update": "软件更新",
+    "update_address": "更新地址",
+    "update_channel": "更新通道",
+    "channel_stable": "正式版",
+    "channel_preview": "预览版",
+    "check_update": "检查更新",
+    "update_checking": "正在检查更新…",
+    "update_downloading": "正在下载 {0}… {1}%",
+    "install_now": "立即安装并重启",
+    "update_later": "稍后",
+    "update_downloaded": "新版本 {0} 已下载完成",
+    "update_up_to_date": "已是最新版本",
+    "update_store_hint": "商店版本通过微软商店更新",
     "language": "多语言",
     "light_mode": "浅色",
     "minimize_on_startup": "启动后最小化",

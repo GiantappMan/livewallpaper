@@ -4,8 +4,9 @@ import { Wallpaper, WallpaperMeta, WallpaperSetting } from "./types/wallpaper";
 import type { Screen } from "./types/screen";
 import PlayingStatus from "./types/playing-status";
 import type { DownloadItem } from "./types/download";
+import type { UpdateState } from "./types/config";
 
-type Key = "Appearance" | "General" | "Wallpaper";
+type Key = "Appearance" | "General" | "Wallpaper" | "Update";
 
 class API {
   private emitter = new EventEmitter();
@@ -423,6 +424,41 @@ class API {
     catch (e) {
       console.log(e);
       return { error: e, data: null };
+    }
+  }
+
+  // ---- 应用更新 ----
+
+  getUpdateState(): UpdateState | null {
+    try {
+      if (!window.chrome || !window.chrome.webview) return null;
+      const { api } = (window as any).chrome.webview.hostObjects;
+      return JSON.parse(api.GetUpdateState());
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  }
+
+  checkUpdate() {
+    if (!window.chrome || !window.chrome.webview) return;
+    const { api } = (window as any).chrome.webview.hostObjects;
+    api.CheckUpdate();
+  }
+
+  installUpdate() {
+    if (!window.chrome || !window.chrome.webview) return;
+    const { api } = (window as any).chrome.webview.hostObjects;
+    api.InstallUpdate();
+  }
+
+  isStoreVersion(): boolean {
+    try {
+      if (!window.chrome || !window.chrome.webview) return false;
+      const { api } = (window as any).chrome.webview.hostObjects;
+      return !!api.IsStoreVersion();
+    } catch (e) {
+      return false;
     }
   }
 

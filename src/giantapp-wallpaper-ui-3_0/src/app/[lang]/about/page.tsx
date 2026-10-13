@@ -7,8 +7,7 @@ import LinkClient from "@/components/link-client"
 import {
     LayoutGrid,
     MessageCircleWarning,
-    Github,
-    DollarSign
+    Github
 } from "lucide-react";
 import Link from "next/link";
 import { langDictAtom } from "@/atoms/lang";
@@ -86,13 +85,6 @@ const AboutPage = () => {
                     className="underline-offset-4 flex items-center" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
                     <Github className="h-4 w-4 mr-1" />
                     {dictionary['about'].give_star}
-                </LinkClient>
-            </Button>
-            <Button variant="outline" asChild>
-                <LinkClient
-                    className="underline-offset-4 flex items-center" href="https://afdian.net/a/giantapp" target="_blank">
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    {dictionary['about'].donate_membership}
                 </LinkClient>
             </Button>
         </div>

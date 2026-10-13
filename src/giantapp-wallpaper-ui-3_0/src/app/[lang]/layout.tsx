@@ -12,6 +12,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemeWrapper } from '@/components/theme-wrapper';
 import SideMenu from '@/components/side-menu';
 import { TitleBar } from '@/components/title-bar';
+import { UpdatePrompt } from '@/components/update-prompt';
 import { getDictionary } from "@/get-dictionary";
 import { RatingDialog } from "@/components/rating-dialog";
 
@@ -57,6 +58,7 @@ export default async function Root({
               </div>
             </div>
           </ThemeWrapper>
+          <UpdatePrompt />
         </Providers>
         <ThemeSwitcher />
       </body>

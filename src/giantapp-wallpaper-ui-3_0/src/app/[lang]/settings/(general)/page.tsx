@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react';
 import { i18n } from "@/i18n-config";
+import { UpdateSettings } from "@/components/update-settings";
 import { langDictAtom } from "@/atoms/lang";
 import { useAtomValue } from "jotai";
 
@@ -151,6 +152,7 @@ const Page = () => {
                     <Skeleton className="h-8 w-32" />
                 </>
         }
+        <UpdateSettings />
     </div>
 };
 

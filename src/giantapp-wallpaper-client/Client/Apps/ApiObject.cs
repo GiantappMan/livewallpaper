@@ -275,6 +275,18 @@ public class ApiObject
         return version1.ToString();
     }
 
+    //是否微软商店（UWP）版本
+    public bool IsStoreVersion() => UpdateService.IsStoreVersion();
+
+    //当前更新状态 JSON（前端轮询）
+    public string GetUpdateState() => UpdateService.State;
+
+    //手动检查更新；商店版打开商店详情页
+    public void CheckUpdate() => UpdateService.CheckUpdate();
+
+    //安装已下载的更新
+    public void InstallUpdate() => UpdateService.InstallUpdate();
+
     //前端上传文件
     public string UploadToTmp(string filename, string fileContentBase64)
     {

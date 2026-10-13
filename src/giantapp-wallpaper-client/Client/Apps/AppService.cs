@@ -186,6 +186,9 @@ internal class AppService
 
         if (_killOldProcess || generalConfig != null && !generalConfig.HideWindow)
             ShowShell();
+
+        //启动后延迟检查应用更新
+        UpdateService.StartupCheck();
     }
 
     //保存快照，下次启动可恢复

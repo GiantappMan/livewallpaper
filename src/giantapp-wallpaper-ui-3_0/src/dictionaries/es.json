@@ -1,7 +1,6 @@
 {
     "about": {
       "author": "Giantapp Man",
-      "donate_membership": "Donar / Pro",
       "encourage": "Dar Ánimo",
       "feedback_and_source_code": "Comentarios y Código Fuente",
       "give_star": "Dar una Estrella",
@@ -24,7 +23,6 @@
     },
     "hub": {
       "download_wallpaper_with_v2": "Puedes descargar fondos de pantalla primero con la Versión2",
-      "membership_upgrade_to_v3": "Los usuarios Pro de la Versión2 pueden actualizar a la Versión3 gratis más tarde",
       "set_same_directory_for_wallpapers_2_and_3": "Establece los directorios de fondos de pantalla para 2 y 3 como el mismo",
       "still_in_development": "Aún en desarrollo"
     },
@@ -148,6 +146,19 @@
       "failed_to_save": "Error al Guardar",
       "general": "General",
       "general_settings": "Configuración General",
+      "update": "Actualización de software",
+      "update_address": "Dirección del servidor de actualizaciones",
+      "update_channel": "Canal de actualización",
+      "channel_stable": "Estable",
+      "channel_preview": "Vista previa",
+      "check_update": "Buscar actualizaciones",
+      "update_checking": "Buscando actualizaciones…",
+      "update_downloading": "Descargando {0}… {1}%",
+      "install_now": "Instalar ahora y reiniciar",
+      "update_later": "Más tarde",
+      "update_downloaded": "Nueva versión {0} descargada",
+      "update_up_to_date": "Ya tienes la última versión",
+      "update_store_hint": "Las versiones de la tienda se actualizan a través de Microsoft Store",
       "language": "Idioma",
       "light_mode": "Modo Claro",
       "minimize_on_startup": "Minimizar al Inicio",
