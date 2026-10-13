@@ -2,6 +2,9 @@
 //   bun dev              前端 dev server（动态端口）+ 调试版客户端
 //   bun dev --web        只起前端（前端迭代时用）
 //   bun dev --app        只构建并启动客户端（前端已在别处跑着时用）
+//   bun dev:debug        同 bun dev，但开启卡死诊断（写 dev-debug.flag 到 exe 目录，
+//                        客户端启动 UI 冻结看门狗 + API/管道耗时打点；日志在
+//                        %LocalAppData%\LiveWallpaper3\logs\log.txt，卡死后分析该文件）
 //
 // 流程：补齐 mpv（download-mpv.ps1）→ 安装前端依赖（如缺）→ next dev（动态端口）
 // → dotnet build Debug → 启动 LiveWallpaper3.exe。
@@ -12,7 +15,7 @@
 // 同样能被回退命中。
 // Ctrl+C 停止 dev server；壁纸应用是托盘程序，由用户自行退出。
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createServer } from "node:net";
 
@@ -30,6 +33,10 @@ const DEV_PORT_FILE = join(dirname(APP_EXE), "dev-server.json");
 const flags = process.argv.slice(2);
 const onlyWeb = flags.includes("--web");
 const onlyApp = flags.includes("--app");
+const debugMode = flags.includes("--debug");
+// 卡死诊断标记：客户端 WallpaperCore.Libs.FreezeWatch / Client.Libs.UiFreezeMonitor /
+// Player.Shared IpcClient 启动时读它决定是否开启打点
+const DEBUG_FLAG_FILE = join(dirname(APP_EXE), "dev-debug.flag");
 
 // 固定命令字面量 + 常量路径参数，不经 shell 解析
 function runPowershellScript(scriptPath: string): Promise<void> {
@@ -148,6 +155,14 @@ async function main() {
     if (!existsSync(APP_EXE)) throw new Error(`找不到构建产物 ${APP_EXE}`);
     // 构建可能清理 bin 目录，启动前刷新握手文件
     if (devPort) await writeDevPortFile(devPort);
+    // 诊断模式标记：debug 写入、非 debug 清理，避免上次 dev:debug 残留
+    if (debugMode) {
+      mkdirSync(dirname(DEBUG_FLAG_FILE), { recursive: true });
+      await Bun.write(DEBUG_FLAG_FILE, "dev-debug");
+      console.log(`[dev] 卡死诊断已开启，卡死后查看 %LocalAppData%\\LiveWallpaper3\\logs\\log.txt`);
+    } else if (existsSync(DEBUG_FLAG_FILE)) {
+      rmSync(DEBUG_FLAG_FILE);
+    }
     // 固定程序 explorer.exe 启动（等价双击），产物路径仅作参数
     spawn("explorer.exe", [APP_EXE], { stdio: "ignore" }).unref();
     console.log(`[dev] 客户端已启动（Debug 版，界面走 http://localhost:${devPort || 3100}）`);

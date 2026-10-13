@@ -101,6 +101,12 @@ public static class WallpaperApi
                 continue;
             }
 
+            //下载中的半成品跳过：无封面会触发截图，残缺文件会让 mpv 长时间不退出
+            if (DownloadingFiles.Contains(fileInfo.FullName))
+            {
+                continue;
+            }
+
             // 符合支持格式的
             if (Wallpaper.IsSupportedFile(fileInfo.Extension) || fileInfo.Extension == ".group")
             {
@@ -696,9 +702,16 @@ public static class WallpaperApi
             string mpvPath = MpvApi.DefaultPlayerPath;
             Process process = new();
             process.StartInfo.FileName = mpvPath;
-            process.StartInfo.Arguments = $"\"{videoPath}\" -o \"{output}\" -vf=scale:500:-1";
+            //禁交互：损坏/不完整的文件可能弹窗等待按键，mpv会一直不退出
+            process.StartInfo.Arguments = $"\"{videoPath}\" -o \"{output}\" -vf=scale:500:-1 --no-input-default-bindings";
             process.Start();
-            process.WaitForExit();
+            //等待必须有上限：本方法在壁纸枚举路径上被调用，无限等待会卡死界面
+            if (!process.WaitForExit(30000))
+            {
+                process.Kill();
+                Logger.Warn($"生成封面超时（30s），已终止 mpv：{videoPath}");
+                return false;
+            }
             return true;
         }
         catch (Exception ex)

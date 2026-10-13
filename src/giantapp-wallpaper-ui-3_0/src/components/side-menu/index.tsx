@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import NavMenuItem from "./nav-menu-item";
-import { CogIcon, HomeIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, CogIcon, HomeIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import {
     CogIcon as solidCogIcon,
     HomeIcon as solidHomeIcon,
     Squares2X2Icon as solidSquares2X2Icon,
+    ArrowDownTrayIcon as solidArrowDownTrayIcon,
     QuestionMarkCircleIcon as questionMarkCircleIcon
 } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
 import { useAtomValue } from "jotai";
 import { langDictAtom } from "@/atoms/lang";
+import { useDownloadStatus } from "@/hooks/use-download-status";
 
 export default function SideMenu({ lang }: { lang: string }) {
     const dictionary = useAtomValue(langDictAtom);
+    const { activeItems } = useDownloadStatus(1500);
     const [sidebarTopNavigation] = useState([
         {
             name: dictionary['common'].local,
@@ -43,6 +46,14 @@ export default function SideMenu({ lang }: { lang: string }) {
 
     const [sidebarBottomNavigation] = useState([
         {
+            name: dictionary['common'].downloads,
+            href: `/${lang}/downloads`,
+            urls: [`/${lang}/downloads`, `/${lang}/downloads.html`],
+            icon: ArrowDownTrayIcon,
+            selectedIcon: solidArrowDownTrayIcon,
+            current: false,
+        },
+        {
             name: dictionary['common'].settings,
             href: `/${lang}/settings`,
             urls: [`/${lang}/settings`, `/${lang}/settings.html`],
@@ -67,7 +78,7 @@ export default function SideMenu({ lang }: { lang: string }) {
     });
 
     sidebarBottomNavigation.forEach((item) => {
-        item.current = pathname === item.href
+        item.current = item.urls.includes(pathname)
         if (item.href === `/${lang}/settings`) {
             item.current = pathname.startsWith(`/${lang}/settings`) || item.urls.includes(pathname)
         }
@@ -98,6 +109,7 @@ export default function SideMenu({ lang }: { lang: string }) {
                                 icon={item.icon}
                                 selected-icon={item.selectedIcon}
                                 current={item.current}
+                                badge={item.name === dictionary['common'].downloads ? activeItems.length : undefined}
                             />
                         ))}
                     </div>

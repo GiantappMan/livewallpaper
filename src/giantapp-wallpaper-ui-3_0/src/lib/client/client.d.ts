@@ -23,6 +23,9 @@ interface API {
   DownloadWallpaper(coverUrl: string, wallpaperUrl: string, wallpaperMetaJson: string): Promise<boolean>;
   CancelDownloadWallpaper(id: string): Promise<boolean>;
   GetDownloadItemStatus(id: string): Promise<string>;
+  GetDownloadStatus(): Promise<string>;
+  GetDownloadHistory(): Promise<string>;
+  ClearDownloadHistory(): void;
   OpenStoreReview(defaultUrl: string): Promise<boolean>;
   GetRealThemeMode(): string;
   OpenLogFolder(): void;

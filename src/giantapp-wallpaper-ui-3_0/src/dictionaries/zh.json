@@ -19,7 +19,23 @@
     "local": "本地",
     "negativeReview": "残忍拒绝",
     "positiveReview": "赏个好评",
-    "settings": "设置"
+    "settings": "设置",
+    "downloads": "下载管理"
+  },
+  "downloads": {
+    "title": "下载管理",
+    "active": "正在下载",
+    "history": "已下载",
+    "no_active_downloads": "暂无下载任务",
+    "no_history": "暂无下载记录",
+    "downloading": "下载中",
+    "completed": "已完成",
+    "canceled": "已取消",
+    "failed": "下载失败",
+    "clear_history": "清空记录",
+    "clear_history_confirm": "确定要清空所有下载记录吗？已下载的壁纸文件不会被删除。",
+    "clear_success": "已清空下载记录",
+    "clear_failed": "清空失败"
   },
   "hub": {
     "download_wallpaper_with_v2": "可以先用巨应2下载壁纸",

@@ -19,7 +19,23 @@
     "local": "Local",
     "negativeReview": "Harshly decline",
     "positiveReview": "Leave a positive review",
-    "settings": "Settings"
+    "settings": "Settings",
+    "downloads": "Downloads"
+  },
+  "downloads": {
+    "title": "Downloads",
+    "active": "Downloading",
+    "history": "Downloaded",
+    "no_active_downloads": "No active downloads",
+    "no_history": "No download history",
+    "downloading": "Downloading",
+    "completed": "Completed",
+    "canceled": "Canceled",
+    "failed": "Failed",
+    "clear_history": "Clear history",
+    "clear_history_confirm": "Clear all download history? Downloaded wallpaper files will not be deleted.",
+    "clear_success": "Download history cleared",
+    "clear_failed": "Failed to clear history"
   },
   "hub": {
     "download_wallpaper_with_v2": "You can download wallpapers with Version2 first",

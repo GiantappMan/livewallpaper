@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Client.Libs;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using WallpaperCore.Libs;
 
 namespace Client.Apps;
 
@@ -18,6 +20,17 @@ public class DonwloadItem
     public bool IsDownloading { get; set; }
     public bool IsDownloadCompleted { get; set; }
     public bool IsCanceled { get; set; }
+}
+
+//下载完成的历史记录，持久化到配置文件夹
+public class DownloadRecord
+{
+    public string Id { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public double TotalBytes { get; set; }
+    public DateTime Time { get; set; }
 }
 
 public class DonwloadStatus
@@ -49,6 +62,47 @@ public class DownloadService
     public static event EventHandler? StatusChangedEvent;
     public static DonwloadStatus Status { get; private set; } = new DonwloadStatus();
 
+    private const string HistoryConfigKey = "DownloadHistory";
+    private const int MaxHistoryCount = 200;
+    private static readonly object _historyLock = new();
+
+    public static List<DownloadRecord> GetHistory()
+    {
+        lock (_historyLock)
+        {
+            return Configer.Get<List<DownloadRecord>>(HistoryConfigKey) ?? new List<DownloadRecord>();
+        }
+    }
+
+    public static void AddHistory(DownloadRecord record)
+    {
+        lock (_historyLock)
+        {
+            var list = GetHistory();
+            //相同的任务只保留一条
+            list.RemoveAll(x => x.Id == record.Id);
+            list.Insert(0, record);
+            if (list.Count > MaxHistoryCount)
+                list.RemoveRange(MaxHistoryCount, list.Count - MaxHistoryCount);
+            Configer.Set(HistoryConfigKey, list, out _, true);
+        }
+    }
+
+    public static void ClearHistory()
+    {
+        lock (_historyLock)
+        {
+            Configer.Set(HistoryConfigKey, new List<DownloadRecord>(), out _, true);
+        }
+    }
+
+    //清理已结束的任务状态(保留正在下载的)
+    public static void RemoveFinishedItems()
+    {
+        Status.Items.RemoveAll(x => !x.IsDownloading);
+        StatusChangedEvent?.Invoke(null, EventArgs.Empty);
+    }
+
     public static void Cancel(string id)
     {
         var item = Status.Items.FirstOrDefault(x => x.Id == id);
@@ -78,6 +132,8 @@ public class DownloadService
             Status.Items.Add(item);
             StatusChangedEvent?.Invoke(null, EventArgs.Empty);
         }
+        //登记下载中的目标文件，壁纸枚举据此跳过半成品（见 DownloadingFiles 注释）
+        DownloadingFiles.Begin(destPath);
         await semaphore.WaitAsync();
         try
         {
@@ -135,6 +191,7 @@ public class DownloadService
         {
             item.IsDownloading = false;
             semaphore.Release();
+            DownloadingFiles.End(destPath);
         }
 
         StatusChangedEvent?.Invoke(null, EventArgs.Empty);

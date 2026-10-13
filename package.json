@@ -2,6 +2,7 @@
   "name": "livewallpaper-v3",
   "private": true,
   "scripts": {
-    "dev": "bun run scripts/dev.ts"
+    "dev": "bun run scripts/dev.ts",
+    "dev:debug": "bun run scripts/dev.ts --debug"
   }
 }

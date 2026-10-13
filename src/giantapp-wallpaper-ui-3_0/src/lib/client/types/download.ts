@@ -6,9 +6,19 @@ export type DownloadItem = {
     receivedBytes: number;
     isDownloading: boolean;
     isDownloadCompleted: boolean;
-    IsCanceled: boolean;
+    isCanceled: boolean;
 }
 
-type DownloadStatus = {
+//下载完成的历史记录
+export type DownloadRecord = {
+    id: string;
+    title: string;
+    fileName: string;
+    filePath: string;
+    totalBytes: number;
+    time: string;
+}
+
+export type DownloadStatus = {
     items: DownloadItem[];
 }

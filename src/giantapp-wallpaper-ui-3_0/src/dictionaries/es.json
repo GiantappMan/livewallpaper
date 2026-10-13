@@ -19,7 +19,23 @@
       "local": "Local",
       "negativeReview": "Rechazar duramente",
       "positiveReview": "Dejar una reseña positiva",
+      "downloads": "Descargas",
       "settings": "Configuración"
+    },
+    "downloads": {
+      "title": "Descargas",
+      "active": "Descargando",
+      "history": "Descargados",
+      "no_active_downloads": "No hay descargas activas",
+      "no_history": "Sin historial de descargas",
+      "downloading": "Descargando",
+      "completed": "Completado",
+      "canceled": "Cancelado",
+      "failed": "Error al descargar",
+      "clear_history": "Borrar historial",
+      "clear_history_confirm": "¿Borrar todo el historial de descargas? Los fondos descargados no se eliminarán.",
+      "clear_success": "Historial de descargas borrado",
+      "clear_failed": "Error al borrar el historial"
     },
     "hub": {
       "download_wallpaper_with_v2": "Puedes descargar fondos de pantalla primero con la Versión2",

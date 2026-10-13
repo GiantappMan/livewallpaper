@@ -21,6 +21,8 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         _logger.Info($"{AppService.ProductName} Start {string.Join(" ", e.Args)}");
+        //诊断模式（bun dev:debug）下启动 UI 冻结看门狗
+        UiFreezeMonitor.Start();
         await AppService.Init();
         //读取参数
         if (e.Args.Length > 0)

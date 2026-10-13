@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WallpaperCore;
+using WallpaperCore.Libs;
 using Windows.ApplicationModel;
 using ConfigWallpaper = Client.Apps.Configs.Wallpaper;
 using ConfigAppearance = Client.Apps.Configs.Appearance;
@@ -127,29 +128,36 @@ public class ApiObject
         return json;
     }
 
-    public string GetWallpapers()
+    public async Task<string> GetWallpapers()
     {
-        var config = Configer.Get<ConfigWallpaper>() ?? new();
-        var res = WallpaperApi.GetWallpapers(config.EnsureDirectories());
-        foreach (var item in res)
+        using var _fw = FreezeWatch.Scope("Api.GetWallpapers");
+        //枚举目录/生成封面可能很慢（曾因 mpv 截图挂住卡死 UI 线程），必须离开 UI 线程执行；
+        //WebView2 会把 Task<string> 映射为 JS Promise，前端本来就是 await 调用
+        return await Task.Run(() =>
         {
-            //把本地路径转换为网址
-            item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
-            item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
-            if (item.Meta.IsPlaylist())
+            var config = Configer.Get<ConfigWallpaper>() ?? new();
+            var res = WallpaperApi.GetWallpapers(config.EnsureDirectories());
+            foreach (var item in res)
             {
-                foreach (var wallpaper in item.Meta.Wallpapers)
+                //把本地路径转换为网址
+                item.CoverUrl = AppService.ConvertPathToUrl(config, item.CoverPath);
+                item.FileUrl = AppService.ConvertPathToUrl(config, item.FilePath);
+                if (item.Meta.IsPlaylist())
                 {
-                    wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
-                    wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+                    foreach (var wallpaper in item.Meta.Wallpapers)
+                    {
+                        wallpaper.CoverUrl = AppService.ConvertPathToUrl(config, wallpaper.CoverPath);
+                        wallpaper.FileUrl = AppService.ConvertPathToUrl(config, wallpaper.FilePath);
+                    }
                 }
             }
-        }
-        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
+            return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
+        });
     }
 
     public async Task<bool> ShowWallpaper(string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.ShowWallpaper");
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return false;
@@ -182,6 +190,7 @@ public class ApiObject
     //获取播放状态
     public string GetPlayingStatus()
     {
+        using var _fw = FreezeWatch.Scope("Api.GetPlayingStatus");
         var res = new PlayingStatus();
 
         //检查数据
@@ -219,6 +228,7 @@ public class ApiObject
 
     public void PauseWallpaper(string? screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.PauseWallpaper");
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok && screenIndex > 0)
             WallpaperApi.PauseWallpaper(screenIndex);
@@ -228,6 +238,7 @@ public class ApiObject
 
     public void ResumeWallpaper(string? screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.ResumeWallpaper");
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok && screenIndex > 0)
             WallpaperApi.ResumeWallpaper(screenIndex);
@@ -237,6 +248,7 @@ public class ApiObject
 
     public void StopWallpaper(string? screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.StopWallpaper");
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok && screenIndex >= 0)
             WallpaperApi.StopWallpaper(screenIndex);
@@ -247,6 +259,7 @@ public class ApiObject
 
     public void SetVolume(string volume, string screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.SetVolume");
         bool ok = int.TryParse(screenIndexStr, out int screenIndex);
         if (ok)
         {
@@ -290,6 +303,7 @@ public class ApiObject
     //前端上传文件
     public string UploadToTmp(string filename, string fileContentBase64)
     {
+        using var _fw = FreezeWatch.Scope("Api.UploadToTmp");
         byte[] fileContent = Convert.FromBase64String(fileContentBase64);
         //临时目录不存在则创建
         if (!Directory.Exists(AppService.TempFolder))
@@ -303,6 +317,7 @@ public class ApiObject
 
     public bool CreateWallpaperNew(string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.CreateWallpaperNew");
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return false;
@@ -330,6 +345,7 @@ public class ApiObject
 
     public async Task PlayNextInPlaylist(string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.PlayNextInPlaylist");
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return;
@@ -339,6 +355,7 @@ public class ApiObject
 
     public async Task PlayPrevInPlaylist(string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.PlayPrevInPlaylist");
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper == null)
             return;
@@ -348,6 +365,7 @@ public class ApiObject
 
     public bool UpdateWallpaperNew(string newWallpaperJson, string oldWallpaperPath)
     {
+        using var _fw = FreezeWatch.Scope("Api.UpdateWallpaperNew");
         var newWallpaper = JsonSerializer.Deserialize<Wallpaper>(newWallpaperJson, WallpaperApi.JsonOptitons);
         ConfigWallpaper config = Configer.Get<ConfigWallpaper>() ?? new();
 
@@ -381,6 +399,7 @@ public class ApiObject
 
     public bool DeleteWallpaper(string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.DeleteWallpaper");
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
         if (wallpaper != null)
             return WallpaperApi.DeleteWallpaper(wallpaper);
@@ -417,6 +436,7 @@ public class ApiObject
 
     public bool SetWallpaperSetting(string settingJson, string wallpaperJson)
     {
+        using var _fw = FreezeWatch.Scope("Api.SetWallpaperSetting");
         var setting = JsonSerializer.Deserialize<WallpaperSetting>(settingJson, WallpaperApi.JsonOptitons);
         var wallpaper = JsonSerializer.Deserialize<Wallpaper>(wallpaperJson, WallpaperApi.JsonOptitons);
 
@@ -443,6 +463,7 @@ public class ApiObject
     //获取指定屏幕的壁纸的当前播放时间和总时间
     public string? GetWallpaperTime(string screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.GetWallpaperTime");
         int screenIndex = -1;
         if (screenIndexStr == null)
         {
@@ -480,6 +501,7 @@ public class ApiObject
     //设置播放进度
     public void SetProgress(string progressStr, string screenIndexStr)
     {
+        using var _fw = FreezeWatch.Scope("Api.SetProgress");
         if (screenIndexStr == null)
         {
             //如果播放的壁纸都是相同路径
@@ -546,6 +568,17 @@ public class ApiObject
 
             //下载完成后，保存meta
             File.WriteAllText(metaFilePath, JsonSerializer.Serialize(meta, WallpaperApi.JsonOptitons));
+
+            //写入下载历史
+            DownloadService.AddHistory(new DownloadRecord
+            {
+                Id = meta.Id,
+                Title = meta.Title ?? string.Empty,
+                FileName = wpFileName,
+                FilePath = destFilePath,
+                TotalBytes = File.Exists(destFilePath) ? new FileInfo(destFilePath).Length : 0,
+                Time = DateTime.Now
+            });
             return true;
         }
         catch (Exception ex)
@@ -565,10 +598,25 @@ public class ApiObject
     }
 
     //获取下载状态
-    public string GetDonwloadStatus()
+    public string GetDownloadStatus()
     {
         var json = JsonSerializer.Serialize(DownloadService.Status, WallpaperApi.JsonOptitons);
         return json;
+    }
+
+    //获取下载历史
+    public string GetDownloadHistory()
+    {
+        var json = JsonSerializer.Serialize(DownloadService.GetHistory(), WallpaperApi.JsonOptitons);
+        return json;
+    }
+
+    //清空下载历史
+    public void ClearDownloadHistory()
+    {
+        DownloadService.ClearHistory();
+        //同时清理已结束的任务状态
+        DownloadService.RemoveFinishedItems();
     }
 
     public string GetDownloadItemStatus(string id)

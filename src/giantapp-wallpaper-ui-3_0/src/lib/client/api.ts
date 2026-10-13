@@ -3,7 +3,7 @@ import type { ApiResult /*, InitProgressEvent*/ } from "./types";
 import { Wallpaper, WallpaperMeta, WallpaperSetting } from "./types/wallpaper";
 import type { Screen } from "./types/screen";
 import PlayingStatus from "./types/playing-status";
-import type { DownloadItem } from "./types/download";
+import type { DownloadItem, DownloadRecord, DownloadStatus } from "./types/download";
 import type { UpdateState } from "./types/config";
 
 type Key = "Appearance" | "General" | "Wallpaper" | "Update";
@@ -25,10 +25,19 @@ class API {
       console.log("RefreshPageEvent", e);
       this.emitter.emit("RefreshPageEvent", e);
     });
+
+    // 注册DownloadStatusChangedEvent事件
+    api.addEventListener("DownloadStatusChangedEvent", (e: any) => {
+      this.emitter.emit("DownloadStatusChangedEvent", e);
+    });
   }
 
   onRefreshPage(callback: (e: any) => void) {
     this.emitter.on("RefreshPageEvent", callback);
+  }
+
+  onDownloadStatusChanged(callback: (e: any) => void) {
+    this.emitter.on("DownloadStatusChangedEvent", callback);
   }
 
   // // 暴露出事件
@@ -374,6 +383,45 @@ class API {
       return { error: e, data: null };
     }
   }
+
+  async getDownloadStatus(): Promise<ApiResult<DownloadStatus>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      let json = await api.GetDownloadStatus();
+      let data = JSON.parse(json);
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async getDownloadHistory(): Promise<ApiResult<DownloadRecord[]>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      let json = await api.GetDownloadHistory();
+      let data = JSON.parse(json);
+      return { error: null, data };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  async clearDownloadHistory(): Promise<ApiResult<null>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = (window as any).chrome.webview.hostObjects;
+      api.ClearDownloadHistory();
+      return { error: null, data: null };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
   async showShell(path: string): Promise<ApiResult<null>> {
     try {
       if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };

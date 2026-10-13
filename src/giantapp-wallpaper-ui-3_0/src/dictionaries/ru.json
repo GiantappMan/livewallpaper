@@ -19,7 +19,23 @@
     "local": "Локально",
     "negativeReview": "Отказаться",
     "positiveReview": "Оставить положительный отзыв",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "downloads": "Загрузки"
+  },
+  "downloads": {
+    "title": "Загрузки",
+    "active": "Активные загрузки",
+    "history": "Загруженные",
+    "no_active_downloads": "Нет активных загрузок",
+    "no_history": "История загрузок пуста",
+    "downloading": "Загрузка",
+    "completed": "Завершено",
+    "canceled": "Отменено",
+    "failed": "Ошибка загрузки",
+    "clear_history": "Очистить историю",
+    "clear_history_confirm": "Очистить всю историю загрузок? Скачанные файлы обоев не будут удалены.",
+    "clear_success": "История загрузок очищена",
+    "clear_failed": "Не удалось очистить историю"
   },
   "hub": {
     "download_wallpaper_with_v2": "Сначала вы можете скачать обои с версией 2",

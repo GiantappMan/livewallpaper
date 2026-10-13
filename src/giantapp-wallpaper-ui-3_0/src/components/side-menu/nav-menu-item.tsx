@@ -7,6 +7,7 @@ interface Props {
   icon?: any;
   selectedIcon?: any;
   current?: boolean;
+  badge?: number;
 }
 
 export default function NavMenuItem(props: Props) {
@@ -48,6 +49,14 @@ export default function NavMenuItem(props: Props) {
           aria-hidden="true"
         />
       </div>
+      {props.badge ? (
+        <span
+          className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] leading-4 text-center"
+          title={props.badge > 99 ? "99+" : String(props.badge)}
+        >
+          {props.badge > 99 ? "99+" : props.badge}
+        </span>
+      ) : null}
       <span
         className={[
           "transition-all duration-300 whitespace-nowrap",
