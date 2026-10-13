@@ -167,7 +167,7 @@ internal class AppService
         ShellWindow.ClientApi = _apiObject;
         ShellWindow.Origins = new[] {
             "http://localhost:3001",
-            "http://localhost:3000",
+            "http://localhost:3100",
             "https://wallpaper.giantapp.cn",
             "https://www.giantapp.cc"
         };
@@ -219,8 +219,8 @@ internal class AppService
         //if (path == "index")
         //    path = null;
         //本地开发
-        url = $"http://localhost:3000/{config.CurrentLan}";
-        //ShellWindow.ShowShell($"http://localhost:3000/{config.CurrentLan}/{path}");
+        url = $"http://localhost:3100/{config.CurrentLan}";
+        //ShellWindow.ShowShell($"http://localhost:3100/{config.CurrentLan}/{path}");
         //return;
 #else
         //ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");

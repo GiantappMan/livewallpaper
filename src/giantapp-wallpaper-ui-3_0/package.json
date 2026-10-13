@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3100",
     "build": "next build",
     "clean:client": "rimraf ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && mkdir ..\\giantapp-wallpaper-client\\Client\\Assets\\UI && echo '' > ..\\giantapp-wallpaper-client\\Client\\Assets\\UI\\.gitkeep",
     "copy:client": "ncp out\\ ..\\giantapp-wallpaper-client\\Client\\Assets\\UI",

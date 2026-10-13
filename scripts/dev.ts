@@ -1,11 +1,11 @@
 // 一键启动调试（对标 4.x 根目录 bun dev）：
-//   bun dev              前端 dev server(:3000) + 调试版客户端
+//   bun dev              前端 dev server(:3100) + 调试版客户端
 //   bun dev --web        只起前端（前端迭代时用）
 //   bun dev --app        只构建并启动客户端（前端已在别处跑着时用）
 //
-// 流程：补齐 mpv（download-mpv.ps1）→ 安装前端依赖（如缺）→ next dev(:3000)
+// 流程：补齐 mpv（download-mpv.ps1）→ 安装前端依赖（如缺）→ next dev(:3100)
 // → dotnet build Debug → 启动 LiveWallpaper3.exe。
-// Debug + DEBUG_LOCAL 构建的界面固定加载 http://localhost:3000/{lang}
+// Debug + DEBUG_LOCAL 构建的界面固定加载 http://localhost:3100/{lang}
 // （见 src/giantapp-wallpaper-client/Client/Apps/AppService.cs）。
 // Ctrl+C 停止 dev server；壁纸应用是托盘程序，由用户自行退出。
 import { spawn, type ChildProcess } from "node:child_process";
@@ -84,7 +84,7 @@ async function main() {
     if (!existsSync(join(UI_DIR, "node_modules"))) {
       await runBunInstall(UI_DIR);
     }
-    console.log("[dev] 启动前端 dev server（http://localhost:3000）…");
+    console.log("[dev] 启动前端 dev server（http://localhost:3100）…");
     web = spawn("bun", ["run", "dev"], { cwd: UI_DIR, stdio: "inherit" });
     web.on("exit", (code) => {
       console.log(`[dev] 前端 dev server 退出（${code}）`);
@@ -98,7 +98,7 @@ async function main() {
     if (!existsSync(APP_EXE)) throw new Error(`找不到构建产物 ${APP_EXE}`);
     // 固定程序 explorer.exe 启动（等价双击），产物路径仅作参数
     spawn("explorer.exe", [APP_EXE], { stdio: "ignore" }).unref();
-    console.log("[dev] 客户端已启动（Debug 版，界面走 http://localhost:3000）");
+    console.log("[dev] 客户端已启动（Debug 版，界面走 http://localhost:3100）");
   }
 
   console.log("[dev] Ctrl+C 停止；壁纸应用请从托盘退出");
