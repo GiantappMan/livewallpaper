@@ -175,6 +175,8 @@
     "update_downloaded": "La nouvelle version {0} a été téléchargée",
     "update_up_to_date": "Vous utilisez la dernière version",
     "update_store_hint": "La version Store est mise à jour via le Microsoft Store",
+    "update_store_open_failed": "Impossible d'ouvrir le Microsoft Store. Veuillez vérifier les mises à jour manuellement",
+    "update_store_opened": "Microsoft Store ouvert. Veuillez y vérifier les mises à jour",
     "language": "Langue",
     "light_mode": "Clair",
     "minimize_on_startup": "Réduire au démarrage",

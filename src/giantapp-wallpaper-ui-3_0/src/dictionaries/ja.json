@@ -175,6 +175,8 @@
     "update_downloaded": "新バージョン {0} のダウンロードが完了しました",
     "update_up_to_date": "最新バージョンです",
     "update_store_hint": "ストア版はMicrosoft Store経由で更新されます",
+    "update_store_open_failed": "Microsoft Storeを開けませんでした。ストアで手動で更新を確認してください",
+    "update_store_opened": "Microsoft Storeを開きました。ストアのページで更新を確認してください",
     "language": "言語",
     "light_mode": "ライト",
     "minimize_on_startup": "起動後に最小化",

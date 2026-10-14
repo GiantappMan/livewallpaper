@@ -175,6 +175,8 @@
     "update_downloaded": "नया संस्करण {0} डाउनलोड पूर्ण",
     "update_up_to_date": "आप नवीनतम संस्करण पर हैं",
     "update_store_hint": "स्टोर संस्करण Microsoft Store से अपडेट होता है",
+    "update_store_open_failed": "Microsoft Store खोलने में विफल। कृपया अपडेट मैन्युअल रूप से जांचें",
+    "update_store_opened": "Microsoft Store खुल गया है। कृपया वहां अपडेट जांचें",
     "language": "भाषा",
     "light_mode": "लाइट",
     "minimize_on_startup": "स्टार्टअप के बाद मिनिमाइज़ करें",

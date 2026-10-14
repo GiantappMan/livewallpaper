@@ -175,6 +175,8 @@
     "update_downloaded": "新版本 {0} 已下載完成",
     "update_up_to_date": "已是最新版本",
     "update_store_hint": "商店版本透過微軟商店更新",
+    "update_store_open_failed": "開啟微軟商店失敗，請在商店中手動檢查更新",
+    "update_store_opened": "已開啟微軟商店，請在商店頁面檢查更新",
     "language": "多語言",
     "light_mode": "淺色",
     "minimize_on_startup": "啟動後最小化",

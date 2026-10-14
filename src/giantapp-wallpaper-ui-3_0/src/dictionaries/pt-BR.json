@@ -175,6 +175,8 @@
     "update_downloaded": "Nova versão {0} baixada",
     "update_up_to_date": "Você já está na versão mais recente",
     "update_store_hint": "A versão da loja é atualizada pela Microsoft Store",
+    "update_store_open_failed": "Falha ao abrir a Microsoft Store. Verifique atualizações manualmente",
+    "update_store_opened": "Microsoft Store aberta. Verifique as atualizações por lá",
     "language": "Idioma",
     "light_mode": "Claro",
     "minimize_on_startup": "Minimizar após iniciar",

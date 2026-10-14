@@ -175,6 +175,8 @@
     "update_downloaded": "Новая версия {0} загружена",
     "update_up_to_date": "У вас последняя версия",
     "update_store_hint": "Версии из магазина обновляются через Microsoft Store",
+    "update_store_open_failed": "Не удалось открыть Microsoft Store. Проверьте обновления вручную",
+    "update_store_opened": "Microsoft Store открыт. Проверьте обновления в магазине",
     "language": "Язык",
     "light_mode": "Светлый режим",
     "minimize_on_startup": "Свернуть при запуске",

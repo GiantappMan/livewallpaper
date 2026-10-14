@@ -175,6 +175,8 @@
     "update_downloaded": "New version {0} downloaded",
     "update_up_to_date": "You're on the latest version",
     "update_store_hint": "Store builds update via Microsoft Store",
+    "update_store_open_failed": "Failed to open Microsoft Store. Please check for updates manually",
+    "update_store_opened": "Microsoft Store opened. Please check for updates there",
     "language": "Language",
     "light_mode": "Light Mode",
     "minimize_on_startup": "Minimize on Startup",

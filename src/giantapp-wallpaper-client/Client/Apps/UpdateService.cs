@@ -52,15 +52,43 @@ internal static class UpdateService
 
     public static bool IsStoreVersion() => UWPHelper.IsRunningAsUwp();
 
-    /// <summary>手动检查；商店版打开商店详情页</summary>
-    public static void CheckUpdate()
+    /// <summary>手动检查更新（安装版拉清单）；商店版走 CheckStoreUpdateAsync</summary>
+    public static void CheckUpdate() => Task.Run(RunCheckAsync);
+
+    /// <summary>商店版手动检查：打开商店详情页，返回是否成功发起打开</summary>
+    public static async Task<bool> CheckStoreUpdateAsync()
     {
-        if (IsStoreVersion())
+        try
         {
-            OpenStorePage();
-            return;
+            if (UWPHelper.IsRunningAsUwp())
+            {
+                var pfn = Windows.ApplicationModel.Package.Current.Id.FamilyName;
+                return await Windows.System.Launcher.LaunchUriAsync(new Uri($"ms-windows-store://pdp/?PFN={pfn}"));
+            }
         }
-        Task.Run(RunCheckAsync);
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "CheckStoreUpdate");
+        }
+        //商店协议打开失败或开发调试环境：退回网页版商店详情页
+        return OpenWebStorePage();
+    }
+
+    private static bool OpenWebStorePage()
+    {
+        try
+        {
+            var url = "https://apps.microsoft.com/detail/9MWTG433JV6B";
+            if (!UrlGuard.IsSafeHttpUrl(url))
+                return false;
+            Process.Start("explorer.exe", $"\"{url}\"");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "OpenWebStorePage");
+            return false;
+        }
     }
 
     /// <summary>启动延迟检查，错开启动高峰</summary>
@@ -97,6 +125,9 @@ internal static class UpdateService
 
     private static async Task RunCheckAsync()
     {
+        //商店版永不走安装包清单（含启动自动检查）
+        if (IsStoreVersion())
+            return;
         if (_busy || _state == "downloading" || _state == "downloaded")
             return;
         _busy = true;
@@ -239,27 +270,5 @@ internal static class UpdateService
         while (nums.Count < 3)
             nums.Add(0);
         return (nums.Take(3).ToArray(), parts.Length > 1 ? parts[1] : null);
-    }
-
-    private static void OpenStorePage()
-    {
-        try
-        {
-            if (UWPHelper.IsRunningAsUwp())
-            {
-                var pfn = Windows.ApplicationModel.Package.Current.Id.FamilyName;
-                _ = Windows.System.Launcher.LaunchUriAsync(new Uri($"ms-windows-store://pdp/?PFN={pfn}"));
-            }
-            else
-            {
-                var url = "https://apps.microsoft.com/detail/9MWTG433JV6B";
-                if (UrlGuard.IsSafeHttpUrl(url))
-                    Process.Start("explorer.exe", $"\"{url}\"");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "OpenStorePage");
-        }
     }
 }

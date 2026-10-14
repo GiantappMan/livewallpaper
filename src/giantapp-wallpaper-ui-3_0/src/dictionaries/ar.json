@@ -175,6 +175,8 @@
     "update_downloaded": "تم تنزيل الإصدار الجديد {0}",
     "update_up_to_date": "أنت تستخدم أحدث إصدار",
     "update_store_hint": "يتم تحديث إصدار المتجر عبر Microsoft Store",
+    "update_store_open_failed": "فشل فتح متجر Microsoft. يرجى التحقق من التحديثات يدويًا",
+    "update_store_opened": "تم فتح متجر Microsoft. يرجى التحقق من التحديثات هناك",
     "language": "اللغة",
     "light_mode": "فاتح",
     "minimize_on_startup": "تصغير بعد بدء التشغيل",

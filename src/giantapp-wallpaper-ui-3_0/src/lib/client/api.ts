@@ -494,6 +494,18 @@ class API {
     api.CheckUpdate();
   }
 
+  //商店版检查更新：打开商店详情页，返回是否成功发起
+  async checkStoreUpdate(): Promise<boolean> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return false;
+      const { api } = (window as any).chrome.webview.hostObjects;
+      return !!(await api.CheckStoreUpdate());
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  }
+
   installUpdate() {
     if (!window.chrome || !window.chrome.webview) return;
     const { api } = (window as any).chrome.webview.hostObjects;
