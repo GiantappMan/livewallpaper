@@ -31,12 +31,28 @@
     <None Remove="Assets\Languages\en.json" />
     <None Remove="Assets\Languages\ru.json" />
     <None Remove="Assets\Languages\zh.json" />
+    <None Remove="Assets\Languages\zh-Hant.json" />
+    <None Remove="Assets\Languages\es.json" />
+    <None Remove="Assets\Languages\ar.json" />
+    <None Remove="Assets\Languages\hi.json" />
+    <None Remove="Assets\Languages\pt-BR.json" />
+    <None Remove="Assets\Languages\fr.json" />
+    <None Remove="Assets\Languages\ja.json" />
+    <None Remove="Assets\Languages\de.json" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\Languages\ru.json" />
     <EmbeddedResource Include="Assets\Languages\en.json" />
     <EmbeddedResource Include="Assets\Languages\zh.json" />
+    <EmbeddedResource Include="Assets\Languages\zh-Hant.json" />
+    <EmbeddedResource Include="Assets\Languages\es.json" />
+    <EmbeddedResource Include="Assets\Languages\ar.json" />
+    <EmbeddedResource Include="Assets\Languages\hi.json" />
+    <EmbeddedResource Include="Assets\Languages\pt-BR.json" />
+    <EmbeddedResource Include="Assets\Languages\fr.json" />
+    <EmbeddedResource Include="Assets\Languages\ja.json" />
+    <EmbeddedResource Include="Assets\Languages\de.json" />
   </ItemGroup>
 
   <ItemGroup>

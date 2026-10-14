@@ -20,9 +20,18 @@ import { UpdateSettings } from "@/components/update-settings";
 import { langDictAtom } from "@/atoms/lang";
 import { useAtomValue } from "jotai";
 
-const localesDescriptions = {
-    zh: "中文",
+//语言原生名称，与社区端 i18n-config.ts 的 localeMeta 保持一致
+const localesDescriptions: Record<string, string> = {
+    zh: "简体中文",
+    "zh-Hant": "繁體中文",
     en: "English",
+    es: "Español",
+    ar: "العربية",
+    hi: "हिन्दी",
+    "pt-BR": "Português (Brasil)",
+    fr: "Français",
+    ja: "日本語",
+    de: "Deutsch",
     ru: "Русский"
 }
 const Page = () => {

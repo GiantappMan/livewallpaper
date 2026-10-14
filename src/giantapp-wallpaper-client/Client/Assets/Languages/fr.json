@@ -1,0 +1,11 @@
+﻿{
+  "about": "À propos",
+  "app_name": "LiveWallpaper 3 - Giantapp",
+  "exit": "Quitter",
+  "open_main_panel": "Ouvrir le panneau principal",
+  "installNow": "Installer maintenant",
+  "installWebview2Tips": "Vous devez installer Microsoft WebView2 Runtime. Cliquez sur le texte bleu ci-dessous pour l'installer.",
+  "setting": "Paramètres",
+  "copy": "Copier",
+  "copied": "Copié"
+}

@@ -1,4 +1,4 @@
-import { i18n, type Locale } from "@/i18n-config";
+import { getLocaleDirection, i18n, type Locale } from "@/i18n-config";
 
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
@@ -29,7 +29,7 @@ export default async function Root({
 }) {
   const dictionary = await getDictionary(params.lang);
   return (
-    <html lang={params.lang} suppressHydrationWarning>
+    <html lang={params.lang} dir={getLocaleDirection(params.lang)} suppressHydrationWarning>
       <head />
       <body
         className={cn(
