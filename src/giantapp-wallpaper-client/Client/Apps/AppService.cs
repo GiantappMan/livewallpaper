@@ -219,7 +219,8 @@ internal class AppService
         var config = Configer.Get<General>() ?? new();
         config.CheckLan();
 
-        string url = $"https://{DomainStr}/index.html";
+        //新版前端静态导出没有 index.html，语言页是 <lang>.html
+        string url = $"https://{DomainStr}/{config.CurrentLan}.html";
 #if DEBUG_LOCAL && DEBUG
         //if (path == "index")
         //    path = null;
