@@ -21,7 +21,7 @@ export function UpdateSettings() {
     const updateState = useUpdateState();
 
     useEffect(() => {
-        setIsStore(apiClient.isStoreVersion());
+        apiClient.isStoreVersion().then(setIsStore);
         apiClient.getConfig<ConfigUpdate>("Update").then((res) => {
             if (!res.error && res.data) setConfig(res.data);
         });

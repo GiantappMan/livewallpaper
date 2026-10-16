@@ -512,11 +512,13 @@ class API {
     api.InstallUpdate();
   }
 
-  isStoreVersion(): boolean {
+  //WebView2 异步代理的方法调用一律返回 Promise，必须 await 取真值，
+  //否则 !!Promise 恒为 true（曾导致安装版被恒判为商店版）
+  async isStoreVersion(): Promise<boolean> {
     try {
       if (!window.chrome || !window.chrome.webview) return false;
       const { api } = (window as any).chrome.webview.hostObjects;
-      return !!api.IsStoreVersion();
+      return !!(await api.IsStoreVersion());
     } catch (e) {
       return false;
     }
