@@ -29,7 +29,7 @@ interface API {
   OpenStoreReview(defaultUrl: string): Promise<boolean>;
   GetRealThemeMode(): string;
   OpenLogFolder(): void;
-  GetUpdateState(): string;
+  GetUpdateState(): Promise<string>;
   CheckUpdate(): void;
   InstallUpdate(): void;
   IsStoreVersion(): boolean;

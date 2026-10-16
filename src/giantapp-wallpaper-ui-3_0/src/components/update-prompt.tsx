@@ -21,7 +21,7 @@ export function useUpdateState() {
 
   useEffect(() => {
     if (!api.isRunningInClient()) return;
-    const tick = () => setUpdateState(api.getUpdateState());
+    const tick = () => api.getUpdateState().then(setUpdateState);
     tick();
     const timer = setInterval(tick, 1500);
     return () => clearInterval(timer);

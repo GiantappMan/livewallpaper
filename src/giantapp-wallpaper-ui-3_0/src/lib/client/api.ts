@@ -477,11 +477,12 @@ class API {
 
   // ---- 应用更新 ----
 
-  getUpdateState(): UpdateState | null {
+  async getUpdateState(): Promise<UpdateState | null> {
     try {
       if (!window.chrome || !window.chrome.webview) return null;
       const { api } = (window as any).chrome.webview.hostObjects;
-      return JSON.parse(api.GetUpdateState());
+      //WebView2 异步代理的方法调用返回 Promise，必须 await 才能拿到 JSON 字符串
+      return JSON.parse(await api.GetUpdateState());
     } catch (e) {
       console.log(e);
       return null;

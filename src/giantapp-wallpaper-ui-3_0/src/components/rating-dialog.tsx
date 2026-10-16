@@ -23,6 +23,7 @@ export type ConfigLaunchRecord = {
     lastLaunchVersion: string;
     hasShownCommentDialog: boolean;
     lastShownCommentDialogTime: number;
+    rejectCount?: number;
 }
 
 export function RatingDialog(props: RatingDialogProps) {
@@ -44,18 +45,20 @@ export function RatingDialog(props: RatingDialogProps) {
         }));
     }
 
-    //拒绝评价
+    //拒绝评价（点残忍拒绝或右上角关闭都算）：延后一个月，累计拒绝3次后不再提示
     const rejectRating = () => {
         setOpen(false);
 
-        //延长下次显示时间和次数
         const config = localStorage.getItem('launchRecord');
         const launchRecord = (config ? JSON.parse(config) : {}) as ConfigLaunchRecord;
+        const rejectCount = (launchRecord.rejectCount ?? 0) + 1;
         localStorage.setItem('launchRecord', JSON.stringify({
             ...launchRecord,
-            launchTimes: -20,
-            //当前时间加20天
-            lastShownCommentDialogTime: new Date().getTime() + 20 * 24 * 60 * 60 * 1000,
+            rejectCount,
+            launchTimes: 0,
+            //延后一个月
+            lastShownCommentDialogTime: new Date().getTime() + 30 * 24 * 60 * 60 * 1000,
+            hasShownCommentDialog: launchRecord.hasShownCommentDialog || rejectCount >= 3,
         }));
     }
 
@@ -76,7 +79,8 @@ export function RatingDialog(props: RatingDialogProps) {
                 setLaunchRecord({
                     ...launchRecord,
                     launchTimes: 0,
-                    lastShownCommentDialogTime: new Date().getTime(),
+                    //保留未到期的延后时间（如刚拒绝过），避免更新后立刻再次弹出
+                    lastShownCommentDialogTime: Math.max(launchRecord.lastShownCommentDialogTime || 0, new Date().getTime()),
                     lastLaunchVersion: version,
                     // hasShownCommentDialog: false
                 })
@@ -91,11 +95,12 @@ export function RatingDialog(props: RatingDialogProps) {
                 return;
             }
 
-            //每启动N次，或者每隔N天，弹出评分对话框
+            //每启动N次，或者每隔N天，弹出评分对话框；延后期内（拒绝后一个月）不弹
             const maxLaunchTimes = 20;
             const maxLaunchDays = 20;
             const now = new Date().getTime();
-            if (launchRecord.launchTimes >= maxLaunchTimes || now - launchRecord.lastShownCommentDialogTime > maxLaunchDays * 24 * 60 * 60 * 1000) {
+            const isPostponed = now < (launchRecord.lastShownCommentDialogTime || 0);
+            if (!isPostponed && (launchRecord.launchTimes >= maxLaunchTimes || now - launchRecord.lastShownCommentDialogTime > maxLaunchDays * 24 * 60 * 60 * 1000)) {
                 //默认拒绝评价
                 setLaunchRecord({
                     ...launchRecord,
@@ -117,7 +122,11 @@ export function RatingDialog(props: RatingDialogProps) {
         setIsClient(true)
     }, [])
 
-    return isClient && <Dialog open={open} onOpenChange={setOpen}>
+    return isClient && <Dialog open={open} onOpenChange={(next) => {
+        //用户主动关闭（右上角X/Esc/点遮罩）视同拒绝
+        if (!next)
+            rejectRating();
+    }}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>{dictionary['common'].encouragementMessage} </DialogTitle>
