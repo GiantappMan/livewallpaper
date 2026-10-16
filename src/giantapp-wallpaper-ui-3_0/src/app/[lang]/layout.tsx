@@ -20,16 +20,19 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
+//next 15 起 params 为 Promise；校验器约束 lang 为 string，运行时来自 generateStaticParams 必为 Locale
 export default async function Root({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { lang: Locale };
+  params: Promise<{ lang: string }>;
 }) {
-  const dictionary = await getDictionary(params.lang);
+  const { lang: rawLang } = await params;
+  const lang = rawLang as Locale;
+  const dictionary = await getDictionary(lang);
   return (
-    <html lang={params.lang} dir={getLocaleDirection(params.lang)} suppressHydrationWarning>
+    <html lang={lang} dir={getLocaleDirection(lang)} suppressHydrationWarning>
       <head />
       <body
         className={cn(
@@ -38,7 +41,7 @@ export default async function Root({
       >
         <TitleBar />
         <Providers
-          lang={params.lang}
+          lang={lang}
           dictionary={dictionary}
           attribute="class"
           // defaultTheme="system"
@@ -47,7 +50,7 @@ export default async function Root({
         >
           <ThemeWrapper>
             <div className="flex h-[calc(100vh-3rem)] bg-background">
-              <SideMenu lang={params.lang} />
+              <SideMenu lang={lang} />
 
               {/* Content area */}
               <div className="flex flex-1 flex-col overflow-hidden border text-card-foreground shadow ml-1 rounded-l-lg rounded-bl-none">

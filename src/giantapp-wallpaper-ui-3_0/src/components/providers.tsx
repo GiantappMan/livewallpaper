@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
-import { ThemeProviderProps } from "next-themes/dist/types"
+import { ThemeProvider as NextThemesProvider, useTheme, type ThemeProviderProps } from "next-themes"
 import { TooltipProvider } from "@radix-ui/react-tooltip"
 import { useConfig } from '@/hooks/use-config';
 import { useCallback, useEffect, useState } from "react"

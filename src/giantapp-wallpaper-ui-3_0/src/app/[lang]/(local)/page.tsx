@@ -6,7 +6,7 @@ import { useMounted } from "@/hooks/use-mounted";
 import api from "@/lib/client/api";
 import { Wallpaper, WallpaperType, getWallpaperTypeString } from "@/lib/client/types/wallpaper";
 import { Screen } from "@/lib/client/types/screen";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import { ToolBar } from "./_components/tool-bar/index";
 import { toast } from "sonner"
 import Link from "next/link";
@@ -35,8 +35,10 @@ import { langDictAtom } from "@/atoms/lang";
 const LocalPage = ({
   params,
 }: {
-  params: { lang: Locale };
+  //next 15 起 params 为 Promise，客户端组件用 React.use() 解包；校验器约束 lang 为 string，运行时必为 Locale
+  params: Promise<{ lang: string }>;
 }) => {
+  const lang = use(params).lang as Locale;
   const dictionary = useAtomValue(langDictAtom);
   const [wallpapers, setWallpapers] = useState<Wallpaper[] | null>();
   const [playingStatus, setPlayingStatus] = useAtom(playingStatusAtom);
@@ -457,7 +459,7 @@ const LocalPage = ({
               {dictionary["local"].create_wallpaper}
             </Button>
             <Button variant="outline">
-              <Link href={`${params.lang}/settings/wallpaper`}>
+              <Link href={`${lang}/settings/wallpaper`}>
                 {dictionary["local"].modify_folder}
               </Link>
             </Button>

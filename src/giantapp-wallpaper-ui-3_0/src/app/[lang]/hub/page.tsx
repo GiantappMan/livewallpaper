@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Skeleton } from "@/components/ui/skeleton"
 import { Locale } from "@/i18n-config";
 
 
+//next 15 起 params 为 Promise，客户端组件用 React.use() 解包；校验器约束 lang 为 string，运行时必为 Locale
 const Page = ({ params }: {
-    params: { lang: Locale };
+    params: Promise<{ lang: string }>;
 }) => {
+    const { lang: rawLang } = use(params);
+    const lang = rawLang as Locale;
     const [loading, setLoading] = useState(true);
     const [iframeSrc, setIframeSrc] = useState<string | undefined | null>();
 
@@ -19,11 +22,11 @@ const Page = ({ params }: {
         }
         else {
             const defaultMode = localStorage.getItem("theme") || "system";
-            // const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${params.lang}/hub?mode=${defaultMode}&nh=1`;
-            const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${params.lang}/explorer?mode=${defaultMode}`;
+            // const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${lang}/hub?mode=${defaultMode}&nh=1`;
+            const url = `${process.env.NEXT_PUBLIC_HUB_Address}/${lang}/explorer?mode=${defaultMode}`;
             setIframeSrc(url);
         }
-    }, [params.lang]);
+    }, [lang]);
 
     return (
         <>

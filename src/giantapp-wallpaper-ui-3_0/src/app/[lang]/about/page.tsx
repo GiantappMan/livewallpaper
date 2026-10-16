@@ -7,7 +7,7 @@ import LinkClient from "@/components/link-client"
 import {
     LayoutGrid,
     MessageCircleWarning,
-    Github
+    Star
 } from "lucide-react";
 import Link from "next/link";
 import { langDictAtom } from "@/atoms/lang";
@@ -83,7 +83,8 @@ const AboutPage = () => {
             <Button variant="outline" asChild>
                 <LinkClient
                     className="underline-offset-4 flex items-center" href="https://github.com/GiantappMan/livewallpaper" target="_blank">
-                    <Github className="h-4 w-4 mr-1" />
+                    {/*lucide 1.x 移除品牌图标 Github，改用 Star */}
+                    <Star className="h-4 w-4 mr-1" />
                     {dictionary['about'].give_star}
                 </LinkClient>
             </Button>
