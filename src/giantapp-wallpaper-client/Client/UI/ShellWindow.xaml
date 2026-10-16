@@ -16,81 +16,30 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Window.Resources>
-        <ControlTemplate x:Key="InputElementErrorTemplate">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <AdornedElementPlaceholder x:Name="adornedElementPlaceholder" />
-                <hc:TransitioningContentControl
-                    Grid.Row="1"
-                    ClipToBounds="True"
-                    TransitionMode="Top2Bottom">
-                    <TextBlock
-                        Margin="2,2,0,0"
-                        Foreground="{DynamicResource DangerBrush}"
-                        Text="{Binding AdornedElement.(Validation.Errors)[0].ErrorContent, ElementName=adornedElementPlaceholder}" />
-                </hc:TransitioningContentControl>
-            </Grid>
-        </ControlTemplate>
-        <Style x:Key="InputElementBaseStyle" TargetType="{x:Type Control}">
-            <Setter Property="MinHeight" Value="{StaticResource DefaultControlHeight}" />
-            <Setter Property="Padding" Value="{StaticResource DefaultInputPadding}" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Background" Value="{DynamicResource TitleBackground}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <!--  工具条图标按钮（Segoe Fluent Icons / MDL2 字形），悬停浮层用 TitleForeground 低透明度适配明暗主题  -->
+        <Style x:Key="NavIconButton" TargetType="{x:Type Button}">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
             <Setter Property="Foreground" Value="{DynamicResource TitleForeground}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-            <Setter Property="Validation.ErrorTemplate" Value="{StaticResource InputElementErrorTemplate}" />
-            <Style.Triggers>
-                <Trigger Property="Validation.HasError" Value="true">
-                    <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style
-            x:Key="AddressTextBoxStyle"
-            BasedOn="{StaticResource InputElementBaseStyle}"
-            TargetType="{x:Type TextBox}">
-            <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="KeyboardNavigation.TabNavigation" Value="None" />
-            <Setter Property="AllowDrop" Value="true" />
-            <Setter Property="ScrollViewer.PanningMode" Value="VerticalFirst" />
-            <Setter Property="Stylus.IsFlicksEnabled" Value="False" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons,Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TextBox}">
-                        <hc:SimplePanel x:Name="root">
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid>
                             <Border
-                                x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{Binding (hc:BorderElement.CornerRadius), RelativeSource={RelativeSource Mode=TemplatedParent}}"
-                                Opacity="0.1"
-                                SnapsToDevicePixels="True" />
-                            <ScrollViewer
-                                x:Name="PART_ContentHost"
-                                Margin="-2,0"
-                                Padding="{TemplateBinding Padding}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Focusable="false"
-                                ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                                ScrollViewer.VerticalScrollBarVisibility="Hidden" />
-                        </hc:SimplePanel>
+                                x:Name="hoverBG"
+                                Background="{DynamicResource TitleForeground}"
+                                CornerRadius="4"
+                                Opacity="0" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="border" Property="Opacity" Value="0.4" />
-                                <Setter TargetName="PART_ContentHost" Property="Opacity" Value="0.4" />
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="hoverBG" Property="Opacity" Value="0.12" />
                             </Trigger>
-                            <Trigger SourceName="PART_ContentHost" Property="IsMouseOver" Value="true">
-                                <Setter Property="BorderBrush" Value="{DynamicResource SecondaryBorderBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -105,20 +54,96 @@
         </Grid.RowDefinitions>
         <DockPanel
             x:Name="addressPanel"
-            Margin="20,0"
+            Margin="12,0,0,8"
             LastChildFill="True"
             Visibility="Collapsed">
-            <Button
-                x:Name="BtnCopyAddress"
-                Click="BtnCopyAddress_Click"
-                DockPanel.Dock="Right">
-                复制
-            </Button>
-            <TextBox
-                x:Name="tbAddress"
+            <!--  外部网页没有前端自绘标题栏，传统浏览器工具条（导航 + 地址胶囊）随地址栏一起显示  -->
+            <StackPanel
+                VerticalAlignment="Center"
                 DockPanel.Dock="Left"
-                IsReadOnly="True"
-                Style="{DynamicResource AddressTextBoxStyle}" />
+                Orientation="Horizontal"
+                WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button
+                    x:Name="BtnBack"
+                    Click="BtnBack_Click"
+                    Content="&#xE72B;"
+                    IsEnabled="False"
+                    Style="{StaticResource NavIconButton}" />
+                <Button
+                    x:Name="BtnForward"
+                    Click="BtnForward_Click"
+                    Content="&#xE72A;"
+                    IsEnabled="False"
+                    Style="{StaticResource NavIconButton}" />
+                <Button
+                    x:Name="BtnReload"
+                    Click="BtnReload_Click"
+                    Content="&#xE72C;"
+                    Style="{StaticResource NavIconButton}" />
+            </StackPanel>
+            <StackPanel
+                Margin="0,0,10,0"
+                VerticalAlignment="Center"
+                DockPanel.Dock="Right"
+                Orientation="Horizontal"
+                WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button
+                    x:Name="BtnMinimize"
+                    Click="BtnMinimize_Click"
+                    Style="{DynamicResource BtnMinimize}" />
+                <Button
+                    x:Name="BtnMaximize"
+                    Click="BtnMaximize_Click"
+                    Style="{DynamicResource BtnMaximize}" />
+                <Button
+                    x:Name="BtnRestore"
+                    Click="BtnRestore_Click"
+                    Style="{DynamicResource BtnRestore}" />
+                <Button
+                    x:Name="BtnClose"
+                    Click="BtnClose_Click"
+                    Style="{DynamicResource BtnClose}" />
+            </StackPanel>
+            <!--  地址胶囊：胶囊本体保留为窗口拖拽区，仅复制按钮可点  -->
+            <Grid Margin="8,0,8,0" VerticalAlignment="Center">
+                <Border
+                    Height="30"
+                    Background="{DynamicResource TitleForeground}"
+                    CornerRadius="15"
+                    Opacity="0.08" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                        FontSize="12"
+                        Opacity="0.6"
+                        Text="&#xE774;" />
+                    <TextBlock
+                        x:Name="tbAddress"
+                        Grid.Column="1"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        Opacity="0.9"
+                        TextTrimming="CharacterEllipsis" />
+                    <Button
+                        x:Name="BtnCopyAddress"
+                        Grid.Column="2"
+                        Width="28"
+                        Height="28"
+                        Margin="0,0,2,0"
+                        Click="BtnCopyAddress_Click"
+                        Content="&#xE8C8;"
+                        Style="{StaticResource NavIconButton}"
+                        WindowChrome.IsHitTestVisibleInChrome="True" />
+                </Grid>
+            </Grid>
         </DockPanel>
         <Wpf:WebView2
             x:Name="webview2"

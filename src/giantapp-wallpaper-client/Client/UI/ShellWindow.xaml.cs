@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace GiantappWallpaper;
 
@@ -46,6 +47,11 @@ public partial class ShellWindow : Window
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private ShellConfig? _cacheShellConfig;
     private readonly string? _configKey;
+
+    //工具条图标字形（Segoe Fluent Icons / MDL2）
+    private const string CopyGlyph = "\uE8C8";
+    private const string CheckGlyph = "\uE73E";
+    private readonly DispatcherTimer _copyFeedbackTimer;
 
     #region properties
     public static ShellWindow? Instance { get; private set; }
@@ -80,6 +86,13 @@ public partial class ShellWindow : Window
         _configKey = configKey;
         InitializeComponent();
         addressPanel.Visibility = showAddress ? Visibility.Visible : Visibility.Collapsed;
+        BtnCopyAddress.ToolTip = LanService.Get("copy");
+        _copyFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+        _copyFeedbackTimer.Tick += (s, e) =>
+        {
+            _copyFeedbackTimer.Stop();
+            BtnCopyAddress.Content = CopyGlyph;
+        };
         SizeChanged += ShellWindow_SizeChanged;
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
@@ -107,6 +120,8 @@ public partial class ShellWindow : Window
             Height = defaultHeight;
         }
         StateChanged += ShellWindow_StateChanged;
+        //WindowState 可能在订阅前被恢复成最大化，同步一次按钮状态
+        UpdateWindowButtonsState();
     }
 
     #region public
@@ -306,6 +321,8 @@ public partial class ShellWindow : Window
 
     private void ShellWindow_StateChanged(object sender, EventArgs e)
     {
+        UpdateWindowButtonsState();
+
         //修改webview2，document.shell_hidden 属性
         string value = WindowState == WindowState.Minimized ? "true" : "false";
         webview2.CoreWebView2?.ExecuteScriptAsync($"document.shell_hidden = {value}");
@@ -314,6 +331,14 @@ public partial class ShellWindow : Window
         {
             SaveShellConfig();
         }
+    }
+
+    //地址栏弹窗（加载外部网页）的窗口按钮：最大化/还原互斥显示
+    private void UpdateWindowButtonsState()
+    {
+        bool maximized = WindowState == WindowState.Maximized;
+        BtnMaximize.Visibility = maximized ? Visibility.Collapsed : Visibility.Visible;
+        BtnRestore.Visibility = maximized ? Visibility.Visible : Visibility.Collapsed;
     }
 
     #endregion
@@ -396,6 +421,7 @@ public partial class ShellWindow : Window
         {
             webview2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
             webview2.CoreWebView2.SourceChanged -= CoreWebView2_SourceChanged;
+            webview2.CoreWebView2.HistoryChanged -= CoreWebView2_HistoryChanged;
             webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
             webview2.CoreWebView2.FrameCreated -= CoreWebView2_FrameCreated;
         }
@@ -421,6 +447,7 @@ public partial class ShellWindow : Window
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject(this));
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
+        webview2.CoreWebView2.HistoryChanged += CoreWebView2_HistoryChanged;
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
         webview2.CoreWebView2.FrameCreated += CoreWebView2_FrameCreated;
@@ -445,7 +472,19 @@ public partial class ShellWindow : Window
     {
         string url = ((CoreWebView2)sender).Source;
         tbAddress.Text = url;
-        BtnCopyAddress.Content = LanService.Get("copy");
+        UpdateNavButtonsState();
+    }
+
+    private void CoreWebView2_HistoryChanged(object? sender, object e)
+    {
+        UpdateNavButtonsState();
+    }
+
+    //前进/后退按钮随历史记录可用性联动
+    private void UpdateNavButtonsState()
+    {
+        BtnBack.IsEnabled = webview2.CoreWebView2?.CanGoBack == true;
+        BtnForward.IsEnabled = webview2.CoreWebView2?.CanGoForward == true;
     }
 
     private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
@@ -524,11 +563,45 @@ public partial class ShellWindow : Window
         }
     }
 
+    private void BtnBack_Click(object sender, RoutedEventArgs e)
+    {
+        webview2.CoreWebView2?.GoBack();
+    }
+
+    private void BtnForward_Click(object sender, RoutedEventArgs e)
+    {
+        webview2.CoreWebView2?.GoForward();
+    }
+
+    private void BtnReload_Click(object sender, RoutedEventArgs e)
+    {
+        webview2.CoreWebView2?.Reload();
+    }
+
+    private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void BtnMaximize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Maximized;
+    }
+
+    private void BtnRestore_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Normal;
+    }
+
+    private void BtnClose_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
     private void BtnCopyAddress_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            BtnCopyAddress.Content = LanService.Get("copied");
             if (UWPHelper.IsRunningAsUwp())
             {
                 var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
@@ -539,6 +612,10 @@ public partial class ShellWindow : Window
             {
                 System.Windows.Forms.Clipboard.SetText(tbAddress.Text);
             }
+            //复制成功反馈：字形变对勾，短暂显示后还原
+            BtnCopyAddress.Content = CheckGlyph;
+            _copyFeedbackTimer.Stop();
+            _copyFeedbackTimer.Start();
         }
         catch (Exception ex)
         {
