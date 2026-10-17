@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Client.Apps.Configs;
 using Client.Libs;
@@ -15,8 +16,9 @@ namespace Client.Apps;
 
 /// <summary>
 /// 应用更新：传统安装模式从更新服务器拉清单（stable/preview 通道），启动自动
-/// 检查并下载，下载完成后由用户确认安装；微软商店版不走清单，检查即打开
-/// 商店详情页。状态机经 GetUpdateState 暴露给前端轮询。
+/// 检查并下载，下载完成后由用户确认安装，下载中可取消；切渠道视为重装目标
+/// 渠道当前版本，跳过版本比较。微软商店版不走清单，检查即打开商店详情页。
+/// 状态机经 GetUpdateState 暴露给前端轮询。
 /// </summary>
 internal static class UpdateService
 {
@@ -30,6 +32,8 @@ internal static class UpdateService
     private static string _notes = string.Empty;
     private static int _percent;
     private static string _installerPath = string.Empty;
+    private static string _downloadedChannel = string.Empty;
+    private static CancellationTokenSource? _downloadCts;
     private static bool _busy;
 
     private class Manifest
@@ -52,8 +56,8 @@ internal static class UpdateService
 
     public static bool IsStoreVersion() => UWPHelper.IsRunningAsUwp();
 
-    /// <summary>手动检查更新（安装版拉清单）；商店版走 CheckStoreUpdateAsync</summary>
-    public static void CheckUpdate() => Task.Run(RunCheckAsync);
+    /// <summary>手动检查更新（安装版拉清单）；reinstall 为 true 时跳过版本比较强制重装；商店版走 CheckStoreUpdateAsync</summary>
+    public static void CheckUpdate(bool reinstall = false) => Task.Run(() => RunCheckAsync(reinstall));
 
     /// <summary>商店版手动检查：打开商店详情页，返回是否成功发起打开</summary>
     public static async Task<bool> CheckStoreUpdateAsync()
@@ -103,8 +107,9 @@ internal static class UpdateService
     }
 
     /// <summary>
-    /// 安装已下载的更新：固定程序 explorer.exe 启动安装向导（安装器路径仅作
-    /// 参数），向导完成后经安装脚本 [Run] 自动启动新版，随后关闭当前应用
+    /// 安装已下载的更新：记录安装包来源渠道（切渠道重装后不再重复提示），
+    /// 固定程序 explorer.exe 启动安装向导（安装器路径仅作参数），向导完成后
+    /// 经安装脚本 [Run] 自动启动新版，随后关闭当前应用
     /// </summary>
     public static void InstallUpdate()
     {
@@ -112,6 +117,16 @@ internal static class UpdateService
         {
             if (_state != "downloaded" || !File.Exists(_installerPath))
                 return;
+
+            if (!string.IsNullOrEmpty(_downloadedChannel))
+            {
+                var config = Configer.Get<Update>() ?? new();
+                if (config.InstalledChannel != _downloadedChannel)
+                {
+                    config.InstalledChannel = _downloadedChannel;
+                    Configer.Set(config, out _, true);
+                }
+            }
 
             Process.Start("explorer.exe", $"\"{_installerPath}\"");
             System.Windows.Application.Current.Shutdown();
@@ -123,23 +138,32 @@ internal static class UpdateService
         }
     }
 
-    private static async Task RunCheckAsync()
+    private static async Task RunCheckAsync(bool reinstall = false)
     {
         //商店版永不走安装包清单（含启动自动检查）
         if (IsStoreVersion())
             return;
-        if (_busy || _state == "downloading" || _state == "downloaded")
+        if (_busy || _state == "downloading")
             return;
         _busy = true;
         try
         {
-            _state = "checking";
-            _error = string.Empty;
-
             var config = Configer.Get<Update>() ?? new();
             config.Check();
-            string channel = config.Channel == "preview" ? "preview" : "stable";
-            string manifestUrl = $"{config.Url.TrimEnd('/')}/{channel}.json";
+            string channel = GetChannel(config);
+
+            //已有待安装的安装包：同渠道不重复下载；渠道不同（切了渠道）则作废重拉
+            if (_state == "downloaded")
+            {
+                if (_downloadedChannel == channel)
+                    return;
+                _installerPath = string.Empty;
+                _state = "idle";
+            }
+
+            _state = "checking";
+            _error = string.Empty;
+            string manifestUrl = BuildManifestUrl(config, channel);
 
             if (!UrlGuard.IsSafeHttpUrl(manifestUrl))
             {
@@ -156,14 +180,16 @@ internal static class UpdateService
                 return;
             }
 
-            //正式版通道忽略预发布版本
+            //正式版通道忽略预发布版本（切渠道重装也不例外）
             if (channel == "stable" && manifest.Prerelease)
             {
                 _state = "upToDate";
                 return;
             }
 
-            if (CompareVersion(manifest.Version, CurrentVersion()) <= 0)
+            //切渠道 = 重装目标渠道当前版本，跳过版本比较；仅由前端检查按钮显式
+            //触发（reinstall=true），启动自动检查不重装
+            if (!reinstall && CompareVersion(manifest.Version, CurrentVersion()) <= 0)
             {
                 _state = "upToDate";
                 return;
@@ -171,6 +197,7 @@ internal static class UpdateService
 
             _version = manifest.Version;
             _notes = manifest.Notes;
+            _downloadedChannel = channel;
             await DownloadAsync(http, manifest, manifestUrl);
         }
         catch (Exception ex)
@@ -184,12 +211,62 @@ internal static class UpdateService
         }
     }
 
+    /// <summary>只读查询指定通道清单的最新版本号（不触发下载），供切通道后展示；
+    /// 商店版、正式通道的预发布版本或查询失败返回空串。通道由前端显式传入，
+    /// 避免切通道后配置尚未落盘读到旧值</summary>
+    public static async Task<string> GetChannelLatestVersionAsync(string? channelName)
+    {
+        try
+        {
+            if (IsStoreVersion())
+                return string.Empty;
+            string channel = channelName == "preview" ? "preview" : "stable";
+            var config = Configer.Get<Update>() ?? new();
+            config.Check();
+            string manifestUrl = BuildManifestUrl(config, channel);
+            if (!UrlGuard.IsSafeHttpUrl(manifestUrl))
+                return string.Empty;
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            var json = await http.GetStringAsync(manifestUrl);
+            var manifest = JsonSerializer.Deserialize<Manifest>(json, _jsonOptions);
+            if (manifest == null || string.IsNullOrWhiteSpace(manifest.Version))
+                return string.Empty;
+            //正式通道忽略预发布版本，与 RunCheckAsync 的判定一致
+            if (channel == "stable" && manifest.Prerelease)
+                return string.Empty;
+            return manifest.Version;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "GetChannelLatestVersion");
+            return string.Empty;
+        }
+    }
+
+    private static string GetChannel(Update config) => config.Channel == "preview" ? "preview" : "stable";
+
+    private static string BuildManifestUrl(Update config, string channel)
+    {
+        return $"{config.Url.TrimEnd('/')}/{channel}.json";
+    }
+
+    /// <summary>取消进行中的更新下载：中止请求并清理临时文件，状态经轮询回到空闲</summary>
+    public static void CancelDownload()
+    {
+        if (_state != "downloading")
+            return;
+        _downloadCts?.Cancel();
+    }
+
     private static async Task DownloadAsync(HttpClient http, Manifest manifest, string manifestUrl)
     {
+        string tmpPath = string.Empty;
         try
         {
             _state = "downloading";
             _percent = 0;
+            _downloadCts = new CancellationTokenSource();
+            CancellationToken token = _downloadCts.Token;
 
             //清单里的地址可为相对路径，以清单地址为 base
             var downloadUri = new Uri(new Uri(manifestUrl), manifest.Url);
@@ -204,9 +281,9 @@ internal static class UpdateService
             Directory.CreateDirectory(dir);
             string fileName = string.Join("_", downloadUri.AbsolutePath.Split('/').Where(s => s.Length > 0).Reverse().Take(2).Reverse());
             string finalPath = Path.Combine(dir, fileName);
-            string tmpPath = finalPath + ".downloading";
+            tmpPath = finalPath + ".downloading";
 
-            using var resp = await http.GetAsync(downloadUri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+            using var resp = await http.GetAsync(downloadUri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token);
             resp.EnsureSuccessStatusCode();
             long total = resp.Content.Headers.ContentLength ?? -1;
             using var src = await resp.Content.ReadAsStreamAsync();
@@ -214,9 +291,9 @@ internal static class UpdateService
             var buffer = new byte[81920];
             long received = 0;
             int read;
-            while ((read = await src.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            while ((read = await src.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
             {
-                await dst.WriteAsync(buffer, 0, read);
+                await dst.WriteAsync(buffer, 0, read, token);
                 received += read;
                 if (total > 0)
                     _percent = (int)(received * 100 / total);
@@ -229,10 +306,32 @@ internal static class UpdateService
             _state = "downloaded";
             _logger.Info("update downloaded: {0}", finalPath);
         }
+        catch (OperationCanceledException)
+        {
+            //用户取消：清理临时文件回到空闲态，不算错误
+            TryDelete(tmpPath);
+            _installerPath = string.Empty;
+            _percent = 0;
+            _state = "idle";
+            _logger.Info("update download canceled");
+        }
         catch (Exception ex)
         {
             _logger.Error(ex, "Download");
             SetError("下载失败：" + ex.Message);
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                File.Delete(path);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "TryDelete {0}", path);
         }
     }
 

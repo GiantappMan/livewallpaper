@@ -294,14 +294,20 @@ public class ApiObject
     //当前更新状态 JSON（前端轮询）
     public string GetUpdateState() => UpdateService.State;
 
-    //手动检查更新（安装版拉清单）
-    public void CheckUpdate() => UpdateService.CheckUpdate();
+    //手动检查更新（安装版拉清单）；reinstall 为 true 时强制重装目标渠道当前版本（切渠道用）
+    public void CheckUpdate(bool reinstall) => UpdateService.CheckUpdate(reinstall);
+
+    //查询指定更新通道清单的最新版本号（只读不下载，供切通道后展示），失败返回空串
+    public Task<string> GetChannelLatestVersion(string channel) => UpdateService.GetChannelLatestVersionAsync(channel);
 
     //商店版手动检查：打开商店详情页，返回是否成功发起
     public Task<bool> CheckStoreUpdate() => UpdateService.CheckStoreUpdateAsync();
 
     //安装已下载的更新
     public void InstallUpdate() => UpdateService.InstallUpdate();
+
+    //取消进行中的更新下载
+    public void CancelUpdateDownload() => UpdateService.CancelDownload();
 
     //前端上传文件
     public string UploadToTmp(string filename, string fileContentBase64)

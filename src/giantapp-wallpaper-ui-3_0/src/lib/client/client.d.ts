@@ -30,8 +30,10 @@ interface API {
   GetRealThemeMode(): string;
   OpenLogFolder(): void;
   GetUpdateState(): Promise<string>;
-  CheckUpdate(): void;
+  CheckUpdate(reinstall: boolean): void;
+  GetChannelLatestVersion(channel: string): Promise<string>;
   InstallUpdate(): void;
+  CancelUpdateDownload(): void;
   IsStoreVersion(): boolean;
   addEventListener(type: string, listener: (e: any) => void);
 }

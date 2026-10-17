@@ -16,6 +16,9 @@ public class Update
     //更新通道：stable / preview
     public string Channel { get; set; } = "stable";
 
+    //已安装安装包的来源渠道，安装器启动时记录；空表示未知（旧版本升级而来）
+    public string InstalledChannel { get; set; } = string.Empty;
+
     //检查并纠正
     public void Check()
     {

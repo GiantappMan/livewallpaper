@@ -489,10 +489,22 @@ class API {
     }
   }
 
-  checkUpdate() {
+  //reinstall 为 true 时强制重装目标渠道当前版本（切换更新渠道用）
+  checkUpdate(reinstall = false) {
     if (!window.chrome || !window.chrome.webview) return;
     const { api } = (window as any).chrome.webview.hostObjects;
-    api.CheckUpdate();
+    api.CheckUpdate(!!reinstall);
+  }
+
+  //查询指定更新通道的最新版本号（只读，不触发下载），失败返回空串
+  async getChannelLatestVersion(channel: string): Promise<string> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return "";
+      const { api } = (window as any).chrome.webview.hostObjects;
+      return (await api.GetChannelLatestVersion(channel)) ?? "";
+    } catch (e) {
+      return "";
+    }
   }
 
   //商店版检查更新：打开商店详情页，返回是否成功发起
@@ -511,6 +523,13 @@ class API {
     if (!window.chrome || !window.chrome.webview) return;
     const { api } = (window as any).chrome.webview.hostObjects;
     api.InstallUpdate();
+  }
+
+  //取消进行中的更新下载
+  cancelUpdateDownload() {
+    if (!window.chrome || !window.chrome.webview) return;
+    const { api } = (window as any).chrome.webview.hostObjects;
+    api.CancelUpdateDownload();
   }
 
   //WebView2 异步代理的方法调用一律返回 Promise，必须 await 取真值，

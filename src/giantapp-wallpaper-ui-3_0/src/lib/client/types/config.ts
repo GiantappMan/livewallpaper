@@ -15,6 +15,8 @@ export type ConfigGeneral = {
 export type ConfigUpdate = {
   url: string;
   channel: "stable" | "preview";
+  //已安装安装包的来源渠道，后端安装时记录；前端改配置时需原样带回，避免被重置
+  installedChannel?: string;
 };
 
 export type UpdateState = {
