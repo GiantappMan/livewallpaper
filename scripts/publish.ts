@@ -121,7 +121,7 @@ function runPowerShellZip(zipPath, dist) {
 }
 
 async function main() {
-  const { kind, skipBuild, uiOnly, syncPreview, notes } = parseArgs(Bun.argv.slice(2));
+  const { kind, skipBuild, uiOnly, withUi, syncPreview, notes } = parseArgs(Bun.argv.slice(2));
 
   const conf = JSON.parse(await Bun.file(join(ROOT, "src-tauri", "tauri.conf.json")).text());
   const version = conf.version;
@@ -214,7 +214,7 @@ async function main() {
     if (!runTarZip(uiZip, dist) && !runPowerShellZip(uiZip, dist)) {
       fail("UI zip 打包失败");
     }
-    await putObject(`${PRODUCT_PREFIX}/ui/ui-${version}.zip`, uiZip, "application/zip", "public, max-age=3600");
+    await putObject(`${PRODUCT_PREFIX}/ui/ui-${version}.zip`, uiZip, "application/zip", "public,max-age=3600");
     // 界面包 URL 带上传时间戳作缓存穿透参数：zip 边缘缓存 1 小时，同版本重发
     // （修内容不发版）时查询串变化即绕开旧缓存，客户端不会拿到上一次的包
     const uiZipUrl = `${publicUrl}/${PRODUCT_PREFIX}/ui/ui-${version}.zip?v=${now.getTime()}`;
@@ -239,7 +239,7 @@ async function main() {
     if (!existsSync(installer)) {
       fail(`找不到安装包 ${installer}（先构建，或去掉 --skip-build）`);
     }
-    await putObject(`${PRODUCT_PREFIX}/dl/${basename(installer)}`, installer, "application/octet-stream", "public, max-age=3600");
+    await putObject(`${PRODUCT_PREFIX}/dl/${basename(installer)}`, installer, "application/octet-stream", "public,max-age=3600");
     const appManifest = {
       version,
       url: `${publicUrl}/${PRODUCT_PREFIX}/dl/${basename(installer)}`,
