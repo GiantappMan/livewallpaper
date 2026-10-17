@@ -48,11 +48,15 @@ if (-not (Test-Path "$PSScriptRoot\Publish\Assets\UI\zh.html") -or
 }
 
 # ---- 4. Inno Setup 打包 ----
+# 从 csproj 读完整 semver 传给 ISCC 命名安装包（文件名带 -alpha.x 预发布后缀）；
+# exe 的 Windows 版本号只有拍平后的四段数字，预览身份在文件名里会丢。
+$semver = (Select-String -Path "$PSScriptRoot\..\giantapp-wallpaper-client\Client\Client.csproj" -Pattern '<Version>([^<]+)</Version>' | Select-Object -First 1).Matches[0].Groups[1].Value
+if (-not $semver) { Write-Host "无法从 Client.csproj 读取 <Version>，终止。"; exit 1 }
 $innoSetup = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 $innoSetupScript = "$PSScriptRoot\installer.iss"
 $innoSetupOutput = "$PSScriptRoot\dist"
 DeletePath -path $innoSetupOutput
-& $innoSetup $innoSetupScript
+& $innoSetup $innoSetupScript "/DSemVer=$semver"
 if ($LASTEXITCODE -ne 0) { Write-Host "Inno Setup 打包失败，终止。"; exit 1 }
 
 $exe = Get-ChildItem "$PSScriptRoot\dist\*.exe" | Select-Object -First 1
