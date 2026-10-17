@@ -173,6 +173,7 @@
     "update_downloading": "Загрузка {0}… {1}%",
     "install_now": "Установить и перезапустить",
     "update_later": "Позже",
+    "cancel": "Отмена",
     "update_downloaded": "Новая версия {0} загружена",
     "update_up_to_date": "У вас последняя версия",
     "update_channel_switch_hint": "Канал изменён. Требуется переустановка",

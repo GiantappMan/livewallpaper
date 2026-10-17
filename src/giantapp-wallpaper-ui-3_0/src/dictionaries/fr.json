@@ -173,6 +173,7 @@
     "update_downloading": "Téléchargement de {0}… {1}%",
     "install_now": "Installer maintenant et redémarrer",
     "update_later": "Plus tard",
+    "cancel": "Annuler",
     "update_downloaded": "La nouvelle version {0} a été téléchargée",
     "update_up_to_date": "Vous utilisez la dernière version",
     "update_channel_switch_hint": "Canal modifié. Réinstallation nécessaire",

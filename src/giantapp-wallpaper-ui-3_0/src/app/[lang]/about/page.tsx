@@ -3,7 +3,6 @@
 import api from "@/lib/client/api";
 import { useEffect, useState, ReactNode } from "react";
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator";
 import LinkClient from "@/components/link-client"
 import { UpdateSettings } from "@/components/update-settings";
 import {
@@ -49,21 +48,26 @@ const AboutPage = () => {
     }, []);
 
     return <div className="h-[calc(100vh-3rem)] overflow-y-auto">
-        <div className="mx-auto max-w-2xl space-y-8 p-6">
-            {/* 产品名与版本 */}
-            <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                    {dictionary['about'].product_name.replace("{0}", version ?? "")}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                    {version ? `${dictionary['settings'].current_version} ${version}` : "\u00A0"}
-                </p>
+        <div className="mx-auto max-w-2xl space-y-6 p-6">
+            {/* 头部：品牌卡（渐变底）+ 版本徽章 */}
+            <div className="relative overflow-hidden rounded-xl border bg-gradient-to-b from-primary/[0.07] to-transparent">
+                <div className="flex items-center gap-5 p-6">
+                    <img src="/logo.png" alt="" className="h-16 w-16 shrink-0 rounded-xl ring-1 ring-border" />
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            {dictionary['about'].product_name.replace("{0}", (version ?? "").split(".")[0]).trim()}
+                        </h1>
+                        {version && (
+                            <span dir="ltr" className="rounded-full border bg-muted/40 px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+                                {`v${version}`}
+                            </span>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* 软件更新 */}
             <UpdateSettings />
-
-            <Separator />
 
             {/* 反馈&源码 */}
             <section className="space-y-3">
@@ -88,8 +92,6 @@ const AboutPage = () => {
                     </Button>
                 </div>
             </section>
-
-            <Separator />
 
             {/* 鼓励一下 */}
             <section className="space-y-3">

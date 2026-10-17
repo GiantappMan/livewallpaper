@@ -173,6 +173,7 @@
     "update_downloading": "{0} डाउनलोड हो रहा है… {1}%",
     "install_now": "अभी इंस्टॉल करें और पुनरारंभ करें",
     "update_later": "बाद में",
+    "cancel": "रद्द करें",
     "update_downloaded": "नया संस्करण {0} डाउनलोड पूर्ण",
     "update_up_to_date": "आप नवीनतम संस्करण पर हैं",
     "update_channel_switch_hint": "चैनल बदल गया है। पुनः इंस्टॉल करना आवश्यक है",

@@ -173,6 +173,7 @@
     "update_downloading": "Downloading {0}… {1}%",
     "install_now": "Install now and restart",
     "update_later": "Later",
+    "cancel": "Cancel",
     "update_downloaded": "New version {0} downloaded",
     "update_up_to_date": "You're on the latest version",
     "update_channel_switch_hint": "Channel changed. Reinstall required",

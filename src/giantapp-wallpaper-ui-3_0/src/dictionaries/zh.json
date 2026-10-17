@@ -173,6 +173,7 @@
     "update_downloading": "正在下载 {0}… {1}%",
     "install_now": "立即安装并重启",
     "update_later": "稍后",
+    "cancel": "取消",
     "update_downloaded": "新版本 {0} 已下载完成",
     "update_up_to_date": "已是最新版本",
     "update_channel_switch_hint": "已切换更新通道，需要重新安装",

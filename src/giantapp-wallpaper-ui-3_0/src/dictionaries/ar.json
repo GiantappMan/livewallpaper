@@ -173,6 +173,7 @@
     "update_downloading": "جارٍ تنزيل {0}… {1}%",
     "install_now": "تثبيت الآن وإعادة التشغيل",
     "update_later": "لاحقاً",
+    "cancel": "إلغاء",
     "update_downloaded": "تم تنزيل الإصدار الجديد {0}",
     "update_up_to_date": "أنت تستخدم أحدث إصدار",
     "update_channel_switch_hint": "تم تغيير القناة. يلزم إعادة التثبيت",
