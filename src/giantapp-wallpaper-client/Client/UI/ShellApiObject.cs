@@ -126,4 +126,10 @@ public class ShellApiObject
         if (_window != null)
             _window.WindowState = System.Windows.WindowState.Normal;
     }
+
+    //强制刷新：清空浏览器缓存并重新加载（等同 Ctrl+Shift+R）
+    public void ForceReload()
+    {
+        _ = _window?.ForceReloadAsync();
+    }
 }

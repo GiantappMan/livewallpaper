@@ -1,6 +1,7 @@
 "use client";
 
 import api from "@/lib/client/api";
+import shellApi from "@/lib/client/shell";
 import { useEffect, useState, ReactNode } from "react";
 import { Button } from "@/components/ui/button"
 import LinkClient from "@/components/link-client"
@@ -9,6 +10,7 @@ import {
     FolderOpen,
     LayoutGrid,
     MessageCircleWarning,
+    RefreshCw,
     Star
 } from "lucide-react";
 import Link from "next/link";
@@ -88,6 +90,18 @@ const AboutPage = () => {
                             className="flex items-center gap-1.5 text-muted-foreground underline-offset-4" href="#" title={dictionary['about'].open_log_folder}>
                             <FolderOpen className="h-4 w-4" />
                             {dictionary['about'].open_log_folder}
+                        </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link
+                            onClick={(e) => {
+                                shellApi.forceReload();
+                                e.preventDefault();
+                            }}
+                            className="flex items-center gap-1.5 text-muted-foreground underline-offset-4" href="#"
+                            title={dictionary['about'].force_refresh_tips}>
+                            <RefreshCw className="h-4 w-4" />
+                            {dictionary['about'].force_refresh}
                         </Link>
                     </Button>
                 </div>

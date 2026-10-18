@@ -8,7 +8,9 @@
     "produced_by": "من إنتاج {0} ❤",
     "product_name": "LiveWallpaper {0} من Giantapp",
     "rate_us": "قيّمنا بخمس نجوم",
-    "open_log_folder": "افتح مجلد السجلات"
+    "open_log_folder": "افتح مجلد السجلات",
+    "force_refresh": "تحديث قسري",
+    "force_refresh_tips": "امسح ذاكرة التخزين المؤقت للمتصفح وأعد التحميل (Ctrl+Shift+R)"
   },
   "common": {
     "about": "حول",

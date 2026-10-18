@@ -8,7 +8,9 @@
     "produced_by": "{0} ❤ 出品",
     "product_name": "巨应壁纸 {0}",
     "rate_us": "五星好评",
-    "open_log_folder": "打开日志目录"
+    "open_log_folder": "打开日志目录",
+    "force_refresh": "强制刷新",
+    "force_refresh_tips": "清空本地浏览器缓存并重新加载（Ctrl+Shift+R）"
   },
   "common": {
     "about": "关于",

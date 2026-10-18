@@ -45,6 +45,7 @@ interface Shell {
   MinimizeWindow();
   MaximizeWindow();
   RestoreWindow();
+  ForceReload();
   addEventListener(type: string, listener: (e: any) => void);
   removeEventListener(type: string, listener: (e: any) => void);
 }

@@ -8,7 +8,9 @@
     "produced_by": "Mit ❤ von {0}",
     "product_name": "LiveWallpaper {0} von Giantapp",
     "rate_us": "Bewerten Sie uns",
-    "open_log_folder": "Protokollordner öffnen"
+    "open_log_folder": "Protokollordner öffnen",
+    "force_refresh": "Erzwungenes Neuladen",
+    "force_refresh_tips": "Browser-Cache leeren und neu laden (Ctrl+Shift+R)"
   },
   "common": {
     "about": "Über",

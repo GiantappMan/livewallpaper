@@ -8,7 +8,9 @@
     "produced_by": "Made with ❤ By {0}",
     "product_name": "LiveWallpaper {0} by Giantapp ",
     "rate_us": "Rate us",
-    "open_log_folder": "Open Log Folder"
+    "open_log_folder": "Open Log Folder",
+    "force_refresh": "Force Refresh",
+    "force_refresh_tips": "Clear browser cache and reload (Ctrl+Shift+R)"
   },
   "common": {
     "about": "About",

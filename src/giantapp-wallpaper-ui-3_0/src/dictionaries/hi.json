@@ -8,7 +8,9 @@
     "produced_by": "{0} ❤ द्वारा निर्मित",
     "product_name": "LiveWallpaper {0} by Giantapp",
     "rate_us": "5 स्टार रेटिंग दें",
-    "open_log_folder": "लॉग फ़ोल्डर खोलें"
+    "open_log_folder": "लॉग फ़ोल्डर खोलें",
+    "force_refresh": "फ़ोर्स रिफ्रेश",
+    "force_refresh_tips": "ब्राउज़र कैश साफ़ करें और पुनः लोड करें (Ctrl+Shift+R)"
   },
   "common": {
     "about": "बारे में",

@@ -557,10 +557,35 @@ public partial class ShellWindow : Window
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        //Ctrl+Shift+R 强制刷新：清空浏览器缓存后重新加载
+        if (e.Key == Key.R && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+        {
+            _ = ForceReloadAsync();
+            return;
+        }
         if (CloseByEsc && e.Key == Key.Escape)
         {
             Close();
         }
+    }
+
+    //清空本地浏览器缓存（HTTP 缓存，不动 localStorage/登录态）并重新加载，等同浏览器 Ctrl+Shift+R
+    public async Task ForceReloadAsync()
+    {
+        var core = webview2.CoreWebView2;
+        if (core == null)
+            return;
+        _logger.Info("ForceReload");
+        try
+        {
+            await core.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache);
+        }
+        catch (Exception ex)
+        {
+            //旧版 WebView2 Runtime 可能不支持该接口，降级为普通刷新
+            _logger.Error(ex);
+        }
+        core.Reload();
     }
 
     private void BtnBack_Click(object sender, RoutedEventArgs e)

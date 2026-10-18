@@ -8,7 +8,9 @@
     "produced_by": "{0} ❤ 制作",
     "product_name": "LiveWallpaper {0} by Giantapp",
     "rate_us": "評価する",
-    "open_log_folder": "ログフォルダを開く"
+    "open_log_folder": "ログフォルダを開く",
+    "force_refresh": "強制再読み込み",
+    "force_refresh_tips": "ブラウザのキャッシュを削除して再読み込みします（Ctrl+Shift+R）"
   },
   "common": {
     "about": "このアプリについて",

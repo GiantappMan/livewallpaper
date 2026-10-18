@@ -8,7 +8,9 @@
     "produced_by": "Сделал {0} с ❤",
     "product_name": "LiveWallpaper {0} от Giantapp ",
     "rate_us": "Оцените",
-    "open_log_folder": "Открыть папку журналов"
+    "open_log_folder": "Открыть папку журналов",
+    "force_refresh": "Принудительное обновление",
+    "force_refresh_tips": "Очистить кэш браузера и перезагрузить страницу (Ctrl+Shift+R)"
   },
   "common": {
     "about": "О приложении",

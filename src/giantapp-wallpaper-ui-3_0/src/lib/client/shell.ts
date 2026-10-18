@@ -43,6 +43,13 @@ class Shell {
     shell.RestoreWindow();
   }
 
+  //强制刷新：清空浏览器缓存并重新加载（等同 Ctrl+Shift+R）
+  forceReload() {
+    if (!window.chrome.webview) return;
+    const { shell } = window.chrome.webview.hostObjects;
+    shell.ForceReload();
+  }
+
   //窗口状态变化（Normal/Minimized/Maximized），由宿主 ShellApiObject.WindowStateChanged 事件推送
   onWindowStateChanged(callback: (state: string) => void): void {
     if (!window.chrome.webview) return;

@@ -8,7 +8,9 @@
     "produced_by": "{0} ❤ 出品",
     "product_name": "巨應壁紙 {0}",
     "rate_us": "五星好評",
-    "open_log_folder": "開啟日誌目錄"
+    "open_log_folder": "開啟日誌目錄",
+    "force_refresh": "強制重新整理",
+    "force_refresh_tips": "清除本機瀏覽器快取並重新載入（Ctrl+Shift+R）"
   },
   "common": {
     "about": "關於",
