@@ -28,6 +28,12 @@ interface SettingDialogProps {
     saveSuccess?: (wallpaper: Wallpaper) => void
 }
 
+//系统播放器已从界面移除，旧的单独配置回落为使用全局配置
+const normalizeSetting = (setting: WallpaperSetting): WallpaperSetting =>
+    setting.videoPlayer === VideoPlayer.System_Player
+        ? { ...setting, videoPlayer: VideoPlayer.Default_Player }
+        : setting
+
 const formSchema = z.object({
     // enableMouseEvent: z.boolean(),
     // hardwareDecoding: z.boolean(),
@@ -60,7 +66,7 @@ export function SettingDialog(props: SettingDialogProps) {
             // videoPlayer: props.wallpaper.setting.videoPlayer,
             // fit: props.wallpaper.setting.fit,
             // keepWallpaper: props.wallpaper.setting.keepWallpaper,
-            setting: props.wallpaper.setting,
+            setting: normalizeSetting(props.wallpaper.setting),
         },
     })
     const { isDirty } = useFormState({ control: form.control });
@@ -77,7 +83,7 @@ export function SettingDialog(props: SettingDialogProps) {
                 // videoPlayer: props.wallpaper.setting.videoPlayer,
                 // fit: props.wallpaper.setting.fit,
                 // keepWallpaper: props.wallpaper.setting.keepWallpaper,
-                setting: props.wallpaper.setting,
+                setting: normalizeSetting(props.wallpaper.setting),
             })
         setWallpaperType(props.wallpaper.meta.type || WallpaperType.NotSupported)
     }, [form, props.open, props.wallpaper])
@@ -219,7 +225,7 @@ export function SettingDialog(props: SettingDialogProps) {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {Object.entries(VideoPlayer).filter(([key]) => isNaN(Number(key))).map(([key, value]) => (
+                                            {Object.entries(VideoPlayer).filter(([key]) => isNaN(Number(key)) && key !== "System_Player").map(([key, value]) => (
                                                 <SelectItem key={key.toString()} value={value.toString()}>
                                                     {dictionary['local'][key.toLowerCase()]}
                                                 </SelectItem>

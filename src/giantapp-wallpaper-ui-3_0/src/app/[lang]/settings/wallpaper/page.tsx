@@ -64,7 +64,14 @@ export default function Page() {
         form.setValue("directories", config.data.directories?.map((item) => ({ path: item })) || [{ path: "" }])
         // form.setValue("keepWallpaper", config.data.keepWallpaper);
         form.setValue("coveredBehavior", config.data.coveredBehavior);
-        form.setValue("defaultVideoPlayer", config.data.defaultVideoPlayer);
+        if (config.data.defaultVideoPlayer === VideoPlayer.System_Player) {
+            //系统播放器已从界面移除，旧配置迁移为 MPV
+            form.setValue("defaultVideoPlayer", VideoPlayer.MPV_Player);
+            form.handleSubmit(onSubmit)();
+        }
+        else {
+            form.setValue("defaultVideoPlayer", config.data.defaultVideoPlayer);
+        }
 
     }, [form]);
 
@@ -205,7 +212,6 @@ export default function Page() {
                                                 <SelectContent>
                                                     {/* <SelectItem value="0">{dictionary['local'].default_player}</SelectItem> */}
                                                     <SelectItem value="1">{dictionary['local'].mpv_player}</SelectItem>
-                                                    <SelectItem value="2">{dictionary['local'].system_player}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>
