@@ -47,12 +47,17 @@ if (-not (Test-Path "$PSScriptRoot\Publish\Assets\UI\zh.html") -or
     Write-Host "发布产物缺少完整前端，终止打包。"; exit 1
 }
 
-# ---- 4. Inno Setup 打包 ----
+# ---- 4. Inno Setup 打包（文件名带完整 semver：Windows 内部版本号拍平 -alpha 后缀，须从版本源头传）----
+$csprojPath = "$PSScriptRoot\..\giantapp-wallpaper-client\Client\Client.csproj"
+[xml]$csprojXml = Get-Content $csprojPath
+$semVer = @($csprojXml.Project.PropertyGroup | Where-Object { $_.Version } | ForEach-Object { $_.Version })[0]
+if (-not $semVer) { Write-Host "无法从 Client.csproj 读取版本号，终止。"; exit 1 }
+Write-Host ("安装包版本: " + $semVer)
 $innoSetup = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 $innoSetupScript = "$PSScriptRoot\installer.iss"
 $innoSetupOutput = "$PSScriptRoot\dist"
 DeletePath -path $innoSetupOutput
-& $innoSetup $innoSetupScript
+& $innoSetup $innoSetupScript ("/DSemVer=" + $semVer)
 if ($LASTEXITCODE -ne 0) { Write-Host "Inno Setup 打包失败，终止。"; exit 1 }
 
 $exe = Get-ChildItem "$PSScriptRoot\dist\*.exe" | Select-Object -First 1

@@ -2,6 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppVersion GetVersionNumbersString(".\publish\LiveWallpaper3.exe")
+; 完整 semver 由 compile.ps1 经 /DSemVer 传入；单独跑 ISCC 时退化为拍平的四段版本号
+#ifndef SemVer
+#define SemVer MyAppVersion
+#endif
 #define ProductName "LiveWallpaper"
 #define ProductVersionName "LiveWallpaper3"
 #define MyAppPublisher "Giantapp Studio"
@@ -28,7 +32,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
 OutputDir={#OutputDir}
-OutputBaseFilename={#ProductName}_Installer_v{#MyAppVersion}
+OutputBaseFilename={#ProductName}_Installer_v{#SemVer}
 VersionInfoDescription={#ProductName} Installer v{#MyAppVersion}
 VersionInfoProductName={#ProductName} Installer v{#MyAppVersion}
 SetupIconFile=..\giantapp-wallpaper-client\Client\Assets\Img\logo.ico

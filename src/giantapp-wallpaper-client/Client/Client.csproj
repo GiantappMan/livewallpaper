@@ -13,8 +13,8 @@
     <Prefer32Bit>false</Prefer32Bit>
     <AssemblyName>LiveWallpaper3</AssemblyName>
     <ApplicationIcon>Assets\Img\logo.ico</ApplicationIcon>
-    <Version>3.1.1-alpha.1</Version>
-    <FileVersion>3.1.1.1</FileVersion>
+    <Version>3.1.1-alpha.2</Version>
+    <FileVersion>3.1.1.2</FileVersion>
     <PackageProjectUrl>https://giantapp.cn</PackageProjectUrl>
     <Authors>巨应君 | Giantapp Man</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
