@@ -14,3 +14,12 @@
 .zcode/screenshots/
 .zcode/workflow-drafts/
 .zcode/workflow-runs/
+
+# 密钥/证书一律不入库（2018 年曾有测试 pfx 带着空密码私钥进过历史，防复发）
+*.pfx
+*.p12
+*.key
+*.pem
+
+# 环境变量本地覆盖文件；.env/.env.development/.env.production/.env.example 为共享配置，有意保留跟踪
+.env*.local
