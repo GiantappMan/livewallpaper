@@ -92,8 +92,7 @@
 
             <small>
               <a
-                target="_blank"
-                href="https://giantapp.cn/post/other/contact"
+                href="mailto:mscoder@hotmail.com"
                 class="navbar-item"
               >
                 {{ $t('common.contact') }}
@@ -103,7 +102,7 @@
             <small>
               <a
                 target="_blank"
-                href="https://support.qq.com/products/315103"
+                href="https://wallpaper.giantapp.cn/feedback"
                 class="navbar-item"
               >
                 {{ $t('common.feedback') }}
