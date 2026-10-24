@@ -182,6 +182,15 @@ export const mutations = {
     clearFinishedDownloads(state) {
         state.downloads = state.downloads.filter((d) => !d.completed);
     },
+    //从localStorage恢复的历史记录（仅已完成），与运行中的任务按url去重
+    loadDownloadRecords(state, list) {
+        if (!Array.isArray(list)) return;
+        for (const item of list) {
+            if (!item || !item.url || !item.completed) continue;
+            if (state.downloads.some((d) => d.url === item.url)) continue;
+            state.downloads.push(Object.assign({ cancelled: false, cancelling: false, error: null }, item));
+        }
+    },
     setCurrentAudioWP(state, { currentAudioWP }) {
         state.currentAudioWP = currentAudioWP;
     },

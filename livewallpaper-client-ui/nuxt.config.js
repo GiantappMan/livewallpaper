@@ -36,6 +36,7 @@ export default {
   plugins: [
     { src: '~/plugins/local.js' },
     { src: '~/plugins/route.client.js' },
+    { src: '~/plugins/downloads-persistence.client.js' },
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
