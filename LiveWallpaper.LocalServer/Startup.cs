@@ -35,6 +35,7 @@ namespace LiveWallpaper.LocalServer
                 List<string> urls = new() { "https://livewallpaper.giantapp.cn", "http://livewallpaper.giantapp.cn", $"http://localhost:{ServerWrapper.HostPort}", $"http://127.0.0.1:{ServerWrapper.HostPort}", "https://test-livewallpaper-5dbri89faad9b-1304209797.ap-shanghai.app.tcloudbase.com" };
 #if DEBUG
                 urls.Add("http://localhost:3000");
+                urls.Add("http://localhost:3001");
 #endif
                 options.AddPolicy(name: AllowSpecificOrigins,
                                   builder =>

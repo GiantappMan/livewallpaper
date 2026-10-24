@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "LiveWallpaper.Shell": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "LIVEWALLPAPER_DEV_UI": "http://localhost:3001/"
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "livewallpaper-v2",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail -n web,client,open -c cyan,green,yellow \"npm:dev:web\" \"npm:dev:client\" \"npm:dev:open\"",
+    "dev:web": "cd livewallpaper-client-ui && npx nuxt dev -p 3001",
+    "dev:client": "cd LiveWallpaper.Shell && dotnet watch --non-interactive --project . run",
+    "dev:server": "dotnet watch --non-interactive --project LiveWallpaper.LocalServer.DevHost run",
+    "dev:open": "npx wait-on -t 180000 http://localhost:3001 && cmd /c start \"\" \"http://localhost:3001/?p=5001\" || exit 0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "wait-on": "^7"
+  }
+}

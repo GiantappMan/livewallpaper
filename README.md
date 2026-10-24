@@ -39,6 +39,18 @@ A tiny non-disturbing Win10 (dynamic) wallpaper app
 - Win10
 - The server site is not open source, the client web source code is [here](https://github.com/daziyuan/LiveWallpaper/tree/v2.x/livewallpaper-client-ui).
 
+### Development
+
+Requires [bun](https://bun.sh) and the .NET 9 SDK.
+
+- `bun dev` starts everything together and opens the browser automatically:
+  - web UI: http://localhost:3001/?p=5001 (Nuxt dev, hot reload)
+  - C# client: `LiveWallpaper.Shell` (WPF tray app + local server + wallpaper engine, run by `dotnet watch` on http://localhost:5001). In DEBUG the client window loads the dev web UI above via the `LIVEWALLPAPER_DEV_UI` setting in its launchSettings.json; C# edits hot reload, unsupported edits restart the client
+  - backend only (no client UI): `bun run dev:server` (`LiveWallpaper.LocalServer.DevHost`)
+- Hot reload on both sides: frontend edits apply instantly, backend C# edits hot reload (unsupported edits restart the server automatically)
+- Or run them separately: `bun run dev:web` / `bun run dev:client` / `bun run dev:server`
+- Stopping `bun dev` (Ctrl+C) exits all child processes and releases the ports. The dev-mode WPF client can't receive the console Ctrl+C signal, so a built-in watchdog (watching the dotnet watch process) shuts it down as a fallback
+
 ### Branch management
 
 - **v2.x** is the latest version of the code, the new version [LiveWallpaper](https://www.microsoft.com/store/apps/9N1S487WCGWR)

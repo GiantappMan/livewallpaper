@@ -17,3 +17,9 @@ BundleArtifacts
 /setup/publish
 /setup/dist
 /LiveWallpaperEngineAPI/Assets/Players/Mpv
+/node_modules
+/bun.lock
+/package-lock.json
+/livewallpaper-client-ui/package-lock.json
+.mimosa/
+.video_agent/

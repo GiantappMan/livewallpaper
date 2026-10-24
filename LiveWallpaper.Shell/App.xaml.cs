@@ -15,6 +15,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+#if DEBUG
+using System.Runtime.InteropServices;
+#endif
 
 namespace LiveWallpaper.Shell
 {
@@ -48,6 +51,10 @@ namespace LiveWallpaper.Shell
         const string serverHost = "https://livewallpaper.giantapp.cn/";
         private static int _hostPort;
         private static readonly int _defaultHostPort = 5001;
+#if DEBUG
+        //bun dev 时由 launchSettings 注入前端 dev 地址，客户端窗口直接打开热更新 UI
+        private static readonly string? _devUiBase = Environment.GetEnvironmentVariable("LIVEWALLPAPER_DEV_UI");
+#endif
 
         #endregion
 
@@ -64,6 +71,9 @@ namespace LiveWallpaper.Shell
             }
 
             CatchApplicationError();
+#if DEBUG
+            StartDevWatchdog();
+#endif
             InitIoc();
             InitNotifyIcon();
             InitApp();
@@ -74,6 +84,52 @@ namespace LiveWallpaper.Shell
         {
             _logger.Log(LogLevel.Info, $"sdk log:{log}");
         }
+
+#if DEBUG
+        //开发模式：bun dev 停止时 dotnet watch 退出，GUI 客户端收不到控制台 Ctrl+C 信号，
+        //靠监视父进程退出兜底，避免孤儿客户端占用端口、壁纸进程残留
+        private static async void StartDevWatchdog()
+        {
+            try
+            {
+                if (Environment.GetEnvironmentVariable("DOTNET_WATCH") == null)
+                    return;
+                int? ppid = GetParentProcessId();
+                if (ppid == null)
+                    return;
+                Process parent = Process.GetProcessById(ppid.Value);
+                await Task.Run(() => parent.WaitForExit());
+                try { await Giantapp.LiveWallpaper.Engine.WallpaperApi.Dispose(); } catch { }
+                await Current.Dispatcher.InvokeAsync(() => Current.Shutdown());
+            }
+            catch
+            {
+                //父进程已不存在等异常，忽略（正常单跑时不影响）
+            }
+        }
+
+        [DllImport("ntdll.dll")]
+        private static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, IntPtr returnLengthPtr);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PROCESS_BASIC_INFORMATION
+        {
+            public IntPtr Reserved1;
+            public IntPtr PebBaseAddress;
+            public IntPtr Reserved2_0;
+            public IntPtr Reserved2_1;
+            public IntPtr InheritedFromUniqueProcessId;
+            public IntPtr Reserved3;
+        }
+
+        private static int? GetParentProcessId()
+        {
+            using Process p = Process.GetCurrentProcess();
+            var info = new PROCESS_BASIC_INFORMATION();
+            int status = NtQueryInformationProcess(p.Handle, 0, ref info, Marshal.SizeOf(info), IntPtr.Zero);
+            return status == 0 ? (int)info.InheritedFromUniqueProcessId : null;
+        }
+#endif
 
         #region properties
 
@@ -196,6 +252,16 @@ namespace LiveWallpaper.Shell
             {
                 ServerWrapper.Start(_hostPort);
             });
+#if DEBUG
+            //开发模式：启动后自动打开客户端窗口（加载 dev 前端）
+            if (!string.IsNullOrEmpty(_devUiBase))
+                _ = Task.Run(async () =>
+                {
+                    await AppManager.WaitInitialized();
+                    //窗口必须在 UI 线程创建
+                    await Current.Dispatcher.InvokeAsync(() => OpenLocalView(GetUrl("", GetLocalHosst())));
+                });
+#endif
         }
         //捕获异常
         private void CatchApplicationError()
@@ -305,6 +371,11 @@ namespace LiveWallpaper.Shell
 
             try
             {
+#if DEBUG
+                //开发模式：替换为前端 dev 服务器地址，?v、&p 参数保留
+                if (!string.IsNullOrEmpty(_devUiBase) && url.StartsWith(GetLocalHosst()))
+                    url = _devUiBase + url[GetLocalHosst().Length..];
+#endif
                 url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
 
                 //if (_hostPort != _defaultHostPort)
