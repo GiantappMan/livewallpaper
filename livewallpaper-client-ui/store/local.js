@@ -10,6 +10,59 @@ function compareLocalID(a, b) {
     return a.toLocaleLowerCase().trim() === b.toLocaleLowerCase().trim();
 }
 
+//已注册下载进度监听的api实例（setPort每次导航都可能换实例，用模块变量做幂等标记）
+let _downloadListenerApi = null;
+
+function fileNameFromUrl(url) {
+    try {
+        const name = decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
+        return name.replace(/\.[^.]+$/, '') || url;
+    } catch (e) {
+        return url;
+    }
+}
+
+function handleDownloadProgress(context, e) {
+    const { commit, dispatch, state } = context;
+    //wallpaper字段是服务端补的主文件URL（封面/异常阶段path不是主文件URL），旧服务端只有path
+    const url = e.wallpaper || e.path;
+    if (!url) return;
+    const percent = Math.max(0, Math.min(100, Math.round(e.percent || 0)));
+    const item = state.downloads.find((d) => d.url === url);
+    if (item) {
+        commit('updateDownload', { url, e, percent });
+    } else {
+        commit('pushDownload', {
+            url,
+            title: e.title || fileNameFromUrl(url),
+            percent,
+            completed: !!e.completed,
+            succeeded: !!e.succeeded,
+            cancelled: false,
+            cancelling: false,
+            //服务端下载异常的原因，用于明确提示
+            error: e.error || null,
+        });
+    }
+    if (e.completed && e.succeeded) {
+        //下载完成后刷新本地列表，新壁纸立即出现
+        dispatch('refresh', {}).catch(() => { });
+    }
+}
+
+function registerDownloadListener(context) {
+    const { state } = context;
+    const api = state.livewallpaperApi;
+    if (!api || _downloadListenerApi === api) return;
+    _downloadListenerApi = api;
+    api.onDownloadWallpaer((e) => handleDownloadProgress(context, e))
+        .catch((e) => {
+            //服务端未启动等场景注册失败，清除标记让下次导航重试
+            console.log('registerDownloadListener', e);
+            if (_downloadListenerApi === api) _downloadListenerApi = null;
+        });
+}
+
 export const state = () => ({
     clientVersion: undefined,
     livewallpaperApi: undefined,
@@ -17,6 +70,8 @@ export const state = () => ({
     expectedClientVersion: process.env.expectedClientVersion,
     isPlaying: false,
     wallpapers: [],
+    //从社区站触发的下载任务（服务端只广播进度，这里做归组与状态留存）
+    downloads: [],
     runningWallpapers: [],
     isLoading: false,
     isLoadingSetting: false,
@@ -104,6 +159,29 @@ export const mutations = {
     removeWallpaper(state, wallpaper) {
         state.wallpapers.splice(state.wallpapers.indexOf(wallpaper), 1)
     },
+    pushDownload(state, item) {
+        state.downloads.push(item)
+    },
+    updateDownload(state, { url, e, percent }) {
+        const item = state.downloads.find((d) => d.url === url);
+        if (!item) return;
+        item.percent = percent;
+        if (e.completed) {
+            item.completed = true;
+            item.succeeded = !!e.succeeded;
+            //服务端下载异常的原因，用于明确提示
+            item.error = e.error || null;
+            //客户端主动取消过的标记为已取消，与服务端失败区分
+            if (!e.succeeded && item.cancelling) item.cancelled = true;
+        }
+    },
+    setDownloadCancelling(state, url) {
+        const item = state.downloads.find((d) => d.url === url);
+        if (item) Vue.set(item, 'cancelling', true);
+    },
+    clearFinishedDownloads(state) {
+        state.downloads = state.downloads.filter((d) => !d.completed);
+    },
     setCurrentAudioWP(state, { currentAudioWP }) {
         state.currentAudioWP = currentAudioWP;
     },
@@ -140,8 +218,17 @@ export const actions = {
     setPort(context, port) {
         let { commit, state } = context;
         port = port || 5001
-        commit("setServerPort", port);
-        commit("setApiInstance", new LivewallpaperApi(port));
+        //同端口复用实例：route.client.js每次导航都会进来，重建实例会泄漏SignalR连接
+        if (!(state.livewallpaperApi && String(state.serverPort) === String(port))) {
+            commit("setServerPort", port);
+            commit("setApiInstance", new LivewallpaperApi(port));
+        }
+        registerDownloadListener(context);
+    },
+    async cancelDownload({ commit, state }, url) {
+        if (!url) return;
+        commit('setDownloadCancelling', url);
+        await state.livewallpaperApi.stopDownloadWallpaper(url).catch(console.log);
     },
     async deleteWallpaper(context, { wallpaper, handleClientApiException, toast }) {
         console.log("deleteWallpaper")

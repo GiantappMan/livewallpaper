@@ -95,12 +95,38 @@ namespace LiveWallpaper.LocalServer.Utils
                 IPAddress[] addresses = Dns.GetHostAddressesAsync(host).GetAwaiter().GetResult();
                 if (addresses.Length == 0)
                     return false;
+                //fake-ip代理(如Clash默认198.18.0.0/15)会把所有域名解析到基准测试保留网段，
+                //实际连接由代理解析，DNS结果不代表内网目标，不能按保留地址拒绝，否则代理用户所有下载都会被误杀
+                if (addresses.All(IsFakeIp))
+                    return true;
                 return addresses.All(IsPublicAddress);
             }
             catch (Exception)
             {
                 return false;
             }
+        }
+
+        //fake-ip网段：198.18.0.0/15（基准测试，Clash/mihomo默认fake-ip-range）、2001:2::/64
+        static bool IsFakeIp(IPAddress ip)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                byte[] b = ip.GetAddressBytes();
+                return b[0] == 198 && (b[1] & 0xFE) == 18;
+            }
+            if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                byte[] b6 = ip.GetAddressBytes();
+                //::ffff:x.y.z.w 按IPv4规则判断
+                bool mapped = true;
+                for (int i = 0; i < 10; i++)
+                    if (b6[i] != 0) { mapped = false; break; }
+                if (mapped && b6[10] == 0xff && b6[11] == 0xff)
+                    return IsFakeIp(new IPAddress(b6, 12));
+                return b6[0] == 0x20 && b6[1] == 0x01 && b6[2] == 0x00 && b6[3] == 0x02;
+            }
+            return false;
         }
 
         static bool IsPublicAddress(IPAddress ip)

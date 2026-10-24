@@ -82,6 +82,7 @@ export default {
         'faSignOutAlt',
         'faSignInAlt',
         'faUpload',
+        'faDownload',
         'faTimesCircle',
         'faCheck',
         'faBan',

@@ -227,39 +227,14 @@ class LivewallpaperApi {
             this.connection.off("DownloadWallpaperProgressChanged");
     }
     async downloadWallpaper(wallpaper) {
-        // let completed = false;
         const { wp, wpCover, groupDir, wpTitle, wpId, wpType } = wallpaper
         var info = {
             title: wpTitle,
             id: wpId,
             type: wpType,
         };
-        var response = await this.connection.invoke("DownloadWallpaperToGroup", wp, wpCover, info, groupDir);
-        return response;
-
         await this._enusureConnected();
-        if (callback) {
-            this.connection.on("DownloadWallpaperProgressChanged", (e) => {
-                if (e.path != wp && e.path != cover) {
-                    return;
-                }
-                callback(e);
-                if (e.completed === true) {
-                    completed = true;
-                }
-            });
-        }
-        response = await this.connection.invoke("DownloadWallpaper", wp, cover, info);
-        console.log(response);
-        if (response.ok) {
-            while (!completed) {
-                await delay(1000);
-            }
-
-            if (callback) {
-                this.connection.off("DownloadWallpaperProgressChanged");
-            }
-        }
+        var response = await this.connection.invoke("DownloadWallpaperToGroup", wp, wpCover, info, groupDir);
         return response;
     }
     async stopSetupFFmpeg() {

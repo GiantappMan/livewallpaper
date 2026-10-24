@@ -1,7 +1,7 @@
 //社区线上地址（默认）
 export const COMMUNITY_URL_ONLINE = 'https://livewallpaper.giantapp.cn'
-//社区本地开发地址（giantapp-wallpaper-server next dev 默认端口）
-export const COMMUNITY_URL_LOCAL = 'http://localhost:3000'
+//社区本地开发地址（根目录 bun dev 启动的前端端口，见 package.json dev:web）
+export const COMMUNITY_URL_LOCAL = 'http://localhost:3001'
 
 export function delay(ms) {
     return new Promise((resolve, reject) => {

@@ -435,7 +435,22 @@ namespace LiveWallpaper.LocalServer.Hubs
                 if (destFolder == null)
                     return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Exception));
 
+                //NetworkHelper.DownloadFileAsync不会创建目录，目录不存在会静默失败；这里主动创建，失败给明确错误
+                try
+                {
+                    Directory.CreateDirectory(destFolder);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                    return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Failed, $"cannot create download dir: {destFolder}"));
+                }
+
                 info ??= new WallpaperProjectInfo();
+
+                //URL末段为空时无法确定落盘文件名
+                if (string.IsNullOrEmpty(Path.GetFileName(wallpaper)))
+                    return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Failed, "download url has no file name"));
 
                 CancellationTokenSource cts = new();
                 _downloadingWallpapers[wallpaper] = cts;
@@ -472,7 +487,8 @@ namespace LiveWallpaper.LocalServer.Hubs
                         {
                             var client = _hubEventEmitter.AllClient();
 
-                            float percent = e.competed / e.total * 90;
+                            //total未知(分块传输)时无法计算百分比，钳到0避免负数
+                            float percent = e.total > 0 ? e.competed / e.total * 90 : 0;
 
                             //ToastNotificationManagerCompat.CreateToastNotifier().Update(
                             //    new NotificationData(new Dictionary<string, string>()
@@ -482,7 +498,8 @@ namespace LiveWallpaper.LocalServer.Hubs
                             //        { "progressStatus", GetText("local.downloading").Replace("{progress}%","") },
                             //  }), tag, group);
 
-                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = wallpaper, e.competed, e.total, percent, completed = false });
+                            //wallpaper/title供客户端按主文件URL归组事件（封面阶段与异常阶段path不是主文件URL）
+                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = wallpaper, wallpaper, title = info?.Title, e.competed, e.total, percent, completed = false });
                         }, 1000);
                     });
 
@@ -491,7 +508,8 @@ namespace LiveWallpaper.LocalServer.Hubs
                         _raiseLimiter.Execute(async () =>
                         {
                             var client = _hubEventEmitter.AllClient();
-                            var percent = e.competed / e.total * 10 + 90;
+                            //total未知时钳到90，完成事件由下载全部结束后的统一完成事件发送
+                            var percent = e.total > 0 ? Math.Clamp(e.competed / e.total * 10 + 90, 0, 100) : 90;
 
                             // ToastNotificationManagerCompat.CreateToastNotifier().Update(
                             //  new NotificationData(new Dictionary<string, string>()
@@ -501,7 +519,7 @@ namespace LiveWallpaper.LocalServer.Hubs
                             //         { "progressStatus", GetText("local.downloadComplete") },
                             //}), tag, group);
 
-                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, e.competed, e.total, percent, completed = percent == 100, succeeded = true });
+                            await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, wallpaper, title = info?.Title, e.competed, e.total, percent, completed = false, succeeded = true });
                         }, 1000);
                     });
 
@@ -530,16 +548,19 @@ namespace LiveWallpaper.LocalServer.Hubs
                                  await UpdateProjectInfo(groupDir, group.Data?.Info);
                              }
                          }
+
+                         //统一完成事件：封面不存在或长度未知时此前永远没有completed事件，客户端会一直等
+                         await _hubEventEmitter.AllClient().SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent = 100d, completed = true, succeeded = true });
                      }
                      catch (Exception ex)
                      {
-                         _raiseLimiter.Execute(async () =>
-                         {
-                             var client = _hubEventEmitter.AllClient();
-                             var percent = 100;
-                             //下载异常
-                             await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover, percent, completed = true, succeeded = false });
-                         }, 1000);
+                     _raiseLimiter.Execute(async () =>
+                     {
+                         var client = _hubEventEmitter.AllClient();
+                         var percent = 100;
+                         //下载异常；path兜底为主文件URL防止无法归组，error供前端明确提示失败原因
+                         await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent, completed = true, succeeded = false, error = ex.Message });
+                     }, 1000);
 
                          Debug.WriteLine(ex);
                      }

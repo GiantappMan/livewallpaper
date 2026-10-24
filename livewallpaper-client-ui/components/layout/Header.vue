@@ -32,6 +32,7 @@
       <b-navbar-item tag="div">
         <div class="buttons">
           <slot></slot>
+          <DownloadManager />
         </div>
       </b-navbar-item>
     </template>
