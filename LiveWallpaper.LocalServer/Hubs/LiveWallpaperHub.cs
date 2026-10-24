@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -96,6 +97,10 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         public async Task<BaseApiResult<WallpaperModel>> ShowWallpaper(string path, string targetScreen)
         {
+            //只允许播放壁纸目录下已存在的壁纸文件，禁止执行外部传入的任意路径
+            if (!SecurityGuard.IsPathUnderDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir, path))
+                return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.NoPermission, "path is not allowed");
+
             if (AppManager.PlayerDownloader.IsBusy)
                 return BaseApiResult<WallpaperModel>.ErrorState(ErrorType.NoPlayer, null, null);
 
@@ -306,8 +311,8 @@ namespace LiveWallpaper.LocalServer.Hubs
         {
             string? dir = Path.GetDirectoryName(path);
             //不能删除非壁纸目录的文件
-            if (AppManager.UserSetting != null && dir != null && !dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
-                return BaseApiResult.ErrorState(ErrorType.Failed);
+            if (!SecurityGuard.IsPathUnderDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir, dir))
+                return BaseApiResult.ErrorState(ErrorType.NoPermission, "path is not allowed");
             return await WallpaperApi.DeleteWallpaper(path);
         }
         //删除特定文件
@@ -321,9 +326,8 @@ namespace LiveWallpaper.LocalServer.Hubs
 
                 try
                 {
-                    string? dir = Path.GetDirectoryName(path);
                     //不能删除非壁纸目录的文件
-                    if (AppManager.UserSetting != null && dir != null && !dir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
+                    if (!SecurityGuard.IsPathUnderDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir, path))
                         continue;
 
                     await Task.Run(() =>
@@ -375,6 +379,12 @@ namespace LiveWallpaper.LocalServer.Hubs
             return AppManager.OpenStoreReview();
         }
 
+        //当前是否以UWP打包模式运行
+        public Task<bool> IsUwp()
+        {
+            return Task.FromResult(AppManager.IsUwp);
+        }
+
         public Task<BaseApiResult> StopDownloadWallpaper(string wallpaper)
         {
             if (_downloadingWallpapers.ContainsKey(wallpaper))
@@ -403,6 +413,11 @@ namespace LiveWallpaper.LocalServer.Hubs
                 if (_downloadingWallpapers.ContainsKey(wallpaper))
                     return Task.FromResult(BaseApiResult.BusyState());
 
+                //下载地址只允许公网http/https，防止被用来访问内网
+                if (!SecurityGuard.IsSafeDownloadUrl(wallpaper) ||
+                    (cover != null && !SecurityGuard.IsSafeDownloadUrl(cover)))
+                    return Task.FromResult(BaseApiResult.ErrorState(ErrorType.Failed, "download url is not allowed"));
+
                 string? destFolder = null;
 
                 if (AppManager.UserSetting != null)
@@ -411,6 +426,10 @@ namespace LiveWallpaper.LocalServer.Hubs
                         destFolder = Path.Combine(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, info.ID);
                     else
                         destFolder = WallpaperApi.GetDraftDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
+
+                    //info.ID可能带..，落到壁纸目录外则拒绝
+                    if (!SecurityGuard.IsPathUnderDir(AppManager.UserSetting.Wallpaper.WallpaperSaveDir, destFolder))
+                        return Task.FromResult(BaseApiResult.ErrorState(ErrorType.NoPermission, "destFolder is not allowed"));
                 }
 
                 if (destFolder == null)
@@ -563,43 +582,21 @@ namespace LiveWallpaper.LocalServer.Hubs
         }
         private static bool HasReadPermission(string? dir)
         {
-            if (dir == null)
+            if (string.IsNullOrEmpty(dir))
                 return false;
-            if (!dir.EndsWith("\\"))
-                dir += "\\";
 
-            List<string> allowDirs = new();
-            var tmpDir = Path.GetTempPath();
-            allowDirs.Add(tmpDir);
-            if (AppManager.UserSetting != null)
-                allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
-
-            foreach (var item in allowDirs)
+            List<string?> allowDirs = new()
             {
-                if (dir.StartsWith(item))
-                    return true;
-            }
+                Path.GetTempPath(),
+                AppManager.UserSetting?.Wallpaper.WallpaperSaveDir
+            };
 
-            return false;
+            return allowDirs.Any(item => SecurityGuard.IsPathUnderDir(item, dir));
         }
         private static bool HasWritePermission(string? dir)
         {
-            if (dir == null)
-                return false;
-
-            if (!dir.EndsWith("\\"))
-                dir += "\\";
-
-            //不能删除非壁纸目录的文件
-            List<string> allowDirs = new();
-            if (AppManager.UserSetting != null)
-                allowDirs.Add(AppManager.UserSetting.Wallpaper.WallpaperSaveDir);
-
-            foreach (var item in allowDirs)
-                if (dir.StartsWith(item))
-                    return true;
-
-            return false;
+            //不能写入非壁纸目录
+            return SecurityGuard.IsPathUnderDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir, dir);
         }
         #endregion
     }

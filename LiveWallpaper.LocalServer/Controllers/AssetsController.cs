@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LiveWallpaper.LocalServer.Utils;
+using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -13,6 +14,11 @@ namespace LiveWallpaper.LocalServer.Controllers
 
         public async Task<ActionResult> Image(string localPath)
         {
+            //只允许读取壁纸目录和临时目录（缩略图）下的图片，防止任意文件读取
+            if (!SecurityGuard.IsPathUnderDir(AppManager.UserSetting?.Wallpaper.WallpaperSaveDir, localPath) &&
+                !SecurityGuard.IsPathUnderDir(Path.GetTempPath(), localPath))
+                return NotFound();
+
             if (!System.IO.File.Exists(localPath))
                 return NotFound();
 

@@ -23,6 +23,7 @@ namespace LiveWallpaper.LocalServer
         public static string CacheDir { get; private set; }
         public static string ConfigDir { get; private set; }
         public static string LogDir { get; private set; }
+        public static bool IsUwp { get; private set; }
         private static IStartupManager? _startupManager = null;
 
         static AppManager()
@@ -30,7 +31,8 @@ namespace LiveWallpaper.LocalServer
             //_runningDataFilePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\{AppName}\\runningData.json";
             //runningdata目录修改为和配置一个目录2021.9.30
             DesktopBridge.Helpers helpers = new();
-            if (helpers.IsRunningAsUwp())
+            IsUwp = helpers.IsRunningAsUwp();
+            if (IsUwp)
             {
                 //uwp放在包里面，卸载时可以清理干净
                 ConfigDir = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, $"Local\\{AppName}\\");
@@ -189,8 +191,7 @@ namespace LiveWallpaper.LocalServer
                     await LoadUserSetting();
 
                 //开机启动
-                DesktopBridge.Helpers helpers = new();
-                if (helpers.IsRunningAsUwp())
+                if (IsUwp)
                     _startupManager = new DesktopBridgeStartupManager("LiveWallpaper2");
                 else
                 {
@@ -302,6 +303,12 @@ namespace LiveWallpaper.LocalServer
             UserSetting = await JsonHelper.JsonDeserializeFromFileAsync<UserSetting>(UserSettingFilePath);
             UserSetting ??= new UserSetting();
             UserSetting.Wallpaper.FixScreenOptions();
+#if DEBUG
+            //实验室设置只在开发模式暴露，保证Debug下前端能看见
+            UserSetting.Lab ??= new LabSetting();
+#else
+            UserSetting.Lab = null;
+#endif
         }
 
         internal static async Task SaveCurrentWalpapers()
@@ -319,6 +326,12 @@ namespace LiveWallpaper.LocalServer
             {
                 if (UserSetting == null)
                     return BaseApiResult.ErrorState(ErrorType.Uninitialized);
+
+#if !DEBUG
+                //实验室设置只在开发模式生效
+                if (setting != null)
+                    setting.Lab = null;
+#endif
 
                 await JsonHelper.JsonSerializeAsync(setting, UserSettingFilePath);
 

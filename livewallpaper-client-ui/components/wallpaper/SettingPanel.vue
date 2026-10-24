@@ -104,6 +104,40 @@
         <hr class="is-medium" />
       </section>
 
+      <section v-if="setting.lab">
+        <h2 class="title is-4">
+          <router-link to="#api-view">#</router-link>
+          {{ $t('dashboard.client.setting.lab') }}
+        </h2>
+        <div class="setting-container">
+          <b-field
+            :label="$t('dashboard.client.setting.communityUrl')"
+            :message="$t('dashboard.client.setting.communityUrlTips')"
+          >
+            <b-select
+              placeholder=""
+              v-model="communityUrlMode"
+              v-on:input="onCommunityModeChange"
+            >
+              <option value="online">
+                {{ $t('dashboard.client.setting.communityUrlOnline') }}
+              </option>
+              <option value="local">
+                {{ $t('dashboard.client.setting.communityUrlLocal') }}
+              </option>
+              <option value="custom">
+                {{ $t('dashboard.client.setting.communityUrlCustom') }}
+              </option>
+            </b-select>
+            <b-input
+              v-model="setting.lab.communityUrl"
+              :placeholder="communityUrlOnline"
+            ></b-input>
+          </b-field>
+        </div>
+        <hr class="is-medium" />
+      </section>
+
       <draggable
         class="list-group"
         v-model="setting.wallpaper.screenOptions"
@@ -165,6 +199,10 @@
 import { createNamespacedHelpers } from 'vuex'
 const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
 import draggable from 'vuedraggable'
+import {
+  COMMUNITY_URL_ONLINE,
+  COMMUNITY_URL_LOCAL,
+} from '~/utils/common'
 
 export default {
   layout: 'dashboard',
@@ -174,9 +212,22 @@ export default {
   data() {
     return {
       drag: false,
+      communityUrlMode: 'online',
+      communityUrlOnline: COMMUNITY_URL_ONLINE,
       //深拷贝，Object.assign只拷贝第一层
       setting: JSON.parse(JSON.stringify(this.$store.state.local.setting)),
     }
+  },
+  watch: {
+    //按当前值推断下拉框选中项：与预设一致选预设，否则自定义
+    'setting.lab.communityUrl': {
+      immediate: true,
+      handler(v) {
+        if (!v || v === COMMUNITY_URL_ONLINE) this.communityUrlMode = 'online'
+        else if (v === COMMUNITY_URL_LOCAL) this.communityUrlMode = 'local'
+        else this.communityUrlMode = 'custom'
+      },
+    },
   },
   computed: {
     dragOptions() {
@@ -213,6 +264,15 @@ export default {
     },
     handleClientApiException(error) {
       this.$local.handleClientApiException(this, error)
+    },
+    //切换预设地址后立即保存；自定义只是标记，等用户手动改完地址再保存
+    onCommunityModeChange(mode) {
+      if (!this.setting.lab) return
+      if (mode === 'online') this.setting.lab.communityUrl = COMMUNITY_URL_ONLINE
+      else if (mode === 'local')
+        this.setting.lab.communityUrl = COMMUNITY_URL_LOCAL
+      else return
+      this.onSaveClick()
     },
     async loadData() {
       await this.loadSetting({

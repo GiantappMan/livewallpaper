@@ -386,6 +386,12 @@ class LivewallpaperApi {
         });
         return r;
     }
+    async isUwp() {
+        let r = await this._invoke({
+            method: "IsUwp",
+        });
+        return r;
+    }
 }
 
 // const livewallpaperApi = new LivewallpaperApi();

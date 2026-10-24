@@ -1,4 +1,5 @@
 import OpenClientTips from '../components/wallpaper/common/OpenClientTips'
+import { COMMUNITY_URL_ONLINE } from '../utils/common'
 
 export default ({ store, app }, inject) => {
     const common = {
@@ -46,7 +47,14 @@ export default ({ store, app }, inject) => {
             })
         },
         getOnlineUrl(path, culture) {
-            let url = `https://livewallpaper.giantapp.cn${culture === 'zh' ? '' : '/' + culture}/${path}?v=${app.$config.expectedClientVersion}`;
+            //实验室设置的自定义社区地址（仅开发模式存在），空则用线上地址
+            let setting = store.state.local.setting;
+            let communityUrl =
+                setting && setting.lab && setting.lab.communityUrl
+                    ? setting.lab.communityUrl
+                    : COMMUNITY_URL_ONLINE;
+            communityUrl = communityUrl.replace(/\/+$/, '');
+            let url = `${communityUrl}${culture === 'zh' ? '' : '/' + culture}/${path}?v=${app.$config.expectedClientVersion}`;
             return url
         }
     };

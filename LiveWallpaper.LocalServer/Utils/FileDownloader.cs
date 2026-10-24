@@ -41,6 +41,10 @@ namespace LiveWallpaper.LocalServer.Utils
         /// <returns></returns>
         public BaseApiResult SetupFile(string url)
         {
+            //下载地址只允许公网http/https，防止SSRF
+            if (!SecurityGuard.IsSafeDownloadUrl(url))
+                return BaseApiResult.ErrorState(ErrorType.Failed, "url is not allowed");
+
             if (IsBusy)
                 return BaseApiResult.BusyState();
 

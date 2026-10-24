@@ -1,4 +1,5 @@
 ﻿using Giantapp.LiveWallpaper.Engine;
+using LiveWallpaper.LocalServer.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -25,19 +26,35 @@ namespace LiveWallpaper.LocalServer.Controllers
                 return BaseApiResult<string>.ErrorState(ErrorType.Failed, "distPath can not be empty");
 
             //string dir = Path.GetDirectoryName(distDir);
-            //不能操作非壁纸目录
-            if (AppManager.UserSetting != null && !distDir.Contains(AppManager.UserSetting.Wallpaper.WallpaperSaveDir))
-                return BaseApiResult<string>.ErrorState(ErrorType.Failed);
+            //只能写入壁纸目录，规范化后严格校验，防止..\跳出和同前缀目录名绕过
+            string? saveDir = AppManager.UserSetting?.Wallpaper.WallpaperSaveDir;
+            if (string.IsNullOrEmpty(saveDir) || !SecurityGuard.IsPathUnderDir(saveDir, distDir))
+                return BaseApiResult<string>.ErrorState(ErrorType.NoPermission, "distDir is not allowed");
 
             try
             {
                 if (fc != null && fc.Files.Count > 0 && fc.Files[0].Length > 0)
                 {
                     var formFile = fc.Files[0];
-                    string distPath = Path.Combine(distDir, formFile.FileName);
 
-                    if (!Directory.Exists(distDir))
-                        Directory.CreateDirectory(distDir);
+                    //去掉路径部分，只保留文件名
+                    string fileName = Path.GetFileName(formFile.FileName);
+                    if (string.IsNullOrEmpty(fileName))
+                        return BaseApiResult<string>.ErrorState(ErrorType.Failed, "fileName is invalid");
+
+                    //禁止通过网络上传可执行文件
+                    if (SecurityGuard.IsBlockedFileExtension(fileName))
+                        return BaseApiResult<string>.ErrorState(ErrorType.Failed, $"file type not allowed:{Path.GetExtension(fileName)}");
+
+                    string normalizedDir = SecurityGuard.NormalizePath(distDir)!;
+                    string distPath = Path.Combine(normalizedDir, fileName);
+
+                    //拼接后再次校验
+                    if (!SecurityGuard.IsPathUnderDir(saveDir, distPath))
+                        return BaseApiResult<string>.ErrorState(ErrorType.NoPermission, "distPath is not allowed");
+
+                    if (!Directory.Exists(normalizedDir))
+                        Directory.CreateDirectory(normalizedDir);
 
                     using var stream = System.IO.File.Create(distPath);
                     await formFile.CopyToAsync(stream);

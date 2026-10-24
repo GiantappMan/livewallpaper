@@ -32,17 +32,7 @@
           </a>
         </b-field>
       </client-only>
-      <b-field>
-        <a target="_blank" :href="$config.releaseNotesUrl">
-          {{ $t('common.releaseNotes') }}
-        </a>
-      </b-field>
-      <b-field>
-        <a target="_blank" :href="$config.donateUrl">
-          {{ $t('common.donate') }}
-        </a>
-      </b-field>
-      <b-field>
+      <b-field v-if="isUwp">
         <b-button
           v-on:click="$local.getApiInstance().openStoreReview()"
           target="_blank"
@@ -68,6 +58,7 @@ export default {
   data() {
     return {
       isLoading: false,
+      isUwp: false,
     }
   },
   async mounted() {
@@ -78,6 +69,14 @@ export default {
     })
     this.isLoading = false
     console.log(this.clientVersion)
+    //好评鼓励只在UWP模式显示；旧版服务端没有IsUwp接口，默认隐藏
+    this.$local
+      .getApiInstance()
+      .isUwp()
+      .then((r) => {
+        this.isUwp = r === true
+      })
+      .catch(() => {})
   },
   methods: {
     isNewerVersion(oldVer, newVer) {

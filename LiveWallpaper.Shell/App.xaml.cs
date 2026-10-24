@@ -197,13 +197,21 @@ namespace LiveWallpaper.Shell
         }
         private void BtnCommunity_Click(object sender, EventArgs e)
         {
-            string? r = GetUrl("/wallpapers", serverHost);
+            string? r = GetUrl("/wallpapers", GetCommunityHost());
             OpenBrowser(r);
         }
         private void BtnCommunityWebView2_Click(object sender, EventArgs e)
         {
-            string? r = GetUrl("/wallpapers", serverHost);
+            string? r = GetUrl("/wallpapers", GetCommunityHost());
             OpenLocalView(r);
+        }
+        //实验室设置的自定义社区地址，空则回退线上地址
+        private static string GetCommunityHost()
+        {
+            string? custom = AppManager.UserSetting?.Lab?.CommunityUrl?.Trim();
+            if (string.IsNullOrEmpty(custom))
+                return serverHost;
+            return custom.TrimEnd('/');
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {

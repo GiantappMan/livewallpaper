@@ -106,6 +106,17 @@ namespace LiveWallpaper.LocalServer.Models
     }
 
     /// <summary>
+    /// 实验室设置，仅开发模式（Debug构建）暴露给前端，Release构建强制为null
+    /// </summary>
+    public class LabSetting
+    {
+        /// <summary>
+        /// 社区地址，null或空表示使用默认线上地址
+        /// </summary>
+        public string? CommunityUrl { get; set; }
+    }
+
+    /// <summary>
     /// 用户设置
     /// </summary>
     public class UserSetting
@@ -113,5 +124,7 @@ namespace LiveWallpaper.LocalServer.Models
         public GeneralSettting General { get; set; } = new GeneralSettting();
 
         public WallpaperSetting Wallpaper { get; set; } = new WallpaperSetting();
+
+        public LabSetting? Lab { get; set; }
     }
 }

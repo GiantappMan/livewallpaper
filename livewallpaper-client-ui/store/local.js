@@ -33,6 +33,8 @@ export const state = () => ({
             appMaximizedEffectAllScreen: false,
             forwardMouseEvent: false,
         },
+        //实验室设置，仅开发模式（Debug构建）服务端才会返回
+        lab: null,
     },
 })
 
