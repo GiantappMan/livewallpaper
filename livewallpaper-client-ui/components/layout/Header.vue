@@ -32,7 +32,7 @@
       <b-navbar-item tag="div">
         <div class="buttons">
           <slot></slot>
-          <DownloadManager />
+          <DownloadManager v-if="isLocalWallpaperPage" />
         </div>
       </b-navbar-item>
     </template>
@@ -52,7 +52,13 @@ export default {
     stick: Boolean,
     light: Boolean,
   },
-  computed: {},
+  computed: {
+    //下载管理属于本地壁纸功能，只在本地壁纸页显示；非默认语言的路由名带 ___locale 后缀
+    isLocalWallpaperPage() {
+      const name = this.$route.name || ''
+      return name === 'index' || name.startsWith('index___')
+    },
+  },
   methods: {
     toggle: function () {
       this.menuActive = !this.menuActive
