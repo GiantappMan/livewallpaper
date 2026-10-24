@@ -5,7 +5,7 @@
     :class="{ 'is-fixed-top': stick, 'is-primary': light }"
   >
     <template slot="brand">
-      <b-navbar-item tag="a" :href="$local.getOnlineUrl('', $i18n.locale)">
+      <b-navbar-item tag="nuxt-link" :to="localePath(localTo)">
         <img width="28" height="28" src="@/assets/imgs/icon.png" />
       </b-navbar-item>
     </template>
@@ -15,8 +15,8 @@
       </b-navbar-item>
       <b-navbar-item
         tag="nuxt-link"
-        :to="localePath('/')"
-        :active="$nuxt.$route.path === '/'"
+        :to="localePath(localTo)"
+        :active="$nuxt.$route.path === localePath(localTo)"
       >
         {{ $t('local.title') }}
       </b-navbar-item>
@@ -51,12 +51,19 @@ export default {
   props: {
     stick: Boolean,
     light: Boolean,
+    //本地壁纸页路由；server-ui里本地壁纸挂在/local，客户端应用挂在/，由使用方传入
+    localTo: {
+      type: String,
+      default: '/',
+    },
   },
   computed: {
-    //下载管理属于本地壁纸功能，只在本地壁纸页显示；非默认语言的路由名带 ___locale 后缀
+    //下载管理属于本地壁纸功能，只在本地壁纸页显示；客户端应用路由名是index，server-ui是local
     isLocalWallpaperPage() {
       const name = this.$route.name || ''
-      return name === 'index' || name.startsWith('index___')
+      return ['index', 'local'].some(
+        (n) => name === n || name.startsWith(n + '___')
+      )
     },
   },
   methods: {
