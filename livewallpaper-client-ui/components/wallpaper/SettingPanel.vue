@@ -199,10 +199,12 @@
 import { createNamespacedHelpers } from 'vuex'
 const { mapState, mapActions, mapMutations } = createNamespacedHelpers('local')
 import draggable from 'vuedraggable'
+//相对路径而非~/别名：本组件会被站点仓库（server-ui）junction 复用，
+//那里 ~ 指向站点根目录，utils/common 没有这两个导出会编译告警且运行时为 undefined
 import {
   COMMUNITY_URL_ONLINE,
   COMMUNITY_URL_LOCAL,
-} from '~/utils/common'
+} from '../../utils/common'
 
 export default {
   layout: 'dashboard',
