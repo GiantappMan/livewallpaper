@@ -130,6 +130,11 @@ export default {
 }
 </script>
 <style scoped>
+/*非4:3封面（16:9横屏/9:16竖屏）会被is-4by3盒子拉伸变形，裁剪填充保持比例 */
+.wp-cover {
+  object-fit: cover;
+}
+
 .item-hovering {
   box-shadow: inset 0 0 0px 2px #ff9970;
 }

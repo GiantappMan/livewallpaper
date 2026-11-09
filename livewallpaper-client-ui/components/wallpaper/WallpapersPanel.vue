@@ -733,6 +733,11 @@ export default {
 .wptitle {
   word-break: break-all;
 }
+
+/*bulma的is-4by3盒子不带object-fit，非4:3封面（16:9横屏/9:16竖屏）会被拉伸变形，裁剪填充保持比例 */
+.card-image img {
+  object-fit: cover;
+}
 .main {
   padding: 2px 3rem 2rem 3rem;
   min-height: 600px;

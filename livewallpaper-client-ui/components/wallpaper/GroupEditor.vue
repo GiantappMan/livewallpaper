@@ -285,6 +285,11 @@ export default {
   min-height: 600px;
 }
 
+/*非4:3封面（16:9横屏/9:16竖屏）会被is-4by3盒子拉伸变形，裁剪填充保持比例 */
+.wp-cover {
+  object-fit: cover;
+}
+
 .list-group {
   min-height: 40px;
 }
