@@ -747,6 +747,19 @@ export default {
   opacity: 0;
 }
 
+/*全页b-loading遮罩要等fade过渡结束才停止拦截鼠标；在rAF停摆的环境下
+  （窗口被遮挡/最小化时加载、WebView2后台渲染、壁纸渲染占用GPU等）过渡会卡在
+  中间态，遮罩以fixed+z-index:999盖住整页且不可见，卡片hover/点击全部失效。
+  离场立即隐藏并放行鼠标，进场期间也不拦截鼠标，保证页面始终可交互。 */
+.loading-overlay.fade-leave-active {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-overlay.fade-enter-active {
+  pointer-events: none;
+}
+
 .card-bottom {
   position: absolute;
   left: 0;
