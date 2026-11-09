@@ -107,7 +107,8 @@ export default {
       this.$router.push(this.localePath('/'))
     },
     clearFinished() {
-      this.$store.commit('local/clearFinishedDownloads')
+      //本地与服务端记录一起清，否则刷新后服务端历史又会加载回来
+      this.$store.dispatch('local/clearDownloadHistory')
     },
     //编程式Modal渲染的动态组件$parent即Modal实例
     close() {

@@ -549,21 +549,42 @@ namespace LiveWallpaper.LocalServer.Hubs
                              }
                          }
 
-                         //统一完成事件：封面不存在或长度未知时此前永远没有completed事件，客户端会一直等
-                         await _hubEventEmitter.AllClient().SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent = 100d, completed = true, succeeded = true });
-                     }
-                     catch (Exception ex)
-                     {
-                     _raiseLimiter.Execute(async () =>
-                     {
-                         var client = _hubEventEmitter.AllClient();
-                         var percent = 100;
-                         //下载异常；path兜底为主文件URL防止无法归组，error供前端明确提示失败原因
-                         await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent, completed = true, succeeded = false, error = ex.Message });
-                     }, 1000);
+                        //统一完成事件：封面不存在或长度未知时此前永远没有completed事件，客户端会一直等
+                        await _hubEventEmitter.AllClient().SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent = 100d, completed = true, succeeded = true });
 
-                         Debug.WriteLine(ex);
-                     }
+                        //完成即记账，所有UI源共享同一份历史
+                        await DownloadRecordManager.RecordAsync(new DownloadRecord
+                        {
+                            Url = wallpaper,
+                            Title = info?.Title,
+                            Succeeded = true,
+                            Time = DateTime.Now,
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                    _raiseLimiter.Execute(async () =>
+                    {
+                        var client = _hubEventEmitter.AllClient();
+                        var percent = 100;
+                        //下载异常；path兜底为主文件URL防止无法归组，error供前端明确提示失败原因
+                        await client.SendAsync("DownloadWallpaperProgressChanged", new { path = cover ?? wallpaper, wallpaper, title = info?.Title, percent, completed = true, succeeded = false, error = ex.Message });
+                    }, 1000);
+
+                        //取消与失败都记账；token已触发视为用户主动取消，与下载异常区分
+                        bool cancelled = cts.IsCancellationRequested || ex is OperationCanceledException;
+                        await DownloadRecordManager.RecordAsync(new DownloadRecord
+                        {
+                            Url = wallpaper,
+                            Title = info?.Title,
+                            Succeeded = false,
+                            Cancelled = cancelled,
+                            Error = ex.Message,
+                            Time = DateTime.Now,
+                        });
+
+                        Debug.WriteLine(ex);
+                    }
                      finally
                      {
                          _downloadingWallpapers.Remove(wallpaper, out _);
@@ -577,6 +598,28 @@ namespace LiveWallpaper.LocalServer.Hubs
                 return Task.FromResult(BaseApiResult.ExceptionState(ex));
             }
         }
+
+        #region download records
+        //下载历史记账在服务端：线上站/本地页等多个UI源展示同一份数据，刷新重启后仍可见
+        public async Task<BaseApiResult<List<DownloadRecord>>> GetDownloadRecords()
+        {
+            return BaseApiResult<List<DownloadRecord>>.SuccessState(await DownloadRecordManager.GetAsync());
+        }
+
+        public async Task<BaseApiResult> ClearDownloadRecords()
+        {
+            await DownloadRecordManager.ClearAsync();
+            return BaseApiResult.SuccessState();
+        }
+
+        //迁移旧版浏览器localStorage里的历史记录（仅补缺不覆盖），成功后前端会删掉本地key
+        public async Task<BaseApiResult> AddDownloadRecords(List<DownloadRecord> records)
+        {
+            await DownloadRecordManager.ImportAsync(records);
+            return BaseApiResult.SuccessState();
+        }
+        #endregion
+
         #region private
 
         private async void FileDownloader_SetupFFmpegPrgoressEvent(object? sender, FileDownloader.ProgressArgs e)

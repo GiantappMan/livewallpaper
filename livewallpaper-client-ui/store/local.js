@@ -13,6 +13,48 @@ function compareLocalID(a, b) {
 //已注册下载进度监听的api实例（setPort每次导航都可能换实例，用模块变量做幂等标记）
 let _downloadListenerApi = null;
 
+//已尝试加载下载历史的api实例（历史记账在服务端，成功后无需每次导航重复拉取）
+let _historyLoaderApi = null;
+
+//从服务端拉取下载历史；顺带把旧版浏览器localStorage里的记录迁移上去
+//（localStorage按源隔离，曾导致线上站/本地页历史不一致，现在服务端是唯一记账方）
+async function loadDownloadHistory(context) {
+    const { state, commit } = context;
+    const api = state.livewallpaperApi;
+    if (!api || _historyLoaderApi === api) return;
+    try {
+        let legacy = [];
+        try {
+            const raw = localStorage.getItem('lw_download_records');
+            if (raw) legacy = JSON.parse(raw).filter((d) => d && d.url && d.completed);
+        } catch (e) {
+            console.log('read legacy download records', e);
+        }
+        if (legacy.length) {
+            const addR = await api.addDownloadRecords(legacy);
+            //迁移成功才删key；旧版本服务端没有该方法时保留，下次导航重试
+            if (addR && addR.ok) localStorage.removeItem('lw_download_records');
+        }
+
+        const res = await api.getDownloadRecords();
+        if (res && res.ok) {
+            commit('loadDownloadRecords', (res.data || []).map((r) => ({
+                url: r.url,
+                title: r.title,
+                percent: 100,
+                completed: true,
+                succeeded: !!r.succeeded,
+                cancelled: !!r.cancelled,
+                error: r.error || null,
+            })));
+        }
+        _historyLoaderApi = api;
+    } catch (e) {
+        //服务端未启动等场景加载失败，清除标记让下次导航重试
+        console.log('loadDownloadHistory', e);
+    }
+}
+
 function fileNameFromUrl(url) {
     try {
         const name = decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
@@ -182,7 +224,7 @@ export const mutations = {
     clearFinishedDownloads(state) {
         state.downloads = state.downloads.filter((d) => !d.completed);
     },
-    //从localStorage恢复的历史记录（仅已完成），与运行中的任务按url去重
+    //恢复历史记录（仅已完成，来源：服务端记账/旧版localStorage），与运行中的任务按url去重
     loadDownloadRecords(state, list) {
         if (!Array.isArray(list)) return;
         for (const item of list) {
@@ -233,6 +275,12 @@ export const actions = {
             commit("setApiInstance", new LivewallpaperApi(port));
         }
         registerDownloadListener(context);
+        loadDownloadHistory(context);
+    },
+    async clearDownloadHistory({ commit, state }) {
+        //先清本地UI展示；服务端记录也清掉，否则刷新后又会从服务端加载回来
+        commit('clearFinishedDownloads');
+        await state.livewallpaperApi.clearDownloadRecords().catch(console.log);
     },
     async cancelDownload({ commit, state }, url) {
         if (!url) return;

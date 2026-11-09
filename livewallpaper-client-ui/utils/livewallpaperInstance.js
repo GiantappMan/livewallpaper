@@ -202,6 +202,27 @@ class LivewallpaperApi {
         });
         return r;
     }
+    //下载历史记账在本地服务端，线上站/本地页等多个UI源读到同一份数据
+    async getDownloadRecords() {
+        let r = await this._invoke({
+            method: "GetDownloadRecords",
+        });
+        return r;
+    }
+    async clearDownloadRecords() {
+        let r = await this._invoke({
+            method: "ClearDownloadRecords",
+        });
+        return r;
+    }
+    //把旧版浏览器localStorage里的历史迁移到服务端（仅补缺）
+    async addDownloadRecords(records) {
+        let r = await this._invoke({
+            method: "AddDownloadRecords",
+            parameters: [records]
+        });
+        return r;
+    }
     async onDownloadWallpaer(callback) {
         await this._enusureConnected();
 
