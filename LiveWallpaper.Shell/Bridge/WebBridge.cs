@@ -24,6 +24,8 @@ namespace LiveWallpaper.Shell.Bridge
     {
         public const string Magic = "__lw";
         public const int Version = 1;
+        /// <summary>注入到页面的桥接能力标记（前端据此选择桥接或端口模式）</summary>
+        public const string BridgeFlagJs = "__LW_BRIDGE__";
 
         /// <summary>与 SignalR JSON 协议一致的序列化选项（camelCase，属性名大小写不敏感反序列化）</summary>
         public static readonly JsonSerializerOptions JsonOptions = new()
@@ -55,6 +57,10 @@ namespace LiveWallpaper.Shell.Bridge
             //UI 静态资源走虚拟域名，不经任何本地端口
             coreWebView2.SetVirtualHostNameToFolderMapping(App.UiHost, wwwrootDir, CoreWebView2HostResourceAccessKind.Allow);
 
+            //能力握手标记：注入到所有页面（含社区站页面）且先于页面脚本执行。
+            //前端只有见到该标记才走桥接；老客户端没有注入逻辑，页面自动回落端口模式（SignalR + localhost:5001）
+            coreWebView2.AddScriptToExecuteOnDocumentCreatedAsync($"window.{BridgeFlagJs} = true;");
+
             //大文件上传不走 postMessage（体积限制），fetch 到资源主机由原生拦截处理
             coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}api/upload*", CoreWebView2WebResourceContext.All);
             //封面/缩略图等本地图片沿用 assets/image?localpath= 契约，改为原生拦截返回
@@ -64,6 +70,11 @@ namespace LiveWallpaper.Shell.Bridge
             coreWebView2.WebMessageReceived += OnWebMessageReceived;
 
             WebMessageEventPublisher.Instance.Attach(coreWebView2);
+
+            //崩溃恢复等场景下页面可能先于注入注册就加载了（此时页面拿不到标记），重载一次让标记生效
+            if (!string.IsNullOrEmpty(coreWebView2.Source) && coreWebView2.Source != "about:blank")
+                coreWebView2.Reload();
+
             _logger.Info($"WebBridge attached, filters: {App.GetResourceBase()}api/upload*, {App.GetResourceBase()}assets/image*");
         }
 

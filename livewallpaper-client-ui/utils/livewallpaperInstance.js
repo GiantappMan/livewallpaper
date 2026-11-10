@@ -2,11 +2,15 @@ import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/s
 import { delay, isVersionGreatherThan } from '../utils/common';
 let _downloadWallpaperHandlers = [];
 
-// ======== 传输层探测 ========
-// 新客户端（WebView2）：走 WebMessage 桥，客户端不开本地端口
-// 浏览器/旧客户端（DevHost 开发、线上站调老客户端）：走 SignalR + HTTP（localhost 端口）
-export const IS_WEBVIEW_BRIDGE =
+// ======== 传输层探测（新旧客户端双兼容） ========
+// 桥接（新客户端，无本地端口）：WebView2 环境且新客户端注入了 __LW_BRIDGE__ 标记
+//   （标记由新 Shell 通过 AddScriptToExecuteOnDocumentCreated 注入到所有页面，先于页面脚本执行）
+// 端口（老客户端 / DevHost / 浏览器）：SignalR + HTTP（localhost:5001）
+//   老客户端不更新也能用：老客户端的 WebView2 里没有 __LW_BRIDGE__ 标记，
+//   社区页即使在新前端代码下也自动回落端口模式，调用老客户端的 5001 服务
+const HAS_WEBVIEW =
     typeof window !== 'undefined' && !!(window.chrome && window.chrome.webview && window.chrome.webview.postMessage)
+export const IS_WEBVIEW_BRIDGE = HAS_WEBVIEW && typeof window.__LW_BRIDGE__ !== 'undefined' && window.__LW_BRIDGE__ === true
 
 //桥接模式下图片/上传资源基地址：
 //客户端原生拦截资源在 res.livewallpaper.local（不可用 UI 虚拟域名：映射主机上的请求不触发 WebView2 拦截）
