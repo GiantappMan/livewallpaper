@@ -9,11 +9,8 @@ export const IS_WEBVIEW_BRIDGE =
     typeof window !== 'undefined' && !!(window.chrome && window.chrome.webview && window.chrome.webview.postMessage)
 
 //桥接模式下图片/上传资源基地址：
-//页面本身在虚拟域名上（发布形态）用相对路径；dev 模式页面在 localhost:3001 上，用绝对虚拟域名地址（客户端原生拦截响应）
-const BRIDGE_RESOURCE_HOST =
-    IS_WEBVIEW_BRIDGE && typeof window !== 'undefined' && window.location.hostname === 'livewallpaper.local'
-        ? ''
-        : 'https://livewallpaper.local/'
+//客户端原生拦截资源在 res.livewallpaper.local（不可用 UI 虚拟域名：映射主机上的请求不触发 WebView2 拦截）
+const BRIDGE_RESOURCE_HOST = 'https://res.livewallpaper.local/'
 
 let _bridgeSeq = 0;
 const _bridgePending = new Map(); // id -> {resolve, reject, timer}

@@ -51,6 +51,9 @@ namespace LiveWallpaper.Shell
         const string serverHost = "https://livewallpaper.giantapp.cn/";
         //UI 虚拟域名：WebView2 通过 SetVirtualHostNameToFolderMapping 加载 wwwroot，不经任何本地端口
         public const string UiHost = "livewallpaper.local";
+        //资源拦截主机：注意映射主机上的请求不触发 WebResourceRequested（WebView2 已知限制），
+        //图片/上传等原生应答走独立假主机，由过滤器拦截，无需真实 DNS
+        public const string ResourceHost = "res.livewallpaper.local";
 #if DEBUG
         //bun dev 时由 launchSettings 注入前端 dev 地址，客户端窗口直接打开热更新 UI
         private static readonly string? _devUiBase = Environment.GetEnvironmentVariable("LIVEWALLPAPER_DEV_UI");
@@ -349,6 +352,13 @@ namespace LiveWallpaper.Shell
         internal static string GetUiBase()
         {
             return $"https://{UiHost}/";
+        }
+        /// <summary>
+        /// 原生拦截资源（图片/上传）基地址
+        /// </summary>
+        internal static string GetResourceBase()
+        {
+            return $"https://{ResourceHost}/";
         }
         //兼容旧命名：现在指向虚拟域名
         internal static string GetLocalHosst()

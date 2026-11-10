@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace LiveWallpaper.Shell.Bridge
 {
@@ -54,16 +55,16 @@ namespace LiveWallpaper.Shell.Bridge
             //UI 静态资源走虚拟域名，不经任何本地端口
             coreWebView2.SetVirtualHostNameToFolderMapping(App.UiHost, wwwrootDir, CoreWebView2HostResourceAccessKind.Allow);
 
-            //大文件上传不走 postMessage（体积限制），fetch 到虚拟域名由原生拦截处理
-            coreWebView2.AddWebResourceRequestedFilter($"{App.GetUiBase()}api/upload*", CoreWebView2WebResourceContext.All);
+            //大文件上传不走 postMessage（体积限制），fetch 到资源主机由原生拦截处理
+            coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}api/upload*", CoreWebView2WebResourceContext.All);
             //封面/缩略图等本地图片沿用 assets/image?localpath= 契约，改为原生拦截返回
-            coreWebView2.AddWebResourceRequestedFilter($"{App.GetUiBase()}assets/image*", CoreWebView2WebResourceContext.All);
+            coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}assets/image*", CoreWebView2WebResourceContext.All);
             coreWebView2.WebResourceRequested += OnWebResourceRequested;
 
             coreWebView2.WebMessageReceived += OnWebMessageReceived;
 
             WebMessageEventPublisher.Instance.Attach(coreWebView2);
-            _logger.Info($"WebBridge attached, filters: {App.GetUiBase()}api/upload*, {App.GetUiBase()}assets/image*");
+            _logger.Info($"WebBridge attached, filters: {App.GetResourceBase()}api/upload*, {App.GetResourceBase()}assets/image*");
         }
 
         public void Detach(CoreWebView2 coreWebView2)
@@ -203,7 +204,6 @@ namespace LiveWallpaper.Shell.Bridge
 
         async void OnWebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
         {
-            _logger.Debug($"WebResourceRequested: {e.Request.Method} {e.Request.Uri}");
             //异步处理期间挂起网络请求
             var deferral = e.GetDeferral();
             try
@@ -347,6 +347,8 @@ namespace LiveWallpaper.Shell.Bridge
     /// </summary>
     public class WebMessageEventPublisher : IEventPublisher
     {
+        static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
         public static WebMessageEventPublisher Instance { get; } = new();
 
         readonly List<CoreWebView2> _webViews = new();
@@ -370,7 +372,7 @@ namespace LiveWallpaper.Shell.Bridge
             }
         }
 
-        public Task PublishAsync(string eventName, object payload)
+        public async Task PublishAsync(string eventName, object payload)
         {
             List<CoreWebView2> targets;
             lock (_webViews)
@@ -379,7 +381,10 @@ namespace LiveWallpaper.Shell.Bridge
             }
 
             if (targets.Count == 0)
-                return Task.CompletedTask;
+            {
+                _logger.Debug($"PublishAsync {eventName}: no attached webview, skipped");
+                return;
+            }
 
             string json = JsonSerializer.Serialize(new Dictionary<string, object?>
             {
@@ -388,18 +393,25 @@ namespace LiveWallpaper.Shell.Bridge
                 ["payload"] = payload,
             }, WebBridge.JsonOptions);
 
-            foreach (var webView in targets)
+            //下载进度等事件来自后台线程，而 WebView2 API 只能在创建它的 UI 线程调用
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null)
+                return;
+
+            await dispatcher.InvokeAsync(() =>
             {
-                try
+                foreach (var webView in targets)
                 {
-                    webView.PostWebMessageAsJson(json);
+                    try
+                    {
+                        webView.PostWebMessageAsJson(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Debug($"PublishAsync post failed: {ex.Message}");
+                    }
                 }
-                catch
-                {
-                    //窗口已关闭等场景，忽略
-                }
-            }
-            return Task.CompletedTask;
+            });
         }
     }
 }
