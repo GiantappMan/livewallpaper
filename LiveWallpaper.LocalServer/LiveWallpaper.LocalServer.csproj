@@ -9,10 +9,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Controllers\WallpaperController.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="DesktopBridge.Helpers" Version="1.2.2" />
 		<PackageReference Include="DotNetUtil.Common" Version="2.0.13" />
 		<PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.2" />

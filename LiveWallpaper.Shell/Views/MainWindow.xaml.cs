@@ -170,9 +170,14 @@ namespace LiveWallpaper.Shell.Views
                 await webview2.EnsureCoreWebView2Async(webView2Environment);
 
                 webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
-                webview2.NavigationStarting += Webview2_NavigationStarting;
+                webview2.CoreWebView2.NavigationStarting += Webview2_NavigationStarting;
                 webview2.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
-                webview2.NavigationCompleted += Webview2_NavigationCompleted;
+                webview2.CoreWebView2.NavigationCompleted += Webview2_NavigationCompleted;
+
+                //接入无端口桥：虚拟域名加载 wwwroot + WebMessage RPC + 上传/图片原生拦截
+                string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+                string wwwrootDir = Path.Combine(appDir, "wwwroot");
+                App.Instance.Services!.GetRequiredService<Bridge.WebBridge>().Attach(webview2.CoreWebView2, wwwrootDir);
 
                 _browserInit = true;
             }
@@ -280,6 +285,8 @@ namespace LiveWallpaper.Shell.Views
                 {
                     await AppManager.SaveUserSetting(AppManager.UserSetting);
                 }
+                if (webview2.CoreWebView2 != null)
+                    App.Instance.Services!.GetRequiredService<Bridge.WebBridge>().Detach(webview2.CoreWebView2);
                 webview2.Dispose();
             }
             catch (Exception)

@@ -153,15 +153,13 @@ namespace LiveWallpaper.LocalServer
             }
         }
 
-        public static async Task Initialize(int hostPort)
+        public static async Task Initialize()
         {
             try
             {
                 //应用程序数据
                 RunningData = await JsonHelper.JsonDeserializeFromFileAsync<RunningData>(RunningDataFilePath);
                 RunningData ??= new RunningData();
-                //更新端口号
-                RunningData.HostPort = hostPort;
                 EntryVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
 
                 if (RunningData.CurrentVersion == null)

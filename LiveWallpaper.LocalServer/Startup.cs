@@ -53,6 +53,10 @@ namespace LiveWallpaper.LocalServer
             //services.AddSingleton<IHostedService, HubEventEmitter>(serviceProvider => serviceProvider.GetService<HubEventEmitter>());
 
             services.AddHostedService(serviceProvider => serviceProvider.GetService<HubEventEmitter>());
+            //客户端本地API纯逻辑层：Hub（SignalR）与 Shell 的 WebMessage 桥共用同一份实现
+            services.AddSingleton<Api.LiveWallpaperApiService>(serviceProvider =>
+                new Api.LiveWallpaperApiService(new Api.SignalREventPublisher(serviceProvider.GetRequiredService<HubEventEmitter>())));
+            services.AddSingleton<Api.TransferFileService>();
             //.AddJsonOptions(options =>
             //{
             //    // Use the default property (Pascal) casing.

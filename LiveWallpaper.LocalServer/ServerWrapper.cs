@@ -11,7 +11,7 @@ namespace LiveWallpaper.LocalServer
             HostPort = port;
             //只监听本机环回地址（IPv4+IPv6），管理接口不允许局域网访问（GHSA-7x4r-5364-6hwf）
             string url = $"http://127.0.0.1:{port};http://[::1]:{port}";
-            await AppManager.Initialize(port);
+            await AppManager.Initialize();
             CreateHostBuilder(new string[] { $"--urls={url}" }).Build().Run();
         }
 

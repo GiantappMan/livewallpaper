@@ -49,8 +49,8 @@ namespace LiveWallpaper.Shell
         private static string? _clientVersion;
         private static MainWindow? _mainWindow;
         const string serverHost = "https://livewallpaper.giantapp.cn/";
-        private static int _hostPort;
-        private static readonly int _defaultHostPort = 5001;
+        //UI 虚拟域名：WebView2 通过 SetVirtualHostNameToFolderMapping 加载 wwwroot，不经任何本地端口
+        public const string UiHost = "livewallpaper.local";
 #if DEBUG
         //bun dev 时由 launchSettings 注入前端 dev 地址，客户端窗口直接打开热更新 UI
         private static readonly string? _devUiBase = Environment.GetEnvironmentVariable("LIVEWALLPAPER_DEV_UI");
@@ -151,6 +151,10 @@ namespace LiveWallpaper.Shell
             var services = new ServiceCollection();
 
             services.AddSingleton<ILogger>(_logger);
+            //无端口桥：WebView2 WebMessage RPC + 事件广播（业务实现在 LocalServer.Api）
+            services.AddSingleton(_ => new LocalServer.Api.LiveWallpaperApiService(Bridge.WebMessageEventPublisher.Instance));
+            services.AddSingleton<LocalServer.Api.TransferFileService>();
+            services.AddSingleton<Bridge.WebBridge>();
 
             return services.BuildServiceProvider();
         }
@@ -251,15 +255,12 @@ namespace LiveWallpaper.Shell
         {
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
             _clientVersion = version!.ToString();
-            _hostPort = GetPort();
 
             WallpaperApi.Initlize(Current.Dispatcher);
             AppManager.CultureChanged += LanService_CultureChanged;
             SetMenuText();
-            _ = Task.Run(() =>
-            {
-                ServerWrapper.Start(_hostPort);
-            });
+            //加载配置/恢复壁纸等初始化（原来由 ServerWrapper 内部调用，无端口化后由 Shell 直接驱动）
+            _ = Task.Run(async () => await AppManager.Initialize());
 #if DEBUG
             //开发模式：启动后自动打开客户端窗口（加载 dev 前端）
             if (!string.IsNullOrEmpty(_devUiBase))
@@ -343,34 +344,16 @@ namespace LiveWallpaper.Shell
             _notifyIcon.Init();
         }
         /// <summary>
-        /// 获取可用端口
+        /// UI 基地址（WebView2 虚拟域名，无本地端口）
         /// </summary>
-        /// <returns></returns>
-        static int GetPort()
+        internal static string GetUiBase()
         {
-            int[] defaultPorts = new int[] { _defaultHostPort, 6001, 7001, 8001, 0 };//0 表示随机
-
-            for (int i = 0; i < defaultPorts.Length; i++)
-            {
-                try
-                {
-                    TcpListener l = new(IPAddress.Loopback, defaultPorts[i]);
-                    l.Start();
-                    int port = ((IPEndPoint)l.LocalEndpoint).Port;
-                    l.Stop();
-                    return port;
-                }
-                catch (Exception)
-                {
-                    continue;
-                }
-            }
-
-            return _defaultHostPort;
+            return $"https://{UiHost}/";
         }
+        //兼容旧命名：现在指向虚拟域名
         internal static string GetLocalHosst()
         {
-            return $"http://localhost:{_hostPort}/";
+            return GetUiBase();
         }
         private async void OpenLocalView(string? url)
         {
@@ -380,18 +363,12 @@ namespace LiveWallpaper.Shell
             try
             {
 #if DEBUG
-                //开发模式：替换为前端 dev 服务器地址，?v、&p 参数保留
-                if (!string.IsNullOrEmpty(_devUiBase) && url.StartsWith(GetLocalHosst()))
-                    url = _devUiBase + url[GetLocalHosst().Length..];
+                //开发模式：替换为前端 dev 服务器地址，页面在 WebView2 内通过 WebMessage 桥调用 API
+                if (!string.IsNullOrEmpty(_devUiBase) && url.StartsWith(GetUiBase()))
+                    url = _devUiBase + url[GetUiBase().Length..];
 #endif
                 url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
 
-                //if (_hostPort != _defaultHostPort)
-                //{
-
-                //每次都带上端口号
-                url = $"{url}&p={_hostPort}";
-                //}
                 if (_mainWindow == null)
                 {
                     _mainWindow = new MainWindow(url)
@@ -454,10 +431,6 @@ namespace LiveWallpaper.Shell
                 if (url == null)
                     return;
                 url = $"{url}?v={_clientVersion}";//加个参数更新浏览器缓存
-                if (_hostPort != _defaultHostPort)
-                {
-                    url = $"{url}&p={_hostPort}";
-                }
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)
