@@ -27,15 +27,26 @@ namespace LiveWallpaper.LocalServer.Api
             if (!File.Exists(localPath))
                 return null;
 
-            for (int i = 0; i < 3; i++)
+            //引擎扫描壁纸时可能正在生成缩略图（写锁），真正重试打开直到可读或超时
+            FileStream? stream = null;
+            for (int i = 0; i < 20; i++)
             {
-                //可能文件正在访问，尝试x秒
-                if (!IsFileReady(localPath))
-                    await Task.Delay(2000);
+                try
+                {
+                    stream = File.Open(localPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    break;
+                }
+                catch (IOException) when (i < 19)
+                {
+                    await Task.Delay(500);
+                }
             }
 
+            if (stream == null)
+                return null;
+
             var ext = Path.GetExtension(localPath).Replace(".", "");
-            return new ImageResult(new FileStream(localPath, FileMode.Open), $"image/{ext}");
+            return new ImageResult(stream, $"image/{ext}");
         }
 
         public static bool IsFileReady(string filename)

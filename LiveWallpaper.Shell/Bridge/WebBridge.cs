@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -61,10 +62,9 @@ namespace LiveWallpaper.Shell.Bridge
             //前端只有见到该标记才走桥接；老客户端没有注入逻辑，页面自动回落端口模式（SignalR + localhost:5001）
             coreWebView2.AddScriptToExecuteOnDocumentCreatedAsync($"window.{BridgeFlagJs} = true;");
 
-            //大文件上传不走 postMessage（体积限制），fetch 到资源主机由原生拦截处理
-            coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}api/upload*", CoreWebView2WebResourceContext.All);
-            //封面/缩略图等本地图片沿用 assets/image?localpath= 契约，改为原生拦截返回
-            coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}assets/image*", CoreWebView2WebResourceContext.All);
+            //大文件上传不走 postMessage（体积限制），fetch 到资源主机由原生拦截处理；
+            //封面缩略图沿用 assets/image?localpath= 契约；default-fallback-image.webp 占位图也从这里应答
+            coreWebView2.AddWebResourceRequestedFilter($"{App.GetResourceBase()}*", CoreWebView2WebResourceContext.All);
             coreWebView2.WebResourceRequested += OnWebResourceRequested;
 
             coreWebView2.WebMessageReceived += OnWebMessageReceived;
@@ -228,6 +228,11 @@ namespace LiveWallpaper.Shell.Bridge
                 {
                     e.Response = await HandleImageAsync(uri);
                 }
+                else if (uri.AbsolutePath.Equals("/default-fallback-image.webp", StringComparison.OrdinalIgnoreCase))
+                {
+                    //占位图（img onerror 兜底）也走拦截应答，避免假主机 DNS 失败导致卡片纯白
+                    e.Response = await HandleStaticFileAsync(uri, "default-fallback-image.webp", "image/webp");
+                }
             }
             catch
             {
@@ -238,6 +243,17 @@ namespace LiveWallpaper.Shell.Bridge
             {
                 deferral.Complete();
             }
+        }
+
+        async Task<CoreWebView2WebResourceResponse?> HandleStaticFileAsync(Uri uri, string fileName, string contentType)
+        {
+            string appDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+            string file = Path.Combine(appDir, "wwwroot", fileName);
+            if (!File.Exists(file))
+                return CreateTextResponse(404, "Not Found");
+
+            var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return CreateResponse(stream, 200, "OK", $"Content-Type: {contentType}");
         }
 
         async Task<CoreWebView2WebResourceResponse?> HandleUploadAsync(Uri uri, string method, Stream? content)
