@@ -54,9 +54,19 @@ export default {
     },
     workbox: {
       // https://pwa.nuxtjs.org/workbox
-      /* workbox options */
       // 虽然缓存问题搞不定，还是打开因为webview2每个版本都清缓存
       enabled: true,
+      // 关键：必须为 false。offline=true 时模块会追加 pagesURLPattern("/") 兜底规则接管一切请求，
+      // 而 WebView2 不会对 SW 发起的请求触发 WebResourceRequested，
+      // 封面/上传（res.livewallpaper.local，客户端原生应答的假主机）会全部变成空白
+      offline: false,
+      // 兜底关掉后，排除规则 belt-and-braces 保留，防止将来重新启用 offline 时复发
+      runtimeCaching: [
+        {
+          urlPattern: '^(?!https://res\\.livewallpaper\\.local/)',
+          handler: 'NetworkFirst',
+        },
+      ],
     },
   },
   fontawesome: {
