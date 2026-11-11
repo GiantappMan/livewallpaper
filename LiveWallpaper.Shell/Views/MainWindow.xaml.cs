@@ -169,6 +169,12 @@ namespace LiveWallpaper.Shell.Views
                 var webView2Environment = await CoreWebView2Environment.CreateAsync(null, cachePath);
                 await webview2.EnsureCoreWebView2Async(webView2Environment);
 
+                //清掉残留的 Service Worker：同版本覆盖安装/升级时，旧版本注册的 SW 仍留在
+                //按版本隔离的用户数据目录里，会抢先拦截虚拟主机导航（livewallpaper.local），
+                //而 SW 上下文里对虚拟主机的 fetch 必然失败 → 主界面 ERR_ACCESS_DENIED 白屏。
+                //必须在首次导航前清除；新前端已不再让 SW 接管本地虚拟主机（见 nuxt.config pwa）。
+                await webview2.CoreWebView2.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.ServiceWorkers);
+
                 webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
                 webview2.CoreWebView2.NavigationStarting += Webview2_NavigationStarting;
                 webview2.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;

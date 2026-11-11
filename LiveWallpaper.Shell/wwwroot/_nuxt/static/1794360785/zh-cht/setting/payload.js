@@ -1,1 +1,0 @@
-__NUXT_JSONP__("/zh-cht/setting", {data:[{}],fetch:{},mutations:[]});

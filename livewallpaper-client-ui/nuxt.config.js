@@ -60,10 +60,13 @@ export default {
       // 而 WebView2 不会对 SW 发起的请求触发 WebResourceRequested，
       // 封面/上传（res.livewallpaper.local，客户端原生应答的假主机）会全部变成空白
       offline: false,
-      // 兜底关掉后，排除规则 belt-and-braces 保留，防止将来重新启用 offline 时复发
+      // 排除规则必须同时排除两个本地虚拟主机：只排资源主机时，SW 的 NetworkFirst
+      // 仍会接管 UI 主机导航（livewallpaper.local/...?v=x），而 SW 上下文里对虚拟
+      // 主机的 fetch 会 ERR_ACCESS_DENIED——升级/同版本覆盖安装的用户（旧 SW 残留在
+      // 按版本隔离的用户数据目录里）首屏直接白屏。资源主机同理（封面/上传原生应答）。
       runtimeCaching: [
         {
-          urlPattern: '^(?!https://res\\.livewallpaper\\.local/)',
+          urlPattern: '^(?!https://(res\\.)?livewallpaper\\.local/)',
           handler: 'NetworkFirst',
         },
       ],
