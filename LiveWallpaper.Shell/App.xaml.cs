@@ -274,6 +274,14 @@ namespace LiveWallpaper.Shell
                     await Current.Dispatcher.InvokeAsync(() => OpenLocalView(GetUrl("", GetLocalHosst())));
                 });
 #endif
+            //冒烟/自动化验证入口：Release 正常启动只有托盘；设 LW2_SHOW_UI=1 时自动打开主窗口，
+            //让发布包可以无人值守验证主界面加载（等价托盘双击）
+            if (Environment.GetEnvironmentVariable("LW2_SHOW_UI") == "1")
+                _ = Task.Run(async () =>
+                {
+                    await AppManager.WaitInitialized();
+                    await Current.Dispatcher.InvokeAsync(() => OpenLocalView(GetUrl("", GetLocalHosst())));
+                });
         }
         //捕获异常
         private void CatchApplicationError()

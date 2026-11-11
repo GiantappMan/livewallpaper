@@ -166,7 +166,13 @@ namespace LiveWallpaper.Shell.Views
 
                 _ = Task.Run(CleanCacheDir);
 
-                var webView2Environment = await CoreWebView2Environment.CreateAsync(null, cachePath);
+                //调试/自动化验证辅助：设 LW2_CDP=<端口> 时开远程调试端口，
+                //可从 http://127.0.0.1:<端口>/json 读到页面真实 title/URL 判断主界面渲染结果
+                var options = new CoreWebView2EnvironmentOptions();
+                if (int.TryParse(Environment.GetEnvironmentVariable("LW2_CDP"), out var cdpPort) && cdpPort > 0)
+                    options.AdditionalBrowserArguments = $"--remote-debugging-port={cdpPort}";
+
+                var webView2Environment = await CoreWebView2Environment.CreateAsync(null, cachePath, options);
                 await webview2.EnsureCoreWebView2Async(webView2Environment);
 
                 //清掉残留的 Service Worker：同版本覆盖安装/升级时，旧版本注册的 SW 仍留在

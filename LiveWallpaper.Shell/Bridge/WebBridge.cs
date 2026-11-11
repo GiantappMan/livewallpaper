@@ -38,6 +38,7 @@ namespace LiveWallpaper.Shell.Bridge
         readonly LiveWallpaperApiService _api;
         readonly TransferFileService _fileService;
         CoreWebView2? _coreWebView2;
+        string? _wwwrootDir;
         Logger _logger = LogManager.GetCurrentClassLogger();
 
         public WebBridge(LiveWallpaperApiService api, TransferFileService fileService)
@@ -47,20 +48,24 @@ namespace LiveWallpaper.Shell.Bridge
         }
 
         /// <summary>
-        /// 把 CoreWebView2 接入桥：注册 RPC 分发、事件广播与 api/upload、assets/image 原生拦截。
+        /// 把 CoreWebView2 接入桥：注册 RPC 分发、事件广播与 UI 静态资源、api/upload、assets/image 原生拦截。
         /// 在 EnsureCoreWebView2Async 之后调用。
         /// </summary>
         public void Attach(CoreWebView2 coreWebView2, string wwwrootDir)
         {
             _coreWebView2 = coreWebView2;
+            _wwwrootDir = wwwrootDir;
             _logger = LogManager.GetCurrentClassLogger();
-
-            //UI 静态资源走虚拟域名，不经任何本地端口
-            coreWebView2.SetVirtualHostNameToFolderMapping(App.UiHost, wwwrootDir, CoreWebView2HostResourceAccessKind.Allow);
 
             //能力握手标记：注入到所有页面（含社区站页面）且先于页面脚本执行。
             //前端只有见到该标记才走桥接；老客户端没有注入逻辑，页面自动回落端口模式（SignalR + localhost:5001）
             coreWebView2.AddScriptToExecuteOnDocumentCreatedAsync($"window.{BridgeFlagJs} = true;");
+
+            //UI 静态资源改用 WebResourceRequested 原生应答（与资源主机同一机制）。
+            //不再用 SetVirtualHostNameToFolderMapping：系统代理开启的机器上该映射不拦截请求，
+            //假域名请求走代理/DNS 后必然失败 → 主界面 ERR_ACCESS_DENIED 白屏（升级用户必现）。
+            //WebResourceRequested 在网络层之前拦截，不受代理/DNS 影响（已实验验证）。
+            coreWebView2.AddWebResourceRequestedFilter($"{App.GetUiBase()}*", CoreWebView2WebResourceContext.All);
 
             //大文件上传不走 postMessage（体积限制），fetch 到资源主机由原生拦截处理；
             //封面缩略图沿用 assets/image?localpath= 契约；default-fallback-image.webp 占位图也从这里应答
@@ -75,7 +80,7 @@ namespace LiveWallpaper.Shell.Bridge
             if (!string.IsNullOrEmpty(coreWebView2.Source) && coreWebView2.Source != "about:blank")
                 coreWebView2.Reload();
 
-            _logger.Info($"WebBridge attached, filters: {App.GetResourceBase()}api/upload*, {App.GetResourceBase()}assets/image*");
+            _logger.Info($"WebBridge attached, filters: {App.GetUiBase()}*, {App.GetResourceBase()}*");
         }
 
         public void Detach(CoreWebView2 coreWebView2)
@@ -220,7 +225,12 @@ namespace LiveWallpaper.Shell.Bridge
             try
             {
                 var uri = new Uri(e.Request.Uri);
-                if (uri.AbsolutePath.StartsWith("/api/upload", StringComparison.OrdinalIgnoreCase))
+                if (uri.Host.Equals(App.UiHost, StringComparison.OrdinalIgnoreCase))
+                {
+                    //UI 主机：wwwroot 静态资源原生应答（导航与子资源全走这里）
+                    e.Response = HandleUiStaticFile(uri);
+                }
+                else if (uri.AbsolutePath.StartsWith("/api/upload", StringComparison.OrdinalIgnoreCase))
                 {
                     e.Response = await HandleUploadAsync(uri, e.Request.Method, e.Request.Content);
                 }
@@ -243,6 +253,41 @@ namespace LiveWallpaper.Shell.Bridge
             {
                 deferral.Complete();
             }
+        }
+
+        //UI 主机静态资源应答：wwwroot 文件映射 + SPA 回退（目录 index.html → 200.html）
+        static readonly System.Collections.Generic.Dictionary<string, string> UiMimeMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            [".html"] = "text/html; charset=utf-8", [".js"] = "application/javascript",
+            [".css"] = "text/css", [".json"] = "application/json", [".webmanifest"] = "application/manifest+json",
+            [".png"] = "image/png", [".webp"] = "image/webp", [".jpg"] = "image/jpeg", [".svg"] = "image/svg+xml",
+            [".ico"] = "image/x-icon", [".woff2"] = "font/woff2", [".woff"] = "font/woff", [".ttf"] = "font/ttf",
+        };
+
+        CoreWebView2WebResourceResponse? HandleUiStaticFile(Uri uri)
+        {
+            if (string.IsNullOrEmpty(_wwwrootDir))
+                return CreateTextResponse(404, "Not Found");
+
+            //路径映射 + 边界校验：resolve 后必须仍在 wwwroot 内，防路径穿越
+            var rel = uri.AbsolutePath == "/" ? "index.html" : uri.AbsolutePath.TrimStart('/');
+            var file = Path.GetFullPath(Path.Combine(_wwwrootDir, rel.Replace('/', Path.DirectorySeparatorChar)));
+            if (!file.StartsWith(Path.GetFullPath(_wwwrootDir), StringComparison.OrdinalIgnoreCase))
+                return CreateTextResponse(403, "Forbidden");
+
+            if (Directory.Exists(file) || !File.Exists(file))
+            {
+                var candidate = Path.Combine(file, "index.html");
+                if (File.Exists(candidate))
+                    file = candidate;
+                else
+                    file = Path.Combine(_wwwrootDir, "200.html");
+            }
+
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            var contentType = UiMimeMap.TryGetValue(ext, out var mime) ? mime : "application/octet-stream";
+            var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return CreateResponse(stream, 200, "OK", $"Content-Type: {contentType}");
         }
 
         async Task<CoreWebView2WebResourceResponse?> HandleStaticFileAsync(Uri uri, string fileName, string contentType)
