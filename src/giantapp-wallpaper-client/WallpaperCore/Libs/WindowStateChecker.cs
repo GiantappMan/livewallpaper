@@ -10,6 +10,15 @@ using Windows.Win32.Foundation;
 
 namespace WallpaperCore.Libs;
 
+//当前遮挡壁纸的窗口信息，供前端展示
+public class CoveringWindowInfo
+{
+    //屏幕设备名，如 \\.\DISPLAY1
+    public string Screen { get; set; } = string.Empty;
+    public string? Title { get; set; }
+    public string? ClassName { get; set; }
+}
+
 /// <summary>
 /// 检查窗口是否最大化了
 /// </summary>
@@ -24,6 +33,9 @@ public class WindowStateChecker
 
     //是否已锁屏
     private static bool _isLocked = false;
+
+    //最近一次检测到的遮挡窗口快照（引用替换保证读取方拿到完整列表）
+    private static List<CoveringWindowInfo> _coveringWindows = new();
 
     #endregion
     static WindowStateChecker()
@@ -120,6 +132,8 @@ public class WindowStateChecker
                     currentScreenState.Add(item.DeviceName, (WindowState.NotMaximized, null, null));
                 //遍历检查列表
                 List<IntPtr> checkHandlesCopy = new(_checkHandles);
+                //本轮检测到的遮挡窗口
+                List<CoveringWindowInfo> coveringWindows = new();
                 foreach (var item in checkHandlesCopy)
                 {
                     var screen = Screen.FromHandle(item);
@@ -129,26 +143,39 @@ public class WindowStateChecker
                         currentScreenState.Add(screen.DeviceName, (WindowState.NotMaximized, null, null));
                     }
 
-                    //已经有其他程序最大化
-                    if (string.IsNullOrEmpty(screen.DeviceName) || currentScreenState[screen.DeviceName].Item1 == WindowState.Maximized)
+                    if (string.IsNullOrEmpty(screen.DeviceName))
                         continue;
 
                     WindowState state = IsWindowMaximized(item, out string? title, out string? className) ? WindowState.Maximized : WindowState.NotMaximized;
-                    //最大化的handle优先插入到前面，方便下次检查
                     if (state == WindowState.Maximized)
                     {
+                        //最大化的handle优先插入到前面，方便下次检查
                         if (!nextCheckHandles.Contains(item))
                         {
                             nextCheckHandles.Add(item);
                         }
+
+                        //收集遮挡窗口（同屏同类名同标题去重）
+                        if (!coveringWindows.Exists(m => m.Screen == screen.DeviceName && m.Title == title && m.ClassName == className))
+                        {
+                            coveringWindows.Add(new()
+                            {
+                                Screen = screen.DeviceName,
+                                Title = title,
+                                ClassName = className,
+                            });
+                        }
                     }
-                    else
-                    {
-                    }
+
+                    //已经有其他程序最大化，屏幕状态以第一个检测到的为准
+                    if (currentScreenState[screen.DeviceName].Item1 == WindowState.Maximized)
+                        continue;
 
                     currentScreenState[screen.DeviceName] = (state, title, className);
                 }
                 _checkHandles = nextCheckHandles;
+                //更新遮挡窗口快照
+                _coveringWindows = coveringWindows;
 
                 //更新数据
                 foreach (var item in currentScreenState)
@@ -219,6 +246,22 @@ public class WindowStateChecker
             return false;
         }
 
+        //用户自定义忽略的窗口类名
+        if (IsClassIgnored(className, WallpaperApi.Settings.CoveredIgnoreStrings))
+        {
+            return false;
+        }
+
+        //透明点击穿透的覆盖层（如 ZcodeGhostCursorOverlay、PowerToys 等）不会真正遮挡桌面，
+        //全屏尺寸会误触发面积判定，这里直接排除
+        int exStyle = PInvoke.GetWindowLong(handle, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        const int transparentAndLayered = (int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_TRANSPARENT
+            | (int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED;
+        if ((exStyle & transparentAndLayered) == transparentAndLayered)
+        {
+            return false;
+        }
+
 #if PrintInfo
         int bufferSize = PInvoke.GetWindowTextLength(handle) + 1;
         string windowName;
@@ -272,5 +315,30 @@ public class WindowStateChecker
     public void Stop()
     {
         _globalCacheScreenState.Clear();
+        _coveringWindows = new();
     }
+
+    #region public
+    //自定义忽略列表是否命中（不区分大小写，包含匹配）
+    public static bool IsClassIgnored(string? className, string[]? ignoreStrings)
+    {
+        if (string.IsNullOrEmpty(className) || ignoreStrings == null || ignoreStrings.Length == 0)
+            return false;
+
+        foreach (var item in ignoreStrings)
+        {
+            if (string.IsNullOrEmpty(item))
+                continue;
+            if (className!.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+        return false;
+    }
+
+    //最近一次检测到的遮挡窗口快照
+    public static List<CoveringWindowInfo> GetCoveringWindows()
+    {
+        return _coveringWindows;
+    }
+    #endregion
 }

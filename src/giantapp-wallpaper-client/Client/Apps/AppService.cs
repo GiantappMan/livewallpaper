@@ -137,6 +137,9 @@ internal class AppService
             SaveSnapshot();
         }
 
+        //遮挡检测忽略列表以壁纸设置为准（快照可能滞后）
+        WallpaperApi.Settings.CoveredIgnoreStrings = wallpaperConfig.CoveredIgnoreStrings ?? new string[0];
+
 
         //多语言初始化
         string path = "Client.Assets.Languages";
@@ -555,6 +558,13 @@ internal class AppService
                     if (WallpaperApi.Settings.CoveredBehavior != configWallpaper.CoveredBehavior)
                     {
                         WallpaperApi.Settings.CoveredBehavior = configWallpaper.CoveredBehavior;
+                        SaveSnapshot();
+                    }
+
+                    var coveredIgnoreStrings = configWallpaper.CoveredIgnoreStrings ?? new string[0];
+                    if (!WallpaperApi.Settings.CoveredIgnoreStrings.SequenceEqual(coveredIgnoreStrings))
+                    {
+                        WallpaperApi.Settings.CoveredIgnoreStrings = coveredIgnoreStrings;
                         SaveSnapshot();
                     }
 

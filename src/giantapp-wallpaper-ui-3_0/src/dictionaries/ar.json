@@ -200,6 +200,13 @@
     "unknown_error": "خطأ غير معروف",
     "wallpaper": "الخلفية",
     "wallpaper_directory": "مجلد قراءة الخلفيات",
+    "occlusion_detection": "كشف الحجب",
+    "covering_window_list": "النوافذ التي يتم اكتشافها حاليًا كحاجبة لسطح المكتب",
+    "no_covering_windows": "لا توجد نوافذ حاجبة",
+    "ignore": "تجاهل",
+    "ignored_window_classes": "فئات النوافذ المتجاهلة",
+    "ignore_hint": "اسم فئة النافذة، مطابقة جزئية",
+    "add_ignore": "إضافة",
     "wallpaper_obscured": "عندما تُحجب الخلفية",
     "wallpaper_settings": "إعدادات الخلفية"
   }

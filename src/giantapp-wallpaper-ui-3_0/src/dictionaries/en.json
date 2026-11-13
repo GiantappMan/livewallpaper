@@ -200,6 +200,13 @@
     "unknown_error": "Unknown Error",
     "wallpaper": "Wallpaper",
     "wallpaper_directory": "Wallpaper Directory",
+    "occlusion_detection": "Occlusion Detection",
+    "covering_window_list": "Windows currently detected as covering the wallpaper",
+    "no_covering_windows": "No covering windows",
+    "ignore": "Ignore",
+    "ignored_window_classes": "Ignored window classes",
+    "ignore_hint": "Window class name, substring match",
+    "add_ignore": "Add",
     "wallpaper_obscured": "When Wallpaper is Obscured",
     "wallpaper_settings": "Wallpaper Settings"
   }

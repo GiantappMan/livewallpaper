@@ -200,6 +200,13 @@
     "unknown_error": "不明なエラー",
     "wallpaper": "壁紙",
     "wallpaper_directory": "壁紙の読み込みフォルダ",
+    "occlusion_detection": "遮蔽検出",
+    "covering_window_list": "現在ウォールペーパーを遮蔽していると検出されたウィンドウ",
+    "no_covering_windows": "遮蔽ウィンドウなし",
+    "ignore": "無視",
+    "ignored_window_classes": "無視したウィンドウクラス",
+    "ignore_hint": "ウィンドウクラス名（部分一致）",
+    "add_ignore": "追加",
     "wallpaper_obscured": "壁紙が隠されたとき",
     "wallpaper_settings": "壁紙設定"
   }

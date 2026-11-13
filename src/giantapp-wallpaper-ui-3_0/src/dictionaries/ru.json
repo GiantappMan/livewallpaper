@@ -200,6 +200,13 @@
     "unknown_error": "Неизвестная ошибка",
     "wallpaper": "Обои",
     "wallpaper_directory": "Папка с обоями",
+    "occlusion_detection": "Обнаружение перекрытия",
+    "covering_window_list": "Окна, сейчас определяемые как перекрывающие обои",
+    "no_covering_windows": "Нет перекрывающих окон",
+    "ignore": "Игнорировать",
+    "ignored_window_classes": "Игнорируемые классы окон",
+    "ignore_hint": "Имя класса окна, частичное совпадение",
+    "add_ignore": "Добавить",
     "wallpaper_obscured": "Когда обои скрыты",
     "wallpaper_settings": "Настройки обоев"
   }

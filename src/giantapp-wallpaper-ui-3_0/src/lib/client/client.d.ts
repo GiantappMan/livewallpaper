@@ -12,6 +12,7 @@ interface API {
   StopWallpaper(screenIndex?: number): Promise<void>;
   SetVolume(volume: string, screenIndex?: string): Promise<void>;
   GetVersion(): Promise<string>;
+  GetCoveringWindows(): Promise<string>;
   OpenUrl(url: string): Promise<void>;
   UploadToTmp(fileName: string, content: string): Promise<string>;
   CreateWallpaper(title: string, coverUrl: string, pathUrl: string): Promise<boolean>;

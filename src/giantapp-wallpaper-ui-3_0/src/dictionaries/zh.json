@@ -200,6 +200,13 @@
     "unknown_error": "未知错误",
     "wallpaper": "壁纸",
     "wallpaper_directory": "壁纸读取目录",
+    "occlusion_detection": "遮挡检测",
+    "covering_window_list": "当前检测到遮挡壁纸的窗口",
+    "no_covering_windows": "暂无遮挡窗口",
+    "ignore": "忽略",
+    "ignored_window_classes": "已忽略的窗口类名",
+    "ignore_hint": "窗口类名，包含匹配",
+    "add_ignore": "添加",
     "wallpaper_obscured": "当壁纸被遮挡时",
     "wallpaper_settings": "壁纸设置"
   }

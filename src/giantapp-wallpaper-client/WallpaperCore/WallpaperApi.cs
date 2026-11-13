@@ -55,6 +55,12 @@ public static class WallpaperApi
         manger.SetScreenMaximized(state == WindowStateChecker.WindowState.Maximized);
     }
 
+    //最近一次检测到的遮挡壁纸的窗口
+    public static List<CoveringWindowInfo> GetCoveringWindows()
+    {
+        return WindowStateChecker.GetCoveringWindows();
+    }
+
     #region events
 
     #endregion

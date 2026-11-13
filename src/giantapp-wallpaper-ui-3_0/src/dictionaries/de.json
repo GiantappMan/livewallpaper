@@ -200,6 +200,13 @@
     "unknown_error": "Unbekannter Fehler",
     "wallpaper": "Wallpaper",
     "wallpaper_directory": "Wallpaper-Ordner",
+    "occlusion_detection": "Verdeckungserkennung",
+    "covering_window_list": "Derzeit als verdeckend erkannte Fenster",
+    "no_covering_windows": "Keine verdeckenden Fenster",
+    "ignore": "Ignorieren",
+    "ignored_window_classes": "Ignorierte Fensterklassen",
+    "ignore_hint": "Fensterklassenname, Teilübereinstimmung",
+    "add_ignore": "Hinzufügen",
     "wallpaper_obscured": "Wenn Wallpaper verdeckt wird",
     "wallpaper_settings": "Wallpaper-Einstellungen"
   }

@@ -200,6 +200,13 @@
     "unknown_error": "Erro desconhecido",
     "wallpaper": "Papel de parede",
     "wallpaper_directory": "Pasta de papéis de parede",
+    "occlusion_detection": "Detecção de oclusão",
+    "covering_window_list": "Janelas atualmente detectadas como cobrindo o papel de parede",
+    "no_covering_windows": "Nenhuma janela cobrindo",
+    "ignore": "Ignorar",
+    "ignored_window_classes": "Classes de janela ignoradas",
+    "ignore_hint": "Nome da classe da janela, correspondência parcial",
+    "add_ignore": "Adicionar",
     "wallpaper_obscured": "Quando o papel de parede estiver oculto",
     "wallpaper_settings": "Configurações de papel de parede"
   }

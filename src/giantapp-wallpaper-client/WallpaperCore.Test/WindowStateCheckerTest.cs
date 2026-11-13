@@ -36,4 +36,22 @@ public class WindowStateCheckerTest
         p.CloseMainWindow();
         p.Close();
     }
+
+    [TestMethod]
+    public void TestIsClassIgnored()
+    {
+        string[] ignoreStrings = new string[] { "ZcodeGhostCursorOverlay", "overlay" };
+        //命中：完全匹配
+        Assert.IsTrue(WindowStateChecker.IsClassIgnored("ZcodeGhostCursorOverlay", ignoreStrings));
+        //命中：包含匹配
+        Assert.IsTrue(WindowStateChecker.IsClassIgnored("SomeOverlayHost", new string[] { "overlay" }));
+        //命中：不区分大小写
+        Assert.IsTrue(WindowStateChecker.IsClassIgnored("zcodeghostcursoroverlay", ignoreStrings));
+        //未命中
+        Assert.IsFalse(WindowStateChecker.IsClassIgnored("Chrome_WidgetWin_1", ignoreStrings));
+        //空值防御
+        Assert.IsFalse(WindowStateChecker.IsClassIgnored(null, ignoreStrings));
+        Assert.IsFalse(WindowStateChecker.IsClassIgnored("mpv", null));
+        Assert.IsFalse(WindowStateChecker.IsClassIgnored("mpv", new string[0]));
+    }
 }

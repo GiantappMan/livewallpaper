@@ -200,6 +200,13 @@
     "unknown_error": "Erreur inconnue",
     "wallpaper": "Fond d'écran",
     "wallpaper_directory": "Dossier des fonds d'écran",
+    "occlusion_detection": "Détection d'occultation",
+    "covering_window_list": "Fenêtres actuellement détectées comme occultantes",
+    "no_covering_windows": "Aucune fenêtre occultante",
+    "ignore": "Ignorer",
+    "ignored_window_classes": "Classes de fenêtres ignorées",
+    "ignore_hint": "Nom de classe de fenêtre, correspondance partielle",
+    "add_ignore": "Ajouter",
     "wallpaper_obscured": "Quand le fond d'écran est masqué",
     "wallpaper_settings": "Paramètres des fonds d'écran"
   }

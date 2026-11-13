@@ -200,6 +200,13 @@
       "unknown_error": "Error Desconocido",
       "wallpaper": "Fondo de Pantalla",
       "wallpaper_directory": "Directorio de Fondos",
+      "occlusion_detection": "Detección de oclusión",
+      "covering_window_list": "Ventanas detectadas actualmente como oclusoras",
+      "no_covering_windows": "No hay ventanas oclusoras",
+      "ignore": "Ignorar",
+      "ignored_window_classes": "Clases de ventana ignoradas",
+      "ignore_hint": "Nombre de clase de ventana, coincidencia parcial",
+      "add_ignore": "Añadir",
       "wallpaper_obscured": "Cuando el Fondo de Pantalla está Oculto",
       "wallpaper_settings": "Configuración de Fondos"
     }

@@ -200,6 +200,13 @@
     "unknown_error": "अज्ञात त्रुटि",
     "wallpaper": "वॉलपेपर",
     "wallpaper_directory": "वॉलपेपर फ़ोल्डर",
+    "occlusion_detection": "ऑक्लूज़न डिटेक्शन",
+    "covering_window_list": "वर्तमान में वॉलपेपर को ढकने वाली पाई गई विंडोज़",
+    "no_covering_windows": "कोई ढकने वाली विंडो नहीं",
+    "ignore": "अनदेखा करें",
+    "ignored_window_classes": "अनदेखी की गई विंडो क्लास",
+    "ignore_hint": "विंडो क्लास नाम, आंशिक मिलान",
+    "add_ignore": "जोड़ें",
     "wallpaper_obscured": "जब वॉलपेपर ढक जाए",
     "wallpaper_settings": "वॉलपेपर सेटिंग्स"
   }

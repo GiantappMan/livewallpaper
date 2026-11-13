@@ -4,7 +4,7 @@ import { Wallpaper, WallpaperMeta, WallpaperSetting } from "./types/wallpaper";
 import type { Screen } from "./types/screen";
 import PlayingStatus from "./types/playing-status";
 import type { DownloadItem, DownloadRecord, DownloadStatus } from "./types/download";
-import type { UpdateState } from "./types/config";
+import type { CoveringWindow, UpdateState } from "./types/config";
 
 type Key = "Appearance" | "General" | "Wallpaper" | "Update";
 
@@ -208,6 +208,19 @@ class API {
       const { api } = window.chrome.webview.hostObjects;
       var res = await api.GetVersion();
       return { error: null, data: res };
+    } catch (e) {
+      console.log(e);
+      return { error: e, data: null };
+    }
+  }
+
+  //最近一次检测到的遮挡壁纸的窗口列表
+  async getCoveringWindows(): Promise<ApiResult<CoveringWindow[]>> {
+    try {
+      if (!window.chrome || !window.chrome.webview) return { error: "no webview", data: null };
+      const { api } = window.chrome.webview.hostObjects;
+      let json = await api.GetCoveringWindows();
+      return { error: null, data: JSON.parse(json) };
     } catch (e) {
       console.log(e);
       return { error: e, data: null };

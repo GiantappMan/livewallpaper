@@ -674,6 +674,8 @@ public class ApiSettings : ICloneable
     public int AudioSourceIndex { get; set; }
     public uint Volume { get; set; }
     public WallpaperCoveredBehavior CoveredBehavior { get; set; } = WallpaperCoveredBehavior.Pause;
+    //遮挡检测忽略的窗口类名（不区分大小写，包含匹配）
+    public string[] CoveredIgnoreStrings { get; set; } = Array.Empty<string>();
 
     public object Clone()
     {

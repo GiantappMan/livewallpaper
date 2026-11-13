@@ -40,5 +40,14 @@ export type ConfigWallpaper = {
   directories: string[];
   // keepWallpaper: boolean;
   coveredBehavior: WallpaperCoveredBehavior;
+  //遮挡检测忽略的窗口类名（不区分大小写，包含匹配）
+  coveredIgnoreStrings?: string[];
   defaultVideoPlayer: VideoPlayer;
+};
+
+//当前检测到遮挡壁纸的窗口
+export type CoveringWindow = {
+  screen: string;
+  title?: string | null;
+  className?: string | null;
 };

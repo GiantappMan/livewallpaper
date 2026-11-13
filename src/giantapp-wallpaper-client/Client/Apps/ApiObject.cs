@@ -640,6 +640,13 @@ public class ApiObject
         AppService.ShowShell(path);
     }
 
+    //最近一次检测到的遮挡壁纸的窗口列表（JSON数组：screen/title/className）
+    public string GetCoveringWindows()
+    {
+        var res = WallpaperApi.GetCoveringWindows();
+        return JsonSerializer.Serialize(res, WallpaperApi.JsonOptitons);
+    }
+
     //商店评分页地址由本机常量发起，不接受前端下发（defaultUrl 仅为兼容旧调用保留）
     public async Task<bool> OpenStoreReview(string? defaultUrl)
     {
