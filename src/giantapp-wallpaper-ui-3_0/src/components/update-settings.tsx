@@ -20,6 +20,12 @@ import {
     RefreshCw
 } from "lucide-react";
 
+//更新区域预设地址（intl 须与后端 Update.DefaultUrl 保持一致）
+const REGION_URLS = {
+    cn: "https://releases.giantapp.cn/wallpaper3",
+    intl: "https://releases.giantapp.cc/wallpaper3",
+} as const;
+
 export function UpdateSettings() {
     const dictionary = useAtomValue(langDictAtom);
     const [isStore, setIsStore] = useState(false);
@@ -80,6 +86,10 @@ export function UpdateSettings() {
 
     //所选通道与本次启动所在通道不一致：切通道需要重装，点检查更新时告知后端跳过版本比较
     const channelSwitched = runtimeChannel !== null && runtimeChannel !== config.channel;
+
+    //地址命中预设区域时高亮对应按钮，自定义地址不选中（忽略末尾斜杠差异）
+    const region = (Object.keys(REGION_URLS) as Array<keyof typeof REGION_URLS>)
+        .find((key) => config.url.replace(/\/+$/, "") === REGION_URLS[key]) ?? null;
 
     const channelName = (channel: "stable" | "preview") =>
         channel === "stable" ? dictionary['settings'].channel_stable : dictionary['settings'].channel_preview;
@@ -199,9 +209,9 @@ export function UpdateSettings() {
                             ) : (
                                 <Button size="sm" disabled={checking} onClick={() => apiClient.checkUpdate(channelSwitched)}>
                                     {checking && spinner}
-                                    {/*切通道后主操作就是重装目标通道版本，不再叫「检查更新」*/}
+                                    {/*切通道后主操作就是切到目标通道版本，不再叫「检查更新」*/}
                                     {channelSwitched
-                                        ? dictionary['settings'].reinstall
+                                        ? dictionary['settings'].switch_to_channel.replace("{0}", channelName(config.channel))
                                         : dictionary['settings'].check_update}
                                 </Button>
                             )}
@@ -217,9 +227,31 @@ export function UpdateSettings() {
                             <ChevronDown className={cn("h-4 w-4 transition-transform", addrOpen && "rotate-180")} />
                         </button>
                         {addrOpen && (
-                            <Input value={config.url}
-                                onChange={(e) => setConfig({ ...config, url: e.target.value })}
-                                onBlur={() => saveConfig(config)} />
+                            <div className="space-y-2">
+                                <div className="inline-flex rounded-lg border p-0.5">
+                                    {(Object.keys(REGION_URLS) as Array<keyof typeof REGION_URLS>).map((key) => (
+                                        <button key={key} type="button"
+                                            className={cn("rounded-[7px] px-3 py-1 text-sm transition-colors",
+                                                region === key
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:text-foreground")}
+                                            onClick={async () => {
+                                                //先落盘再查最新版本：后端读的是已持久化的配置
+                                                const next = { ...config, url: REGION_URLS[key] };
+                                                setConfig(next);
+                                                await apiClient.setConfig("Update", next);
+                                                refreshChannelLatest(next.channel);
+                                            }}>
+                                            {key === "cn"
+                                                ? dictionary['settings'].region_cn
+                                                : dictionary['settings'].region_intl}
+                                        </button>
+                                    ))}
+                                </div>
+                                <Input value={config.url}
+                                    onChange={(e) => setConfig({ ...config, url: e.target.value })}
+                                    onBlur={() => saveConfig(config)} />
+                            </div>
                         )}
                     </div>
                 </div>
