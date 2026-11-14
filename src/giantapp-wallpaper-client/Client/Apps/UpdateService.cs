@@ -287,21 +287,37 @@ internal static class UpdateService
             resp.EnsureSuccessStatusCode();
             long total = resp.Content.Headers.ContentLength ?? -1;
             using var src = await resp.Content.ReadAsStreamAsync();
-            using var dst = File.Create(tmpPath);
             var buffer = new byte[81920];
             long received = 0;
             int read;
-            while ((read = await src.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
+            //File.Create 默认 FileShare.None，句柄未关闭时 Move 会报 sharing violation，
+            //必须先写完并释放句柄，再做删除/挪位
+            using (var dst = File.Create(tmpPath))
             {
-                await dst.WriteAsync(buffer, 0, read, token);
-                received += read;
-                if (total > 0)
-                    _percent = (int)(received * 100 / total);
+                while ((read = await src.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
+                {
+                    await dst.WriteAsync(buffer, 0, read, token);
+                    received += read;
+                    if (total > 0)
+                        _percent = (int)(received * 100 / total);
+                }
             }
 
-            if (File.Exists(finalPath))
-                File.Delete(finalPath);
-            File.Move(tmpPath, finalPath);
+            //旧安装包可能正被杀软短暂扫描或安装向导占用，重试几轮错开瞬时锁
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(finalPath))
+                        File.Delete(finalPath);
+                    File.Move(tmpPath, finalPath);
+                    break;
+                }
+                catch (IOException) when (attempt < 3)
+                {
+                    await Task.Delay(500, token);
+                }
+            }
             _installerPath = finalPath;
             _state = "downloaded";
             _logger.Info("update downloaded: {0}", finalPath);

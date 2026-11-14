@@ -71,6 +71,13 @@ export function UpdateSettings() {
         return () => clearTimeout(timer);
     }, [storeResult]);
 
+    //点击立即进入检查态：后端状态靠 1.5s 轮询同步，本地先显示 spinner，
+    //轮询确认后端已受理（状态离开 idle）后交还给后端状态驱动
+    const [pendingCheck, setPendingCheck] = useState(false);
+    useEffect(() => {
+        if (updateState && updateState.state !== "idle") setPendingCheck(false);
+    }, [updateState]);
+
     const saveConfig = useCallback((config: ConfigUpdate) => {
         setConfig(config);
         apiClient.setConfig("Update", config);
@@ -95,7 +102,7 @@ export function UpdateSettings() {
         channel === "stable" ? dictionary['settings'].channel_stable : dictionary['settings'].channel_preview;
 
     const state = updateState?.state;
-    const checking = state === "checking";
+    const checking = pendingCheck || state === "checking";
     const downloading = state === "downloading";
     const downloaded = state === "downloaded";
 
@@ -112,7 +119,7 @@ export function UpdateSettings() {
     );
 
     const statusBanner = () => {
-        if (state === "checking")
+        if (checking)
             return banner(Loader2, "text-muted-foreground", dictionary['settings'].update_checking, true);
         if (state === "downloaded")
             return banner(CheckCircle2, "text-emerald-500", dictionary['settings'].update_downloaded.replace("{0}", updateState?.version ?? ""));
@@ -207,7 +214,12 @@ export function UpdateSettings() {
                                     {dictionary['settings'].install_now}
                                 </Button>
                             ) : (
-                                <Button size="sm" disabled={checking} onClick={() => apiClient.checkUpdate(channelSwitched)}>
+                                <Button size="sm" disabled={checking} onClick={() => {
+                                    //无 WebView 环境（纯 Web 调试）不置检查态，避免 spinner 卡死
+                                    if (!apiClient.isRunningInClient()) return;
+                                    setPendingCheck(true);
+                                    apiClient.checkUpdate(channelSwitched);
+                                }}>
                                     {checking && spinner}
                                     {/*切通道后主操作就是切到目标通道版本，不再叫「检查更新」*/}
                                     {channelSwitched
