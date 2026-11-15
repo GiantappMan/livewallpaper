@@ -49,15 +49,16 @@ function Invoke-TeoJson([string[]]$TcArgs) {
     $text = ($out | ForEach-Object { $_.ToString() }) -join "`n"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "tccli 调用失败: $text"
-        Write-Host "若提示 secretId is invalid，请在终端重新运行 tccli configure 配置有效密钥（凭据只存本机 ~/.tccli，不入仓库）。"
+        if ($text -match "secretId") { Write-Host "请在终端重新运行 tccli configure 配置有效密钥（凭据只存本机 ~/.tccli，不入仓库）。" }
         exit 1
     }
     return ($text | ConvertFrom-Json)
 }
 
-# 手工拼 JSON 数组，避开 ConvertTo-Json 单元素不加 [] 的坑
+# 手工拼 JSON 数组。PS5.1 给子进程传参会吃掉内嵌双引号，须预转义成 \" 才能原样到达 tccli
 function To-JsonArray([string[]]$Items) {
-    return "[" + (($Items | ForEach-Object { '"' + ($_ -replace '\\', '\\\\' -replace '"', '\"') + '"' }) -join ",") + "]"
+    $quoted = ($Items | ForEach-Object { '\"' + $_ + '\"' }) -join ','
+    return ('[' + $quoted + ']')
 }
 
 # 1. 查站点 ZoneId
