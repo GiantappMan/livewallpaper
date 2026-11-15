@@ -14,6 +14,7 @@
 
 - 版本号：`Client/Client.csproj` 的 `<Version>`（语义版本，source of truth）+ `Client.App/Package.appxmanifest` 的 `Identity Version`（数值四段）
 - 发布：用全局 `giantapp-release` skill，按仓库根 `.release.json`（product=wallpaper3，CF+双通道+GitHub Release）执行；清单发到 `releases.giantapp.cc/wallpaper3/`
+- 国内分发：`releases.giantapp.cn`（腾讯云 EdgeOne）与 `.cc` 同一 R2 源的国内加速入口，边缘会缓存旧清单且缓存 key 忽略查询参数——`.release.json` 的 `postRelease: ["src/build/purge-cdn.ps1"]` 已配发布完成后自动刷新清单 JSON。前置：本机 `pip install tccli` + `tccli configure` 配置腾讯云密钥（凭据只存 `~/.tccli`，脚本与仓库对密钥零接触）
 - 应用内更新检测：`Client/Apps/UpdateService.cs`，启动 10 秒后自动检查 + 设置页手动检查，自动下载，下载完弹窗安装；微软商店版（`UWPHelper.IsRunningAsUwp()`）检查更新 = 打开商店详情页，永不引导下载安装包
 
 ## 提交纪律

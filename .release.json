@@ -2,5 +2,6 @@
   "product": "wallpaper3",
   "githubRelease": true,
   "cloudflareR2": true,
-  "dualChannel": true
+  "dualChannel": true,
+  "postRelease": ["src/build/purge-cdn.ps1"]
 }
