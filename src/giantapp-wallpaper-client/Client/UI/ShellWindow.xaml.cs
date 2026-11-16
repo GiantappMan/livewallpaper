@@ -445,6 +445,11 @@ public partial class ShellWindow : Window
 #endif
         webview2.CoreWebView2.AddHostObjectToScript("api", ClientApi);
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject(this));
+        //商店版（UWP）内嵌在 UA 尾部注入固定标识：官网 SSR 据此首帧不渲染站外引流直链（微软商店规则）；
+        //安装版不注入，官网照常展示直链。标识需与 giantapp-wallpaper-server 的 STORE_CLIENT_UA_MARKER 保持一致
+        if (UWPHelper.IsRunningAsUwp())
+            webview2.CoreWebView2.Settings.UserAgent =
+                $"{webview2.CoreWebView2.Settings.UserAgent} GiantAppWallpaperStore/1.0";
         webview2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         webview2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
         webview2.CoreWebView2.HistoryChanged += CoreWebView2_HistoryChanged;
