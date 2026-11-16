@@ -538,10 +538,13 @@ public partial class ShellWindow : Window
         {
             if (uri.Host.Contains(domain))
             {
-                if (!uri.AbsolutePath.EndsWith(".html"))
+                //静态导出没有目录索引页，尾斜杠路径要先去掉再补 .html，
+                //否则生成 /en/settings/.html 这类 404 地址
+                string path = uri.AbsolutePath.TrimEnd('/');
+                if (path.Length > 0 && !path.EndsWith(".html"))
                 {
                     e.Cancel = true;
-                    string rewriteUrl = uri.GetLeftPart(UriPartial.Authority) + uri.AbsolutePath + ".html" + uri.Query;
+                    string rewriteUrl = uri.GetLeftPart(UriPartial.Authority) + path + ".html" + uri.Query;
                     webview2.CoreWebView2.Navigate(rewriteUrl);
                 }
                 break;

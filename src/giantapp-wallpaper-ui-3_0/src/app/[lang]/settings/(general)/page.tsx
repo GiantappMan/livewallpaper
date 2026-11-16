@@ -119,8 +119,10 @@ const Page = () => {
                                                         currentLan: language
                                                     }).then(() => {
                                                         setOpen(false)
-                                                        //重定向
-                                                        router.push(`/${language}/settings/`)
+                                                        //重定向。不能带尾斜杠：静态导出模式下 Next 会
+                                                        //请求 <path>/index.txt（不存在），软导航失败后退化为
+                                                        //硬跳转，会被壳层补 .html 成 /xx/settings/.html 导致 404
+                                                        router.push(`/${language}/settings`)
                                                     });
                                                 }}
                                             >

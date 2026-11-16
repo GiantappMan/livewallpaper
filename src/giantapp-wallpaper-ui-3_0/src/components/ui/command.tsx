@@ -115,7 +115,10 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      //cmdk 1.x 对未禁用项也渲染 data-disabled="false"（React 把布尔值字符串化写进 DOM），
+      //必须精确匹配 "true"，否则 opacity-50 + pointer-events-none 命中所有项：外观变灰、
+      //真实鼠标点击全部穿透到父容器，永远无法选中
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
       className
     )}
     {...props}
