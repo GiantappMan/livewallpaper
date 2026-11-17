@@ -108,10 +108,12 @@ internal static class UpdateService
 
     /// <summary>
     /// 安装已下载的更新：记录安装包来源渠道（切渠道重装后不再重复提示），
-    /// 固定程序 explorer.exe 启动安装向导（安装器路径仅作参数），向导完成后
-    /// 经安装脚本 [Run] 自动启动新版，随后关闭当前应用
+    /// 先按托盘退出同链路释放壁纸（mpv.exe 是主程序派生的独立子进程，主程序
+    /// 直接退出会孤儿化并锁住安装包要覆盖的 Assets\Players\Mpv 文件，导致安装
+    /// 向导弹"无法自动关闭所有应用程序"），再启动安装向导并关闭当前应用；
+    /// 向导完成后经安装脚本 [Run] 自动启动新版
     /// </summary>
-    public static void InstallUpdate()
+    public static async void InstallUpdate()
     {
         try
         {
@@ -127,6 +129,11 @@ internal static class UpdateService
                     Configer.Set(config, out _, true);
                 }
             }
+
+            //无论 KeepWallpaper 设置如何都释放：升级要覆盖 mpv 文件，保留旧进程
+            //必然锁文件；快照一并清掉，新版启动后按配置重新拉起壁纸
+            await WallpaperApi.Dispose();
+            Configer.Set<WallpaperApiSnapshot?>(null, out _, true);
 
             Process.Start("explorer.exe", $"\"{_installerPath}\"");
             System.Windows.Application.Current.Shutdown();

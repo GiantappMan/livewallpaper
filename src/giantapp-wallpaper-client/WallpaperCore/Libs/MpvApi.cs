@@ -163,6 +163,8 @@ public class MpvApi : IVideoApi
             //var res = true;
 
             ProcessLaunched = true;
+            //挂进主进程 Job：主程序崩溃/被强杀时连带终止 mpv，避免孤儿进程锁安装目录
+            ChildProcessJob.Assign(Process);
 
             //Process = Process.GetProcessesByName("LiveWallpaper3_VideoPlayer")[0];
             //异步等待窗口句柄

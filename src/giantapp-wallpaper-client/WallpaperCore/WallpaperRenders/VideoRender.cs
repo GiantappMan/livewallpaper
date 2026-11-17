@@ -17,7 +17,6 @@ internal class VideoRender : BaseRender
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private VideoSnapshot? _snapshot;
-    private bool _isRestore;
     private Wallpaper? _latestWallpaper;
     private IVideoApi? _playerApi;
     private double _duration = -1;
@@ -27,8 +26,6 @@ internal class VideoRender : BaseRender
     internal override void Init(WallpaperManagerSnapshot? snapshotObj)
     {
         _snapshot = GetSnapshot<VideoSnapshot>(snapshotObj);
-        if (_snapshot != null)
-            _isRestore = true;
         //if (snapshotObj?.Snapshots == null)
         //    return;
 
@@ -247,9 +244,23 @@ internal class VideoRender : BaseRender
             if (_playerApi == null)
                 return;
 
-            _playerApi.Process?.CloseMainWindow();
-            if (_isRestore && _playerApi.Process?.HasExited == false)
-                _playerApi.Process?.Kill();//快照恢复的进程关不掉
+            var process = _playerApi.Process;
+            if (process == null)
+                return;
+
+            try
+            {
+                process.CloseMainWindow();
+                //优雅退出给 2 秒窗口，超时强杀兜底：mpv 是独立子进程，hang 住
+                //或快照恢复的进程 CloseMainWindow 关不掉，不杀会孤儿化并锁住
+                //安装目录文件（曾导致升级安装弹"无法自动关闭所有应用程序"）
+                if (!process.WaitForExit(2000))
+                    process.Kill();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Failed to dispose video player.");
+            }
         });
     }
 }

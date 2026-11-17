@@ -67,4 +67,24 @@ Name: "{autodesktop}\{cm:AppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(ProductName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{cmd}"; Parameters: "/C ""taskkill /im {#MyAppExeName} /f /t" ; RunOnceId: "killprocss";
+Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im {#MyAppExeName}"; RunOnceId: "killprocss";
+; 主程序派生的 mpv.exe 是独立子进程，主程序被杀后会孤儿化继续锁安装目录文件
+Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im mpv.exe"; RunOnceId: "killmpv";
+
+[Code]
+// 升级前强制结束主程序与 mpv 播放器：mpv.exe 是主程序派生的独立子进程，主程序
+// 退出后它会孤儿化继续锁住 Assets\Players\Mpv 下的文件；Restart Manager 关不掉
+// 它（不处理 WM_ENDSESSION），曾导致升级弹"安装程序无法自动关闭所有应用程序"。
+// 本事件函数在 Inno 的文件占用检查（CloseApplications）之前调用，静默安装（应用
+// 内自动升级）同样生效，先杀干净则占用检查为空、弹窗不会出现。杀掉的壁纸进程
+// 无需恢复：新版启动时按快照检测旧 PId 已死会自动重新拉起。
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  resultCode: Integer;
+begin
+  Result := '';
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, resultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im mpv.exe', '', SW_HIDE, ewWaitUntilTerminated, resultCode);
+  // 给系统留出释放文件句柄的时间
+  Sleep(1000);
+end;

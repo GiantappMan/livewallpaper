@@ -711,6 +711,8 @@ public static class WallpaperApi
             //禁交互：损坏/不完整的文件可能弹窗等待按键，mpv会一直不退出
             process.StartInfo.Arguments = $"\"{videoPath}\" -o \"{output}\" -vf=scale:500:-1 --no-input-default-bindings";
             process.Start();
+            //挂进主进程 Job，防孤儿进程锁安装目录文件
+            ChildProcessJob.Assign(process);
             //等待必须有上限：本方法在壁纸枚举路径上被调用，无限等待会卡死界面
             if (!process.WaitForExit(30000))
             {
