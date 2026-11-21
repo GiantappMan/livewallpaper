@@ -366,6 +366,16 @@ internal static class UpdateService
 
     private static string CurrentVersion()
     {
+        //AssemblyVersion 是纯数字（MSBuild 会剥掉预发布号），必须读 InformationalVersion
+        //才能拿到 3.1.3-alpha.2 这类完整语义版本，否则与预发布清单比较会被判为更新
+        var attr = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        var v = attr?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(v))
+        {
+            int plus = v.IndexOf('+');
+            return plus > 0 ? v[..plus] : v;
+        }
         return Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
     }
 
