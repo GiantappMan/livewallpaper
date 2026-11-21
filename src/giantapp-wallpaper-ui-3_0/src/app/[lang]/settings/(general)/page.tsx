@@ -31,7 +31,19 @@ const localesDescriptions: Record<string, string> = {
     fr: "Français",
     ja: "日本語",
     de: "Deutsch",
-    ru: "Русский"
+    ru: "Русский",
+    tr: "Türkçe",
+    id: "Bahasa Indonesia",
+    vi: "Tiếng Việt",
+    th: "ไทย",
+    bn: "বাংলা",
+    km: "ភាសាខ្មែរ",
+    ko: "한국어",
+    it: "Italiano",
+    pl: "Polski",
+    my: "မြန်မာ",
+    nl: "Nederlands",
+    he: "עברית"
 }
 const Page = () => {
     const dictionary = useAtomValue(langDictAtom);

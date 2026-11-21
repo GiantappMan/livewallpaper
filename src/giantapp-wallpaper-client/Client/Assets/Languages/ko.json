@@ -1,0 +1,11 @@
+﻿{
+  "about": "정보",
+  "app_name": "LiveWallpaper 3 - Giantapp",
+  "exit": "종료",
+  "open_main_panel": "메인 패널 열기",
+  "installNow": "지금 설치",
+  "installWebview2Tips": "Microsoft WebView2 런타임을 설치해야 합니다. 아래 파란 글자를 클릭하여 설치하세요.",
+  "setting": "설정",
+  "copy": "복사",
+  "copied": "복사됨"
+}

@@ -40,6 +40,18 @@
     <None Remove="Assets\Languages\fr.json" />
     <None Remove="Assets\Languages\ja.json" />
     <None Remove="Assets\Languages\de.json" />
+    <None Remove="Assets\Languages\tr.json" />
+    <None Remove="Assets\Languages\id.json" />
+    <None Remove="Assets\Languages\vi.json" />
+    <None Remove="Assets\Languages\th.json" />
+    <None Remove="Assets\Languages\bn.json" />
+    <None Remove="Assets\Languages\km.json" />
+    <None Remove="Assets\Languages\ko.json" />
+    <None Remove="Assets\Languages\it.json" />
+    <None Remove="Assets\Languages\pl.json" />
+    <None Remove="Assets\Languages\my.json" />
+    <None Remove="Assets\Languages\nl.json" />
+    <None Remove="Assets\Languages\he.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +66,18 @@
     <EmbeddedResource Include="Assets\Languages\fr.json" />
     <EmbeddedResource Include="Assets\Languages\ja.json" />
     <EmbeddedResource Include="Assets\Languages\de.json" />
+    <EmbeddedResource Include="Assets\Languages\tr.json" />
+    <EmbeddedResource Include="Assets\Languages\id.json" />
+    <EmbeddedResource Include="Assets\Languages\vi.json" />
+    <EmbeddedResource Include="Assets\Languages\th.json" />
+    <EmbeddedResource Include="Assets\Languages\bn.json" />
+    <EmbeddedResource Include="Assets\Languages\km.json" />
+    <EmbeddedResource Include="Assets\Languages\ko.json" />
+    <EmbeddedResource Include="Assets\Languages\it.json" />
+    <EmbeddedResource Include="Assets\Languages\pl.json" />
+    <EmbeddedResource Include="Assets\Languages\my.json" />
+    <EmbeddedResource Include="Assets\Languages\nl.json" />
+    <EmbeddedResource Include="Assets\Languages\he.json" />
   </ItemGroup>
 
   <ItemGroup>
