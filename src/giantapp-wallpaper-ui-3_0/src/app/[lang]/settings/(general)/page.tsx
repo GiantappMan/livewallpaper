@@ -10,7 +10,7 @@ import { ConfigGeneral } from "@/lib/client/types/config";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation'
@@ -120,6 +120,9 @@ const Page = () => {
                                 <Command>
                                     <CommandInput placeholder={dictionary['settings'].search} className="h-9" />
                                     <CommandEmpty>{dictionary['settings'].not_found}</CommandEmpty>
+                                    {/* CommandList 自带 max-h + 滚动：语言有 23 项，不包一层的话
+                                        弹层按自然高度撑开，超出窗口的部分会被壳层裁断且无法滚动 */}
+                                    <CommandList>
                                     <CommandGroup>
                                         {i18n.locales.map((language) => (
                                             <CommandItem
@@ -163,6 +166,7 @@ const Page = () => {
                                             {dictionary['settings'].contribute_your_language}
                                         </CommandItem>
                                     </CommandGroup>
+                                    </CommandList>
                                 </Command>
                             </PopoverContent>
                         </Popover>

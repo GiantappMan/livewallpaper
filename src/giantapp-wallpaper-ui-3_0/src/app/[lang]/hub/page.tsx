@@ -31,9 +31,13 @@ const Page = ({ params }: {
     return (
         <>
 
-            <div className="w-full min-h-[100vh]">
+            {/*hub 页在应用布局的内容卡内：TitleBar 占 3rem、内容卡上边框 1px，
+            可用高度 = 100vh - 3rem - 1px。之前用 min-h-[100vh] 会让 iframe 底部
+            溢出卡片 49px，社区站底部锚定的「回到顶部」按钮/底部横幅被裁出可视区
+            （C# WebView2 demo 已复现验证）；不能用 h-full——main 无确定高度会塌缩*/}
+            <div className="w-full h-[calc(100vh-3rem-1px)]">
                 {loading &&
-                    <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto max-h-[100vh] pb-20 h-ful">
+                    <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 overflow-y-auto h-full pb-20">
                         {
                             Array.from({ length: 12 }).map((_, i) => (
                                 <div className="flex flex-col space-y-3" key={i}>
@@ -48,7 +52,7 @@ const Page = ({ params }: {
 
                 {iframeSrc && <iframe
                     allowFullScreen={true}
-                    className={`w-full min-h-[100vh] ${loading ? 'hidden' : 'block'}`}
+                    className={`w-full h-full ${loading ? 'hidden' : 'block'}`}
                     src={iframeSrc}
                     onLoad={() => setLoading(false)}
                 />}

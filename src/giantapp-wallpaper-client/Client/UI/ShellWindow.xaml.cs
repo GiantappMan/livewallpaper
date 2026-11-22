@@ -54,6 +54,13 @@ public partial class ShellWindow : Window
     //从右向左书写的界面语言（侧栏在右侧，社区返回键需镜像到右上角）
     private static readonly HashSet<string> RtlLanguages = new() { "ar", "he" };
     private readonly DispatcherTimer _copyFeedbackTimer;
+    //最大化状态下 WebView2 视口重同步的防抖定时器（见 ShellWindow_SizeChanged）
+    private DispatcherTimer? _webviewResyncDelay;
+    //社区 iframe 在 webview 坐标系里的 [left, top, right, bottom]；null=未知（工具条退回窗口角定位）。
+    internal double[]? HubIframeRect { get; private set; }
+    //站点「回到顶部」按钮的 webview 坐标 [left, top, right, bottom]（含站点自身滚动条让位），
+    //悬浮工具条以它为锚才能像素级对齐；null=未知
+    internal double[]? HubBtnRect { get; private set; }
     //社区右下角浏览器快捷工具条（独立小窗口，见 CommunityNavWindow）：后退/前进/刷新，
     //只在社区页显示且只在社区内部生效，绝不退回/前进到社区之外的客户端页面。
     //内部历史以社区 iframe 的 location.href 序列建模；后退/前进前实时读 href 确认目标条目，
@@ -345,7 +352,50 @@ public partial class ShellWindow : Window
 
         if (WindowState != WindowState.Minimized)
         {
+            //WebView2(WPF)+WindowChrome 已知问题：最大化/还原（含任务栏自动隐藏改变工作区高度）后，
+            //浏览器视口可能停留在旧尺寸，页面底部锚定的元素（社区站「回到顶部」按钮等）会沉到
+            //窗口外只剩半个（偏移量恰为 CaptionHeight=48）。等布局落定后微调高度再还原，
+            //借尺寸变更事件强制控制器按最终窗口尺寸重设 bounds（与正常拖拽缩放同路径）。
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+                new Action(() => ResyncCommunityNavAfterLayoutAsync()));
             SaveShellConfig();
+        }
+    }
+
+    //webview 高度微调 1px 再恢复 Grid 自适应高度，触发两次布局让 WebView2 重新套用 bounds；
+    //顺带让 CommunityNavWindow 按落定后的尺寸重新定位
+    private void FixWebView2StaleBounds()
+    {
+        if (!webview2.IsLoaded || webview2.ActualHeight <= 1)
+            return;
+        double h = webview2.ActualHeight;
+        webview2.Height = h - 1;
+        webview2.UpdateLayout();
+        webview2.ClearValue(System.Windows.FrameworkElement.HeightProperty);
+        webview2.UpdateLayout();
+        _ = LogViewportDiagnosticsAsync("resync");
+    }
+
+    //临时诊断：对账 WPF 尺寸与页面视口高度、社区站「回到顶部」按钮实际坐标/透明度，
+    //用于定位 WebView2 内容偏移问题，问题关闭后移除
+    private async System.Threading.Tasks.Task LogViewportDiagnosticsAsync(string tag)
+    {
+        try
+        {
+            var core = webview2.CoreWebView2;
+            if (core == null || !_hubActive)
+                return;
+            string top = await core.ExecuteScriptAsync(
+                "JSON.stringify({iw:innerWidth,ih:innerHeight,dch:document.documentElement.clientHeight,vvH:visualViewport&&visualViewport.height,vvY:visualViewport&&visualViewport.offsetTop,scrollY:scrollY})");
+            string frame = "null";
+            if (_hubFrame != null && _hubFrame.IsDestroyed() == 0)
+                frame = await _hubFrame.ExecuteScriptAsync(
+                    "JSON.stringify({ih:innerHeight,dch:document.documentElement.clientHeight,scrollY:scrollY,btn:(function(){var el=document.querySelector(\"[aria-label='回到顶部']\");if(!el)return null;var r=el.getBoundingClientRect();var cs=getComputedStyle(el);return {x:Math.round(r.x),y:Math.round(r.y),w:r.width,h:r.height,op:cs.opacity}})()})");
+            _logger.Info($"[VPDiag:{tag}] wpf={webview2.ActualWidth:0.#}x{webview2.ActualHeight:0.#} state={WindowState} hubRect={(HubIframeRect == null ? "null" : string.Join(",", HubIframeRect))} btnRect={(HubBtnRect == null ? "null" : string.Join(",", HubBtnRect))} top={top} frame={frame}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Info($"[VPDiag:{tag}] failed: {ex.Message}");
         }
     }
 
@@ -373,11 +423,25 @@ public partial class ShellWindow : Window
     }
     private void ShellWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        //最大化状态下任务栏自动隐藏/弹出会改变工作区高度，窗口跟着变尺寸但不触发 StateChanged，
+        //WebView2 视口可能停留在旧尺寸（页面底部锚定元素沉到窗口外）。防抖后强制重同步一次。
         if (WindowState == WindowState.Maximized)
         {
+            if (_webviewResyncDelay == null)
+                _webviewResyncDelay = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _webviewResyncDelay.Tick -= WebviewResync_Tick;
+            _webviewResyncDelay.Tick += WebviewResync_Tick;
+            _webviewResyncDelay.Stop();
+            _webviewResyncDelay.Start();
             return;
         }
         SaveShellConfig();
+    }
+
+    private void WebviewResync_Tick(object? sender, EventArgs e)
+    {
+        _webviewResyncDelay?.Stop();
+        ResyncCommunityNavAfterLayoutAsync();
     }
 
     //记录窗口大小
@@ -656,6 +720,75 @@ public partial class ShellWindow : Window
         _logger.Info($"[HubBack] model out: index={_hubUrlIndex} count={_hubUrls.Count} show={_hubUrlIndex > 0}");
     }
 
+    //读取工具条对齐锚点：hub 页里社区 iframe 的位置（查 DOM，同源）+
+    //站点「回到顶部」按钮的位置（跨源帧脚本；right:24 相对站点布局视口，
+    //还要让开站点自身滚动条，只有按钮实测坐标才是精确锚点）
+    internal async System.Threading.Tasks.Task RefreshHubAnchorAsync()
+    {
+        try
+        {
+            var core = webview2.CoreWebView2;
+            if (core == null)
+                return;
+            string s = await core.ExecuteScriptAsync(
+                "(function(){var f=document.querySelector('iframe');if(!f)return 'null';var r=f.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom].join(',')})()");
+            if (ParseRectScriptResult(s, out var iframe))
+                HubIframeRect = iframe;
+            else
+                HubIframeRect = null;
+
+            HubBtnRect = null;
+            var frame = _hubFrame;
+            if (iframe != null && frame != null && frame.IsDestroyed() == 0)
+            {
+                string b = await frame.ExecuteScriptAsync(
+                    "(function(){var e=document.querySelector(\"[aria-label='回到顶部']\");if(!e)return 'null';var r=e.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom].join(',')})()");
+                if (ParseRectScriptResult(b, out var btn))
+                {
+                    //iframe 相对坐标 → webview 坐标
+                    HubBtnRect = new double[4] {
+                        iframe[0] + btn[0], iframe[1] + btn[1],
+                        iframe[0] + btn[2], iframe[1] + btn[3],
+                    };
+                }
+            }
+        }
+        catch
+        {
+            HubIframeRect = null; //脚本失败退回窗口角定位
+            HubBtnRect = null;
+        }
+    }
+
+    //ExecuteScriptAsync 返回 JSON 字符串（双层编码），解析 "[l,t,r,b]" 形式
+    private static bool ParseRectScriptResult(string s, out double[]? rect)
+    {
+        rect = null;
+        try
+        {
+            var inner = System.Text.Json.JsonDocument.Parse(s).RootElement.GetString();
+            if (string.IsNullOrEmpty(inner) || inner == "null")
+                return false;
+            var p = inner.Split(',');
+            if (p.Length != 4)
+                return false;
+            rect = p.Select(x => double.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    //重读锚点（iframe/按钮位置）并让工具条重新落位（状态/尺寸变化后调用）
+    private async void ResyncCommunityNavAfterLayoutAsync()
+    {
+        await RefreshHubAnchorAsync();
+        FixWebView2StaleBounds();
+        _communityNav?.UpdatePlacement();
+    }
+
     private async System.Threading.Tasks.Task PollHubFrameUrlAsync()
     {
         var frame = _hubFrame;
@@ -666,6 +799,9 @@ public partial class ShellWindow : Window
             return;
         UpdateHubUrlModel(href);
         UpdateCommunityNav();
+        await RefreshHubAnchorAsync();
+        _communityNav?.UpdatePlacement();
+        await LogViewportDiagnosticsAsync("poll");
     }
 
     private void CoreWebView2_FrameNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)

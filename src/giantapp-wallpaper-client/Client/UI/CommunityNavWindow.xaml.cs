@@ -2,40 +2,39 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
 using MultiLanguageForXAML;
 
 namespace GiantappWallpaper;
 
 /// <summary>
-/// 社区页右下角的浏览器快捷工具条（后退 / 前进 / 刷新），仅在社区内部生效。
-/// 默认折叠成单圆把手，鼠标悬停时从右下角放大为完整工具条，移开自动收起。
+/// 社区页的浏览器快捷工具条（后退 / 前进 / 刷新），仅在社区内部生效。
+/// 常驻在标题栏（web TitleBar 行，高 3rem）内、标题（logo+头像）之后：三枚 32px
+/// 幽灵按钮（ShellWindow NavIconButton 同规格，悬停 12% 淡入），无底无边融入标题栏。
+/// 不做折叠/悬停展开（右下角悬浮方案会与社区站底部锚定元素互相遮挡，且窗口
+/// 移动引发 WPF 假 MouseLeave/Enter 造成闪烁，已弃用）。
 /// WebView2 是 HwndHost（浏览器子窗口永远盖住同窗口的 WPF 元素，airspace 限制），
 /// 无法用同窗口 WPF 元素浮在网页上方，所以用一个无激活、不进任务栏的
-/// Owned 小窗口贴在壳窗口社区内容区右下角，由 ShellWindow 控制显隐与定位。
+/// Owned 小窗口浮在壳窗口标题栏上方，由 ShellWindow 控制显隐与定位。
 /// </summary>
 public partial class CommunityNavWindow : Window
 {
     private const string BackGlyph = "\uE72B";
     private const string ForwardGlyph = "\uE72A";
     private const string RefreshGlyph = "\uE72C";
-    //展开胶囊尺寸（内容区坐标系，CSS px == DIP）
-    private const double CapsuleWidth = 44;
-    private const double CapsuleHeight = 118;
-    //距社区内容区右/下边缘的边距
-    private const double MarginRight = 20;
-    private const double MarginBottom = 20;
-    //窗口比胶囊大一圈（Margin 6），留出阴影渲染空间
-    private const double WindowPadding = 6;
+    //三枚 32px 幽灵按钮的横排区域（内容区坐标系，CSS px == DIP）
+    private const double NavWidth = 96;
+    private const double NavHeight = 32;
+    //窗口四周留 4px 命中余量
+    private const double WindowPadding = 4;
+    //web 标题栏行高（布局里 3rem）与标题（logo+头像）之后的起始 x
+    private const double TitleBarHeight = 48;
+    private const double TitleBarOffsetX = 112;
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_NOACTIVATE = 0x08000000;
     private const int WS_EX_TOOLWINDOW = 0x00000080;
 
     private readonly ShellWindow _owner;
     private bool _rtl;
-    private bool _expanded;
 
     public event Action? BackRequested;
     public event Action? ForwardRequested;
@@ -67,14 +66,12 @@ public partial class CommunityNavWindow : Window
     public void UpdateState(bool show, bool rtl, bool canBack, bool canForward)
     {
         _rtl = rtl;
-        //RTL 界面箭头镜像：后退朝右、前进朝左
+        //RTL：布局镜像（按钮从右往左排），箭头方向对调
+        FlowDirection = rtl ? System.Windows.FlowDirection.RightToLeft : System.Windows.FlowDirection.LeftToRight;
         BtnBack.Content = rtl ? ForwardGlyph : BackGlyph;
         BtnForward.Content = rtl ? BackGlyph : ForwardGlyph;
         BtnBack.IsEnabled = canBack;
         BtnForward.IsEnabled = canForward;
-        //折叠把手贴角落：RTL 时镜像到左下角
-        CollapsedRoot.HorizontalAlignment = rtl ? HorizontalAlignment.Left : HorizontalAlignment.Right;
-        CollapsedRoot.Margin = rtl ? new Thickness(10, 0, 0, 10) : new Thickness(0, 0, 10, 10);
         if (show)
         {
             UpdatePlacement();
@@ -83,20 +80,21 @@ public partial class CommunityNavWindow : Window
         }
         else if (IsVisible)
         {
-            if (_expanded)
-                Collapse();
             Hide();
         }
     }
 
-    //把工具条贴到 webview2 内容区右下角（PointToScreen 已含窗口内边距与 DPI）
+    //落位到标题栏内、标题之后（webview 坐标系，PointToScreen 已含窗口内边距与 DPI），
+    //垂直在标题栏（48px）内居中
     public void UpdatePlacement()
     {
         var webview = _owner.webview2;
         if (webview.Visibility != Visibility.Visible || webview.ActualWidth <= 0 || webview.ActualHeight <= 0)
             return;
-        double left = _rtl ? MarginRight : webview.ActualWidth - MarginRight - CapsuleWidth;
-        double top = webview.ActualHeight - MarginBottom - CapsuleHeight;
+        double left = _rtl
+            ? webview.ActualWidth - TitleBarOffsetX - NavWidth
+            : TitleBarOffsetX;
+        double top = (TitleBarHeight - NavHeight) / 2;
         try
         {
             var screenPoint = webview.PointToScreen(new Point(left, top));
@@ -111,50 +109,6 @@ public partial class CommunityNavWindow : Window
             //visual 尚未渲染完成时跳过，等下一次布局事件
         }
     }
-
-    #region 折叠/展开
-
-    private void Root_MouseEnter(object sender, MouseEventArgs e)
-    {
-        if (_expanded)
-            return;
-        _expanded = true;
-        CollapsedRoot.IsHitTestVisible = false; //避免挡住展开后同位置的刷新按钮
-        ExpandedRoot.IsHitTestVisible = true;
-        Animate(ExpandedRoot, UIElement.OpacityProperty, 1);
-        Animate(ExpandScale, ScaleTransform.ScaleXProperty, 1);
-        Animate(ExpandScale, ScaleTransform.ScaleYProperty, 1);
-        Animate(CollapsedRoot, UIElement.OpacityProperty, 0);
-    }
-
-    private void Root_MouseLeave(object sender, MouseEventArgs e)
-    {
-        if (!_expanded)
-            return;
-        Collapse();
-    }
-
-    private void Collapse()
-    {
-        _expanded = false;
-        ExpandedRoot.IsHitTestVisible = false; //先关命中，空区域立刻透传点击给网页
-        CollapsedRoot.IsHitTestVisible = true;
-        Animate(ExpandedRoot, UIElement.OpacityProperty, 0);
-        Animate(ExpandScale, ScaleTransform.ScaleXProperty, 0.4);
-        Animate(ExpandScale, ScaleTransform.ScaleYProperty, 0.4);
-        Animate(CollapsedRoot, UIElement.OpacityProperty, 1);
-    }
-
-    private static void Animate(IAnimatable target, DependencyProperty property, double to)
-    {
-        var anim = new DoubleAnimation(to, TimeSpan.FromMilliseconds(160))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        target.BeginAnimation(property, anim);
-    }
-
-    #endregion
 
     private void BtnBack_Click(object sender, RoutedEventArgs e)
     {
