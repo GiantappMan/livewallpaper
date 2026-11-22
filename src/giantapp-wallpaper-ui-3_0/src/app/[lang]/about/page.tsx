@@ -75,12 +75,13 @@ const AboutPage = () => {
             <section className="space-y-3">
                 <h2 className="text-lg font-semibold">{dictionary['about'].feedback_and_source_code}</h2>
                 <div className="flex flex-wrap items-center gap-2">
-                    <LinkButton href="https://support.qq.com/products/315103">
+                    <LinkButton href="https://wallpaper.giantapp.cn/feedback">
                         <MessageCircleWarning className="h-4 w-4" />
                         {dictionary['about'].problems_and_suggestions}
                     </LinkButton>
                     <LinkButton href="https://github.com/GiantappMan/livewallpaper">Github</LinkButton>
                     <LinkButton href="https://gitee.com/GiantappMan/livewallpaper">Gitee</LinkButton>
+                    <LinkButton href="https://gitcode.com/GiantappMan/livewallpaper">GitCode</LinkButton>
                     <Button variant="ghost" size="sm" asChild>
                         <Link
                             onClick={(e) => {
