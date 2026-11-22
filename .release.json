@@ -3,5 +3,5 @@
   "githubRelease": true,
   "cloudflareR2": true,
   "dualChannel": true,
-  "postRelease": ["src/build/purge-cdn.ps1"]
+  "postRelease": ["src/build/purge-cdn.ps1", "src/build/upload-mirror-releases.ps1"]
 }
