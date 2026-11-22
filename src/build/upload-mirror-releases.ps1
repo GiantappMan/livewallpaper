@@ -26,6 +26,7 @@ $FileName = Split-Path $Artifact -Leaf
 $IsPrerelease = $Version -match "-"
 
 # ---------- 令牌 ----------
+# 优先级：环境变量 > tokens.json > CLI 登录态（gitee-cli / gitcode-cli，运行时读取不经手令牌）
 function Get-Tokens {
     $tokens = @{}
     if ($env:GITEE_TOKEN)   { $tokens["gitee"]   = $env:GITEE_TOKEN }
@@ -35,6 +36,23 @@ function Get-Tokens {
         $j = Get-Content $file -Raw -Encoding UTF8 | ConvertFrom-Json
         if (-not $tokens["gitee"] -and $j.gitee)     { $tokens["gitee"]   = $j.gitee }
         if (-not $tokens["gitcode"] -and $j.gitcode) { $tokens["gitcode"] = $j.gitcode }
+    }
+    if (-not $tokens["gitee"]) {
+        $out = & gitee.exe auth token 2>$null
+        if ($LASTEXITCODE -eq 0 -and $out) { $tokens["gitee"] = (($out | Select-Object -First 1)).Trim() }
+    }
+    if (-not $tokens["gitcode"]) {
+        # gitcode auth token 需交互确认，改读 CLI 落盘登录态（AUTH.md：~/.config/gc/auth.json，0600）
+        $authJson = Join-Path $env:USERPROFILE ".config\gc\auth.json"
+        if (Test-Path $authJson) {
+            try {
+                $j = Get-Content $authJson -Raw -Encoding UTF8 | ConvertFrom-Json
+                $gc = $j.hosts."gitcode.com"
+                $activeUser = $gc.active_user
+                $tk = $gc.users.$activeUser.token
+                if ($tk) { $tokens["gitcode"] = $tk }
+            } catch { Write-Warning "读取 gitcode 登录态失败: $_" }
+        }
     }
     return $tokens
 }
@@ -53,11 +71,11 @@ function Write-Utf8NoBom([string]$Path, [string]$Text) {
     # PS5.1 Out-File 默认 UTF-16，curl 传 JSON 必须显式 UTF-8 无 BOM
     [IO.File]::WriteAllText($Path, $Text, (New-Object System.Text.UTF8Encoding($false)))
 }
-function Invoke-CurlJson([string[]]$CurlArgs, [string]$Label) {
+function Invoke-CurlJson([string[]]$CurlArgs, [string]$Label, [int]$TimeoutSec = 60) {
     # 返回 @{ Code; Body }，失败时打印响应体便于排查
     $outFile = Join-Path $TempDir "$Label-resp.json"
     $codeFile = Join-Path $TempDir "$Label-code.txt"
-    & curl.exe -sS --max-time 60 @CurlArgs -o $outFile -w "%{http_code}" > $codeFile
+    & curl.exe -sS --max-time $TimeoutSec @CurlArgs -o $outFile -w "%{http_code}" > $codeFile
     if ($LASTEXITCODE -ne 0) { Write-Error "[$Label] curl 退出码 $LASTEXITCODE"; exit 1 }
     $code = (Get-Content $codeFile -Raw).Trim()
     $body = (Get-Content $outFile -Raw -Encoding UTF8)
@@ -72,9 +90,14 @@ foreach ($remote in $Tokens.Keys) {
         if ($LASTEXITCODE -ne 0) { Write-Error "本地创建 tag $Tag 失败"; exit 1 }
     }
     Write-Host "[$remote] 推送 tag $Tag ..."
+    # PS5.1 下 EAP=Stop 会把 git 的 stderr 进度输出当终止错误，临时降级为 Continue
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     $pushOut = git push $remote "refs/tags/$Tag" 2>&1
+    $pushCode = $LASTEXITCODE
+    $ErrorActionPreference = $prevEap
     Write-Host ($pushOut -join "`n")
-    if ($LASTEXITCODE -ne 0) { Write-Error "[$remote] tag 推送失败"; exit 1 }
+    if ($pushCode -ne 0) { Write-Error "[$remote] tag 推送失败"; exit 1 }
 }
 
 $giteeBodyPath = Join-Path $TempDir "gitee-body.json"
@@ -87,27 +110,33 @@ if ($Tokens["gitee"]) {
         Write-Host "[gitee] 创建/确认 Release $Tag ..."
         Write-Utf8NoBom $giteeBodyPath (@{
             access_token = $t; tag_name = $Tag; name = $Tag
+            target_commitish = "v3.x"
             body = $Notes; prerelease = $IsPrerelease
         } | ConvertTo-Json)
         $r = Invoke-CurlJson @("-X", "POST", "-H", "Content-Type: application/json",
             "--data-binary", "@$giteeBodyPath",
             "https://gitee.com/api/v5/repos/$Owner/$Repo/releases") "gitee-create"
         if ($r.Code -notmatch "^2") {
-            # 已存在则按 tag 查回 release id 续传附件
-            $r2 = Invoke-CurlJson @("https://gitee.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag`?access_token=$t") "gitee-get"
-            if ($r2.Code -ne "200") { Write-Error "[gitee] 创建 Release 失败 HTTP $($r.Code): $($r.Body)"; exit 1 }
-            $releaseId = ($r2.Body | ConvertFrom-Json).id
-        } else {
-            $releaseId = ($r.Body | ConvertFrom-Json).id
+            Write-Host "[gitee] 创建未返回 2xx（HTTP $($r.Code)），按 tag 回读既有 Release ..."
         }
+        # 统一按 tag 回读：拿 release id + 判断附件是否已传（幂等，重跑不传双份）
+        $r2 = Invoke-CurlJson @("https://gitee.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag`?access_token=$t") "gitee-get"
+        if ($r2.Code -ne "200") { Write-Error "[gitee] Release 不可用（创建 HTTP $($r.Code)，回读 HTTP $($r2.Code)）: $($r2.Body)"; exit 1 }
+        $rel = $r2.Body | ConvertFrom-Json
+        $releaseId = $rel.id
         if (-not $releaseId) { Write-Error "[gitee] 未取到 release id"; exit 1 }
 
-        Write-Host "[gitee] 上传附件 $FileName (release $releaseId) ..."
-        $r3 = Invoke-CurlJson @("-X", "POST",
-            "-F", "access_token=$t",
-            "-F", "file=@$Artifact",
-            "https://gitee.com/api/v5/repos/$Owner/$Repo/releases/$releaseId/attach_files") "gitee-attach"
-        if ($r3.Code -notmatch "^2") { Write-Error "[gitee] 附件上传失败 HTTP $($r3.Code): $($r3.Body)"; exit 1 }
+        $already = [bool]($rel.assets | Where-Object { $_.name -eq $FileName })
+        if ($already) {
+            Write-Host "[gitee] 附件已存在，跳过上传"
+        } else {
+            Write-Host "[gitee] 上传附件 $FileName (release $releaseId) ..."
+            $r3 = Invoke-CurlJson @("-X", "POST",
+                "-F", "access_token=$t",
+                "-F", "file=@$Artifact",
+                "https://gitee.com/api/v5/repos/$Owner/$Repo/releases/$releaseId/attach_files") "gitee-attach" 900
+            if ($r3.Code -notmatch "^2") { Write-Error "[gitee] 附件上传失败 HTTP $($r3.Code): $($r3.Body)"; exit 1 }
+        }
 
         # 验证：按 tag 回读，确认附件名存在
         $r4 = Invoke-CurlJson @("https://gitee.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag`?access_token=$t") "gitee-verify"
@@ -131,46 +160,61 @@ if ($Tokens["gitcode"]) {
         Write-Host "[gitcode] 创建/确认 Release $Tag ..."
         Write-Utf8NoBom $gitcodeBodyPath (@{
             access_token = $t; tag_name = $Tag; name = $Tag
+            target_commitish = "v3.x"
             body = $Notes; prerelease = $IsPrerelease
         } | ConvertTo-Json)
         $r = Invoke-CurlJson @("-X", "POST", "-H", "Content-Type: application/json",
             "--data-binary", "@$gitcodeBodyPath",
             "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases") "gitcode-create"
         if ($r.Code -notmatch "^2") {
-            $r2 = Invoke-CurlJson @("--get",
+            Write-Host "[gitcode] 创建未返回 2xx（HTTP $($r.Code)），按 tag 回读既有 Release ..."
+        }
+        # 统一按 tag 回读（幂等判断附件是否已传）
+        $r2 = Invoke-CurlJson @("--get",
+            "--data-urlencode", "access_token=$t",
+            "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag") "gitcode-get"
+        if ($r2.Code -ne "200") { Write-Error "[gitcode] Release 不可用（创建 HTTP $($r.Code)，回读 HTTP $($r2.Code)）: $($r2.Body)"; exit 1 }
+        $rel = $r2.Body | ConvertFrom-Json
+        $already = [bool]($rel.assets | Where-Object { $_.name -eq $FileName -and $_.type -eq "attach" })
+
+        if ($already) {
+            Write-Host "[gitcode] 附件已存在，跳过上传"
+        } else {
+            Write-Host "[gitcode] 获取附件上传地址 ..."
+            $r3 = Invoke-CurlJson @("--get",
                 "--data-urlencode", "access_token=$t",
-                "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag") "gitcode-get"
-            if ($r2.Code -ne "200") { Write-Error "[gitcode] 创建 Release 失败 HTTP $($r.Code): $($r.Body)"; exit 1 }
+                "--data-urlencode", "file_name=$FileName",
+                "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/$Tag/upload_url") "gitcode-uploadurl"
+            if ($r3.Code -ne "200") { Write-Error "[gitcode] 获取上传地址失败 HTTP $($r3.Code): $($r3.Body)"; exit 1 }
+            $up = $r3.Body | ConvertFrom-Json
+            if (-not $up.url) { Write-Error "[gitcode] 上传地址响应缺少 url: $($r3.Body)"; exit 1 }
+
+            Write-Host "[gitcode] 直传附件 $FileName ..."
+            $putArgs = @("-X", "PUT", "--max-time", "900", "-T", $Artifact, $up.url)
+            foreach ($p in $up.headers.PSObject.Properties) {
+                $putArgs += @("-H", "$($p.Name): $($p.Value)")
+            }
+            & curl.exe -sS @putArgs -o (Join-Path $TempDir "gitcode-put.txt") -w "%{http_code}" > (Join-Path $TempDir "gitcode-put-code.txt")
+            if ($LASTEXITCODE -ne 0) { Write-Error "[gitcode] OBS 直传 curl 退出码 $LASTEXITCODE"; exit 1 }
+            $putCode = (Get-Content (Join-Path $TempDir "gitcode-put-code.txt") -Raw).Trim()
+            if ($putCode -notmatch "^2") {
+                Write-Error "[gitcode] OBS 直传失败 HTTP $putCode`: $((Get-Content (Join-Path $TempDir 'gitcode-put.txt') -Raw))"; exit 1
+            }
         }
 
-        Write-Host "[gitcode] 获取附件上传地址 ..."
-        $r3 = Invoke-CurlJson @("--get",
-            "--data-urlencode", "access_token=$t",
-            "--data-urlencode", "file_name=$FileName",
-            "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/$Tag/upload_url") "gitcode-uploadurl"
-        if ($r3.Code -ne "200") { Write-Error "[gitcode] 获取上传地址失败 HTTP $($r3.Code): $($r3.Body)"; exit 1 }
-        $up = $r3.Body | ConvertFrom-Json
-        if (-not $up.url) { Write-Error "[gitcode] 上传地址响应缺少 url: $($r3.Body)"; exit 1 }
-
-        Write-Host "[gitcode] 直传附件 $FileName ..."
-        $putArgs = @("-X", "PUT", "--max-time", "900", "-T", $Artifact, $up.url)
-        foreach ($p in $up.headers.PSObject.Properties) {
-            $putArgs += @("-H", "$($p.Name): $($p.Value)")
+        # 验证：OBS 回调异步登记附件，轮询回读（最多约 90 秒）
+        $verified = $false
+        for ($i = 1; $i -le 6 -and -not $verified; $i++) {
+            if ($i -gt 1) { Start-Sleep -Seconds 15 }
+            $r4 = Invoke-CurlJson @("--get",
+                "--data-urlencode", "access_token=$t",
+                "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag") "gitcode-verify"
+            if ($r4.Code -ne "200") { continue }
+            $assets = ($r4.Body | ConvertFrom-Json).assets
+            $verified = [bool]($assets | Where-Object { $_.name -eq $FileName -and $_.type -eq "attach" })
         }
-        & curl.exe -sS @putArgs -o (Join-Path $TempDir "gitcode-put.txt") -w "%{http_code}" > (Join-Path $TempDir "gitcode-put-code.txt")
-        if ($LASTEXITCODE -ne 0) { Write-Error "[gitcode] OBS 直传 curl 退出码 $LASTEXITCODE"; exit 1 }
-        $putCode = (Get-Content (Join-Path $TempDir "gitcode-put-code.txt") -Raw).Trim()
-        if ($putCode -notmatch "^2") {
-            Write-Error "[gitcode] OBS 直传失败 HTTP $putCode`: $((Get-Content (Join-Path $TempDir 'gitcode-put.txt') -Raw))"; exit 1
-        }
-
-        # 验证：按 tag 回读，确认附件名存在
-        $r4 = Invoke-CurlJson @("--get",
-            "--data-urlencode", "access_token=$t",
-            "https://api.gitcode.com/api/v5/repos/$Owner/$Repo/releases/tags/$Tag") "gitcode-verify"
-        $attachNames = (($r4.Body | ConvertFrom-Json).attach_files | ForEach-Object { $_.file_name }) -join ","
-        if ($attachNames -notmatch [regex]::Escape($FileName)) {
-            Write-Error "[gitcode] 验证失败：release 附件列表中未见 $FileName（现有: $attachNames）"; exit 1
+        if (-not $verified) {
+            Write-Error "[gitcode] 验证失败：release 附件列表中未见 $FileName（OBS 回调可能延迟，可稍后手动复查）"; exit 1
         }
         Write-Host "[gitcode] 完成 ✓ https://gitcode.com/$Owner/$Repo/releases/tag/$Tag"
     } catch {
