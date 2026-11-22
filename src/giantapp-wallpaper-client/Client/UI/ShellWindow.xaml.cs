@@ -373,30 +373,6 @@ public partial class ShellWindow : Window
         webview2.UpdateLayout();
         webview2.ClearValue(System.Windows.FrameworkElement.HeightProperty);
         webview2.UpdateLayout();
-        _ = LogViewportDiagnosticsAsync("resync");
-    }
-
-    //临时诊断：对账 WPF 尺寸与页面视口高度、社区站「回到顶部」按钮实际坐标/透明度，
-    //用于定位 WebView2 内容偏移问题，问题关闭后移除
-    private async System.Threading.Tasks.Task LogViewportDiagnosticsAsync(string tag)
-    {
-        try
-        {
-            var core = webview2.CoreWebView2;
-            if (core == null || !_hubActive)
-                return;
-            string top = await core.ExecuteScriptAsync(
-                "JSON.stringify({iw:innerWidth,ih:innerHeight,dch:document.documentElement.clientHeight,vvH:visualViewport&&visualViewport.height,vvY:visualViewport&&visualViewport.offsetTop,scrollY:scrollY})");
-            string frame = "null";
-            if (_hubFrame != null && _hubFrame.IsDestroyed() == 0)
-                frame = await _hubFrame.ExecuteScriptAsync(
-                    "JSON.stringify({ih:innerHeight,dch:document.documentElement.clientHeight,scrollY:scrollY,btn:(function(){var el=document.querySelector(\"[aria-label='回到顶部']\");if(!el)return null;var r=el.getBoundingClientRect();var cs=getComputedStyle(el);return {x:Math.round(r.x),y:Math.round(r.y),w:r.width,h:r.height,op:cs.opacity}})()})");
-            _logger.Info($"[VPDiag:{tag}] wpf={webview2.ActualWidth:0.#}x{webview2.ActualHeight:0.#} state={WindowState} hubRect={(HubIframeRect == null ? "null" : string.Join(",", HubIframeRect))} btnRect={(HubBtnRect == null ? "null" : string.Join(",", HubBtnRect))} top={top} frame={frame}");
-        }
-        catch (Exception ex)
-        {
-            _logger.Info($"[VPDiag:{tag}] failed: {ex.Message}");
-        }
     }
 
     //地址栏弹窗（加载外部网页）的窗口按钮：最大化/还原互斥显示
@@ -808,7 +784,6 @@ public partial class ShellWindow : Window
         UpdateCommunityNav();
         await RefreshHubAnchorAsync();
         _communityNav?.UpdatePlacement();
-        await LogViewportDiagnosticsAsync("poll");
     }
 
     private void CoreWebView2_FrameNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
