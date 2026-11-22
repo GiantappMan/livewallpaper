@@ -650,18 +650,25 @@ public partial class ShellWindow : Window
             int target = _hubUrlIndex + delta;
             if (target < 0 || target >= _hubUrls.Count)
                 return; //已在社区起点/终点：无可后退/前进内容
-            await frame.ExecuteScriptAsync(delta < 0 ? "history.back()" : "history.forward()");
-            _hubUrlIndex = target; //乐观移动并禁用，防止连点
-            UpdateCommunityNav();
-            //轮询等地址落位（最多约 1.2 秒），期间按钮保持禁用
-            for (int i = 0; i < 8; i++)
+        string before = href;
+        await frame.ExecuteScriptAsync(delta < 0 ? "history.back()" : "history.forward()");
+        _hubUrlIndex = target; //乐观移动并禁用，防止连点
+        UpdateCommunityNav();
+        //快轮询等地址落位：一有变化立即恢复按钮（SPA 的 history 跳转几十毫秒即落位，
+        //旧实现固定轮询 8×150ms≈1.2 秒，按钮禁用感很明显）；剩余校正由
+        //HistoryChanged → PollHubFrameUrlAsync 兜底
+        for (int i = 0; i < 6; i++)
+        {
+            await System.Threading.Tasks.Task.Delay(50);
+            href = await TryReadHubHrefAsync(frame);
+            if (href == null || _hubFrame != frame)
+                return;
+            if (href != before)
             {
-                await System.Threading.Tasks.Task.Delay(150);
-                href = await TryReadHubHrefAsync(frame);
-                if (href == null || _hubFrame != frame)
-                    return;
                 UpdateHubUrlModel(href);
+                break;
             }
+        }
         }
         finally
         {

@@ -27,7 +27,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Grid Background="Transparent">
+                        <!--  alpha=1 的不可见底：AllowsTransparency 窗口按像素 alpha 命中，
+                        Transparent(alpha 0) 会整块点击穿透，导致只有图标笔画能点  -->
+                        <Grid Background="#01000000">
                             <Border
                                 x:Name="hoverBG"
                                 Background="{DynamicResource TitleForeground}"
