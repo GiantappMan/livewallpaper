@@ -28,5 +28,6 @@
 - Google Fonts 不可达：前端字体已自托管（@fontsource/inter），**不要**引入 `next/font/google`
 - 前端静态导出没有 `index.html`：发布版启动地址是 `/{lang}.html`（AppService.ShowShell），新增语言记得同步语言页
 - 仅支持 64 位：所有 csproj 已强制 `PlatformTarget=x64`，不要移除
-- dev server 多开互踩：起 `next dev` 前先确认 :3000 没有残留实例
+- dev server 多开互踩：起 `next dev` 前先确认 :3000 没有残留实例；`bun dev` Ctrl+C 后 `stopWeb()` 只杀直接子进程，`bun x next dev` 进程树会残留（bun→next→node 数层），下次起不来先 `tasklist` 查残留树并 `taskkill /T /F` 整树清掉
+- **Bun 1.4.x Windows bug：async 函数里 `await Bun.file(缺失文件).text()` 会让进程静默 exit(0)**（ENOENT 不走 reject，try/catch 兜不住；顶层 await 不受影响）。`scripts/` 下的脚本文件 IO 一律用 node:fs（`readFileSync`/`writeFileSync`），不要用 `Bun.file`/`Bun.write`；曾导致 `bun dev` 停在「mpv 已就绪」后静默死亡、客户端永不启动
 - **社区登录在调试版必失败，不是 bug**：SameSite 按站点（eTLD+1）判定。Debug 壳加载 `http://localhost:端口`（`#define DEBUG_LOCAL`），对 hub iframe 里的 `wallpaper.giantapp.cn` 是真跨站，会话 Cookie 一律不携带 → 登录无效；正式包壳是 `https://client.giantapp.cn`，与社区站同属 giantapp.cn 站点 → Cookie 正常、登录正常。用户问"社区怎么又登不上"时先确认是不是 Debug 包；测登录相关改动必须打正式包，或临时把 `ShowShell` 指到线上 `client.giantapp.cn`（测的是线上界面）。GitHub 授权页另有 X-Frame-Options 禁止 iframe 嵌套，跨站 iframe 里必现"github.com 拒绝连接"

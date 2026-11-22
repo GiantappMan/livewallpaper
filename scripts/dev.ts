@@ -15,7 +15,7 @@
 // 同样能被回退命中。
 // Ctrl+C 停止 dev server；壁纸应用是托盘程序，由用户自行退出。
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createServer } from "node:net";
 
@@ -90,11 +90,13 @@ function findFreePort(): Promise<number> {
   });
 }
 
-// 端口选择：优先复用上次记录的端口（URL 稳定，调试工具/收藏不失效），被占用才换新空闲端口
+// 端口选择：优先复用上次记录的端口（URL 稳定，调试工具/收藏不失效），被占用才换新空闲端口。
+// 注意：这里必须用 node:fs 读——Bun 1.4.x Windows 上在 async 函数里 await Bun.file(缺失文件)
+// 会静默 exit(0)，ENOENT 不走 reject（见 AGENTS.md 已知坑）
 async function pickDevPort(): Promise<number> {
   let last = 0;
   try {
-    const info = JSON.parse(await Bun.file(DEV_PORT_FILE).text());
+    const info = JSON.parse(readFileSync(DEV_PORT_FILE, "utf8"));
     if (typeof info?.port === "number" && info.port >= 1 && info.port <= 65535) last = info.port;
   } catch { /* 首次运行或文件损坏，走新分配 */ }
   if (last && (await isPortFree(last))) return last;
@@ -104,7 +106,7 @@ async function pickDevPort(): Promise<number> {
 // 把本次端口写回握手文件，同时就是"最近使用端口"记录；pid 供客户端识别陈旧文件
 async function writeDevPortFile(port: number) {
   mkdirSync(dirname(DEV_PORT_FILE), { recursive: true });
-  await Bun.write(DEV_PORT_FILE, JSON.stringify({ port, pid: process.pid }));
+  writeFileSync(DEV_PORT_FILE, JSON.stringify({ port, pid: process.pid }));
 }
 
 let web: ChildProcess | undefined;
