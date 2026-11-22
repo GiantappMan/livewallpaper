@@ -51,7 +51,20 @@ public partial class ShellWindow : Window
     //工具条图标字形（Segoe Fluent Icons / MDL2）
     private const string CopyGlyph = "\uE8C8";
     private const string CheckGlyph = "\uE73E";
+    //从右向左书写的界面语言（侧栏在右侧，社区返回键需镜像到右上角）
+    private static readonly HashSet<string> RtlLanguages = new() { "ar", "he" };
     private readonly DispatcherTimer _copyFeedbackTimer;
+    //社区右下角浏览器快捷工具条（独立小窗口，见 CommunityNavWindow）：后退/前进/刷新，
+    //只在社区页显示且只在社区内部生效，绝不退回/前进到社区之外的客户端页面。
+    //内部历史以社区 iframe 的 location.href 序列建模；后退/前进前实时读 href 确认目标条目，
+    //操作落位期间按钮强制禁用（iframe 的 history 遍历并非严格帧内作用，帧历史耗尽时会弹
+    //joint 历史把壳也退掉，实测如此，必须靠门控避免）
+    private CommunityNavWindow? _communityNav;
+    private bool _hubActive;
+    private bool _hubNavInFlight;
+    private CoreWebView2Frame? _hubFrame;
+    private readonly List<string> _hubUrls = new();
+    private int _hubUrlIndex;
 
     #region properties
     public static ShellWindow? Instance { get; private set; }
@@ -94,6 +107,8 @@ public partial class ShellWindow : Window
             BtnCopyAddress.Content = CopyGlyph;
         };
         SizeChanged += ShellWindow_SizeChanged;
+        //窗口移动/缩放时让悬浮返回键跟着走
+        LocationChanged += (_, _) => _communityNav?.UpdatePlacement();
         webview2.DefaultBackgroundColor = Color.Transparent;
         webview2.CoreWebView2InitializationCompleted += Webview2_CoreWebView2InitializationCompleted;
 
@@ -322,6 +337,7 @@ public partial class ShellWindow : Window
     private void ShellWindow_StateChanged(object sender, EventArgs e)
     {
         UpdateWindowButtonsState();
+        _communityNav?.UpdatePlacement();
 
         //修改webview2，document.shell_hidden 属性
         string value = WindowState == WindowState.Minimized ? "true" : "false";
@@ -424,9 +440,13 @@ public partial class ShellWindow : Window
             webview2.CoreWebView2.HistoryChanged -= CoreWebView2_HistoryChanged;
             webview2.CoreWebView2.NewWindowRequested -= CoreWebView2_NewWindowRequested;
             webview2.CoreWebView2.FrameCreated -= CoreWebView2_FrameCreated;
+            webview2.CoreWebView2.FrameNavigationCompleted -= CoreWebView2_FrameNavigationCompleted;
         }
 
         //webview2.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
+        //社区快捷工具条悬浮窗口随壳一起关闭
+        _communityNav?.Close();
+        _communityNav = null;
         //强制回收webview2
         if (Instance == this)
             Instance = null;
@@ -456,6 +476,7 @@ public partial class ShellWindow : Window
         //webview2.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
         webview2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
         webview2.CoreWebView2.FrameCreated += CoreWebView2_FrameCreated;
+        webview2.CoreWebView2.FrameNavigationCompleted += CoreWebView2_FrameNavigationCompleted;
 
         if (!AllowDragFile)
             DisableDragFile();
@@ -483,6 +504,9 @@ public partial class ShellWindow : Window
     private void CoreWebView2_HistoryChanged(object? sender, object e)
     {
         UpdateNavButtonsState();
+        //社区内部导航会改变历史，刷新帧地址模型
+        if (_hubActive)
+            _ = PollHubFrameUrlAsync();
     }
 
     //前进/后退按钮随历史记录可用性联动
@@ -490,12 +514,192 @@ public partial class ShellWindow : Window
     {
         BtnBack.IsEnabled = webview2.CoreWebView2?.CanGoBack == true;
         BtnForward.IsEnabled = webview2.CoreWebView2?.CanGoForward == true;
+        UpdateCommunityNav();
+    }
+
+    //社区右下角快捷工具条：仅当前在社区页显示；后退/前进只在社区内部生效，
+    //刷新只重载社区 iframe
+    private void UpdateCommunityNav()
+    {
+        var core = webview2.CoreWebView2;
+        bool show = false;
+        bool rtl = false;
+        bool canBack = false;
+        bool canForward = false;
+        if (Uri.TryCreate(core?.Source, UriKind.Absolute, out var uri) && uri != null)
+        {
+            rtl = IsRtlShellUri(uri);
+            if (IsHubPath(uri.AbsolutePath))
+            {
+                _hubActive = true;
+                bool idle = !_hubNavInFlight;
+                //帧内 URL 序列索引：>0 有可后退页面，<count-1 有可前进页面
+                canBack = idle && _hubUrlIndex > 0;
+                canForward = idle && _hubUrlIndex < _hubUrls.Count - 1;
+                show = true;
+            }
+            else
+            {
+                //离开社区：重置检测状态
+                _hubActive = false;
+                _hubFrame = null;
+                _hubUrls.Clear();
+                _hubUrlIndex = 0;
+            }
+        }
+        if (!show)
+        {
+            _communityNav?.UpdateState(false, false, false, false);
+            return;
+        }
+        if (_communityNav == null)
+        {
+            _communityNav = new CommunityNavWindow(this);
+            _communityNav.BackRequested += () => CommunityNavTraverseAsync(-1);
+            _communityNav.ForwardRequested += () => CommunityNavTraverseAsync(1);
+            _communityNav.RefreshRequested += CommunityNavRefresh;
+        }
+        _communityNav.UpdateState(true, rtl, canBack, canForward);
+    }
+
+    private void CommunityNavTraverseAsync(int delta)
+    {
+        if (_hubNavInFlight)
+            return;
+        _ = CommunityNavTraverseAsyncCore(delta);
+    }
+
+    //后退/前进一步：先实时读地址确认目标条目存在才执行；落位期间按钮保持禁用
+    private async System.Threading.Tasks.Task CommunityNavTraverseAsyncCore(int delta)
+    {
+        var frame = _hubFrame;
+        if (frame == null || frame.IsDestroyed() != 0)
+            return;
+        _hubNavInFlight = true;
+        try
+        {
+            string href = await TryReadHubHrefAsync(frame);
+            if (href == null)
+                return;
+            UpdateHubUrlModel(href);
+            UpdateCommunityNav();
+            int target = _hubUrlIndex + delta;
+            if (target < 0 || target >= _hubUrls.Count)
+                return; //已在社区起点/终点：无可后退/前进内容
+            await frame.ExecuteScriptAsync(delta < 0 ? "history.back()" : "history.forward()");
+            _hubUrlIndex = target; //乐观移动并禁用，防止连点
+            UpdateCommunityNav();
+            //轮询等地址落位（最多约 1.2 秒），期间按钮保持禁用
+            for (int i = 0; i < 8; i++)
+            {
+                await System.Threading.Tasks.Task.Delay(150);
+                href = await TryReadHubHrefAsync(frame);
+                if (href == null || _hubFrame != frame)
+                    return;
+                UpdateHubUrlModel(href);
+            }
+        }
+        finally
+        {
+            _hubNavInFlight = false;
+            UpdateCommunityNav();
+            _ = PollHubFrameUrlAsync(); //最终校正一次
+        }
+    }
+
+    //刷新社区 iframe（只重载社区页面，不动壳）
+    private void CommunityNavRefresh()
+    {
+        if (_hubNavInFlight)
+            return;
+        var frame = _hubFrame;
+        if (frame == null || frame.IsDestroyed() != 0)
+            return;
+        _ = frame.ExecuteScriptAsync("location.reload()");
+    }
+
+    //读取社区 iframe 当前地址（原始 JSON 编码串，同一地址编码稳定可直接比较）
+    private static async System.Threading.Tasks.Task<string?> TryReadHubHrefAsync(CoreWebView2Frame frame)
+    {
+        try
+        {
+            string href = await frame.ExecuteScriptAsync("location.href");
+            return string.IsNullOrEmpty(href) || href == "null" ? null : href;
+        }
+        catch
+        {
+            return null; //帧已销毁或尚不可执行脚本
+        }
+    }
+
+    //维护访问序列模型：新地址截断前进记录后入栈，后退/前进则指针回移
+    private void UpdateHubUrlModel(string href)
+    {
+        if (_hubUrls.Count == 0)
+        {
+            _hubUrls.Add(href);
+            _hubUrlIndex = 0;
+            return;
+        }
+        if (_hubUrls[_hubUrlIndex] == href)
+            return;
+        int i = _hubUrls.IndexOf(href);
+        if (i >= 0)
+        {
+            _hubUrlIndex = i;
+            return;
+        }
+        if (_hubUrlIndex < _hubUrls.Count - 1)
+            _hubUrls.RemoveRange(_hubUrlIndex + 1, _hubUrls.Count - _hubUrlIndex - 1);
+        _hubUrls.Add(href);
+        _hubUrlIndex = _hubUrls.Count - 1;
+        _logger.Info($"[HubBack] model out: index={_hubUrlIndex} count={_hubUrls.Count} show={_hubUrlIndex > 0}");
+    }
+
+    private async System.Threading.Tasks.Task PollHubFrameUrlAsync()
+    {
+        var frame = _hubFrame;
+        if (frame == null || frame.IsDestroyed() != 0 || _hubFrame != frame)
+            return;
+        string href = await TryReadHubHrefAsync(frame);
+        if (href == null || _hubFrame != frame)
+            return;
+        UpdateHubUrlModel(href);
+        UpdateCommunityNav();
+    }
+
+    private void CoreWebView2_FrameNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    {
+        //社区 iframe 文档级导航完成后刷新地址模型
+        if (_hubActive)
+            _ = PollHubFrameUrlAsync();
+    }
+
+    //壳的顶层路径是否是社区页（静态导出为 /{lang}/hub.html，SPA 路由为 /{lang}/hub）
+    private static bool IsHubPath(string absolutePath)
+    {
+        string path = absolutePath.TrimEnd('/');
+        return path.EndsWith("/hub", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith("/hub.html", StringComparison.OrdinalIgnoreCase);
+    }
+
+    //从壳地址的第一段解析语言并判断是否 RTL（如 /zh.html、/en/hub）
+    private static bool IsRtlShellUri(Uri uri)
+    {
+        string first = uri.AbsolutePath.Trim('/').Split('/').FirstOrDefault() ?? string.Empty;
+        string lang = first.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
+            ? first[..^5]
+            : first;
+        return RtlLanguages.Contains(lang.ToLowerInvariant());
     }
 
     private void CoreWebView2_FrameCreated(object sender, CoreWebView2FrameCreatedEventArgs e)
     {
         e.Frame.AddHostObjectToScript("api", ClientApi, Origins);
         webview2.CoreWebView2.AddHostObjectToScript("shell", new ShellApiObject(this));
+        //社区页创建的第一个帧即社区 iframe，用它在帧内执行 history.back / 读取 location
+        if (_hubActive && _hubFrame == null)
+            _hubFrame = e.Frame;
     }
 
     private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -570,6 +774,29 @@ public partial class ShellWindow : Window
         {
             _ = ForceReloadAsync();
             return;
+        }
+        //社区快捷键：Alt+← 后退、Alt+→ 前进、F5 刷新，仅在社区页生效。
+        //WPF 版 WebView2 会把浏览器加速键转发成 WPF 冒泡 KeyDown 路由到这里
+        if (_hubActive)
+        {
+            if (e.Key == Key.Left && Keyboard.Modifiers == ModifierKeys.Alt)
+            {
+                e.Handled = true;
+                CommunityNavTraverseAsync(-1);
+                return;
+            }
+            if (e.Key == Key.Right && Keyboard.Modifiers == ModifierKeys.Alt)
+            {
+                e.Handled = true;
+                CommunityNavTraverseAsync(1);
+                return;
+            }
+            if (e.Key == Key.F5)
+            {
+                e.Handled = true;
+                CommunityNavRefresh();
+                return;
+            }
         }
         if (CloseByEsc && e.Key == Key.Escape)
         {

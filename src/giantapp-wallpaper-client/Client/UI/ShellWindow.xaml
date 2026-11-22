@@ -46,6 +46,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!--  社区页右下角浏览器快捷工具条见 CommunityNavWindow（WebView2 是 HwndHost，同窗口 WPF 元素无法浮在网页上方）  -->
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
