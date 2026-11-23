@@ -222,20 +222,22 @@ internal class AppService
         var config = Configer.Get<General>() ?? new();
         config.CheckLan();
 
-        //新版前端静态导出没有 index.html，语言页是 <lang>.html
-        string url = $"https://{DomainStr}/{config.CurrentLan}.html";
+        path = path?.TrimStart('/');
+        string url;
 #if DEBUG_LOCAL && DEBUG
-        //if (path == "index")
-        //    path = null;
         //本地开发：优先用 dev.ts 写入的动态端口，回退 3100
         url = $"http://localhost:{DetectDevServerPort()}/{config.CurrentLan}";
-        //ShellWindow.ShowShell($"http://localhost:3100/{config.CurrentLan}/{path}");
-        //return;
 #else
-        //ShellWindow.ShowShell($"https://{DomainStr}/{config.CurrentLan}/{path}");
+        //新版前端静态导出没有 index.html，语言页是 <lang>.html；
+        //子页面没有目录索引页，交给壳的 AutoAppendHtmlDomains 在导航时补 .html
+        url = $"https://{DomainStr}/{config.CurrentLan}";
+        if (string.IsNullOrEmpty(path))
+            url += ".html";
 #endif
+        //前端是真实路径路由（/{lang}/settings、/{lang}/hub?target=x），不响应 hash 路由，
+        //拼成 #/{path} 只会停在首页
         if (!string.IsNullOrEmpty(path))
-            url += $"#/{path}";
+            url += $"/{path}";
         ShellWindow.ShowShell(url);
 
     }

@@ -246,10 +246,11 @@ public partial class ShellWindow : Window
         //判断url是否包含query
         if (url != null && !url.Contains("mode="))
         {
-            if (url.Contains("?"))
-                url += $"&mode={realModel}";
-            else
-                url += $"?mode={realModel}";
+            //query 必须插在 #fragment 之前：接在 fragment 后面会被当成锚点的一部分，页面读不到
+            int hashIndex = url.IndexOf('#');
+            string fragment = hashIndex < 0 ? string.Empty : url[hashIndex..];
+            string main = hashIndex < 0 ? url : url[..hashIndex];
+            url = main + (main.Contains("?") ? "&" : "?") + $"mode={realModel}" + fragment;
         }
 
         webview2.Source = new Uri(url);
