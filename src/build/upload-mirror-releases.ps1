@@ -25,6 +25,17 @@ if (-not $Notes) { $Notes = $Tag }
 $FileName = Split-Path $Artifact -Leaf
 $IsPrerelease = $Version -match "-"
 
+# ---------- Release 页面地址 ----------
+# 两家路径格式不同，不能照搬（均在浏览器里核实过）：
+#   Gitee:   https://gitee.com/<owner>/<repo>/releases/tag/<tag>
+#   GitCode: https://gitcode.com/<owner>/<repo>/releases/<tag>   没有 tag/ 段
+# 两家接口都不返回页面地址（只有附件的 browser_download_url），只能按格式拼；
+# 脚本也无法自检：GitCode 是纯前端站点，任何路径都返回同一份 HTTP 200 的页面壳，
+# 写错只会渲染成「页面找不到或无权限」；Gitee 对非浏览器客户端一律 302 到源码归档。
+# 改这里的格式后必须用浏览器打开确认。
+$GiteeReleaseUrl = "https://gitee.com/$Owner/$Repo/releases/tag/$Tag"
+$GitCodeReleaseUrl = "https://gitcode.com/$Owner/$Repo/releases/$Tag"
+
 # ---------- 令牌 ----------
 # 优先级：环境变量 > tokens.json > CLI 登录态（gitee-cli / gitcode-cli，运行时读取不经手令牌）
 function Get-Tokens {
@@ -144,7 +155,7 @@ if ($Tokens["gitee"]) {
         if (-not ($assets | Where-Object { $_.name -eq $FileName })) {
             Write-Error "[gitee] 验证失败：release 附件列表中未见 $FileName"; exit 1
         }
-        Write-Host "[gitee] 完成 ✓ https://gitee.com/$Owner/$Repo/releases/tag/$Tag"
+        Write-Host "[gitee] 完成 ✓ $GiteeReleaseUrl"
     } catch {
         Write-Error "[gitee] $_"
         exit 1
@@ -216,7 +227,7 @@ if ($Tokens["gitcode"]) {
         if (-not $verified) {
             Write-Error "[gitcode] 验证失败：release 附件列表中未见 $FileName（OBS 回调可能延迟，可稍后手动复查）"; exit 1
         }
-        Write-Host "[gitcode] 完成 ✓ https://gitcode.com/$Owner/$Repo/releases/tag/$Tag"
+        Write-Host "[gitcode] 完成 ✓ $GitCodeReleaseUrl"
     } catch {
         Write-Error "[gitcode] $_"
         exit 1
